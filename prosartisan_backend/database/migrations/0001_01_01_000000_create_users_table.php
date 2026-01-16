@@ -8,17 +8,27 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
+     *
+     * Creates the users table for storing all user types
+     * (Client, Artisan, Fournisseur, ReferentZone, Admin)
      */
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
-            $table->rememberToken();
+            $table->uuid('id')->primary();
+            $table->string('email', 255)->unique();
+            $table->string('password_hash', 255);
+            $table->string('user_type', 50); // CLIENT, ARTISAN, FOURNISSEUR, REFERENT_ZONE, ADMIN
+            $table->string('account_status', 50)->default('PENDING'); // PENDING, ACTIVE, SUSPENDED
+            $table->string('phone_number', 20)->nullable();
+            $table->integer('failed_login_attempts')->default(0);
+            $table->timestamp('locked_until')->nullable();
             $table->timestamps();
+
+            // Indexes
+            $table->index('email');
+            $table->index('user_type');
+            $table->index('account_status');
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
@@ -29,7 +39,7 @@ return new class extends Migration
 
         Schema::create('sessions', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->foreignId('user_id')->nullable()->index();
+            $table->uuid('user_id')->nullable()->index();
             $table->string('ip_address', 45)->nullable();
             $table->text('user_agent')->nullable();
             $table->longText('payload');
