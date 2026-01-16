@@ -72,7 +72,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Validates: Requirements 1.4**
 
 - [~] 3. Implement Identity Management Context (API & Mobile)
-  - [~] 3.1 Create registration and authentication API endpoints
+  - [-] 3.1 Create registration and authentication API endpoints
     - POST /api/v1/auth/register (client, artisan, fournisseur)
     - POST /api/v1/auth/login
     - POST /api/v1/auth/otp/generate
