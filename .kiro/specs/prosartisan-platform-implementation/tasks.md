@@ -20,7 +20,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
 
 ## Tasks
 
-- [-] 1. Set up project infrastructure and shared kernel
+- [x] 1. Set up project infrastructure and shared kernel
   - Configure PostgreSQL with PostGIS extension
   - Set up Laravel project structure with DDD folders (Domain, Application, Infrastructure, Http)
   - Set up Flutter project with feature-based architecture
@@ -29,8 +29,8 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
   - Set up CI/CD pipeline configuration
   - _Requirements: 16.1, 19.1, 19.2, 19.3_
 
-- [ ] 2. Implement Identity Management Context (Backend)
-  - [ ] 2.1 Create User domain entities and value objects
+- [~] 2. Implement Identity Management Context (Backend)
+  - [-] 2.1 Create User domain entities and value objects
     - Implement User, Artisan, Client, Fournisseur entities
     - Implement KYCDocuments, Email, HashedPassword, PhoneNumber value objects
     - Implement UserType, AccountStatus enums
@@ -40,7 +40,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 1: User Account Creation Uniqueness**
     - **Validates: Requirements 1.1**
   
-  - [ ] 2.3 Implement KYC verification domain service
+  - [~] 2.3 Implement KYC verification domain service
     - Create KYCVerificationService interface and implementation
     - Implement document validation logic
     - _Requirements: 1.2_
@@ -49,7 +49,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 2: KYC Document Requirement**
     - **Validates: Requirements 1.2**
   
-  - [ ] 2.5 Implement authentication domain service
+  - [~] 2.5 Implement authentication domain service
     - Create AuthenticationService with JWT token generation
     - Implement OTP generation and verification
     - Implement account lockout logic after 3 failed attempts
@@ -61,7 +61,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 6: OTP Round Trip Verification**
     - **Validates: Requirements 1.3, 1.5, 1.6**
   
-  - [ ] 2.7 Create User repository and database migrations
+  - [~] 2.7 Create User repository and database migrations
     - Implement UserRepository interface and PostgreSQL implementation
     - Create users, artisan_profiles, fournisseur_profiles, kyc_verifications tables
     - Add PostGIS indexes for location queries
@@ -71,8 +71,8 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 4: Unverified Artisan Mission Restriction**
     - **Validates: Requirements 1.4**
 
-- [ ] 3. Implement Identity Management Context (API & Mobile)
-  - [ ] 3.1 Create registration and authentication API endpoints
+- [~] 3. Implement Identity Management Context (API & Mobile)
+  - [~] 3.1 Create registration and authentication API endpoints
     - POST /api/v1/auth/register (client, artisan, fournisseur)
     - POST /api/v1/auth/login
     - POST /api/v1/auth/otp/generate
@@ -80,7 +80,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - POST /api/v1/users/{id}/kyc (upload KYC documents)
     - _Requirements: 1.1, 1.2, 1.3, 1.6_
   
-  - [ ] 3.2 Implement Flutter authentication screens
+  - [~] 3.2 Implement Flutter authentication screens
     - Create login screen with email/password
     - Create registration screens for each user type
     - Create KYC document upload screen with camera integration
@@ -93,11 +93,11 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - Test account lockout after failed attempts
     - _Requirements: 1.1, 1.2, 1.3, 1.5, 1.6_
 
-- [ ] 4. Checkpoint - Identity Context Complete
+- [~] 4. Checkpoint - Identity Context Complete
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 5. Implement Marketplace Context (Backend)
-  - [ ] 5.1 Create Mission and Devis domain entities
+- [~] 5. Implement Marketplace Context (Backend)
+  - [~] 5.1 Create Mission and Devis domain entities
     - Implement Mission aggregate with quote management
     - Implement Devis entity with DevisLine items
     - Implement TradeCategory, MissionStatus, DevisStatus value objects
@@ -109,7 +109,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 15: Maximum Quotes Per Mission**
     - **Validates: Requirements 3.1, 3.3, 3.4**
   
-  - [ ] 5.3 Implement artisan search domain service
+  - [~] 5.3 Implement artisan search domain service
     - Create ArtisanSearchService with PostGIS proximity queries
     - Implement proximity-based sorting (≤1km first)
     - Implement trade category filtering
@@ -121,7 +121,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 11: Search Result Sort Order**
     - **Validates: Requirements 2.1, 2.2, 2.6**
   
-  - [ ] 5.5 Implement location privacy service
+  - [~] 5.5 Implement location privacy service
     - Create LocationPrivacyService with GPS blurring (50m radius)
     - Implement coordinate revelation after quote acceptance
     - _Requirements: 2.4, 3.5_
@@ -131,7 +131,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 16: Coordinate Revelation After Acceptance**
     - **Validates: Requirements 2.4, 3.5_
   
-  - [ ] 5.7 Create Mission and Devis repositories
+  - [~] 5.7 Create Mission and Devis repositories
     - Implement MissionRepository and DevisRepository interfaces
     - Create missions, devis, devis_lines tables with PostGIS indexes
     - _Requirements: 3.1, 3.3_
@@ -141,8 +141,8 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 18: Escrow Initiation Trigger**
     - **Validates: Requirements 3.6, 3.7**
 
-- [ ] 6. Implement Marketplace Context (API & Mobile)
-  - [ ] 6.1 Create mission and quote API endpoints
+- [~] 6. Implement Marketplace Context (API & Mobile)
+  - [~] 6.1 Create mission and quote API endpoints
     - POST /api/v1/missions (create mission)
     - GET /api/v1/missions (list missions with pagination)
     - GET /api/v1/missions/{id}
@@ -151,7 +151,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - GET /api/v1/artisans/search (with filters and location)
     - _Requirements: 2.1, 2.2, 3.1, 3.2, 3.3, 3.5_
   
-  - [ ] 6.2 Implement Flutter marketplace screens
+  - [~] 6.2 Implement Flutter marketplace screens
     - Create artisan search screen with map view (Google Maps SDK)
     - Implement map clustering for nearby artisans
     - Create mission creation form
@@ -165,12 +165,12 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - Test maximum 3 quotes per mission constraint
     - _Requirements: 2.1, 2.2, 3.1, 3.3, 3.4, 3.5_
 
-- [ ] 7. Checkpoint - Marketplace Context Complete
+- [~] 7. Checkpoint - Marketplace Context Complete
   - Ensure all tests pass, ask the user if questions arise.
 
 
-- [ ] 8. Implement Financial Transactions Context (Backend)
-  - [ ] 8.1 Create Sequestre and JetonMateriel domain entities
+- [~] 8. Implement Financial Transactions Context (Backend)
+  - [~] 8.1 Create Sequestre and JetonMateriel domain entities
     - Implement Sequestre aggregate with fragmentation logic
     - Implement JetonMateriel entity with validation tracking
     - Implement Transaction entity for audit trail
@@ -182,12 +182,12 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 20: Jeton Generation After Fragmentation**
     - **Validates: Requirements 4.2, 4.3**
   
-  - [ ] 8.3 Implement escrow fragmentation domain service
+  - [~] 8.3 Implement escrow fragmentation domain service
     - Create EscrowFragmentationService with 65/35 split calculation
     - Implement fund release logic for materials and labor
     - _Requirements: 4.2_
   
-  - [ ] 8.4 Implement jeton factory and validation service
+  - [~] 8.4 Implement jeton factory and validation service
     - Create JetonFactory for jeton generation with PA-XXXX codes
     - Implement AntiFraudService with GPS proximity validation (100m)
     - Implement jeton expiration logic (7 days)
@@ -201,7 +201,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 28: Expired Jeton Fund Return**
     - **Validates: Requirements 5.1, 5.2, 5.3, 5.5, 5.7**
   
-  - [ ] 8.6 Implement mobile money gateway adapter
+  - [~] 8.6 Implement mobile money gateway adapter
     - Create MobileMoneyGateway interface
     - Implement Wave, Orange Money, MTN adapters
     - Implement retry logic (3 attempts with exponential backoff)
@@ -214,7 +214,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 79: Payment Webhook Timeout Query**
     - **Validates: Requirements 4.5, 15.4, 15.5**
   
-  - [ ] 8.8 Create Financial repositories and migrations
+  - [~] 8.8 Create Financial repositories and migrations
     - Implement SequestreRepository, JetonRepository, TransactionRepository
     - Create sequestres, jetons_materiel, jeton_validations, transactions tables
     - Ensure transactions table is append-only (immutable audit log)
@@ -225,8 +225,8 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 72: Financial Transaction Audit Logging**
     - **Validates: Requirements 4.6, 13.6**
 
-- [ ] 9. Implement Financial Transactions Context (API & Mobile)
-  - [ ] 9.1 Create financial transaction API endpoints
+- [~] 9. Implement Financial Transactions Context (API & Mobile)
+  - [~] 9.1 Create financial transaction API endpoints
     - POST /api/v1/escrow/block (initiate escrow after quote acceptance)
     - POST /api/v1/jetons/generate
     - POST /api/v1/jetons/validate (with GPS verification)
@@ -234,7 +234,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - GET /api/v1/transactions (transaction history)
     - _Requirements: 4.1, 4.2, 5.1, 5.3, 15.4_
   
-  - [ ] 9.2 Implement Flutter payment and jeton screens
+  - [~] 9.2 Implement Flutter payment and jeton screens
     - Create payment initiation screen with mobile money options
     - Create jeton display screen for artisans (show code and QR)
     - Create jeton validation screen for suppliers (scan QR, verify GPS)
@@ -248,11 +248,11 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - Test fund release to artisan and supplier
     - _Requirements: 4.1, 4.2, 4.3, 5.3, 15.4_
 
-- [ ] 10. Checkpoint - Financial Context Complete
+- [~] 10. Checkpoint - Financial Context Complete
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 11. Implement Worksite Management Context (Backend)
-  - [ ] 11.1 Create Chantier and Jalon domain entities
+- [~] 11. Implement Worksite Management Context (Backend)
+  - [~] 11.1 Create Chantier and Jalon domain entities
     - Implement Chantier aggregate with milestone management
     - Implement Jalon entity with proof submission and validation
     - Implement ProofOfDelivery value object with GPS and photo data
@@ -263,7 +263,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 29: Chantier Milestone Initialization**
     - **Validates: Requirements 6.1**
   
-  - [ ] 11.3 Implement milestone validation domain service
+  - [~] 11.3 Implement milestone validation domain service
     - Create MilestoneValidationService with GPS verification
     - Implement PhotoVerificationService for EXIF data extraction
     - Implement 48-hour auto-validation deadline logic
@@ -275,12 +275,12 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 33: Jalon Auto-Validation Execution**
     - **Validates: Requirements 6.2, 6.4, 6.5**
   
-  - [ ] 11.5 Implement auto-validation service with cron job
+  - [~] 11.5 Implement auto-validation service with cron job
     - Create AutoValidationService to process expired deadlines
     - Set up Laravel scheduled task to run every hour
     - _Requirements: 6.5_
   
-  - [ ] 11.6 Create Chantier and Jalon repositories
+  - [~] 11.6 Create Chantier and Jalon repositories
     - Implement ChantierRepository and JalonRepository
     - Create chantiers and jalons tables
     - Add index on auto_validation_deadline for cron queries
@@ -291,8 +291,8 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 35: Chantier Completion Condition**
     - **Validates: Requirements 6.6, 6.7**
 
-- [ ] 12. Implement Worksite Management Context (API & Mobile)
-  - [ ] 12.1 Create worksite management API endpoints
+- [~] 12. Implement Worksite Management Context (API & Mobile)
+  - [~] 12.1 Create worksite management API endpoints
     - POST /api/v1/chantiers (start chantier after escrow)
     - GET /api/v1/chantiers/{id}
     - POST /api/v1/jalons/{id}/submit-proof (with photo upload)
@@ -300,7 +300,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - POST /api/v1/jalons/{id}/contest
     - _Requirements: 6.1, 6.2, 6.3_
   
-  - [ ] 12.2 Implement Flutter worksite screens
+  - [~] 12.2 Implement Flutter worksite screens
     - Create chantier detail screen with milestone list
     - Create photo capture screen with GPS embedding
     - Create milestone validation screen for clients
@@ -313,11 +313,11 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - Test photo GPS extraction and verification
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6_
 
-- [ ] 13. Checkpoint - Worksite Context Complete
+- [~] 13. Checkpoint - Worksite Context Complete
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 13. Implement Reputation Management Context (Backend)
-  - [ ] 13.1 Create ReputationProfile domain entity
+- [~] 13. Implement Reputation Management Context (Backend)
+  - [~] 13.1 Create ReputationProfile domain entity
     - Implement ReputationProfile aggregate with score history
     - Implement NZassaScore value object with 0-100 validation
     - Implement ReputationMetrics value object
@@ -328,7 +328,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - Test that NZassaScore constructor rejects values outside 0-100
     - _Requirements: 7.2_
   
-  - [ ] 13.3 Implement score calculation domain service
+  - [~] 13.3 Implement score calculation domain service
     - Create ScoreCalculationService with weighted formula
     - Implement reliability calculation (completed / accepted * 100)
     - Implement integrity calculation with fraud penalties
@@ -344,14 +344,14 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 41: Reactivity Score Calculation**
     - **Validates: Requirements 7.2, 7.3, 7.4, 7.5, 7.6**
   
-  - [ ] 13.4 Implement metrics aggregation service
+  - [~] 13.4 Implement metrics aggregation service
     - Create MetricsAggregationService to query across contexts
     - Aggregate completed/accepted projects from Chantier
     - Aggregate ratings from Rating table
     - Calculate average response time from Mission notifications
     - _Requirements: 7.1, 7.3, 7.5, 7.6_
   
-  - [ ] 13.5 Create Reputation repositories and migrations
+  - [~] 13.5 Create Reputation repositories and migrations
     - Implement ReputationRepository
     - Create reputation_profiles, score_history, ratings tables
     - Add indexes on artisan_id and current_score
@@ -363,15 +363,15 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 43: Score History Audit Trail**
     - **Validates: Requirements 7.1, 7.7, 7.8**
 
-- [ ] 14. Implement Reputation Management Context (API & Mobile)
-  - [ ] 14.1 Create reputation API endpoints
+- [~] 14. Implement Reputation Management Context (API & Mobile)
+  - [~] 14.1 Create reputation API endpoints
     - GET /api/v1/artisans/{id}/reputation
     - GET /api/v1/artisans/{id}/score-history
     - POST /api/v1/missions/{id}/rate (submit rating)
     - GET /api/v1/artisans/{id}/ratings
     - _Requirements: 7.1, 7.8, 8.2, 8.3_
   
-  - [ ] 14.2 Implement Flutter reputation screens
+  - [~] 14.2 Implement Flutter reputation screens
     - Create artisan reputation detail screen with score breakdown
     - Create rating submission screen (1-5 stars + comment)
     - Display score history chart
@@ -389,11 +389,11 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - Test score history audit trail
     - _Requirements: 7.1, 7.8, 8.2, 8.3, 8.5_
 
-- [ ] 15. Checkpoint - Reputation Context Complete
+- [~] 15. Checkpoint - Reputation Context Complete
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 16. Implement Dispute Resolution Context (Backend)
-  - [ ] 16.1 Create Litige domain entity
+- [~] 16. Implement Dispute Resolution Context (Backend)
+  - [~] 16.1 Create Litige domain entity
     - Implement Litige aggregate with mediation and arbitration
     - Implement Mediation and Arbitration entities
     - Implement DisputeType, DisputeStatus, ArbitrationDecision value objects
@@ -404,7 +404,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 49: Dispute Fund Freeze**
     - **Validates: Requirements 9.1, 9.2**
   
-  - [ ] 16.3 Implement mediation and arbitration services
+  - [~] 16.3 Implement mediation and arbitration services
     - Create MediationService with mediator assignment logic
     - Implement high-value dispute detection (> 2M XOF)
     - Create ArbitrationService with decision execution
@@ -416,7 +416,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 53: Dispute Reporting Time Window**
     - **Validates: Requirements 9.3, 9.4, 9.6, 9.7**
   
-  - [ ] 16.5 Create Litige repository and migrations
+  - [~] 16.5 Create Litige repository and migrations
     - Implement LitigeRepository
     - Create litiges and mediation_communications tables
     - _Requirements: 9.1_
@@ -425,8 +425,8 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 51: Mediation Party Notification**
     - **Validates: Requirements 9.5**
 
-- [ ] 17. Implement Dispute Resolution Context (API & Mobile)
-  - [ ] 17.1 Create dispute resolution API endpoints
+- [~] 17. Implement Dispute Resolution Context (API & Mobile)
+  - [~] 17.1 Create dispute resolution API endpoints
     - POST /api/v1/disputes (report dispute)
     - GET /api/v1/disputes/{id}
     - POST /api/v1/disputes/{id}/mediation/start
@@ -434,7 +434,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - POST /api/v1/disputes/{id}/arbitration/render
     - _Requirements: 9.1, 9.5, 9.6_
   
-  - [ ] 17.2 Implement Flutter dispute screens
+  - [~] 17.2 Implement Flutter dispute screens
     - Create dispute reporting form with evidence upload
     - Create mediation chat screen
     - Create dispute detail screen for admins
@@ -446,18 +446,18 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - Test arbitration decision execution
     - _Requirements: 9.1, 9.2, 9.3, 9.5, 9.6_
 
-- [ ] 18. Checkpoint - Dispute Context Complete
+- [~] 18. Checkpoint - Dispute Context Complete
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 19. Implement Notification System
-  - [ ] 19.1 Create notification infrastructure
+- [~] 19. Implement Notification System
+  - [~] 19.1 Create notification infrastructure
     - Implement Firebase Cloud Messaging adapter
     - Implement SMS gateway adapter (Twilio or local provider)
     - Implement WhatsApp Business API adapter
     - Implement email service adapter
     - _Requirements: 11.1, 11.2, 11.3, 11.4_
   
-  - [ ] 19.2 Implement notification service with retry logic
+  - [~] 19.2 Implement notification service with retry logic
     - Create NotificationService with channel fallback
     - Implement retry logic (push → SMS → WhatsApp → email)
     - Implement user notification preferences
@@ -472,21 +472,21 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 63: Notification Retry on Failure**
     - **Validates: Requirements 11.1, 11.2, 11.3, 11.4, 11.5, 11.6**
   
-  - [ ] 19.4 Wire notification triggers to domain events
+  - [~] 19.4 Wire notification triggers to domain events
     - Listen to MissionCreated → notify nearby artisans
     - Listen to QuoteSubmitted → notify client
     - Listen to MilestoneProofSubmitted → notify client
     - Listen to LaborPaymentReleased → notify artisan
     - _Requirements: 11.1, 11.2, 11.3, 11.4_
 
-- [ ] 20. Implement Backoffice Administration
-  - [ ] 20.1 Create React backoffice application
+- [~] 20. Implement Backoffice Administration
+  - [~] 20.1 Create React backoffice application
     - Set up React project with TypeScript
     - Create admin authentication and authorization
     - Implement dashboard with statistics
     - _Requirements: 12.1, 12.4_
   
-  - [ ] 20.2 Implement user management screens
+  - [~] 20.2 Implement user management screens
     - Create user list with filters (type, status, KYC)
     - Create user detail view with KYC documents
     - Implement account suspension functionality
@@ -497,7 +497,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 65: Suspended Account Transaction Prevention**
     - **Validates: Requirements 12.2, 12.3**
   
-  - [ ] 20.4 Implement dispute management screens
+  - [~] 20.4 Implement dispute management screens
     - Create dispute list with filters
     - Create dispute detail view with evidence and communications
     - Implement arbitration decision form
@@ -507,7 +507,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 66: Admin Dispute View Evidence Completeness**
     - **Validates: Requirements 12.5**
   
-  - [ ] 20.6 Implement reputation management screens
+  - [~] 20.6 Implement reputation management screens
     - Create artisan reputation dashboard
     - Implement manual score adjustment with justification
     - Create transaction export functionality (CSV)
@@ -518,8 +518,8 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 68: Transaction Export Data Accuracy**
     - **Validates: Requirements 12.6, 12.7**
 
-- [ ] 21. Implement Security and Cross-Cutting Concerns
-  - [ ] 21.1 Implement API authentication and authorization
+- [~] 21. Implement Security and Cross-Cutting Concerns
+  - [~] 21.1 Implement API authentication and authorization
     - Create JWT middleware for all protected endpoints
     - Implement role-based access control (client, artisan, admin)
     - Implement rate limiting middleware (100 req/min)
@@ -530,7 +530,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 71: Rate Limiting Enforcement**
     - **Validates: Requirements 13.2, 13.4**
   
-  - [ ] 21.3 Implement fraud detection service
+  - [~] 21.3 Implement fraud detection service
     - Create SuspiciousActivityDetector with pattern matching
     - Implement account flagging for review
     - Implement escrow circumvention detection
@@ -541,13 +541,13 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 73: Escrow Circumvention Penalty**
     - **Validates: Requirements 13.3, 13.7**
   
-  - [ ] 21.5 Implement data encryption
+  - [~] 21.5 Implement data encryption
     - Encrypt sensitive fields (passwords, payment info) with AES-256
     - Implement secure file storage for KYC documents and photos
     - _Requirements: 13.1_
 
-- [ ] 22. Implement Mobile App Features
-  - [ ] 22.1 Implement offline mode and sync
+- [~] 22. Implement Mobile App Features
+  - [~] 22.1 Implement offline mode and sync
     - Create local SQLite cache for missions and profiles
     - Implement offline data access
     - Implement sync service for pending actions
@@ -558,7 +558,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 76: Online Sync After Reconnection**
     - **Validates: Requirements 14.3, 14.4**
   
-  - [ ] 22.3 Implement app authentication flow
+  - [~] 22.3 Implement app authentication flow
     - Create splash screen with auth check
     - Implement token refresh logic
     - Redirect unauthenticated users to login
@@ -568,7 +568,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 74: Unauthenticated User Redirection**
     - **Validates: Requirements 14.2**
   
-  - [ ] 22.5 Implement photo capture with EXIF embedding
+  - [~] 22.5 Implement photo capture with EXIF embedding
     - Use camera plugin with GPS permission
     - Embed GPS coordinates and timestamp in EXIF data
     - _Requirements: 14.7_
@@ -577,8 +577,8 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 77: Photo EXIF Data Embedding**
     - **Validates: Requirements 14.7**
 
-- [ ] 23. Implement Localization and Formatting
-  - [ ] 23.1 Set up French localization
+- [~] 23. Implement Localization and Formatting
+  - [~] 23.1 Set up French localization
     - Create French translation files for all UI text
     - Implement currency formatting (XOF with thousand separators)
     - Implement date formatting (DD/MM/YYYY HH:mm)
@@ -591,7 +591,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 86: Glossary Term Consistency**
     - **Validates: Requirements 18.1, 18.2, 18.3, 18.4**
   
-  - [ ] 23.3 Implement optional English localization
+  - [~] 23.3 Implement optional English localization
     - Create English translation files
     - Implement language preference setting
     - _Requirements: 18.5_
@@ -600,13 +600,13 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 87: English Localization Option**
     - **Validates: Requirements 18.5**
 
-- [ ] 24. Implement API Documentation and Standards
-  - [ ] 24.1 Generate OpenAPI documentation
+- [~] 24. Implement API Documentation and Standards
+  - [~] 24.1 Generate OpenAPI documentation
     - Use Laravel OpenAPI generator
     - Document all endpoints with request/response examples
     - _Requirements: 20.1, 20.2_
   
-  - [ ] 24.2 Implement consistent error responses
+  - [~] 24.2 Implement consistent error responses
     - Create error response formatter middleware
     - Ensure all errors return JSON with error, message, status_code
     - _Requirements: 20.4_
@@ -616,8 +616,8 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 89: Consistent Error Response Format**
     - **Validates: Requirements 20.3, 20.4**
 
-- [ ] 25. Implement Geolocation Features
-  - [ ] 25.1 Implement GPS utilities
+- [~] 25. Implement Geolocation Features
+  - [~] 25.1 Implement GPS utilities
     - Create Haversine distance calculation function
     - Implement GPS accuracy validation (< 10m)
     - Implement GPS fallback to OTP when unavailable
@@ -630,8 +630,8 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 57: GPS Timestamp Recording**
     - **Validates: Requirements 10.2, 10.4, 10.5, 10.6**
 
-- [ ] 26. Implement Pagination and Performance
-  - [ ] 26.1 Implement pagination for list endpoints
+- [~] 26. Implement Pagination and Performance
+  - [~] 26.1 Implement pagination for list endpoints
     - Add pagination to missions, artisans, transactions lists
     - Set page size to 20 items
     - _Requirements: 17.2_
@@ -640,12 +640,12 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 82: Mission List Pagination**
     - **Validates: Requirements 17.2**
   
-  - [ ] 26.3 Implement caching strategy
+  - [~] 26.3 Implement caching strategy
     - Cache artisan profiles with 5-minute TTL
     - Cache trade categories and static data
     - _Requirements: 17.3_
   
-  - [ ] 26.4 Add database indexes for performance
+  - [~] 26.4 Add database indexes for performance
     - Index frequently queried fields (user_id, mission_id, status)
     - Add PostGIS spatial indexes for location queries
     - _Requirements: 17.5_

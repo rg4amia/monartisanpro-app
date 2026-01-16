@@ -27,21 +27,21 @@ void main() {
 
     test('rejects invalid latitude', () {
       expect(
-        () => const GPSCoordinates(latitude: 91.0, longitude: -4.0083),
+        () => GPSCoordinates(latitude: 91.0, longitude: -4.0083),
         throwsAssertionError,
       );
     });
 
     test('rejects invalid longitude', () {
       expect(
-        () => const GPSCoordinates(latitude: 5.3600, longitude: 181.0),
+        () => GPSCoordinates(latitude: 5.3600, longitude: 181.0),
         throwsAssertionError,
       );
     });
 
     test('rejects negative accuracy', () {
       expect(
-        () => const GPSCoordinates(
+        () => GPSCoordinates(
           latitude: 5.3600,
           longitude: -4.0083,
           accuracy: -5.0,
