@@ -30,7 +30,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
   - _Requirements: 16.1, 19.1, 19.2, 19.3_
 
 - [~] 2. Implement Identity Management Context (Backend)
-  - [-] 2.1 Create User domain entities and value objects
+  - [x] 2.1 Create User domain entities and value objects
     - Implement User, Artisan, Client, Fournisseur entities
     - Implement KYCDocuments, Email, HashedPassword, PhoneNumber value objects
     - Implement UserType, AccountStatus enums
@@ -40,7 +40,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 1: User Account Creation Uniqueness**
     - **Validates: Requirements 1.1**
   
-  - [~] 2.3 Implement KYC verification domain service
+  - [-] 2.3 Implement KYC verification domain service
     - Create KYCVerificationService interface and implementation
     - Implement document validation logic
     - _Requirements: 1.2_

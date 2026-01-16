@@ -17,82 +17,82 @@ use DateTime;
  */
 final class Client extends User
 {
- private PhoneNumber $phoneNumber;
- private ?string $preferredPaymentMethod;
+    private PhoneNumber $phoneNumber;
+    private ?string $preferredPaymentMethod;
 
- public function __construct(
-  UserId $id,
-  Email $email,
-  HashedPassword $password,
-  PhoneNumber $phoneNumber,
-  ?string $preferredPaymentMethod = null,
-  ?AccountStatus $status = null,
-  ?DateTime $createdAt = null,
-  ?DateTime $updatedAt = null
- ) {
-  parent::__construct(
-   $id,
-   $email,
-   $password,
-   UserType::CLIENT(),
-   $status,
-   null, // Clients don't require KYC documents
-   $createdAt,
-   $updatedAt
-  );
+    public function __construct(
+        UserId $id,
+        Email $email,
+        HashedPassword $password,
+        PhoneNumber $phoneNumber,
+        ?string $preferredPaymentMethod = null,
+        ?AccountStatus $status = null,
+        ?DateTime $createdAt = null,
+        ?DateTime $updatedAt = null
+    ) {
+        parent::__construct(
+            $id,
+            $email,
+            $password,
+            UserType::CLIENT(),
+            $status,
+            null, // Clients don't require KYC documents
+            $createdAt,
+            $updatedAt
+        );
 
-  $this->phoneNumber = $phoneNumber;
-  $this->preferredPaymentMethod = $preferredPaymentMethod;
- }
+        $this->phoneNumber = $phoneNumber;
+        $this->preferredPaymentMethod = $preferredPaymentMethod;
+    }
 
- /**
-  * Create a new client
-  */
- public static function createClient(
-  Email $email,
-  HashedPassword $password,
-  PhoneNumber $phoneNumber,
-  ?string $preferredPaymentMethod = null
- ): self {
-  $client = new self(
-   UserId::generate(),
-   $email,
-   $password,
-   $phoneNumber,
-   $preferredPaymentMethod,
-   AccountStatus::ACTIVE() // Clients are active immediately
-  );
+    /**
+     * Create a new client
+     */
+    public static function createClient(
+        Email $email,
+        HashedPassword $password,
+        PhoneNumber $phoneNumber,
+        ?string $preferredPaymentMethod = null
+    ): self {
+        $client = new self(
+            UserId::generate(),
+            $email,
+            $password,
+            $phoneNumber,
+            $preferredPaymentMethod,
+            AccountStatus::ACTIVE() // Clients are active immediately
+        );
 
-  return $client;
- }
+        return $client;
+    }
 
- /**
-  * Update phone number
-  */
- public function updatePhoneNumber(PhoneNumber $newPhoneNumber): void
- {
-  $this->phoneNumber = $newPhoneNumber;
-  $this->updatedAt = new DateTime();
- }
+    /**
+     * Update phone number
+     */
+    public function updatePhoneNumber(PhoneNumber $newPhoneNumber): void
+    {
+        $this->phoneNumber = $newPhoneNumber;
+        $this->updatedAt = new DateTime();
+    }
 
- /**
-  * Set preferred payment method
-  */
- public function setPreferredPaymentMethod(string $paymentMethod): void
- {
-  $this->preferredPaymentMethod = $paymentMethod;
-  $this->updatedAt = new DateTime();
- }
+    /**
+     * Set preferred payment method
+     */
+    public function setPreferredPaymentMethod(string $paymentMethod): void
+    {
+        $this->preferredPaymentMethod = $paymentMethod;
+        $this->updatedAt = new DateTime();
+    }
 
- // Getters
+    // Getters
 
- public function getPhoneNumber(): PhoneNumber
- {
-  return $this->phoneNumber;
- }
+    public function getPhoneNumber(): PhoneNumber
+    {
+        return $this->phoneNumber;
+    }
 
- public function getPreferredPaymentMethod(): ?string
- {
-  return $this->preferredPaymentMethod;
- }
+    public function getPreferredPaymentMethod(): ?string
+    {
+        return $this->preferredPaymentMethod;
+    }
 }
