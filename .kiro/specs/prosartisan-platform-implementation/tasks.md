@@ -93,11 +93,11 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - Test account lockout after failed attempts
     - _Requirements: 1.1, 1.2, 1.3, 1.5, 1.6_
 
-- [~] 4. Checkpoint - Identity Context Complete
+- [x] 4. Checkpoint - Identity Context Complete
   - Ensure all tests pass, ask the user if questions arise.
 
 - [~] 5. Implement Marketplace Context (Backend)
-  - [~] 5.1 Create Mission and Devis domain entities
+  - [ ] 5.1 Create Mission and Devis domain entities
     - Implement Mission aggregate with quote management
     - Implement Devis entity with DevisLine items
     - Implement TradeCategory, MissionStatus, DevisStatus value objects
