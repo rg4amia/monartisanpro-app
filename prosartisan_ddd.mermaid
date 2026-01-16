@@ -1,0 +1,54 @@
+graph TB
+    subgraph "BOUNDED CONTEXT: Gestion des Identités"
+        UC[User Context]
+        UC --> Client[Client]
+        UC --> Artisan[Artisan]
+        UC --> Fournisseur[Fournisseur]
+        UC --> ReferentZone[Référent de Zone]
+        UC --> KYC[KYC Verification]
+    end
+
+    subgraph "BOUNDED CONTEXT: Marketplace"
+        MC[Mission Context]
+        MC --> Recherche[Recherche & Filtrage]
+        MC --> Cartographie[Cartographie GPS]
+        MC --> Devis[Devis]
+        MC --> Mission[Mission]
+    end
+
+    subgraph "BOUNDED CONTEXT: Transactions Financières"
+        FC[Financial Context]
+        FC --> Sequestre[Séquestre]
+        FC --> JetonMateriel[Jeton Matériel]
+        FC --> PaiementMO[Paiement Main-d'œuvre]
+        FC --> MobileMoney[Mobile Money Gateway]
+    end
+
+    subgraph "BOUNDED CONTEXT: Réputation"
+        RC[Reputation Context]
+        RC --> ScoreNZassa[Score N'Zassa]
+        RC --> Evaluation[Évaluation Client]
+        RC --> HistoriqueArtisan[Historique Artisan]
+    end
+
+    subgraph "BOUNDED CONTEXT: Suivi de Chantier"
+        WC[Worksite Context]
+        WC --> Chantier[Chantier]
+        WC --> Jalon[Jalon/Étape]
+        WC --> PreuveLivraison[Preuve Livraison]
+        WC --> Validation[Validation]
+    end
+
+    subgraph "BOUNDED CONTEXT: Litiges"
+        DC[Dispute Context]
+        DC --> Signalement[Signalement]
+        DC --> Mediation[Médiation]
+        DC --> Arbitrage[Arbitrage]
+    end
+
+    MC -.->|ACL| UC
+    FC -.->|ACL| MC
+    WC -.->|ACL| FC
+    RC -.->|ACL| WC
+    DC -.->|ACL| MC
+    DC -.->|ACL| FC
