@@ -12,37 +12,37 @@ use Illuminate\Http\Resources\Json\JsonResource;
  */
 class AuthResource extends JsonResource
 {
- private string $token;
+    private string $token;
 
- /**
-  * Create a new resource instance.
-  *
-  * @param mixed $resource
-  * @param string $token
-  */
- public function __construct($resource, string $token)
- {
-  parent::__construct($resource);
-  $this->token = $token;
- }
+    /**
+     * Create a new resource instance.
+     *
+     * @param mixed $resource
+     * @param string $token
+     */
+    public function __construct($resource, string $token)
+    {
+        parent::__construct($resource);
+        $this->token = $token;
+    }
 
- /**
-  * Transform the resource into an array.
-  *
-  * @return array<string, mixed>
-  */
- public function toArray(Request $request): array
- {
-  $userData = match ($this->resource->getType()->getValue()) {
-   'ARTISAN' => (new ArtisanResource($this->resource))->toArray($request),
-   'FOURNISSEUR' => (new FournisseurResource($this->resource))->toArray($request),
-   default => (new UserResource($this->resource))->toArray($request),
-  };
+    /**
+     * Transform the resource into an array.
+     *
+     * @return array<string, mixed>
+     */
+    public function toArray(Request $request): array
+    {
+        $userData = match ($this->resource->getType()->getValue()) {
+            'ARTISAN' => (new ArtisanResource($this->resource))->toArray($request),
+            'FOURNISSEUR' => (new FournisseurResource($this->resource))->toArray($request),
+            default => (new UserResource($this->resource))->toArray($request),
+        };
 
-  return [
-   'user' => $userData,
-   'token' => $this->token,
-   'token_type' => 'Bearer',
-  ];
- }
+        return [
+            'user' => $userData,
+            'token' => $this->token,
+            'token_type' => 'Bearer',
+        ];
+    }
 }

@@ -35,12 +35,16 @@ return new class extends Migration
    $table->index('is_kyc_verified');
   });
 
-  // Add PostGIS geography column for location
-  // Using geography type for accurate distance calculations
-  DB::statement('ALTER TABLE artisan_profiles ADD COLUMN location GEOGRAPHY(POINT, 4326)');
-
-  // Create spatial index on location for efficient proximity queries
-  DB::statement('CREATE INDEX idx_artisan_location ON artisan_profiles USING GIST(location)');
+  // Add location column based on database driver
+  if (DB::connection()->getDriverName() === 'sqlite') {
+   // For SQLite (testing), use TEXT to store JSON representation of coordinates
+   DB::statement('ALTER TABLE artisan_profiles ADD COLUMN location TEXT');
+  } else {
+   // For PostgreSQL (production), use PostGIS geography column
+   DB::statement('ALTER TABLE artisan_profiles ADD COLUMN location GEOGRAPHY(POINT, 4326)');
+   // Create spatial index on location for efficient proximity queries
+   DB::statement('CREATE INDEX idx_artisan_location ON artisan_profiles USING GIST(location)');
+  }
  }
 
  /**

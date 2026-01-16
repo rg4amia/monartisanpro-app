@@ -31,11 +31,16 @@ return new class extends Migration
    $table->index('user_id');
   });
 
-  // Add PostGIS geography column for shop location
-  DB::statement('ALTER TABLE fournisseur_profiles ADD COLUMN shop_location GEOGRAPHY(POINT, 4326)');
-
-  // Create spatial index on shop_location for efficient proximity queries
-  DB::statement('CREATE INDEX idx_fournisseur_location ON fournisseur_profiles USING GIST(shop_location)');
+  // Add location column based on database driver
+  if (DB::connection()->getDriverName() === 'sqlite') {
+   // For SQLite (testing), use TEXT to store JSON representation of coordinates
+   DB::statement('ALTER TABLE fournisseur_profiles ADD COLUMN shop_location TEXT');
+  } else {
+   // For PostgreSQL (production), use PostGIS geography column
+   DB::statement('ALTER TABLE fournisseur_profiles ADD COLUMN shop_location GEOGRAPHY(POINT, 4326)');
+   // Create spatial index on shop_location for efficient proximity queries
+   DB::statement('CREATE INDEX idx_fournisseur_location ON fournisseur_profiles USING GIST(shop_location)');
+  }
  }
 
  /**

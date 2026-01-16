@@ -7,7 +7,7 @@ use App\Domain\Identity\Services\AuthenticationService;
 use App\Domain\Identity\Services\KYCVerificationService;
 use App\Domain\Identity\Services\LaravelAuthenticationService;
 use App\Domain\Identity\Services\DefaultKYCVerificationService;
-use App\Infrastructure\Persistence\PostgresUserRepository;
+use App\Infrastructure\Repositories\PostgresUserRepository;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider

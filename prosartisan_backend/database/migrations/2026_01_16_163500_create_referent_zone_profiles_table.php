@@ -32,11 +32,16 @@ return new class extends Migration
             $table->index('zone');
         });
 
-        // Add PostGIS geography column for coverage area
-        DB::statement('ALTER TABLE referent_zone_profiles ADD COLUMN coverage_area GEOGRAPHY(POINT, 4326)');
-
-        // Create spatial index on coverage_area
-        DB::statement('CREATE INDEX idx_referent_coverage_area ON referent_zone_profiles USING GIST(coverage_area)');
+        // Add location column based on database driver
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            // For SQLite (testing), use TEXT to store JSON representation of coordinates
+            DB::statement('ALTER TABLE referent_zone_profiles ADD COLUMN coverage_area TEXT');
+        } else {
+            // For PostgreSQL (production), use PostGIS geography column
+            DB::statement('ALTER TABLE referent_zone_profiles ADD COLUMN coverage_area GEOGRAPHY(POINT, 4326)');
+            // Create spatial index on coverage_area
+            DB::statement('CREATE INDEX idx_referent_coverage_area ON referent_zone_profiles USING GIST(coverage_area)');
+        }
     }
 
     /**
