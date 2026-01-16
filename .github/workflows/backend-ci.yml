@@ -1,0 +1,117 @@
+name: Backend CI
+
+on:
+ push:
+  branches: [main, develop]
+  paths:
+   - "prosartisan_backend/**"
+   - ".github/workflows/backend-ci.yml"
+ pull_request:
+  branches: [main, develop]
+  paths:
+   - "prosartisan_backend/**"
+   - ".github/workflows/backend-ci.yml"
+
+jobs:
+ test:
+  runs-on: ubuntu-latest
+
+  services:
+   postgres:
+    image: postgis/postgis:15-3.3
+    env:
+     POSTGRES_DB: prosartisan_test
+     POSTGRES_USER: postgres
+     POSTGRES_PASSWORD: postgres
+    ports:
+     - 5432:5432
+    options: >-
+     --health-cmd pg_isready
+     --health-interval 10s
+     --health-timeout 5s
+     --health-retries 5
+
+   redis:
+    image: redis:7-alpine
+    ports:
+     - 6379:6379
+    options: >-
+     --health-cmd "redis-cli ping"
+     --health-interval 10s
+     --health-timeout 5s
+     --health-retries 5
+
+  steps:
+   - uses: actions/checkout@v4
+
+   - name: Setup PHP
+     uses: shivammathur/setup-php@v2
+     with:
+      php-version: "8.2"
+      extensions: mbstring, pdo, pdo_pgsql, redis, gd
+      coverage: xdebug
+
+   - name: Copy .env
+     working-directory: prosartisan_backend
+     run: |
+      cp .env.example .env
+      sed -i 's/DB_CONNECTION=.*/DB_CONNECTION=pgsql/' .env
+      sed -i 's/DB_DATABASE=.*/DB_DATABASE=prosartisan_test/' .env
+      sed -i 's/DB_USERNAME=.*/DB_USERNAME=postgres/' .env
+      sed -i 's/DB_PASSWORD=.*/DB_PASSWORD=postgres/' .env
+
+   - name: Install Dependencies
+     working-directory: prosartisan_backend
+     run: composer install --prefer-dist --no-progress --no-interaction
+
+   - name: Generate key
+     working-directory: prosartisan_backend
+     run: php artisan key:generate
+
+   - name: Directory Permissions
+     working-directory: prosartisan_backend
+     run: chmod -R 777 storage bootstrap/cache
+
+   - name: Run Migrations
+     working-directory: prosartisan_backend
+     run: php artisan migrate --force
+     env:
+      DB_CONNECTION: pgsql
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_DATABASE: prosartisan_test
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+
+   - name: Run Code Style Check
+     working-directory: prosartisan_backend
+     run: ./vendor/bin/pint --test
+
+   - name: Run Unit Tests
+     working-directory: prosartisan_backend
+     run: php artisan test --testsuite=Unit --coverage --min=80
+     env:
+      DB_CONNECTION: pgsql
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_DATABASE: prosartisan_test
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+
+   - name: Run Feature Tests
+     working-directory: prosartisan_backend
+     run: php artisan test --testsuite=Feature
+     env:
+      DB_CONNECTION: pgsql
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_DATABASE: prosartisan_test
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+
+   - name: Upload Coverage Reports
+     uses: codecov/codecov-action@v4
+     with:
+      files: ./prosartisan_backend/coverage.xml
+      flags: backend
+      name: backend-coverage
