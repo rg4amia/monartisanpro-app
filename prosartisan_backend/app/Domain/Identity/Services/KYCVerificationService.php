@@ -15,18 +15,18 @@ use App\Domain\Identity\Models\ValueObjects\KYCVerificationResult;
  */
 interface KYCVerificationService
 {
- /**
-  * Verify KYC documents for authenticity and completeness
-  *
-  * Validates:
-  * - Document type is CNI or PASSPORT
-  * - ID number format is valid
-  * - Document URL is accessible
-  * - Selfie URL is accessible
-  * - All required fields are present
-  *
-  * @param KYCDocuments $documents The KYC documents to verify
-  * @return KYCVerificationResult The verification result with success/failure status
-  */
- public function verifyDocuments(KYCDocuments $documents): KYCVerificationResult;
+    /**
+     * Verify KYC documents for authenticity and completeness
+     *
+     * Validates:
+     * - Document type is CNI or PASSPORT
+     * - ID number format is valid
+     * - Document URL is accessible
+     * - Selfie URL is accessible
+     * - All required fields are present
+     *
+     * @param KYCDocuments $documents The KYC documents to verify
+     * @return KYCVerificationResult The verification result with success/failure status
+     */
+    public function verifyDocuments(KYCDocuments $documents): KYCVerificationResult;
 }

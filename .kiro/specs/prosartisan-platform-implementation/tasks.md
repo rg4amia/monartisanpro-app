@@ -49,7 +49,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 2: KYC Document Requirement**
     - **Validates: Requirements 1.2**
   
-  - [-] 2.5 Implement authentication domain service
+  - [x] 2.5 Implement authentication domain service
     - Create AuthenticationService with JWT token generation
     - Implement OTP generation and verification
     - Implement account lockout logic after 3 failed attempts
@@ -61,7 +61,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 6: OTP Round Trip Verification**
     - **Validates: Requirements 1.3, 1.5, 1.6**
   
-  - [~] 2.7 Create User repository and database migrations
+  - [-] 2.7 Create User repository and database migrations
     - Implement UserRepository interface and PostgreSQL implementation
     - Create users, artisan_profiles, fournisseur_profiles, kyc_verifications tables
     - Add PostGIS indexes for location queries

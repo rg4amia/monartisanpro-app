@@ -9,8 +9,8 @@ use Exception;
  */
 class OTPGenerationException extends Exception
 {
- public function __construct(string $message = 'Failed to generate or send OTP', ?\Throwable $previous = null)
- {
-  parent::__construct($message, 0, $previous);
- }
+    public function __construct(string $message = 'Failed to generate or send OTP', ?\Throwable $previous = null)
+    {
+        parent::__construct($message, 0, $previous);
+    }
 }

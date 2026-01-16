@@ -18,7 +18,7 @@ class LogSMSService implements SMSService
  public function send(PhoneNumber $phone, string $message): bool
  {
   Log::info('SMS sent', [
-   'phone' => $phone->toString(),
+   'phone' => $phone->getValue(),
    'message' => $message,
    'timestamp' => now()->toIso8601String(),
   ]);

@@ -242,7 +242,7 @@ class AuthenticationServiceTest extends TestCase
   $this->assertNotNull($otp);
   $this->assertMatchesRegularExpression('/^\d{6}$/', $otp->getCode());
   $this->assertFalse($otp->isExpired());
-  $this->assertEquals($phone->toString(), $otp->getPhoneNumber()->toString());
+  $this->assertEquals($phone->getValue(), $otp->getPhoneNumber()->getValue());
  }
 
  /**
@@ -323,7 +323,7 @@ class AuthenticationServiceTest extends TestCase
 
   // Verify token contains user ID
   $userId = $this->authService->verifyToken($token->getToken());
-  $this->assertEquals($user->getId()->toString(), $userId);
+  $this->assertEquals($user->getId()->getValue(), $userId);
  }
 
  /**
@@ -362,6 +362,9 @@ class AuthenticationServiceTest extends TestCase
    ->willReturn($user);
 
   $originalToken = $this->authService->generateToken($user);
+
+  // Wait a moment to ensure different issued_at timestamp
+  sleep(1);
 
   // Act
   $newToken = $this->authService->refreshToken($originalToken->getToken());

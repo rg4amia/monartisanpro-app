@@ -9,8 +9,8 @@ use Exception;
  */
 class AccountSuspendedException extends Exception
 {
- public function __construct(string $message = 'Account has been suspended. Please contact support.')
- {
-  parent::__construct($message);
- }
+    public function __construct(string $message = 'Account has been suspended. Please contact support.')
+    {
+        parent::__construct($message);
+    }
 }

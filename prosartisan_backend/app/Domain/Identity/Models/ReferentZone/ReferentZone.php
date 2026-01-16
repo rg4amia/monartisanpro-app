@@ -18,111 +18,111 @@ use DateTime;
  */
 final class ReferentZone extends User
 {
- private PhoneNumber $phoneNumber;
- private GPS_Coordinates $coverageArea;
- private string $zone;
+    private PhoneNumber $phoneNumber;
+    private GPS_Coordinates $coverageArea;
+    private string $zone;
 
- public function __construct(
-  UserId $id,
-  Email $email,
-  HashedPassword $password,
-  PhoneNumber $phoneNumber,
-  GPS_Coordinates $coverageArea,
-  string $zone,
-  ?AccountStatus $status = null,
-  ?DateTime $createdAt = null,
-  ?DateTime $updatedAt = null
- ) {
-  parent::__construct(
-   $id,
-   $email,
-   $password,
-   UserType::REFERENT_ZONE(),
-   $status,
-   null, // ReferentZone doesn't require KYC documents (verified by admin)
-   $createdAt,
-   $updatedAt
-  );
+    public function __construct(
+        UserId $id,
+        Email $email,
+        HashedPassword $password,
+        PhoneNumber $phoneNumber,
+        GPS_Coordinates $coverageArea,
+        string $zone,
+        ?AccountStatus $status = null,
+        ?DateTime $createdAt = null,
+        ?DateTime $updatedAt = null
+    ) {
+        parent::__construct(
+            $id,
+            $email,
+            $password,
+            UserType::REFERENT_ZONE(),
+            $status,
+            null, // ReferentZone doesn't require KYC documents (verified by admin)
+            $createdAt,
+            $updatedAt
+        );
 
-  $this->phoneNumber = $phoneNumber;
-  $this->coverageArea = $coverageArea;
-  $this->zone = $zone;
- }
+        $this->phoneNumber = $phoneNumber;
+        $this->coverageArea = $coverageArea;
+        $this->zone = $zone;
+    }
 
- /**
-  * Create a new referent de zone
-  */
- public static function createReferentZone(
-  Email $email,
-  HashedPassword $password,
-  PhoneNumber $phoneNumber,
-  GPS_Coordinates $coverageArea,
-  string $zone
- ): self {
-  return new self(
-   UserId::generate(),
-   $email,
-   $password,
-   $phoneNumber,
-   $coverageArea,
-   $zone,
-   AccountStatus::PENDING() // Must be activated by admin
-  );
- }
+    /**
+     * Create a new referent de zone
+     */
+    public static function createReferentZone(
+        Email $email,
+        HashedPassword $password,
+        PhoneNumber $phoneNumber,
+        GPS_Coordinates $coverageArea,
+        string $zone
+    ): self {
+        return new self(
+            UserId::generate(),
+            $email,
+            $password,
+            $phoneNumber,
+            $coverageArea,
+            $zone,
+            AccountStatus::PENDING() // Must be activated by admin
+        );
+    }
 
- /**
-  * Check if referent can mediate disputes
-  */
- public function canMediateDisputes(): bool
- {
-  return $this->isActive() && !$this->isLocked();
- }
+    /**
+     * Check if referent can mediate disputes
+     */
+    public function canMediateDisputes(): bool
+    {
+        return $this->isActive() && !$this->isLocked();
+    }
 
- /**
-  * Update coverage area
-  */
- public function updateCoverageArea(GPS_Coordinates $newCoverageArea): void
- {
-  $this->coverageArea = $newCoverageArea;
-  $this->updatedAt = new DateTime();
- }
+    /**
+     * Update coverage area
+     */
+    public function updateCoverageArea(GPS_Coordinates $newCoverageArea): void
+    {
+        $this->coverageArea = $newCoverageArea;
+        $this->updatedAt = new DateTime();
+    }
 
- /**
-  * Update zone
-  */
- public function updateZone(string $newZone): void
- {
-  if (empty(trim($newZone))) {
-   throw new \InvalidArgumentException('Zone cannot be empty');
-  }
+    /**
+     * Update zone
+     */
+    public function updateZone(string $newZone): void
+    {
+        if (empty(trim($newZone))) {
+            throw new \InvalidArgumentException('Zone cannot be empty');
+        }
 
-  $this->zone = $newZone;
-  $this->updatedAt = new DateTime();
- }
+        $this->zone = $newZone;
+        $this->updatedAt = new DateTime();
+    }
 
- /**
-  * Update phone number
-  */
- public function updatePhoneNumber(PhoneNumber $newPhoneNumber): void
- {
-  $this->phoneNumber = $newPhoneNumber;
-  $this->updatedAt = new DateTime();
- }
+    /**
+     * Update phone number
+     */
+    public function updatePhoneNumber(PhoneNumber $newPhoneNumber): void
+    {
+        $this->phoneNumber = $newPhoneNumber;
+        $this->updatedAt = new DateTime();
+    }
 
- // Getters
+    // Getters
 
- public function getPhoneNumber(): PhoneNumber
- {
-  return $this->phoneNumber;
- }
+    public function getPhoneNumber(): PhoneNumber
+    {
+        return $this->phoneNumber;
+    }
 
- public function getCoverageArea(): GPS_Coordinates
- {
-  return $this->coverageArea;
- }
+    public function getCoverageArea(): GPS_Coordinates
+    {
+        return $this->coverageArea;
+    }
 
- public function getZone(): string
- {
-  return $this->zone;
- }
+    public function getZone(): string
+    {
+        return $this->zone;
+    }
 }

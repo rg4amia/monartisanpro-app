@@ -9,8 +9,8 @@ use Exception;
  */
 class InvalidTokenException extends Exception
 {
- public function __construct(string $message = 'Invalid or expired authentication token')
- {
-  parent::__construct($message);
- }
+    public function __construct(string $message = 'Invalid or expired authentication token')
+    {
+        parent::__construct($message);
+    }
 }

@@ -10,21 +10,21 @@ use Exception;
  */
 class AccountLockedException extends Exception
 {
- private ?DateTime $lockedUntil;
+    private ?DateTime $lockedUntil;
 
- public function __construct(?DateTime $lockedUntil = null, string $message = 'Account is temporarily locked due to multiple failed login attempts')
- {
-  $this->lockedUntil = $lockedUntil;
+    public function __construct(?DateTime $lockedUntil = null, string $message = 'Account is temporarily locked due to multiple failed login attempts')
+    {
+        $this->lockedUntil = $lockedUntil;
 
-  if ($lockedUntil !== null) {
-   $message .= '. Please try again after ' . $lockedUntil->format('Y-m-d H:i:s');
-  }
+        if ($lockedUntil !== null) {
+            $message .= '. Please try again after ' . $lockedUntil->format('Y-m-d H:i:s');
+        }
 
-  parent::__construct($message);
- }
+        parent::__construct($message);
+    }
 
- public function getLockedUntil(): ?DateTime
- {
-  return $this->lockedUntil;
- }
+    public function getLockedUntil(): ?DateTime
+    {
+        return $this->lockedUntil;
+    }
 }

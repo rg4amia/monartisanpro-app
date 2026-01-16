@@ -191,7 +191,7 @@ class OTPTest extends TestCase
 
   // Act & Assert
   $this->assertEquals($code, $otp->getCode());
-  $this->assertEquals($phone->toString(), $otp->getPhoneNumber()->toString());
+  $this->assertEquals($phone->getValue(), $otp->getPhoneNumber()->getValue());
   $this->assertEquals($expiresAt, $otp->getExpiresAt());
   $this->assertEquals($createdAt, $otp->getCreatedAt());
  }
