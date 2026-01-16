@@ -40,7 +40,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 1: User Account Creation Uniqueness**
     - **Validates: Requirements 1.1**
   
-  - [-] 2.3 Implement KYC verification domain service
+  - [x] 2.3 Implement KYC verification domain service
     - Create KYCVerificationService interface and implementation
     - Implement document validation logic
     - _Requirements: 1.2_
@@ -49,7 +49,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 2: KYC Document Requirement**
     - **Validates: Requirements 1.2**
   
-  - [~] 2.5 Implement authentication domain service
+  - [-] 2.5 Implement authentication domain service
     - Create AuthenticationService with JWT token generation
     - Implement OTP generation and verification
     - Implement account lockout logic after 3 failed attempts
@@ -651,7 +651,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - _Requirements: 17.5_
 
 - [ ] 27. Final Integration and End-to-End Testing
-  - [ ] 27.1 Wire all contexts together with event handlers
+  - [~] 27.1 Wire all contexts together with event handlers
     - QuoteAccepted → block funds → fragment → generate jeton
     - MilestoneValidated → release labor payment
     - ChantierCompleted → recalculate score
@@ -664,13 +664,13 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - Test dispute lifecycle (report → mediation → arbitration → resolution)
     - _Requirements: All requirements_
   
-  - [ ] 27.3 Implement monitoring and logging
+  - [~] 27.3 Implement monitoring and logging
     - Set up structured logging with correlation IDs
     - Implement metrics tracking (response times, error rates)
     - Set up alerting rules for critical failures
     - _Requirements: Testing Strategy_
 
-- [ ] 28. Final Checkpoint - Complete Platform
+- [~] 28. Final Checkpoint - Complete Platform
   - Run full test suite (unit + property + integration + E2E)
   - Verify all 89 correctness properties pass
   - Ensure test coverage meets targets (85% overall)
