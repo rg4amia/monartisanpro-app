@@ -80,7 +80,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - POST /api/v1/users/{id}/kyc (upload KYC documents)
     - _Requirements: 1.1, 1.2, 1.3, 1.6_
   
-  - [~] 3.2 Implement Flutter authentication screens
+  - [-] 3.2 Implement Flutter authentication screens
     - Create login screen with email/password
     - Create registration screens for each user type
     - Create KYC document upload screen with camera integration
