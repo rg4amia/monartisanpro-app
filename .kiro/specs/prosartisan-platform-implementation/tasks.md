@@ -316,7 +316,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
 - [x] 13. Checkpoint - Worksite Context Complete
   - Ensure all tests pass, ask the user if questions arise.
 
-- [-] 13. Implement Reputation Management Context (Backend)
+- [x] 13. Implement Reputation Management Context (Backend)
   - [x] 13.1 Create ReputationProfile domain entity
     - Implement ReputationProfile aggregate with score history
     - Implement NZassaScore value object with 0-100 validation
@@ -363,7 +363,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 43: Score History Audit Trail**
     - **Validates: Requirements 7.1, 7.7, 7.8**
 
-- [ ] 14. Implement Reputation Management Context (API & Mobile)
+- [~] 14. Implement Reputation Management Context (API & Mobile)
   - [ ] 14.1 Create reputation API endpoints
     - GET /api/v1/artisans/{id}/reputation
     - GET /api/v1/artisans/{id}/score-history
