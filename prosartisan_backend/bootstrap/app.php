@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'auth:api' => \App\Http\Middleware\Auth\AuthenticateAPI::class,
+            'backoffice.auth' => \App\Http\Middleware\BackofficeAuth::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
