@@ -363,7 +363,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 43: Score History Audit Trail**
     - **Validates: Requirements 7.1, 7.7, 7.8**
 
-- [-] 14. Implement Reputation Management Context (API & Mobile)
+- [x] 14. Implement Reputation Management Context (API & Mobile)
   - [x] 14.1 Create reputation API endpoints
     - GET /api/v1/artisans/{id}/reputation
     - GET /api/v1/artisans/{id}/score-history
@@ -371,7 +371,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - GET /api/v1/artisans/{id}/ratings
     - _Requirements: 7.1, 7.8, 8.2, 8.3_
   
-  - [-] 14.2 Implement Flutter reputation screens
+  - [x] 14.2 Implement Flutter reputation screens
     - Create artisan reputation detail screen with score breakdown
     - Create rating submission screen (1-5 stars + comment)
     - Display score history chart
@@ -392,8 +392,8 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
 - [ ] 15. Checkpoint - Reputation Context Complete
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 16. Implement Dispute Resolution Context (Backend)
-  - [ ] 16.1 Create Litige domain entity
+- [-] 16. Implement Dispute Resolution Context (Backend)
+  - [-] 16.1 Create Litige domain entity
     - Implement Litige aggregate with mediation and arbitration
     - Implement Mediation and Arbitration entities
     - Implement DisputeType, DisputeStatus, ArbitrationDecision value objects
