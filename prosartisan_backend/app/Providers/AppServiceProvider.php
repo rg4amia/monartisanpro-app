@@ -11,6 +11,8 @@ use App\Domain\Marketplace\Repositories\DevisRepository;
 use App\Domain\Marketplace\Repositories\MissionRepository;
 use App\Domain\Marketplace\Services\ArtisanSearchService;
 use App\Domain\Marketplace\Services\DefaultArtisanSearchService;
+use App\Domain\Marketplace\Services\LocationPrivacyService;
+use App\Domain\Marketplace\Services\DefaultLocationPrivacyService;
 use App\Infrastructure\Repositories\PostgresDevisRepository;
 use App\Infrastructure\Repositories\PostgresMissionRepository;
 use App\Infrastructure\Repositories\PostgresUserRepository;
@@ -32,6 +34,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(AuthenticationService::class, LaravelAuthenticationService::class);
         $this->app->bind(KYCVerificationService::class, DefaultKYCVerificationService::class);
         $this->app->bind(ArtisanSearchService::class, DefaultArtisanSearchService::class);
+        $this->app->bind(LocationPrivacyService::class, DefaultLocationPrivacyService::class);
     }
 
     /**

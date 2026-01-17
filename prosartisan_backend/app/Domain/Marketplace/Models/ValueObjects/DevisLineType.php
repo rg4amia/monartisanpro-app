@@ -5,12 +5,12 @@ namespace App\Domain\Marketplace\Models\ValueObjects;
 use InvalidArgumentException;
 
 /**
- * Value Object representing the type of a devis line item
+ * Value object representing Devis line item type
  */
 final class DevisLineType
 {
- private const MATERIAL = 'MATERIAL';
- private const LABOR = 'LABOR';
+ public const MATERIAL = 'MATERIAL';
+ public const LABOR = 'LABOR';
 
  private const VALID_TYPES = [
   self::MATERIAL,
@@ -24,14 +24,9 @@ final class DevisLineType
 
  private string $value;
 
- private function __construct(string $value)
+ public function __construct(string $value)
  {
-  $value = strtoupper($value);
-
-  if (!in_array($value, self::VALID_TYPES, true)) {
-   throw new InvalidArgumentException("Invalid devis line type: {$value}");
-  }
-
+  $this->validateType($value);
   $this->value = $value;
  }
 
@@ -55,10 +50,7 @@ final class DevisLineType
   return $this->value;
  }
 
- /**
-  * Get French label for display
-  */
- public function getLabel(): string
+ public function getFrenchLabel(): string
  {
   return self::FRENCH_LABELS[$this->value];
  }
@@ -81,5 +73,14 @@ final class DevisLineType
  public function __toString(): string
  {
   return $this->value;
+ }
+
+ private function validateType(string $value): void
+ {
+  if (!in_array($value, self::VALID_TYPES, true)) {
+   throw new InvalidArgumentException(
+    "Invalid devis line type: {$value}. Valid types are: " . implode(', ', self::VALID_TYPES)
+   );
+  }
  }
 }

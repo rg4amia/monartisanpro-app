@@ -5,13 +5,13 @@ namespace App\Domain\Marketplace\Models\ValueObjects;
 use InvalidArgumentException;
 
 /**
- * Value Object representing the status of a devis (quote)
+ * Value object representing Devis status
  */
 final class DevisStatus
 {
- private const PENDING = 'PENDING';
- private const ACCEPTED = 'ACCEPTED';
- private const REJECTED = 'REJECTED';
+ public const PENDING = 'PENDING';
+ public const ACCEPTED = 'ACCEPTED';
+ public const REJECTED = 'REJECTED';
 
  private const VALID_STATUSES = [
   self::PENDING,
@@ -27,14 +27,9 @@ final class DevisStatus
 
  private string $value;
 
- private function __construct(string $value)
+ public function __construct(string $value)
  {
-  $value = strtoupper($value);
-
-  if (!in_array($value, self::VALID_STATUSES, true)) {
-   throw new InvalidArgumentException("Invalid devis status: {$value}");
-  }
-
+  $this->validateStatus($value);
   $this->value = $value;
  }
 
@@ -63,10 +58,7 @@ final class DevisStatus
   return $this->value;
  }
 
- /**
-  * Get French label for display
-  */
- public function getLabel(): string
+ public function getFrenchLabel(): string
  {
   return self::FRENCH_LABELS[$this->value];
  }
@@ -94,5 +86,14 @@ final class DevisStatus
  public function __toString(): string
  {
   return $this->value;
+ }
+
+ private function validateStatus(string $value): void
+ {
+  if (!in_array($value, self::VALID_STATUSES, true)) {
+   throw new InvalidArgumentException(
+    "Invalid devis status: {$value}. Valid statuses are: " . implode(', ', self::VALID_STATUSES)
+   );
+  }
  }
 }
