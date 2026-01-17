@@ -225,7 +225,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 72: Financial Transaction Audit Logging**
     - **Validates: Requirements 4.6, 13.6**
 
-- [-] 9. Implement Financial Transactions Context (API & Mobile)
+- [x] 9. Implement Financial Transactions Context (API & Mobile)
   - [x] 9.1 Create financial transaction API endpoints
     - POST /api/v1/escrow/block (initiate escrow after quote acceptance)
     - POST /api/v1/jetons/generate
@@ -234,7 +234,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - GET /api/v1/transactions (transaction history)
     - _Requirements: 4.1, 4.2, 5.1, 5.3, 15.4_
   
-  - [-] 9.2 Implement Flutter payment and jeton screens
+  - [x] 9.2 Implement Flutter payment and jeton screens
     - Create payment initiation screen with mobile money options
     - Create jeton display screen for artisans (show code and QR)
     - Create jeton validation screen for suppliers (scan QR, verify GPS)
@@ -251,7 +251,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
 - [ ] 10. Checkpoint - Financial Context Complete
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 11. Implement Worksite Management Context (Backend)
+- [-] 11. Implement Worksite Management Context (Backend)
   - [ ] 11.1 Create Chantier and Jalon domain entities
     - Implement Chantier aggregate with milestone management
     - Implement Jalon entity with proof submission and validation

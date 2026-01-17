@@ -1,0 +1,67 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
+/// Transaction filter chips widget
+class TransactionFilterChips extends StatelessWidget {
+  final RxString selectedFilter;
+  final ValueChanged<String> onFilterChanged;
+
+  const TransactionFilterChips({
+    Key? key,
+    required this.selectedFilter,
+    required this.onFilterChanged,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final filters = [
+      {'key': 'all', 'label': 'Toutes'},
+      {'key': 'ESCROW_BLOCK', 'label': 'Séquestre'},
+      {'key': 'MATERIAL_RELEASE', 'label': 'Matériaux'},
+      {'key': 'LABOR_RELEASE', 'label': 'Main d\'œuvre'},
+      {'key': 'REFUND', 'label': 'Remboursement'},
+    ];
+
+    return SizedBox(
+      height: 40,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: filters.length,
+        itemBuilder: (context, index) {
+          final filter = filters[index];
+          final key = filter['key']!;
+          final label = filter['label']!;
+
+          return Padding(
+            padding: EdgeInsets.only(
+              left: index == 0 ? 0 : 8,
+              right: index == filters.length - 1 ? 0 : 0,
+            ),
+            child: Obx(() {
+              final isSelected = selectedFilter.value == key;
+
+              return FilterChip(
+                label: Text(label),
+                selected: isSelected,
+                onSelected: (selected) {
+                  if (selected) {
+                    onFilterChanged(key);
+                  }
+                },
+                backgroundColor: Colors.grey.shade100,
+                selectedColor: Theme.of(context).primaryColor.withOpacity(0.2),
+                checkmarkColor: Theme.of(context).primaryColor,
+                labelStyle: TextStyle(
+                  color: isSelected
+                      ? Theme.of(context).primaryColor
+                      : Colors.grey.shade700,
+                  fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
+                ),
+              );
+            }),
+          );
+        },
+      ),
+    );
+  }
+}
