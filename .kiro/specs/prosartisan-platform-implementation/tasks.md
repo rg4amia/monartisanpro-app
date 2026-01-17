@@ -519,7 +519,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Validates: Requirements 12.6, 12.7**
 
 - [-] 21. Implement Security and Cross-Cutting Concerns
-  - [ ] 21.1 Implement API authentication and authorization
+  - [-] 21.1 Implement API authentication and authorization
     - Create JWT middleware for all protected endpoints
     - Implement role-based access control (client, artisan, admin)
     - Implement rate limiting middleware (100 req/min)
