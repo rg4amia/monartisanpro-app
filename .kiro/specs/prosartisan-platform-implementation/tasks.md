@@ -226,7 +226,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Validates: Requirements 4.6, 13.6**
 
 - [-] 9. Implement Financial Transactions Context (API & Mobile)
-  - [-] 9.1 Create financial transaction API endpoints
+  - [x] 9.1 Create financial transaction API endpoints
     - POST /api/v1/escrow/block (initiate escrow after quote acceptance)
     - POST /api/v1/jetons/generate
     - POST /api/v1/jetons/validate (with GPS verification)
@@ -234,7 +234,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - GET /api/v1/transactions (transaction history)
     - _Requirements: 4.1, 4.2, 5.1, 5.3, 15.4_
   
-  - [ ] 9.2 Implement Flutter payment and jeton screens
+  - [-] 9.2 Implement Flutter payment and jeton screens
     - Create payment initiation screen with mobile money options
     - Create jeton display screen for artisans (show code and QR)
     - Create jeton validation screen for suppliers (scan QR, verify GPS)

@@ -43,7 +43,7 @@ class JetonResource extends JsonResource
    'is_expired' => $this->isExpired(),
    'qr_code_data' => [
     'code' => $this->getCode()->toString(),
-    'amount' => $this->getRemainingAmount()->getAmountInCentimes(),
+    'amount' => $this->getRemainingAmount()->toCentimes(),
     'expires_at' => $this->getExpiresAt()->format('Y-m-d H:i:s'),
    ],
   ];

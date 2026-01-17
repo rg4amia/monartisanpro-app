@@ -24,7 +24,7 @@ class TransactionResource extends JsonResource
    'from_user_id' => $this->getFromUserId()->getValue(),
    'to_user_id' => $this->getToUserId()->getValue(),
    'amount' => [
-    'centimes' => $this->getAmount()->getAmountInCentimes(),
+    'centimes' => $this->getAmount()->toCentimes(),
     'formatted' => $this->getAmount()->format(),
    ],
    'type' => $this->getType()->getValue(),

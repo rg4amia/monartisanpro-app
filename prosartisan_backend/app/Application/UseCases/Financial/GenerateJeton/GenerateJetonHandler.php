@@ -21,8 +21,7 @@ final class GenerateJetonHandler
 {
  public function __construct(
   private SequestreRepository $sequestreRepository,
-  private JetonRepository $jetonRepository,
-  private JetonFactory $jetonFactory
+  private JetonRepository $jetonRepository
  ) {}
 
  public function handle(GenerateJetonCommand $command): JetonMateriel
@@ -49,10 +48,11 @@ final class GenerateJetonHandler
    throw new \Exception('No materials funds available in sequestre');
   }
 
-  // Generate jeton using factory
-  $jeton = $this->jetonFactory->createJeton(
-   $sequestre,
+  // Generate jeton directly
+  $jeton = JetonMateriel::create(
+   $sequestreId,
    $artisanId,
+   $sequestre->getRemainingMaterials(),
    $supplierIds
   );
 
