@@ -60,6 +60,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(JetonFactory::class, DefaultJetonFactory::class);
         $this->app->bind(AntiFraudService::class, DefaultAntiFraudService::class);
         $this->app->bind(\App\Domain\Shared\Services\FraudDetectionService::class, \App\Infrastructure\Services\Security\DefaultFraudDetectionService::class);
+        $this->app->bind(\App\Domain\Shared\Services\EncryptionService::class, \App\Infrastructure\Services\Security\LaravelEncryptionService::class);
+        $this->app->bind(\App\Domain\Shared\Services\SecureFileStorageService::class, \App\Infrastructure\Services\Storage\LocalSecureFileStorageService::class);
     }
 
     /**
