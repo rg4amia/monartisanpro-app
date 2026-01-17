@@ -97,7 +97,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
   - Ensure all tests pass, ask the user if questions arise.
 
 - [~] 5. Implement Marketplace Context (Backend)
-  - [ ] 5.1 Create Mission and Devis domain entities
+  - [x] 5.1 Create Mission and Devis domain entities
     - Implement Mission aggregate with quote management
     - Implement Devis entity with DevisLine items
     - Implement TradeCategory, MissionStatus, DevisStatus value objects
@@ -109,7 +109,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 15: Maximum Quotes Per Mission**
     - **Validates: Requirements 3.1, 3.3, 3.4**
   
-  - [~] 5.3 Implement artisan search domain service
+  - [x] 5.3 Implement artisan search domain service
     - Create ArtisanSearchService with PostGIS proximity queries
     - Implement proximity-based sorting (≤1km first)
     - Implement trade category filtering
@@ -121,7 +121,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 11: Search Result Sort Order**
     - **Validates: Requirements 2.1, 2.2, 2.6**
   
-  - [~] 5.5 Implement location privacy service
+  - [x] 5.5 Implement location privacy service
     - Create LocationPrivacyService with GPS blurring (50m radius)
     - Implement coordinate revelation after quote acceptance
     - _Requirements: 2.4, 3.5_
@@ -131,7 +131,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 16: Coordinate Revelation After Acceptance**
     - **Validates: Requirements 2.4, 3.5_
   
-  - [~] 5.7 Create Mission and Devis repositories
+  - [-] 5.7 Create Mission and Devis repositories
     - Implement MissionRepository and DevisRepository interfaces
     - Create missions, devis, devis_lines tables with PostGIS indexes
     - _Requirements: 3.1, 3.3_
