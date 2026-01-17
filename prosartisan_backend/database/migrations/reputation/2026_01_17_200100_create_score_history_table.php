@@ -13,19 +13,14 @@ return new class extends Migration
  {
   Schema::create('score_history', function (Blueprint $table) {
    $table->uuid('id')->primary();
-   $table->uuid('profile_id');
-   $table->integer('score'); // 0-100
+   $table->uuid('artisan_id');
+   $table->integer('old_score');
+   $table->integer('new_score');
    $table->text('reason');
    $table->timestamp('recorded_at');
-   $table->timestamps();
 
-   // Foreign key constraint
-   $table->foreign('profile_id')->references('id')->on('reputation_profiles')->onDelete('cascade');
-
-   // Indexes for performance
-   $table->index('profile_id');
-   $table->index('recorded_at');
-   $table->index(['profile_id', 'recorded_at']); // Composite index for history queries
+   $table->foreign('artisan_id')->references('id')->on('users')->onDelete('cascade');
+   $table->index(['artisan_id', 'recorded_at']);
   });
  }
 

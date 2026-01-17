@@ -479,7 +479,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - Listen to LaborPaymentReleased → notify artisan
     - _Requirements: 11.1, 11.2, 11.3, 11.4_
 
-- [-] 20. Implement Backoffice Administration
+- [x] 20. Implement Backoffice Administration
   - [x] 20.1 Create React backoffice application
     - Set up React project with TypeScript
     - Create admin authentication and authorization
@@ -507,7 +507,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 66: Admin Dispute View Evidence Completeness**
     - **Validates: Requirements 12.5**
   
-  - [-] 20.6 Implement reputation management screens
+  - [x] 20.6 Implement reputation management screens
     - Create artisan reputation dashboard
     - Implement manual score adjustment with justification
     - Create transaction export functionality (CSV)
@@ -518,7 +518,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 68: Transaction Export Data Accuracy**
     - **Validates: Requirements 12.6, 12.7**
 
-- [ ] 21. Implement Security and Cross-Cutting Concerns
+- [-] 21. Implement Security and Cross-Cutting Concerns
   - [ ] 21.1 Implement API authentication and authorization
     - Create JWT middleware for all protected endpoints
     - Implement role-based access control (client, artisan, admin)

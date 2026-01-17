@@ -35,6 +35,12 @@ Route::prefix('backoffice')->group(function () {
         Route::post('/disputes/{dispute}/render-decision', [App\Http\Controllers\Backoffice\DisputeController::class, 'renderDecision'])->name('backoffice.disputes.render-decision');
         Route::post('/disputes/{dispute}/communications', [App\Http\Controllers\Backoffice\DisputeController::class, 'addCommunication'])->name('backoffice.disputes.add-communication');
 
+        // Reputation management routes
+        Route::get('/reputation', [App\Http\Controllers\Backoffice\ReputationController::class, 'index'])->name('backoffice.reputation.index');
+        Route::get('/reputation/{artisan}', [App\Http\Controllers\Backoffice\ReputationController::class, 'show'])->name('backoffice.reputation.show');
+        Route::post('/reputation/{artisan}/adjust-score', [App\Http\Controllers\Backoffice\ReputationController::class, 'adjustScore'])->name('backoffice.reputation.adjust-score');
+        Route::get('/reputation/export-transactions', [App\Http\Controllers\Backoffice\ReputationController::class, 'exportTransactions'])->name('backoffice.reputation.export-transactions');
+
         // Redirect root backoffice to dashboard
         Route::get('/', function () {
             return redirect()->route('backoffice.dashboard');
