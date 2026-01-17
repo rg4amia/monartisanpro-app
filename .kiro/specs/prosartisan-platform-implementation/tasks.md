@@ -316,8 +316,8 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
 - [x] 13. Checkpoint - Worksite Context Complete
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 13. Implement Reputation Management Context (Backend)
-  - [ ] 13.1 Create ReputationProfile domain entity
+- [-] 13. Implement Reputation Management Context (Backend)
+  - [x] 13.1 Create ReputationProfile domain entity
     - Implement ReputationProfile aggregate with score history
     - Implement NZassaScore value object with 0-100 validation
     - Implement ReputationMetrics value object
@@ -328,7 +328,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - Test that NZassaScore constructor rejects values outside 0-100
     - _Requirements: 7.2_
   
-  - [ ] 13.3 Implement score calculation domain service
+  - [x] 13.3 Implement score calculation domain service
     - Create ScoreCalculationService with weighted formula
     - Implement reliability calculation (completed / accepted * 100)
     - Implement integrity calculation with fraud penalties
@@ -344,7 +344,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 41: Reactivity Score Calculation**
     - **Validates: Requirements 7.2, 7.3, 7.4, 7.5, 7.6**
   
-  - [ ] 13.4 Implement metrics aggregation service
+  - [-] 13.4 Implement metrics aggregation service
     - Create MetricsAggregationService to query across contexts
     - Aggregate completed/accepted projects from Chantier
     - Aggregate ratings from Rating table

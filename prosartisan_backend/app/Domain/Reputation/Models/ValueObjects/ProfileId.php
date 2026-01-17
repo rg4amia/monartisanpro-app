@@ -10,43 +10,43 @@ use InvalidArgumentException;
  */
 final class ProfileId
 {
- private string $value;
+    private string $value;
 
- public function __construct(string $value)
- {
-  $this->validateUuid($value);
-  $this->value = $value;
- }
+    public function __construct(string $value)
+    {
+        $this->validateUuid($value);
+        $this->value = $value;
+    }
 
- public static function generate(): self
- {
-  return new self(Str::uuid()->toString());
- }
+    public static function generate(): self
+    {
+        return new self(Str::uuid()->toString());
+    }
 
- public static function fromString(string $value): self
- {
-  return new self($value);
- }
+    public static function fromString(string $value): self
+    {
+        return new self($value);
+    }
 
- public function getValue(): string
- {
-  return $this->value;
- }
+    public function getValue(): string
+    {
+        return $this->value;
+    }
 
- public function equals(ProfileId $other): bool
- {
-  return $this->value === $other->value;
- }
+    public function equals(ProfileId $other): bool
+    {
+        return $this->value === $other->value;
+    }
 
- public function __toString(): string
- {
-  return $this->value;
- }
+    public function __toString(): string
+    {
+        return $this->value;
+    }
 
- private function validateUuid(string $value): void
- {
-  if (!Str::isUuid($value)) {
-   throw new InvalidArgumentException("Invalid UUID format: {$value}");
-  }
- }
+    private function validateUuid(string $value): void
+    {
+        if (!Str::isUuid($value)) {
+            throw new InvalidArgumentException("Invalid UUID format: {$value}");
+        }
+    }
 }
