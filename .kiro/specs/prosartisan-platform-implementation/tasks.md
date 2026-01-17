@@ -363,8 +363,8 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 43: Score History Audit Trail**
     - **Validates: Requirements 7.1, 7.7, 7.8**
 
-- [~] 14. Implement Reputation Management Context (API & Mobile)
-  - [ ] 14.1 Create reputation API endpoints
+- [-] 14. Implement Reputation Management Context (API & Mobile)
+  - [-] 14.1 Create reputation API endpoints
     - GET /api/v1/artisans/{id}/reputation
     - GET /api/v1/artisans/{id}/score-history
     - POST /api/v1/missions/{id}/rate (submit rating)
