@@ -214,7 +214,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 79: Payment Webhook Timeout Query**
     - **Validates: Requirements 4.5, 15.4, 15.5**
   
-  - [-] 8.8 Create Financial repositories and migrations
+  - [x] 8.8 Create Financial repositories and migrations
     - Implement SequestreRepository, JetonRepository, TransactionRepository
     - Create sequestres, jetons_materiel, jeton_validations, transactions tables
     - Ensure transactions table is append-only (immutable audit log)
