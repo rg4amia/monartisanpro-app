@@ -65,18 +65,22 @@ final class PostgresTransactionRepository implements TransactionRepository
         return $rows->map(fn($row) => $this->mapRowToTransaction($row))->toArray();
     }
 
-    public function findByUserIdPaginated(UserId $userId, int $page = 1, int $perPage = 20): array
+    public function findByUserIdPaginated(UserId $userId, int $limit, int $offset, ?TransactionType $typeFilter = null): array
     {
-        $offset = ($page - 1) * $perPage;
-
-        $rows = DB::table(self::TABLE)
+        $query = DB::table(self::TABLE)
             ->where(function ($query) use ($userId) {
                 $query->where('from_user_id', $userId->getValue())
                     ->orWhere('to_user_id', $userId->getValue());
-            })
+            });
+
+        if ($typeFilter) {
+            $query->where('type', $typeFilter->getValue());
+        }
+
+        $rows = $query
             ->orderBy('created_at', 'desc')
             ->offset($offset)
-            ->limit($perPage)
+            ->limit($limit)
             ->get();
 
         return $rows->map(fn($row) => $this->mapRowToTransaction($row))->toArray();
@@ -154,14 +158,19 @@ final class PostgresTransactionRepository implements TransactionRepository
         return $rows->map(fn($row) => $this->mapRowToTransaction($row))->toArray();
     }
 
-    public function countByUserId(UserId $userId): int
+    public function countByUserId(UserId $userId, ?TransactionType $typeFilter = null): int
     {
-        return DB::table(self::TABLE)
+        $query = DB::table(self::TABLE)
             ->where(function ($query) use ($userId) {
                 $query->where('from_user_id', $userId->getValue())
                     ->orWhere('to_user_id', $userId->getValue());
-            })
-            ->count();
+            });
+
+        if ($typeFilter) {
+            $query->where('type', $typeFilter->getValue());
+        }
+
+        return $query->count();
     }
 
     public function getTotalVolumeByUserId(UserId $userId): int

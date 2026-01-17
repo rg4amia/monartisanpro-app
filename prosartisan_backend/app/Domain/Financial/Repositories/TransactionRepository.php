@@ -34,7 +34,7 @@ interface TransactionRepository
     /**
      * Find transactions by user ID with pagination
      */
-    public function findByUserIdPaginated(UserId $userId, int $page = 1, int $perPage = 20): array;
+    public function findByUserIdPaginated(UserId $userId, int $limit, int $offset, ?TransactionType $typeFilter = null): array;
 
     /**
      * Find transactions by type
@@ -74,7 +74,7 @@ interface TransactionRepository
     /**
      * Get transaction count for user
      */
-    public function countByUserId(UserId $userId): int;
+    public function countByUserId(UserId $userId, ?TransactionType $typeFilter = null): int;
 
     /**
      * Get total transaction volume for user

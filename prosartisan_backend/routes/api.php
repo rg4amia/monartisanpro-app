@@ -5,6 +5,9 @@ use App\Http\Controllers\Api\V1\Auth\KYCController;
 use App\Http\Controllers\Api\V1\Marketplace\MissionController;
 use App\Http\Controllers\Api\V1\Marketplace\QuoteController;
 use App\Http\Controllers\Api\V1\Marketplace\ArtisanController;
+use App\Http\Controllers\Api\V1\Financial\EscrowController;
+use App\Http\Controllers\Api\V1\Financial\JetonController;
+use App\Http\Controllers\Api\V1\Financial\TransactionController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -51,12 +54,29 @@ Route::prefix('v1')->group(function () {
   Route::prefix('artisans')->group(function () {
    Route::get('/search', [ArtisanController::class, 'search']);
   });
+
+  // Financial transaction routes
+  Route::prefix('escrow')->group(function () {
+   Route::post('/block', [EscrowController::class, 'block']);
+  });
+
+  Route::prefix('jetons')->group(function () {
+   Route::post('/generate', [JetonController::class, 'generate']);
+   Route::post('/validate', [JetonController::class, 'validate']);
+  });
+
+  Route::prefix('transactions')->group(function () {
+   Route::get('/', [TransactionController::class, 'index']);
+  });
  });
 
  // Mobile Money Webhook routes (public - no auth required)
- Route::prefix('payments/webhook')->group(function () {
-  Route::post('/wave', [\App\Http\Controllers\Api\V1\Payment\WebhookController::class, 'handleWave']);
-  Route::post('/orange', [\App\Http\Controllers\Api\V1\Payment\WebhookController::class, 'handleOrangeMoney']);
-  Route::post('/mtn', [\App\Http\Controllers\Api\V1\Payment\WebhookController::class, 'handleMTN']);
+ Route::prefix('payments')->group(function () {
+  Route::post('/webhook', [\App\Http\Controllers\Api\V1\Payment\WebhookController::class, 'handleGeneric']);
+  Route::prefix('webhook')->group(function () {
+   Route::post('/wave', [\App\Http\Controllers\Api\V1\Payment\WebhookController::class, 'handleWave']);
+   Route::post('/orange', [\App\Http\Controllers\Api\V1\Payment\WebhookController::class, 'handleOrangeMoney']);
+   Route::post('/mtn', [\App\Http\Controllers\Api\V1\Payment\WebhookController::class, 'handleMTN']);
+  });
  });
 });
