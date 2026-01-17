@@ -122,44 +122,93 @@ class PostgresUserRepository implements UserRepository
     {
         $radiusMeters = $radiusKm * 1000;
 
-        $results = DB::select("
-            SELECT
-                u.id,
-                u.email,
-                u.password_hash,
-                u.user_type,
-                u.account_status,
-                u.phone_number,
-                u.failed_login_attempts,
-                u.locked_until,
-                u.created_at,
-                u.updated_at,
-                ap.trade_category,
-                ST_Y(ap.location::geometry) as latitude,
-                ST_X(ap.location::geometry) as longitude,
-                ap.is_kyc_verified,
-                ap.kyc_documents,
-                ST_Distance(
+        if (DB::getDriverName() === 'pgsql') {
+            $results = DB::select("
+                SELECT
+                    u.id,
+                    u.email,
+                    u.password_hash,
+                    u.user_type,
+                    u.account_status,
+                    u.phone_number,
+                    u.failed_login_attempts,
+                    u.locked_until,
+                    u.created_at,
+                    u.updated_at,
+                    ap.trade_category,
+                    ST_Y(ap.location::geometry) as latitude,
+                    ST_X(ap.location::geometry) as longitude,
+                    ap.is_kyc_verified,
+                    ap.kyc_documents,
+                    ST_Distance(
+                        ap.location,
+                        ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography
+                    ) as distance_meters
+                FROM users u
+                INNER JOIN artisan_profiles ap ON u.id = ap.user_id
+                WHERE u.user_type = 'ARTISAN'
+                AND u.account_status = 'ACTIVE'
+                AND ST_DWithin(
                     ap.location,
-                    ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography
-                ) as distance_meters
-            FROM users u
-            INNER JOIN artisan_profiles ap ON u.id = ap.user_id
-            WHERE u.user_type = 'ARTISAN'
-            AND u.account_status = 'ACTIVE'
-            AND ST_DWithin(
-                ap.location,
-                ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography,
-                ?
-            )
-            ORDER BY distance_meters ASC
-        ", [
-            $location->getLongitude(),
-            $location->getLatitude(),
-            $location->getLongitude(),
-            $location->getLatitude(),
-            $radiusMeters
-        ]);
+                    ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography,
+                    ?
+                )
+                ORDER BY distance_meters ASC
+            ", [
+                $location->getLongitude(),
+                $location->getLatitude(),
+                $location->getLongitude(),
+                $location->getLatitude(),
+                $radiusMeters
+            ]);
+        } else {
+            // For SQLite, parse JSON location and use simple distance calculation
+            $artisanProfiles = DB::table('users')
+                ->join('artisan_profiles', 'users.id', '=', 'artisan_profiles.user_id')
+                ->where('users.user_type', 'ARTISAN')
+                ->where('users.account_status', 'ACTIVE')
+                ->select([
+                    'users.id',
+                    'users.email',
+                    'users.password_hash',
+                    'users.user_type',
+                    'users.account_status',
+                    'users.phone_number',
+                    'users.failed_login_attempts',
+                    'users.locked_until',
+                    'users.created_at',
+                    'users.updated_at',
+                    'artisan_profiles.trade_category',
+                    'artisan_profiles.location',
+                    'artisan_profiles.is_kyc_verified',
+                    'artisan_profiles.kyc_documents',
+                ])
+                ->get();
+
+            $results = [];
+            foreach ($artisanProfiles as $profile) {
+                if ($profile->location) {
+                    $locationData = json_decode($profile->location, true);
+                    $artisanLocation = new GPS_Coordinates(
+                        $locationData['latitude'] ?? 0,
+                        $locationData['longitude'] ?? 0
+                    );
+
+                    $distance = $location->distanceTo($artisanLocation);
+                    if ($distance <= $radiusMeters) {
+                        $profile->latitude = $locationData['latitude'] ?? 0;
+                        $profile->longitude = $locationData['longitude'] ?? 0;
+                        $profile->distance_meters = $distance;
+                        $results[] = $profile;
+                    }
+                }
+            }
+
+            // Sort by distance
+            usort($results, function ($a, $b) {
+                return $a->distance_meters <=> $b->distance_meters;
+            });
+        }
 
         $artisans = [];
         foreach ($results as $row) {
@@ -203,9 +252,11 @@ class PostgresUserRepository implements UserRepository
                 $artisan->getLocation()->getLatitude()
             ));
         } else {
-            // For SQLite and other databases, store as separate columns
-            $profileData['latitude'] = $artisan->getLocation()->getLatitude();
-            $profileData['longitude'] = $artisan->getLocation()->getLongitude();
+            // For SQLite, store as JSON string
+            $profileData['location'] = json_encode([
+                'latitude' => $artisan->getLocation()->getLatitude(),
+                'longitude' => $artisan->getLocation()->getLongitude()
+            ]);
         }
 
         $exists = DB::table('artisan_profiles')
@@ -217,7 +268,11 @@ class PostgresUserRepository implements UserRepository
                 ->where('user_id', $artisan->getId()->toString())
                 ->update($profileData);
         } else {
-            $profileData['id'] = DB::raw('gen_random_uuid()');
+            if (DB::getDriverName() === 'pgsql') {
+                $profileData['id'] = DB::raw('gen_random_uuid()');
+            } else {
+                $profileData['id'] = (string) \Ramsey\Uuid\Uuid::uuid4();
+            }
             $profileData['created_at'] = $artisan->getCreatedAt()->format('Y-m-d H:i:s');
             DB::table('artisan_profiles')->insert($profileData);
         }
@@ -263,9 +318,11 @@ class PostgresUserRepository implements UserRepository
                 $fournisseur->getShopLocation()->getLatitude()
             ));
         } else {
-            // For SQLite and other databases, store as separate columns
-            $profileData['shop_latitude'] = $fournisseur->getShopLocation()->getLatitude();
-            $profileData['shop_longitude'] = $fournisseur->getShopLocation()->getLongitude();
+            // For SQLite, store as JSON string
+            $profileData['shop_location'] = json_encode([
+                'latitude' => $fournisseur->getShopLocation()->getLatitude(),
+                'longitude' => $fournisseur->getShopLocation()->getLongitude()
+            ]);
         }
 
         $exists = DB::table('fournisseur_profiles')
@@ -277,7 +334,11 @@ class PostgresUserRepository implements UserRepository
                 ->where('user_id', $fournisseur->getId()->toString())
                 ->update($profileData);
         } else {
-            $profileData['id'] = DB::raw('gen_random_uuid()');
+            if (DB::getDriverName() === 'pgsql') {
+                $profileData['id'] = DB::raw('gen_random_uuid()');
+            } else {
+                $profileData['id'] = (string) \Ramsey\Uuid\Uuid::uuid4();
+            }
             $profileData['created_at'] = $fournisseur->getCreatedAt()->format('Y-m-d H:i:s');
             DB::table('fournisseur_profiles')->insert($profileData);
         }
@@ -315,9 +376,11 @@ class PostgresUserRepository implements UserRepository
                 $referent->getCoverageArea()->getLatitude()
             ));
         } else {
-            // For SQLite and other databases, store as separate columns
-            $profileData['coverage_latitude'] = $referent->getCoverageArea()->getLatitude();
-            $profileData['coverage_longitude'] = $referent->getCoverageArea()->getLongitude();
+            // For SQLite, store as JSON string
+            $profileData['coverage_area'] = json_encode([
+                'latitude' => $referent->getCoverageArea()->getLatitude(),
+                'longitude' => $referent->getCoverageArea()->getLongitude()
+            ]);
         }
 
         $exists = DB::table('referent_zone_profiles')
@@ -329,7 +392,11 @@ class PostgresUserRepository implements UserRepository
                 ->where('user_id', $referent->getId()->toString())
                 ->update($profileData);
         } else {
-            $profileData['id'] = DB::raw('gen_random_uuid()');
+            if (DB::getDriverName() === 'pgsql') {
+                $profileData['id'] = DB::raw('gen_random_uuid()');
+            } else {
+                $profileData['id'] = (string) \Ramsey\Uuid\Uuid::uuid4();
+            }
             $profileData['created_at'] = $referent->getCreatedAt()->format('Y-m-d H:i:s');
             DB::table('referent_zone_profiles')->insert($profileData);
         }
@@ -364,7 +431,11 @@ class PostgresUserRepository implements UserRepository
                 ->where('user_id', $user->getId()->toString())
                 ->update($kycData);
         } else {
-            $kycData['id'] = DB::raw('gen_random_uuid()');
+            if (DB::getDriverName() === 'pgsql') {
+                $kycData['id'] = DB::raw('gen_random_uuid()');
+            } else {
+                $kycData['id'] = (string) \Ramsey\Uuid\Uuid::uuid4();
+            }
             $kycData['created_at'] = $kycDocs->getSubmittedAt()->format('Y-m-d H:i:s');
             DB::table('kyc_verifications')->insert($kycData);
         }
@@ -434,6 +505,13 @@ class PostgresUserRepository implements UserRepository
             $profileData = DB::table('artisan_profiles')
                 ->where('user_id', $userData->id)
                 ->first();
+
+            // Parse JSON location for SQLite
+            if ($profileData && $profileData->location) {
+                $location = json_decode($profileData->location, true);
+                $profileData->latitude = $location['latitude'] ?? 0;
+                $profileData->longitude = $location['longitude'] ?? 0;
+            }
         }
 
         if (!$profileData) {
@@ -442,7 +520,8 @@ class PostgresUserRepository implements UserRepository
 
         return $this->hydrateArtisan((object) array_merge(
             (array) $userData,
-            (array) $profileData
+            (array) $profileData,
+            ['id' => $userData->id] // Ensure we keep the user ID, not the profile user_id
         ));
     }
 
@@ -451,10 +530,12 @@ class PostgresUserRepository implements UserRepository
      */
     private function hydrateArtisan(object $data): Artisan
     {
-        $kycDocuments = $this->loadKYCDocuments($data->id ?? $data->user_id);
+        // Use the user ID from the users table, not the profile table
+        $userId = $data->id ?? $data->user_id;
+        $kycDocuments = $this->loadKYCDocuments($userId);
 
         $artisan = new Artisan(
-            UserId::fromString($data->id ?? $data->user_id),
+            UserId::fromString($userId),
             Email::fromString($data->email),
             HashedPassword::fromHash($data->password_hash),
             PhoneNumber::fromString($data->phone_number ?? ''),
@@ -512,13 +593,16 @@ class PostgresUserRepository implements UserRepository
                 ->first();
         } else {
             $profileData = DB::table('fournisseur_profiles')
-                ->select([
-                    'business_name',
-                    'shop_latitude',
-                    'shop_longitude',
-                ])
+                ->select(['business_name', 'shop_location'])
                 ->where('user_id', $userData->id)
                 ->first();
+
+            // Parse JSON location for SQLite
+            if ($profileData && $profileData->shop_location) {
+                $location = json_decode($profileData->shop_location, true);
+                $profileData->shop_latitude = $location['latitude'] ?? 0;
+                $profileData->shop_longitude = $location['longitude'] ?? 0;
+            }
         }
 
         if (!$profileData) {
@@ -560,14 +644,28 @@ class PostgresUserRepository implements UserRepository
      */
     private function hydrateReferentZone(object $userData): ReferentZone
     {
-        $profileData = DB::table('referent_zone_profiles')
-            ->select([
-                'zone',
-                'ST_Y(coverage_area::geometry) as latitude',
-                'ST_X(coverage_area::geometry) as longitude',
-            ])
-            ->where('user_id', $userData->id)
-            ->first();
+        if (DB::getDriverName() === 'pgsql') {
+            $profileData = DB::table('referent_zone_profiles')
+                ->select([
+                    'zone',
+                    'ST_Y(coverage_area::geometry) as coverage_latitude',
+                    'ST_X(coverage_area::geometry) as coverage_longitude',
+                ])
+                ->where('user_id', $userData->id)
+                ->first();
+        } else {
+            $profileData = DB::table('referent_zone_profiles')
+                ->select(['zone', 'coverage_area'])
+                ->where('user_id', $userData->id)
+                ->first();
+
+            // Parse JSON location for SQLite
+            if ($profileData && $profileData->coverage_area) {
+                $location = json_decode($profileData->coverage_area, true);
+                $profileData->coverage_latitude = $location['latitude'] ?? 0;
+                $profileData->coverage_longitude = $location['longitude'] ?? 0;
+            }
+        }
 
         if (!$profileData) {
             throw new \RuntimeException("ReferentZone profile not found for user {$userData->id}");
@@ -579,8 +677,8 @@ class PostgresUserRepository implements UserRepository
             HashedPassword::fromHash($userData->password_hash),
             PhoneNumber::fromString($userData->phone_number ?? ''),
             new GPS_Coordinates(
-                (float) $profileData->latitude,
-                (float) $profileData->longitude
+                (float) $profileData->coverage_latitude,
+                (float) $profileData->coverage_longitude
             ),
             $profileData->zone,
             AccountStatus::fromString($userData->account_status),
