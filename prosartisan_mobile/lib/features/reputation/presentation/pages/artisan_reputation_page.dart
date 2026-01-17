@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../domain/models/reputation_profile.dart';
 import '../controllers/reputation_controller.dart';
 import '../widgets/reputation_score_card.dart';
 import '../widgets/reputation_metrics_card.dart';
@@ -139,7 +140,7 @@ class _ArtisanReputationPageState extends State<ArtisanReputationPage>
     );
   }
 
-  Widget _buildEligibilityCard(reputation) {
+  Widget _buildEligibilityCard(ReputationProfile reputation) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),

@@ -11,7 +11,10 @@ class ReputationApiService {
   ReputationApiService({Dio? dio}) : _dio = dio ?? Dio();
 
   /// Get artisan reputation profile
-  Future<ReputationProfile> getArtisanReputation(String artisanId, String token) async {
+  Future<ReputationProfile> getArtisanReputation(
+    String artisanId,
+    String token,
+  ) async {
     try {
       final response = await _dio.get(
         '$_baseUrl/v1/artisans/$artisanId/reputation',
@@ -27,19 +30,26 @@ class ReputationApiService {
       if (response.statusCode == 200) {
         return ReputationProfile.fromJson(response.data['data']);
       } else {
-        throw Exception('Erreur lors de la récupération du profil de réputation');
+        throw Exception(
+          'Erreur lors de la récupération du profil de réputation',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) {
         throw Exception('Profil de réputation non trouvé');
       } else {
-        throw Exception('Erreur lors de la récupération du profil de réputation');
+        throw Exception(
+          'Erreur lors de la récupération du profil de réputation',
+        );
       }
     }
   }
 
   /// Get artisan score history
-  Future<List<ScoreSnapshot>> getScoreHistory(String artisanId, String token) async {
+  Future<List<ScoreSnapshot>> getScoreHistory(
+    String artisanId,
+    String token,
+  ) async {
     try {
       final response = await _dio.get(
         '$_baseUrl/v1/artisans/$artisanId/score-history',
@@ -56,13 +66,17 @@ class ReputationApiService {
         final List<dynamic> historyData = response.data['data'];
         return historyData.map((item) => ScoreSnapshot.fromJson(item)).toList();
       } else {
-        throw Exception('Erreur lors de la récupération de l\'historique des scores');
+        throw Exception(
+          'Erreur lors de la récupération de l\'historique des scores',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) {
         throw Exception('Historique des scores non trouvé');
       } else {
-        throw Exception('Erreur lors de la récupération de l\'historique des scores');
+        throw Exception(
+          'Erreur lors de la récupération de l\'historique des scores',
+        );
       }
     }
   }
@@ -78,11 +92,7 @@ class ReputationApiService {
     try {
       final response = await _dio.post(
         '$_baseUrl/v1/missions/$missionId/rate',
-        data: {
-          'artisan_id': artisanId,
-          'rating': rating,
-          'comment': comment,
-        },
+        data: {'artisan_id': artisanId, 'rating': rating, 'comment': comment},
         options: Options(
           headers: {
             'Authorization': 'Bearer $token',
@@ -103,21 +113,37 @@ class ReputationApiService {
       } else {
         throw Exception('Erreur lors de la soumission de la note');
       }
-      Uri.parse(
-        '$_baseUrl/v1/artisans/$artisanId/ratings?page=$page&per_page=$perPage',
-      ),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-    );
+    }
+  }
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      final List<dynamic> ratingsData = data['data'] ?? data;
-      return ratingsData.map((item) => Rating.fromJson(item)).toList();
-    } else {
+  /// Get all ratings for an artisan
+  Future<List<Rating>> getArtisanRatings(
+    String artisanId,
+    String token, {
+    int page = 1,
+    int perPage = 20,
+  }) async {
+    try {
+      final response = await _dio.get(
+        '$_baseUrl/v1/artisans/$artisanId/ratings',
+        queryParameters: {'page': page, 'per_page': perPage},
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> ratingsData =
+            response.data['data'] ?? response.data;
+        return ratingsData.map((item) => Rating.fromJson(item)).toList();
+      } else {
+        throw Exception('Erreur lors de la récupération des notes');
+      }
+    } on DioException {
       throw Exception('Erreur lors de la récupération des notes');
     }
   }

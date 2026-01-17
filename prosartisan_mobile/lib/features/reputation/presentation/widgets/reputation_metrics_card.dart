@@ -77,7 +77,7 @@ class ReputationMetricsCard extends StatelessWidget {
             children: [
               Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
               Text(
-                '${weight}% du score',
+                '$weight% du score',
                 style: const TextStyle(fontSize: 12, color: Colors.grey),
               ),
             ],
@@ -113,7 +113,7 @@ class ReputationMetricsCard extends StatelessWidget {
         Expanded(
           child: _buildStatItem(
             'Projets terminés',
-            '${metrics.completedProjects}',
+            metrics.completedProjects.toString(),
             Icons.check_circle,
             Colors.green,
           ),
