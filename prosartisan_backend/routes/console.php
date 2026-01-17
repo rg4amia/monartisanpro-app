@@ -16,3 +16,9 @@ Schedule::command('mobile-money:query-pending')
     ->everyFiveMinutes()
     ->withoutOverlapping()
     ->runInBackground();
+
+// Schedule auto-validation processing to run every hour
+Schedule::command('worksite:process-auto-validations')
+    ->hourly()
+    ->withoutOverlapping()
+    ->runInBackground();

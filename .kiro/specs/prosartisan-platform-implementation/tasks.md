@@ -263,7 +263,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 29: Chantier Milestone Initialization**
     - **Validates: Requirements 6.1**
   
-  - [-] 11.3 Implement milestone validation domain service
+  - [x] 11.3 Implement milestone validation domain service
     - Create MilestoneValidationService with GPS verification
     - Implement PhotoVerificationService for EXIF data extraction
     - Implement 48-hour auto-validation deadline logic
@@ -275,12 +275,12 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 33: Jalon Auto-Validation Execution**
     - **Validates: Requirements 6.2, 6.4, 6.5**
   
-  - [ ] 11.5 Implement auto-validation service with cron job
+  - [x] 11.5 Implement auto-validation service with cron job
     - Create AutoValidationService to process expired deadlines
     - Set up Laravel scheduled task to run every hour
     - _Requirements: 6.5_
   
-  - [ ] 11.6 Create Chantier and Jalon repositories
+  - [-] 11.6 Create Chantier and Jalon repositories
     - Implement ChantierRepository and JalonRepository
     - Create chantiers and jalons tables
     - Add index on auto_validation_deadline for cron queries
