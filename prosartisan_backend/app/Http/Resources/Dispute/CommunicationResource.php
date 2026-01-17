@@ -11,21 +11,21 @@ use Illuminate\Http\Resources\Json\JsonResource;
  */
 class CommunicationResource extends JsonResource
 {
- /**
-  * Transform the resource into an array.
-  *
-  * @param Request $request
-  * @return array<string, mixed>
-  */
- public function toArray(Request $request): array
- {
-  /** @var MediationCommunication $communication */
-  $communication = $this->resource;
+    /**
+     * Transform the resource into an array.
+     *
+     * @param Request $request
+     * @return array<string, mixed>
+     */
+    public function toArray(Request $request): array
+    {
+        /** @var MediationCommunication $communication */
+        $communication = $this->resource;
 
-  return [
-   'message' => $communication->getMessage(),
-   'sender_id' => $communication->getSenderId()->getValue(),
-   'sent_at' => $communication->getSentAt()->format('Y-m-d H:i:s'),
-  ];
- }
+        return [
+            'message' => $communication->getMessage(),
+            'sender_id' => $communication->getSenderId()->getValue(),
+            'sent_at' => $communication->getSentAt()->format('Y-m-d H:i:s'),
+        ];
+    }
 }

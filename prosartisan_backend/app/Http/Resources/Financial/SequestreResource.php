@@ -12,48 +12,48 @@ use Illuminate\Http\Resources\Json\JsonResource;
  */
 class SequestreResource extends JsonResource
 {
- /**
-  * Transform the resource into an array.
-  *
-  * @return array<string, mixed>
-  */
- public function toArray(Request $request): array
- {
-  return [
-   'id' => $this->getId()->getValue(),
-   'mission_id' => $this->getMissionId()->getValue(),
-   'client_id' => $this->getClientId()->getValue(),
-   'artisan_id' => $this->getArtisanId()->getValue(),
-   'total_amount' => [
-    'centimes' => $this->getTotalAmount()->toCentimes(),
-    'formatted' => $this->getTotalAmount()->format(),
-   ],
-   'materials_amount' => [
-    'centimes' => $this->getMaterialsAmount()->toCentimes(),
-    'formatted' => $this->getMaterialsAmount()->format(),
-   ],
-   'labor_amount' => [
-    'centimes' => $this->getLaborAmount()->toCentimes(),
-    'formatted' => $this->getLaborAmount()->format(),
-   ],
-   'materials_released' => [
-    'centimes' => $this->getMaterialsReleased()->toCentimes(),
-    'formatted' => $this->getMaterialsReleased()->format(),
-   ],
-   'labor_released' => [
-    'centimes' => $this->getLaborReleased()->toCentimes(),
-    'formatted' => $this->getLaborReleased()->format(),
-   ],
-   'remaining_materials' => [
-    'centimes' => $this->getRemainingMaterials()->toCentimes(),
-    'formatted' => $this->getRemainingMaterials()->format(),
-   ],
-   'remaining_labor' => [
-    'centimes' => $this->getRemainingLabor()->toCentimes(),
-    'formatted' => $this->getRemainingLabor()->format(),
-   ],
-   'status' => $this->getStatus()->getValue(),
-   'created_at' => $this->getCreatedAt()->format('Y-m-d H:i:s'),
-  ];
- }
+    /**
+     * Transform the resource into an array.
+     *
+     * @return array<string, mixed>
+     */
+    public function toArray(Request $request): array
+    {
+        return [
+            'id' => $this->getId()->getValue(),
+            'mission_id' => $this->getMissionId()->getValue(),
+            'client_id' => $this->getClientId()->getValue(),
+            'artisan_id' => $this->getArtisanId()->getValue(),
+            'total_amount' => [
+                'centimes' => $this->getTotalAmount()->toCentimes(),
+                'formatted' => $this->getTotalAmount()->format(),
+            ],
+            'materials_amount' => [
+                'centimes' => $this->getMaterialsAmount()->toCentimes(),
+                'formatted' => $this->getMaterialsAmount()->format(),
+            ],
+            'labor_amount' => [
+                'centimes' => $this->getLaborAmount()->toCentimes(),
+                'formatted' => $this->getLaborAmount()->format(),
+            ],
+            'materials_released' => [
+                'centimes' => $this->getMaterialsReleased()->toCentimes(),
+                'formatted' => $this->getMaterialsReleased()->format(),
+            ],
+            'labor_released' => [
+                'centimes' => $this->getLaborReleased()->toCentimes(),
+                'formatted' => $this->getLaborReleased()->format(),
+            ],
+            'remaining_materials' => [
+                'centimes' => $this->getRemainingMaterials()->toCentimes(),
+                'formatted' => $this->getRemainingMaterials()->format(),
+            ],
+            'remaining_labor' => [
+                'centimes' => $this->getRemainingLabor()->toCentimes(),
+                'formatted' => $this->getRemainingLabor()->format(),
+            ],
+            'status' => $this->getStatus()->getValue(),
+            'created_at' => $this->getCreatedAt()->format('Y-m-d H:i:s'),
+        ];
+    }
 }

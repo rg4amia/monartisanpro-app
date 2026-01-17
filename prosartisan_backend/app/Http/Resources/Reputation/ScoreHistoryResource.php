@@ -8,18 +8,18 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class ScoreHistoryResource extends JsonResource
 {
- /**
-  * Transform the resource into an array.
-  *
-  * @return array<string, mixed>
-  */
- public function toArray(Request $request): array
- {
-  /** @var ScoreSnapshot $this */
-  return [
-   'score' => $this->getScore()->getValue(),
-   'reason' => $this->getReason(),
-   'recorded_at' => $this->getRecordedAt()->format('Y-m-d H:i:s'),
-  ];
- }
+    /**
+     * Transform the resource into an array.
+     *
+     * @return array<string, mixed>
+     */
+    public function toArray(Request $request): array
+    {
+        /** @var ScoreSnapshot $this */
+        return [
+            'score' => $this->getScore()->getValue(),
+            'reason' => $this->getReason(),
+            'recorded_at' => $this->getRecordedAt()->format('Y-m-d H:i:s'),
+        ];
+    }
 }

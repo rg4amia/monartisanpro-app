@@ -20,68 +20,68 @@ use Illuminate\Support\Facades\Log;
  */
 class TransactionController extends Controller
 {
- private GetTransactionHistoryHandler $getTransactionHistoryHandler;
+    private GetTransactionHistoryHandler $getTransactionHistoryHandler;
 
- public function __construct(GetTransactionHistoryHandler $getTransactionHistoryHandler)
- {
-  $this->getTransactionHistoryHandler = $getTransactionHistoryHandler;
- }
+    public function __construct(GetTransactionHistoryHandler $getTransactionHistoryHandler)
+    {
+        $this->getTransactionHistoryHandler = $getTransactionHistoryHandler;
+    }
 
- /**
-  * Get transaction history for authenticated user
-  *
-  * GET /api/v1/transactions
-  *
-  * @param Request $request
-  * @return JsonResponse
-  */
- public function index(Request $request): JsonResponse
- {
-  try {
-   $userId = Auth::id();
-   $page = $request->get('page', 1);
-   $limit = $request->get('limit', 20);
-   $type = $request->get('type'); // Optional filter by transaction type
+    /**
+     * Get transaction history for authenticated user
+     *
+     * GET /api/v1/transactions
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function index(Request $request): JsonResponse
+    {
+        try {
+            $userId = Auth::id();
+            $page = $request->get('page', 1);
+            $limit = $request->get('limit', 20);
+            $type = $request->get('type'); // Optional filter by transaction type
 
-   $query = new GetTransactionHistoryQuery(
-    $userId,
-    $page,
-    $limit,
-    $type
-   );
+            $query = new GetTransactionHistoryQuery(
+                $userId,
+                $page,
+                $limit,
+                $type
+            );
 
-   $result = $this->getTransactionHistoryHandler->handle($query);
+            $result = $this->getTransactionHistoryHandler->handle($query);
 
-   Log::info('Transaction history retrieved', [
-    'user_id' => $userId,
-    'page' => $page,
-    'count' => count($result['transactions'])
-   ]);
+            Log::info('Transaction history retrieved', [
+                'user_id' => $userId,
+                'page' => $page,
+                'count' => count($result['transactions'])
+            ]);
 
-   return response()->json([
-    'status' => 'success',
-    'data' => [
-     'transactions' => TransactionResource::collection($result['transactions']),
-     'pagination' => [
-      'current_page' => $page,
-      'per_page' => $limit,
-      'total' => $result['total'],
-      'last_page' => ceil($result['total'] / $limit)
-     ]
-    ]
-   ], 200);
-  } catch (\Exception $e) {
-   Log::error('Failed to retrieve transaction history', [
-    'error' => $e->getMessage(),
-    'user_id' => Auth::id(),
-    'trace' => $e->getTraceAsString()
-   ]);
+            return response()->json([
+                'status' => 'success',
+                'data' => [
+                    'transactions' => TransactionResource::collection($result['transactions']),
+                    'pagination' => [
+                        'current_page' => $page,
+                        'per_page' => $limit,
+                        'total' => $result['total'],
+                        'last_page' => ceil($result['total'] / $limit)
+                    ]
+                ]
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error('Failed to retrieve transaction history', [
+                'error' => $e->getMessage(),
+                'user_id' => Auth::id(),
+                'trace' => $e->getTraceAsString()
+            ]);
 
-   return response()->json([
-    'status' => 'error',
-    'message' => 'Failed to retrieve transaction history',
-    'error' => $e->getMessage()
-   ], 500);
-  }
- }
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to retrieve transaction history',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

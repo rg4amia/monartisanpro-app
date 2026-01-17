@@ -497,7 +497,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 65: Suspended Account Transaction Prevention**
     - **Validates: Requirements 12.2, 12.3**
   
-  - [-] 20.4 Implement dispute management screens
+  - [x] 20.4 Implement dispute management screens
     - Create dispute list with filters
     - Create dispute detail view with evidence and communications
     - Implement arbitration decision form
@@ -507,7 +507,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 66: Admin Dispute View Evidence Completeness**
     - **Validates: Requirements 12.5**
   
-  - [ ] 20.6 Implement reputation management screens
+  - [-] 20.6 Implement reputation management screens
     - Create artisan reputation dashboard
     - Implement manual score adjustment with justification
     - Create transaction export functionality (CSV)

@@ -28,6 +28,13 @@ Route::prefix('backoffice')->group(function () {
         Route::post('/users/{user}/approve-kyc', [UserController::class, 'approveKyc'])->name('backoffice.users.approve-kyc');
         Route::post('/users/{user}/reject-kyc', [UserController::class, 'rejectKyc'])->name('backoffice.users.reject-kyc');
 
+        // Dispute management routes
+        Route::get('/disputes', [App\Http\Controllers\Backoffice\DisputeController::class, 'index'])->name('backoffice.disputes.index');
+        Route::get('/disputes/{dispute}', [App\Http\Controllers\Backoffice\DisputeController::class, 'show'])->name('backoffice.disputes.show');
+        Route::post('/disputes/{dispute}/assign-mediator', [App\Http\Controllers\Backoffice\DisputeController::class, 'assignMediator'])->name('backoffice.disputes.assign-mediator');
+        Route::post('/disputes/{dispute}/render-decision', [App\Http\Controllers\Backoffice\DisputeController::class, 'renderDecision'])->name('backoffice.disputes.render-decision');
+        Route::post('/disputes/{dispute}/communications', [App\Http\Controllers\Backoffice\DisputeController::class, 'addCommunication'])->name('backoffice.disputes.add-communication');
+
         // Redirect root backoffice to dashboard
         Route::get('/', function () {
             return redirect()->route('backoffice.dashboard');

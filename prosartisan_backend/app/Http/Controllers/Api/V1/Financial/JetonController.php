@@ -22,113 +22,113 @@ use Illuminate\Support\Facades\Log;
  */
 class JetonController extends Controller
 {
- private GenerateJetonHandler $generateJetonHandler;
- private ValidateJetonHandler $validateJetonHandler;
+    private GenerateJetonHandler $generateJetonHandler;
+    private ValidateJetonHandler $validateJetonHandler;
 
- public function __construct(
-  GenerateJetonHandler $generateJetonHandler,
-  ValidateJetonHandler $validateJetonHandler
- ) {
-  $this->generateJetonHandler = $generateJetonHandler;
-  $this->validateJetonHandler = $validateJetonHandler;
- }
+    public function __construct(
+        GenerateJetonHandler $generateJetonHandler,
+        ValidateJetonHandler $validateJetonHandler
+    ) {
+        $this->generateJetonHandler = $generateJetonHandler;
+        $this->validateJetonHandler = $validateJetonHandler;
+    }
 
- /**
-  * Generate a new jeton for materials purchase
-  *
-  * POST /api/v1/jetons/generate
-  *
-  * @param GenerateJetonRequest $request
-  * @return JsonResponse
-  */
- public function generate(GenerateJetonRequest $request): JsonResponse
- {
-  try {
-   $command = new GenerateJetonCommand(
-    $request->validated('sequestre_id'),
-    $request->validated('artisan_id'),
-    $request->validated('supplier_ids', [])
-   );
+    /**
+     * Generate a new jeton for materials purchase
+     *
+     * POST /api/v1/jetons/generate
+     *
+     * @param GenerateJetonRequest $request
+     * @return JsonResponse
+     */
+    public function generate(GenerateJetonRequest $request): JsonResponse
+    {
+        try {
+            $command = new GenerateJetonCommand(
+                $request->validated('sequestre_id'),
+                $request->validated('artisan_id'),
+                $request->validated('supplier_ids', [])
+            );
 
-   $jeton = $this->generateJetonHandler->handle($command);
+            $jeton = $this->generateJetonHandler->handle($command);
 
-   Log::info('Jeton generated successfully', [
-    'jeton_id' => $jeton->getId()->getValue(),
-    'jeton_code' => $jeton->getCode()->toString(),
-    'artisan_id' => $request->validated('artisan_id')
-   ]);
+            Log::info('Jeton generated successfully', [
+                'jeton_id' => $jeton->getId()->getValue(),
+                'jeton_code' => $jeton->getCode()->toString(),
+                'artisan_id' => $request->validated('artisan_id')
+            ]);
 
-   return response()->json([
-    'status' => 'success',
-    'message' => 'Jeton generated successfully',
-    'data' => new JetonResource($jeton)
-   ], 201);
-  } catch (\Exception $e) {
-   Log::error('Failed to generate jeton', [
-    'error' => $e->getMessage(),
-    'sequestre_id' => $request->validated('sequestre_id'),
-    'trace' => $e->getTraceAsString()
-   ]);
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Jeton generated successfully',
+                'data' => new JetonResource($jeton)
+            ], 201);
+        } catch (\Exception $e) {
+            Log::error('Failed to generate jeton', [
+                'error' => $e->getMessage(),
+                'sequestre_id' => $request->validated('sequestre_id'),
+                'trace' => $e->getTraceAsString()
+            ]);
 
-   return response()->json([
-    'status' => 'error',
-    'message' => 'Failed to generate jeton',
-    'error' => $e->getMessage()
-   ], 500);
-  }
- }
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to generate jeton',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 
- /**
-  * Validate a jeton for materials purchase
-  *
-  * POST /api/v1/jetons/validate
-  *
-  * @param ValidateJetonRequest $request
-  * @return JsonResponse
-  */
- public function validate(ValidateJetonRequest $request): JsonResponse
- {
-  try {
-   $command = new ValidateJetonCommand(
-    $request->validated('jeton_code'),
-    $request->validated('fournisseur_id'),
-    $request->validated('amount_centimes'),
-    $request->validated('artisan_latitude'),
-    $request->validated('artisan_longitude'),
-    $request->validated('supplier_latitude'),
-    $request->validated('supplier_longitude')
-   );
+    /**
+     * Validate a jeton for materials purchase
+     *
+     * POST /api/v1/jetons/validate
+     *
+     * @param ValidateJetonRequest $request
+     * @return JsonResponse
+     */
+    public function validate(ValidateJetonRequest $request): JsonResponse
+    {
+        try {
+            $command = new ValidateJetonCommand(
+                $request->validated('jeton_code'),
+                $request->validated('fournisseur_id'),
+                $request->validated('amount_centimes'),
+                $request->validated('artisan_latitude'),
+                $request->validated('artisan_longitude'),
+                $request->validated('supplier_latitude'),
+                $request->validated('supplier_longitude')
+            );
 
-   $result = $this->validateJetonHandler->handle($command);
+            $result = $this->validateJetonHandler->handle($command);
 
-   Log::info('Jeton validated successfully', [
-    'jeton_code' => $request->validated('jeton_code'),
-    'fournisseur_id' => $request->validated('fournisseur_id'),
-    'amount_used' => $request->validated('amount_centimes')
-   ]);
+            Log::info('Jeton validated successfully', [
+                'jeton_code' => $request->validated('jeton_code'),
+                'fournisseur_id' => $request->validated('fournisseur_id'),
+                'amount_used' => $request->validated('amount_centimes')
+            ]);
 
-   return response()->json([
-    'status' => 'success',
-    'message' => 'Jeton validated successfully',
-    'data' => [
-     'validation_id' => $result['validation_id'],
-     'amount_used' => $result['amount_used'],
-     'remaining_amount' => $result['remaining_amount'],
-     'validated_at' => $result['validated_at']
-    ]
-   ], 200);
-  } catch (\Exception $e) {
-   Log::error('Failed to validate jeton', [
-    'error' => $e->getMessage(),
-    'jeton_code' => $request->validated('jeton_code'),
-    'trace' => $e->getTraceAsString()
-   ]);
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Jeton validated successfully',
+                'data' => [
+                    'validation_id' => $result['validation_id'],
+                    'amount_used' => $result['amount_used'],
+                    'remaining_amount' => $result['remaining_amount'],
+                    'validated_at' => $result['validated_at']
+                ]
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error('Failed to validate jeton', [
+                'error' => $e->getMessage(),
+                'jeton_code' => $request->validated('jeton_code'),
+                'trace' => $e->getTraceAsString()
+            ]);
 
-   return response()->json([
-    'status' => 'error',
-    'message' => 'Failed to validate jeton',
-    'error' => $e->getMessage()
-   ], 400);
-  }
- }
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to validate jeton',
+                'error' => $e->getMessage()
+            ], 400);
+        }
+    }
 }

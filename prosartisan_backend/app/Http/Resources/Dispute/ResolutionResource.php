@@ -11,22 +11,22 @@ use Illuminate\Http\Resources\Json\JsonResource;
  */
 class ResolutionResource extends JsonResource
 {
- /**
-  * Transform the resource into an array.
-  *
-  * @param Request $request
-  * @return array<string, mixed>
-  */
- public function toArray(Request $request): array
- {
-  /** @var Resolution $resolution */
-  $resolution = $this->resource;
+    /**
+     * Transform the resource into an array.
+     *
+     * @param Request $request
+     * @return array<string, mixed>
+     */
+    public function toArray(Request $request): array
+    {
+        /** @var Resolution $resolution */
+        $resolution = $this->resource;
 
-  return [
-   'outcome' => $resolution->getOutcome(),
-   'amount' => $resolution->getAmount()?->toArray(),
-   'notes' => $resolution->getNotes(),
-   'resolved_at' => $resolution->getResolvedAt()->format('Y-m-d H:i:s'),
-  ];
- }
+        return [
+            'outcome' => $resolution->getOutcome(),
+            'amount' => $resolution->getAmount()?->toArray(),
+            'notes' => $resolution->getNotes(),
+            'resolved_at' => $resolution->getResolvedAt()->format('Y-m-d H:i:s'),
+        ];
+    }
 }

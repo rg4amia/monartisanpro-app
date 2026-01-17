@@ -11,24 +11,24 @@ use Illuminate\Http\Resources\Json\JsonResource;
  */
 class MediationResource extends JsonResource
 {
- /**
-  * Transform the resource into an array.
-  *
-  * @param Request $request
-  * @return array<string, mixed>
-  */
- public function toArray(Request $request): array
- {
-  /** @var Mediation $mediation */
-  $mediation = $this->resource;
+    /**
+     * Transform the resource into an array.
+     *
+     * @param Request $request
+     * @return array<string, mixed>
+     */
+    public function toArray(Request $request): array
+    {
+        /** @var Mediation $mediation */
+        $mediation = $this->resource;
 
-  return [
-   'mediator_id' => $mediation->getMediatorId()->getValue(),
-   'is_active' => $mediation->isActive(),
-   'communications_count' => $mediation->getCommunicationsCount(),
-   'communications' => CommunicationResource::collection($mediation->getCommunications()),
-   'started_at' => $mediation->getStartedAt()->format('Y-m-d H:i:s'),
-   'ended_at' => $mediation->getEndedAt()?->format('Y-m-d H:i:s'),
-  ];
- }
+        return [
+            'mediator_id' => $mediation->getMediatorId()->getValue(),
+            'is_active' => $mediation->isActive(),
+            'communications_count' => $mediation->getCommunicationsCount(),
+            'communications' => CommunicationResource::collection($mediation->getCommunications()),
+            'started_at' => $mediation->getStartedAt()->format('Y-m-d H:i:s'),
+            'ended_at' => $mediation->getEndedAt()?->format('Y-m-d H:i:s'),
+        ];
+    }
 }

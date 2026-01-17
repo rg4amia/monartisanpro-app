@@ -19,57 +19,57 @@ use Illuminate\Support\Facades\Log;
  */
 class EscrowController extends Controller
 {
- private BlockEscrowFundsHandler $blockEscrowHandler;
+    private BlockEscrowFundsHandler $blockEscrowHandler;
 
- public function __construct(BlockEscrowFundsHandler $blockEscrowHandler)
- {
-  $this->blockEscrowHandler = $blockEscrowHandler;
- }
+    public function __construct(BlockEscrowFundsHandler $blockEscrowHandler)
+    {
+        $this->blockEscrowHandler = $blockEscrowHandler;
+    }
 
- /**
-  * Block funds in escrow after quote acceptance
-  *
-  * POST /api/v1/escrow/block
-  *
-  * @param BlockEscrowRequest $request
-  * @return JsonResponse
-  */
- public function block(BlockEscrowRequest $request): JsonResponse
- {
-  try {
-   $command = new BlockEscrowFundsCommand(
-    $request->validated('mission_id'),
-    $request->validated('devis_id'),
-    $request->validated('client_id'),
-    $request->validated('artisan_id'),
-    $request->validated('total_amount_centimes')
-   );
+    /**
+     * Block funds in escrow after quote acceptance
+     *
+     * POST /api/v1/escrow/block
+     *
+     * @param BlockEscrowRequest $request
+     * @return JsonResponse
+     */
+    public function block(BlockEscrowRequest $request): JsonResponse
+    {
+        try {
+            $command = new BlockEscrowFundsCommand(
+                $request->validated('mission_id'),
+                $request->validated('devis_id'),
+                $request->validated('client_id'),
+                $request->validated('artisan_id'),
+                $request->validated('total_amount_centimes')
+            );
 
-   $sequestre = $this->blockEscrowHandler->handle($command);
+            $sequestre = $this->blockEscrowHandler->handle($command);
 
-   Log::info('Escrow funds blocked successfully', [
-    'sequestre_id' => $sequestre->getId()->getValue(),
-    'mission_id' => $request->validated('mission_id'),
-    'total_amount' => $request->validated('total_amount_centimes')
-   ]);
+            Log::info('Escrow funds blocked successfully', [
+                'sequestre_id' => $sequestre->getId()->getValue(),
+                'mission_id' => $request->validated('mission_id'),
+                'total_amount' => $request->validated('total_amount_centimes')
+            ]);
 
-   return response()->json([
-    'status' => 'success',
-    'message' => 'Funds blocked in escrow successfully',
-    'data' => new SequestreResource($sequestre)
-   ], 201);
-  } catch (\Exception $e) {
-   Log::error('Failed to block escrow funds', [
-    'error' => $e->getMessage(),
-    'mission_id' => $request->validated('mission_id'),
-    'trace' => $e->getTraceAsString()
-   ]);
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Funds blocked in escrow successfully',
+                'data' => new SequestreResource($sequestre)
+            ], 201);
+        } catch (\Exception $e) {
+            Log::error('Failed to block escrow funds', [
+                'error' => $e->getMessage(),
+                'mission_id' => $request->validated('mission_id'),
+                'trace' => $e->getTraceAsString()
+            ]);
 
-   return response()->json([
-    'status' => 'error',
-    'message' => 'Failed to block funds in escrow',
-    'error' => $e->getMessage()
-   ], 500);
-  }
- }
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to block funds in escrow',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

@@ -12,53 +12,53 @@ use App\Domain\Identity\Models\ValueObjects\UserType;
 
 class AuthController extends Controller
 {
- public function showLogin()
- {
-  return Inertia::render('Backoffice/Auth/Login');
- }
+    public function showLogin()
+    {
+        return Inertia::render('Backoffice/Auth/Login');
+    }
 
- public function login(Request $request)
- {
-  $request->validate([
-   'email' => 'required|email',
-   'password' => 'required',
-  ]);
+    public function login(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
 
-  // Check if user exists and is admin
-  $user = \App\Models\User::where('email', $request->email)->first();
+        // Check if user exists and is admin
+        $user = \App\Models\User::where('email', $request->email)->first();
 
-  if (!$user || !Hash::check($request->password, $user->password_hash)) {
-   throw ValidationException::withMessages([
-    'email' => ['Les informations d\'identification fournies sont incorrectes.'],
-   ]);
-  }
+        if (!$user || !Hash::check($request->password, $user->password_hash)) {
+            throw ValidationException::withMessages([
+                'email' => ['Les informations d\'identification fournies sont incorrectes.'],
+            ]);
+        }
 
-  if ($user->user_type !== UserType::ADMIN->value) {
-   throw ValidationException::withMessages([
-    'email' => ['Accès non autorisé. Seuls les administrateurs peuvent accéder au backoffice.'],
-   ]);
-  }
+        if ($user->user_type !== UserType::ADMIN->value) {
+            throw ValidationException::withMessages([
+                'email' => ['Accès non autorisé. Seuls les administrateurs peuvent accéder au backoffice.'],
+            ]);
+        }
 
-  if ($user->account_status !== 'ACTIVE') {
-   throw ValidationException::withMessages([
-    'email' => ['Votre compte est suspendu. Contactez l\'administrateur.'],
-   ]);
-  }
+        if ($user->account_status !== 'ACTIVE') {
+            throw ValidationException::withMessages([
+                'email' => ['Votre compte est suspendu. Contactez l\'administrateur.'],
+            ]);
+        }
 
-  Auth::login($user, $request->boolean('remember'));
+        Auth::login($user, $request->boolean('remember'));
 
-  $request->session()->regenerate();
+        $request->session()->regenerate();
 
-  return redirect()->intended('/backoffice/dashboard');
- }
+        return redirect()->intended('/backoffice/dashboard');
+    }
 
- public function logout(Request $request)
- {
-  Auth::logout();
+    public function logout(Request $request)
+    {
+        Auth::logout();
 
-  $request->session()->invalidate();
-  $request->session()->regenerateToken();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
-  return redirect('/backoffice/login');
- }
+        return redirect('/backoffice/login');
+    }
 }
