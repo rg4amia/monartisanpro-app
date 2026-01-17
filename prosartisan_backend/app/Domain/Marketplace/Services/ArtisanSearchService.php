@@ -19,33 +19,33 @@ use App\Domain\Shared\ValueObjects\GPS_Coordinates;
  */
 interface ArtisanSearchService
 {
- /**
-  * Search for artisans near a location with optional trade category filter
-  *
-  * Returns artisans sorted by:
-  * 1. Proximity (artisans ≤1km appear first)
-  * 2. Score_N'Zassa (descending) within each proximity group
-  *
-  * @param GPS_Coordinates $location Client's search location
-  * @param TradeCategory|null $category Optional trade category filter
-  * @param float $radiusKm Search radius in kilometers (default 10km)
-  * @return array Array of arrays with keys: 'artisan' (Artisan), 'distance' (float), 'is_nearby' (bool)
-  */
- public function searchNearby(
-  GPS_Coordinates $location,
-  ?TradeCategory $category = null,
-  float $radiusKm = 10.0
- ): array;
+    /**
+     * Search for artisans near a location with optional trade category filter
+     *
+     * Returns artisans sorted by:
+     * 1. Proximity (artisans ≤1km appear first)
+     * 2. Score_N'Zassa (descending) within each proximity group
+     *
+     * @param GPS_Coordinates $location Client's search location
+     * @param TradeCategory|null $category Optional trade category filter
+     * @param float $radiusKm Search radius in kilometers (default 10km)
+     * @return array Array of arrays with keys: 'artisan' (Artisan), 'distance' (float), 'is_nearby' (bool)
+     */
+    public function searchNearby(
+        GPS_Coordinates $location,
+        ?TradeCategory $category = null,
+        float $radiusKm = 10.0
+    ): array;
 
- /**
-  * Apply proximity boost to artisan search results
-  *
-  * Sorts artisans with those ≤1km appearing first (golden markers),
-  * then by Score_N'Zassa within each group
-  *
-  * @param array $artisans Array of Artisan entities
-  * @param GPS_Coordinates $clientLocation Client's location for distance calculation
-  * @return array Array of arrays with keys: 'artisan', 'distance', 'is_nearby'
-  */
- public function applyProximityBoost(array $artisans, GPS_Coordinates $clientLocation): array;
+    /**
+     * Apply proximity boost to artisan search results
+     *
+     * Sorts artisans with those ≤1km appearing first (golden markers),
+     * then by Score_N'Zassa within each group
+     *
+     * @param array $artisans Array of Artisan entities
+     * @param GPS_Coordinates $clientLocation Client's location for distance calculation
+     * @return array Array of arrays with keys: 'artisan', 'distance', 'is_nearby'
+     */
+    public function applyProximityBoost(array $artisans, GPS_Coordinates $clientLocation): array;
 }

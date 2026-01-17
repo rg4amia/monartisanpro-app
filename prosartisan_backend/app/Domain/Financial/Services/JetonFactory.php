@@ -15,23 +15,23 @@ use App\Domain\Identity\Models\Artisan\Artisan;
  */
 interface JetonFactory
 {
- /**
-  * Create a jeton for materials purchase
-  *
-  * @param Sequestre $sequestre
-  * @param Artisan $artisan
-  * @param array $nearbySuppliers Array of Fournisseur entities
-  * @return JetonMateriel
-  */
- public function createJeton(Sequestre $sequestre, Artisan $artisan, array $nearbySuppliers): JetonMateriel;
+    /**
+     * Create a jeton for materials purchase
+     *
+     * @param Sequestre $sequestre
+     * @param Artisan $artisan
+     * @param array $nearbySuppliers Array of Fournisseur entities
+     * @return JetonMateriel
+     */
+    public function createJeton(Sequestre $sequestre, Artisan $artisan, array $nearbySuppliers): JetonMateriel;
 
- /**
-  * Create a jeton with specific authorized suppliers
-  *
-  * @param Sequestre $sequestre
-  * @param Artisan $artisan
-  * @param array $authorizedSupplierIds Array of UserId
-  * @return JetonMateriel
-  */
- public function createJetonWithSuppliers(Sequestre $sequestre, Artisan $artisan, array $authorizedSupplierIds): JetonMateriel;
+    /**
+     * Create a jeton with specific authorized suppliers
+     *
+     * @param Sequestre $sequestre
+     * @param Artisan $artisan
+     * @param array $authorizedSupplierIds Array of UserId
+     * @return JetonMateriel
+     */
+    public function createJetonWithSuppliers(Sequestre $sequestre, Artisan $artisan, array $authorizedSupplierIds): JetonMateriel;
 }

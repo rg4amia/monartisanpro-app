@@ -11,24 +11,24 @@ use App\Domain\Shared\ValueObjects\MoneyAmount;
  */
 final class DefaultEscrowFragmentationService implements EscrowFragmentationService
 {
- private const MATERIALS_PERCENTAGE = 65;
- private const LABOR_PERCENTAGE = 35;
+    private const MATERIALS_PERCENTAGE = 65;
+    private const LABOR_PERCENTAGE = 35;
 
- public function calculateFragmentation(MoneyAmount $total): array
- {
-  return [
-   'materials' => $total->percentage(self::MATERIALS_PERCENTAGE),
-   'labor' => $total->percentage(self::LABOR_PERCENTAGE),
-  ];
- }
+    public function calculateFragmentation(MoneyAmount $total): array
+    {
+        return [
+            'materials' => $total->percentage(self::MATERIALS_PERCENTAGE),
+            'labor' => $total->percentage(self::LABOR_PERCENTAGE),
+        ];
+    }
 
- public function getMaterialsPercentage(): int
- {
-  return self::MATERIALS_PERCENTAGE;
- }
+    public function getMaterialsPercentage(): int
+    {
+        return self::MATERIALS_PERCENTAGE;
+    }
 
- public function getLaborPercentage(): int
- {
-  return self::LABOR_PERCENTAGE;
- }
+    public function getLaborPercentage(): int
+    {
+        return self::LABOR_PERCENTAGE;
+    }
 }

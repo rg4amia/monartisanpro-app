@@ -14,55 +14,55 @@ use App\Domain\Identity\Models\ValueObjects\UserId;
  */
 interface TransactionRepository
 {
- /**
-  * Save transaction to persistence
-  *
-  * Note: This is append-only - transactions are never updated
-  */
- public function save(Transaction $transaction): void;
+    /**
+     * Save transaction to persistence
+     *
+     * Note: This is append-only - transactions are never updated
+     */
+    public function save(Transaction $transaction): void;
 
- /**
-  * Find transaction by ID
-  */
- public function findById(TransactionId $id): ?Transaction;
+    /**
+     * Find transaction by ID
+     */
+    public function findById(TransactionId $id): ?Transaction;
 
- /**
-  * Find transactions by user ID (either from or to)
-  */
- public function findByUserId(UserId $userId): array;
+    /**
+     * Find transactions by user ID (either from or to)
+     */
+    public function findByUserId(UserId $userId): array;
 
- /**
-  * Find transactions by user ID with pagination
-  */
- public function findByUserIdPaginated(UserId $userId, int $page = 1, int $perPage = 20): array;
+    /**
+     * Find transactions by user ID with pagination
+     */
+    public function findByUserIdPaginated(UserId $userId, int $page = 1, int $perPage = 20): array;
 
- /**
-  * Find transactions by type
-  */
- public function findByType(TransactionType $type): array;
+    /**
+     * Find transactions by type
+     */
+    public function findByType(TransactionType $type): array;
 
- /**
-  * Find pending transactions
-  */
- public function findPending(): array;
+    /**
+     * Find pending transactions
+     */
+    public function findPending(): array;
 
- /**
-  * Find transactions between two users
-  */
- public function findBetweenUsers(UserId $fromUserId, UserId $toUserId): array;
+    /**
+     * Find transactions between two users
+     */
+    public function findBetweenUsers(UserId $fromUserId, UserId $toUserId): array;
 
- /**
-  * Find transactions by mobile money reference
-  */
- public function findByMobileMoneyReference(string $reference): array;
+    /**
+     * Find transactions by mobile money reference
+     */
+    public function findByMobileMoneyReference(string $reference): array;
 
- /**
-  * Get transaction count for user
-  */
- public function countByUserId(UserId $userId): int;
+    /**
+     * Get transaction count for user
+     */
+    public function countByUserId(UserId $userId): int;
 
- /**
-  * Get total transaction volume for user
-  */
- public function getTotalVolumeByUserId(UserId $userId): int; // Returns amount in centimes
+    /**
+     * Get total transaction volume for user
+     */
+    public function getTotalVolumeByUserId(UserId $userId): int; // Returns amount in centimes
 }

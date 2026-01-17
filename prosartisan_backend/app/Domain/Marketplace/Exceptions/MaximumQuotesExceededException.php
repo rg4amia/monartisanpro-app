@@ -9,8 +9,8 @@ use Exception;
  */
 class MaximumQuotesExceededException extends Exception
 {
- public function __construct(string $missionId)
- {
-  parent::__construct("Mission {$missionId} already has the maximum number of quotes (3)");
- }
+    public function __construct(string $missionId)
+    {
+        parent::__construct("Mission {$missionId} already has the maximum number of quotes (3)");
+    }
 }

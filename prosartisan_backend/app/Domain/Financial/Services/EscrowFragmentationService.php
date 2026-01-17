@@ -14,21 +14,21 @@ use App\Domain\Shared\ValueObjects\MoneyAmount;
  */
 interface EscrowFragmentationService
 {
- /**
-  * Calculate fragmentation amounts
-  *
-  * @param MoneyAmount $total
-  * @return array{materials: MoneyAmount, labor: MoneyAmount}
-  */
- public function calculateFragmentation(MoneyAmount $total): array;
+    /**
+     * Calculate fragmentation amounts
+     *
+     * @param MoneyAmount $total
+     * @return array{materials: MoneyAmount, labor: MoneyAmount}
+     */
+    public function calculateFragmentation(MoneyAmount $total): array;
 
- /**
-  * Get materials percentage
-  */
- public function getMaterialsPercentage(): int;
+    /**
+     * Get materials percentage
+     */
+    public function getMaterialsPercentage(): int;
 
- /**
-  * Get labor percentage
-  */
- public function getLaborPercentage(): int;
+    /**
+     * Get labor percentage
+     */
+    public function getLaborPercentage(): int;
 }

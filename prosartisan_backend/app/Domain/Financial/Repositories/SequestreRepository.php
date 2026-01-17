@@ -12,38 +12,38 @@ use App\Domain\Identity\Models\ValueObjects\UserId;
  */
 interface SequestreRepository
 {
- /**
-  * Save sequestre to persistence
-  */
- public function save(Sequestre $sequestre): void;
+    /**
+     * Save sequestre to persistence
+     */
+    public function save(Sequestre $sequestre): void;
 
- /**
-  * Find sequestre by ID
-  */
- public function findById(SequestreId $id): ?Sequestre;
+    /**
+     * Find sequestre by ID
+     */
+    public function findById(SequestreId $id): ?Sequestre;
 
- /**
-  * Find sequestre by mission ID
-  */
- public function findByMissionId(MissionId $missionId): ?Sequestre;
+    /**
+     * Find sequestre by mission ID
+     */
+    public function findByMissionId(MissionId $missionId): ?Sequestre;
 
- /**
-  * Find sequestres by client ID
-  */
- public function findByClientId(UserId $clientId): array;
+    /**
+     * Find sequestres by client ID
+     */
+    public function findByClientId(UserId $clientId): array;
 
- /**
-  * Find sequestres by artisan ID
-  */
- public function findByArtisanId(UserId $artisanId): array;
+    /**
+     * Find sequestres by artisan ID
+     */
+    public function findByArtisanId(UserId $artisanId): array;
 
- /**
-  * Find active sequestres (not fully released or refunded)
-  */
- public function findActive(): array;
+    /**
+     * Find active sequestres (not fully released or refunded)
+     */
+    public function findActive(): array;
 
- /**
-  * Delete sequestre (for testing purposes only)
-  */
- public function delete(SequestreId $id): void;
+    /**
+     * Delete sequestre (for testing purposes only)
+     */
+    public function delete(SequestreId $id): void;
 }
