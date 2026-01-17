@@ -364,14 +364,14 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Validates: Requirements 7.1, 7.7, 7.8**
 
 - [-] 14. Implement Reputation Management Context (API & Mobile)
-  - [-] 14.1 Create reputation API endpoints
+  - [x] 14.1 Create reputation API endpoints
     - GET /api/v1/artisans/{id}/reputation
     - GET /api/v1/artisans/{id}/score-history
     - POST /api/v1/missions/{id}/rate (submit rating)
     - GET /api/v1/artisans/{id}/ratings
     - _Requirements: 7.1, 7.8, 8.2, 8.3_
   
-  - [ ] 14.2 Implement Flutter reputation screens
+  - [-] 14.2 Implement Flutter reputation screens
     - Create artisan reputation detail screen with score breakdown
     - Create rating submission screen (1-5 stars + comment)
     - Display score history chart
