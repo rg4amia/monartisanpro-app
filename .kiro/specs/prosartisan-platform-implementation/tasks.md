@@ -519,7 +519,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Validates: Requirements 12.6, 12.7**
 
 - [-] 21. Implement Security and Cross-Cutting Concerns
-  - [-] 21.1 Implement API authentication and authorization
+  - [x] 21.1 Implement API authentication and authorization
     - Create JWT middleware for all protected endpoints
     - Implement role-based access control (client, artisan, admin)
     - Implement rate limiting middleware (100 req/min)
@@ -530,7 +530,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 71: Rate Limiting Enforcement**
     - **Validates: Requirements 13.2, 13.4**
   
-  - [ ] 21.3 Implement fraud detection service
+  - [-] 21.3 Implement fraud detection service
     - Create SuspiciousActivityDetector with pattern matching
     - Implement account flagging for review
     - Implement escrow circumvention detection

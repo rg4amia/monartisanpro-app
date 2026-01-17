@@ -203,7 +203,9 @@ class User
      */
     public function isKYCVerified(): bool
     {
-        return $this->kycDocuments !== null && $this->kycDocuments->isVerified();
+        // For base User class, check if KYC documents exist and account is active
+        // Subclasses (Artisan, Fournisseur) override this with their own logic
+        return $this->kycDocuments !== null && $this->isActive();
     }
 
     /**
