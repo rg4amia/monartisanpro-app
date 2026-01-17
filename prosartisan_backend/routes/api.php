@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\Financial\JetonController;
 use App\Http\Controllers\Api\V1\Financial\TransactionController;
 use App\Http\Controllers\Api\V1\Worksite\ChantierController;
 use App\Http\Controllers\Api\V1\Worksite\JalonController;
+use App\Http\Controllers\Api\V1\Reputation\ReputationController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -83,6 +84,17 @@ Route::prefix('v1')->group(function () {
    Route::post('/{id}/submit-proof', [JalonController::class, 'submitProof']);
    Route::post('/{id}/validate', [JalonController::class, 'validate']);
    Route::post('/{id}/contest', [JalonController::class, 'contest']);
+  });
+
+  // Reputation management routes
+  Route::prefix('artisans')->group(function () {
+   Route::get('/{id}/reputation', [ReputationController::class, 'getArtisanReputation']);
+   Route::get('/{id}/score-history', [ReputationController::class, 'getScoreHistory']);
+   Route::get('/{id}/ratings', [ReputationController::class, 'getArtisanRatings']);
+  });
+
+  Route::prefix('missions')->group(function () {
+   Route::post('/{id}/rate', [ReputationController::class, 'submitRating']);
   });
  });
 

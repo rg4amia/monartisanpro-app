@@ -22,12 +22,16 @@ use App\Domain\Financial\Services\JetonFactory;
 use App\Domain\Financial\Services\DefaultJetonFactory;
 use App\Domain\Financial\Services\AntiFraudService;
 use App\Domain\Financial\Services\DefaultAntiFraudService;
+use App\Domain\Reputation\Repositories\ReputationRepository;
+use App\Domain\Reputation\Repositories\RatingRepository;
 use App\Infrastructure\Repositories\PostgresDevisRepository;
 use App\Infrastructure\Repositories\PostgresMissionRepository;
 use App\Infrastructure\Repositories\PostgresUserRepository;
 use App\Infrastructure\Repositories\PostgresSequestreRepository;
 use App\Infrastructure\Repositories\PostgresJetonRepository;
 use App\Infrastructure\Repositories\PostgresTransactionRepository;
+use App\Infrastructure\Repositories\PostgresReputationRepository;
+use App\Infrastructure\Repositories\PostgresRatingRepository;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -44,6 +48,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(SequestreRepository::class, PostgresSequestreRepository::class);
         $this->app->bind(JetonRepository::class, PostgresJetonRepository::class);
         $this->app->bind(TransactionRepository::class, PostgresTransactionRepository::class);
+        $this->app->bind(ReputationRepository::class, PostgresReputationRepository::class);
+        $this->app->bind(RatingRepository::class, PostgresRatingRepository::class);
 
         // Register domain services
         $this->app->bind(AuthenticationService::class, LaravelAuthenticationService::class);
