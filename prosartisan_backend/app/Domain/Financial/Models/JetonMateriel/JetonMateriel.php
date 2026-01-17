@@ -96,7 +96,7 @@ final class JetonMateriel
         MoneyAmount $amount,
         GPS_Coordinates $artisanLocation,
         GPS_Coordinates $supplierLocation
-    ): void {
+    ): string {
         $this->validateCanBeUsed();
         $this->validateSupplierAuthorization($fournisseurId);
         $this->validateAmount($amount);
@@ -104,6 +104,9 @@ final class JetonMateriel
 
         $this->usedAmount = $this->usedAmount->add($amount);
         $this->updateStatus();
+
+        // Return a validation ID for tracking
+        return \Ramsey\Uuid\Uuid::uuid4()->toString();
     }
 
     /**

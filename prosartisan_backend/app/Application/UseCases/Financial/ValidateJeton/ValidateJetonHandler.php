@@ -3,6 +3,8 @@
 namespace App\Application\UseCases\Financial\ValidateJeton;
 
 use App\Domain\Financial\Repositories\JetonRepository;
+use App\Domain\Financial\Repositories\JetonValidationRepository;
+use App\Domain\Financial\Models\JetonValidation\JetonValidation;
 use App\Domain\Financial\Services\AntiFraudService;
 use App\Domain\Financial\Events\JetonValidated;
 use App\Domain\Identity\Models\ValueObjects\UserId;
