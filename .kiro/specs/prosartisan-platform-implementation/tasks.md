@@ -252,7 +252,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
   - Ensure all tests pass, ask the user if questions arise.
 
 - [-] 11. Implement Worksite Management Context (Backend)
-  - [ ] 11.1 Create Chantier and Jalon domain entities
+  - [x] 11.1 Create Chantier and Jalon domain entities
     - Implement Chantier aggregate with milestone management
     - Implement Jalon entity with proof submission and validation
     - Implement ProofOfDelivery value object with GPS and photo data
@@ -263,7 +263,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 29: Chantier Milestone Initialization**
     - **Validates: Requirements 6.1**
   
-  - [ ] 11.3 Implement milestone validation domain service
+  - [-] 11.3 Implement milestone validation domain service
     - Create MilestoneValidationService with GPS verification
     - Implement PhotoVerificationService for EXIF data extraction
     - Implement 48-hour auto-validation deadline logic
