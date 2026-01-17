@@ -66,4 +66,35 @@ return [
         'environment' => env('MTN_ENVIRONMENT', 'sandbox'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Notification Services
+    |--------------------------------------------------------------------------
+    */
+
+    'firebase' => [
+        'server_key' => env('FIREBASE_SERVER_KEY'),
+        'project_id' => env('FIREBASE_PROJECT_ID'),
+        'database_url' => env('FIREBASE_DATABASE_URL'),
+    ],
+
+    'twilio' => [
+        'account_sid' => env('TWILIO_ACCOUNT_SID'),
+        'auth_token' => env('TWILIO_AUTH_TOKEN'),
+        'from_number' => env('TWILIO_FROM_NUMBER'),
+    ],
+
+    'local_sms' => [
+        'api_url' => env('LOCAL_SMS_API_URL'),
+        'api_key' => env('LOCAL_SMS_API_KEY'),
+        'sender_id' => env('LOCAL_SMS_SENDER_ID', 'ProSartisan'),
+    ],
+
+    'whatsapp' => [
+        'access_token' => env('WHATSAPP_ACCESS_TOKEN'),
+        'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID'),
+        'business_account_id' => env('WHATSAPP_BUSINESS_ACCOUNT_ID'),
+        'webhook_verify_token' => env('WHATSAPP_WEBHOOK_VERIFY_TOKEN'),
+    ],
+
 ];

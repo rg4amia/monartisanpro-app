@@ -3,9 +3,11 @@
 namespace App\Domain\Marketplace\Models\Devis;
 
 use App\Domain\Identity\Models\ValueObjects\UserId;
+use App\Domain\Marketplace\Events\QuoteSubmitted;
 use App\Domain\Marketplace\Models\ValueObjects\DevisId;
 use App\Domain\Marketplace\Models\ValueObjects\DevisStatus;
 use App\Domain\Marketplace\Models\ValueObjects\MissionId;
+use App\Domain\Shared\Services\DomainEventDispatcher;
 use App\Domain\Shared\ValueObjects\MoneyAmount;
 use DateTime;
 use InvalidArgumentException;
@@ -60,13 +62,31 @@ final class Devis
         array $lineItems,
         ?DateTime $expiresAt = null
     ): self {
-        return new self(
+        $devis = new self(
             DevisId::generate(),
             $missionId,
             $artisanId,
             $lineItems,
             $expiresAt
         );
+
+        return $devis;
+    }
+
+    /**
+     * Submit this devis (fire domain event)
+     */
+    public function submit(UserId $clientId): void
+    {
+        // Fire domain event
+        DomainEventDispatcher::dispatch(new QuoteSubmitted(
+            $this->id,
+            $this->missionId,
+            $this->artisanId,
+            $clientId,
+            $this->totalAmount,
+            $this->createdAt
+        ));
     }
 
     /**

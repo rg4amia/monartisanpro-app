@@ -4,11 +4,13 @@ namespace App\Domain\Marketplace\Models\Mission;
 
 use App\Domain\Identity\Models\ValueObjects\TradeCategory;
 use App\Domain\Identity\Models\ValueObjects\UserId;
+use App\Domain\Marketplace\Events\MissionCreated;
 use App\Domain\Marketplace\Exceptions\MaximumQuotesExceededException;
 use App\Domain\Marketplace\Models\Devis\Devis;
 use App\Domain\Marketplace\Models\ValueObjects\DevisId;
 use App\Domain\Marketplace\Models\ValueObjects\MissionId;
 use App\Domain\Marketplace\Models\ValueObjects\MissionStatus;
+use App\Domain\Shared\Services\DomainEventDispatcher;
 use App\Domain\Shared\ValueObjects\GPS_Coordinates;
 use App\Domain\Shared\ValueObjects\MoneyAmount;
 use DateTime;
@@ -72,7 +74,7 @@ final class Mission
         MoneyAmount $budgetMin,
         MoneyAmount $budgetMax
     ): self {
-        return new self(
+        $mission = new self(
             MissionId::generate(),
             $clientId,
             $description,
@@ -81,6 +83,18 @@ final class Mission
             $budgetMin,
             $budgetMax
         );
+
+        // Fire domain event
+        DomainEventDispatcher::dispatch(new MissionCreated(
+            $mission->id,
+            $mission->clientId,
+            $mission->location,
+            $mission->category,
+            $mission->description,
+            $mission->createdAt
+        ));
+
+        return $mission;
     }
 
     /**
