@@ -344,14 +344,14 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 41: Reactivity Score Calculation**
     - **Validates: Requirements 7.2, 7.3, 7.4, 7.5, 7.6**
   
-  - [-] 13.4 Implement metrics aggregation service
+  - [x] 13.4 Implement metrics aggregation service
     - Create MetricsAggregationService to query across contexts
     - Aggregate completed/accepted projects from Chantier
     - Aggregate ratings from Rating table
     - Calculate average response time from Mission notifications
     - _Requirements: 7.1, 7.3, 7.5, 7.6_
   
-  - [ ] 13.5 Create Reputation repositories and migrations
+  - [-] 13.5 Create Reputation repositories and migrations
     - Implement ReputationRepository
     - Create reputation_profiles, score_history, ratings tables
     - Add indexes on artisan_id and current_score
