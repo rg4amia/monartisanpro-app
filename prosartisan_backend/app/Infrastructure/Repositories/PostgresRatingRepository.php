@@ -94,7 +94,7 @@ class PostgresRatingRepository implements RatingRepository
             ->count();
     }
 
-    privatefunction mapToRating($data): Rating
+    private function mapToRating($data): Rating
     {
         return new Rating(
             RatingId::fromString($data->id),
