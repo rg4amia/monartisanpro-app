@@ -13,7 +13,11 @@ class ApiService {
     Map<String, dynamic>? queryParameters,
     Options? options,
   }) async {
-    return await _apiClient.get(path, queryParameters: queryParameters, options: options);
+    return await _apiClient.get(
+      path,
+      queryParameters: queryParameters,
+      options: options,
+    );
   }
 
   /// POST request
@@ -23,7 +27,12 @@ class ApiService {
     Map<String, dynamic>? queryParameters,
     Options? options,
   }) async {
-    return await _apiClient.post(path, data: data, queryParameters: queryParameters, options: options);
+    return await _apiClient.post(
+      path,
+      data: data,
+      queryParameters: queryParameters,
+      options: options,
+    );
   }
 
   /// PUT request
@@ -33,7 +42,12 @@ class ApiService {
     Map<String, dynamic>? queryParameters,
     Options? options,
   }) async {
-    return await _apiClient.put(path, data: data, queryParameters: queryParameters, options: options);
+    return await _apiClient.put(
+      path,
+      data: data,
+      queryParameters: queryParameters,
+      options: options,
+    );
   }
 
   /// DELETE request
@@ -43,7 +57,12 @@ class ApiService {
     Map<String, dynamic>? queryParameters,
     Options? options,
   }) async {
-    return await _apiClient.delete(path, data: data, queryParameters: queryParameters, options: options);
+    return await _apiClient.delete(
+      path,
+      data: data,
+      queryParameters: queryParameters,
+      options: options,
+    );
   }
 
   /// Upload file
@@ -57,4 +76,12 @@ class ApiService {
   }
 
   /// Save token
-  Future<void> saveToken(S
+  Future<void> saveToken(String token) async {
+    await _apiClient.saveToken(token);
+  }
+
+  /// Clear token
+  Future<void> clearToken() async {
+    await _apiClient.clearToken();
+  }
+}
