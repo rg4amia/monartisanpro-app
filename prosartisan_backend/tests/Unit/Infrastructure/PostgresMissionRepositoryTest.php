@@ -23,12 +23,23 @@ class PostgresMissionRepositoryTest extends TestCase
  {
   parent::setUp();
   $this->repository = new PostgresMissionRepository();
+
+  // Create a test user for foreign key constraints
+  DB::table('users')->insert([
+   'id' => 'test-user-id',
+   'email' => 'test@example.com',
+   'password' => 'hashed-password',
+   'user_type' => 'CLIENT',
+   'account_status' => 'ACTIVE',
+   'created_at' => now(),
+   'updated_at' => now(),
+  ]);
  }
 
  public function test_saves_and_finds_mission_by_id(): void
  {
   $mission = Mission::create(
-   UserId::generate(),
+   UserId::fromString('test-user-id'),
    'Réparation de plomberie urgente',
    TradeCategory::PLUMBER(),
    new GPS_Coordinates(5.3600, -4.0083),

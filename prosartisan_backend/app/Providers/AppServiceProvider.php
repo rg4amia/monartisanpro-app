@@ -13,9 +13,21 @@ use App\Domain\Marketplace\Services\ArtisanSearchService;
 use App\Domain\Marketplace\Services\DefaultArtisanSearchService;
 use App\Domain\Marketplace\Services\LocationPrivacyService;
 use App\Domain\Marketplace\Services\DefaultLocationPrivacyService;
+use App\Domain\Financial\Repositories\SequestreRepository;
+use App\Domain\Financial\Repositories\JetonRepository;
+use App\Domain\Financial\Repositories\TransactionRepository;
+use App\Domain\Financial\Services\EscrowFragmentationService;
+use App\Domain\Financial\Services\DefaultEscrowFragmentationService;
+use App\Domain\Financial\Services\JetonFactory;
+use App\Domain\Financial\Services\DefaultJetonFactory;
+use App\Domain\Financial\Services\AntiFraudService;
+use App\Domain\Financial\Services\DefaultAntiFraudService;
 use App\Infrastructure\Repositories\PostgresDevisRepository;
 use App\Infrastructure\Repositories\PostgresMissionRepository;
 use App\Infrastructure\Repositories\PostgresUserRepository;
+use App\Infrastructure\Repositories\PostgresSequestreRepository;
+use App\Infrastructure\Repositories\PostgresJetonRepository;
+use App\Infrastructure\Repositories\PostgresTransactionRepository;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -29,12 +41,18 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(UserRepository::class, PostgresUserRepository::class);
         $this->app->bind(MissionRepository::class, PostgresMissionRepository::class);
         $this->app->bind(DevisRepository::class, PostgresDevisRepository::class);
+        $this->app->bind(SequestreRepository::class, PostgresSequestreRepository::class);
+        $this->app->bind(JetonRepository::class, PostgresJetonRepository::class);
+        $this->app->bind(TransactionRepository::class, PostgresTransactionRepository::class);
 
         // Register domain services
         $this->app->bind(AuthenticationService::class, LaravelAuthenticationService::class);
         $this->app->bind(KYCVerificationService::class, DefaultKYCVerificationService::class);
         $this->app->bind(ArtisanSearchService::class, DefaultArtisanSearchService::class);
         $this->app->bind(LocationPrivacyService::class, DefaultLocationPrivacyService::class);
+        $this->app->bind(EscrowFragmentationService::class, DefaultEscrowFragmentationService::class);
+        $this->app->bind(JetonFactory::class, DefaultJetonFactory::class);
+        $this->app->bind(AntiFraudService::class, DefaultAntiFraudService::class);
     }
 
     /**

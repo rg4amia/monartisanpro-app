@@ -32,11 +32,16 @@ return new class extends Migration
             $table->index('created_at');
         });
 
-        // Add PostGIS geography column for location
-        DB::statement('ALTER TABLE missions ADD COLUMN location GEOGRAPHY(POINT, 4326)');
-
-        // Create spatial index for efficient proximity queries
-        DB::statement('CREATE INDEX idx_missions_location ON missions USING GIST(location)');
+        // Add PostGIS geography column for location (PostgreSQL only)
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('ALTER TABLE missions ADD COLUMN location GEOGRAPHY(POINT, 4326)');
+            DB::statement('CREATE INDEX idx_missions_location ON missions USING GIST(location)');
+        } else {
+            // For SQLite/MySQL, use separate latitude/longitude columns
+            Schema::table('missions', function (Blueprint $table) {
+                $table->text('location')->nullable(); // Store as JSON
+            });
+        }
     }
 
     /**

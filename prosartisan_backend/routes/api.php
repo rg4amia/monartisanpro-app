@@ -2,6 +2,9 @@
 
 use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\Api\V1\Auth\KYCController;
+use App\Http\Controllers\Api\V1\Marketplace\MissionController;
+use App\Http\Controllers\Api\V1\Marketplace\QuoteController;
+use App\Http\Controllers\Api\V1\Marketplace\ArtisanController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -31,5 +34,22 @@ Route::prefix('v1')->group(function () {
 
   // KYC document upload
   Route::post('/users/{id}/kyc', [KYCController::class, 'uploadKYC']);
+
+  // Marketplace routes
+  Route::prefix('missions')->group(function () {
+   Route::get('/', [MissionController::class, 'index']);
+   Route::post('/', [MissionController::class, 'store']);
+   Route::get('/{id}', [MissionController::class, 'show']);
+   Route::post('/{missionId}/quotes', [QuoteController::class, 'store']);
+   Route::get('/{missionId}/quotes', [QuoteController::class, 'index']);
+  });
+
+  Route::prefix('quotes')->group(function () {
+   Route::post('/{id}/accept', [QuoteController::class, 'accept']);
+  });
+
+  Route::prefix('artisans')->group(function () {
+   Route::get('/search', [ArtisanController::class, 'search']);
+  });
  });
 });
