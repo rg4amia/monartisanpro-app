@@ -5,14 +5,14 @@ namespace App\Domain\Marketplace\Models\ValueObjects;
 use InvalidArgumentException;
 
 /**
- * Value Object representing the status of a mission
+ * Value object representing Mission status
  */
 final class MissionStatus
 {
- private const OPEN = 'OPEN';
- private const QUOTED = 'QUOTED';
- private const ACCEPTED = 'ACCEPTED';
- private const CANCELLED = 'CANCELLED';
+ public const OPEN = 'OPEN';
+ public const QUOTED = 'QUOTED';
+ public const ACCEPTED = 'ACCEPTED';
+ public const CANCELLED = 'CANCELLED';
 
  private const VALID_STATUSES = [
   self::OPEN,
@@ -30,14 +30,9 @@ final class MissionStatus
 
  private string $value;
 
- private function __construct(string $value)
+ public function __construct(string $value)
  {
-  $value = strtoupper($value);
-
-  if (!in_array($value, self::VALID_STATUSES, true)) {
-   throw new InvalidArgumentException("Invalid mission status: {$value}");
-  }
-
+  $this->validateStatus($value);
   $this->value = $value;
  }
 
@@ -71,10 +66,7 @@ final class MissionStatus
   return $this->value;
  }
 
- /**
-  * Get French label for display
-  */
- public function getLabel(): string
+ public function getFrenchLabel(): string
  {
   return self::FRENCH_LABELS[$this->value];
  }
@@ -107,5 +99,14 @@ final class MissionStatus
  public function __toString(): string
  {
   return $this->value;
+ }
+
+ private function validateStatus(string $value): void
+ {
+  if (!in_array($value, self::VALID_STATUSES, true)) {
+   throw new InvalidArgumentException(
+    "Invalid mission status: {$value}. Valid statuses are: " . implode(', ', self::VALID_STATUSES)
+   );
+  }
  }
 }

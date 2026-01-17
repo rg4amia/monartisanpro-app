@@ -2,58 +2,51 @@
 
 namespace App\Domain\Marketplace\Models\ValueObjects;
 
+use Illuminate\Support\Str;
 use InvalidArgumentException;
-use Ramsey\Uuid\Uuid;
-use Ramsey\Uuid\UuidInterface;
 
 /**
- * Value Object representing a unique mission identifier
+ * Value object representing a Mission identifier
  */
 final class MissionId
 {
- private UuidInterface $value;
+    private string $value;
 
- private function __construct(UuidInterface $uuid)
- {
-  $this->value = $uuid;
- }
+    public function __construct(string $value)
+    {
+        $this->validateUuid($value);
+        $this->value = $value;
+    }
 
- public static function generate(): self
- {
-  return new self(Uuid::uuid4());
- }
+    public static function generate(): self
+    {
+        return new self(Str::uuid()->toString());
+    }
 
- public static function fromString(string $uuid): self
- {
-  if (!Uuid::isValid($uuid)) {
-   throw new InvalidArgumentException("Invalid UUID format: {$uuid}");
-  }
+    public static function fromString(string $value): self
+    {
+        return new self($value);
+    }
 
-  return new self(Uuid::fromString($uuid));
- }
+    public function getValue(): string
+    {
+        return $this->value;
+    }
 
- public static function fromUuid(UuidInterface $uuid): self
- {
-  return new self($uuid);
- }
+    public function equals(MissionId $other): bool
+    {
+        return $this->value === $other->value;
+    }
 
- public function getValue(): string
- {
-  return $this->value->toString();
- }
+    public function __toString(): string
+    {
+        return $this->value;
+    }
 
- public function getUuid(): UuidInterface
- {
-  return $this->value;
- }
-
- public function equals(MissionId $other): bool
- {
-  return $this->value->equals($other->value);
- }
-
- public function __toString(): string
- {
-  return $this->value->toString();
- }
+    private function validateUuid(string $value): void
+    {
+        if (!Str::isUuid($value)) {
+            throw new InvalidArgumentException("Invalid UUID format: {$value}");
+        }
+    }
 }

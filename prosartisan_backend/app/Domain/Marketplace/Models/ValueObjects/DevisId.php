@@ -2,58 +2,51 @@
 
 namespace App\Domain\Marketplace\Models\ValueObjects;
 
+use Illuminate\Support\Str;
 use InvalidArgumentException;
-use Ramsey\Uuid\Uuid;
-use Ramsey\Uuid\UuidInterface;
 
 /**
- * Value Object representing a unique devis (quote) identifier
+ * Value object representing a Devis identifier
  */
 final class DevisId
 {
- private UuidInterface $value;
+ private string $value;
 
- private function __construct(UuidInterface $uuid)
+ public function __construct(string $value)
  {
-  $this->value = $uuid;
+  $this->validateUuid($value);
+  $this->value = $value;
  }
 
  public static function generate(): self
  {
-  return new self(Uuid::uuid4());
+  return new self(Str::uuid()->toString());
  }
 
- public static function fromString(string $uuid): self
+ public static function fromString(string $value): self
  {
-  if (!Uuid::isValid($uuid)) {
-   throw new InvalidArgumentException("Invalid UUID format: {$uuid}");
-  }
-
-  return new self(Uuid::fromString($uuid));
- }
-
- public static function fromUuid(UuidInterface $uuid): self
- {
-  return new self($uuid);
+  return new self($value);
  }
 
  public function getValue(): string
- {
-  return $this->value->toString();
- }
-
- public function getUuid(): UuidInterface
  {
   return $this->value;
  }
 
  public function equals(DevisId $other): bool
  {
-  return $this->value->equals($other->value);
+  return $this->value === $other->value;
  }
 
  public function __toString(): string
  {
-  return $this->value->toString();
+  return $this->value;
+ }
+
+ private function validateUuid(string $value): void
+ {
+  if (!Str::isUuid($value)) {
+   throw new InvalidArgumentException("Invalid UUID format: {$value}");
+  }
  }
 }
