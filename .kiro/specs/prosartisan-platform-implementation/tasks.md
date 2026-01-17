@@ -393,7 +393,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
   - Ensure all tests pass, ask the user if questions arise.
 
 - [-] 16. Implement Dispute Resolution Context (Backend)
-  - [-] 16.1 Create Litige domain entity
+  - [x] 16.1 Create Litige domain entity
     - Implement Litige aggregate with mediation and arbitration
     - Implement Mediation and Arbitration entities
     - Implement DisputeType, DisputeStatus, ArbitrationDecision value objects
@@ -404,7 +404,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 49: Dispute Fund Freeze**
     - **Validates: Requirements 9.1, 9.2**
   
-  - [ ] 16.3 Implement mediation and arbitration services
+  - [x] 16.3 Implement mediation and arbitration services
     - Create MediationService with mediator assignment logic
     - Implement high-value dispute detection (> 2M XOF)
     - Create ArbitrationService with decision execution
@@ -416,7 +416,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 53: Dispute Reporting Time Window**
     - **Validates: Requirements 9.3, 9.4, 9.6, 9.7**
   
-  - [ ] 16.5 Create Litige repository and migrations
+  - [x] 16.5 Create Litige repository and migrations
     - Implement LitigeRepository
     - Create litiges and mediation_communications tables
     - _Requirements: 9.1_
