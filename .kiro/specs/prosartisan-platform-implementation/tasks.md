@@ -291,7 +291,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 35: Chantier Completion Condition**
     - **Validates: Requirements 6.6, 6.7**
 
-- [-] 12. Implement Worksite Management Context (API & Mobile)
+- [x] 12. Implement Worksite Management Context (API & Mobile)
   - [x] 12.1 Create worksite management API endpoints
     - POST /api/v1/chantiers (start chantier after escrow)
     - GET /api/v1/chantiers/{id}
@@ -300,7 +300,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - POST /api/v1/jalons/{id}/contest
     - _Requirements: 6.1, 6.2, 6.3_
   
-  - [-] 12.2 Implement Flutter worksite screens
+  - [x] 12.2 Implement Flutter worksite screens
     - Create chantier detail screen with milestone list
     - Create photo capture screen with GPS embedding
     - Create milestone validation screen for clients
@@ -313,7 +313,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - Test photo GPS extraction and verification
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6_
 
-- [ ] 13. Checkpoint - Worksite Context Complete
+- [-] 13. Checkpoint - Worksite Context Complete
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 13. Implement Reputation Management Context (Backend)
