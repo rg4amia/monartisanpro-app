@@ -351,7 +351,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - Calculate average response time from Mission notifications
     - _Requirements: 7.1, 7.3, 7.5, 7.6_
   
-  - [-] 13.5 Create Reputation repositories and migrations
+  - [x] 13.5 Create Reputation repositories and migrations
     - Implement ReputationRepository
     - Create reputation_profiles, score_history, ratings tables
     - Add indexes on artisan_id and current_score
