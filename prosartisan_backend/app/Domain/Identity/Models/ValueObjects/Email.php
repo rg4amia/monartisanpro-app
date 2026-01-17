@@ -49,6 +49,11 @@ final class Email
         return $this->value === $other->value;
     }
 
+    public function toString(): string
+    {
+        return $this->getValue();
+    }
+
     public function __toString(): string
     {
         return $this->value;

@@ -39,6 +39,14 @@ final class HashedPassword
     }
 
     /**
+     * Alias for fromPlainText for backward compatibility
+     */
+    public static function fromPlainPassword(string $plainPassword): self
+    {
+        return self::fromPlainText($plainPassword);
+    }
+
+    /**
      * Create from an already hashed password (e.g., from database)
      */
     public static function fromHash(string $hash): self
@@ -65,6 +73,11 @@ final class HashedPassword
     public function getHash(): string
     {
         return $this->hash;
+    }
+
+    public function toString(): string
+    {
+        return $this->getHash();
     }
 
     public function __toString(): string

@@ -26,6 +26,7 @@ final class DevisLineType
 
     public function __construct(string $value)
     {
+        $value = strtoupper($value);
         $this->validateType($value);
         $this->value = $value;
     }
@@ -53,6 +54,11 @@ final class DevisLineType
     public function getFrenchLabel(): string
     {
         return self::FRENCH_LABELS[$this->value];
+    }
+
+    public function getLabel(): string
+    {
+        return $this->getFrenchLabel();
     }
 
     public function isMaterial(): bool

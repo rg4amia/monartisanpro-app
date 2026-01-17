@@ -32,6 +32,7 @@ final class MissionStatus
 
     public function __construct(string $value)
     {
+        $value = strtoupper($value);
         $this->validateStatus($value);
         $this->value = $value;
     }
@@ -69,6 +70,11 @@ final class MissionStatus
     public function getFrenchLabel(): string
     {
         return self::FRENCH_LABELS[$this->value];
+    }
+
+    public function getLabel(): string
+    {
+        return $this->getFrenchLabel();
     }
 
     public function isOpen(): bool

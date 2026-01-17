@@ -188,17 +188,25 @@ class PostgresUserRepository implements UserRepository
         $profileData = [
             'user_id' => $artisan->getId()->toString(),
             'trade_category' => $artisan->getCategory()->toString(),
-            'location' => DB::raw(sprintf(
-                "ST_SetSRID(ST_MakePoint(%f, %f), 4326)::geography",
-                $artisan->getLocation()->getLongitude(),
-                $artisan->getLocation()->getLatitude()
-            )),
             'is_kyc_verified' => $artisan->isKYCVerified(),
             'kyc_documents' => $artisan->hasKYCDocuments()
                 ? json_encode($this->serializeKYCDocuments($artisan->getKYCDocuments()))
                 : null,
             'updated_at' => $artisan->getUpdatedAt()->format('Y-m-d H:i:s'),
         ];
+
+        // Handle location based on database driver
+        if (DB::getDriverName() === 'pgsql') {
+            $profileData['location'] = DB::raw(sprintf(
+                "ST_SetSRID(ST_MakePoint(%f, %f), 4326)::geography",
+                $artisan->getLocation()->getLongitude(),
+                $artisan->getLocation()->getLatitude()
+            ));
+        } else {
+            // For SQLite and other databases, store as separate columns
+            $profileData['latitude'] = $artisan->getLocation()->getLatitude();
+            $profileData['longitude'] = $artisan->getLocation()->getLongitude();
+        }
 
         $exists = DB::table('artisan_profiles')
             ->where('user_id', $artisan->getId()->toString())
@@ -244,13 +252,21 @@ class PostgresUserRepository implements UserRepository
         $profileData = [
             'user_id' => $fournisseur->getId()->toString(),
             'business_name' => $fournisseur->getBusinessName(),
-            'shop_location' => DB::raw(sprintf(
+            'updated_at' => $fournisseur->getUpdatedAt()->format('Y-m-d H:i:s'),
+        ];
+
+        // Handle location based on database driver
+        if (DB::getDriverName() === 'pgsql') {
+            $profileData['shop_location'] = DB::raw(sprintf(
                 "ST_SetSRID(ST_MakePoint(%f, %f), 4326)::geography",
                 $fournisseur->getShopLocation()->getLongitude(),
                 $fournisseur->getShopLocation()->getLatitude()
-            )),
-            'updated_at' => $fournisseur->getUpdatedAt()->format('Y-m-d H:i:s'),
-        ];
+            ));
+        } else {
+            // For SQLite and other databases, store as separate columns
+            $profileData['shop_latitude'] = $fournisseur->getShopLocation()->getLatitude();
+            $profileData['shop_longitude'] = $fournisseur->getShopLocation()->getLongitude();
+        }
 
         $exists = DB::table('fournisseur_profiles')
             ->where('user_id', $fournisseur->getId()->toString())
@@ -288,13 +304,21 @@ class PostgresUserRepository implements UserRepository
         $profileData = [
             'user_id' => $referent->getId()->toString(),
             'zone' => $referent->getZone(),
-            'coverage_area' => DB::raw(sprintf(
+            'updated_at' => $referent->getUpdatedAt()->format('Y-m-d H:i:s'),
+        ];
+
+        // Handle location based on database driver
+        if (DB::getDriverName() === 'pgsql') {
+            $profileData['coverage_area'] = DB::raw(sprintf(
                 "ST_SetSRID(ST_MakePoint(%f, %f), 4326)::geography",
                 $referent->getCoverageArea()->getLongitude(),
                 $referent->getCoverageArea()->getLatitude()
-            )),
-            'updated_at' => $referent->getUpdatedAt()->format('Y-m-d H:i:s'),
-        ];
+            ));
+        } else {
+            // For SQLite and other databases, store as separate columns
+            $profileData['coverage_latitude'] = $referent->getCoverageArea()->getLatitude();
+            $profileData['coverage_longitude'] = $referent->getCoverageArea()->getLongitude();
+        }
 
         $exists = DB::table('referent_zone_profiles')
             ->where('user_id', $referent->getId()->toString())
@@ -397,9 +421,20 @@ class PostgresUserRepository implements UserRepository
      */
     private function hydrateArtisanFromUserId(object $userData): Artisan
     {
-        $profileData = DB::table('artisan_profiles')
-            ->where('user_id', $userData->id)
-            ->first();
+        if (DB::getDriverName() === 'pgsql') {
+            $profileData = DB::table('artisan_profiles')
+                ->select([
+                    '*',
+                    'ST_Y(location::geometry) as latitude',
+                    'ST_X(location::geometry) as longitude',
+                ])
+                ->where('user_id', $userData->id)
+                ->first();
+        } else {
+            $profileData = DB::table('artisan_profiles')
+                ->where('user_id', $userData->id)
+                ->first();
+        }
 
         if (!$profileData) {
             throw new \RuntimeException("Artisan profile not found for user {$userData->id}");
@@ -466,14 +501,25 @@ class PostgresUserRepository implements UserRepository
      */
     private function hydrateFournisseurFromUserId(object $userData): Fournisseur
     {
-        $profileData = DB::table('fournisseur_profiles')
-            ->select([
-                'business_name',
-                'ST_Y(shop_location::geometry) as latitude',
-                'ST_X(shop_location::geometry) as longitude',
-            ])
-            ->where('user_id', $userData->id)
-            ->first();
+        if (DB::getDriverName() === 'pgsql') {
+            $profileData = DB::table('fournisseur_profiles')
+                ->select([
+                    'business_name',
+                    'ST_Y(shop_location::geometry) as shop_latitude',
+                    'ST_X(shop_location::geometry) as shop_longitude',
+                ])
+                ->where('user_id', $userData->id)
+                ->first();
+        } else {
+            $profileData = DB::table('fournisseur_profiles')
+                ->select([
+                    'business_name',
+                    'shop_latitude',
+                    'shop_longitude',
+                ])
+                ->where('user_id', $userData->id)
+                ->first();
+        }
 
         if (!$profileData) {
             throw new \RuntimeException("Fournisseur profile not found for user {$userData->id}");
@@ -494,8 +540,8 @@ class PostgresUserRepository implements UserRepository
             PhoneNumber::fromString($userData->phone_number ?? ''),
             $profileData->business_name,
             new GPS_Coordinates(
-                (float) $profileData->latitude,
-                (float) $profileData->longitude
+                (float) $profileData->shop_latitude,
+                (float) $profileData->shop_longitude
             ),
             $isKYCVerified,
             AccountStatus::fromString($userData->account_status),
