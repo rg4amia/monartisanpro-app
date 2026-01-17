@@ -3,11 +3,11 @@ import '../../domain/models/reputation_profile.dart';
 import '../../domain/models/score_snapshot.dart';
 import '../../domain/models/rating.dart';
 import '../../domain/repositories/reputation_repository.dart';
-import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../../core/services/api/api_client.dart';
 
 class ReputationController extends GetxController {
   final ReputationRepository _repository;
-  final AuthController _authController = Get.find<AuthController>();
+  final ApiClient _apiClient = Get.find<ApiClient>();
 
   ReputationController(this._repository);
 
@@ -29,7 +29,7 @@ class ReputationController extends GetxController {
   Future<void> loadArtisanReputation(String artisanId) async {
     try {
       _isLoading.value = true;
-      final token = _authController.token;
+      final token = await _apiClient.getToken();
       if (token == null) throw Exception('Token d\'authentification manquant');
 
       final reputation = await _repository.getArtisanReputation(
@@ -52,7 +52,7 @@ class ReputationController extends GetxController {
   Future<void> loadScoreHistory(String artisanId) async {
     try {
       _isLoading.value = true;
-      final token = _authController.token;
+      final token = await _apiClient.getToken();
       if (token == null) throw Exception('Token d\'authentification manquant');
 
       final history = await _repository.getScoreHistory(artisanId, token);
@@ -72,7 +72,7 @@ class ReputationController extends GetxController {
   Future<void> loadArtisanRatings(String artisanId, {int page = 1}) async {
     try {
       _isLoading.value = true;
-      final token = _authController.token;
+      final token = await _apiClient.getToken();
       if (token == null) throw Exception('Token d\'authentification manquant');
 
       final artisanRatings = await _repository.getArtisanRatings(
@@ -105,7 +105,7 @@ class ReputationController extends GetxController {
   }) async {
     try {
       _isSubmittingRating.value = true;
-      final token = _authController.token;
+      final token = await _apiClient.getToken();
       if (token == null) throw Exception('Token d\'authentification manquant');
 
       final newRating = await _repository.submitRating(
