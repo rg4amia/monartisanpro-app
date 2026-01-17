@@ -25,15 +25,15 @@ class JetonResource extends JsonResource
    'sequestre_id' => $this->getSequestreId()->getValue(),
    'artisan_id' => $this->getArtisanId()->getValue(),
    'total_amount' => [
-    'centimes' => $this->getTotalAmount()->getAmountInCentimes(),
+    'centimes' => $this->getTotalAmount()->toCentimes(),
     'formatted' => $this->getTotalAmount()->format(),
    ],
    'used_amount' => [
-    'centimes' => $this->getUsedAmount()->getAmountInCentimes(),
+    'centimes' => $this->getUsedAmount()->toCentimes(),
     'formatted' => $this->getUsedAmount()->format(),
    ],
    'remaining_amount' => [
-    'centimes' => $this->getRemainingAmount()->getAmountInCentimes(),
+    'centimes' => $this->getRemainingAmount()->toCentimes(),
     'formatted' => $this->getRemainingAmount()->format(),
    ],
    'authorized_suppliers' => $this->getAuthorizedSuppliers(),

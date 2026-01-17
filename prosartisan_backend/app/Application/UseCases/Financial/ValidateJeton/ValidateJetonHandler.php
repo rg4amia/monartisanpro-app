@@ -23,6 +23,7 @@ final class ValidateJetonHandler
 {
  public function __construct(
   private JetonRepository $jetonRepository,
+  private JetonValidationRepository $jetonValidationRepository,
   private AntiFraudService $antiFraudService
  ) {}
 
@@ -48,8 +49,8 @@ final class ValidateJetonHandler
   // Create value objects
   $fournisseurId = UserId::fromString($command->fournisseurId);
   $amount = MoneyAmount::fromCentimes($command->amountCentimes, Currency::XOF());
-  $artisanLocation = GPS_Coordinates::fromLatLng($command->artisanLatitude, $command->artisanLongitude);
-  $supplierLocation = GPS_Coordinates::fromLatLng($command->supplierLatitude, $command->supplierLongitude);
+  $artisanLocation = new GPS_Coordinates($command->artisanLatitude, $command->artisanLongitude);
+  $supplierLocation = new GPS_Coordinates($command->supplierLatitude, $command->supplierLongitude);
 
   // Verify GPS proximity (must be within 100m)
   if (!$this->antiFraudService->verifyProximity($artisanLocation, $supplierLocation, 100.0)) {
@@ -62,12 +63,25 @@ final class ValidateJetonHandler
   }
 
   // Check if amount is available
-  if ($amount->getAmountInCentimes() > $jeton->getRemainingAmount()->getAmountInCentimes()) {
+  if ($amount->toCentimes() > $jeton->getRemainingAmount()->toCentimes()) {
    throw new \Exception('Requested amount exceeds remaining jeton balance');
   }
 
   // Validate the jeton
   $validationId = $jeton->validate($fournisseurId, $amount, $artisanLocation, $supplierLocation);
+
+  // Create validation record for audit
+  $validation = JetonValidation::create(
+   $jeton->getId(),
+   $fournisseurId,
+   $jeton->getArtisanId(),
+   $amount,
+   $artisanLocation,
+   $supplierLocation
+  );
+
+  // Save validation record
+  $this->jetonValidationRepository->save($validation);
 
   // Save updated jeton
   $this->jetonRepository->save($jeton);
@@ -85,13 +99,13 @@ final class ValidateJetonHandler
    'jeton_code' => $command->jetonCode,
    'validation_id' => $validationId,
    'amount_used' => $command->amountCentimes,
-   'remaining_amount' => $jeton->getRemainingAmount()->getAmountInCentimes()
+   'remaining_amount' => $jeton->getRemainingAmount()->toCentimes()
   ]);
 
   return [
    'validation_id' => $validationId,
-   'amount_used' => $amount->getAmountInCentimes(),
-   'remaining_amount' => $jeton->getRemainingAmount()->getAmountInCentimes(),
+   'amount_used' => $amount->toCentimes(),
+   'remaining_amount' => $jeton->getRemainingAmount()->toCentimes(),
    'validated_at' => (new \DateTime())->format('Y-m-d H:i:s')
   ];
  }
