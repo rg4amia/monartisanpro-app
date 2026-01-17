@@ -2,7 +2,17 @@
 
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
+
+// Register mobile money commands - Laravel 11 auto-discovers commands
+// The command will be automatically registered from the Commands directory
+
+// Schedule the pending transactions query to run every 5 minutes
+Schedule::command('mobile-money:query-pending')
+    ->everyFiveMinutes()
+    ->withoutOverlapping()
+    ->runInBackground();

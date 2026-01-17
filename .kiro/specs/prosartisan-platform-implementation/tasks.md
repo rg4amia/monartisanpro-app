@@ -201,7 +201,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 28: Expired Jeton Fund Return**
     - **Validates: Requirements 5.1, 5.2, 5.3, 5.5, 5.7**
   
-  - [ ] 8.6 Implement mobile money gateway adapter
+  - [-] 8.6 Implement mobile money gateway adapter
     - Create MobileMoneyGateway interface
     - Implement Wave, Orange Money, MTN adapters
     - Implement retry logic (3 attempts with exponential backoff)
@@ -214,7 +214,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 79: Payment Webhook Timeout Query**
     - **Validates: Requirements 4.5, 15.4, 15.5**
   
-  - [-] 8.8 Create Financial repositories and migrations
+  - [~] 8.8 Create Financial repositories and migrations
     - Implement SequestreRepository, JetonRepository, TransactionRepository
     - Create sequestres, jetons_materiel, jeton_validations, transactions tables
     - Ensure transactions table is append-only (immutable audit log)

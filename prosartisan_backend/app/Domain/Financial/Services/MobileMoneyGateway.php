@@ -1,0 +1,94 @@
+<?php
+
+namespace App\Domain\Financial\Services;
+
+use App\Domain\Identity\Models\ValueObjects\UserId;
+use App\Domain\Identity\Models\ValueObjects\PhoneNumber;
+use App\Domain\Shared\ValueObjects\MoneyAmount;
+use App\Domain\Financial\Models\ValueObjects\TransactionId;
+
+/**
+ * Interface for Mobile Money payment gateway integration
+ *
+ * Provides abstraction for different mobile money providers
+ * (Wave, Orange Money, MTN) with unified payment operations.
+ *
+ * Requirements: 4.4, 4.5, 15.1, 15.4, 15.5
+ */
+interface MobileMoneyGateway
+{
+    /**
+     * Block funds from a user's mobile money account for escrow
+     *
+     * @param UserId $userId User whose funds to block
+     * @param PhoneNumber $phoneNumber User's mobile money phone number
+     * @param MoneyAmount $amount Amount to block
+     * @param string $reference Internal transaction reference
+     * @return MobileMoneyTransactionResult
+     */
+    public function blockFunds(
+        UserId $userId,
+        PhoneNumber $phoneNumber,
+        MoneyAmount $amount,
+        string $reference
+    ): MobileMoneyTransactionResult;
+
+    /**
+     * Transfer funds from one user to another
+     *
+     * @param UserId $fromUserId Source user
+     * @param PhoneNumber $fromPhone Source phone number
+     * @param UserId $toUserId Destination user
+     * @param PhoneNumber $toPhone Destination phone number
+     * @param MoneyAmount $amount Amount to transfer
+     * @param string $reference Internal transaction reference
+     * @return MobileMoneyTransactionResult
+     */
+    public function transferFunds(
+        UserId $fromUserId,
+        PhoneNumber $fromPhone,
+        UserId $toUserId,
+        PhoneNumber $toPhone,
+        MoneyAmount $amount,
+        string $reference
+    ): MobileMoneyTransactionResult;
+
+    /**
+     * Refund funds to a user's mobile money account
+     *
+     * @param UserId $userId User to refund
+     * @param PhoneNumber $phoneNumber User's mobile money phone number
+     * @param MoneyAmount $amount Amount to refund
+     * @param string $reference Internal transaction reference
+     * @return MobileMoneyTransactionResult
+     */
+    public function refundFunds(
+        UserId $userId,
+        PhoneNumber $phoneNumber,
+        MoneyAmount $amount,
+        string $reference
+    ): MobileMoneyTransactionResult;
+
+    /**
+     * Check the status of a mobile money transaction
+     *
+     * @param string $providerTransactionId Provider's transaction ID
+     * @return MobileMoneyTransactionStatus
+     */
+    public function checkTransactionStatus(string $providerTransactionId): MobileMoneyTransactionStatus;
+
+    /**
+     * Get the provider name (Wave, Orange Money, MTN)
+     *
+     * @return string
+     */
+    public function getProviderName(): string;
+
+    /**
+     * Check if this gateway supports the given phone number
+     *
+     * @param PhoneNumber $phoneNumber
+     * @return bool
+     */
+    public function supportsPhoneNumber(PhoneNumber $phoneNumber): bool;
+}

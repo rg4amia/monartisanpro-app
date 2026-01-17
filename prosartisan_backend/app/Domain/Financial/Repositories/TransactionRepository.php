@@ -57,6 +57,21 @@ interface TransactionRepository
     public function findByMobileMoneyReference(string $reference): array;
 
     /**
+     * Find single transaction by mobile money reference
+     */
+    public function findSingleByMobileMoneyReference(string $reference): ?Transaction;
+
+    /**
+     * Find transaction by metadata reference
+     */
+    public function findByMetadataReference(string $reference): ?Transaction;
+
+    /**
+     * Find pending transactions older than specified time
+     */
+    public function findPendingOlderThan(\DateTime $cutoffTime): array;
+
+    /**
      * Get transaction count for user
      */
     public function countByUserId(UserId $userId): int;

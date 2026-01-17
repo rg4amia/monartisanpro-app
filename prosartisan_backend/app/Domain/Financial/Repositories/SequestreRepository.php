@@ -43,6 +43,11 @@ interface SequestreRepository
     public function findActive(): array;
 
     /**
+     * Find sequestre by reference
+     */
+    public function findByReference(string $reference): ?Sequestre;
+
+    /**
      * Delete sequestre (for testing purposes only)
      */
     public function delete(SequestreId $id): void;

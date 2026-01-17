@@ -52,4 +52,11 @@ Route::prefix('v1')->group(function () {
    Route::get('/search', [ArtisanController::class, 'search']);
   });
  });
+
+ // Mobile Money Webhook routes (public - no auth required)
+ Route::prefix('payments/webhook')->group(function () {
+  Route::post('/wave', [\App\Http\Controllers\Api\V1\Payment\WebhookController::class, 'handleWave']);
+  Route::post('/orange', [\App\Http\Controllers\Api\V1\Payment\WebhookController::class, 'handleOrangeMoney']);
+  Route::post('/mtn', [\App\Http\Controllers\Api\V1\Payment\WebhookController::class, 'handleMTN']);
+ });
 });

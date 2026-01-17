@@ -123,6 +123,37 @@ final class PostgresTransactionRepository implements TransactionRepository
         return $rows->map(fn($row) => $this->mapRowToTransaction($row))->toArray();
     }
 
+    public function findSingleByMobileMoneyReference(string $reference): ?Transaction
+    {
+        $row = DB::table(self::TABLE)
+            ->where('mobile_money_reference', $reference)
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        return $row ? $this->mapRowToTransaction($row) : null;
+    }
+
+    public function findByMetadataReference(string $reference): ?Transaction
+    {
+        $row = DB::table(self::TABLE)
+            ->whereRaw("JSON_EXTRACT(metadata, '$.reference') = ?", [$reference])
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        return $row ? $this->mapRowToTransaction($row) : null;
+    }
+
+    public function findPendingOlderThan(\DateTime $cutoffTime): array
+    {
+        $rows = DB::table(self::TABLE)
+            ->where('status', TransactionStatus::PENDING)
+            ->where('created_at', '<', $cutoffTime->format('Y-m-d H:i:s'))
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        return $rows->map(fn($row) => $this->mapRowToTransaction($row))->toArray();
+    }
+
     public function countByUserId(UserId $userId): int
     {
         return DB::table(self::TABLE)
