@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:prosartisan_mobile/core/domain/value_objects/gps_coordinates.dart';
-import 'package:prosartisan_mobile/features/marketplace/domain/entities/mission.dart';
 import 'package:prosartisan_mobile/features/marketplace/presentation/controllers/mission_controller.dart';
 import 'package:prosartisan_mobile/features/marketplace/presentation/widgets/category_selector_widget.dart';
 
@@ -240,7 +239,6 @@ class LocationPickerPage extends StatefulWidget {
 }
 
 class _LocationPickerPageState extends State<LocationPickerPage> {
-  GoogleMapController? _mapController;
   GPSCoordinates? _selectedLocation;
   GPSCoordinates? _currentLocation;
   bool _isLoading = true;
@@ -305,7 +303,9 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
           : Stack(
               children: [
                 GoogleMap(
-                  onMapCreated: (controller) => _mapController = controller,
+                  onMapCreated: (controller) {
+                    // Map controller can be used if needed
+                  },
                   initialCameraPosition: CameraPosition(
                     target: _currentLocation != null
                         ? LatLng(

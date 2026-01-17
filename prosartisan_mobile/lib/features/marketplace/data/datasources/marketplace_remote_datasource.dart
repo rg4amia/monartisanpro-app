@@ -75,12 +75,12 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
     int page = 1,
     int limit = 20,
   }) async {
-    final queryParams = {
-      'latitude': location.latitude,
-      'longitude': location.longitude,
-      'radius_km': radiusKm,
-      'page': page,
-      'limit': limit,
+    final queryParams = <String, String>{
+      'latitude': location.latitude.toString(),
+      'longitude': location.longitude.toString(),
+      'radius_km': radiusKm.toString(),
+      'page': page.toString(),
+      'limit': limit.toString(),
     };
 
     if (category != null) {
@@ -120,7 +120,10 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
     String? clientId,
     MissionStatus? status,
   }) async {
-    final queryParams = {'page': page, 'limit': limit};
+    final queryParams = <String, String>{
+      'page': page.toString(),
+      'limit': limit.toString(),
+    };
 
     if (clientId != null) {
       queryParams['client_id'] = clientId;
@@ -164,12 +167,12 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
     int page = 1,
     int limit = 20,
   }) async {
-    final queryParams = {
-      'latitude': location.latitude,
-      'longitude': location.longitude,
-      'radius_km': radiusKm,
-      'page': page,
-      'limit': limit,
+    final queryParams = <String, String>{
+      'latitude': location.latitude.toString(),
+      'longitude': location.longitude.toString(),
+      'radius_km': radiusKm.toString(),
+      'page': page.toString(),
+      'limit': limit.toString(),
     };
 
     if (category != null) {

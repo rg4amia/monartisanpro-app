@@ -14,30 +14,30 @@ use DateTime;
  */
 final class FundsBlocked
 {
- public SequestreId $sequestreId;
- public MissionId $missionId;
- public MoneyAmount $totalAmount;
- public DateTime $occurredAt;
+    public SequestreId $sequestreId;
+    public MissionId $missionId;
+    public MoneyAmount $totalAmount;
+    public DateTime $occurredAt;
 
- public function __construct(
-  SequestreId $sequestreId,
-  MissionId $missionId,
-  MoneyAmount $totalAmount,
-  ?DateTime $occurredAt = null
- ) {
-  $this->sequestreId = $sequestreId;
-  $this->missionId = $missionId;
-  $this->totalAmount = $totalAmount;
-  $this->occurredAt = $occurredAt ?? new DateTime();
- }
+    public function __construct(
+        SequestreId $sequestreId,
+        MissionId $missionId,
+        MoneyAmount $totalAmount,
+        ?DateTime $occurredAt = null
+    ) {
+        $this->sequestreId = $sequestreId;
+        $this->missionId = $missionId;
+        $this->totalAmount = $totalAmount;
+        $this->occurredAt = $occurredAt ?? new DateTime();
+    }
 
- public function toArray(): array
- {
-  return [
-   'sequestre_id' => $this->sequestreId->getValue(),
-   'mission_id' => $this->missionId->getValue(),
-   'total_amount' => $this->totalAmount->toArray(),
-   'occurred_at' => $this->occurredAt->format('Y-m-d H:i:s'),
-  ];
- }
+    public function toArray(): array
+    {
+        return [
+            'sequestre_id' => $this->sequestreId->getValue(),
+            'mission_id' => $this->missionId->getValue(),
+            'total_amount' => $this->totalAmount->toArray(),
+            'occurred_at' => $this->occurredAt->format('Y-m-d H:i:s'),
+        ];
+    }
 }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:prosartisan_mobile/features/marketplace/domain/entities/mission.dart';
 import 'package:prosartisan_mobile/features/marketplace/presentation/controllers/artisan_search_controller.dart';
 import 'package:prosartisan_mobile/features/marketplace/presentation/widgets/category_filter_widget.dart';
 import 'package:prosartisan_mobile/features/marketplace/presentation/widgets/search_radius_slider.dart';
@@ -158,8 +157,8 @@ class ArtisanSearchPage extends GetView<ArtisanSearchController> {
       floatingActionButton: FloatingActionButton(
         onPressed: () => Get.toNamed('/mission/create'),
         backgroundColor: Colors.blue[600],
-        child: const Icon(Icons.add, color: Colors.white),
         tooltip: 'Créer une mission',
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
@@ -292,9 +291,7 @@ class ArtisanSearchPage extends GetView<ArtisanSearchController> {
                                   size: 16,
                                 ),
                                 const SizedBox(width: 4),
-                                Text(
-                                  '${artisan.averageRating.toStringAsFixed(1)}',
-                                ),
+                                Text(artisan.averageRating.toStringAsFixed(1)),
                                 const SizedBox(width: 8),
                                 Text('Score: ${artisan.nzassaScore.toInt()}'),
                                 const SizedBox(width: 8),

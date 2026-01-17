@@ -14,30 +14,30 @@ use DateTime;
  */
 final class LaborPaymentReleased
 {
- public SequestreId $sequestreId;
- public UserId $artisanId;
- public MoneyAmount $amount;
- public DateTime $occurredAt;
+    public SequestreId $sequestreId;
+    public UserId $artisanId;
+    public MoneyAmount $amount;
+    public DateTime $occurredAt;
 
- public function __construct(
-  SequestreId $sequestreId,
-  UserId $artisanId,
-  MoneyAmount $amount,
-  ?DateTime $occurredAt = null
- ) {
-  $this->sequestreId = $sequestreId;
-  $this->artisanId = $artisanId;
-  $this->amount = $amount;
-  $this->occurredAt = $occurredAt ?? new DateTime();
- }
+    public function __construct(
+        SequestreId $sequestreId,
+        UserId $artisanId,
+        MoneyAmount $amount,
+        ?DateTime $occurredAt = null
+    ) {
+        $this->sequestreId = $sequestreId;
+        $this->artisanId = $artisanId;
+        $this->amount = $amount;
+        $this->occurredAt = $occurredAt ?? new DateTime();
+    }
 
- public function toArray(): array
- {
-  return [
-   'sequestre_id' => $this->sequestreId->getValue(),
-   'artisan_id' => $this->artisanId->getValue(),
-   'amount' => $this->amount->toArray(),
-   'occurred_at' => $this->occurredAt->format('Y-m-d H:i:s'),
-  ];
- }
+    public function toArray(): array
+    {
+        return [
+            'sequestre_id' => $this->sequestreId->getValue(),
+            'artisan_id' => $this->artisanId->getValue(),
+            'amount' => $this->amount->toArray(),
+            'occurred_at' => $this->occurredAt->format('Y-m-d H:i:s'),
+        ];
+    }
 }

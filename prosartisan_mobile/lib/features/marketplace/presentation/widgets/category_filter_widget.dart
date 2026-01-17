@@ -29,19 +29,17 @@ class CategoryFilterWidget extends StatelessWidget {
             const SizedBox(width: 8),
           ],
 
-          ...TradeCategory.values
-              .map(
-                (category) => Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: _buildCategoryChip(
-                    label: category.displayName,
-                    icon: _getCategoryIcon(category),
-                    isSelected: selectedCategory == category,
-                    onTap: () => onCategoryChanged(category),
-                  ),
-                ),
-              )
-              .toList(),
+          ...TradeCategory.values.map(
+            (category) => Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: _buildCategoryChip(
+                label: category.displayName,
+                icon: _getCategoryIcon(category),
+                isSelected: selectedCategory == category,
+                onTap: () => onCategoryChanged(category),
+              ),
+            ),
+          ),
         ],
       ),
     );

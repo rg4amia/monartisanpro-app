@@ -289,7 +289,7 @@ class DevisCreatePage extends GetView<DevisController> {
                 ),
               ),
             );
-          }).toList(),
+          }),
         ],
       );
     });

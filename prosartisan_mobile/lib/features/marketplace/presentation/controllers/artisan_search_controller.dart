@@ -17,7 +17,7 @@ class ArtisanSearchController extends GetxController {
   final _selectedCategory = Rx<TradeCategory?>(null);
   final _currentLocation = Rx<GPSCoordinates?>(null);
   final _searchRadius = 5.0.obs; // Default 5km radius
-  final _markers = <Marker>{}.obs;
+  final _markers = <Marker>[].obs;
   final _clusters = <String, List<Artisan>>{}.obs;
 
   GoogleMapController? _mapController;
@@ -28,7 +28,7 @@ class ArtisanSearchController extends GetxController {
   TradeCategory? get selectedCategory => _selectedCategory.value;
   GPSCoordinates? get currentLocation => _currentLocation.value;
   double get searchRadius => _searchRadius.value;
-  Set<Marker> get markers => _markers;
+  Set<Marker> get markers => _markers.toSet();
   Map<String, List<Artisan>> get clusters => _clusters;
 
   @override
@@ -61,7 +61,9 @@ class ArtisanSearchController extends GetxController {
 
       // Get current position
       final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
       );
 
       _currentLocation.value = GPSCoordinates(
@@ -124,7 +126,7 @@ class ArtisanSearchController extends GetxController {
   void _updateMapMarkers() {
     if (_currentLocation.value == null) return;
 
-    final newMarkers = <Marker>{};
+    final newMarkers = <Marker>[];
     final newClusters = <String, List<Artisan>>{};
 
     // Group artisans by proximity for clustering
@@ -211,112 +213,13 @@ class ArtisanSearchController extends GetxController {
   }
 
   void _onArtisanMarkerTapped(Artisan artisan) {
-    // Navigate to artisan detail or show bottom sheet
-    Get.bottomSheet(
-      _buildArtisanBottomSheet(artisan),
-      backgroundColor: Get.theme.scaffoldBackgroundColor,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-    );
+    // This will be handled by the UI layer
+    // The UI can listen to this event and show appropriate bottom sheet
   }
 
   void _onClusterMarkerTapped(List<Artisan> artisans) {
-    // Show list of artisans in cluster
-    Get.bottomSheet(
-      _buildClusterBottomSheet(artisans),
-      backgroundColor: Get.theme.scaffoldBackgroundColor,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-    );
-  }
-
-  Widget _buildArtisanBottomSheet(Artisan artisan) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            artisan.businessName ?? artisan.email,
-            style: Get.textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 8),
-          Text(artisan.category.displayName, style: Get.textTheme.bodyLarge),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              const Icon(Icons.star, color: Colors.amber, size: 20),
-              const SizedBox(width: 4),
-              Text('${artisan.averageRating.toStringAsFixed(1)} • '),
-              Text('Score N\'Zassa: ${artisan.nzassaScore.toInt()}'),
-            ],
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
-                Get.back();
-                // Navigate to artisan profile or create mission
-              },
-              child: const Text('Voir le profil'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildClusterBottomSheet(List<Artisan> artisans) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      height: Get.height * 0.6,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '${artisans.length} artisans dans cette zone',
-            style: Get.textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: ListView.builder(
-              itemCount: artisans.length,
-              itemBuilder: (context, index) {
-                final artisan = artisans[index];
-                return ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor:
-                        artisan.isWithinGoldenRange(_currentLocation.value!)
-                        ? Colors.amber
-                        : Colors.blue,
-                    child: Text(artisan.category.displayName[0]),
-                  ),
-                  title: Text(artisan.businessName ?? artisan.email),
-                  subtitle: Text(
-                    '${artisan.category.displayName} • Score: ${artisan.nzassaScore.toInt()}',
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.star, color: Colors.amber, size: 16),
-                      Text(artisan.averageRating.toStringAsFixed(1)),
-                    ],
-                  ),
-                  onTap: () {
-                    Get.back();
-                    _onArtisanMarkerTapped(artisan);
-                  },
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
+    // This will be handled by the UI layer
+    // The UI can listen to this event and show appropriate bottom sheet
   }
 
   void onMapCreated(GoogleMapController controller) {

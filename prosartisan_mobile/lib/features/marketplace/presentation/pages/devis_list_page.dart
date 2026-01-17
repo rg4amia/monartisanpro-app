@@ -26,7 +26,7 @@ class DevisListPage extends GetView<DevisController> {
         children: [
           // Mission info header
           _buildMissionHeader(),
-          
+
           // Devis list
           Expanded(
             child: Obx(() {
@@ -101,13 +101,12 @@ class DevisListPage extends GetView<DevisController> {
             ),
           ),
           const SizedBox(height: 8),
-          Obx(() => Text(
-            '${controller.devisList.length}/3 devis reçus',
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey[600],
+          Obx(
+            () => Text(
+              '${controller.devisList.length}/3 devis reçus',
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
             ),
-          )),
+          ),
         ],
       ),
     );
@@ -116,7 +115,7 @@ class DevisListPage extends GetView<DevisController> {
   Widget _buildStatusChip(MissionStatus status) {
     Color color;
     String text;
-    
+
     switch (status) {
       case MissionStatus.open:
         color = Colors.green;
@@ -213,10 +212,7 @@ class DevisListPage extends GetView<DevisController> {
                       ),
                       Text(
                         'Soumis le ${_formatDate(devis.createdAt)}',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 12,
-                        ),
+                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
                       ),
                     ],
                   ),
@@ -224,9 +220,9 @@ class DevisListPage extends GetView<DevisController> {
                 _buildDevisStatusChip(devis.status),
               ],
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Price breakdown
             Container(
               padding: const EdgeInsets.all(12),
@@ -263,7 +259,10 @@ class DevisListPage extends GetView<DevisController> {
                     children: [
                       const Text(
                         'Total:',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       Text(
                         _formatCurrency(devis.totalAmount),
@@ -278,9 +277,9 @@ class DevisListPage extends GetView<DevisController> {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Line items summary
             if (devis.lineItems.isNotEmpty) ...[
               Text(
@@ -288,30 +287,39 @@ class DevisListPage extends GetView<DevisController> {
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              ...devis.lineItems.take(3).map((item) => Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Row(
-                  children: [
-                    Icon(
-                      item.type == DevisLineType.material ? Icons.build : Icons.person,
-                      size: 16,
-                      color: Colors.grey[600],
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        '${item.description} (${item.quantity}x)',
-                        style: const TextStyle(fontSize: 12),
+              ...devis.lineItems
+                  .take(3)
+                  .map(
+                    (item) => Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Row(
+                        children: [
+                          Icon(
+                            item.type == DevisLineType.material
+                                ? Icons.build
+                                : Icons.person,
+                            size: 16,
+                            color: Colors.grey[600],
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              '${item.description} (${item.quantity}x)',
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ),
+                          Text(
+                            _formatCurrency(item.total),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    Text(
-                      _formatCurrency(item.total),
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-              )).toList(),
-              
+                  ),
+
               if (devis.lineItems.length > 3)
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
@@ -324,10 +332,10 @@ class DevisListPage extends GetView<DevisController> {
                     ),
                   ),
                 ),
-              
+
               const SizedBox(height: 16),
             ],
-            
+
             // Action buttons
             if (devis.status == DevisStatus.pending && !devis.isExpired) ...[
               Row(
@@ -373,7 +381,7 @@ class DevisListPage extends GetView<DevisController> {
                 ),
               ),
             ],
-            
+
             // View details button
             const SizedBox(height: 8),
             TextButton(
@@ -389,7 +397,7 @@ class DevisListPage extends GetView<DevisController> {
   Widget _buildDevisStatusChip(DevisStatus status) {
     Color color;
     String text;
-    
+
     switch (status) {
       case DevisStatus.pending:
         color = Colors.orange;
@@ -436,10 +444,7 @@ class DevisListPage extends GetView<DevisController> {
           ],
         ),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Annuler'),
-          ),
+          TextButton(onPressed: () => Get.back(), child: const Text('Annuler')),
           ElevatedButton(
             onPressed: () {
               Get.back();
@@ -462,10 +467,7 @@ class DevisListPage extends GetView<DevisController> {
         title: const Text('Rejeter le devis'),
         content: const Text('Êtes-vous sûr de vouloir rejeter ce devis ?'),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Annuler'),
-          ),
+          TextButton(onPressed: () => Get.back(), child: const Text('Annuler')),
           ElevatedButton(
             onPressed: () {
               Get.back();
@@ -496,10 +498,7 @@ class DevisListPage extends GetView<DevisController> {
           children: [
             Row(
               children: [
-                Text(
-                  'Détail du devis',
-                  style: Get.textTheme.headlineSmall,
-                ),
+                Text('Détail du devis', style: Get.textTheme.headlineSmall),
                 const Spacer(),
                 IconButton(
                   onPressed: () => Get.back(),
@@ -508,7 +507,7 @@ class DevisListPage extends GetView<DevisController> {
               ],
             ),
             const SizedBox(height: 16),
-            
+
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
@@ -529,49 +528,56 @@ class DevisListPage extends GetView<DevisController> {
                             Text('ID: ${devis.artisanId}'),
                             Text('Soumis le: ${_formatDate(devis.createdAt)}'),
                             if (devis.expiresAt != null)
-                              Text('Expire le: ${_formatDate(devis.expiresAt!)}'),
+                              Text(
+                                'Expire le: ${_formatDate(devis.expiresAt!)}',
+                              ),
                           ],
                         ),
                       ),
                     ),
-                    
+
                     const SizedBox(height: 16),
-                    
+
                     // Line items
                     const Text(
                       'Lignes du devis',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                     const SizedBox(height: 8),
-                    
-                    ...devis.lineItems.map((item) => Card(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: item.type == DevisLineType.material
-                              ? Colors.orange
-                              : Colors.blue,
-                          child: Icon(
-                            item.type == DevisLineType.material
-                                ? Icons.build
-                                : Icons.person,
-                            color: Colors.white,
-                            size: 20,
+
+                    ...devis.lineItems.map(
+                      (item) => Card(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        child: ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: item.type == DevisLineType.material
+                                ? Colors.orange
+                                : Colors.blue,
+                            child: Icon(
+                              item.type == DevisLineType.material
+                                  ? Icons.build
+                                  : Icons.person,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                          title: Text(item.description),
+                          subtitle: Text(
+                            '${item.quantity} x ${_formatCurrency(item.unitPrice)}',
+                          ),
+                          trailing: Text(
+                            _formatCurrency(item.total),
+                            style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
-                        title: Text(item.description),
-                        subtitle: Text(
-                          '${item.quantity} x ${_formatCurrency(item.unitPrice)}',
-                        ),
-                        trailing: Text(
-                          _formatCurrency(item.total),
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
                       ),
-                    )).toList(),
-                    
+                    ),
+
                     const SizedBox(height: 16),
-                    
+
                     // Total summary
                     Card(
                       color: Colors.blue[50],
@@ -585,7 +591,9 @@ class DevisListPage extends GetView<DevisController> {
                                 const Text('Matériel:'),
                                 Text(
                                   _formatCurrency(devis.materialsAmount),
-                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ],
                             ),
@@ -596,7 +604,9 @@ class DevisListPage extends GetView<DevisController> {
                                 const Text('Main d\'œuvre:'),
                                 Text(
                                   _formatCurrency(devis.laborAmount),
-                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ],
                             ),
@@ -606,7 +616,10 @@ class DevisListPage extends GetView<DevisController> {
                               children: [
                                 const Text(
                                   'Total:',
-                                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                                 Text(
                                   _formatCurrency(devis.totalAmount),
@@ -633,10 +646,7 @@ class DevisListPage extends GetView<DevisController> {
   }
 
   String _formatCurrency(double amount) {
-    return '${amount.toStringAsFixed(0).replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (Match m) => '${m[1]} ',
-    )} FCFA';
+    return '${amount.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]} ')} FCFA';
   }
 
   String _formatDate(DateTime date) {

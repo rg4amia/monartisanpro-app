@@ -1,5 +1,4 @@
 import 'package:prosartisan_mobile/features/marketplace/domain/entities/devis.dart';
-import 'package:prosartisan_mobile/features/marketplace/domain/entities/mission.dart';
 import 'package:prosartisan_mobile/features/marketplace/domain/repositories/devis_repository.dart';
 import 'package:prosartisan_mobile/features/marketplace/domain/repositories/mission_repository.dart';
 
