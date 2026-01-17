@@ -251,7 +251,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
 - [ ] 10. Checkpoint - Financial Context Complete
   - Ensure all tests pass, ask the user if questions arise.
 
-- [-] 11. Implement Worksite Management Context (Backend)
+- [x] 11. Implement Worksite Management Context (Backend)
   - [x] 11.1 Create Chantier and Jalon domain entities
     - Implement Chantier aggregate with milestone management
     - Implement Jalon entity with proof submission and validation
@@ -280,7 +280,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - Set up Laravel scheduled task to run every hour
     - _Requirements: 6.5_
   
-  - [-] 11.6 Create Chantier and Jalon repositories
+  - [x] 11.6 Create Chantier and Jalon repositories
     - Implement ChantierRepository and JalonRepository
     - Create chantiers and jalons tables
     - Add index on auto_validation_deadline for cron queries
@@ -291,8 +291,8 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 35: Chantier Completion Condition**
     - **Validates: Requirements 6.6, 6.7**
 
-- [ ] 12. Implement Worksite Management Context (API & Mobile)
-  - [ ] 12.1 Create worksite management API endpoints
+- [-] 12. Implement Worksite Management Context (API & Mobile)
+  - [-] 12.1 Create worksite management API endpoints
     - POST /api/v1/chantiers (start chantier after escrow)
     - GET /api/v1/chantiers/{id}
     - POST /api/v1/jalons/{id}/submit-proof (with photo upload)
