@@ -5,6 +5,7 @@ namespace App\Domain\Identity\Repositories;
 use App\Domain\Identity\Models\User;
 use App\Domain\Identity\Models\ValueObjects\Email;
 use App\Domain\Identity\Models\ValueObjects\UserId;
+use App\Domain\Identity\Models\ValueObjects\UserType;
 use App\Domain\Shared\ValueObjects\GPS_Coordinates;
 
 /**
@@ -46,6 +47,14 @@ interface UserRepository
      * @return array Array of Artisan entities
      */
     public function findArtisansNearLocation(GPS_Coordinates $location, float $radiusKm): array;
+
+    /**
+     * Find users by type
+     *
+     * @param UserType $type User type
+     * @return array Array of User entities
+     */
+    public function findByType(UserType $type): array;
 
     /**
      * Delete a user

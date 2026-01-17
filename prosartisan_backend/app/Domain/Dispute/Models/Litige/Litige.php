@@ -224,4 +224,123 @@ final class Litige
     }
 
     /**
-     * Get the other part
+     * Get the other party in the dispute
+     */
+    public function getOtherParty(UserId $userId): UserId
+    {
+        if ($this->reporterId->equals($userId)) {
+            return $this->defendantId;
+        }
+
+        if ($this->defendantId->equals($userId)) {
+            return $this->reporterId;
+        }
+
+        throw new InvalidArgumentException('User is not involved in this dispute');
+    }
+
+    // Getters
+    public function getId(): LitigeId
+    {
+        return $this->id;
+    }
+
+    public function getMissionId(): MissionId
+    {
+        return $this->missionId;
+    }
+
+    public function getReporterId(): UserId
+    {
+        return $this->reporterId;
+    }
+
+    public function getDefendantId(): UserId
+    {
+        return $this->defendantId;
+    }
+
+    public function getType(): DisputeType
+    {
+        return $this->type;
+    }
+
+    public function getDescription(): string
+    {
+        return $this->description;
+    }
+
+    public function getEvidence(): array
+    {
+        return $this->evidence;
+    }
+
+    public function getStatus(): DisputeStatus
+    {
+        return $this->status;
+    }
+
+    public function getMediation(): ?Mediation
+    {
+        return $this->mediation;
+    }
+
+    public function getArbitration(): ?Arbitration
+    {
+        return $this->arbitration;
+    }
+
+    public function getResolution(): ?Resolution
+    {
+        return $this->resolution;
+    }
+
+    public function getCreatedAt(): DateTime
+    {
+        return $this->createdAt;
+    }
+
+    public function getResolvedAt(): ?DateTime
+    {
+        return $this->resolvedAt;
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'id' => $this->id->getValue(),
+            'mission_id' => $this->missionId->getValue(),
+            'reporter_id' => $this->reporterId->getValue(),
+            'defendant_id' => $this->defendantId->getValue(),
+            'type' => $this->type->getValue(),
+            'type_label' => $this->type->getFrenchLabel(),
+            'description' => $this->description,
+            'evidence' => $this->evidence,
+            'status' => $this->status->getValue(),
+            'status_label' => $this->status->getFrenchLabel(),
+            'mediation' => $this->mediation?->toArray(),
+            'arbitration' => $this->arbitration?->toArray(),
+            'resolution' => $this->resolution?->toArray(),
+            'created_at' => $this->createdAt->format('Y-m-d H:i:s'),
+            'resolved_at' => $this->resolvedAt?->format('Y-m-d H:i:s'),
+        ];
+    }
+
+    private function validateDescription(string $description): void
+    {
+        if (empty(trim($description))) {
+            throw new InvalidArgumentException('Dispute description cannot be empty');
+        }
+
+        if (strlen($description) < 10) {
+            throw new InvalidArgumentException('Dispute description must be at least 10 characters long');
+        }
+    }
+
+    private function validateParties(UserId $reporterId, UserId $defendantId): void
+    {
+        if ($reporterId->equals($defendantId)) {
+            throw new InvalidArgumentException('Reporter and defendant cannot be the same user');
+        }
+    }
+}
