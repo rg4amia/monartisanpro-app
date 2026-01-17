@@ -37,7 +37,7 @@ Route::prefix('v1')->group(function () {
  });
 
  // Protected routes (require authentication)
- Route::middleware('auth:api')->group(function () {
+ Route::middleware(['auth:api'])->group(function () {
 
   // KYC document upload
   Route::post('/users/{id}/kyc', [KYCController::class, 'uploadKYC']);
@@ -45,14 +45,14 @@ Route::prefix('v1')->group(function () {
   // Marketplace routes
   Route::prefix('missions')->group(function () {
    Route::get('/', [MissionController::class, 'index']);
-   Route::post('/', [MissionController::class, 'store']);
+   Route::post('/', [MissionController::class, 'store'])->middleware('role:' . \App\Domain\Identity\Models\ValueObjects\UserType::CLIENT->value);
    Route::get('/{id}', [MissionController::class, 'show']);
-   Route::post('/{missionId}/quotes', [QuoteController::class, 'store']);
+   Route::post('/{missionId}/quotes', [QuoteController::class, 'store'])->middleware(['kyc.required', 'role:' . \App\Domain\Identity\Models\ValueObjects\UserType::ARTISAN->value]);
    Route::get('/{missionId}/quotes', [QuoteController::class, 'index']);
   });
 
   Route::prefix('quotes')->group(function () {
-   Route::post('/{id}/accept', [QuoteController::class, 'accept']);
+   Route::post('/{id}/accept', [QuoteController::class, 'accept'])->middleware('role:' . \App\Domain\Identity\Models\ValueObjects\UserType::CLIENT->value);
   });
 
   Route::prefix('artisans')->group(function () {
@@ -61,12 +61,12 @@ Route::prefix('v1')->group(function () {
 
   // Financial transaction routes
   Route::prefix('escrow')->group(function () {
-   Route::post('/block', [EscrowController::class, 'block']);
+   Route::post('/block', [EscrowController::class, 'block'])->middleware('role:' . \App\Domain\Identity\Models\ValueObjects\UserType::CLIENT->value);
   });
 
   Route::prefix('jetons')->group(function () {
-   Route::post('/generate', [JetonController::class, 'generate']);
-   Route::post('/validate', [JetonController::class, 'validate']);
+   Route::post('/generate', [JetonController::class, 'generate'])->middleware(['kyc.required', 'role:' . \App\Domain\Identity\Models\ValueObjects\UserType::ARTISAN->value]);
+   Route::post('/validate', [JetonController::class, 'validate'])->middleware(['kyc.required', 'role:' . \App\Domain\Identity\Models\ValueObjects\UserType::FOURNISSEUR->value]);
   });
 
   Route::prefix('transactions')->group(function () {
@@ -76,15 +76,15 @@ Route::prefix('v1')->group(function () {
   // Worksite management routes
   Route::prefix('chantiers')->group(function () {
    Route::get('/', [ChantierController::class, 'index']);
-   Route::post('/', [ChantierController::class, 'store']);
+   Route::post('/', [ChantierController::class, 'store'])->middleware(['kyc.required', 'role:' . \App\Domain\Identity\Models\ValueObjects\UserType::ARTISAN->value]);
    Route::get('/{id}', [ChantierController::class, 'show']);
   });
 
   Route::prefix('jalons')->group(function () {
    Route::get('/{id}', [JalonController::class, 'show']);
-   Route::post('/{id}/submit-proof', [JalonController::class, 'submitProof']);
-   Route::post('/{id}/validate', [JalonController::class, 'validate']);
-   Route::post('/{id}/contest', [JalonController::class, 'contest']);
+   Route::post('/{id}/submit-proof', [JalonController::class, 'submitProof'])->middleware(['kyc.required', 'role:' . \App\Domain\Identity\Models\ValueObjects\UserType::ARTISAN->value]);
+   Route::post('/{id}/validate', [JalonController::class, 'validate'])->middleware('role:' . \App\Domain\Identity\Models\ValueObjects\UserType::CLIENT->value);
+   Route::post('/{id}/contest', [JalonController::class, 'contest'])->middleware('role:' . \App\Domain\Identity\Models\ValueObjects\UserType::CLIENT->value);
   });
 
   // Reputation management routes
@@ -95,7 +95,7 @@ Route::prefix('v1')->group(function () {
   });
 
   Route::prefix('missions')->group(function () {
-   Route::post('/{id}/rate', [ReputationController::class, 'submitRating']);
+   Route::post('/{id}/rate', [ReputationController::class, 'submitRating'])->middleware('role:' . \App\Domain\Identity\Models\ValueObjects\UserType::CLIENT->value);
   });
 
   // Dispute resolution routes
@@ -105,12 +105,12 @@ Route::prefix('v1')->group(function () {
    Route::get('/{id}', [DisputeController::class, 'show']);
    Route::post('/{id}/mediation/start', [DisputeController::class, 'startMediation']);
    Route::post('/{id}/mediation/message', [DisputeController::class, 'sendMediationMessage']);
-   Route::post('/{id}/arbitration/render', [DisputeController::class, 'renderArbitration']);
+   Route::post('/{id}/arbitration/render', [DisputeController::class, 'renderArbitration'])->middleware('role:' . \App\Domain\Identity\Models\ValueObjects\UserType::ADMIN->value . ',' . \App\Domain\Identity\Models\ValueObjects\UserType::REFERENT_ZONE->value);
   });
 
   // Admin dispute management routes
   Route::prefix('admin/disputes')->group(function () {
-   Route::get('/', [DisputeController::class, 'adminIndex']);
+   Route::get('/', [DisputeController::class, 'adminIndex'])->middleware('role:' . \App\Domain\Identity\Models\ValueObjects\UserType::ADMIN->value);
   });
  });
 

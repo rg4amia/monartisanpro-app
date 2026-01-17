@@ -15,6 +15,14 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'auth:api' => \App\Http\Middleware\Auth\AuthenticateAPI::class,
             'backoffice.auth' => \App\Http\Middleware\BackofficeAuth::class,
+            'role' => \App\Http\Middleware\Role\RoleBasedAccess::class,
+            'rate.limit' => \App\Http\Middleware\RateLimitMiddleware::class,
+            'kyc.required' => \App\Http\Middleware\KYC\RequireKYCVerification::class,
+        ]);
+
+        // Apply rate limiting to all API routes
+        $middleware->group('api', [
+            \App\Http\Middleware\RateLimitMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -199,6 +199,14 @@ class User
     }
 
     /**
+     * Check if KYC is verified
+     */
+    public function isKYCVerified(): bool
+    {
+        return $this->kycDocuments !== null && $this->kycDocuments->isVerified();
+    }
+
+    /**
      * Check if account is active
      */
     public function isActive(): bool
