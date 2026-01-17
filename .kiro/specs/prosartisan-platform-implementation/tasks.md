@@ -518,7 +518,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 68: Transaction Export Data Accuracy**
     - **Validates: Requirements 12.6, 12.7**
 
-- [-] 21. Implement Security and Cross-Cutting Concerns
+- [x] 21. Implement Security and Cross-Cutting Concerns
   - [x] 21.1 Implement API authentication and authorization
     - Create JWT middleware for all protected endpoints
     - Implement role-based access control (client, artisan, admin)
@@ -541,7 +541,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 73: Escrow Circumvention Penalty**
     - **Validates: Requirements 13.3, 13.7**
   
-  - [-] 21.5 Implement data encryption
+  - [x] 21.5 Implement data encryption
     - Encrypt sensitive fields (passwords, payment info) with AES-256
     - Implement secure file storage for KYC documents and photos
     - _Requirements: 13.1_
