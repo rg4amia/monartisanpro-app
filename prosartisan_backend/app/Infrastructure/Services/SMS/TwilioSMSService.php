@@ -16,7 +16,7 @@ class TwilioSMSService implements SMSNotificationService
     private string $fromNumber;
     private UserRepository $userRepository;
 
-    public function__construct(UserRepository $userRepository)
+    public function __construct(UserRepository $userRepository)
     {
         $this->accountSid = config('services.twilio.account_sid');
         $this->authToken = config('services.twilio.auth_token');
