@@ -253,7 +253,7 @@ final class Jalon
         return $this->sequenceNumber;
     }
 
-    public functiongetStatus(): JalonStatus
+    public function getStatus(): JalonStatus
     {
         return $this->status;
     }

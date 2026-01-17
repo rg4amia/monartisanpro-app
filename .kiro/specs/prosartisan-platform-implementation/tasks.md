@@ -292,7 +292,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Validates: Requirements 6.6, 6.7**
 
 - [-] 12. Implement Worksite Management Context (API & Mobile)
-  - [-] 12.1 Create worksite management API endpoints
+  - [x] 12.1 Create worksite management API endpoints
     - POST /api/v1/chantiers (start chantier after escrow)
     - GET /api/v1/chantiers/{id}
     - POST /api/v1/jalons/{id}/submit-proof (with photo upload)
@@ -300,7 +300,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - POST /api/v1/jalons/{id}/contest
     - _Requirements: 6.1, 6.2, 6.3_
   
-  - [ ] 12.2 Implement Flutter worksite screens
+  - [-] 12.2 Implement Flutter worksite screens
     - Create chantier detail screen with milestone list
     - Create photo capture screen with GPS embedding
     - Create milestone validation screen for clients

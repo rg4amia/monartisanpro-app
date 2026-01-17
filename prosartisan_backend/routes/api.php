@@ -8,6 +8,8 @@ use App\Http\Controllers\Api\V1\Marketplace\ArtisanController;
 use App\Http\Controllers\Api\V1\Financial\EscrowController;
 use App\Http\Controllers\Api\V1\Financial\JetonController;
 use App\Http\Controllers\Api\V1\Financial\TransactionController;
+use App\Http\Controllers\Api\V1\Worksite\ChantierController;
+use App\Http\Controllers\Api\V1\Worksite\JalonController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -67,6 +69,20 @@ Route::prefix('v1')->group(function () {
 
   Route::prefix('transactions')->group(function () {
    Route::get('/', [TransactionController::class, 'index']);
+  });
+
+  // Worksite management routes
+  Route::prefix('chantiers')->group(function () {
+   Route::get('/', [ChantierController::class, 'index']);
+   Route::post('/', [ChantierController::class, 'store']);
+   Route::get('/{id}', [ChantierController::class, 'show']);
+  });
+
+  Route::prefix('jalons')->group(function () {
+   Route::get('/{id}', [JalonController::class, 'show']);
+   Route::post('/{id}/submit-proof', [JalonController::class, 'submitProof']);
+   Route::post('/{id}/validate', [JalonController::class, 'validate']);
+   Route::post('/{id}/contest', [JalonController::class, 'contest']);
   });
  });
 
