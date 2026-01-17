@@ -324,7 +324,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - Implement ScoreSnapshot for audit trail
     - _Requirements: 7.1, 7.2, 7.8_
   
-  - [-]* 13.2 Write property test for score range validation
+  - [x]* 13.2 Write property test for score range validation
     - Test that NZassaScore constructor rejects values outside 0-100
     - _Requirements: 7.2_
   
@@ -336,7 +336,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - Implement reactivity calculation (inverse of response time)
     - _Requirements: 7.2, 7.3, 7.4, 7.5, 7.6_
   
-  - [ ]* 13.4 Write property tests for score calculations
+  - [x]* 13.4 Write property tests for score calculations
     - **Property 37: N'Zassa Score Weighted Calculation**
     - **Property 38: Reliability Score Formula**
     - **Property 39: Integrity Fraud Penalty**
@@ -357,7 +357,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - Add indexes on artisan_id and current_score
     - _Requirements: 7.1, 7.8, 8.2_
   
-  - [ ]* 13.6 Write property tests for reputation features
+  - [-]* 13.6 Write property tests for reputation features
     - **Property 36: Score Recalculation Trigger**
     - **Property 42: Micro-Credit Eligibility Threshold**
     - **Property 43: Score History Audit Trail**
