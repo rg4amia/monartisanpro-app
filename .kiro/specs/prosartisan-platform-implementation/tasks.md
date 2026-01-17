@@ -225,8 +225,8 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 72: Financial Transaction Audit Logging**
     - **Validates: Requirements 4.6, 13.6**
 
-- [ ] 9. Implement Financial Transactions Context (API & Mobile)
-  - [ ] 9.1 Create financial transaction API endpoints
+- [-] 9. Implement Financial Transactions Context (API & Mobile)
+  - [-] 9.1 Create financial transaction API endpoints
     - POST /api/v1/escrow/block (initiate escrow after quote acceptance)
     - POST /api/v1/jetons/generate
     - POST /api/v1/jetons/validate (with GPS verification)
