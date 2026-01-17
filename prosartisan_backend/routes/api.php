@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\V1\Financial\TransactionController;
 use App\Http\Controllers\Api\V1\Worksite\ChantierController;
 use App\Http\Controllers\Api\V1\Worksite\JalonController;
 use App\Http\Controllers\Api\V1\Reputation\ReputationController;
+use App\Http\Controllers\Api\V1\Dispute\DisputeController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -95,6 +96,21 @@ Route::prefix('v1')->group(function () {
 
   Route::prefix('missions')->group(function () {
    Route::post('/{id}/rate', [ReputationController::class, 'submitRating']);
+  });
+
+  // Dispute resolution routes
+  Route::prefix('disputes')->group(function () {
+   Route::get('/', [DisputeController::class, 'index']);
+   Route::post('/', [DisputeController::class, 'store']);
+   Route::get('/{id}', [DisputeController::class, 'show']);
+   Route::post('/{id}/mediation/start', [DisputeController::class, 'startMediation']);
+   Route::post('/{id}/mediation/message', [DisputeController::class, 'sendMediationMessage']);
+   Route::post('/{id}/arbitration/render', [DisputeController::class, 'renderArbitration']);
+  });
+
+  // Admin dispute management routes
+  Route::prefix('admin/disputes')->group(function () {
+   Route::get('/', [DisputeController::class, 'adminIndex']);
   });
  });
 
