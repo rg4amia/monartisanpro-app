@@ -357,7 +357,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - Add indexes on artisan_id and current_score
     - _Requirements: 7.1, 7.8, 8.2_
   
-  - [-]* 13.6 Write property tests for reputation features
+  - [x]* 13.6 Write property tests for reputation features
     - **Property 36: Score Recalculation Trigger**
     - **Property 42: Micro-Credit Eligibility Threshold**
     - **Property 43: Score History Audit Trail**

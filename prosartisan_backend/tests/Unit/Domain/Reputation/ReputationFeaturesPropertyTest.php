@@ -182,7 +182,7 @@ class ReputationFeaturesPropertyTest extends TestCase
    fn($snapshot) =>
    !str_contains($snapshot->getReason(), 'Previous score before recalculation')
   );
-  $newScores = array_map(fn($snapshot) => $snapshot->getScore()->getValue(), $newScoreSnapshots);
+  $newScores = array_values(array_map(fn($snapshot) => $snapshot->getScore()->getValue(), $newScoreSnapshots));
 
   $this->assertEquals($scores, $newScores, "History should contain all applied scores");
  }
