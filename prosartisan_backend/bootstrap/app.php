@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\Role\RoleBasedAccess::class,
             'rate.limit' => \App\Http\Middleware\RateLimitMiddleware::class,
             'kyc.required' => \App\Http\Middleware\KYC\RequireKYCVerification::class,
+            'fraud.detection' => \App\Http\Middleware\Security\FraudDetectionMiddleware::class,
         ]);
 
         // Apply rate limiting to all API routes

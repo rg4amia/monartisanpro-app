@@ -59,6 +59,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(EscrowFragmentationService::class, DefaultEscrowFragmentationService::class);
         $this->app->bind(JetonFactory::class, DefaultJetonFactory::class);
         $this->app->bind(AntiFraudService::class, DefaultAntiFraudService::class);
+        $this->app->bind(\App\Domain\Shared\Services\FraudDetectionService::class, \App\Infrastructure\Services\Security\DefaultFraudDetectionService::class);
     }
 
     /**

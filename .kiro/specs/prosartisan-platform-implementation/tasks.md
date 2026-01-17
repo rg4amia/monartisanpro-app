@@ -530,7 +530,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 71: Rate Limiting Enforcement**
     - **Validates: Requirements 13.2, 13.4**
   
-  - [-] 21.3 Implement fraud detection service
+  - [x] 21.3 Implement fraud detection service
     - Create SuspiciousActivityDetector with pattern matching
     - Implement account flagging for review
     - Implement escrow circumvention detection
@@ -541,7 +541,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 73: Escrow Circumvention Penalty**
     - **Validates: Requirements 13.3, 13.7**
   
-  - [ ] 21.5 Implement data encryption
+  - [-] 21.5 Implement data encryption
     - Encrypt sensitive fields (passwords, payment info) with AES-256
     - Implement secure file storage for KYC documents and photos
     - _Requirements: 13.1_

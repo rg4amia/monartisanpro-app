@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\V1\Worksite\ChantierController;
 use App\Http\Controllers\Api\V1\Worksite\JalonController;
 use App\Http\Controllers\Api\V1\Reputation\ReputationController;
 use App\Http\Controllers\Api\V1\Dispute\DisputeController;
+use App\Http\Controllers\SecureFileController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -61,12 +62,12 @@ Route::prefix('v1')->group(function () {
 
   // Financial transaction routes
   Route::prefix('escrow')->group(function () {
-   Route::post('/block', [EscrowController::class, 'block'])->middleware('role:' . \App\Domain\Identity\Models\ValueObjects\UserType::CLIENT->value);
+   Route::post('/block', [EscrowController::class, 'block'])->middleware(['fraud.detection', 'role:' . \App\Domain\Identity\Models\ValueObjects\UserType::CLIENT->value]);
   });
 
   Route::prefix('jetons')->group(function () {
-   Route::post('/generate', [JetonController::class, 'generate'])->middleware(['kyc.required', 'role:' . \App\Domain\Identity\Models\ValueObjects\UserType::ARTISAN->value]);
-   Route::post('/validate', [JetonController::class, 'validate'])->middleware(['kyc.required', 'role:' . \App\Domain\Identity\Models\ValueObjects\UserType::FOURNISSEUR->value]);
+   Route::post('/generate', [JetonController::class, 'generate'])->middleware(['fraud.detection', 'kyc.required', 'role:' . \App\Domain\Identity\Models\ValueObjects\UserType::ARTISAN->value]);
+   Route::post('/validate', [JetonController::class, 'validate'])->middleware(['fraud.detection', 'kyc.required', 'role:' . \App\Domain\Identity\Models\ValueObjects\UserType::FOURNISSEUR->value]);
   });
 
   Route::prefix('transactions')->group(function () {
