@@ -558,7 +558,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 76: Online Sync After Reconnection**
     - **Validates: Requirements 14.3, 14.4**
   
-  - [ ] 22.3 Implement app authentication flow
+  - [-] 22.3 Implement app authentication flow
     - Create splash screen with auth check
     - Implement token refresh logic
     - Redirect unauthenticated users to login
