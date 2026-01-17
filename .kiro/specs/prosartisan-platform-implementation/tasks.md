@@ -546,8 +546,8 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - Implement secure file storage for KYC documents and photos
     - _Requirements: 13.1_
 
-- [ ] 22. Implement Mobile App Features
-  - [ ] 22.1 Implement offline mode and sync
+- [-] 22. Implement Mobile App Features
+  - [-] 22.1 Implement offline mode and sync
     - Create local SQLite cache for missions and profiles
     - Implement offline data access
     - Implement sync service for pending actions
