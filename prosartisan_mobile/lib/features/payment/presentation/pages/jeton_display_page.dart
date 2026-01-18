@@ -72,7 +72,7 @@ class JetonDisplayPage extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
-                    QrImageView(
+                    QrImage(
                       data: jeton.qrCodeData,
                       version: QrVersions.auto,
                       size: 200.0,

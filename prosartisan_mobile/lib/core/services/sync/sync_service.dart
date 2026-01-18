@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:get/get.dart';
+import '../../domain/value_objects/gps_coordinates.dart';
 import '../storage/offline_storage_service.dart';
 import '../api/api_service.dart';
 import '../../../features/auth/domain/entities/user.dart';

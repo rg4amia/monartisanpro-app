@@ -7,11 +7,11 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 import '../../domain/value_objects/gps_coordinates.dart';
 
-/// Service for capturing photos with GPS EXIF data embedding
+/// Service for capturing photos with GPS coordinates
 class PhotoCaptureService {
   final ImagePicker _imagePicker = ImagePicker();
 
-  /// Capture photo from camera with GPS coordinates embedded in EXIF
+  /// Capture photo from camera with GPS coordinates
   Future<PhotoCaptureResult> capturePhotoWithGPS({
     bool requireGPS = true,
     double maxWidth = 1920,
@@ -30,8 +30,10 @@ class PhotoCaptureService {
       if (locationPermission) {
         try {
           final position = await Geolocator.getCurrentPosition(
-            desiredAccuracy: LocationAccuracy.high,
-            timeLimit: const Duration(seconds: 10),
+            locationSettings: const LocationSettings(
+              accuracy: LocationAccuracy.high,
+              timeLimit: Duration(seconds: 10),
+            ),
           );
           coordinates = GPSCoordinates(
             latitude: position.latitude,
@@ -40,7 +42,9 @@ class PhotoCaptureService {
           );
         } catch (e) {
           if (requireGPS) {
-            throw PhotoCaptureException('Impossible d\'obtenir la position GPS');
+            throw PhotoCaptureException(
+              'Impossible d\'obtenir la position GPS',
+            );
           }
         }
       }
@@ -57,20 +61,9 @@ class PhotoCaptureService {
         throw PhotoCaptureException('Aucune photo capturée');
       }
 
-      // Read image bytes
+      // Read image bytes and save to app directory
       final imageBytes = await image.readAsBytes();
-      
-      // Embed GPS data in EXIF if coordinates are available
-      File processedImageFile;
-      if (coordinates != null) {
-        processedImageFile = await _embedGPSInEXIF(
-          imageBytes,
-          coordinates,
-          image.path,
-        );
-      } else {
-        processedImageFile = File(image.path);
-      }
+      final processedImageFile = await _saveImageToAppDirectory(imageBytes);
 
       return PhotoCaptureResult(
         file: processedImageFile,
@@ -78,7 +71,6 @@ class PhotoCaptureService {
         capturedAt: DateTime.now(),
         hasGPSData: coordinates != null,
       );
-
     } catch (e) {
       if (e is PhotoCaptureException) {
         rethrow;
@@ -100,19 +92,21 @@ class PhotoCaptureService {
 
       final imageBytes = await image.readAsBytes();
       final coordinates = await _extractGPSFromEXIF(imageBytes);
+      final processedImageFile = await _saveImageToAppDirectory(imageBytes);
 
       return PhotoCaptureResult(
-        file: File(image.path),
+        file: processedImageFile,
         coordinates: coordinates,
         capturedAt: DateTime.now(),
         hasGPSData: coordinates != null,
       );
-
     } catch (e) {
       if (e is PhotoCaptureException) {
         rethrow;
       }
-      throw PhotoCaptureException('Erreur lors de la sélection: ${e.toString()}');
+      throw PhotoCaptureException(
+        'Erreur lors de la sélection: ${e.toString()}',
+      );
     }
   }
 
@@ -138,83 +132,19 @@ class PhotoCaptureService {
     return true;
   }
 
-  /// Embed GPS coordinates in EXIF data
-  Future<File> _embedGPSInEXIF(
-    Uint8List imageBytes,
-    GPSCoordinates coordinates,
-    String originalPath,
-  ) async {
+  /// Save image to app documents directory
+  Future<File> _saveImageToAppDirectory(Uint8List imageBytes) async {
     try {
-      // Get app documents directory
       final directory = await getApplicationDocumentsDirectory();
       final fileName = 'photo_${DateTime.now().millisecondsSinceEpoch}.jpg';
       final newPath = path.join(directory.path, fileName);
-
-      // Read existing EXIF data
-      final exifData = await readExifFromBytes(imageBytes);
-      final exifMap = <String, IfdTag>{};
-      
-      // Copy existing EXIF data
-      if (exifData.isNotEmpty) {
-        exifMap.addAll(exifData);
-      }
-
-      // Add GPS data to EXIF
-      exifMap['GPS GPSLatitudeRef'] = IfdTag(
-        tag: 'GPS GPSLatitudeRef',
-        tagType: 'ASCII',
-        values: IfdValues([coordinates.latitude >= 0 ? 'N' : 'S']),
-      );
-
-      exifMap['GPS GPSLatitude'] = IfdTag(
-        tag: 'GPS GPSLatitude',
-        tagType: 'Rational',
-        values: IfdValues(_convertToRational(coordinates.latitude.abs())),
-      );
-
-      exifMap['GPS GPSLongitudeRef'] = IfdTag(
-        tag: 'GPS GPSLongitudeRef',
-        tagType: 'ASCII',
-        values: IfdValues([coordinates.longitude >= 0 ? 'E' : 'W']),
-      );
-
-      exifMap['GPS GPSLongitude'] = IfdTag(
-        tag: 'GPS GPSLongitude',
-        tagType: 'Rational',
-        values: IfdValues(_convertToRational(coordinates.longitude.abs())),
-      );
-
-      // Add timestamp
-      final now = DateTime.now();
-      exifMap['DateTime'] = IfdTag(
-        tag: 'DateTime',
-        tagType: 'ASCII',
-        values: IfdValues([now.toIso8601String()]),
-      );
-
-      // Add accuracy if available
-      if (coordinates.accuracy != null) {
-        exifMap['GPS GPSHPositioningError'] = IfdTag(
-          tag: 'GPS GPSHPositioningError',
-          tagType: 'Rational',
-          values: IfdValues([Rational(coordinates.accuracy!.toInt(), 1)]),
-        );
-      }
-
-      // Write image with updated EXIF data
       final newFile = File(newPath);
       await newFile.writeAsBytes(imageBytes);
-
       return newFile;
-
     } catch (e) {
-      // If EXIF embedding fails, return original file
-      final directory = await getApplicationDocumentsDirectory();
-      final fileName = 'photo_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final newPath = path.join(directory.path, fileName);
-      final newFile = File(newPath);
-      await newFile.writeAsBytes(imageBytes);
-      return newFile;
+      throw PhotoCaptureException(
+        'Erreur lors de la sauvegarde: ${e.toString()}',
+      );
     }
   }
 
@@ -222,54 +152,69 @@ class PhotoCaptureService {
   Future<GPSCoordinates?> _extractGPSFromEXIF(Uint8List imageBytes) async {
     try {
       final exifData = await readExifFromBytes(imageBytes);
-      
+
       if (exifData.isEmpty) return null;
 
-      final latRef = exifData['GPS GPSLatitudeRef']?.values.toString();
+      // Try to extract GPS data from EXIF
+      final latRef = exifData['GPS GPSLatitudeRef']?.printable;
+      final lonRef = exifData['GPS GPSLongitudeRef']?.printable;
       final latData = exifData['GPS GPSLatitude']?.values;
-      final lonRef = exifData['GPS GPSLongitudeRef']?.values.toString();
       final lonData = exifData['GPS GPSLongitude']?.values;
 
-      if (latRef == null || latData == null || lonRef == null || lonData == null) {
+      if (latRef == null ||
+          lonRef == null ||
+          latData == null ||
+          lonData == null) {
         return null;
       }
 
-      final latitude = _convertFromRational(latData) * (latRef.contains('S') ? -1 : 1);
-      final longitude = _convertFromRational(lonData) * (lonRef.contains('W') ? -1 : 1);
+      // Convert GPS coordinates from EXIF format
+      final latitude =
+          _convertGPSCoordinate(latData) * (latRef.contains('S') ? -1 : 1);
+      final longitude =
+          _convertGPSCoordinate(lonData) * (lonRef.contains('W') ? -1 : 1);
 
-      return GPSCoordinates(
-        latitude: latitude,
-        longitude: longitude,
-      );
-
+      return GPSCoordinates(latitude: latitude, longitude: longitude);
     } catch (e) {
       return null;
     }
   }
 
-  /// Convert decimal degrees to rational format for EXIF
-  List<Rational> _convertToRational(double decimal) {
-    final degrees = decimal.floor();
-    final minutes = ((decimal - degrees) * 60).floor();
-    final seconds = ((decimal - degrees - minutes / 60) * 3600);
+  /// Convert GPS coordinate from EXIF rational format to decimal degrees
+  double _convertGPSCoordinate(dynamic values) {
+    try {
+      if (values is List && values.length >= 3) {
+        // EXIF GPS format: [degrees, minutes, seconds] as rationals
+        final degrees = _parseRational(values[0]);
+        final minutes = _parseRational(values[1]);
+        final seconds = _parseRational(values[2]);
 
-    return [
-      Rational(degrees, 1),
-      Rational(minutes, 1),
-      Rational((seconds * 1000).round(), 1000),
-    ];
+        return degrees + minutes / 60 + seconds / 3600;
+      }
+      return 0.0;
+    } catch (e) {
+      return 0.0;
+    }
   }
 
-  /// Convert rational format from EXIF to decimal degrees
-  double _convertFromRational(IfdValues values) {
-    final rationals = values.toList();
-    if (rationals.length < 3) return 0.0;
-
-    final degrees = (rationals[0] as Rational).toDouble();
-    final minutes = (rationals[1] as Rational).toDouble();
-    final seconds = (rationals[2] as Rational).toDouble();
-
-    return degrees + minutes / 60 + seconds / 3600;
+  /// Parse rational value from EXIF data
+  double _parseRational(dynamic value) {
+    try {
+      if (value is num) {
+        return value.toDouble();
+      }
+      if (value.toString().contains('/')) {
+        final parts = value.toString().split('/');
+        if (parts.length == 2) {
+          final numerator = double.tryParse(parts[0]) ?? 0;
+          final denominator = double.tryParse(parts[1]) ?? 1;
+          return denominator != 0 ? numerator / denominator : 0;
+        }
+      }
+      return double.tryParse(value.toString()) ?? 0;
+    } catch (e) {
+      return 0.0;
+    }
   }
 
   /// Verify photo integrity and GPS data
@@ -277,15 +222,15 @@ class PhotoCaptureService {
     try {
       final imageBytes = await photoFile.readAsBytes();
       final coordinates = await _extractGPSFromEXIF(imageBytes);
-      
+
       // Check if file exists and is readable
       final exists = await photoFile.exists();
       final size = await photoFile.length();
-      
+
       // Basic integrity checks
       final hasValidSize = size > 1024; // At least 1KB
       final hasGPSData = coordinates != null;
-      
+
       return PhotoVerificationResult(
         isValid: exists && hasValidSize,
         hasGPSData: hasGPSData,
@@ -293,7 +238,6 @@ class PhotoCaptureService {
         fileSize: size,
         verifiedAt: DateTime.now(),
       );
-
     } catch (e) {
       return PhotoVerificationResult(
         isValid: false,
@@ -344,9 +288,9 @@ class PhotoVerificationResult {
 /// Exception thrown during photo capture operations
 class PhotoCaptureException implements Exception {
   final String message;
-  
+
   PhotoCaptureException(this.message);
-  
+
   @override
   String toString() => 'PhotoCaptureException: $message';
 }
