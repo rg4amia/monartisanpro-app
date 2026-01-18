@@ -2,10 +2,6 @@
 
 namespace App\Infrastructure\Services\Cache;
 
-use App\Domain\Identity\Models\ValueObjects\TradeCategory;
-use App\Domain\Marketplace\Models\ValueObjects\MissionStatus;
-use App\Domain\Marketplace\Models\ValueObjects\DevisStatus;
-
 /**
  * Service for caching static data like trade categories and statuses
  *
@@ -30,17 +26,17 @@ class StaticDataCacheService
    function () {
     return [
      [
-      'value' => TradeCategory::PLUMBER,
+      'value' => 'PLUMBER',
       'label' => 'Plombier',
       'description' => 'Installation et réparation de plomberie'
      ],
      [
-      'value' => TradeCategory::ELECTRICIAN,
+      'value' => 'ELECTRICIAN',
       'label' => 'Électricien',
       'description' => 'Installation et réparation électrique'
      ],
      [
-      'value' => TradeCategory::MASON,
+      'value' => 'MASON',
       'label' => 'Maçon',
       'description' => 'Travaux de maçonnerie et construction'
      ]
@@ -62,22 +58,22 @@ class StaticDataCacheService
    function () {
     return [
      [
-      'value' => MissionStatus::OPEN,
+      'value' => 'OPEN',
       'label' => 'Ouverte',
       'description' => 'Mission ouverte aux devis'
      ],
      [
-      'value' => MissionStatus::QUOTED,
+      'value' => 'QUOTED',
       'label' => 'Devis reçus',
       'description' => 'Mission avec des devis en attente'
      ],
      [
-      'value' => MissionStatus::ACCEPTED,
+      'value' => 'ACCEPTED',
       'label' => 'Acceptée',
       'description' => 'Mission avec devis accepté'
      ],
      [
-      'value' => MissionStatus::CANCELLED,
+      'value' => 'CANCELLED',
       'label' => 'Annulée',
       'description' => 'Mission annulée'
      ]
@@ -99,17 +95,17 @@ class StaticDataCacheService
    function () {
     return [
      [
-      'value' => DevisStatus::PENDING,
+      'value' => 'PENDING',
       'label' => 'En attente',
       'description' => 'Devis en attente de réponse'
      ],
      [
-      'value' => DevisStatus::ACCEPTED,
+      'value' => 'ACCEPTED',
       'label' => 'Accepté',
       'description' => 'Devis accepté par le client'
      ],
      [
-      'value' => DevisStatus::REJECTED,
+      'value' => 'REJECTED',
       'label' => 'Rejeté',
       'description' => 'Devis rejeté par le client'
      ]
