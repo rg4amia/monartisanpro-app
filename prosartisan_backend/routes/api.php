@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\V1\Worksite\JalonController;
 use App\Http\Controllers\Api\V1\Reputation\ReputationController;
 use App\Http\Controllers\Api\V1\Dispute\DisputeController;
 use App\Http\Controllers\Api\V1\Documentation\OpenApiController;
+use App\Http\Controllers\Api\V1\GPSValidationController;
 use App\Http\Controllers\SecureFileController;
 use Illuminate\Support\Facades\Route;
 
@@ -122,6 +123,14 @@ Route::prefix('v1')->group(function () {
   // Admin dispute management routes
   Route::prefix('admin/disputes')->group(function () {
    Route::get('/', [DisputeController::class, 'adminIndex'])->middleware('role:ADMIN');
+  });
+
+  // GPS validation routes
+  Route::prefix('gps')->group(function () {
+   Route::post('/validate-proximity', [GPSValidationController::class, 'validateProximity']);
+   Route::post('/verify-otp', [GPSValidationController::class, 'verifyOTP']);
+   Route::post('/calculate-distance', [GPSValidationController::class, 'calculateDistance']);
+   Route::post('/generate-otp', [GPSValidationController::class, 'generateOTP']);
   });
  });
 

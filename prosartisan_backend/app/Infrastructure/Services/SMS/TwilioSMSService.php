@@ -45,7 +45,7 @@ class TwilioSMSService implements SMSNotificationService
     {
         try {
             $response = Http::withBasicAuth($this->accountSid, $this->authToken)
-              ->asForm()
+                ->asForm()
                 ->post("https://api.twilio.com/2010-04-01/Accounts/{$this->accountSid}/Messages.json", [
                     'From' => $this->fromNumber,
                     'To' => $phoneNumber->getValue(),
@@ -69,7 +69,7 @@ class TwilioSMSService implements SMSNotificationService
         }
     }
 
-    public function sendOTP(PhoneNumber $phoneNumber,string $code): bool
+    public function sendOTP(PhoneNumber $phoneNumber, string $code): bool
     {
         $message = "Votre code de vérification ProSartisan est: {$code}. Ce code expire dans 5 minutes.";
         return $this->sendSMS($phoneNumber, $message);

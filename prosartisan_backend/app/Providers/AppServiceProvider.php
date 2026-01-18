@@ -62,6 +62,12 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(\App\Domain\Shared\Services\FraudDetectionService::class, \App\Infrastructure\Services\Security\DefaultFraudDetectionService::class);
         $this->app->bind(\App\Domain\Shared\Services\EncryptionService::class, \App\Infrastructure\Services\Security\LaravelEncryptionService::class);
         $this->app->bind(\App\Domain\Shared\Services\SecureFileStorageService::class, \App\Infrastructure\Services\Storage\LocalSecureFileStorageService::class);
+        $this->app->bind(\App\Domain\Shared\Services\GPSUtilityService::class, \App\Infrastructure\Services\GPS\GPSUtilityService::class);
+        $this->app->bind(\App\Domain\Identity\Services\SMSService::class, function ($app) {
+            return new \App\Infrastructure\Services\SMS\SMSServiceAdapter(
+                $app->make(\App\Domain\Shared\Services\SMSNotificationService::class)
+            );
+        });
     }
 
     /**
