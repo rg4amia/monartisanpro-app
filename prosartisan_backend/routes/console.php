@@ -22,3 +22,9 @@ Schedule::command('worksite:process-auto-validations')
     ->hourly()
     ->withoutOverlapping()
     ->runInBackground();
+
+// Schedule system health monitoring to run every 5 minutes
+Schedule::command('monitor:health --alert')
+    ->everyFiveMinutes()
+    ->withoutOverlapping()
+    ->runInBackground();

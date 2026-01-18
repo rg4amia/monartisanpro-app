@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\V1\Dispute\DisputeController;
 use App\Http\Controllers\Api\V1\Documentation\OpenApiController;
 use App\Http\Controllers\Api\V1\GPSValidationController;
 use App\Http\Controllers\Api\V1\StaticDataController;
+use App\Http\Controllers\Api\V1\HealthController;
 use App\Http\Controllers\SecureFileController;
 use Illuminate\Support\Facades\Route;
 
@@ -34,6 +35,15 @@ Route::get('/secure-file', [SecureFileController::class, 'serve'])->name('secure
 
 // API Version 1
 Route::prefix('v1')->group(function () {
+
+ // Health check routes (public)
+ Route::prefix('health')->group(function () {
+  Route::get('/', [HealthController::class, 'health']);
+  Route::get('/detailed', [HealthController::class, 'detailed']);
+  Route::get('/metrics', [HealthController::class, 'metrics']);
+  Route::get('/metrics/{name}', [HealthController::class, 'metric']);
+  Route::delete('/metrics', [HealthController::class, 'clearMetrics']);
+ });
 
  // API Documentation routes (public)
  Route::prefix('docs')->group(function () {
