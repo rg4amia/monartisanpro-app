@@ -278,7 +278,7 @@ class MissionListPaginationPropertyTest extends TestCase
    'client_id' => $clientId->toString(),
    'description' => $description,
    'trade_category' => 'PLUMBER',
-   'location' => \DB::raw("ST_GeomFromText('POINT(-4.0083 5.3600)', 4326)"),
+   'location' => json_encode(['latitude' => 5.3600, 'longitude' => -4.0083]),
    'budget_min_centimes' => 5000000,
    'budget_max_centimes' => 10000000,
    'status' => 'OPEN',
@@ -298,7 +298,10 @@ class MissionListPaginationPropertyTest extends TestCase
    'client_id' => $clientId->toString(),
    'description' => $description,
    'trade_category' => 'PLUMBER',
-   'location' => \DB::raw("ST_GeomFromText('POINT({$location->getLongitude()} {$location->getLatitude()})', 4326)"),
+   'location' => json_encode([
+    'latitude' => $location->getLatitude(),
+    'longitude' => $location->getLongitude()
+   ]),
    'budget_min_centimes' => 5000000,
    'budget_max_centimes' => 10000000,
    'status' => 'OPEN',
