@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\V1\Reputation\ReputationController;
 use App\Http\Controllers\Api\V1\Dispute\DisputeController;
 use App\Http\Controllers\Api\V1\Documentation\OpenApiController;
 use App\Http\Controllers\Api\V1\GPSValidationController;
+use App\Http\Controllers\Api\V1\StaticDataController;
 use App\Http\Controllers\SecureFileController;
 use Illuminate\Support\Facades\Route;
 
@@ -38,6 +39,14 @@ Route::prefix('v1')->group(function () {
  Route::prefix('docs')->group(function () {
   Route::get('/spec', [OpenApiController::class, 'getSpec']);
   Route::get('/', [OpenApiController::class, 'getSwaggerUI']);
+ });
+
+ // Static data routes (public - cached)
+ Route::prefix('static')->group(function () {
+  Route::get('/trade-categories', [StaticDataController::class, 'tradeCategories']);
+  Route::get('/mission-statuses', [StaticDataController::class, 'missionStatuses']);
+  Route::get('/devis-statuses', [StaticDataController::class, 'devisStatuses']);
+  Route::get('/all', [StaticDataController::class, 'all']);
  });
 
  // Authentication routes (public)

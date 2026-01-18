@@ -104,6 +104,15 @@ class PostgresMissionRepository implements MissionRepository
      */
     public function findByClientId(UserId $clientId): array
     {
+        $result = $this->findByClientIdPaginated($clientId, 1000, 0);
+        return $result['missions'];
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function findByClientIdPaginated(UserId $clientId, int $limit, int $offset): array
+    {
         if (DB::getDriverName() === 'pgsql') {
             $rows = DB::table('missions')
                 ->select([
@@ -120,7 +129,13 @@ class PostgresMissionRepository implements MissionRepository
                 ])
                 ->where('client_id', $clientId->getValue())
                 ->orderBy('created_at', 'desc')
+                ->limit($limit)
+                ->offset($offset)
                 ->get();
+
+            $total = DB::table('missions')
+                ->where('client_id', $clientId->getValue())
+                ->count();
         } else {
             $rows = DB::table('missions')
                 ->select([
@@ -136,16 +151,34 @@ class PostgresMissionRepository implements MissionRepository
                 ])
                 ->where('client_id', $clientId->getValue())
                 ->orderBy('created_at', 'desc')
+                ->limit($limit)
+                ->offset($offset)
                 ->get();
+
+            $total = DB::table('missions')
+                ->where('client_id', $clientId->getValue())
+                ->count();
         }
 
-        return $rows->map(fn($row) => $this->mapRowToMission($row))->toArray();
+        return [
+            'missions' => $rows->map(fn($row) => $this->mapRowToMission($row))->toArray(),
+            'total' => $total
+        ];
     }
 
     /**
      * {@inheritDoc}
      */
     public function findOpenMissionsNearLocation(GPS_Coordinates $location, float $radiusKm): array
+    {
+        $result = $this->findOpenMissionsNearLocationPaginated($location, $radiusKm, 1000, 0);
+        return $result['missions'];
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function findOpenMissionsNearLocationPaginated(GPS_Coordinates $location, float $radiusKm, int $limit, int $offset): array
     {
         if (DB::getDriverName() === 'pgsql') {
             $rows = DB::table('missions')
@@ -165,10 +198,17 @@ class PostgresMissionRepository implements MissionRepository
                 ->whereRaw("ST_DWithin(location, ST_GeomFromText('POINT({$location->getLongitude()} {$location->getLatitude()})', 4326)::geography, ?)", [$radiusKm * 1000])
                 ->whereIn('status', [MissionStatus::OPEN, MissionStatus::QUOTED])
                 ->orderBy('distance_meters')
+                ->limit($limit)
+                ->offset($offset)
                 ->get();
+
+            $total = DB::table('missions')
+                ->whereRaw("ST_DWithin(location, ST_GeomFromText('POINT({$location->getLongitude()} {$location->getLatitude()})', 4326)::geography, ?)", [$radiusKm * 1000])
+                ->whereIn('status', [MissionStatus::OPEN, MissionStatus::QUOTED])
+                ->count();
         } else {
             // For SQLite, use a simple approximation (not geographically accurate but works for testing)
-            $rows = DB::table('missions')
+            $allRows = DB::table('missions')
                 ->select([
                     'id',
                     'client_id',
@@ -188,9 +228,15 @@ class PostgresMissionRepository implements MissionRepository
                     $distance = $location->distanceTo($missionLocation);
                     return $distance <= ($radiusKm * 1000); // Convert km to meters
                 });
+
+            $total = $allRows->count();
+            $rows = $allRows->slice($offset, $limit);
         }
 
-        return $rows->map(fn($row) => $this->mapRowToMission($row))->toArray();
+        return [
+            'missions' => $rows->map(fn($row) => $this->mapRowToMission($row))->toArray(),
+            'total' => $total
+        ];
     }
 
     /**

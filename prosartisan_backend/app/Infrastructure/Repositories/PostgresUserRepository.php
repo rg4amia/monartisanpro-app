@@ -120,6 +120,15 @@ class PostgresUserRepository implements UserRepository
      */
     public function findArtisansNearLocation(GPS_Coordinates $location, float $radiusKm): array
     {
+        $result = $this->findArtisansNearLocationPaginated($location, $radiusKm, 1000, 0);
+        return $result['artisans'];
+    }
+
+    /**
+     * Find artisans near a location with pagination
+     */
+    public function findArtisansNearLocationPaginated(GPS_Coordinates $location, float $radiusKm, int $limit, int $offset): array
+    {
         $radiusMeters = $radiusKm * 1000;
 
         if (DB::getDriverName() === 'pgsql') {
@@ -154,13 +163,36 @@ class PostgresUserRepository implements UserRepository
                     ?
                 )
                 ORDER BY distance_meters ASC
+                LIMIT ? OFFSET ?
             ", [
                 $location->getLongitude(),
                 $location->getLatitude(),
                 $location->getLongitude(),
                 $location->getLatitude(),
+                $radiusMeters,
+                $limit,
+                $offset
+            ]);
+
+            // Get total count for pagination
+            $totalResult = DB::select("
+                SELECT COUNT(*) as total
+                FROM users u
+                INNER JOIN artisan_profiles ap ON u.id = ap.user_id
+                WHERE u.user_type = 'ARTISAN'
+                AND u.account_status = 'ACTIVE'
+                AND ST_DWithin(
+                    ap.location,
+                    ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography,
+                    ?
+                )
+            ", [
+                $location->getLongitude(),
+                $location->getLatitude(),
                 $radiusMeters
             ]);
+
+            $total = $totalResult[0]->total ?? 0;
         } else {
             // For SQLite, parse JSON location and use simple distance calculation
             $artisanProfiles = DB::table('users')
@@ -208,6 +240,9 @@ class PostgresUserRepository implements UserRepository
             usort($results, function ($a, $b) {
                 return $a->distance_meters <=> $b->distance_meters;
             });
+
+            $total = count($results);
+            $results = array_slice($results, $offset, $limit);
         }
 
         $artisans = [];
@@ -215,7 +250,27 @@ class PostgresUserRepository implements UserRepository
             $artisans[] = $this->hydrateArtisan($row);
         }
 
-        return $artisans;
+        return [
+            'artisans' => $artisans,
+            'total' => $total
+        ];
+    }
+
+    /**
+     * Find users by type
+     */
+    public function findByType(UserType $type): array
+    {
+        $userData = DB::table('users')
+            ->where('user_type', $type->toString())
+            ->get();
+
+        $users = [];
+        foreach ($userData as $row) {
+            $users[] = $this->hydrateUser($row);
+        }
+
+        return $users;
     }
 
     /**

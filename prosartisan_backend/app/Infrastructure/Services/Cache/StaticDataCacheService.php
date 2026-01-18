@@ -1,0 +1,142 @@
+<?php
+
+namespace App\Infrastructure\Services\Cache;
+
+use App\Domain\Identity\Models\ValueObjects\TradeCategory;
+use App\Domain\Marketplace\Models\ValueObjects\MissionStatus;
+use App\Domain\Marketplace\Models\ValueObjects\DevisStatus;
+
+/**
+ * Service for caching static data like trade categories and statuses
+ *
+ * Requirements: 17.3
+ */
+class StaticDataCacheService
+{
+ public function __construct(
+  private CacheService $cacheService
+ ) {}
+
+ /**
+  * Get trade categories with caching
+  *
+  * @return array
+  */
+ public function getTradeCategories(): array
+ {
+  return $this->cacheService->remember(
+   CacheService::TRADE_CATEGORIES_KEY,
+   CacheService::TRADE_CATEGORIES_TTL,
+   function () {
+    return [
+     [
+      'value' => TradeCategory::PLUMBER,
+      'label' => 'Plombier',
+      'description' => 'Installation et réparation de plomberie'
+     ],
+     [
+      'value' => TradeCategory::ELECTRICIAN,
+      'label' => 'Électricien',
+      'description' => 'Installation et réparation électrique'
+     ],
+     [
+      'value' => TradeCategory::MASON,
+      'label' => 'Maçon',
+      'description' => 'Travaux de maçonnerie et construction'
+     ]
+    ];
+   }
+  );
+ }
+
+ /**
+  * Get mission statuses with caching
+  *
+  * @return array
+  */
+ public function getMissionStatuses(): array
+ {
+  return $this->cacheService->remember(
+   CacheService::MISSION_STATUSES_KEY,
+   CacheService::STATIC_DATA_TTL,
+   function () {
+    return [
+     [
+      'value' => MissionStatus::OPEN,
+      'label' => 'Ouverte',
+      'description' => 'Mission ouverte aux devis'
+     ],
+     [
+      'value' => MissionStatus::QUOTED,
+      'label' => 'Devis reçus',
+      'description' => 'Mission avec des devis en attente'
+     ],
+     [
+      'value' => MissionStatus::ACCEPTED,
+      'label' => 'Acceptée',
+      'description' => 'Mission avec devis accepté'
+     ],
+     [
+      'value' => MissionStatus::CANCELLED,
+      'label' => 'Annulée',
+      'description' => 'Mission annulée'
+     ]
+    ];
+   }
+  );
+ }
+
+ /**
+  * Get devis statuses with caching
+  *
+  * @return array
+  */
+ public function getDevisStatuses(): array
+ {
+  return $this->cacheService->remember(
+   CacheService::DEVIS_STATUSES_KEY,
+   CacheService::STATIC_DATA_TTL,
+   function () {
+    return [
+     [
+      'value' => DevisStatus::PENDING,
+      'label' => 'En attente',
+      'description' => 'Devis en attente de réponse'
+     ],
+     [
+      'value' => DevisStatus::ACCEPTED,
+      'label' => 'Accepté',
+      'description' => 'Devis accepté par le client'
+     ],
+     [
+      'value' => DevisStatus::REJECTED,
+      'label' => 'Rejeté',
+      'description' => 'Devis rejeté par le client'
+     ]
+    ];
+   }
+  );
+ }
+
+ /**
+  * Warm up all static data caches
+  *
+  * @return void
+  */
+ public function warmUpCaches(): void
+ {
+  $this->getTradeCategories();
+  $this->getMissionStatuses();
+  $this->getDevisStatuses();
+ }
+
+ /**
+  * Clear all static data caches
+  *
+  * @return void
+  */
+ public function clearCaches(): void
+ {
+  $this->cacheService->clearStaticDataCache();
+ }
+}

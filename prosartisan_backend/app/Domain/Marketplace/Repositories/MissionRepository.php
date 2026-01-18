@@ -30,6 +30,16 @@ interface MissionRepository
     public function findByClientId(UserId $clientId): array;
 
     /**
+     * Find missions by client ID with pagination
+     *
+     * @param UserId $clientId Client ID
+     * @param int $limit Number of items per page
+     * @param int $offset Offset for pagination
+     * @return array ['missions' => Mission[], 'total' => int]
+     */
+    public function findByClientIdPaginated(UserId $clientId, int $limit, int $offset): array;
+
+    /**
      * Find open missions near a location
      *
      * @param GPS_Coordinates $location Center point for search
@@ -37,4 +47,15 @@ interface MissionRepository
      * @return Mission[]
      */
     public function findOpenMissionsNearLocation(GPS_Coordinates $location, float $radiusKm): array;
+
+    /**
+     * Find open missions near a location with pagination
+     *
+     * @param GPS_Coordinates $location Center point for search
+     * @param float $radiusKm Search radius in kilometers
+     * @param int $limit Number of items per page
+     * @param int $offset Offset for pagination
+     * @return array ['missions' => Mission[], 'total' => int]
+     */
+    public function findOpenMissionsNearLocationPaginated(GPS_Coordinates $location, float $radiusKm, int $limit, int $offset): array;
 }

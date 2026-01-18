@@ -27,11 +27,14 @@ use App\Domain\Reputation\Repositories\RatingRepository;
 use App\Infrastructure\Repositories\PostgresDevisRepository;
 use App\Infrastructure\Repositories\PostgresMissionRepository;
 use App\Infrastructure\Repositories\PostgresUserRepository;
+use App\Infrastructure\Repositories\CachedUserRepository;
 use App\Infrastructure\Repositories\PostgresSequestreRepository;
 use App\Infrastructure\Repositories\PostgresJetonRepository;
 use App\Infrastructure\Repositories\PostgresTransactionRepository;
 use App\Infrastructure\Repositories\PostgresReputationRepository;
 use App\Infrastructure\Repositories\PostgresRatingRepository;
+use App\Infrastructure\Services\Cache\CacheService;
+use App\Infrastructure\Services\Cache\StaticDataCacheService;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -41,8 +44,19 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Register repositories
-        $this->app->bind(UserRepository::class, PostgresUserRepository::class);
+        // Register cache services
+        $this->app->singleton(CacheService::class);
+        $this->app->singleton(StaticDataCacheService::class);
+
+        // Register repositories with caching decorators
+        $this->app->bind('postgres.user.repository', PostgresUserRepository::class);
+        $this->app->bind(UserRepository::class, function ($app) {
+            return new CachedUserRepository(
+                $app->make('postgres.user.repository'),
+                $app->make(CacheService::class)
+            );
+        });
+
         $this->app->bind(MissionRepository::class, PostgresMissionRepository::class);
         $this->app->bind(DevisRepository::class, PostgresDevisRepository::class);
         $this->app->bind(SequestreRepository::class, PostgresSequestreRepository::class);

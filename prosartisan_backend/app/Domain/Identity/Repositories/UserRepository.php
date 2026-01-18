@@ -49,6 +49,17 @@ interface UserRepository
     public function findArtisansNearLocation(GPS_Coordinates $location, float $radiusKm): array;
 
     /**
+     * Find artisans near a location with pagination
+     *
+     * @param GPS_Coordinates $location Center location
+     * @param float $radiusKm Search radius in kilometers
+     * @param int $limit Number of items per page
+     * @param int $offset Offset for pagination
+     * @return array ['artisans' => array, 'total' => int]
+     */
+    public function findArtisansNearLocationPaginated(GPS_Coordinates $location, float $radiusKm, int $limit, int $offset): array;
+
+    /**
      * Find users by type
      *
      * @param UserType $type User type

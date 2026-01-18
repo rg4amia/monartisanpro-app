@@ -70,15 +70,31 @@ class MissionController extends Controller
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
+        $page = max(1, (int) $request->get('page', 1));
+        $perPage = 20; // Fixed page size as per requirement
+        $offset = ($page - 1) * $perPage;
 
         // Clients see their own missions, Artisans see nearby open missions
         if ($user->user_type === 'CLIENT') {
-            $missions = $this->missionRepository->findByClientId(UserId::fromString($user->id));
+            $result = $this->missionRepository->findByClientIdPaginated(
+                UserId::fromString($user->id),
+                $perPage,
+                $offset
+            );
+            $missions = $result['missions'];
+            $total = $result['total'];
         } else {
             // For artisans, find nearby open missions
             // TODO: Get artisan location from profile
             $location = new GPS_Coordinates(5.3600, -4.0083); // Default to Abidjan for now
-            $missions = $this->missionRepository->findOpenMissionsNearLocation($location, 10.0);
+            $result = $this->missionRepository->findOpenMissionsNearLocationPaginated(
+                $location,
+                10.0,
+                $perPage,
+                $offset
+            );
+            $missions = $result['missions'];
+            $total = $result['total'];
 
             // Blur GPS coordinates for privacy (Requirement 2.4)
             foreach ($missions as $mission) {
@@ -87,16 +103,23 @@ class MissionController extends Controller
             }
         }
 
-        // Simple pagination (first 20 items)
-        $paginatedMissions = array_slice($missions, 0, 20);
+        $lastPage = ceil($total / $perPage);
 
         return response()->json([
-            'data' => array_map(fn($mission) => new MissionResource($mission), $paginatedMissions),
+            'data' => array_map(fn($mission) => new MissionResource($mission), $missions),
             'meta' => [
-                'total' => count($missions),
-                'per_page' => 20,
-                'current_page' => 1,
-                'last_page' => ceil(count($missions) / 20)
+                'current_page' => $page,
+                'per_page' => $perPage,
+                'total' => $total,
+                'last_page' => $lastPage,
+                'from' => $offset + 1,
+                'to' => min($offset + $perPage, $total),
+            ],
+            'links' => [
+                'first' => $request->url() . '?page=1',
+                'last' => $request->url() . '?page=' . $lastPage,
+                'prev' => $page > 1 ? $request->url() . '?page=' . ($page - 1) : null,
+                'next' => $page < $lastPage ? $request->url() . '?page=' . ($page + 1) : null,
             ]
         ]);
     }
