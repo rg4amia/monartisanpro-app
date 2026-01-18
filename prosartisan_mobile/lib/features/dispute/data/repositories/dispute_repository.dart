@@ -1,6 +1,5 @@
-import 'dart:convert';
 import 'dart:io';
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 import '../../../../core/services/api/api_service.dart';
 import '../../../../core/services/api/api_client.dart';
 import '../../domain/models/dispute.dart';
@@ -28,22 +27,19 @@ class DisputeRepository {
     required String description,
     List<String>? evidence,
   }) async {
-    final response = await _apiService.post(
-      '/disputes',
-      data: {
-        'mission_id': missionId,
-        'defendant_id': defendantId,
-        'type': type,
-        'description': description,
-        'evidence': evidence ?? [],
-      },
-    );
+    final response = await _apiService.post('/disputes', {
+      'mission_id': missionId,
+      'defendant_id': defendantId,
+      'type': type,
+      'description': description,
+      'evidence': evidence ?? [],
+    });
 
     if (response.statusCode == 201) {
-      final data = json.decode(response.body);
+      final data = response.data;
       return Dispute.fromJson(data['data']);
     } else {
-      throw Exception('Failed to report dispute: ${response.body}');
+      throw Exception('Failed to report dispute: ${response.data}');
     }
   }
 
@@ -52,14 +48,14 @@ class DisputeRepository {
     final response = await _apiService.get('/disputes/$disputeId');
 
     if (response.statusCode == 200) {
-      final data = json.decode(response.body);
+      final data = response.data;
       return Dispute.fromJson(data['data']);
     } else if (response.statusCode == 404) {
       throw Exception('Dispute not found');
     } else if (response.statusCode == 403) {
       throw Exception('Access denied');
     } else {
-      throw Exception('Failed to get dispute: ${response.body}');
+      throw Exception('Failed to get dispute: ${response.data}');
     }
   }
 
@@ -68,12 +64,12 @@ class DisputeRepository {
     final response = await _apiService.get('/disputes');
 
     if (response.statusCode == 200) {
-      final data = json.decode(response.body);
+      final data = response.data;
       return (data['data'] as List)
           .map((dispute) => Dispute.fromJson(dispute))
           .toList();
     } else {
-      throw Exception('Failed to get disputes: ${response.body}');
+      throw Exception('Failed to get disputes: ${response.data}');
     }
   }
 
@@ -84,19 +80,19 @@ class DisputeRepository {
   }) async {
     final response = await _apiService.post(
       '/disputes/$disputeId/mediation/start',
-      data: {'mediator_id': mediatorId},
+      {'mediator_id': mediatorId},
     );
 
     if (response.statusCode == 200) {
-      final data = json.decode(response.body);
+      final data = response.data;
       return Dispute.fromJson(data['data']);
     } else if (response.statusCode == 403) {
       throw Exception('Access denied');
     } else if (response.statusCode == 400) {
-      final data = json.decode(response.body);
+      final data = response.data;
       throw Exception(data['message']);
     } else {
-      throw Exception('Failed to start mediation: ${response.body}');
+      throw Exception('Failed to start mediation: ${response.data}');
     }
   }
 
@@ -109,19 +105,19 @@ class DisputeRepository {
   }) async {
     final response = await _apiService.post(
       '/disputes/$disputeId/mediation/message',
-      data: {'message': message},
+      {'message': message},
     );
 
     if (response.statusCode == 200) {
-      final data = json.decode(response.body);
+      final data = response.data;
       return Dispute.fromJson(data['data']);
     } else if (response.statusCode == 403) {
       throw Exception('Access denied');
     } else if (response.statusCode == 400) {
-      final data = json.decode(response.body);
+      final data = response.data;
       throw Exception(data['message']);
     } else {
-      throw Exception('Failed to send message: ${response.body}');
+      throw Exception('Failed to send message: ${response.data}');
     }
   }
 
@@ -140,24 +136,24 @@ class DisputeRepository {
     };
 
     if (amountCentimes != null) {
-      data['amount_centimes'] = amountCentimes;
+      data['amount_centimes'] = amountCentimes.toString();
     }
 
     final response = await _apiService.post(
       '/disputes/$disputeId/arbitration/render',
-      data: data,
+      data,
     );
 
     if (response.statusCode == 200) {
-      final responseData = json.decode(response.body);
+      final responseData = response.data;
       return Dispute.fromJson(responseData['data']);
     } else if (response.statusCode == 403) {
       throw Exception('Access denied');
     } else if (response.statusCode == 400) {
-      final responseData = json.decode(response.body);
+      final responseData = response.data;
       throw Exception(responseData['message']);
     } else {
-      throw Exception('Failed to render arbitration: ${response.body}');
+      throw Exception('Failed to render arbitration: ${response.data}');
     }
   }
 
@@ -171,21 +167,26 @@ class DisputeRepository {
     final response = await _apiService.get(endpoint);
 
     if (response.statusCode == 200) {
-      final data = json.decode(response.body);
+      final data = response.data;
       return (data['data'] as List)
           .map((dispute) => Dispute.fromJson(dispute))
           .toList();
     } else if (response.statusCode == 403) {
       throw Exception('Access denied');
     } else {
-      throw Exception('Failed to get disputes: ${response.body}');
+      throw Exception('Failed to get disputes: ${response.data}');
     }
   }
 
   /// Upload evidence file
   Future<String> uploadEvidence(File file) async {
-    // Use the ApiClient's upload functionality instead of manual multipart
-    final data = {'file': await http.MultipartFile.fromPath('file', file.path)};
+    // Use the ApiClient's upload functionality
+    final data = {
+      'file': await MultipartFile.fromFile(
+        file.path,
+        filename: file.path.split('/').last,
+      ),
+    };
 
     final response = await _apiClient.uploadFile('/upload/evidence', data);
 
@@ -195,14 +196,5 @@ class DisputeRepository {
     } else {
       throw Exception('Failed to upload evidence: ${response.data}');
     }
-  }
-
-  /// Get authentication headers
-  Future<Map<String, String>> _getAuthHeaders() async {
-    final token = await _apiClient.getToken();
-    return {
-      'Authorization': 'Bearer ${token ?? ''}',
-      'Content-Type': 'application/json',
-    };
   }
 }

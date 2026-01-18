@@ -2,20 +2,23 @@ import 'dart:io';
 import 'package:get/get.dart';
 import '../../domain/models/dispute.dart';
 import '../../data/repositories/dispute_repository.dart';
-import '../../../../core/services/auth_service.dart';
+import '../../../auth/presentation/controllers/auth_controller.dart';
 
 /// Controller for dispute management
 ///
 /// Requirements: 9.1, 9.5
 class DisputeController extends GetxController {
   final DisputeRepository _disputeRepository;
-  final AuthService _authService;
+  late final AuthController _authController;
 
-  DisputeController({
-    required DisputeRepository disputeRepository,
-    required AuthService authService,
-  }) : _disputeRepository = disputeRepository,
-       _authService = authService;
+  DisputeController({required DisputeRepository disputeRepository})
+    : _disputeRepository = disputeRepository;
+
+  @override
+  void onInit() {
+    super.onInit();
+    _authController = Get.find<AuthController>();
+  }
 
   // Observable state
   final RxList<Dispute> disputes = <Dispute>[].obs;
@@ -242,13 +245,13 @@ class DisputeController extends GetxController {
 
   /// Check if current user is involved in dispute
   bool isUserInvolved(Dispute dispute) {
-    final currentUserId = _authService.currentUser?.id;
+    final currentUserId = _authController.currentUser.value?.id;
     return currentUserId != null && dispute.involvesUser(currentUserId);
   }
 
   /// Check if current user is admin
   bool get isAdmin {
-    return _authService.currentUser?.userType == 'ADMIN';
+    return _authController.currentUser.value?.userType == 'ADMIN';
   }
 
   /// Get dispute status color
