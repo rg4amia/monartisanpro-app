@@ -651,7 +651,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - _Requirements: 17.5_
 
 - [-] 27. Final Integration and End-to-End Testing
-  - [ ] 27.1 Wire all contexts together with event handlers
+  - [-] 27.1 Wire all contexts together with event handlers
     - QuoteAccepted → block funds → fragment → generate jeton
     - MilestoneValidated → release labor payment
     - ChantierCompleted → recalculate score

@@ -3,10 +3,15 @@
 namespace App\Providers;
 
 use App\Application\Handlers\NotificationEventHandler;
+use App\Application\Handlers\IntegrationEventHandler;
 use App\Domain\Financial\Events\LaborPaymentReleased;
 use App\Domain\Marketplace\Events\MissionCreated;
 use App\Domain\Marketplace\Events\QuoteSubmitted;
+use App\Domain\Marketplace\Events\QuoteAccepted;
 use App\Domain\Worksite\Events\MilestoneProofSubmitted;
+use App\Domain\Worksite\Events\MilestoneValidated;
+use App\Domain\Worksite\Events\ChantierCompleted;
+use App\Domain\Dispute\Events\DisputeReported;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Event;
 
