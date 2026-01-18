@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\V1\Worksite\ChantierController;
 use App\Http\Controllers\Api\V1\Worksite\JalonController;
 use App\Http\Controllers\Api\V1\Reputation\ReputationController;
 use App\Http\Controllers\Api\V1\Dispute\DisputeController;
+use App\Http\Controllers\Api\V1\Documentation\OpenApiController;
 use App\Http\Controllers\SecureFileController;
 use Illuminate\Support\Facades\Route;
 
@@ -31,6 +32,12 @@ Route::get('/secure-file', [SecureFileController::class, 'serve'])->name('secure
 
 // API Version 1
 Route::prefix('v1')->group(function () {
+
+ // API Documentation routes (public)
+ Route::prefix('docs')->group(function () {
+  Route::get('/spec', [OpenApiController::class, 'getSpec']);
+  Route::get('/', [OpenApiController::class, 'getSwaggerUI']);
+ });
 
  // Authentication routes (public)
  Route::prefix('auth')->group(function () {

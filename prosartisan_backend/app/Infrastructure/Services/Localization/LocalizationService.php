@@ -30,7 +30,7 @@ class LocalizationService
 
   // Use French number formatting with spaces as thousand separators
   $formatter = new NumberFormatter('fr_FR', NumberFormatter::DECIMAL);
-  $formatter->setAttribute(NumberFormatter::GROUPING_SEPARATOR_SYMBOL, ' ');
+  $formatter->setSymbol(NumberFormatter::GROUPING_SEPARATOR_SYMBOL, ' ');
 
   $formattedAmount = $formatter->format($amountInFrancs);
 

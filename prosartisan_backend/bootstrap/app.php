@@ -20,12 +20,14 @@ return Application::configure(basePath: dirname(__DIR__))
             'kyc.required' => \App\Http\Middleware\KYC\RequireKYCVerification::class,
             'fraud.detection' => \App\Http\Middleware\Security\FraudDetectionMiddleware::class,
             'locale' => \App\Http\Middleware\LocaleMiddleware::class,
+            'error.formatter' => \App\Http\Middleware\ErrorResponseFormatter::class,
         ]);
 
-        // Apply rate limiting and locale detection to all API routes
+        // Apply rate limiting, locale detection, and error formatting to all API routes
         $middleware->group('api', [
             \App\Http\Middleware\RateLimitMiddleware::class,
             \App\Http\Middleware\LocaleMiddleware::class,
+            \App\Http\Middleware\ErrorResponseFormatter::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
