@@ -630,13 +630,13 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - **Property 57: GPS Timestamp Recording**
     - **Validates: Requirements 10.2, 10.4, 10.5, 10.6**
 
-- [-] 26. Implement Pagination and Performance
+- [x] 26. Implement Pagination and Performance
   - [x] 26.1 Implement pagination for list endpoints
     - Add pagination to missions, artisans, transactions lists
     - Set page size to 20 items
     - _Requirements: 17.2_
   
-  - [-]* 26.2 Write property test for pagination
+  - [x]* 26.2 Write property test for pagination
     - **Property 82: Mission List Pagination**
     - **Validates: Requirements 17.2**
   
@@ -650,7 +650,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - Add PostGIS spatial indexes for location queries
     - _Requirements: 17.5_
 
-- [ ] 27. Final Integration and End-to-End Testing
+- [-] 27. Final Integration and End-to-End Testing
   - [ ] 27.1 Wire all contexts together with event handlers
     - QuoteAccepted → block funds → fragment → generate jeton
     - MilestoneValidated → release labor payment

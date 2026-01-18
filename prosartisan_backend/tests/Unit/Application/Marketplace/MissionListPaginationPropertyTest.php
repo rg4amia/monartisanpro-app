@@ -156,8 +156,8 @@ class MissionListPaginationPropertyTest extends TestCase
     );
 
     // Property: No overlap between pages
-    $firstPageIds = array_map(fn($m) => $m->getId()->toString(), $firstPage['missions']);
-    $secondPageIds = array_map(fn($m) => $m->getId()->toString(), $secondPage['missions']);
+    $firstPageIds = array_map(fn($m) => $m->getId()->getValue(), $firstPage['missions']);
+    $secondPageIds = array_map(fn($m) => $m->getId()->getValue(), $secondPage['missions']);
     $this->assertEmpty(array_intersect($firstPageIds, $secondPageIds));
 
     // Property: Total should be consistent across pages
@@ -181,7 +181,7 @@ class MissionListPaginationPropertyTest extends TestCase
   }
 
   $pageSize = 20;
-  $expectedPages = ceil($totalMissions / $pageSize); // Should be 3 pages
+  $expectedPages = (int) ceil($totalMissions / $pageSize); // Should be 3 pages
 
   $allRetrievedIds = [];
 
@@ -202,7 +202,7 @@ class MissionListPaginationPropertyTest extends TestCase
 
    // Collect IDs to check for duplicates
    foreach ($result['missions'] as $mission) {
-    $allRetrievedIds[] = $mission->getId()->toString();
+    $allRetrievedIds[] = $mission->getId()->getValue();
    }
   }
 
@@ -214,7 +214,7 @@ class MissionListPaginationPropertyTest extends TestCase
  private function assertPaginationConsistency(UserId $clientId, array $expectedMissionIds, int $totalMissions): void
  {
   $pageSize = 20; // As per requirement 17.2
-  $expectedPages = ceil($totalMissions / $pageSize);
+  $expectedPages = (int) ceil($totalMissions / $pageSize);
 
   $allRetrievedIds = [];
 
@@ -239,7 +239,7 @@ class MissionListPaginationPropertyTest extends TestCase
 
    // Collect mission IDs
    foreach ($result['missions'] as $mission) {
-    $allRetrievedIds[] = $mission->getId()->toString();
+    $allRetrievedIds[] = $mission->getId()->getValue();
    }
   }
 
