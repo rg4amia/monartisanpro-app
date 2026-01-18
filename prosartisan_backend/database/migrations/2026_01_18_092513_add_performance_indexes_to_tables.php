@@ -31,8 +31,7 @@ return new class extends Migration
         Schema::table('artisan_profiles', function (Blueprint $table) {
             // Composite index for KYC verified artisans by category
             $table->index(['trade_category', 'is_kyc_verified'], 'idx_artisan_category_kyc');
-            // Index for KYC verification status
-            $table->index('is_kyc_verified');
+            // Note: is_kyc_verified index already exists from create_artisan_profiles_table migration
         });
 
         // Add composite indexes for missions table
@@ -165,7 +164,7 @@ return new class extends Migration
         // Drop composite indexes for artisan_profiles table
         Schema::table('artisan_profiles', function (Blueprint $table) {
             $table->dropIndex('idx_artisan_category_kyc');
-            $table->dropIndex(['is_kyc_verified']);
+            // Note: is_kyc_verified index is owned by create_artisan_profiles_table migration
         });
 
         // Drop composite indexes for missions table

@@ -636,7 +636,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - Set page size to 20 items
     - _Requirements: 17.2_
   
-  - [ ]* 26.2 Write property test for pagination
+  - [-]* 26.2 Write property test for pagination
     - **Property 82: Mission List Pagination**
     - **Validates: Requirements 17.2**
   
