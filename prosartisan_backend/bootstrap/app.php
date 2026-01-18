@@ -31,5 +31,13 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Force API routes to use our custom exception handler
+        $exceptions->render(function (Throwable $e, $request) {
+            // Only handle API routes
+            if ($request->is('api/*') || $request->expectsJson()) {
+                $handler = new \App\Exceptions\Handler(app());
+                return $handler->render($request, $e);
+            }
+            return null; // Let Laravel handle non-API routes normally
+        });
     })->create();
