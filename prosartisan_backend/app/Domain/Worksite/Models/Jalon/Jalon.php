@@ -7,6 +7,9 @@ use App\Domain\Worksite\Models\ValueObjects\ChantierId;
 use App\Domain\Worksite\Models\ValueObjects\JalonId;
 use App\Domain\Worksite\Models\ValueObjects\JalonStatus;
 use App\Domain\Worksite\Models\ValueObjects\ProofOfDelivery;
+use App\Domain\Worksite\Events\MilestoneValidated;
+use App\Domain\Shared\Services\DomainEventDispatcher;
+use App\Domain\Identity\Models\ValueObjects\UserId;
 use DateTime;
 use InvalidArgumentException;
 

@@ -5,6 +5,7 @@ namespace App\Domain\Marketplace\Models\Mission;
 use App\Domain\Identity\Models\ValueObjects\TradeCategory;
 use App\Domain\Identity\Models\ValueObjects\UserId;
 use App\Domain\Marketplace\Events\MissionCreated;
+use App\Domain\Marketplace\Events\QuoteAccepted;
 use App\Domain\Marketplace\Exceptions\MaximumQuotesExceededException;
 use App\Domain\Marketplace\Models\Devis\Devis;
 use App\Domain\Marketplace\Models\ValueObjects\DevisId;
@@ -142,11 +143,13 @@ final class Mission
         }
 
         $quoteFound = false;
+        $acceptedQuote = null;
 
         foreach ($this->quotes as $quote) {
             if ($quote->getId()->equals($quoteId)) {
                 $quote->accept();
                 $quoteFound = true;
+                $acceptedQuote = $quote;
             } else {
                 // Reject all other pending quotes
                 if ($quote->getStatus()->isPending()) {
@@ -160,6 +163,20 @@ final class Mission
         }
 
         $this->status = MissionStatus::accepted();
+
+        // Fire QuoteAccepted domain event
+        if ($acceptedQuote) {
+            DomainEventDispatcher::dispatch(new QuoteAccepted(
+                $acceptedQuote->getId(),
+                $this->id,
+                $this->clientId,
+                $acceptedQuote->getArtisanId(),
+                $acceptedQuote->getTotalAmount(),
+                $acceptedQuote->getMaterialsAmount(),
+                $acceptedQuote->getLaborAmount(),
+                new DateTime()
+            ));
+        }
     }
 
     /**

@@ -13,12 +13,14 @@ final class SequestreStatus
     public const PARTIAL = 'PARTIAL';
     public const RELEASED = 'RELEASED';
     public const REFUNDED = 'REFUNDED';
+    public const FROZEN = 'FROZEN';
 
     private const VALID_STATUSES = [
         self::BLOCKED,
         self::PARTIAL,
         self::RELEASED,
         self::REFUNDED,
+        self::FROZEN,
     ];
 
     private const FRENCH_LABELS = [
@@ -26,6 +28,7 @@ final class SequestreStatus
         self::PARTIAL => 'Partiellement libéré',
         self::RELEASED => 'Libéré',
         self::REFUNDED => 'Remboursé',
+        self::FROZEN => 'Gelé',
     ];
 
     private string $value;
@@ -54,6 +57,11 @@ final class SequestreStatus
     public static function refunded(): self
     {
         return new self(self::REFUNDED);
+    }
+
+    public static function frozen(): self
+    {
+        return new self(self::FROZEN);
     }
 
     public static function fromString(string $value): self
@@ -89,6 +97,11 @@ final class SequestreStatus
     public function isRefunded(): bool
     {
         return $this->value === self::REFUNDED;
+    }
+
+    public function isFrozen(): bool
+    {
+        return $this->value === self::FROZEN;
     }
 
     public function equals(SequestreStatus $other): bool
