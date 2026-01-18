@@ -261,7 +261,7 @@ class MissionListPaginationPropertyTest extends TestCase
   \DB::table('users')->insert([
    'id' => $userId->toString(),
    'email' => "test-{$userId->toString()}@example.com",
-   'password' => bcrypt('password'),
+   'password_hash' => bcrypt('password'),
    'user_type' => $userType,
    'account_status' => 'ACTIVE',
    'created_at' => now(),
