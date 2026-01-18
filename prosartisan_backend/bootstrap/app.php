@@ -21,10 +21,12 @@ return Application::configure(basePath: dirname(__DIR__))
             'fraud.detection' => \App\Http\Middleware\Security\FraudDetectionMiddleware::class,
             'locale' => \App\Http\Middleware\LocaleMiddleware::class,
             'error.formatter' => \App\Http\Middleware\ErrorResponseFormatter::class,
+            'monitoring' => \App\Http\Middleware\MonitoringMiddleware::class,
         ]);
 
-        // Apply rate limiting, locale detection, and error formatting to all API routes
+        // Apply monitoring, rate limiting, locale detection, and error formatting to all API routes
         $middleware->group('api', [
+            \App\Http\Middleware\MonitoringMiddleware::class,
             \App\Http\Middleware\RateLimitMiddleware::class,
             \App\Http\Middleware\LocaleMiddleware::class,
             \App\Http\Middleware\ErrorResponseFormatter::class,

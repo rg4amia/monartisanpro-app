@@ -7,4 +7,5 @@ return [
     App\Providers\MobileMoneyServiceProvider::class,
     App\Providers\NotificationServiceProvider::class,
     App\Providers\WorksiteServiceProvider::class,
+    App\Providers\MonitoringServiceProvider::class,
 ];
