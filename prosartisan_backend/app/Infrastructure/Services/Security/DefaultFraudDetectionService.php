@@ -279,7 +279,7 @@ class DefaultFraudDetectionService implements FraudDetectionService
         }
 
         // Check if amount is significantly higher than average
-        $amountCentimes = $amount->getCentimes();
+        $amountCentimes = $amount->toCentimes();
         $threshold = $avgAmount * self::UNUSUAL_AMOUNT_MULTIPLIER;
 
         $isSuspicious = $amountCentimes > $threshold;

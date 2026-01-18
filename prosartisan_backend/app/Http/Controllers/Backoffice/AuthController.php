@@ -33,7 +33,7 @@ class AuthController extends Controller
             ]);
         }
 
-        if ($user->user_type !== UserType::ADMIN->value) {
+        if ($user->user_type !== UserType::ADMIN()->getValue()) {
             throw ValidationException::withMessages([
                 'email' => ['Accès non autorisé. Seuls les administrateurs peuvent accéder au backoffice.'],
             ]);

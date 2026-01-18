@@ -524,6 +524,7 @@ class PostgresUserRepository implements UserRepository
     private function hydrateBaseUser(object $userData): User
     {
         $kycDocuments = $this->loadKYCDocuments($userData->id);
+        $phoneNumber = $userData->phone_number ? PhoneNumber::fromString($userData->phone_number) : null;
 
         $user = new User(
             UserId::fromString($userData->id),
@@ -532,6 +533,9 @@ class PostgresUserRepository implements UserRepository
             UserType::fromString($userData->user_type),
             AccountStatus::fromString($userData->account_status),
             $kycDocuments,
+            $phoneNumber,
+            null, // deviceToken
+            null, // notificationPreferences
             new DateTime($userData->created_at),
             new DateTime($userData->updated_at)
         );
@@ -807,6 +811,41 @@ class PostgresUserRepository implements UserRepository
     }
 
     /**
+     * Hydrate Fournisseur entity from combined data
+     */
+    private function hydrateFournisseurFromRow(object $data): Fournisseur
+    {
+        $kycDocuments = $this->loadKYCDocuments($data->id);
+
+        // Check if KYC verified from kyc_verifications table
+        $isKYCVerified = DB::table('kyc_verifications')
+            ->where('user_id', $data->id)
+            ->where('verification_status', 'VERIFIED')
+            ->exists();
+
+        $fournisseur = new Fournisseur(
+            UserId::fromString($data->id),
+            Email::fromString($data->email),
+            HashedPassword::fromHash($data->password_hash),
+            PhoneNumber::fromString($data->phone_number ?? ''),
+            $data->business_name,
+            new GPS_Coordinates(
+                (float) $data->latitude,
+                (float) $data->longitude
+            ),
+            $isKYCVerified,
+            AccountStatus::fromString($data->account_status),
+            $kycDocuments,
+            new DateTime($data->created_at),
+            new DateTime($data->updated_at)
+        );
+
+        $this->restoreLoginState($fournisseur, $data);
+
+        return $fournisseur;
+    }
+
+    /**
      * Find suppliers near a location
      */
     public function findSuppliersNearLocation(GPS_Coordinates $location, float $radiusKm): array
@@ -861,7 +900,12 @@ class PostgresUserRepository implements UserRepository
 
         $suppliers = [];
         foreach ($results as $row) {
-            $suppliers[] = $this->mapRowToFournisseur($row);
+            // For PostgreSQL results, we need to create a proper user data object
+            if (DB::getDriverName() === 'pgsql') {
+                $suppliers[] = $this->hydrateFournisseurFromRow($row);
+            } else {
+                $suppliers[] = $this->hydrateFournisseurFromUserId($row);
+            }
         }
 
         return $suppliers;

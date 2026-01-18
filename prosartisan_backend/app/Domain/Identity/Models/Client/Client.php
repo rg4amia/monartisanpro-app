@@ -17,7 +17,6 @@ use DateTime;
  */
 final class Client extends User
 {
-    private PhoneNumber $phoneNumber;
     private ?string $preferredPaymentMethod;
 
     public function __construct(
@@ -37,11 +36,13 @@ final class Client extends User
             UserType::CLIENT(),
             $status,
             null, // Clients don't require KYC documents
+            $phoneNumber, // Pass phoneNumber to parent
+            null, // deviceToken
+            null, // notificationPreferences
             $createdAt,
             $updatedAt
         );
 
-        $this->phoneNumber = $phoneNumber;
         $this->preferredPaymentMethod = $preferredPaymentMethod;
     }
 
@@ -86,8 +87,15 @@ final class Client extends User
 
     // Getters
 
+    /**
+     * Get phone number (clients always have a phone number)
+     */
     public function getPhoneNumber(): PhoneNumber
     {
+        // Clients always have a phone number, so we can safely assert it's not null
+        if ($this->phoneNumber === null) {
+            throw new \LogicException('Client must have a phone number');
+        }
         return $this->phoneNumber;
     }
 

@@ -26,6 +26,9 @@ class MetricsCollector
   {
     $key = self::METRICS_PREFIX . 'response_time:' . $endpoint;
 
+    // Track the key for non-Redis stores
+    self::trackMetricKey($key);
+
     // Get existing metrics
     $metrics = Cache::get($key, [
       'count' => 0,
@@ -196,10 +199,48 @@ class MetricsCollector
    */
   public static function clearMetrics(): void
   {
-    $keys = Cache::getRedis()->keys(self::METRICS_PREFIX . '*');
+    try {
+      if (Cache::getStore() instanceof \Illuminate\Cache\RedisStore) {
+        $keys = Cache::getRedis()->keys(self::METRICS_PREFIX . '*');
+        foreach ($keys as $key) {
+          Cache::forget($key);
+        }
+      } else {
+        $keys = self::getTrackedMetricKeys();
+        foreach ($keys as $key) {
+          Cache::forget($key);
+        }
+        // Clear the keys index
+        Cache::forget(self::METRICS_PREFIX . 'keys');
+      }
+    } catch (\Exception $e) {
+      // If we can't clear metrics, just continue
+    }
+  }
 
-    foreach ($keys as $key) {
-      Cache::forget($key);
+  /**
+   * Get tracked metric keys (for non-Redis cache stores)
+   */
+  private static function getTrackedMetricKeys(): array
+  {
+    // This is a simplified implementation
+    // In production, you might want to maintain a separate index of metric keys
+    return Cache::get(self::METRICS_PREFIX . 'keys', []);
+  }
+
+  /**
+   * Track a metric key (for non-Redis cache stores)
+   */
+  private static function trackMetricKey(string $key): void
+  {
+    if (Cache::getStore() instanceof \Illuminate\Cache\RedisStore) {
+      return; // Redis doesn't need key tracking
+    }
+
+    $keys = Cache::get(self::METRICS_PREFIX . 'keys', []);
+    if (!in_array($key, $keys)) {
+      $keys[] = $key;
+      Cache::put(self::METRICS_PREFIX . 'keys', $keys, self::METRICS_TTL);
     }
   }
 

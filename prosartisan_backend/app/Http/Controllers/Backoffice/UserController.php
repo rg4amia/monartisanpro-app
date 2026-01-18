@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use App\Domain\Identity\Models\ValueObjects\UserType;
 use App\Domain\Identity\Models\ValueObjects\AccountStatus;
@@ -92,7 +93,7 @@ class UserController extends Controller
         ]);
 
         $user->update([
-            'account_status' => AccountStatus::SUSPENDED->value,
+            'account_status' => AccountStatus::SUSPENDED()->getValue(),
         ]);
 
         // Log the suspension
@@ -101,7 +102,7 @@ class UserController extends Controller
             'action' => 'account_suspended',
             'details' => json_encode([
                 'reason' => $request->reason,
-                'suspended_by' => auth()->id(),
+                'suspended_by' => Auth::id(),
                 'suspended_at' => now(),
             ]),
             'created_at' => now(),
@@ -113,7 +114,7 @@ class UserController extends Controller
     public function activate(User $user)
     {
         $user->update([
-            'account_status' => AccountStatus::ACTIVE->value,
+            'account_status' => AccountStatus::ACTIVE()->getValue(),
         ]);
 
         // Log the activation
@@ -121,7 +122,7 @@ class UserController extends Controller
             'user_id' => $user->id,
             'action' => 'account_activated',
             'details' => json_encode([
-                'activated_by' => auth()->id(),
+                'activated_by' => Auth::id(),
                 'activated_at' => now(),
             ]),
             'created_at' => now(),
@@ -132,7 +133,7 @@ class UserController extends Controller
 
     public function approveKyc(User $user)
     {
-        if ($user->user_type === UserType::ARTISAN->value) {
+        if ($user->user_type === UserType::ARTISAN()->getValue()) {
             DB::table('artisan_profiles')
                 ->where('user_id', $user->id)
                 ->update(['is_kyc_verified' => true]);
@@ -150,7 +151,7 @@ class UserController extends Controller
             'user_id' => $user->id,
             'action' => 'kyc_approved',
             'details' => json_encode([
-                'approved_by' => auth()->id(),
+                'approved_by' => Auth::id(),
                 'approved_at' => now(),
             ]),
             'created_at' => now(),
@@ -177,7 +178,7 @@ class UserController extends Controller
             'action' => 'kyc_rejected',
             'details' => json_encode([
                 'reason' => $request->reason,
-                'rejected_by' => auth()->id(),
+                'rejected_by' => Auth::id(),
                 'rejected_at' => now(),
             ]),
             'created_at' => now(),
@@ -189,19 +190,19 @@ class UserController extends Controller
     private function getUserTypes()
     {
         return [
-            ['value' => UserType::CLIENT->value, 'label' => 'Client'],
-            ['value' => UserType::ARTISAN->value, 'label' => 'Artisan'],
-            ['value' => UserType::FOURNISSEUR->value, 'label' => 'Fournisseur'],
-            ['value' => UserType::REFERENT_ZONE->value, 'label' => 'Référent de Zone'],
+            ['value' => UserType::CLIENT()->getValue(), 'label' => 'Client'],
+            ['value' => UserType::ARTISAN()->getValue(), 'label' => 'Artisan'],
+            ['value' => UserType::FOURNISSEUR()->getValue(), 'label' => 'Fournisseur'],
+            ['value' => UserType::REFERENT_ZONE()->getValue(), 'label' => 'Référent de Zone'],
         ];
     }
 
     private function getAccountStatuses()
     {
         return [
-            ['value' => AccountStatus::PENDING->value, 'label' => 'En attente'],
-            ['value' => AccountStatus::ACTIVE->value, 'label' => 'Actif'],
-            ['value' => AccountStatus::SUSPENDED->value, 'label' => 'Suspendu'],
+            ['value' => AccountStatus::PENDING()->getValue(), 'label' => 'En attente'],
+            ['value' => AccountStatus::ACTIVE()->getValue(), 'label' => 'Actif'],
+            ['value' => AccountStatus::SUSPENDED()->getValue(), 'label' => 'Suspendu'],
         ];
     }
 

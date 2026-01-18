@@ -21,7 +21,6 @@ final class Fournisseur extends User
 {
     private string $businessName;
     private GPS_Coordinates $shopLocation;
-    private PhoneNumber $phoneNumber;
     private bool $isKYCVerified;
 
     public function __construct(
@@ -44,11 +43,13 @@ final class Fournisseur extends User
             UserType::FOURNISSEUR(),
             $status,
             $kycDocuments,
+            $phoneNumber, // Pass phoneNumber to parent
+            null, // deviceToken
+            null, // notificationPreferences
             $createdAt,
             $updatedAt
         );
 
-        $this->phoneNumber = $phoneNumber;
         $this->businessName = $businessName;
         $this->shopLocation = $shopLocation;
         $this->isKYCVerified = $isKYCVerified;
@@ -142,6 +143,10 @@ final class Fournisseur extends User
 
     public function getPhoneNumber(): PhoneNumber
     {
+        // Fournisseurs always have a phone number, so we can safely assert it's not null
+        if ($this->phoneNumber === null) {
+            throw new \LogicException('Fournisseur must have a phone number');
+        }
         return $this->phoneNumber;
     }
 

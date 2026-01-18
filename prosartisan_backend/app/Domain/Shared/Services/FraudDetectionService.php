@@ -4,6 +4,7 @@ namespace App\Domain\Shared\Services;
 
 use App\Domain\Identity\Models\ValueObjects\UserId;
 use App\Domain\Shared\ValueObjects\MoneyAmount;
+use App\Domain\Shared\ValueObjects\SuspiciousActivityResult;
 
 /**
  * Fraud Detection Service Interface

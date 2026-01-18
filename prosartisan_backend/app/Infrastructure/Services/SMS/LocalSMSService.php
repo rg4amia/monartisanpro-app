@@ -6,6 +6,7 @@ use App\Domain\Identity\Models\ValueObjects\PhoneNumber;
 use App\Domain\Identity\Models\ValueObjects\UserId;
 use App\Domain\Identity\Repositories\UserRepository;
 use App\Domain\Shared\Services\SMSNotificationService;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -47,6 +48,7 @@ class LocalSMSService implements SMSNotificationService
             // Format phone number for Côte d'Ivoire (+225)
             $formattedNumber = $this->formatPhoneNumber($phoneNumber->getValue());
 
+            /** @var \Illuminate\Http\Client\Response $response */
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $this->apiKey,
                 'Content-Type' => 'application/json',

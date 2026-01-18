@@ -3,9 +3,9 @@
 namespace App\Infrastructure\Services\MobileMoney;
 
 use App\Domain\Financial\Services\MobileMoneyService;
+use App\Domain\Financial\Services\MobileMoneyGateway;
 use App\Domain\Financial\Repositories\TransactionRepository;
 use App\Domain\Financial\Repositories\SequestreRepository;
-use App\Domain\Financial\Models\ValueObjects\TransactionStatus;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use Exception;

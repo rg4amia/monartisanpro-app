@@ -6,6 +6,7 @@ use App\Domain\Identity\Models\ValueObjects\PhoneNumber;
 use App\Domain\Identity\Models\ValueObjects\UserId;
 use App\Domain\Identity\Repositories\UserRepository;
 use App\Domain\Shared\Services\SMSNotificationService;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -44,6 +45,7 @@ class TwilioSMSService implements SMSNotificationService
     public function sendSMS(PhoneNumber $phoneNumber, string $message): bool
     {
         try {
+            /** @var \Illuminate\Http\Client\Response $response */
             $response = Http::withBasicAuth($this->accountSid, $this->authToken)
                 ->asForm()
                 ->post("https://api.twilio.com/2010-04-01/Accounts/{$this->accountSid}/Messages.json", [

@@ -5,7 +5,6 @@ namespace App\Domain\Financial\Services;
 use App\Domain\Identity\Models\ValueObjects\UserId;
 use App\Domain\Identity\Models\ValueObjects\PhoneNumber;
 use App\Domain\Shared\ValueObjects\MoneyAmount;
-use App\Domain\Financial\Models\ValueObjects\TransactionId;
 
 /**
  * Interface for Mobile Money payment gateway integration
@@ -91,4 +90,13 @@ interface MobileMoneyGateway
      * @return bool
      */
     public function supportsPhoneNumber(PhoneNumber $phoneNumber): bool;
+
+    /**
+     * Verify webhook signature for security
+     *
+     * @param string $payload Raw webhook payload
+     * @param string $signature Signature from webhook headers
+     * @return bool True if signature is valid
+     */
+    public function verifyWebhookSignature(string $payload, string $signature): bool;
 }

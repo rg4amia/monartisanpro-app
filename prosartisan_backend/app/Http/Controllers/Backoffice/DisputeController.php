@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use App\Domain\Dispute\Models\ValueObjects\DisputeStatus;
 use App\Domain\Dispute\Models\ValueObjects\DecisionType;
 
@@ -114,7 +115,7 @@ class DisputeController extends Controller
             ->where('id', $id)
             ->update([
                 'mediator_id' => $request->mediator_id,
-                'status' => DisputeStatus::IN_MEDIATION->value,
+                'status' => DisputeStatus::IN_MEDIATION,
                 'updated_at' => now(),
             ]);
 
@@ -124,7 +125,7 @@ class DisputeController extends Controller
             'action' => 'mediation_assigned',
             'details' => json_encode([
                 'litige_id' => $id,
-                'assigned_by' => auth()->id(),
+                'assigned_by' => Auth::id(),
                 'assigned_at' => now(),
             ]),
             'created_at' => now(),
@@ -148,7 +149,7 @@ class DisputeController extends Controller
             DB::table('litiges')
                 ->where('id', $id)
                 ->update([
-                    'status' => DisputeStatus::RESOLVED->value,
+                    'status' => DisputeStatus::RESOLVED,
                     'decision_type' => $request->decision_type,
                     'decision_amount_centimes' => $request->amount_centimes,
                     'decision_justification' => $request->justification,
@@ -170,7 +171,7 @@ class DisputeController extends Controller
 
             // Log the decision
             DB::table('user_activity_logs')->insert([
-                'user_id' => auth()->id(),
+                'user_id' => Auth::id(),
                 'action' => 'arbitration_rendered',
                 'details' => json_encode([
                     'litige_id' => $id,
@@ -200,7 +201,7 @@ class DisputeController extends Controller
         DB::table('mediation_communications')->insert([
             'id' => \Illuminate\Support\Str::uuid(),
             'litige_id' => $id,
-            'sender_id' => auth()->id(),
+            'sender_id' => Auth::id(),
             'message' => $request->message,
             'created_at' => now(),
         ]);
@@ -211,23 +212,31 @@ class DisputeController extends Controller
     private function executeDecision($sequestreId, $decisionType, $amountCentimes = null)
     {
         switch ($decisionType) {
-            case DecisionType::REFUND_CLIENT->value:
+            case DecisionType::REFUND_CLIENT:
                 DB::table('sequestres')
                     ->where('id', $sequestreId)
                     ->update(['status' => 'REFUNDED']);
                 break;
 
-            case DecisionType::PAY_ARTISAN->value:
+            case DecisionType::PAY_ARTISAN:
                 DB::table('sequestres')
                     ->where('id', $sequestreId)
                     ->update(['status' => 'RELEASED']);
                 break;
 
-            case DecisionType::PARTIAL_REFUND->value:
+            case DecisionType::PARTIAL_REFUND:
                 // Implement partial refund logic
+                if ($amountCentimes !== null) {
+                    DB::table('sequestres')
+                        ->where('id', $sequestreId)
+                        ->update([
+                            'status' => 'PARTIALLY_REFUNDED',
+                            'refunded_amount_centimes' => $amountCentimes
+                        ]);
+                }
                 break;
 
-            case DecisionType::FREEZE_FUNDS->value:
+            case DecisionType::FREEZE_FUNDS:
                 DB::table('sequestres')
                     ->where('id', $sequestreId)
                     ->update(['status' => 'FROZEN']);
@@ -238,11 +247,11 @@ class DisputeController extends Controller
     private function getDisputeStatuses()
     {
         return [
-            ['value' => DisputeStatus::OPEN->value, 'label' => 'Ouvert'],
-            ['value' => DisputeStatus::IN_MEDIATION->value, 'label' => 'En médiation'],
-            ['value' => DisputeStatus::IN_ARBITRATION->value, 'label' => 'En arbitrage'],
-            ['value' => DisputeStatus::RESOLVED->value, 'label' => 'Résolu'],
-            ['value' => DisputeStatus::CLOSED->value, 'label' => 'Fermé'],
+            ['value' => DisputeStatus::OPEN, 'label' => 'Ouvert'],
+            ['value' => DisputeStatus::IN_MEDIATION, 'label' => 'En médiation'],
+            ['value' => DisputeStatus::IN_ARBITRATION, 'label' => 'En arbitrage'],
+            ['value' => DisputeStatus::RESOLVED, 'label' => 'Résolu'],
+            ['value' => DisputeStatus::CLOSED, 'label' => 'Fermé'],
         ];
     }
 
@@ -259,10 +268,10 @@ class DisputeController extends Controller
     private function getDecisionTypes()
     {
         return [
-            ['value' => DecisionType::REFUND_CLIENT->value, 'label' => 'Rembourser le client'],
-            ['value' => DecisionType::PAY_ARTISAN->value, 'label' => 'Payer l\'artisan'],
-            ['value' => DecisionType::PARTIAL_REFUND->value, 'label' => 'Remboursement partiel'],
-            ['value' => DecisionType::FREEZE_FUNDS->value, 'label' => 'Geler les fonds'],
+            ['value' => DecisionType::REFUND_CLIENT, 'label' => 'Rembourser le client'],
+            ['value' => DecisionType::PAY_ARTISAN, 'label' => 'Payer l\'artisan'],
+            ['value' => DecisionType::PARTIAL_REFUND, 'label' => 'Remboursement partiel'],
+            ['value' => DecisionType::FREEZE_FUNDS, 'label' => 'Geler les fonds'],
         ];
     }
 }

@@ -18,7 +18,6 @@ use DateTime;
  */
 final class ReferentZone extends User
 {
-    private PhoneNumber $phoneNumber;
     private GPS_Coordinates $coverageArea;
     private string $zone;
 
@@ -40,11 +39,13 @@ final class ReferentZone extends User
             UserType::REFERENT_ZONE(),
             $status,
             null, // ReferentZone doesn't require KYC documents (verified by admin)
+            $phoneNumber, // Pass phoneNumber to parent
+            null, // deviceToken
+            null, // notificationPreferences
             $createdAt,
             $updatedAt
         );
 
-        $this->phoneNumber = $phoneNumber;
         $this->coverageArea = $coverageArea;
         $this->zone = $zone;
     }
@@ -113,6 +114,10 @@ final class ReferentZone extends User
 
     public function getPhoneNumber(): PhoneNumber
     {
+        // ReferentZone always have a phone number, so we can safely assert it's not null
+        if ($this->phoneNumber === null) {
+            throw new \LogicException('ReferentZone must have a phone number');
+        }
         return $this->phoneNumber;
     }
 
