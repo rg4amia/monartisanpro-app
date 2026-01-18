@@ -1,0 +1,211 @@
+{
+  "@@locale": "fr",
+  "appTitle": "ProSartisan",
+  "@appTitle": {
+    "description": "The title of the application"
+  },
+
+  "welcome": "Bienvenue",
+  "login": "Connexion",
+  "register": "S'inscrire",
+  "logout": "Déconnexion",
+  "email": "Adresse e-mail",
+  "password": "Mot de passe",
+  "confirmPassword": "Confirmer le mot de passe",
+  "firstName": "Prénom",
+  "lastName": "Nom",
+  "phoneNumber": "Numéro de téléphone",
+  "forgotPassword": "Mot de passe oublié ?",
+  "rememberMe": "Se souvenir de moi",
+  "dontHaveAccount": "Vous n'avez pas de compte ?",
+  "alreadyHaveAccount": "Vous avez déjà un compte ?",
+
+  "userTypes": "Types d'utilisateur",
+  "client": "Client",
+  "artisan": "Artisan",
+  "supplier": "Fournisseur",
+  "selectUserType": "Sélectionnez votre type d'utilisateur",
+
+  "categories": "Catégories",
+  "plumber": "Plombier",
+  "electrician": "Électricien",
+  "mason": "Maçon",
+  "selectCategory": "Sélectionnez votre catégorie",
+
+  "missions": "Missions",
+  "createMission": "Créer une mission",
+  "missionTitle": "Titre de la mission",
+  "missionDescription": "Description de la mission",
+  "location": "Localisation",
+  "budget": "Budget",
+  "budgetMin": "Budget minimum",
+  "budgetMax": "Budget maximum",
+  "currency": "FCFA",
+  "submit": "Soumettre",
+  "cancel": "Annuler",
+  "save": "Enregistrer",
+  "delete": "Supprimer",
+  "edit": "Modifier",
+  "view": "Voir",
+
+  "quotes": "Devis",
+  "submitQuote": "Soumettre un devis",
+  "quoteAmount": "Montant du devis",
+  "materialsAmount": "Montant matériaux",
+  "laborAmount": "Montant main-d'œuvre",
+  "quoteDescription": "Description du devis",
+  "acceptQuote": "Accepter le devis",
+  "rejectQuote": "Rejeter le devis",
+  "quotesReceived": "Devis reçus",
+  "noQuotesYet": "Aucun devis reçu pour le moment",
+
+  "worksite": "Chantier",
+  "milestones": "Jalons",
+  "submitProof": "Soumettre une preuve",
+  "validateMilestone": "Valider le jalon",
+  "contestMilestone": "Contester le jalon",
+  "takePhoto": "Prendre une photo",
+  "uploadPhoto": "Télécharger une photo",
+  "photoRequired": "Photo requise",
+  "gpsRequired": "Localisation GPS requise",
+
+  "payments": "Paiements",
+  "escrow": "Séquestre",
+  "materialToken": "Jeton matériel",
+  "tokenCode": "Code du jeton",
+  "validateToken": "Valider le jeton",
+  "tokenExpiry": "Expiration du jeton",
+  "paymentMethods": "Méthodes de paiement",
+  "wave": "Wave",
+  "orangeMoney": "Orange Money",
+  "mtnMoney": "MTN Mobile Money",
+  "paymentConfirmed": "Paiement confirmé",
+  "paymentFailed": "Échec du paiement",
+
+  "reputation": "Réputation",
+  "nzassaScore": "Score N'Zassa",
+  "rating": "Évaluation",
+  "rateArtisan": "Évaluer l'artisan",
+  "submitRating": "Soumettre l'évaluation",
+  "reliability": "Fiabilité",
+  "integrity": "Intégrité",
+  "quality": "Qualité",
+  "reactivity": "Réactivité",
+  "microCreditEligible": "Éligible au micro-crédit",
+
+  "disputes": "Litiges",
+  "reportDispute": "Signaler un litige",
+  "disputeType": "Type de litige",
+  "disputeDescription": "Description du litige",
+  "uploadEvidence": "Télécharger des preuves",
+  "mediation": "Médiation",
+  "arbitration": "Arbitrage",
+  "disputeResolved": "Litige résolu",
+
+  "notifications": "Notifications",
+  "notificationSettings": "Paramètres de notification",
+  "pushNotifications": "Notifications push",
+  "smsNotifications": "Notifications SMS",
+  "emailNotifications": "Notifications e-mail",
+  "whatsappNotifications": "Notifications WhatsApp",
+
+  "profile": "Profil",
+  "editProfile": "Modifier le profil",
+  "kycVerification": "Vérification KYC",
+  "uploadDocuments": "Télécharger les documents",
+  "idDocument": "Document d'identité",
+  "selfie": "Selfie",
+  "kycPending": "KYC en attente",
+  "kycVerified": "KYC vérifié",
+  "kycRejected": "KYC rejeté",
+
+  "search": "Rechercher",
+  "searchArtisans": "Rechercher des artisans",
+  "nearbyArtisans": "Artisans à proximité",
+  "distance": "Distance",
+  "km": "km",
+  "showOnMap": "Afficher sur la carte",
+  "mapView": "Vue carte",
+  "listView": "Vue liste",
+
+  "settings": "Paramètres",
+  "language": "Langue",
+  "french": "Français",
+  "english": "Anglais",
+  "changeLanguage": "Changer de langue",
+  "darkMode": "Mode sombre",
+  "lightMode": "Mode clair",
+  "about": "À propos",
+  "version": "Version",
+  "termsOfService": "Conditions d'utilisation",
+  "privacyPolicy": "Politique de confidentialité",
+
+  "errors": "Erreurs",
+  "networkError": "Erreur de réseau",
+  "serverError": "Erreur du serveur",
+  "validationError": "Erreur de validation",
+  "unknownError": "Erreur inconnue",
+  "tryAgain": "Réessayer",
+  "contactSupport": "Contacter le support",
+
+  "success": "Succès",
+  "info": "Information",
+  "warning": "Avertissement",
+  "error": "Erreur",
+  "loading": "Chargement...",
+  "noData": "Aucune donnée",
+  "refresh": "Actualiser",
+
+  "offline": "Hors ligne",
+  "online": "En ligne",
+  "syncPending": "Synchronisation en attente",
+  "syncComplete": "Synchronisation terminée",
+
+  "dateFormat": "dd/MM/yyyy",
+  "timeFormat": "HH:mm",
+  "dateTimeFormat": "dd/MM/yyyy HH:mm",
+
+  "currencyFormat": "{amount} FCFA",
+  "@currencyFormat": {
+    "description": "Format for displaying currency amounts",
+    "placeholders": {
+      "amount": {
+        "type": "String",
+        "example": "1 000 000"
+      }
+    }
+  },
+
+  "distanceFormat": "{distance} km",
+  "@distanceFormat": {
+    "description": "Format for displaying distances",
+    "placeholders": {
+      "distance": {
+        "type": "String",
+        "example": "2.5"
+      }
+    }
+  },
+
+  "ratingFormat": "{rating}/5",
+  "@ratingFormat": {
+    "description": "Format for displaying ratings",
+    "placeholders": {
+      "rating": {
+        "type": "String",
+        "example": "4.5"
+      }
+    }
+  },
+
+  "timeAgo": "il y a {time}",
+  "@timeAgo": {
+    "description": "Format for displaying relative time",
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "2 heures"
+      }
+    }
+  }
+}

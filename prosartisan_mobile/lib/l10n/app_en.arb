@@ -1,0 +1,211 @@
+{
+  "@@locale": "en",
+  "appTitle": "ProSartisan",
+  "@appTitle": {
+    "description": "The title of the application"
+  },
+
+  "welcome": "Welcome",
+  "login": "Login",
+  "register": "Register",
+  "logout": "Logout",
+  "email": "Email address",
+  "password": "Password",
+  "confirmPassword": "Confirm password",
+  "firstName": "First name",
+  "lastName": "Last name",
+  "phoneNumber": "Phone number",
+  "forgotPassword": "Forgot password?",
+  "rememberMe": "Remember me",
+  "dontHaveAccount": "Don't have an account?",
+  "alreadyHaveAccount": "Already have an account?",
+
+  "userTypes": "User types",
+  "client": "Client",
+  "artisan": "Artisan",
+  "supplier": "Supplier",
+  "selectUserType": "Select your user type",
+
+  "categories": "Categories",
+  "plumber": "Plumber",
+  "electrician": "Electrician",
+  "mason": "Mason",
+  "selectCategory": "Select your category",
+
+  "missions": "Missions",
+  "createMission": "Create mission",
+  "missionTitle": "Mission title",
+  "missionDescription": "Mission description",
+  "location": "Location",
+  "budget": "Budget",
+  "budgetMin": "Minimum budget",
+  "budgetMax": "Maximum budget",
+  "currency": "XOF",
+  "submit": "Submit",
+  "cancel": "Cancel",
+  "save": "Save",
+  "delete": "Delete",
+  "edit": "Edit",
+  "view": "View",
+
+  "quotes": "Quotes",
+  "submitQuote": "Submit quote",
+  "quoteAmount": "Quote amount",
+  "materialsAmount": "Materials amount",
+  "laborAmount": "Labor amount",
+  "quoteDescription": "Quote description",
+  "acceptQuote": "Accept quote",
+  "rejectQuote": "Reject quote",
+  "quotesReceived": "Quotes received",
+  "noQuotesYet": "No quotes received yet",
+
+  "worksite": "Worksite",
+  "milestones": "Milestones",
+  "submitProof": "Submit proof",
+  "validateMilestone": "Validate milestone",
+  "contestMilestone": "Contest milestone",
+  "takePhoto": "Take photo",
+  "uploadPhoto": "Upload photo",
+  "photoRequired": "Photo required",
+  "gpsRequired": "GPS location required",
+
+  "payments": "Payments",
+  "escrow": "Escrow",
+  "materialToken": "Material token",
+  "tokenCode": "Token code",
+  "validateToken": "Validate token",
+  "tokenExpiry": "Token expiry",
+  "paymentMethods": "Payment methods",
+  "wave": "Wave",
+  "orangeMoney": "Orange Money",
+  "mtnMoney": "MTN Mobile Money",
+  "paymentConfirmed": "Payment confirmed",
+  "paymentFailed": "Payment failed",
+
+  "reputation": "Reputation",
+  "nzassaScore": "N'Zassa Score",
+  "rating": "Rating",
+  "rateArtisan": "Rate artisan",
+  "submitRating": "Submit rating",
+  "reliability": "Reliability",
+  "integrity": "Integrity",
+  "quality": "Quality",
+  "reactivity": "Reactivity",
+  "microCreditEligible": "Micro-credit eligible",
+
+  "disputes": "Disputes",
+  "reportDispute": "Report dispute",
+  "disputeType": "Dispute type",
+  "disputeDescription": "Dispute description",
+  "uploadEvidence": "Upload evidence",
+  "mediation": "Mediation",
+  "arbitration": "Arbitration",
+  "disputeResolved": "Dispute resolved",
+
+  "notifications": "Notifications",
+  "notificationSettings": "Notification settings",
+  "pushNotifications": "Push notifications",
+  "smsNotifications": "SMS notifications",
+  "emailNotifications": "Email notifications",
+  "whatsappNotifications": "WhatsApp notifications",
+
+  "profile": "Profile",
+  "editProfile": "Edit profile",
+  "kycVerification": "KYC verification",
+  "uploadDocuments": "Upload documents",
+  "idDocument": "ID document",
+  "selfie": "Selfie",
+  "kycPending": "KYC pending",
+  "kycVerified": "KYC verified",
+  "kycRejected": "KYC rejected",
+
+  "search": "Search",
+  "searchArtisans": "Search artisans",
+  "nearbyArtisans": "Nearby artisans",
+  "distance": "Distance",
+  "km": "km",
+  "showOnMap": "Show on map",
+  "mapView": "Map view",
+  "listView": "List view",
+
+  "settings": "Settings",
+  "language": "Language",
+  "french": "French",
+  "english": "English",
+  "changeLanguage": "Change language",
+  "darkMode": "Dark mode",
+  "lightMode": "Light mode",
+  "about": "About",
+  "version": "Version",
+  "termsOfService": "Terms of service",
+  "privacyPolicy": "Privacy policy",
+
+  "errors": "Errors",
+  "networkError": "Network error",
+  "serverError": "Server error",
+  "validationError": "Validation error",
+  "unknownError": "Unknown error",
+  "tryAgain": "Try again",
+  "contactSupport": "Contact support",
+
+  "success": "Success",
+  "info": "Information",
+  "warning": "Warning",
+  "error": "Error",
+  "loading": "Loading...",
+  "noData": "No data",
+  "refresh": "Refresh",
+
+  "offline": "Offline",
+  "online": "Online",
+  "syncPending": "Sync pending",
+  "syncComplete": "Sync complete",
+
+  "dateFormat": "MM/dd/yyyy",
+  "timeFormat": "HH:mm",
+  "dateTimeFormat": "MM/dd/yyyy HH:mm",
+
+  "currencyFormat": "{amount} XOF",
+  "@currencyFormat": {
+    "description": "Format for displaying currency amounts",
+    "placeholders": {
+      "amount": {
+        "type": "String",
+        "example": "1,000,000"
+      }
+    }
+  },
+
+  "distanceFormat": "{distance} km",
+  "@distanceFormat": {
+    "description": "Format for displaying distances",
+    "placeholders": {
+      "distance": {
+        "type": "String",
+        "example": "2.5"
+      }
+    }
+  },
+
+  "ratingFormat": "{rating}/5",
+  "@ratingFormat": {
+    "description": "Format for displaying ratings",
+    "placeholders": {
+      "rating": {
+        "type": "String",
+        "example": "4.5"
+      }
+    }
+  },
+
+  "timeAgo": "{time} ago",
+  "@timeAgo": {
+    "description": "Format for displaying relative time",
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "2 hours"
+      }
+    }
+  }
+}
