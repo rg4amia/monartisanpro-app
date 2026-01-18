@@ -28,6 +28,11 @@ interface SequestreRepository
     public function findByMissionId(MissionId $missionId): ?Sequestre;
 
     /**
+     * Find sequestre by chantier ID
+     */
+    public function findByChantierId(\App\Domain\Worksite\Models\ValueObjects\ChantierId $chantierId): ?Sequestre;
+
+    /**
      * Find sequestres by client ID
      */
     public function findByClientId(UserId $clientId): array;

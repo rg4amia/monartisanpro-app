@@ -49,6 +49,15 @@ interface UserRepository
     public function findArtisansNearLocation(GPS_Coordinates $location, float $radiusKm): array;
 
     /**
+     * Find suppliers near a location
+     *
+     * @param GPS_Coordinates $location Center location
+     * @param float $radiusKm Search radius in kilometers
+     * @return array Array of Fournisseur entities
+     */
+    public function findSuppliersNearLocation(GPS_Coordinates $location, float $radiusKm): array;
+
+    /**
      * Find artisans near a location with pagination
      *
      * @param GPS_Coordinates $location Center location

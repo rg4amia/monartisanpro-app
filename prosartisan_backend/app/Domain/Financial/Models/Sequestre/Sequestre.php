@@ -101,6 +101,26 @@ final class Sequestre
     }
 
     /**
+     * Block funds in escrow (set status to blocked)
+     *
+     * Requirement 4.1: Block funds in escrow after quote acceptance
+     */
+    public function block(?string $transactionReference = null): void
+    {
+        $this->status = SequestreStatus::blocked();
+    }
+
+    /**
+     * Freeze funds (prevent any releases during dispute)
+     *
+     * Requirement 9.2: Freeze funds when dispute is reported
+     */
+    public function freeze(string $reason): void
+    {
+        $this->status = SequestreStatus::frozen();
+    }
+
+    /**
      * Release materials funds
      *
      * Used when jeton is validated at supplier

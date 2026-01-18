@@ -103,6 +103,24 @@ final class PostgresSequestreRepository implements SequestreRepository
         DB::table(self::TABLE)->where('id', $id->getValue())->delete();
     }
 
+    public function findByChantierId(\App\Domain\Worksite\Models\ValueObjects\ChantierId $chantierId): ?Sequestre
+    {
+        // Find sequestre by looking up the mission_id from the chantier
+        $chantierRow = DB::table('chantiers')
+            ->where('id', $chantierId->getValue())
+            ->first();
+
+        if (!$chantierRow) {
+            return null;
+        }
+
+        $row = DB::table(self::TABLE)
+            ->where('mission_id', $chantierRow->mission_id)
+            ->first();
+
+        return $row ? $this->mapRowToSequestre($row) : null;
+    }
+
     private function mapRowToSequestre($row): Sequestre
     {
         return new Sequestre(

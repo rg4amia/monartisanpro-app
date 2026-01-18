@@ -805,4 +805,65 @@ class PostgresUserRepository implements UserRepository
             'submitted_at' => $docs->getSubmittedAt()->format('Y-m-d H:i:s'),
         ];
     }
+
+    /**
+     * Find suppliers near a location
+     */
+    public function findSuppliersNearLocation(GPS_Coordinates $location, float $radiusKm): array
+    {
+        $radiusMeters = $radiusKm * 1000;
+
+        if (DB::getDriverName() === 'pgsql') {
+            $results = DB::select("
+                SELECT
+                    u.id,
+                    u.email,
+                    u.password_hash,
+                    u.user_type,
+                    u.account_status,
+                    u.phone_number,
+                    u.failed_login_attempts,
+                    u.locked_until,
+                    u.created_at,
+                    u.updated_at,
+                    fp.business_name,
+                    ST_Y(fp.shop_location::geometry) as latitude,
+                    ST_X(fp.shop_location::geometry) as longitude,
+                    ST_Distance(
+                        fp.shop_location,
+                        ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography
+                    ) as distance_meters
+                FROM users u
+                INNER JOIN fournisseur_profiles fp ON u.id = fp.user_id
+                WHERE u.user_type = 'FOURNISSEUR'
+                AND u.account_status = 'ACTIVE'
+                AND ST_DWithin(
+                    fp.shop_location,
+                    ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography,
+                    ?
+                )
+                ORDER BY distance_meters ASC
+            ", [
+                $location->getLongitude(),
+                $location->getLatitude(),
+                $location->getLongitude(),
+                $location->getLatitude(),
+                $radiusMeters
+            ]);
+        } else {
+            // For SQLite, use simple distance calculation
+            $results = DB::table('users')
+                ->join('fournisseur_profiles', 'users.id', '=', 'fournisseur_profiles.user_id')
+                ->where('users.user_type', 'FOURNISSEUR')
+                ->where('users.account_status', 'ACTIVE')
+                ->get();
+        }
+
+        $suppliers = [];
+        foreach ($results as $row) {
+            $suppliers[] = $this->mapRowToFournisseur($row);
+        }
+
+        return $suppliers;
+    }
 }

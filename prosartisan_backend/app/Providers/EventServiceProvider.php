@@ -36,6 +36,20 @@ class EventServiceProvider extends ServiceProvider
   LaborPaymentReleased::class => [
    [NotificationEventHandler::class, 'handleLaborPaymentReleased'],
   ],
+
+  // Integration events
+  QuoteAccepted::class => [
+   [IntegrationEventHandler::class, 'handleQuoteAccepted'],
+  ],
+  MilestoneValidated::class => [
+   [IntegrationEventHandler::class, 'handleMilestoneValidated'],
+  ],
+  ChantierCompleted::class => [
+   [IntegrationEventHandler::class, 'handleChantierCompleted'],
+  ],
+  DisputeReported::class => [
+   [IntegrationEventHandler::class, 'handleDisputeReported'],
+  ],
  ];
 
  /**
@@ -60,6 +74,23 @@ class EventServiceProvider extends ServiceProvider
 
   Event::listen(LaborPaymentReleased::class, function (LaborPaymentReleased $event) {
    app(NotificationEventHandler::class)->handleLaborPaymentReleased($event);
+  });
+
+  // Register integration event handlers
+  Event::listen(QuoteAccepted::class, function (QuoteAccepted $event) {
+   app(IntegrationEventHandler::class)->handleQuoteAccepted($event);
+  });
+
+  Event::listen(MilestoneValidated::class, function (MilestoneValidated $event) {
+   app(IntegrationEventHandler::class)->handleMilestoneValidated($event);
+  });
+
+  Event::listen(ChantierCompleted::class, function (ChantierCompleted $event) {
+   app(IntegrationEventHandler::class)->handleChantierCompleted($event);
+  });
+
+  Event::listen(DisputeReported::class, function (DisputeReported $event) {
+   app(IntegrationEventHandler::class)->handleDisputeReported($event);
   });
  }
 
