@@ -12,7 +12,7 @@ import '../widgets/jeton_status_badge.dart';
 class JetonDisplayPage extends StatelessWidget {
   final String jetonId;
 
-  const JetonDisplayPage({Key? key, required this.jetonId}) : super(key: key);
+  const JetonDisplayPage({super.key, required this.jetonId});
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +63,7 @@ class JetonDisplayPage extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.grey.withOpacity(0.2),
+                      color: Colors.grey.withValues(alpha: 0.2),
                       spreadRadius: 2,
                       blurRadius: 8,
                       offset: const Offset(0, 2),
@@ -72,7 +72,7 @@ class JetonDisplayPage extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
-                    QrImage(
+                    QrImageView(
                       data: jeton.qrCodeData,
                       version: QrVersions.auto,
                       size: 200.0,

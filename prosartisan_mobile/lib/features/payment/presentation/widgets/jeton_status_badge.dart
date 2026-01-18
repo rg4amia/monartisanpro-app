@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 class JetonStatusBadge extends StatelessWidget {
   final String status;
 
-  const JetonStatusBadge({Key? key, required this.status}) : super(key: key);
+  const JetonStatusBadge({super.key, required this.status});
 
   @override
   Widget build(BuildContext context) {
@@ -13,10 +13,10 @@ class JetonStatusBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: statusInfo['color'].withOpacity(0.1),
+        color: statusInfo['color'].withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: statusInfo['color'].withOpacity(0.3),
+          color: statusInfo['color'].withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -50,7 +50,7 @@ class JetonStatusBadge extends StatelessWidget {
         return {
           'label': 'Partiellement utilisé',
           'color': Colors.orange,
-          'icon': Icons.partial_fulfillment,
+          'icon': Icons.pie_chart,
         };
       case 'FULLY_USED':
         return {
@@ -59,7 +59,11 @@ class JetonStatusBadge extends StatelessWidget {
           'icon': Icons.done_all,
         };
       case 'EXPIRED':
-        return {'label': 'Expiré', 'color': Colors.red, 'icon': Icons.expired};
+        return {
+          'label': 'Expiré',
+          'color': Colors.red,
+          'icon': Icons.access_time,
+        };
       default:
         return {'label': status, 'color': Colors.grey, 'icon': Icons.help};
     }

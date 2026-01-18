@@ -10,7 +10,7 @@ import '../widgets/gps_status_indicator.dart';
 ///
 /// Requirements: 5.3
 class JetonValidationPage extends StatefulWidget {
-  const JetonValidationPage({Key? key}) : super(key: key);
+  const JetonValidationPage({super.key});
 
   @override
   State<JetonValidationPage> createState() => _JetonValidationPageState();
@@ -96,7 +96,7 @@ class _JetonValidationPageState extends State<JetonValidationPage> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: controller.canValidate.value
+                        onPressed: controller.canValidate
                             ? () => _validateJeton()
                             : null,
                         style: ElevatedButton.styleFrom(
@@ -258,7 +258,9 @@ class _JetonValidationPageState extends State<JetonValidationPage> {
     // Get current location
     try {
       Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
       );
 
       await controller.validateJeton(

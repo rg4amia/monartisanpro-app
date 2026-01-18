@@ -1,22 +1,22 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import '../../../../core/services/api/api_service.dart';
+import '../../../../core/services/api/api_client.dart';
 import '../../domain/models/dispute.dart';
-import '../../../../core/services/api_service.dart';
-import '../../../../core/services/auth_service.dart';
 
 /// Repository for dispute-related API operations
 ///
 /// Requirements: 9.1, 9.5, 9.6
 class DisputeRepository {
   final ApiService _apiService;
-  final AuthService _authService;
+  final ApiClient _apiClient;
 
   DisputeRepository({
     required ApiService apiService,
-    required AuthService authService,
+    required ApiClient apiClient,
   }) : _apiService = apiService,
-       _authService = authService;
+       _apiClient = apiClient;
 
   /// Report a new dispute
   ///
@@ -184,26 +184,25 @@ class DisputeRepository {
 
   /// Upload evidence file
   Future<String> uploadEvidence(File file) async {
-    // This would typically upload to a file storage service
-    // For now, we'll simulate returning a URL
-    // In a real implementation, you'd upload to AWS S3, Firebase Storage, etc.
+    // Use the ApiClient's upload functionality instead of manual multipart
+    final data = {'file': await http.MultipartFile.fromPath('file', file.path)};
 
-    final request = http.MultipartRequest(
-      'POST',
-      Uri.parse('${_apiService.baseUrl}/upload/evidence'),
-    );
-
-    request.headers.addAll(await _authService.getAuthHeaders());
-    request.files.add(await http.MultipartFile.fromPath('file', file.path));
-
-    final streamedResponse = await request.send();
-    final response = await http.Response.fromStream(streamedResponse);
+    final response = await _apiClient.uploadFile('/upload/evidence', data);
 
     if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      return data['url'];
+      final responseData = response.data;
+      return responseData['url'];
     } else {
-      throw Exception('Failed to upload evidence: ${response.body}');
+      throw Exception('Failed to upload evidence: ${response.data}');
     }
+  }
+
+  /// Get authentication headers
+  Future<Map<String, String>> _getAuthHeaders() async {
+    final token = await _apiClient.getToken();
+    return {
+      'Authorization': 'Bearer ${token ?? ''}',
+      'Content-Type': 'application/json',
+    };
   }
 }
