@@ -18,6 +18,7 @@ class DisputeController extends GetxController {
   void onInit() {
     super.onInit();
     _authController = Get.find<AuthController>();
+    loadUserDisputes();
   }
 
   // Observable state
@@ -38,12 +39,6 @@ class DisputeController extends GetxController {
   // Mediation chat state
   final RxString messageText = ''.obs;
   final RxList<Communication> messages = <Communication>[].obs;
-
-  @override
-  void onInit() {
-    super.onInit();
-    loadUserDisputes();
-  }
 
   /// Load user's disputes
   Future<void> loadUserDisputes() async {
@@ -340,6 +335,7 @@ class DisputeController extends GetxController {
   }
 
   /// Refresh disputes
+  @override
   Future<void> refresh() async {
     await loadUserDisputes();
   }
