@@ -119,7 +119,7 @@ final class Jalon
      *
      * Requirement 6.3: Client validation of milestone
      */
-    public function validate(): void
+    public function validate(UserId $clientId, UserId $artisanId): void
     {
         if (!$this->status->isSubmitted()) {
             throw new InvalidArgumentException(
@@ -130,6 +130,17 @@ final class Jalon
         $this->status = JalonStatus::validated();
         $this->validatedAt = new DateTime();
         $this->autoValidationDeadline = null; // Clear deadline since manually validated
+
+        // Fire MilestoneValidated domain event
+        DomainEventDispatcher::dispatch(new MilestoneValidated(
+            $this->id,
+            $this->chantierId,
+            $clientId,
+            $artisanId,
+            $this->laborAmount,
+            false, // Not auto-validated
+            new DateTime()
+        ));
     }
 
     /**
@@ -159,7 +170,7 @@ final class Jalon
      *
      * Requirement 6.5: Auto-validate after 48 hours if no response
      */
-    public function autoValidate(): void
+    public function autoValidate(UserId $clientId, UserId $artisanId): void
     {
         if (!$this->status->isSubmitted()) {
             throw new InvalidArgumentException(
@@ -176,6 +187,17 @@ final class Jalon
         $this->status = JalonStatus::validated();
         $this->validatedAt = new DateTime();
         $this->autoValidationDeadline = null;
+
+        // Fire MilestoneValidated domain event
+        DomainEventDispatcher::dispatch(new MilestoneValidated(
+            $this->id,
+            $this->chantierId,
+            $clientId,
+            $artisanId,
+            $this->laborAmount,
+            true, // Auto-validated
+            new DateTime()
+        ));
     }
 
     /**

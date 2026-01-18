@@ -651,7 +651,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - _Requirements: 17.5_
 
 - [-] 27. Final Integration and End-to-End Testing
-  - [-] 27.1 Wire all contexts together with event handlers
+  - [x] 27.1 Wire all contexts together with event handlers
     - QuoteAccepted → block funds → fragment → generate jeton
     - MilestoneValidated → release labor payment
     - ChantierCompleted → recalculate score
@@ -664,7 +664,7 @@ This implementation plan breaks down the ProSartisan platform into incremental, 
     - Test dispute lifecycle (report → mediation → arbitration → resolution)
     - _Requirements: All requirements_
   
-  - [ ] 27.3 Implement monitoring and logging
+  - [-] 27.3 Implement monitoring and logging
     - Set up structured logging with correlation IDs
     - Implement metrics tracking (response times, error rates)
     - Set up alerting rules for critical failures

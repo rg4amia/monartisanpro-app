@@ -10,6 +10,8 @@ use App\Domain\Dispute\Models\ValueObjects\LitigeId;
 use App\Domain\Dispute\Models\ValueObjects\Resolution;
 use App\Domain\Identity\Models\ValueObjects\UserId;
 use App\Domain\Marketplace\Models\ValueObjects\MissionId;
+use App\Domain\Dispute\Events\DisputeReported;
+use App\Domain\Shared\Services\DomainEventDispatcher;
 use DateTime;
 use InvalidArgumentException;
 
@@ -82,7 +84,7 @@ final class Litige
         string $description,
         array $evidence = []
     ): self {
-        return new self(
+        $litige = new self(
             LitigeId::generate(),
             $missionId,
             $reporterId,
@@ -91,6 +93,17 @@ final class Litige
             $description,
             $evidence
         );
+
+        // Fire DisputeReported domain event
+        DomainEventDispatcher::dispatch(new DisputeReported(
+            $litige->id,
+            $missionId,
+            $reporterId,
+            $type,
+            new DateTime()
+        ));
+
+        return $litige;
     }
 
     /**

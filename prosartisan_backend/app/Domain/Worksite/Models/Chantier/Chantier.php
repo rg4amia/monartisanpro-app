@@ -9,6 +9,8 @@ use App\Domain\Worksite\Models\Jalon\Jalon;
 use App\Domain\Worksite\Models\ValueObjects\ChantierId;
 use App\Domain\Worksite\Models\ValueObjects\ChantierStatus;
 use App\Domain\Worksite\Models\ValueObjects\JalonStatus;
+use App\Domain\Worksite\Events\ChantierCompleted;
+use App\Domain\Shared\Services\DomainEventDispatcher;
 use DateTime;
 use InvalidArgumentException;
 
@@ -136,6 +138,15 @@ final class Chantier
 
   $this->status = ChantierStatus::completed();
   $this->completedAt = new DateTime();
+
+  // Fire ChantierCompleted domain event
+  DomainEventDispatcher::dispatch(new ChantierCompleted(
+   $this->id,
+   $this->missionId,
+   $this->artisanId,
+   $this->clientId,
+   new DateTime()
+  ));
  }
 
  /**
