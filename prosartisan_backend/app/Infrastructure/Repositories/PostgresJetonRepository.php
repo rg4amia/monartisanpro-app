@@ -3,15 +3,15 @@
 namespace App\Infrastructure\Repositories;
 
 use App\Domain\Financial\Models\JetonMateriel\JetonMateriel;
-use App\Domain\Financial\Models\ValueObjects\JetonId;
 use App\Domain\Financial\Models\ValueObjects\JetonCode;
+use App\Domain\Financial\Models\ValueObjects\JetonId;
 use App\Domain\Financial\Models\ValueObjects\JetonStatus;
 use App\Domain\Financial\Models\ValueObjects\SequestreId;
 use App\Domain\Financial\Repositories\JetonRepository;
 use App\Domain\Identity\Models\ValueObjects\UserId;
 use App\Domain\Shared\ValueObjects\MoneyAmount;
-use Illuminate\Support\Facades\DB;
 use DateTime;
+use Illuminate\Support\Facades\DB;
 
 /**
  * PostgreSQL implementation of JetonRepository
@@ -29,7 +29,7 @@ final class PostgresJetonRepository implements JetonRepository
             'code' => $jeton->getCode()->getValue(),
             'total_amount_centimes' => $jeton->getTotalAmount()->toCentimes(),
             'used_amount_centimes' => $jeton->getUsedAmount()->toCentimes(),
-            'authorized_suppliers' => json_encode(array_map(fn($id) => $id->getValue(), $jeton->getAuthorizedSuppliers())),
+            'authorized_suppliers' => json_encode(array_map(fn ($id) => $id->getValue(), $jeton->getAuthorizedSuppliers())),
             'status' => $jeton->getStatus()->getValue(),
             'created_at' => $jeton->getCreatedAt()->format('Y-m-d H:i:s'),
             'expires_at' => $jeton->getExpiresAt()->format('Y-m-d H:i:s'),
@@ -66,7 +66,7 @@ final class PostgresJetonRepository implements JetonRepository
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return $rows->map(fn($row) => $this->mapRowToJeton($row))->toArray();
+        return $rows->map(fn ($row) => $this->mapRowToJeton($row))->toArray();
     }
 
     public function findBySequestre(SequestreId $sequestreId): array
@@ -76,7 +76,7 @@ final class PostgresJetonRepository implements JetonRepository
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return $rows->map(fn($row) => $this->mapRowToJeton($row))->toArray();
+        return $rows->map(fn ($row) => $this->mapRowToJeton($row))->toArray();
     }
 
     public function findExpiredJetons(): array
@@ -86,7 +86,7 @@ final class PostgresJetonRepository implements JetonRepository
             ->whereIn('status', [JetonStatus::ACTIVE, JetonStatus::PARTIALLY_USED])
             ->get();
 
-        return $rows->map(fn($row) => $this->mapRowToJeton($row))->toArray();
+        return $rows->map(fn ($row) => $this->mapRowToJeton($row))->toArray();
     }
 
     public function findAuthorizedForSupplier(UserId $supplierId): array
@@ -101,7 +101,7 @@ final class PostgresJetonRepository implements JetonRepository
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return $rows->map(fn($row) => $this->mapRowToJeton($row))->toArray();
+        return $rows->map(fn ($row) => $this->mapRowToJeton($row))->toArray();
     }
 
     public function delete(JetonId $id): void
@@ -112,7 +112,7 @@ final class PostgresJetonRepository implements JetonRepository
     private function mapRowToJeton($row): JetonMateriel
     {
         $authorizedSuppliers = json_decode($row->authorized_suppliers, true) ?? [];
-        $supplierIds = array_map(fn($id) => UserId::fromString($id), $authorizedSuppliers);
+        $supplierIds = array_map(fn ($id) => UserId::fromString($id), $authorizedSuppliers);
 
         return new JetonMateriel(
             JetonId::fromString($row->id),

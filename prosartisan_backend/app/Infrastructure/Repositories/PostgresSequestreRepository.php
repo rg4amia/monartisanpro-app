@@ -9,8 +9,8 @@ use App\Domain\Financial\Repositories\SequestreRepository;
 use App\Domain\Identity\Models\ValueObjects\UserId;
 use App\Domain\Marketplace\Models\ValueObjects\MissionId;
 use App\Domain\Shared\ValueObjects\MoneyAmount;
-use Illuminate\Support\Facades\DB;
 use DateTime;
+use Illuminate\Support\Facades\DB;
 
 /**
  * PostgreSQL implementation of SequestreRepository
@@ -64,7 +64,7 @@ final class PostgresSequestreRepository implements SequestreRepository
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return $rows->map(fn($row) => $this->mapRowToSequestre($row))->toArray();
+        return $rows->map(fn ($row) => $this->mapRowToSequestre($row))->toArray();
     }
 
     public function findByArtisanId(UserId $artisanId): array
@@ -74,7 +74,7 @@ final class PostgresSequestreRepository implements SequestreRepository
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return $rows->map(fn($row) => $this->mapRowToSequestre($row))->toArray();
+        return $rows->map(fn ($row) => $this->mapRowToSequestre($row))->toArray();
     }
 
     public function findActive(): array
@@ -84,7 +84,7 @@ final class PostgresSequestreRepository implements SequestreRepository
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return $rows->map(fn($row) => $this->mapRowToSequestre($row))->toArray();
+        return $rows->map(fn ($row) => $this->mapRowToSequestre($row))->toArray();
     }
 
     public function findByReference(string $reference): ?Sequestre
@@ -92,7 +92,7 @@ final class PostgresSequestreRepository implements SequestreRepository
         // For now, we'll search by mission_id as the reference
         // In a real implementation, you might have a separate reference field
         $row = DB::table(self::TABLE)
-            ->where('mission_id', 'LIKE', '%' . $reference . '%')
+            ->where('mission_id', 'LIKE', '%'.$reference.'%')
             ->first();
 
         return $row ? $this->mapRowToSequestre($row) : null;
@@ -110,7 +110,7 @@ final class PostgresSequestreRepository implements SequestreRepository
             ->where('id', $chantierId->getValue())
             ->first();
 
-        if (!$chantierRow) {
+        if (! $chantierRow) {
             return null;
         }
 

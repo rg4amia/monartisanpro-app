@@ -6,10 +6,10 @@ use App\Domain\Financial\Models\JetonValidation\JetonValidation;
 use App\Domain\Financial\Models\ValueObjects\JetonId;
 use App\Domain\Financial\Repositories\JetonValidationRepository;
 use App\Domain\Identity\Models\ValueObjects\UserId;
-use App\Domain\Shared\ValueObjects\MoneyAmount;
 use App\Domain\Shared\ValueObjects\GPS_Coordinates;
-use Illuminate\Support\Facades\DB;
+use App\Domain\Shared\ValueObjects\MoneyAmount;
 use DateTime;
+use Illuminate\Support\Facades\DB;
 
 /**
  * PostgreSQL implementation of JetonValidationRepository
@@ -60,7 +60,7 @@ final class PostgresJetonValidationRepository implements JetonValidationReposito
             ->orderBy('validated_at', 'desc')
             ->get();
 
-        return $rows->map(fn($row) => $this->mapRowToValidation($row))->toArray();
+        return $rows->map(fn ($row) => $this->mapRowToValidation($row))->toArray();
     }
 
     public function findByFournisseurId(UserId $fournisseurId): array
@@ -70,7 +70,7 @@ final class PostgresJetonValidationRepository implements JetonValidationReposito
             ->orderBy('validated_at', 'desc')
             ->get();
 
-        return $rows->map(fn($row) => $this->mapRowToValidation($row))->toArray();
+        return $rows->map(fn ($row) => $this->mapRowToValidation($row))->toArray();
     }
 
     public function findByArtisanId(UserId $artisanId): array
@@ -80,7 +80,7 @@ final class PostgresJetonValidationRepository implements JetonValidationReposito
             ->orderBy('validated_at', 'desc')
             ->get();
 
-        return $rows->map(fn($row) => $this->mapRowToValidation($row))->toArray();
+        return $rows->map(fn ($row) => $this->mapRowToValidation($row))->toArray();
     }
 
     private function mapRowToValidation($row): JetonValidation

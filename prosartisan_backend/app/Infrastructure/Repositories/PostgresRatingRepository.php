@@ -8,8 +8,8 @@ use App\Domain\Reputation\Models\Rating\Rating;
 use App\Domain\Reputation\Models\ValueObjects\RatingId;
 use App\Domain\Reputation\Models\ValueObjects\RatingValue;
 use App\Domain\Reputation\Repositories\RatingRepository;
-use Illuminate\Support\Facades\DB;
 use DateTime;
+use Illuminate\Support\Facades\DB;
 
 /**
  * PostgreSQL implementation of RatingRepository
@@ -38,7 +38,7 @@ class PostgresRatingRepository implements RatingRepository
             ->where('id', $id->getValue())
             ->first();
 
-        if (!$data) {
+        if (! $data) {
             return null;
         }
 
@@ -51,7 +51,7 @@ class PostgresRatingRepository implements RatingRepository
             ->where('mission_id', $missionId->getValue())
             ->first();
 
-        if (!$data) {
+        if (! $data) {
             return null;
         }
 
@@ -65,7 +65,7 @@ class PostgresRatingRepository implements RatingRepository
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return $results->map(fn($data) => $this->mapToRating($data))->toArray();
+        return $results->map(fn ($data) => $this->mapToRating($data))->toArray();
     }
 
     public function findByClientId(UserId $clientId): array
@@ -75,7 +75,7 @@ class PostgresRatingRepository implements RatingRepository
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return $results->map(fn($data) => $this->mapToRating($data))->toArray();
+        return $results->map(fn ($data) => $this->mapToRating($data))->toArray();
     }
 
     public function getAverageRatingForArtisan(UserId $artisanId): float

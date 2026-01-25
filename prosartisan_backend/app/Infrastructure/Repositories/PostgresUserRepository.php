@@ -90,7 +90,7 @@ class PostgresUserRepository implements UserRepository
             ->where('id', $id->toString())
             ->first();
 
-        if (!$userData) {
+        if (! $userData) {
             return null;
         }
 
@@ -106,7 +106,7 @@ class PostgresUserRepository implements UserRepository
             ->where('email', $email->toString())
             ->first();
 
-        if (!$userData) {
+        if (! $userData) {
             return null;
         }
 
@@ -121,6 +121,7 @@ class PostgresUserRepository implements UserRepository
     public function findArtisansNearLocation(GPS_Coordinates $location, float $radiusKm): array
     {
         $result = $this->findArtisansNearLocationPaginated($location, $radiusKm, 1000, 0);
+
         return $result['artisans'];
     }
 
@@ -171,7 +172,7 @@ class PostgresUserRepository implements UserRepository
                 $location->getLatitude(),
                 $radiusMeters,
                 $limit,
-                $offset
+                $offset,
             ]);
 
             // Get total count for pagination
@@ -189,7 +190,7 @@ class PostgresUserRepository implements UserRepository
             ", [
                 $location->getLongitude(),
                 $location->getLatitude(),
-                $radiusMeters
+                $radiusMeters,
             ]);
 
             $total = $totalResult[0]->total ?? 0;
@@ -252,7 +253,7 @@ class PostgresUserRepository implements UserRepository
 
         return [
             'artisans' => $artisans,
-            'total' => $total
+            'total' => $total,
         ];
     }
 
@@ -302,7 +303,7 @@ class PostgresUserRepository implements UserRepository
         // Handle location based on database driver
         if (DB::getDriverName() === 'pgsql') {
             $profileData['location'] = DB::raw(sprintf(
-                "ST_SetSRID(ST_MakePoint(%f, %f), 4326)::geography",
+                'ST_SetSRID(ST_MakePoint(%f, %f), 4326)::geography',
                 $artisan->getLocation()->getLongitude(),
                 $artisan->getLocation()->getLatitude()
             ));
@@ -310,7 +311,7 @@ class PostgresUserRepository implements UserRepository
             // For SQLite, store as JSON string
             $profileData['location'] = json_encode([
                 'latitude' => $artisan->getLocation()->getLatitude(),
-                'longitude' => $artisan->getLocation()->getLongitude()
+                'longitude' => $artisan->getLocation()->getLongitude(),
             ]);
         }
 
@@ -368,7 +369,7 @@ class PostgresUserRepository implements UserRepository
         // Handle location based on database driver
         if (DB::getDriverName() === 'pgsql') {
             $profileData['shop_location'] = DB::raw(sprintf(
-                "ST_SetSRID(ST_MakePoint(%f, %f), 4326)::geography",
+                'ST_SetSRID(ST_MakePoint(%f, %f), 4326)::geography',
                 $fournisseur->getShopLocation()->getLongitude(),
                 $fournisseur->getShopLocation()->getLatitude()
             ));
@@ -376,7 +377,7 @@ class PostgresUserRepository implements UserRepository
             // For SQLite, store as JSON string
             $profileData['shop_location'] = json_encode([
                 'latitude' => $fournisseur->getShopLocation()->getLatitude(),
-                'longitude' => $fournisseur->getShopLocation()->getLongitude()
+                'longitude' => $fournisseur->getShopLocation()->getLongitude(),
             ]);
         }
 
@@ -426,7 +427,7 @@ class PostgresUserRepository implements UserRepository
         // Handle location based on database driver
         if (DB::getDriverName() === 'pgsql') {
             $profileData['coverage_area'] = DB::raw(sprintf(
-                "ST_SetSRID(ST_MakePoint(%f, %f), 4326)::geography",
+                'ST_SetSRID(ST_MakePoint(%f, %f), 4326)::geography',
                 $referent->getCoverageArea()->getLongitude(),
                 $referent->getCoverageArea()->getLatitude()
             ));
@@ -434,7 +435,7 @@ class PostgresUserRepository implements UserRepository
             // For SQLite, store as JSON string
             $profileData['coverage_area'] = json_encode([
                 'latitude' => $referent->getCoverageArea()->getLatitude(),
-                'longitude' => $referent->getCoverageArea()->getLongitude()
+                'longitude' => $referent->getCoverageArea()->getLongitude(),
             ]);
         }
 
@@ -463,7 +464,7 @@ class PostgresUserRepository implements UserRepository
     private function saveKYCVerification(User $user): void
     {
         $kycDocs = $user->getKYCDocuments();
-        if (!$kycDocs) {
+        if (! $kycDocs) {
             return;
         }
 
@@ -573,7 +574,7 @@ class PostgresUserRepository implements UserRepository
             }
         }
 
-        if (!$profileData) {
+        if (! $profileData) {
             throw new \RuntimeException("Artisan profile not found for user {$userData->id}");
         }
 
@@ -664,7 +665,7 @@ class PostgresUserRepository implements UserRepository
             }
         }
 
-        if (!$profileData) {
+        if (! $profileData) {
             throw new \RuntimeException("Fournisseur profile not found for user {$userData->id}");
         }
 
@@ -726,7 +727,7 @@ class PostgresUserRepository implements UserRepository
             }
         }
 
-        if (!$profileData) {
+        if (! $profileData) {
             throw new \RuntimeException("ReferentZone profile not found for user {$userData->id}");
         }
 
@@ -759,7 +760,7 @@ class PostgresUserRepository implements UserRepository
             ->where('user_id', $userId)
             ->first();
 
-        if (!$kycData) {
+        if (! $kycData) {
             return null;
         }
 
@@ -797,7 +798,7 @@ class PostgresUserRepository implements UserRepository
      */
     private function serializeKYCDocuments(?KYCDocuments $docs): ?array
     {
-        if (!$docs) {
+        if (! $docs) {
             return null;
         }
 
@@ -887,7 +888,7 @@ class PostgresUserRepository implements UserRepository
                 $location->getLatitude(),
                 $location->getLongitude(),
                 $location->getLatitude(),
-                $radiusMeters
+                $radiusMeters,
             ]);
         } else {
             // For SQLite, use simple distance calculation

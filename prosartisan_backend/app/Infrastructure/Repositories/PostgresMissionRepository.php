@@ -44,7 +44,7 @@ class PostgresMissionRepository implements MissionRepository
             // For SQLite/MySQL, store as JSON or separate columns
             $data['location'] = json_encode([
                 'latitude' => $mission->getLocation()->getLatitude(),
-                'longitude' => $mission->getLocation()->getLongitude()
+                'longitude' => $mission->getLocation()->getLongitude(),
             ]);
         }
 
@@ -71,7 +71,7 @@ class PostgresMissionRepository implements MissionRepository
                     'budget_min_centimes',
                     'budget_max_centimes',
                     'status',
-                    'created_at'
+                    'created_at',
                 ])
                 ->where('id', $id->getValue())
                 ->first();
@@ -86,13 +86,13 @@ class PostgresMissionRepository implements MissionRepository
                     'budget_min_centimes',
                     'budget_max_centimes',
                     'status',
-                    'created_at'
+                    'created_at',
                 ])
                 ->where('id', $id->getValue())
                 ->first();
         }
 
-        if (!$row) {
+        if (! $row) {
             return null;
         }
 
@@ -105,6 +105,7 @@ class PostgresMissionRepository implements MissionRepository
     public function findByClientId(UserId $clientId): array
     {
         $result = $this->findByClientIdPaginated($clientId, 1000, 0);
+
         return $result['missions'];
     }
 
@@ -125,7 +126,7 @@ class PostgresMissionRepository implements MissionRepository
                     'budget_min_centimes',
                     'budget_max_centimes',
                     'status',
-                    'created_at'
+                    'created_at',
                 ])
                 ->where('client_id', $clientId->getValue())
                 ->orderBy('created_at', 'desc')
@@ -147,7 +148,7 @@ class PostgresMissionRepository implements MissionRepository
                     'budget_min_centimes',
                     'budget_max_centimes',
                     'status',
-                    'created_at'
+                    'created_at',
                 ])
                 ->where('client_id', $clientId->getValue())
                 ->orderBy('created_at', 'desc')
@@ -161,8 +162,8 @@ class PostgresMissionRepository implements MissionRepository
         }
 
         return [
-            'missions' => $rows->map(fn($row) => $this->mapRowToMission($row))->toArray(),
-            'total' => $total
+            'missions' => $rows->map(fn ($row) => $this->mapRowToMission($row))->toArray(),
+            'total' => $total,
         ];
     }
 
@@ -172,6 +173,7 @@ class PostgresMissionRepository implements MissionRepository
     public function findOpenMissionsNearLocation(GPS_Coordinates $location, float $radiusKm): array
     {
         $result = $this->findOpenMissionsNearLocationPaginated($location, $radiusKm, 1000, 0);
+
         return $result['missions'];
     }
 
@@ -193,7 +195,7 @@ class PostgresMissionRepository implements MissionRepository
                     'budget_max_centimes',
                     'status',
                     'created_at',
-                    DB::raw("ST_Distance(location, ST_GeomFromText('POINT({$location->getLongitude()} {$location->getLatitude()})', 4326)::geography) as distance_meters")
+                    DB::raw("ST_Distance(location, ST_GeomFromText('POINT({$location->getLongitude()} {$location->getLatitude()})', 4326)::geography) as distance_meters"),
                 ])
                 ->whereRaw("ST_DWithin(location, ST_GeomFromText('POINT({$location->getLongitude()} {$location->getLatitude()})', 4326)::geography, ?)", [$radiusKm * 1000])
                 ->whereIn('status', [MissionStatus::OPEN, MissionStatus::QUOTED])
@@ -218,7 +220,7 @@ class PostgresMissionRepository implements MissionRepository
                     'budget_min_centimes',
                     'budget_max_centimes',
                     'status',
-                    'created_at'
+                    'created_at',
                 ])
                 ->whereIn('status', [MissionStatus::OPEN, MissionStatus::QUOTED])
                 ->get()
@@ -226,6 +228,7 @@ class PostgresMissionRepository implements MissionRepository
                     $locationData = json_decode($row->location, true);
                     $missionLocation = new GPS_Coordinates($locationData['latitude'], $locationData['longitude']);
                     $distance = $location->distanceTo($missionLocation);
+
                     return $distance <= ($radiusKm * 1000); // Convert km to meters
                 });
 
@@ -234,8 +237,8 @@ class PostgresMissionRepository implements MissionRepository
         }
 
         return [
-            'missions' => $rows->map(fn($row) => $this->mapRowToMission($row))->toArray(),
-            'total' => $total
+            'missions' => $rows->map(fn ($row) => $this->mapRowToMission($row))->toArray(),
+            'total' => $total,
         ];
     }
 

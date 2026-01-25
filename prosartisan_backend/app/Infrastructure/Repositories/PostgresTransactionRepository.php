@@ -4,13 +4,13 @@ namespace App\Infrastructure\Repositories;
 
 use App\Domain\Financial\Models\Transaction\Transaction;
 use App\Domain\Financial\Models\ValueObjects\TransactionId;
-use App\Domain\Financial\Models\ValueObjects\TransactionType;
 use App\Domain\Financial\Models\ValueObjects\TransactionStatus;
+use App\Domain\Financial\Models\ValueObjects\TransactionType;
 use App\Domain\Financial\Repositories\TransactionRepository;
 use App\Domain\Identity\Models\ValueObjects\UserId;
 use App\Domain\Shared\ValueObjects\MoneyAmount;
-use Illuminate\Support\Facades\DB;
 use DateTime;
+use Illuminate\Support\Facades\DB;
 
 /**
  * PostgreSQL implementation of TransactionRepository
@@ -62,7 +62,7 @@ final class PostgresTransactionRepository implements TransactionRepository
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return $rows->map(fn($row) => $this->mapRowToTransaction($row))->toArray();
+        return $rows->map(fn ($row) => $this->mapRowToTransaction($row))->toArray();
     }
 
     public function findByUserIdPaginated(UserId $userId, int $limit, int $offset, ?TransactionType $typeFilter = null): array
@@ -83,7 +83,7 @@ final class PostgresTransactionRepository implements TransactionRepository
             ->limit($limit)
             ->get();
 
-        return $rows->map(fn($row) => $this->mapRowToTransaction($row))->toArray();
+        return $rows->map(fn ($row) => $this->mapRowToTransaction($row))->toArray();
     }
 
     public function findByType(TransactionType $type): array
@@ -93,7 +93,7 @@ final class PostgresTransactionRepository implements TransactionRepository
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return $rows->map(fn($row) => $this->mapRowToTransaction($row))->toArray();
+        return $rows->map(fn ($row) => $this->mapRowToTransaction($row))->toArray();
     }
 
     public function findPending(): array
@@ -103,7 +103,7 @@ final class PostgresTransactionRepository implements TransactionRepository
             ->orderBy('created_at', 'asc')
             ->get();
 
-        return $rows->map(fn($row) => $this->mapRowToTransaction($row))->toArray();
+        return $rows->map(fn ($row) => $this->mapRowToTransaction($row))->toArray();
     }
 
     public function findBetweenUsers(UserId $fromUserId, UserId $toUserId): array
@@ -114,7 +114,7 @@ final class PostgresTransactionRepository implements TransactionRepository
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return $rows->map(fn($row) => $this->mapRowToTransaction($row))->toArray();
+        return $rows->map(fn ($row) => $this->mapRowToTransaction($row))->toArray();
     }
 
     public function findByMobileMoneyReference(string $reference): array
@@ -124,7 +124,7 @@ final class PostgresTransactionRepository implements TransactionRepository
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return $rows->map(fn($row) => $this->mapRowToTransaction($row))->toArray();
+        return $rows->map(fn ($row) => $this->mapRowToTransaction($row))->toArray();
     }
 
     public function findSingleByMobileMoneyReference(string $reference): ?Transaction
@@ -155,7 +155,7 @@ final class PostgresTransactionRepository implements TransactionRepository
             ->orderBy('created_at', 'asc')
             ->get();
 
-        return $rows->map(fn($row) => $this->mapRowToTransaction($row))->toArray();
+        return $rows->map(fn ($row) => $this->mapRowToTransaction($row))->toArray();
     }
 
     public function countByUserId(UserId $userId, ?TransactionType $typeFilter = null): int
