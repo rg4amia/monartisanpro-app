@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_radius.dart';
 
 /// Amount input field widget with validation
 class AmountInputField extends StatelessWidget {
@@ -9,12 +13,12 @@ class AmountInputField extends StatelessWidget {
   final ValueChanged<String>? onChanged;
 
   const AmountInputField({
-    Key? key,
+    super.key,
     required this.controller,
     required this.labelText,
     required this.maxAmount,
     this.onChanged,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -28,13 +32,41 @@ class AmountInputField extends StatelessWidget {
             FilteringTextInputFormatter.digitsOnly,
             _AmountInputFormatter(),
           ],
+          style: AppTypography.body.copyWith(color: AppColors.textPrimary),
           decoration: InputDecoration(
             labelText: labelText,
+            labelStyle: AppTypography.bodySmall.copyWith(
+              color: AppColors.textSecondary,
+            ),
             hintText: '0',
-            border: const OutlineInputBorder(),
-            prefixIcon: const Icon(Icons.attach_money),
+            hintStyle: AppTypography.body.copyWith(color: AppColors.textMuted),
+            filled: true,
+            fillColor: AppColors.cardBg,
+            border: OutlineInputBorder(
+              borderRadius: AppRadius.inputRadius,
+              borderSide: BorderSide(color: AppColors.overlayMedium),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: AppRadius.inputRadius,
+              borderSide: BorderSide(color: AppColors.overlayMedium),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: AppRadius.inputRadius,
+              borderSide: BorderSide(color: AppColors.accentPrimary, width: 2),
+            ),
+            prefixIcon: Icon(
+              Icons.attach_money,
+              color: AppColors.textSecondary,
+            ),
             suffixText: 'FCFA',
+            suffixStyle: AppTypography.bodySmall.copyWith(
+              color: AppColors.textSecondary,
+            ),
             helperText: 'Maximum: ${_formatAmount(maxAmount)} FCFA',
+            helperStyle: AppTypography.caption.copyWith(
+              color: AppColors.textTertiary,
+            ),
+            contentPadding: AppSpacing.inputPaddingDefault,
           ),
           onChanged: onChanged,
         ),

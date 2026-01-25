@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../domain/models/dispute.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_radius.dart';
 
 /// Widget for displaying mediation chat messages
 class MessageBubbleWidget extends StatelessWidget {
@@ -8,16 +12,16 @@ class MessageBubbleWidget extends StatelessWidget {
   final bool isMediator;
 
   const MessageBubbleWidget({
-    Key? key,
+    super.key,
     required this.message,
     required this.isCurrentUser,
     required this.isMediator,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: EdgeInsets.symmetric(vertical: AppSpacing.xs),
       child: Row(
         mainAxisAlignment: isCurrentUser
             ? MainAxisAlignment.end
@@ -25,27 +29,30 @@ class MessageBubbleWidget extends StatelessWidget {
         children: [
           if (!isCurrentUser) ...[
             _buildAvatar(context),
-            const SizedBox(width: 8),
+            SizedBox(width: AppSpacing.sm),
           ],
           Flexible(
             child: Container(
               constraints: BoxConstraints(
                 maxWidth: MediaQuery.of(context).size.width * 0.75,
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: EdgeInsets.symmetric(
+                horizontal: AppSpacing.base,
+                vertical: AppSpacing.md,
+              ),
               decoration: BoxDecoration(
                 color: _getBubbleColor(context),
-                borderRadius: BorderRadius.circular(20).copyWith(
+                borderRadius: BorderRadius.circular(AppRadius.lg).copyWith(
                   bottomLeft: isCurrentUser
-                      ? const Radius.circular(20)
-                      : const Radius.circular(4),
+                      ? Radius.circular(AppRadius.lg)
+                      : Radius.circular(AppRadius.sm),
                   bottomRight: isCurrentUser
-                      ? const Radius.circular(4)
-                      : const Radius.circular(20),
+                      ? Radius.circular(AppRadius.sm)
+                      : Radius.circular(AppRadius.lg),
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
@@ -57,26 +64,28 @@ class MessageBubbleWidget extends StatelessWidget {
                   if (!isCurrentUser) ...[
                     Text(
                       _getSenderLabel(),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      style: AppTypography.bodySmall.copyWith(
                         fontWeight: FontWeight.bold,
                         color: _getSenderLabelColor(context),
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: AppSpacing.xs),
                   ],
                   Text(
                     message.message,
-                    style: TextStyle(
-                      color: isCurrentUser ? Colors.white : Colors.black87,
+                    style: AppTypography.body.copyWith(
+                      color: isCurrentUser
+                          ? Colors.white
+                          : AppColors.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: AppSpacing.xs),
                   Text(
                     _formatTime(message.sentAt),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    style: AppTypography.caption.copyWith(
                       color: isCurrentUser
-                          ? Colors.white.withOpacity(0.7)
-                          : Colors.grey[600],
+                          ? Colors.white.withValues(alpha: 0.7)
+                          : AppColors.textSecondary,
                     ),
                   ),
                 ],
@@ -84,7 +93,7 @@ class MessageBubbleWidget extends StatelessWidget {
             ),
           ),
           if (isCurrentUser) ...[
-            const SizedBox(width: 8),
+            SizedBox(width: AppSpacing.sm),
             _buildAvatar(context),
           ],
         ],
@@ -98,9 +107,8 @@ class MessageBubbleWidget extends StatelessWidget {
       backgroundColor: _getAvatarColor(context),
       child: Text(
         _getAvatarText(),
-        style: const TextStyle(
+        style: AppTypography.caption.copyWith(
           color: Colors.white,
-          fontSize: 12,
           fontWeight: FontWeight.bold,
         ),
       ),
@@ -109,29 +117,29 @@ class MessageBubbleWidget extends StatelessWidget {
 
   Color _getBubbleColor(BuildContext context) {
     if (isCurrentUser) {
-      return Theme.of(context).primaryColor;
+      return AppColors.accentPrimary;
     } else if (isMediator) {
-      return Colors.blue[100]!;
+      return AppColors.accentPrimary.withValues(alpha: 0.1);
     } else {
-      return Colors.grey[200]!;
+      return AppColors.cardBg;
     }
   }
 
   Color _getAvatarColor(BuildContext context) {
     if (isCurrentUser) {
-      return Theme.of(context).primaryColor;
+      return AppColors.accentPrimary;
     } else if (isMediator) {
-      return Colors.blue;
+      return AppColors.accentPrimary;
     } else {
-      return Colors.grey[600]!;
+      return AppColors.textSecondary;
     }
   }
 
   Color _getSenderLabelColor(BuildContext context) {
     if (isMediator) {
-      return Colors.blue[700]!;
+      return AppColors.accentPrimary;
     } else {
-      return Colors.grey[700]!;
+      return AppColors.textSecondary;
     }
   }
 

@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_radius.dart';
 
 /// Payment amount display widget
 class PaymentAmountDisplay extends StatelessWidget {
   final int totalAmountCentimes;
 
-  const PaymentAmountDisplay({Key? key, required this.totalAmountCentimes})
-    : super(key: key);
+  const PaymentAmountDisplay({super.key, required this.totalAmountCentimes});
 
   @override
   Widget build(BuildContext context) {
@@ -13,20 +16,13 @@ class PaymentAmountDisplay extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Theme.of(context).primaryColor,
-            Theme.of(context).primaryColor.withOpacity(0.8),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
+        gradient: AppColors.paymentCardLinearGradient,
+        borderRadius: AppRadius.cardRadius,
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).primaryColor.withOpacity(0.3),
+            color: AppColors.accentPrimary.withValues(alpha: 0.3),
             spreadRadius: 2,
             blurRadius: 8,
             offset: const Offset(0, 4),
@@ -37,23 +33,23 @@ class PaymentAmountDisplay extends StatelessWidget {
         children: [
           Text(
             'Montant à payer',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: Colors.white.withOpacity(0.9),
+            style: AppTypography.sectionTitle.copyWith(
+              color: Colors.white.withValues(alpha: 0.9),
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: AppSpacing.sm),
           Text(
             formattedAmount,
-            style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+            style: AppTypography.h2.copyWith(
               color: Colors.white,
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: AppSpacing.xs),
           Text(
             'Francs CFA (XOF)',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Colors.white.withOpacity(0.8),
+            style: AppTypography.body.copyWith(
+              color: Colors.white.withValues(alpha: 0.8),
             ),
           ),
         ],

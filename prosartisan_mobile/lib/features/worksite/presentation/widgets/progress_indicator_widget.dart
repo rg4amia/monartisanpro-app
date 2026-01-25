@@ -137,7 +137,7 @@ class WorksiteCircularProgress extends StatelessWidget {
               children: [
                 Text(
                   '${(progress * 100).toInt()}%',
-                  style: AppTypography.titleMedium.copyWith(
+                  style: AppTypography.sectionTitle.copyWith(
                     fontWeight: FontWeight.bold,
                     color: effectiveProgressColor,
                   ),
@@ -236,7 +236,7 @@ class MilestoneProgressSteps extends StatelessWidget {
                     children: [
                       Text(
                         step.title,
-                        style: AppTypography.bodyMedium.copyWith(
+                        style: AppTypography.body.copyWith(
                           fontWeight: isCurrent
                               ? FontWeight.bold
                               : FontWeight.normal,

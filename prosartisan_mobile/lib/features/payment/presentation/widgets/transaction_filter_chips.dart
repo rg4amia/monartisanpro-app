@@ -38,7 +38,7 @@ class TransactionFilterChips extends StatelessWidget {
 
           return Padding(
             padding: EdgeInsets.only(
-              left: index == 0 ? 0 : 8,
+              left: index == 0 ? 0 : AppSpacing.sm,
               right: index == filters.length - 1 ? 0 : 0,
             ),
             child: Obx(() {
@@ -52,14 +52,17 @@ class TransactionFilterChips extends StatelessWidget {
                     onFilterChanged(key);
                   }
                 },
-                backgroundColor: Colors.grey.shade100,
-                selectedColor: Theme.of(context).primaryColor.withOpacity(0.2),
-                checkmarkColor: Theme.of(context).primaryColor,
-                labelStyle: TextStyle(
+                backgroundColor: AppColors.cardBg,
+                selectedColor: AppColors.accentPrimary.withValues(alpha: 0.2),
+                checkmarkColor: AppColors.accentPrimary,
+                labelStyle: AppTypography.bodySmall.copyWith(
                   color: isSelected
-                      ? Theme.of(context).primaryColor
-                      : Colors.grey.shade700,
+                      ? AppColors.accentPrimary
+                      : AppColors.textSecondary,
                   fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: AppRadius.buttonRadius,
                 ),
               );
             }),

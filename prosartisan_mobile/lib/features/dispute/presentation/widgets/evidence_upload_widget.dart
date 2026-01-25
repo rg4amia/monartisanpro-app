@@ -1,5 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_radius.dart';
 
 /// Widget for displaying and managing evidence files and URLs
 class EvidenceUploadWidget extends StatelessWidget {
@@ -9,34 +13,35 @@ class EvidenceUploadWidget extends StatelessWidget {
   final Function(int) onRemoveUrl;
 
   const EvidenceUploadWidget({
-    Key? key,
+    super.key,
     required this.evidenceFiles,
     required this.evidenceUrls,
     required this.onRemoveFile,
     required this.onRemoveUrl,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     if (evidenceFiles.isEmpty && evidenceUrls.isEmpty) {
       return Container(
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.all(AppSpacing.xl),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey[300]!),
-          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: AppColors.overlayMedium),
+          borderRadius: AppRadius.cardRadius,
+          color: AppColors.cardBg,
         ),
         child: Column(
           children: [
             Icon(
               Icons.cloud_upload_outlined,
               size: 48,
-              color: Colors.grey[400],
+              color: AppColors.textMuted,
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: AppSpacing.sm),
             Text(
               'Aucune preuve ajoutée',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.grey[600],
+              style: AppTypography.body.copyWith(
+                color: AppColors.textSecondary,
               ),
             ),
           ],
@@ -54,7 +59,7 @@ class EvidenceUploadWidget extends StatelessWidget {
             return _buildFileItem(context, file, index, true);
           }).toList(),
         ],
-        
+
         // Display URLs
         if (evidenceUrls.isNotEmpty) ...[
           ...evidenceUrls.asMap().entries.map((entry) {
@@ -67,30 +72,59 @@ class EvidenceUploadWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildFileItem(BuildContext context, File file, int index, bool isFile) {
+  Widget _buildFileItem(
+    BuildContext context,
+    File file,
+    int index,
+    bool isFile,
+  ) {
     final fileName = file.path.split('/').last;
     final isImage = _isImageFile(fileName);
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
-          child: Icon(
-            isImage ? Icons.image : Icons.insert_drive_file,
-            color: Theme.of(context).primaryColor,
+    return Container(
+      margin: EdgeInsets.only(bottom: AppSpacing.sm),
+      padding: EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.cardBg,
+        borderRadius: AppRadius.cardRadius,
+        border: Border.all(color: AppColors.overlayMedium),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            backgroundColor: AppColors.accentPrimary.withValues(alpha: 0.1),
+            child: Icon(
+              isImage ? Icons.image : Icons.insert_drive_file,
+              color: AppColors.accentPrimary,
+            ),
           ),
-        ),
-        title: Text(
-          fileName,
-          style: const TextStyle(fontWeight: FontWeight.w500),
-        ),
-        subtitle: Text(_getFileSize(file)),
-        trailing: IconButton(
-          icon: const Icon(Icons.delete_outline, color: Colors.red),
-          onPressed: () => onRemoveFile(index),
-        ),
-        onTap: isImage ? () => _showImagePreview(context, file) : null,
+          SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  fileName,
+                  style: AppTypography.body.copyWith(
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                SizedBox(height: AppSpacing.xs),
+                Text(
+                  _getFileSize(file),
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: Icon(Icons.delete_outline, color: AppColors.accentDanger),
+            onPressed: () => onRemoveFile(index),
+          ),
+        ],
       ),
     );
   }
@@ -101,10 +135,7 @@ class EvidenceUploadWidget extends StatelessWidget {
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: Colors.blue.withOpacity(0.1),
-          child: const Icon(
-            Icons.link,
-            color: Colors.blue,
-          ),
+          child: const Icon(Icons.link, color: Colors.blue),
         ),
         title: Text(
           _getUrlDisplayName(url),
@@ -112,10 +143,7 @@ class EvidenceUploadWidget extends StatelessWidget {
         ),
         subtitle: Text(
           url,
-          style: TextStyle(
-            color: Colors.grey[600],
-            fontSize: 12,
-          ),
+          style: TextStyle(color: Colors.grey[600], fontSize: 12),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -145,12 +173,7 @@ class EvidenceUploadWidget extends StatelessWidget {
                 ),
               ],
             ),
-            Flexible(
-              child: Image.file(
-                file,
-                fit: BoxFit.contain,
-              ),
-            ),
+            Flexible(child: Image.file(file, fit: BoxFit.contain)),
           ],
         ),
       ),

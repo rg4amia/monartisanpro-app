@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../core/theme/app_spacing.dart';
 
 /// GPS status indicator widget
 class GPSStatusIndicator extends StatelessWidget {
@@ -6,23 +9,23 @@ class GPSStatusIndicator extends StatelessWidget {
   final double accuracy;
 
   const GPSStatusIndicator({
-    Key? key,
+    super.key,
     required this.hasPermission,
     required this.accuracy,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     if (!hasPermission) {
       return Row(
         children: [
-          Icon(Icons.location_off, color: Colors.red.shade600, size: 20),
-          const SizedBox(width: 8),
+          Icon(Icons.location_off, color: AppColors.accentDanger, size: 20),
+          SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
               'Permission GPS requise pour la validation',
-              style: TextStyle(
-                color: Colors.red.shade700,
+              style: AppTypography.bodySmall.copyWith(
+                color: AppColors.accentDanger,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -32,23 +35,25 @@ class GPSStatusIndicator extends StatelessWidget {
     }
 
     final isAccurate = accuracy <= 10.0;
-    final color = isAccurate ? Colors.green : Colors.orange;
+    final color = isAccurate
+        ? AppColors.accentSuccess
+        : AppColors.accentWarning;
 
     return Row(
       children: [
         Icon(
           isAccurate ? Icons.gps_fixed : Icons.gps_not_fixed,
-          color: color.shade600,
+          color: color,
           size: 20,
         ),
-        const SizedBox(width: 8),
+        SizedBox(width: AppSpacing.sm),
         Expanded(
           child: Text(
             isAccurate
                 ? 'GPS précis (${accuracy.toStringAsFixed(1)}m)'
                 : 'GPS imprécis (${accuracy.toStringAsFixed(1)}m)',
-            style: TextStyle(
-              color: color.shade700,
+            style: AppTypography.bodySmall.copyWith(
+              color: color,
               fontWeight: FontWeight.w500,
             ),
           ),
