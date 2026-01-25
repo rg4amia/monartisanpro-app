@@ -10,6 +10,7 @@ class CreateMissionUseCase {
   Future<Mission> execute({
     required String description,
     required TradeCategory category,
+    int? tradeId,
     required GPSCoordinates location,
     required double budgetMin,
     required double budgetMax,
@@ -36,6 +37,7 @@ class CreateMissionUseCase {
     return await _repository.createMission(
       description: description.trim(),
       category: category,
+      tradeId: tradeId,
       location: location,
       budgetMin: budgetMin,
       budgetMax: budgetMax,

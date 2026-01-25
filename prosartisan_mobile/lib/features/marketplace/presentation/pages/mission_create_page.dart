@@ -44,8 +44,8 @@ class MissionCreatePage extends GetView<MissionController> {
               const SizedBox(height: 8),
               Obx(
                 () => CategorySelectorWidget(
-                  selectedCategory: controller.selectedCategory,
-                  onCategorySelected: controller.setCategory,
+                  selectedTrade: controller.selectedTrade,
+                  onTradeSelected: controller.setTrade,
                 ),
               ),
 

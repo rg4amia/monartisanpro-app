@@ -1,4 +1,5 @@
 import 'package:prosartisan_mobile/core/domain/value_objects/gps_coordinates.dart';
+import 'package:prosartisan_mobile/features/marketplace/data/models/trade_model.dart';
 import 'package:prosartisan_mobile/features/marketplace/domain/entities/mission.dart';
 
 class MissionModel extends Mission {
@@ -7,6 +8,8 @@ class MissionModel extends Mission {
     required super.clientId,
     required super.description,
     required super.category,
+    super.trade,
+    super.tradeId,
     required super.location,
     required super.budgetMin,
     required super.budgetMax,
@@ -22,6 +25,10 @@ class MissionModel extends Mission {
       clientId: json['client_id'] as String,
       description: json['description'] as String,
       category: TradeCategory.fromString(json['trade_category'] as String),
+      trade: json['trade'] != null
+          ? TradeModel.fromJson(json['trade'] as Map<String, dynamic>)
+          : null,
+      tradeId: json['trade_id'] as int?,
       location: GPSCoordinates.fromJson(
         json['location'] as Map<String, dynamic>,
       ),
@@ -42,6 +49,7 @@ class MissionModel extends Mission {
       'client_id': clientId,
       'description': description,
       'trade_category': category.value,
+      'trade_id': tradeId,
       'location': location.toJson(),
       'budget_min': budgetMin,
       'budget_max': budgetMax,

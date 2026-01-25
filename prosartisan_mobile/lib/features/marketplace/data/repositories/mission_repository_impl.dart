@@ -52,6 +52,7 @@ class MissionRepositoryImpl implements MissionRepository {
   Future<Mission> createMission({
     required String description,
     required TradeCategory category,
+    int? tradeId,
     required GPSCoordinates location,
     required double budgetMin,
     required double budgetMax,
@@ -59,6 +60,7 @@ class MissionRepositoryImpl implements MissionRepository {
     final model = await _remoteDataSource.createMission(
       description: description,
       category: category,
+      tradeId: tradeId,
       location: location,
       budgetMin: budgetMin,
       budgetMax: budgetMax,

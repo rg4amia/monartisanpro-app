@@ -27,34 +27,35 @@ class MissionResource extends JsonResource
             'description' => $mission->getDescription(),
             'category' => [
                 'value' => $mission->getCategory()->getValue(),
-                'label' => $mission->getCategory()->getFrenchLabel()
+                'label' => $mission->getCategory()->getLabel(),
             ],
+            'trade_id' => $mission->getTradeId(),
             'location' => [
                 'latitude' => $mission->getLocation()->getLatitude(),
-                'longitude' => $mission->getLocation()->getLongitude()
+                'longitude' => $mission->getLocation()->getLongitude(),
             ],
             'budget' => [
                 'min' => [
                     'centimes' => $mission->getBudgetMin()->toCentimes(),
                     'francs' => $mission->getBudgetMin()->toFloat(),
-                    'formatted' => $mission->getBudgetMin()->format()
+                    'formatted' => $mission->getBudgetMin()->format(),
                 ],
                 'max' => [
                     'centimes' => $mission->getBudgetMax()->toCentimes(),
                     'francs' => $mission->getBudgetMax()->toFloat(),
-                    'formatted' => $mission->getBudgetMax()->format()
-                ]
+                    'formatted' => $mission->getBudgetMax()->format(),
+                ],
             ],
             'status' => [
                 'value' => $mission->getStatus()->getValue(),
-                'label' => $mission->getStatus()->getFrenchLabel()
+                'label' => $mission->getStatus()->getLabel(),
             ],
             'quotes_count' => count($mission->getQuotes()),
             'can_receive_more_quotes' => $mission->canReceiveMoreQuotes(),
             'quotes' => DevisResource::collection($mission->getQuotes()),
             'accepted_quote' => $mission->getAcceptedQuote() ? new DevisResource($mission->getAcceptedQuote()) : null,
             'created_at' => $mission->getCreatedAt()->format('Y-m-d H:i:s'),
-            'created_at_human' => $mission->getCreatedAt()->format('d/m/Y à H:i')
+            'created_at_human' => $mission->getCreatedAt()->format('d/m/Y à H:i'),
         ];
     }
 }

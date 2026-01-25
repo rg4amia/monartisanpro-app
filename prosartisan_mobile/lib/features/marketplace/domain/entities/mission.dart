@@ -1,4 +1,5 @@
 import 'package:prosartisan_mobile/core/domain/value_objects/gps_coordinates.dart';
+import 'package:prosartisan_mobile/features/marketplace/domain/entities/trade.dart';
 
 enum TradeCategory {
   plumber('PLUMBER', 'Plombier'),
@@ -40,6 +41,8 @@ class Mission {
   final String clientId;
   final String description;
   final TradeCategory category;
+  final Trade? trade;
+  final int? tradeId;
   final GPSCoordinates location;
   final double budgetMin;
   final double budgetMax;
@@ -53,6 +56,8 @@ class Mission {
     required this.clientId,
     required this.description,
     required this.category,
+    this.trade,
+    this.tradeId,
     required this.location,
     required this.budgetMin,
     required this.budgetMax,
@@ -70,6 +75,8 @@ class Mission {
     String? clientId,
     String? description,
     TradeCategory? category,
+    Trade? trade,
+    int? tradeId,
     GPSCoordinates? location,
     double? budgetMin,
     double? budgetMax,
@@ -83,6 +90,8 @@ class Mission {
       clientId: clientId ?? this.clientId,
       description: description ?? this.description,
       category: category ?? this.category,
+      trade: trade ?? this.trade,
+      tradeId: tradeId ?? this.tradeId,
       location: location ?? this.location,
       budgetMin: budgetMin ?? this.budgetMin,
       budgetMax: budgetMax ?? this.budgetMax,

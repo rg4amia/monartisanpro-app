@@ -37,6 +37,7 @@ abstract class MarketplaceRemoteDataSource {
   Future<MissionModel> createMission({
     required String description,
     required TradeCategory category,
+    int? tradeId,
     required GPSCoordinates location,
     required double budgetMin,
     required double budgetMax,
@@ -194,6 +195,7 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
   Future<MissionModel> createMission({
     required String description,
     required TradeCategory category,
+    int? tradeId,
     required GPSCoordinates location,
     required double budgetMin,
     required double budgetMax,
@@ -203,6 +205,7 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
       data: {
         'description': description,
         'trade_category': category.value,
+        'trade_id': tradeId,
         'location': location.toJson(),
         'budget_min': budgetMin,
         'budget_max': budgetMax,

@@ -22,6 +22,7 @@ abstract class MissionRepository {
   Future<Mission> createMission({
     required String description,
     required TradeCategory category,
+    int? tradeId, // Optional trade ID
     required GPSCoordinates location,
     required double budgetMin,
     required double budgetMax,
