@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/transaction.dart';
 
 /// Transaction list item widget
@@ -6,34 +10,43 @@ class TransactionListItem extends StatelessWidget {
   final Transaction transaction;
   final VoidCallback? onTap;
 
-  const TransactionListItem({Key? key, required this.transaction, this.onTap})
-    : super(key: key);
+  const TransactionListItem({super.key, required this.transaction, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
+    return Container(
+      margin: EdgeInsets.only(bottom: AppSpacing.sm),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+        border: Border.all(color: AppColors.border),
+      ),
       child: ListTile(
         leading: _buildTransactionIcon(),
         title: Text(
           _getTransactionTypeDisplayName(transaction.type),
-          style: const TextStyle(fontWeight: FontWeight.w500),
+          style: AppTypography.bodyMedium.copyWith(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w500,
+          ),
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 4),
+            SizedBox(height: AppSpacing.xs),
             Text(
               transaction.amountFormatted,
-              style: TextStyle(
+              style: AppTypography.bodyMedium.copyWith(
                 fontWeight: FontWeight.bold,
                 color: _getAmountColor(),
               ),
             ),
-            const SizedBox(height: 2),
+            SizedBox(height: AppSpacing.xs),
             Text(
               _formatDate(transaction.createdAt),
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              style: AppTypography.bodySmall.copyWith(
+                color: AppColors.textSecondary,
+              ),
             ),
           ],
         ),
@@ -50,31 +63,31 @@ class TransactionListItem extends StatelessWidget {
     switch (transaction.type) {
       case 'ESCROW_BLOCK':
         icon = Icons.lock;
-        color = Colors.orange;
+        color = AppColors.warning;
         break;
       case 'MATERIAL_RELEASE':
         icon = Icons.build;
-        color = Colors.blue;
+        color = AppColors.info;
         break;
       case 'LABOR_RELEASE':
         icon = Icons.work;
-        color = Colors.green;
+        color = AppColors.success;
         break;
       case 'REFUND':
         icon = Icons.undo;
-        color = Colors.red;
+        color = AppColors.error;
         break;
       default:
         icon = Icons.account_balance_wallet;
-        color = Colors.grey;
+        color = AppColors.textSecondary;
     }
 
     return Container(
       width: 40,
       height: 40,
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(AppTheme.radiusSm),
       ),
       child: Icon(icon, color: color, size: 20),
     );
@@ -86,34 +99,36 @@ class TransactionListItem extends StatelessWidget {
 
     switch (transaction.status) {
       case 'PENDING':
-        color = Colors.orange;
+        color = AppColors.warning;
         label = 'En attente';
         break;
       case 'COMPLETED':
-        color = Colors.green;
+        color = AppColors.success;
         label = 'Terminée';
         break;
       case 'FAILED':
-        color = Colors.red;
+        color = AppColors.error;
         label = 'Échouée';
         break;
       default:
-        color = Colors.grey;
+        color = AppColors.textSecondary;
         label = transaction.status;
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Text(
         label,
-        style: TextStyle(
+        style: AppTypography.bodySmall.copyWith(
           color: color,
-          fontSize: 12,
           fontWeight: FontWeight.w500,
         ),
       ),
@@ -123,14 +138,14 @@ class TransactionListItem extends StatelessWidget {
   Color _getAmountColor() {
     switch (transaction.type) {
       case 'ESCROW_BLOCK':
-        return Colors.orange.shade700;
+        return AppColors.warning;
       case 'MATERIAL_RELEASE':
       case 'LABOR_RELEASE':
-        return Colors.green.shade700;
+        return AppColors.success;
       case 'REFUND':
-        return Colors.blue.shade700;
+        return AppColors.info;
       default:
-        return Colors.black87;
+        return AppColors.textPrimary;
     }
   }
 

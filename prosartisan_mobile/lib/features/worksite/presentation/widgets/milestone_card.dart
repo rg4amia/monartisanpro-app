@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:prosartisan_mobile/features/worksite/domain/models/jalon.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../domain/models/jalon.dart';
 
 /// Card widget for displaying milestone information
 ///
@@ -13,23 +17,27 @@ class MilestoneCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 2,
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+        border: Border.all(color: AppColors.border),
+      ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: EdgeInsets.all(AppSpacing.md),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildHeader(context),
-              const SizedBox(height: 12),
+              SizedBox(height: AppSpacing.sm),
               _buildDescription(context),
-              const SizedBox(height: 12),
+              SizedBox(height: AppSpacing.sm),
               _buildFooter(context),
               if (jalon.needsUrgentAction) ...[
-                const SizedBox(height: 12),
+                SizedBox(height: AppSpacing.sm),
                 _buildUrgentBanner(context),
               ],
             ],
@@ -224,15 +232,15 @@ class MilestoneCard extends StatelessWidget {
   Color _getStatusColor(String status) {
     switch (status) {
       case 'PENDING':
-        return Colors.grey;
+        return AppColors.textSecondary;
       case 'SUBMITTED':
-        return Colors.orange;
+        return AppColors.warning;
       case 'VALIDATED':
-        return Colors.green;
+        return AppColors.success;
       case 'CONTESTED':
-        return Colors.red;
+        return AppColors.error;
       default:
-        return Colors.grey;
+        return AppColors.textSecondary;
     }
   }
 

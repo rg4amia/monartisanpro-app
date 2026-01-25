@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_theme.dart';
 
 /// Mobile money option card widget
 class MobileMoneyOptionCard extends StatelessWidget {
@@ -8,46 +12,50 @@ class MobileMoneyOptionCard extends StatelessWidget {
   final VoidCallback onTap;
 
   const MobileMoneyOptionCard({
-    Key? key,
+    super.key,
     required this.provider,
     required this.icon,
     required this.color,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+        border: Border.all(color: AppColors.border),
+      ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(AppSpacing.md),
           child: Row(
             children: [
               Container(
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(AppTheme.radiusSm),
                 ),
                 child: Icon(icon, color: color, size: 24),
               ),
-              const SizedBox(width: 16),
+              SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Text(
                   provider,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  style: AppTypography.bodyLarge.copyWith(
+                    color: AppColors.textPrimary,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
               Icon(
                 Icons.arrow_forward_ios,
-                color: Colors.grey.shade400,
+                color: AppColors.textSecondary,
                 size: 16,
               ),
             ],

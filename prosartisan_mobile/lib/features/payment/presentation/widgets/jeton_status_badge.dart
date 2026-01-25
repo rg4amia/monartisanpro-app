@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_theme.dart';
 
 /// Jeton status badge widget
 class JetonStatusBadge extends StatelessWidget {
@@ -11,10 +15,13 @@ class JetonStatusBadge extends StatelessWidget {
     final statusInfo = _getStatusInfo(status);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
       decoration: BoxDecoration(
         color: statusInfo['color'].withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
         border: Border.all(
           color: statusInfo['color'].withValues(alpha: 0.3),
           width: 1,
@@ -24,13 +31,12 @@ class JetonStatusBadge extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(statusInfo['icon'], size: 16, color: statusInfo['color']),
-          const SizedBox(width: 8),
+          SizedBox(width: AppSpacing.sm),
           Text(
             statusInfo['label'],
-            style: TextStyle(
+            style: AppTypography.bodySmall.copyWith(
               color: statusInfo['color'],
               fontWeight: FontWeight.w500,
-              fontSize: 14,
             ),
           ),
         ],
@@ -43,29 +49,33 @@ class JetonStatusBadge extends StatelessWidget {
       case 'ACTIVE':
         return {
           'label': 'Actif',
-          'color': Colors.green,
+          'color': AppColors.success,
           'icon': Icons.check_circle,
         };
       case 'PARTIALLY_USED':
         return {
           'label': 'Partiellement utilisé',
-          'color': Colors.orange,
+          'color': AppColors.warning,
           'icon': Icons.pie_chart,
         };
       case 'FULLY_USED':
         return {
           'label': 'Entièrement utilisé',
-          'color': Colors.blue,
+          'color': AppColors.info,
           'icon': Icons.done_all,
         };
       case 'EXPIRED':
         return {
           'label': 'Expiré',
-          'color': Colors.red,
+          'color': AppColors.error,
           'icon': Icons.access_time,
         };
       default:
-        return {'label': status, 'color': Colors.grey, 'icon': Icons.help};
+        return {
+          'label': status,
+          'color': AppColors.textSecondary,
+          'icon': Icons.help,
+        };
     }
   }
 }
