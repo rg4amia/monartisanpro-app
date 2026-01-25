@@ -46,6 +46,7 @@ class MissionController extends Controller
             UserId::fromString($request->user()->id),
             $validated['description'],
             TradeCategory::fromString($validated['category']),
+            $validated['trade_id'] ?? null,
             new GPS_Coordinates($validated['latitude'], $validated['longitude']),
             MoneyAmount::fromCentimes($validated['budget_min_centimes']),
             MoneyAmount::fromCentimes($validated['budget_max_centimes'])
@@ -57,7 +58,7 @@ class MissionController extends Controller
 
         return response()->json([
             'message' => 'Mission créée avec succès',
-            'data' => new MissionResource($mission)
+            'data' => new MissionResource($mission),
         ], Response::HTTP_CREATED);
     }
 
@@ -106,7 +107,7 @@ class MissionController extends Controller
         $lastPage = ceil($total / $perPage);
 
         return response()->json([
-            'data' => array_map(fn($mission) => new MissionResource($mission), $missions),
+            'data' => array_map(fn ($mission) => new MissionResource($mission), $missions),
             'meta' => [
                 'current_page' => $page,
                 'per_page' => $perPage,
@@ -116,11 +117,11 @@ class MissionController extends Controller
                 'to' => min($offset + $perPage, $total),
             ],
             'links' => [
-                'first' => $request->url() . '?page=1',
-                'last' => $request->url() . '?page=' . $lastPage,
-                'prev' => $page > 1 ? $request->url() . '?page=' . ($page - 1) : null,
-                'next' => $page < $lastPage ? $request->url() . '?page=' . ($page + 1) : null,
-            ]
+                'first' => $request->url().'?page=1',
+                'last' => $request->url().'?page='.$lastPage,
+                'prev' => $page > 1 ? $request->url().'?page='.($page - 1) : null,
+                'next' => $page < $lastPage ? $request->url().'?page='.($page + 1) : null,
+            ],
         ]);
     }
 
@@ -133,10 +134,10 @@ class MissionController extends Controller
     {
         $mission = $this->missionRepository->findById(MissionId::fromString($id));
 
-        if (!$mission) {
+        if (! $mission) {
             return response()->json([
                 'error' => 'MISSION_NOT_FOUND',
-                'message' => 'Mission non trouvée'
+                'message' => 'Mission non trouvée',
             ], Response::HTTP_NOT_FOUND);
         }
 
@@ -146,7 +147,7 @@ class MissionController extends Controller
         if ($user->user_type === 'CLIENT' && $mission->getClientId()->getValue() !== $user->id) {
             return response()->json([
                 'error' => 'UNAUTHORIZED',
-                'message' => 'Accès non autorisé à cette mission'
+                'message' => 'Accès non autorisé à cette mission',
             ], Response::HTTP_FORBIDDEN);
         }
 
@@ -167,7 +168,7 @@ class MissionController extends Controller
         }
 
         return response()->json([
-            'data' => new MissionResource($mission)
+            'data' => new MissionResource($mission),
         ]);
     }
 }

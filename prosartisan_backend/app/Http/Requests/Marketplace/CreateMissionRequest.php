@@ -2,9 +2,7 @@
 
 namespace App\Http\Requests\Marketplace;
 
-use App\Domain\Identity\Models\ValueObjects\TradeCategory;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 /**
  * Request validation for mission creation
@@ -28,11 +26,8 @@ class CreateMissionRequest extends FormRequest
     {
         return [
             'description' => ['required', 'string', 'min:10', 'max:1000'],
-            'category' => ['required', 'string', Rule::in([
-                TradeCategory::PLUMBER,
-                TradeCategory::ELECTRICIAN,
-                TradeCategory::MASON
-            ])],
+            'category' => ['required', 'string'], // Category is now open-ended or derived from trade
+            'trade_id' => ['nullable', 'exists:trades,id'],
             'latitude' => ['required', 'numeric', 'between:-90,90'],
             'longitude' => ['required', 'numeric', 'between:-180,180'],
             'budget_min_centimes' => ['required', 'integer', 'min:1000'], // Minimum 10 XOF

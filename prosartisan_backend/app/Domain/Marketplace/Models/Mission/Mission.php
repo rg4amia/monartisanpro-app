@@ -24,15 +24,26 @@ use InvalidArgumentException;
 final class Mission
 {
     private MissionId $id;
+
     private UserId $clientId;
+
     private string $description;
+
     private TradeCategory $category;
+
+    private ?int $tradeId;
+
     private GPS_Coordinates $location;
+
     private MoneyAmount $budgetMin;
+
     private MoneyAmount $budgetMax;
+
     private MissionStatus $status;
+
     /** @var Devis[] */
     private array $quotes;
+
     private DateTime $createdAt;
 
     private const MAX_QUOTES = 3;
@@ -42,6 +53,7 @@ final class Mission
         UserId $clientId,
         string $description,
         TradeCategory $category,
+        ?int $tradeId,
         GPS_Coordinates $location,
         MoneyAmount $budgetMin,
         MoneyAmount $budgetMax,
@@ -56,12 +68,13 @@ final class Mission
         $this->clientId = $clientId;
         $this->description = $description;
         $this->category = $category;
+        $this->tradeId = $tradeId;
         $this->location = $location;
         $this->budgetMin = $budgetMin;
         $this->budgetMax = $budgetMax;
         $this->status = $status ?? MissionStatus::open();
         $this->quotes = $quotes;
-        $this->createdAt = $createdAt ?? new DateTime();
+        $this->createdAt = $createdAt ?? new DateTime;
     }
 
     /**
@@ -71,6 +84,7 @@ final class Mission
         UserId $clientId,
         string $description,
         TradeCategory $category,
+        ?int $tradeId,
         GPS_Coordinates $location,
         MoneyAmount $budgetMin,
         MoneyAmount $budgetMax
@@ -80,6 +94,7 @@ final class Mission
             $clientId,
             $description,
             $category,
+            $tradeId,
             $location,
             $budgetMin,
             $budgetMax
@@ -98,6 +113,13 @@ final class Mission
         return $mission;
     }
 
+    // ... (keep existing methods)
+
+    public function getTradeId(): ?int
+    {
+        return $this->tradeId;
+    }
+
     /**
      * Add a quote to this mission
      *
@@ -106,7 +128,7 @@ final class Mission
      */
     public function addQuote(Devis $quote): void
     {
-        if (!$this->canReceiveMoreQuotes()) {
+        if (! $this->canReceiveMoreQuotes()) {
             if (count($this->quotes) >= self::MAX_QUOTES) {
                 throw new MaximumQuotesExceededException($this->id->getValue());
             }
@@ -117,7 +139,7 @@ final class Mission
         }
 
         // Verify the quote is for this mission
-        if (!$quote->getMissionId()->equals($this->id)) {
+        if (! $quote->getMissionId()->equals($this->id)) {
             throw new InvalidArgumentException('Quote mission ID does not match this mission');
         }
 
@@ -136,7 +158,7 @@ final class Mission
      */
     public function acceptQuote(DevisId $quoteId): void
     {
-        if (!$this->status->isOpen() && !$this->status->isQuoted()) {
+        if (! $this->status->isOpen() && ! $this->status->isQuoted()) {
             throw new InvalidArgumentException(
                 "Cannot accept quote for mission with status {$this->status->getValue()}"
             );
@@ -158,7 +180,7 @@ final class Mission
             }
         }
 
-        if (!$quoteFound) {
+        if (! $quoteFound) {
             throw new InvalidArgumentException("Quote {$quoteId->getValue()} not found in this mission");
         }
 
@@ -174,7 +196,7 @@ final class Mission
                 $acceptedQuote->getTotalAmount(),
                 $acceptedQuote->getMaterialsAmount(),
                 $acceptedQuote->getLaborAmount(),
-                new DateTime()
+                new DateTime
             ));
         }
     }
@@ -284,7 +306,7 @@ final class Mission
             'budget_max' => $this->budgetMax->toArray(),
             'status' => $this->status->getValue(),
             'quotes_count' => count($this->quotes),
-            'quotes' => array_map(fn(Devis $quote) => $quote->toArray(), $this->quotes),
+            'quotes' => array_map(fn (Devis $quote) => $quote->toArray(), $this->quotes),
             'created_at' => $this->createdAt->format('Y-m-d H:i:s'),
         ];
     }
