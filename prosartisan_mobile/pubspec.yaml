@@ -37,6 +37,10 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
 
+  # UI & Design
+  google_fonts: ^6.1.0 # Pour SF Pro Display ou alternative
+  flutter_svg: ^2.0.9 # Icons SVG
+
   # State Management
   get: ^4.6.6
 

@@ -6,6 +6,7 @@ import 'core/routes/app_routes.dart';
 import 'core/constants/app_strings.dart';
 import 'core/controllers/language_controller.dart';
 import 'core/services/localization_service.dart';
+import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/bindings/auth_binding.dart';
 import 'generated/l10n/app_localizations.dart';
 
@@ -39,47 +40,9 @@ class ProSartisanApp extends StatelessWidget {
           GlobalCupertinoLocalizations.delegate,
         ],
 
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: Colors.orange,
-            brightness: Brightness.light,
-          ),
-          useMaterial3: true,
-          inputDecorationTheme: InputDecorationTheme(
-            filled: true,
-            fillColor: Colors.grey.shade50,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey.shade300),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey.shade300),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Colors.orange, width: 2),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Colors.red),
-            ),
-          ),
-          elevatedButtonTheme: ElevatedButtonThemeData(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orange,
-              foregroundColor: Colors.white,
-              elevation: 2,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-          textButtonTheme: TextButtonThemeData(
-            style: TextButton.styleFrom(foregroundColor: Colors.orange),
-          ),
-        ),
+        theme: AppTheme.darkTheme, // Utilise le thème sombre par défaut
+        darkTheme: AppTheme.darkTheme,
+        themeMode: ThemeMode.dark, // Force le thème sombre
         initialBinding: AuthBinding(),
         initialRoute: AppRoutes.splash,
         getPages: AppPages.routes,

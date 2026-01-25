@@ -1,0 +1,633 @@
+{
+  "designSystem": {
+    "name": "Home Service Mobile App Design System",
+    "version": "1.0",
+    "description": "A modern mobile app design system for home service booking platforms with dual theme support"
+  },
+  
+  "colorPalette": {
+    "light": {
+      "background": {
+        "primary": "#F8F9FA",
+        "secondary": "#FFFFFF",
+        "card": "#FFFFFF"
+      },
+      "text": {
+        "primary": "#1A1A1A",
+        "secondary": "#6B7280",
+        "tertiary": "#9CA3AF"
+      },
+      "accent": {
+        "primary": "#4F46E5",
+        "secondary": "#10B981",
+        "highlight": "#F59E0B"
+      }
+    },
+    "dark": {
+      "background": {
+        "primary": "#1A1F3A",
+        "secondary": "#232B4A",
+        "card": "#2A3354",
+        "elevated": "#343D5F"
+      },
+      "text": {
+        "primary": "#FFFFFF",
+        "secondary": "#A8B2D1",
+        "tertiary": "#7A8AA8",
+        "muted": "#5A6B8C"
+      },
+      "accent": {
+        "primary": "#5B7FFF",
+        "secondary": "#4ADE80",
+        "highlight": "#FBBF24",
+        "danger": "#EF4444"
+      },
+      "overlay": {
+        "light": "rgba(255, 255, 255, 0.05)",
+        "medium": "rgba(255, 255, 255, 0.1)",
+        "heavy": "rgba(0, 0, 0, 0.3)"
+      }
+    }
+  },
+  
+  "typography": {
+    "fontFamily": {
+      "primary": "SF Pro Display, -apple-system, BlinkMacSystemFont, sans-serif",
+      "secondary": "SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif"
+    },
+    "sizes": {
+      "h1": "28px",
+      "h2": "24px",
+      "h3": "20px",
+      "h4": "18px",
+      "body": "16px",
+      "bodySmall": "14px",
+      "caption": "12px",
+      "tiny": "10px"
+    },
+    "weights": {
+      "regular": 400,
+      "medium": 500,
+      "semibold": 600,
+      "bold": 700
+    },
+    "lineHeight": {
+      "tight": 1.2,
+      "normal": 1.5,
+      "relaxed": 1.75
+    }
+  },
+  
+  "spacing": {
+    "scale": {
+      "xs": "4px",
+      "sm": "8px",
+      "md": "12px",
+      "base": "16px",
+      "lg": "20px",
+      "xl": "24px",
+      "2xl": "32px",
+      "3xl": "40px",
+      "4xl": "48px"
+    },
+    "cardPadding": "16px",
+    "screenPadding": "20px",
+    "sectionGap": "24px"
+  },
+  
+  "borderRadius": {
+    "sm": "8px",
+    "md": "12px",
+    "lg": "16px",
+    "xl": "20px",
+    "2xl": "24px",
+    "full": "9999px",
+    "card": "16px",
+    "button": "12px",
+    "categoryCard": "16px"
+  },
+  
+  "shadows": {
+    "light": {
+      "sm": "0 1px 2px rgba(0, 0, 0, 0.05)",
+      "md": "0 4px 6px rgba(0, 0, 0, 0.07)",
+      "lg": "0 10px 15px rgba(0, 0, 0, 0.1)",
+      "xl": "0 20px 25px rgba(0, 0, 0, 0.15)"
+    },
+    "dark": {
+      "sm": "0 1px 2px rgba(0, 0, 0, 0.3)",
+      "md": "0 4px 6px rgba(0, 0, 0, 0.4)",
+      "lg": "0 10px 15px rgba(0, 0, 0, 0.5)",
+      "xl": "0 20px 25px rgba(0, 0, 0, 0.6)",
+      "glow": "0 0 20px rgba(91, 127, 255, 0.3)"
+    }
+  },
+  
+  "componentPatterns": {
+    "cards": {
+      "promotional": {
+        "layout": "horizontal",
+        "structure": "Promotional cards feature bold gradient backgrounds with illustrations, combining discount text, promotional copy, and imagery",
+        "styling": {
+          "background": "Vibrant gradients (blues, purples)",
+          "borderRadius": "16px",
+          "padding": "20px",
+          "illustration": "Character illustrations positioned on the right",
+          "textHierarchy": "Large percentage/number, bold headline, supporting text"
+        }
+      },
+      "categoryCard": {
+        "layout": "grid",
+        "structure": "Square or rectangular cards with centered icon and label",
+        "styling": {
+          "background": "Solid color backgrounds or semi-transparent overlays",
+          "borderRadius": "16px",
+          "padding": "16px",
+          "iconSize": "48px - 64px",
+          "activeState": "Accent color background with white text/icon",
+          "inactiveState": "Muted background with regular icon/text"
+        },
+        "variants": [
+          "Primary category (larger, accent colored)",
+          "Secondary categories (uniform size, muted colors)"
+        ]
+      },
+      "serviceCard": {
+        "layout": "vertical",
+        "structure": "Image, service name, rating, price, provider info",
+        "components": [
+          "Full-width image with rounded top corners",
+          "Service title and pricing badge overlay or below",
+          "Star rating with review count",
+          "Provider avatar, name, and role"
+        ],
+        "styling": {
+          "borderRadius": "16px",
+          "imageAspectRatio": "16:9 or 4:3",
+          "priceBadge": "Floating or inline, accent color",
+          "spacing": "12px between elements"
+        }
+      },
+      "paymentCard": {
+        "layout": "horizontal",
+        "structure": "Gradient background with card details",
+        "styling": {
+          "background": "Gradient (pink-to-orange, blue-to-purple)",
+          "borderRadius": "16px",
+          "padding": "20px",
+          "cardNumber": "Masked with dots, monospace font",
+          "cardBrand": "Icon positioned top-right"
+        }
+      },
+      "bookingCard": {
+        "layout": "vertical",
+        "structure": "Service image, booking details, provider info, status",
+        "components": [
+          "Thumbnail image",
+          "Booking ID and date",
+          "Service name and price",
+          "Provider details",
+          "Status badge (Completed, Pending, etc.)"
+        ],
+        "styling": {
+          "statusColors": {
+            "completed": "#10B981",
+            "pending": "#F59E0B",
+            "cancelled": "#EF4444"
+          }
+        }
+      }
+    },
+    
+    "buttons": {
+      "primary": {
+        "background": "Accent color gradient or solid",
+        "textColor": "White",
+        "borderRadius": "12px",
+        "padding": "16px 24px",
+        "fontSize": "16px",
+        "fontWeight": 600,
+        "shadow": "Medium elevation"
+      },
+      "secondary": {
+        "background": "Transparent or light overlay",
+        "border": "1px solid accent or overlay color",
+        "textColor": "Accent or primary text",
+        "borderRadius": "12px",
+        "padding": "16px 24px"
+      },
+      "icon": {
+        "shape": "Circle or rounded square",
+        "size": "40px - 48px",
+        "background": "Semi-transparent overlay",
+        "iconSize": "20px - 24px"
+      },
+      "floating": {
+        "position": "Fixed bottom-right or center-bottom",
+        "shape": "Rounded pill or circle",
+        "shadow": "Large elevation with accent glow",
+        "icon": "Plus, search, or action icon"
+      }
+    },
+    
+    "navigation": {
+      "topBar": {
+        "height": "56px - 64px",
+        "layout": "Left icon (menu/back) + Center title + Right icon (notifications/actions)",
+        "background": "Transparent or primary background",
+        "elevation": "None or subtle shadow"
+      },
+      "bottomBar": {
+        "height": "64px - 72px",
+        "items": "4-5 navigation items",
+        "layout": "Icon above label",
+        "activeState": "Accent color with filled icon",
+        "inactiveState": "Muted color with outline icon",
+        "background": "Card background with blur effect",
+        "borderRadius": "24px 24px 0 0 or floating pill"
+      },
+      "categoryPills": {
+        "layout": "Horizontal scroll",
+        "styling": {
+          "activeBackground": "Accent color",
+          "inactiveBackground": "Overlay or card background",
+          "borderRadius": "20px",
+          "padding": "8px 16px"
+        }
+      }
+    },
+    
+    "searchBar": {
+      "layout": "Full-width or with adjacent action button",
+      "styling": {
+        "background": "Card background with subtle border",
+        "borderRadius": "12px",
+        "padding": "12px 16px",
+        "iconPosition": "Left",
+        "placeholderColor": "Tertiary text"
+      }
+    },
+    
+    "iconography": {
+      "style": "Flat, minimalist illustrations with 2-3 colors",
+      "categories": {
+        "services": "Tool-based icons (wrench, brush, plug)",
+        "actions": "Simple line icons",
+        "illustrations": "Character-based scenes with workers"
+      },
+      "colorUsage": "Icons use 2-3 colors max, often accent + neutral + highlight"
+    },
+    
+    "badges": {
+      "status": {
+        "borderRadius": "6px",
+        "padding": "4px 8px",
+        "fontSize": "12px",
+        "fontWeight": 600,
+        "variants": ["Completed", "Pending", "Cancelled", "Confirmed"]
+      },
+      "price": {
+        "borderRadius": "8px",
+        "padding": "6px 12px",
+        "background": "Accent color",
+        "textColor": "White",
+        "fontSize": "14px",
+        "fontWeight": 600
+      },
+      "discount": {
+        "style": "Bold text with emoji or icon",
+        "placement": "Top-left of promotional cards"
+      }
+    },
+    
+    "rating": {
+      "display": "Star icon + numeric rating + review count",
+      "starColor": "#FBBF24",
+      "textFormat": "4.9 (500+ reviews)",
+      "fontSize": "12px - 14px"
+    },
+    
+    "formInputs": {
+      "textInput": {
+        "background": "Card background or subtle overlay",
+        "borderRadius": "12px",
+        "padding": "12px 16px",
+        "border": "1px solid overlay color",
+        "focusState": "Accent color border",
+        "fontSize": "16px"
+      },
+      "select": {
+        "style": "Similar to text input with dropdown arrow",
+        "activeBackground": "Accent color with white text"
+      },
+      "radio": {
+        "size": "20px - 24px",
+        "style": "Circular with accent fill when selected"
+      }
+    },
+    
+    "lists": {
+      "serviceList": {
+        "itemSpacing": "12px",
+        "itemBackground": "Card background",
+        "itemBorderRadius": "12px",
+        "itemPadding": "12px"
+      },
+      "categoryGrid": {
+        "columns": "3",
+        "gap": "12px",
+        "itemAspectRatio": "1:1 or 4:3"
+      }
+    },
+    
+    "modals": {
+      "background": "Card background with backdrop blur",
+      "borderRadius": "24px 24px 0 0",
+      "padding": "24px",
+      "maxHeight": "85vh",
+      "animation": "Slide up from bottom"
+    },
+    
+    "loadingStates": {
+      "skeleton": "Shimmer effect with gradient animation",
+      "spinner": "Accent color circular spinner",
+      "progressBar": "Accent color with rounded ends"
+    }
+  },
+  
+  "layoutPatterns": {
+    "homePage": {
+      "structure": [
+        "Header with greeting and notifications",
+        "Promotional banner/card",
+        "Search bar with filters",
+        "Category grid (2-3 columns)",
+        "Popular services carousel or list",
+        "Bottom navigation"
+      ],
+      "spacing": "24px between major sections"
+    },
+    
+    "categoryPage": {
+      "structure": [
+        "Back button + title header",
+        "Search bar with filters",
+        "Subcategory pills (horizontal scroll)",
+        "Service cards (vertical list or grid)",
+        "Bottom navigation"
+      ]
+    },
+    
+    "detailPage": {
+      "structure": [
+        "Back button header",
+        "Hero image or carousel",
+        "Service title and pricing",
+        "Rating and reviews",
+        "Description",
+        "Provider information",
+        "Action button (floating or fixed bottom)"
+      ]
+    },
+    
+    "profilePage": {
+      "structure": [
+        "Header with back button",
+        "Avatar and user info",
+        "Action buttons",
+        "Favorite services or lists",
+        "Settings/options list",
+        "Bottom navigation"
+      ]
+    },
+    
+    "bookingFlow": {
+      "structure": [
+        "Progress indicator (steps)",
+        "Current step content",
+        "Form inputs or selections",
+        "Summary card",
+        "Navigation buttons (back + continue)"
+      ]
+    }
+  },
+  
+  "interactions": {
+    "transitions": {
+      "pageTransition": "Slide left/right 300ms ease-in-out",
+      "modalTransition": "Slide up 250ms ease-out",
+      "cardHover": "Scale 1.02 + shadow increase",
+      "buttonPress": "Scale 0.98 + opacity 0.8"
+    },
+    
+    "animations": {
+      "promotional": "Subtle floating or pulse animation",
+      "loading": "Skeleton shimmer or spinner rotation",
+      "success": "Checkmark animation with scale + fade",
+      "iconEntry": "Fade in with slight scale"
+    },
+    
+    "feedback": {
+      "tapFeedback": "Brief opacity change + optional haptic",
+      "successState": "Green checkmark with brief animation",
+      "errorState": "Red accent with shake animation",
+      "loadingState": "Spinner or skeleton screen"
+    }
+  },
+  
+  "designPrinciples": {
+    "visualHierarchy": [
+      "Use size, color, and weight to establish clear hierarchy",
+      "Promotional content uses bold colors and large type",
+      "Secondary content uses muted colors and smaller type",
+      "Critical actions use accent colors and prominent placement"
+    ],
+    
+    "cardDesign": [
+      "Consistent border radius across all cards (12px-16px)",
+      "Subtle shadows for depth (more pronounced in dark mode)",
+      "Card backgrounds contrast with page background",
+      "Images always have rounded corners matching card radius"
+    ],
+    
+    "iconUsage": [
+      "Icons are colorful and illustrative, not just outlines",
+      "Category icons use 2-3 colors with simple shapes",
+      "Icons maintain consistent visual weight",
+      "Active states use filled icons, inactive use outlined or muted versions"
+    ],
+    
+    "colorApplication": [
+      "Dark mode: Deep blue base with purple undertones",
+      "Accent colors (blues, greens) provide energy and highlight actions",
+      "Use overlays and transparency for depth and layering",
+      "Status colors follow standard conventions (green=success, yellow=warning, red=error)"
+    ],
+    
+    "contentDensity": [
+      "Grid layouts for categories (2-3 columns on mobile)",
+      "Vertical lists for detailed service cards",
+      "Generous padding and spacing to avoid clutter",
+      "Maximum 6-8 items visible before scrolling"
+    ],
+    
+    "imagery": [
+      "Real photos for service listings and providers",
+      "Illustrated characters for promotional and empty states",
+      "Icons for categories and navigation",
+      "All images have consistent aspect ratios within context"
+    ]
+  },
+  
+  "responsiveGuidelines": {
+    "mobile": {
+      "maxWidth": "428px",
+      "columns": "Single column for content, 2-3 for grids",
+      "touchTargets": "Minimum 44px × 44px",
+      "bottomNavigation": "Fixed position with safe area padding"
+    },
+    
+    "tablet": {
+      "maxWidth": "768px",
+      "columns": "2-4 columns for grids",
+      "adaptiveLayout": "Utilize additional screen width for side panels or larger cards"
+    }
+  },
+  
+  "accessibilityGuidelines": {
+    "contrast": {
+      "minimumRatio": "4.5:1 for normal text",
+      "largeTextRatio": "3:1 for text ≥18px",
+      "accentColors": "Ensure sufficient contrast on dark backgrounds"
+    },
+    
+    "interactiveElements": {
+      "minTouchTarget": "44px × 44px",
+      "spacing": "8px minimum between tappable elements",
+      "focusStates": "Visible focus indicators with accent color"
+    },
+    
+    "textReadability": {
+      "minFontSize": "14px for body text",
+      "lineLength": "Maximum 70 characters for readability",
+      "lineHeight": "1.5 minimum for body text"
+    }
+  },
+  
+  "specificComponents": {
+    "welcomeHeader": {
+      "structure": "Greeting text + user name with emoji",
+      "layout": "Left-aligned with icon button on left, notification on right",
+      "typography": "h2 size for 'Welcome,', h3 size for name"
+    },
+    
+    "categoryGrid": {
+      "columns": 3,
+      "aspectRatio": "1:1",
+      "gap": "12px",
+      "cardStructure": "Icon (centered) + Label (bottom)",
+      "primaryCard": "Accent color background, typically green",
+      "secondaryCards": "Muted backgrounds matching theme"
+    },
+    
+    "serviceCardList": {
+      "orientation": "Vertical scroll",
+      "cardSpacing": "16px",
+      "cardStructure": [
+        "Image (top, 40% of card height)",
+        "Title and price (inline)",
+        "Rating",
+        "Provider info (avatar + name + role)"
+      ]
+    },
+    
+    "bottomNavigation": {
+      "items": ["Home", "Bookings", "Categories", "Chat", "Profile"],
+      "iconStyle": "Outline when inactive, filled when active",
+      "labelDisplay": "Always visible",
+      "activeIndicator": "Accent color for icon and label",
+      "background": "Card background with subtle backdrop blur"
+    },
+    
+    "searchComponent": {
+      "width": "Full width minus horizontal padding",
+      "layout": "Search icon + input field + optional filter button",
+      "placeholder": "Search for All Services or category-specific",
+      "actionButton": "Square icon button with accent background (optional)"
+    },
+    
+    "providerInfo": {
+      "layout": "Horizontal: Avatar + Name + Role/Badge",
+      "avatarSize": "40px - 48px",
+      "avatarStyle": "Circular with border or shadow",
+      "nameWeight": "Semibold",
+      "roleColor": "Tertiary text color"
+    },
+    
+    "emptyStates": {
+      "structure": "Illustration + Heading + Subtext + CTA button",
+      "illustration": "Centered, takes 30-40% of viewport height",
+      "text": "Centered alignment",
+      "ctaPlacement": "Below text, center-aligned"
+    }
+  },
+  
+  "illustrationStyle": {
+    "characters": {
+      "style": "Flat, simplified human figures",
+      "colorPalette": "Primary colors (red, blue, yellow) + skin tones",
+      "proportions": "Slightly stylized, friendly appearance",
+      "details": "Minimal facial features, focus on clothing/tools"
+    },
+    
+    "icons": {
+      "style": "Flat with subtle gradients or dual-tone",
+      "strokeWidth": "2px - 3px for outlines",
+      "fillStyle": "Solid colors with occasional gradients",
+      "complexity": "Simple, recognizable shapes"
+    }
+  },
+  
+  "themeImplementation": {
+    "switching": {
+      "method": "System preference or manual toggle",
+      "persistence": "Save user preference",
+      "transition": "Smooth color transition (200ms)"
+    },
+    
+    "darkModeSpecifics": {
+      "emphasis": "Use deeper blues/purples for richness",
+      "glowEffects": "Subtle glows on accent colors",
+      "overlays": "Semi-transparent whites for layering",
+      "imageOverlays": "Optional dark overlay on images for contrast"
+    }
+  },
+  
+  "implementationNotes": {
+    "frameworks": [
+      "React Native or Flutter for mobile",
+      "Tailwind CSS or Styled Components for web",
+      "Framer Motion for animations"
+    ],
+    
+    "stateManagement": [
+      "Track active categories, filters, selections",
+      "Manage booking flow progress",
+      "Cache user preferences and theme selection"
+    ],
+    
+    "performance": [
+      "Lazy load images and off-screen content",
+      "Use skeleton screens for loading states",
+      "Optimize illustrations and icons as SVGs",
+      "Implement virtual scrolling for long lists"
+    ],
+    
+    "consistency": [
+      "Maintain consistent spacing scale throughout",
+      "Use same border radius values for similar elements",
+      "Apply color palette consistently across themes",
+      "Keep typography scale uniform across all screens"
+    ]
+  }
+}
