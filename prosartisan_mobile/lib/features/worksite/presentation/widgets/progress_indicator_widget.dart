@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_radius.dart';
 
 /// Custom progress indicator widget for worksite progress
 ///
@@ -22,9 +26,8 @@ class WorksiteProgressIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveProgressColor =
-        progressColor ?? Theme.of(context).primaryColor;
-    final effectiveBackgroundColor = backgroundColor ?? Colors.grey[300];
+    final effectiveProgressColor = progressColor ?? AppColors.accentPrimary;
+    final effectiveBackgroundColor = backgroundColor ?? AppColors.overlayMedium;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -34,7 +37,7 @@ class WorksiteProgressIndicator extends StatelessWidget {
           height: 8,
           decoration: BoxDecoration(
             color: effectiveBackgroundColor,
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           child: FractionallySizedBox(
             alignment: Alignment.centerLeft,
@@ -42,13 +45,13 @@ class WorksiteProgressIndicator extends StatelessWidget {
             child: Container(
               decoration: BoxDecoration(
                 color: effectiveProgressColor,
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
             ),
           ),
         ),
 
-        const SizedBox(height: 8),
+        SizedBox(height: AppSpacing.sm),
 
         // Progress text and percentage
         Row(
@@ -56,13 +59,13 @@ class WorksiteProgressIndicator extends StatelessWidget {
           children: [
             Text(
               '$completedMilestones/$totalMilestones jalons terminés',
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
+              style: AppTypography.bodySmall.copyWith(
+                color: AppColors.textSecondary,
+              ),
             ),
             Text(
               '${(progress * 100).toInt()}%',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              style: AppTypography.bodySmall.copyWith(
                 fontWeight: FontWeight.w600,
                 color: effectiveProgressColor,
               ),
@@ -95,9 +98,8 @@ class WorksiteCircularProgress extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveProgressColor =
-        progressColor ?? Theme.of(context).primaryColor;
-    final effectiveBackgroundColor = backgroundColor ?? Colors.grey[300];
+    final effectiveProgressColor = progressColor ?? AppColors.accentPrimary;
+    final effectiveBackgroundColor = backgroundColor ?? AppColors.overlayMedium;
 
     return SizedBox(
       width: size,
@@ -112,7 +114,7 @@ class WorksiteCircularProgress extends StatelessWidget {
               value: 1.0,
               strokeWidth: 6,
               valueColor: AlwaysStoppedAnimation<Color>(
-                effectiveBackgroundColor!,
+                effectiveBackgroundColor,
               ),
             ),
           ),
@@ -135,16 +137,16 @@ class WorksiteCircularProgress extends StatelessWidget {
               children: [
                 Text(
                   '${(progress * 100).toInt()}%',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  style: AppTypography.titleMedium.copyWith(
                     fontWeight: FontWeight.bold,
                     color: effectiveProgressColor,
                   ),
                 ),
                 Text(
                   '$completedMilestones/$totalMilestones',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ],
             ),
@@ -190,10 +192,10 @@ class MilestoneProgressSteps extends StatelessWidget {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: isCompleted
-                            ? Colors.green
+                            ? AppColors.accentSuccess
                             : isCurrent
-                            ? Theme.of(context).primaryColor
-                            : Colors.grey[300],
+                            ? AppColors.accentPrimary
+                            : AppColors.overlayMedium,
                       ),
                       child: Center(
                         child: isCompleted
@@ -207,7 +209,7 @@ class MilestoneProgressSteps extends StatelessWidget {
                                 style: TextStyle(
                                   color: isCurrent
                                       ? Colors.white
-                                      : Colors.grey[600],
+                                      : AppColors.textSecondary,
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -218,12 +220,14 @@ class MilestoneProgressSteps extends StatelessWidget {
                       Container(
                         width: 2,
                         height: 40,
-                        color: isCompleted ? Colors.green : Colors.grey[300],
+                        color: isCompleted
+                            ? AppColors.accentSuccess
+                            : AppColors.overlayMedium,
                       ),
                   ],
                 ),
 
-                const SizedBox(width: 16),
+                SizedBox(width: AppSpacing.base),
 
                 // Step content
                 Expanded(
@@ -232,23 +236,24 @@ class MilestoneProgressSteps extends StatelessWidget {
                     children: [
                       Text(
                         step.title,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        style: AppTypography.bodyMedium.copyWith(
                           fontWeight: isCurrent
                               ? FontWeight.bold
                               : FontWeight.normal,
                           color: isCompleted
-                              ? Colors.green
+                              ? AppColors.accentSuccess
                               : isCurrent
-                              ? Theme.of(context).primaryColor
-                              : Colors.grey[600],
+                              ? AppColors.accentPrimary
+                              : AppColors.textSecondary,
                         ),
                       ),
                       if (step.description != null) ...[
-                        const SizedBox(height: 4),
+                        SizedBox(height: AppSpacing.xs),
                         Text(
                           step.description!,
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: Colors.grey[600]),
+                          style: AppTypography.bodySmall.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
                         ),
                       ],
                     ],
@@ -256,7 +261,7 @@ class MilestoneProgressSteps extends StatelessWidget {
                 ),
               ],
             ),
-            if (!isLast) const SizedBox(height: 8),
+            if (!isLast) SizedBox(height: AppSpacing.sm),
           ],
         );
       }).toList(),

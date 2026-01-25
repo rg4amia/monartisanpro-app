@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_radius.dart';
 
 /// Transaction filter chips widget
 class TransactionFilterChips extends StatelessWidget {
@@ -7,10 +11,10 @@ class TransactionFilterChips extends StatelessWidget {
   final ValueChanged<String> onFilterChanged;
 
   const TransactionFilterChips({
-    Key? key,
+    super.key,
     required this.selectedFilter,
     required this.onFilterChanged,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
