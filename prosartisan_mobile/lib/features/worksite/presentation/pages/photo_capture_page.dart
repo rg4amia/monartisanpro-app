@@ -3,7 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:prosartisan_mobile/features/worksite/presentation/controllers/worksite_controller.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../shared/widgets/buttons/primary_button.dart';
+import '../../../../shared/widgets/buttons/secondary_button.dart';
+import '../../../../shared/widgets/cards/info_card.dart';
+import '../controllers/worksite_controller.dart';
 
 /// Photo capture screen with GPS embedding
 ///
@@ -42,20 +49,27 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Preuve de Livraison'),
-        backgroundColor: Theme.of(context).primaryColor,
-        foregroundColor: Colors.white,
+        title: Text(
+          'Preuve de Livraison',
+          style: AppTypography.headingMedium.copyWith(
+            color: AppColors.textLight,
+          ),
+        ),
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.textLight,
+        elevation: 0,
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: EdgeInsets.all(AppSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildJalonInfo(context),
-            const SizedBox(height: 24),
+            SizedBox(height: AppSpacing.lg),
             _buildLocationInfo(context),
-            const SizedBox(height: 24),
+            SizedBox(height: AppSpacing.lg),
             _buildCameraSection(context),
             const Spacer(),
             _buildActionButtons(context),
@@ -66,140 +80,139 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
   }
 
   Widget _buildJalonInfo(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Jalon à valider',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              widget.jalonDescription,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-          ],
-        ),
-      ),
+    return InfoCard(
+      title: 'Jalon à valider',
+      subtitle: widget.jalonDescription,
+      icon: Icons.assignment,
+      backgroundColor: AppColors.info.withValues(alpha: 0.1),
+      borderColor: AppColors.info,
     );
   }
 
   Widget _buildLocationInfo(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  _currentPosition != null
-                      ? Icons.location_on
-                      : Icons.location_off,
-                  color: _currentPosition != null ? Colors.green : Colors.red,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Localisation GPS',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            if (_currentPosition != null) ...[
+    return Container(
+      padding: EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                _currentPosition != null
+                    ? Icons.location_on
+                    : Icons.location_off,
+                color: _currentPosition != null
+                    ? AppColors.success
+                    : AppColors.error,
+              ),
+              SizedBox(width: AppSpacing.sm),
               Text(
-                'Latitude: ${_currentPosition!.latitude.toStringAsFixed(6)}',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              Text(
-                'Longitude: ${_currentPosition!.longitude.toStringAsFixed(6)}',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              Text(
-                'Précision: ${_currentPosition!.accuracy.toStringAsFixed(1)}m',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: _currentPosition!.accuracy <= 10
-                      ? Colors.green
-                      : Colors.orange,
+                'Localisation GPS',
+                style: AppTypography.headingSmall.copyWith(
+                  color: AppColors.textPrimary,
                 ),
-              ),
-              if (_currentPosition!.accuracy > 10)
-                const Text(
-                  'Attention: Précision GPS faible (>10m)',
-                  style: TextStyle(color: Colors.orange, fontSize: 12),
-                ),
-            ] else ...[
-              const Text(
-                'Localisation non disponible',
-                style: TextStyle(color: Colors.red),
-              ),
-              TextButton.icon(
-                onPressed: _getCurrentLocation,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Réessayer'),
               ),
             ],
+          ),
+          SizedBox(height: AppSpacing.sm),
+          if (_currentPosition != null) ...[
+            Text(
+              'Latitude: ${_currentPosition!.latitude.toStringAsFixed(6)}',
+              style: AppTypography.bodySmall.copyWith(
+                color: AppColors.textSecondary,
+                fontFamily: 'monospace',
+              ),
+            ),
+            Text(
+              'Longitude: ${_currentPosition!.longitude.toStringAsFixed(6)}',
+              style: AppTypography.bodySmall.copyWith(
+                color: AppColors.textSecondary,
+                fontFamily: 'monospace',
+              ),
+            ),
+            Text(
+              'Précision: ${_currentPosition!.accuracy.toStringAsFixed(1)}m',
+              style: AppTypography.bodySmall.copyWith(
+                color: _currentPosition!.accuracy <= 10
+                    ? AppColors.success
+                    : AppColors.warning,
+              ),
+            ),
+            if (_currentPosition!.accuracy > 10)
+              Text(
+                'Attention: Précision GPS faible (>10m)',
+                style: AppTypography.bodySmall.copyWith(
+                  color: AppColors.warning,
+                ),
+              ),
+          ] else ...[
+            Text(
+              'Localisation non disponible',
+              style: AppTypography.bodyMedium.copyWith(color: AppColors.error),
+            ),
+            SizedBox(height: AppSpacing.sm),
+            SecondaryButton(
+              onPressed: _getCurrentLocation,
+              text: 'Réessayer',
+              icon: Icons.refresh,
+              isCompact: true,
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
 
   Widget _buildCameraSection(BuildContext context) {
     return Expanded(
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              Text(
-                'Photo de preuve',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+      child: Container(
+        padding: EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Column(
+          children: [
+            Text(
+              'Photo de preuve',
+              style: AppTypography.headingSmall.copyWith(
+                color: AppColors.textPrimary,
               ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: _capturedImage != null
-                    ? _buildImagePreview()
-                    : _buildCameraPlaceholder(context),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  ElevatedButton.icon(
-                    onPressed: _isCapturing
-                        ? null
-                        : () => _capturePhoto(ImageSource.camera),
-                    icon: _isCapturing
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.camera_alt),
-                    label: const Text('Appareil photo'),
-                  ),
-                  ElevatedButton.icon(
-                    onPressed: _isCapturing
-                        ? null
-                        : () => _capturePhoto(ImageSource.gallery),
-                    icon: const Icon(Icons.photo_library),
-                    label: const Text('Galerie'),
-                  ),
-                ],
-              ),
-            ],
-          ),
+            ),
+            SizedBox(height: AppSpacing.md),
+            Expanded(
+              child: _capturedImage != null
+                  ? _buildImagePreview()
+                  : _buildCameraPlaceholder(context),
+            ),
+            SizedBox(height: AppSpacing.md),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                SecondaryButton(
+                  onPressed: _isCapturing
+                      ? null
+                      : () => _capturePhoto(ImageSource.camera),
+                  text: 'Appareil photo',
+                  icon: _isCapturing ? null : Icons.camera_alt,
+                  isLoading: _isCapturing,
+                ),
+                SecondaryButton(
+                  onPressed: _isCapturing
+                      ? null
+                      : () => _capturePhoto(ImageSource.gallery),
+                  text: 'Galerie',
+                  icon: Icons.photo_library,
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -209,11 +222,11 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!),
-        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
         child: Image.file(_capturedImage!, fit: BoxFit.contain),
       ),
     );
@@ -223,27 +236,27 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!, style: BorderStyle.solid),
-        borderRadius: BorderRadius.circular(8),
-        color: Colors.grey[50],
+        border: Border.all(color: AppColors.border, style: BorderStyle.solid),
+        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+        color: AppColors.background,
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.camera_alt, size: 64, color: Colors.grey[400]),
-          const SizedBox(height: 16),
+          Icon(Icons.camera_alt, size: 64, color: AppColors.textSecondary),
+          SizedBox(height: AppSpacing.md),
           Text(
             'Aucune photo capturée',
-            style: Theme.of(
-              context,
-            ).textTheme.bodyLarge?.copyWith(color: Colors.grey[600]),
+            style: AppTypography.bodyLarge.copyWith(
+              color: AppColors.textSecondary,
+            ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: AppSpacing.sm),
           Text(
             'Prenez une photo pour prouver l\'avancement du travail',
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: Colors.grey[500]),
+            style: AppTypography.bodySmall.copyWith(
+              color: AppColors.textSecondary,
+            ),
             textAlign: TextAlign.center,
           ),
         ],
@@ -255,45 +268,21 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
     return Column(
       children: [
         if (_error != null) ...[
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.red[50],
-              border: Border.all(color: Colors.red[200]!),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              _error!,
-              style: const TextStyle(color: Colors.red),
-              textAlign: TextAlign.center,
-            ),
+          InfoCard(
+            title: 'Erreur',
+            subtitle: _error!,
+            icon: Icons.error,
+            backgroundColor: AppColors.error.withValues(alpha: 0.1),
+            borderColor: AppColors.error,
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: AppSpacing.md),
         ],
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton.icon(
-            onPressed: _canSubmit() ? _submitProof : null,
-            icon: _isSubmitting
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                : const Icon(Icons.send),
-            label: Text(
-              _isSubmitting ? 'Envoi en cours...' : 'Soumettre la preuve',
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).primaryColor,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-            ),
-          ),
+        PrimaryButton(
+          onPressed: _canSubmit() ? _submitProof : null,
+          text: _isSubmitting ? 'Envoi en cours...' : 'Soumettre la preuve',
+          icon: Icons.send,
+          isLoading: _isSubmitting,
+          isFullWidth: true,
         ),
       ],
     );
@@ -335,8 +324,10 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
 
       // Get current position
       Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-        timeLimit: const Duration(seconds: 10),
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 10),
+        ),
       );
 
       setState(() {

@@ -2,6 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../shared/widgets/buttons/primary_button.dart';
+import '../../../../shared/widgets/buttons/secondary_button.dart';
 import '../controllers/otp_controller.dart';
 
 /// OTP verification page
@@ -127,37 +133,52 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
     final otpController = Get.find<OtpController>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text(AppStrings.otpVerification)),
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: Text(
+          AppStrings.otpVerification,
+          style: AppTypography.headingMedium.copyWith(
+            color: AppColors.textLight,
+          ),
+        ),
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.textLight,
+        elevation: 0,
+      ),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: EdgeInsets.all(AppSpacing.lg),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 32),
+              SizedBox(height: AppSpacing.xl),
 
               // Icon
-              Icon(Icons.sms, size: 80, color: Theme.of(context).primaryColor),
+              Icon(Icons.sms, size: 80, color: AppColors.primary),
 
-              const SizedBox(height: 24),
+              SizedBox(height: AppSpacing.lg),
 
               // Title
               Text(
                 AppStrings.enterOtp,
-                style: Theme.of(context).textTheme.headlineSmall,
+                style: AppTypography.headingMedium.copyWith(
+                  color: AppColors.textPrimary,
+                ),
                 textAlign: TextAlign.center,
               ),
 
-              const SizedBox(height: 8),
+              SizedBox(height: AppSpacing.sm),
 
               // Subtitle
               Text(
                 '${AppStrings.otpSentTo} ${widget.phoneNumber}',
-                style: Theme.of(context).textTheme.bodyMedium,
+                style: AppTypography.bodyMedium.copyWith(
+                  color: AppColors.textSecondary,
+                ),
                 textAlign: TextAlign.center,
               ),
 
-              const SizedBox(height: 48),
+              SizedBox(height: AppSpacing.xl * 2),
 
               // OTP input fields
               Row(
@@ -171,12 +192,34 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
                       textAlign: TextAlign.center,
                       keyboardType: TextInputType.number,
                       maxLength: 1,
-                      style: Theme.of(context).textTheme.headlineSmall,
+                      style: AppTypography.headingMedium.copyWith(
+                        color: AppColors.textPrimary,
+                      ),
                       decoration: InputDecoration(
                         counterText: '',
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusMd,
+                          ),
+                          borderSide: BorderSide(color: AppColors.border),
                         ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusMd,
+                          ),
+                          borderSide: BorderSide(color: AppColors.border),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusMd,
+                          ),
+                          borderSide: BorderSide(
+                            color: AppColors.primary,
+                            width: 2,
+                          ),
+                        ),
+                        filled: true,
+                        fillColor: AppColors.surface,
                       ),
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       onChanged: (value) {
@@ -196,51 +239,32 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
                 }),
               ),
 
-              const SizedBox(height: 32),
+              SizedBox(height: AppSpacing.xl),
 
               // Verify button
               Obx(
-                () => ElevatedButton(
+                () => PrimaryButton(
                   onPressed: otpController.isLoading.value
                       ? null
                       : _handleVerify,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: otpController.isLoading.value
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              Colors.white,
-                            ),
-                          ),
-                        )
-                      : const Text(
-                          AppStrings.verify,
-                          style: TextStyle(fontSize: 16),
-                        ),
+                  text: AppStrings.verify,
+                  isLoading: otpController.isLoading.value,
+                  isFullWidth: true,
                 ),
               ),
 
-              const SizedBox(height: 24),
+              SizedBox(height: AppSpacing.lg),
 
               // Resend button
               Obx(() {
                 final countdown = otpController.resendCountdown.value;
 
-                return TextButton(
+                return SecondaryButton(
                   onPressed: countdown > 0 ? null : _handleResend,
-                  child: Text(
-                    countdown > 0
-                        ? '${AppStrings.resendOtp} (${countdown}s)'
-                        : AppStrings.resendOtp,
-                  ),
+                  text: countdown > 0
+                      ? '${AppStrings.resendOtp} (${countdown}s)'
+                      : AppStrings.resendOtp,
+                  isFullWidth: true,
                 );
               }),
             ],
