@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../shared/widgets/cards/info_card.dart';
 import '../controllers/payment_controller.dart';
 import '../widgets/mobile_money_option_card.dart';
 import '../widgets/payment_amount_display.dart';
@@ -13,98 +18,92 @@ class PaymentInitiationPage extends StatelessWidget {
   final int totalAmountCentimes;
 
   const PaymentInitiationPage({
-    Key? key,
+    super.key,
     required this.missionId,
     required this.devisId,
     required this.totalAmountCentimes,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     final PaymentController controller = Get.put(PaymentController());
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Paiement'),
-        backgroundColor: Theme.of(context).primaryColor,
-        foregroundColor: Colors.white,
+        title: Text(
+          'Paiement',
+          style: AppTypography.headingMedium.copyWith(
+            color: AppColors.textLight,
+          ),
+        ),
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.textLight,
+        elevation: 0,
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
+          return Center(
+            child: CircularProgressIndicator(color: AppColors.primary),
+          );
         }
 
         return SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
+          padding: EdgeInsets.all(AppSpacing.md),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Payment amount display
               PaymentAmountDisplay(totalAmountCentimes: totalAmountCentimes),
 
-              const SizedBox(height: 24),
+              SizedBox(height: AppSpacing.lg),
 
               // Payment method selection
               Text(
                 'Choisissez votre méthode de paiement',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
+                style: AppTypography.headingSmall.copyWith(
+                  color: AppColors.textPrimary,
                 ),
               ),
 
-              const SizedBox(height: 16),
+              SizedBox(height: AppSpacing.md),
 
               // Mobile Money options
               MobileMoneyOptionCard(
                 provider: 'Wave',
                 icon: Icons.waves,
-                color: Colors.blue,
+                color: AppColors.info,
                 onTap: () => _initiatePayment(controller, 'wave'),
               ),
 
-              const SizedBox(height: 12),
+              SizedBox(height: AppSpacing.sm),
 
               MobileMoneyOptionCard(
                 provider: 'Orange Money',
                 icon: Icons.phone_android,
-                color: Colors.orange,
+                color: AppColors.warning,
                 onTap: () => _initiatePayment(controller, 'orange'),
               ),
 
-              const SizedBox(height: 12),
+              SizedBox(height: AppSpacing.sm),
 
               MobileMoneyOptionCard(
                 provider: 'MTN Mobile Money',
                 icon: Icons.phone_iphone,
-                color: Colors.yellow.shade700,
+                color: AppColors.accent,
                 onTap: () => _initiatePayment(controller, 'mtn'),
               ),
 
-              const SizedBox(height: 32),
+              SizedBox(height: AppSpacing.xl),
 
               // Security notice
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.blue.shade200),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.security, color: Colors.blue.shade600),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Vos fonds seront sécurisés dans un compte séquestre jusqu\'à la validation des travaux.',
-                        style: TextStyle(
-                          color: Colors.blue.shade800,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+              InfoCard(
+                title: 'Sécurité des fonds',
+                subtitle:
+                    'Vos fonds seront sécurisés dans un compte séquestre jusqu\'à la validation des travaux.',
+                icon: Icons.security,
+                backgroundColor: AppColors.info.withValues(alpha: 0.1),
+                borderColor: AppColors.info,
               ),
             ],
           ),

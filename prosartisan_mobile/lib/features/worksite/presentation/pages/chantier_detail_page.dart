@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:prosartisan_mobile/features/worksite/domain/models/chantier.dart';
-import 'package:prosartisan_mobile/features/worksite/domain/models/jalon.dart';
-import 'package:prosartisan_mobile/features/worksite/presentation/controllers/worksite_controller.dart';
-import 'package:prosartisan_mobile/features/worksite/presentation/widgets/milestone_card.dart';
-import 'package:prosartisan_mobile/features/worksite/presentation/widgets/progress_indicator_widget.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../shared/widgets/cards/info_card.dart';
+import '../../../../shared/widgets/cards/empty_state_card.dart';
+import '../../../worksite/domain/models/chantier.dart';
+import '../../../worksite/domain/models/jalon.dart';
+import '../../../worksite/presentation/controllers/worksite_controller.dart';
+import '../../../worksite/presentation/widgets/milestone_card.dart';
+import '../../../worksite/presentation/widgets/progress_indicator_widget.dart';
 
 /// Chantier detail screen with milestone list
 ///
@@ -25,41 +31,55 @@ class ChantierDetailPage extends StatelessWidget {
     });
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Détails du Chantier'),
-        backgroundColor: Theme.of(context).primaryColor,
-        foregroundColor: Colors.white,
+        title: Text(
+          'Détails du Chantier',
+          style: AppTypography.headingMedium.copyWith(
+            color: AppColors.textLight,
+          ),
+        ),
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.textLight,
+        elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: Icon(Icons.refresh, color: AppColors.textLight),
             onPressed: () => controller.refreshCurrentChantier(),
           ),
         ],
       ),
       body: Obx(() {
         if (controller.isLoading && controller.currentChantier == null) {
-          return const Center(child: CircularProgressIndicator());
+          return Center(
+            child: CircularProgressIndicator(color: AppColors.primary),
+          );
         }
 
         final chantier = controller.currentChantier;
         if (chantier == null) {
-          return const Center(child: Text('Chantier non trouvé'));
+          return EmptyStateCard(
+            icon: Icons.construction,
+            title: 'Chantier non trouvé',
+            subtitle: 'Le chantier demandé n\'existe pas.',
+          );
         }
 
         return RefreshIndicator(
           onRefresh: () => controller.refreshCurrentChantier(),
+          color: AppColors.primary,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16.0),
+            padding: EdgeInsets.all(AppSpacing.md),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildChantierHeader(context, chantier),
-                const SizedBox(height: 24),
+                SizedBox(height: AppSpacing.lg),
                 _buildProgressSection(context, chantier),
-                const SizedBox(height: 24),
+                SizedBox(height: AppSpacing.lg),
                 _buildFinancialSection(context, chantier),
-                const SizedBox(height: 24),
+                SizedBox(height: AppSpacing.lg),
                 _buildMilestonesSection(context, chantier),
               ],
             ),

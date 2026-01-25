@@ -7,6 +7,13 @@ import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/otp_verification_page.dart';
 import '../../features/auth/presentation/pages/kyc_upload_page.dart';
 import '../../features/auth/presentation/controllers/auth_controller.dart';
+import '../../features/home/presentation/bindings/home_binding.dart';
+import '../../features/home/presentation/pages/home_page.dart';
+import '../../features/bookings/presentation/pages/bookings_page.dart';
+import '../../features/categories/presentation/pages/categories_page.dart';
+import '../../features/chat/presentation/pages/chat_page.dart';
+import '../../features/profile/presentation/pages/profile_page.dart';
+import '../../features/demo/presentation/pages/design_system_demo_page.dart';
 import '../middleware/auth_middleware.dart';
 import 'app_routes.dart';
 
@@ -50,34 +57,36 @@ class AppPages {
     // Protected pages (authenticated only)
     GetPage(
       name: AppRoutes.home,
-      page: () => const _PlaceholderHomePage(),
-      binding: AuthBinding(),
+      page: () => const HomePage(),
+      binding: HomeBinding(),
       middlewares: [AuthMiddleware()],
     ),
+
+    GetPage(
+      name: AppRoutes.bookings,
+      page: () => const BookingsPage(),
+      middlewares: [AuthMiddleware()],
+    ),
+
+    GetPage(
+      name: AppRoutes.categories,
+      page: () => const CategoriesPage(),
+      middlewares: [AuthMiddleware()],
+    ),
+
+    GetPage(
+      name: AppRoutes.chat,
+      page: () => const ChatPage(),
+      middlewares: [AuthMiddleware()],
+    ),
+
+    GetPage(
+      name: AppRoutes.profile,
+      page: () => const ProfilePage(),
+      middlewares: [AuthMiddleware()],
+    ),
+
+    // Demo page (for development)
+    GetPage(name: AppRoutes.demo, page: () => const DesignSystemDemoPage()),
   ];
-}
-
-/// Placeholder home page
-class _PlaceholderHomePage extends StatelessWidget {
-  const _PlaceholderHomePage();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('ProSartisan'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              final authController = Get.find<AuthController>();
-              await authController.logout();
-              Get.offAllNamed(AppRoutes.login);
-            },
-          ),
-        ],
-      ),
-      body: const Center(child: Text('Bienvenue sur ProSartisan!')),
-    );
-  }
 }

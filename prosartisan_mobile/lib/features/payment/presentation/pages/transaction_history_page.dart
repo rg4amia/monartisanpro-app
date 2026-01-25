@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../shared/widgets/buttons/primary_button.dart';
+import '../../../../shared/widgets/cards/empty_state_card.dart';
 import '../controllers/transaction_history_controller.dart';
 import '../widgets/transaction_list_item.dart';
 import '../widgets/transaction_filter_chips.dart';
@@ -8,7 +14,7 @@ import '../widgets/transaction_filter_chips.dart';
 ///
 /// Requirements: 4.6, 13.6
 class TransactionHistoryPage extends StatelessWidget {
-  const TransactionHistoryPage({Key? key}) : super(key: key);
+  const TransactionHistoryPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -22,13 +28,20 @@ class TransactionHistoryPage extends StatelessWidget {
     });
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Historique des transactions'),
-        backgroundColor: Theme.of(context).primaryColor,
-        foregroundColor: Colors.white,
+        title: Text(
+          'Historique des transactions',
+          style: AppTypography.headingMedium.copyWith(
+            color: AppColors.textLight,
+          ),
+        ),
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.textLight,
+        elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: Icon(Icons.refresh, color: AppColors.textLight),
             onPressed: () => controller.refreshTransactions(),
           ),
         ],
@@ -37,7 +50,16 @@ class TransactionHistoryPage extends StatelessWidget {
         children: [
           // Filter chips
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.sm,
+            ),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              border: Border(
+                bottom: BorderSide(color: AppColors.border, width: 1),
+              ),
+            ),
             child: TransactionFilterChips(
               selectedFilter: controller.selectedFilter,
               onFilterChanged: (filter) => controller.setFilter(filter),
@@ -49,41 +71,24 @@ class TransactionHistoryPage extends StatelessWidget {
             child: Obx(() {
               if (controller.isLoading.value &&
                   controller.transactions.isEmpty) {
-                return const Center(child: CircularProgressIndicator());
+                return Center(
+                  child: CircularProgressIndicator(color: AppColors.primary),
+                );
               }
 
               if (controller.transactions.isEmpty) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.receipt_long,
-                        size: 64,
-                        color: Colors.grey.shade400,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Aucune transaction trouvée',
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(color: Colors.grey.shade600),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Vos transactions apparaîtront ici',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.grey.shade500,
-                        ),
-                      ),
-                    ],
-                  ),
+                return EmptyStateCard(
+                  icon: Icons.receipt_long,
+                  title: 'Aucune transaction trouvée',
+                  subtitle: 'Vos transactions apparaîtront ici',
                 );
               }
 
               return RefreshIndicator(
                 onRefresh: () => controller.refreshTransactions(),
+                color: AppColors.primary,
                 child: ListView.builder(
-                  padding: const EdgeInsets.all(16),
+                  padding: EdgeInsets.all(AppSpacing.md),
                   itemCount:
                       controller.transactions.length +
                       (controller.hasMorePages.value ? 1 : 0),
@@ -91,27 +96,35 @@ class TransactionHistoryPage extends StatelessWidget {
                     // Load more indicator
                     if (index == controller.transactions.length) {
                       if (controller.isLoadingMore.value) {
-                        return const Padding(
-                          padding: EdgeInsets.all(16),
-                          child: Center(child: CircularProgressIndicator()),
+                        return Padding(
+                          padding: EdgeInsets.all(AppSpacing.md),
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: AppColors.primary,
+                            ),
+                          ),
                         );
                       } else {
                         // Load more button
                         return Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: ElevatedButton(
+                          padding: EdgeInsets.all(AppSpacing.md),
+                          child: PrimaryButton(
                             onPressed: () => controller.loadMoreTransactions(),
-                            child: const Text('Charger plus'),
+                            text: 'Charger plus',
+                            isFullWidth: true,
                           ),
                         );
                       }
                     }
 
                     final transaction = controller.transactions[index];
-                    return TransactionListItem(
-                      transaction: transaction,
-                      onTap: () =>
-                          _showTransactionDetails(context, transaction),
+                    return Padding(
+                      padding: EdgeInsets.only(bottom: AppSpacing.sm),
+                      child: TransactionListItem(
+                        transaction: transaction,
+                        onTap: () =>
+                            _showTransactionDetails(context, transaction),
+                      ),
                     );
                   },
                 ),
@@ -127,8 +140,11 @@ class TransactionHistoryPage extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      backgroundColor: AppColors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppTheme.radiusLg),
+        ),
       ),
       builder: (context) => DraggableScrollableSheet(
         initialChildSize: 0.7,
@@ -136,7 +152,7 @@ class TransactionHistoryPage extends StatelessWidget {
         minChildSize: 0.5,
         expand: false,
         builder: (context, scrollController) => Container(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.all(AppSpacing.lg),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -146,23 +162,23 @@ class TransactionHistoryPage extends StatelessWidget {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
+                    color: AppColors.border,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
 
-              const SizedBox(height: 20),
+              SizedBox(height: AppSpacing.lg),
 
               // Title
               Text(
                 'Détails de la transaction',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
+                style: AppTypography.headingMedium.copyWith(
+                  color: AppColors.textPrimary,
                 ),
               ),
 
-              const SizedBox(height: 20),
+              SizedBox(height: AppSpacing.lg),
 
               // Transaction details
               Expanded(
@@ -186,12 +202,10 @@ class TransactionHistoryPage extends StatelessWidget {
               ),
 
               // Close button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Fermer'),
-                ),
+              PrimaryButton(
+                onPressed: () => Navigator.of(context).pop(),
+                text: 'Fermer',
+                isFullWidth: true,
               ),
             ],
           ),
@@ -202,7 +216,7 @@ class TransactionHistoryPage extends StatelessWidget {
 
   Widget _buildDetailRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -210,16 +224,19 @@ class TransactionHistoryPage extends StatelessWidget {
             width: 120,
             child: Text(
               label,
-              style: const TextStyle(
+              style: AppTypography.bodyMedium.copyWith(
+                color: AppColors.textSecondary,
                 fontWeight: FontWeight.w500,
-                color: Colors.grey,
               ),
             ),
           ),
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(fontWeight: FontWeight.w500),
+              style: AppTypography.bodyMedium.copyWith(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
         ],

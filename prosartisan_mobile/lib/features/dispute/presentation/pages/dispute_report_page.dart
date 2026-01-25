@@ -2,12 +2,19 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../shared/widgets/buttons/primary_button.dart';
+import '../../../../shared/widgets/buttons/secondary_button.dart';
+import '../../../../shared/widgets/cards/info_card.dart';
 import '../../domain/models/dispute.dart';
 import '../controllers/dispute_controller.dart';
 import '../widgets/evidence_upload_widget.dart';
 
 /// Page for reporting a new dispute
-/// 
+///
 /// Requirement 9.1: Create dispute reporting form with evidence upload
 class DisputeReportPage extends StatefulWidget {
   final String missionId;
@@ -16,12 +23,12 @@ class DisputeReportPage extends StatefulWidget {
   final String? defendantName;
 
   const DisputeReportPage({
-    Key? key,
+    super.key,
     required this.missionId,
     required this.defendantId,
     this.missionTitle,
     this.defendantName,
-  }) : super(key: key);
+  });
 
   @override
   State<DisputeReportPage> createState() => _DisputeReportPageState();
@@ -50,14 +57,23 @@ class _DisputeReportPageState extends State<DisputeReportPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Signaler un litige'),
-        backgroundColor: Theme.of(context).primaryColor,
-        foregroundColor: Colors.white,
+        title: Text(
+          'Signaler un litige',
+          style: AppTypography.headingMedium.copyWith(
+            color: AppColors.textLight,
+          ),
+        ),
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.textLight,
+        elevation: 0,
       ),
-      body: Obx(() => _controller.isSubmitting.value
-          ? const Center(child: CircularProgressIndicator())
-          : _buildForm()),
+      body: Obx(
+        () => _controller.isSubmitting.value
+            ? Center(child: CircularProgressIndicator(color: AppColors.primary))
+            : _buildForm(),
+      ),
     );
   }
 
@@ -90,9 +106,9 @@ class _DisputeReportPageState extends State<DisputeReportPage> {
           children: [
             Text(
               'Informations de la mission',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             if (widget.missionTitle != null) ...[
@@ -120,36 +136,38 @@ class _DisputeReportPageState extends State<DisputeReportPage> {
       children: [
         Text(
           'Type de litige *',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
-        Obx(() => Wrap(
-          spacing: 8.0,
-          runSpacing: 8.0,
-          children: DisputeType.allTypes.map((type) {
-            final isSelected = _controller.selectedType.value == type;
-            return FilterChip(
-              label: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(_controller.getTypeIcon(type)),
-                  const SizedBox(width: 4),
-                  Text(type.label),
-                ],
-              ),
-              selected: isSelected,
-              onSelected: (selected) {
-                if (selected) {
-                  _controller.setDisputeType(type);
-                }
-              },
-              selectedColor: Theme.of(context).primaryColor.withOpacity(0.2),
-              checkmarkColor: Theme.of(context).primaryColor,
-            );
-          }).toList(),
-        )),
+        Obx(
+          () => Wrap(
+            spacing: 8.0,
+            runSpacing: 8.0,
+            children: DisputeType.allTypes.map((type) {
+              final isSelected = _controller.selectedType.value == type;
+              return FilterChip(
+                label: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(_controller.getTypeIcon(type)),
+                    const SizedBox(width: 4),
+                    Text(type.label),
+                  ],
+                ),
+                selected: isSelected,
+                onSelected: (selected) {
+                  if (selected) {
+                    _controller.setDisputeType(type);
+                  }
+                },
+                selectedColor: AppColors.primary.withValues(alpha: 0.2),
+                checkmarkColor: AppColors.primary,
+              );
+            }).toList(),
+          ),
+        ),
       ],
     );
   }
@@ -160,9 +178,9 @@ class _DisputeReportPageState extends State<DisputeReportPage> {
       children: [
         Text(
           'Description du litige *',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
         TextFormField(
@@ -179,9 +197,9 @@ class _DisputeReportPageState extends State<DisputeReportPage> {
         const SizedBox(height: 4),
         Text(
           'Minimum 10 caractères requis',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: Colors.grey[600],
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
         ),
       ],
     );
@@ -195,9 +213,9 @@ class _DisputeReportPageState extends State<DisputeReportPage> {
           children: [
             Text(
               'Preuves (optionnel)',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const Spacer(),
             TextButton.icon(
@@ -210,17 +228,19 @@ class _DisputeReportPageState extends State<DisputeReportPage> {
         const SizedBox(height: 8),
         Text(
           'Ajoutez des photos, documents ou liens pour appuyer votre litige',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: Colors.grey[600],
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
         ),
         const SizedBox(height: 16),
-        Obx(() => EvidenceUploadWidget(
-          evidenceFiles: _controller.evidenceFiles,
-          evidenceUrls: _controller.evidenceUrls,
-          onRemoveFile: _controller.removeEvidenceFile,
-          onRemoveUrl: _controller.removeEvidenceUrl,
-        )),
+        Obx(
+          () => EvidenceUploadWidget(
+            evidenceFiles: _controller.evidenceFiles,
+            evidenceUrls: _controller.evidenceUrls,
+            onRemoveFile: _controller.removeEvidenceFile,
+            onRemoveUrl: _controller.removeEvidenceUrl,
+          ),
+        ),
       ],
     );
   }

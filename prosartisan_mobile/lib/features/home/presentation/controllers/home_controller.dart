@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/widgets/cards/category_card.dart';
@@ -167,16 +168,16 @@ class HomeController extends GetxController {
         // Déjà sur la page d'accueil
         break;
       case 'bookings':
-        Get.toNamed('/bookings');
+        Get.toNamed(AppRoutes.bookings);
         break;
       case 'categories':
-        Get.toNamed('/categories');
+        Get.toNamed(AppRoutes.categories);
         break;
       case 'chat':
-        Get.toNamed('/chat');
+        Get.toNamed(AppRoutes.chat);
         break;
       case 'profile':
-        Get.toNamed('/profile');
+        Get.toNamed(AppRoutes.profile);
         break;
     }
   }

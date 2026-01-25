@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../shared/widgets/cards/empty_state_card.dart';
 import '../../domain/models/dispute.dart';
 import '../controllers/dispute_controller.dart';
 import '../widgets/message_bubble_widget.dart';
@@ -12,10 +17,10 @@ class MediationChatPage extends StatefulWidget {
   final Dispute dispute;
 
   const MediationChatPage({
-    Key? key,
+    super.key,
     required this.disputeId,
     required this.dispute,
-  }) : super(key: key);
+  });
 
   @override
   State<MediationChatPage> createState() => _MediationChatPageState();
@@ -118,8 +123,8 @@ class _MediationChatPageState extends State<MediationChatPage> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: mediation.isActive
-            ? Colors.green.withOpacity(0.1)
-            : Colors.grey.withOpacity(0.1),
+            ? AppColors.success.withValues(alpha: 0.1)
+            : AppColors.textSecondary.withValues(alpha: 0.1),
         border: Border(bottom: BorderSide(color: Colors.grey[300]!)),
       ),
       child: Row(

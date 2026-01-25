@@ -2,11 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/app_shadows.dart';
+import '../../../../shared/widgets/buttons/primary_button.dart';
+import '../../../../shared/widgets/buttons/icon_button.dart';
 import '../controllers/jeton_controller.dart';
 import '../widgets/jeton_info_card.dart';
 import '../widgets/jeton_status_badge.dart';
 
 /// Jeton display screen for artisans (show code and QR)
+/// Updated with ProSartisan design system
 ///
 /// Requirements: 5.1, 5.2
 class JetonDisplayPage extends StatelessWidget {
@@ -24,158 +32,242 @@ class JetonDisplayPage extends StatelessWidget {
     });
 
     return Scaffold(
+      backgroundColor: AppColors.primaryBg,
       appBar: AppBar(
-        title: const Text('Jeton Matériel'),
-        backgroundColor: Theme.of(context).primaryColor,
-        foregroundColor: Colors.white,
+        title: Text(
+          'Jeton Matériel',
+          style: AppTypography.h4.copyWith(color: AppColors.textPrimary),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: CustomIconButton(
+          icon: Icons.arrow_back,
+          onPressed: () => Get.back(),
+          backgroundColor: AppColors.overlayLight,
+          iconColor: AppColors.textPrimary,
+        ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
+          CustomIconButton(
+            icon: Icons.refresh,
             onPressed: () => controller.loadJetonDetails(jetonId),
+            backgroundColor: AppColors.overlayLight,
+            iconColor: AppColors.textPrimary,
           ),
+          const SizedBox(width: AppSpacing.base),
         ],
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const CircularProgressIndicator(color: AppColors.accentPrimary),
+                const SizedBox(height: AppSpacing.base),
+                Text(
+                  'Chargement du jeton...',
+                  style: AppTypography.body.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          );
         }
 
         final jeton = controller.currentJeton.value;
         if (jeton == null) {
-          return const Center(child: Text('Jeton non trouvé'));
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline, size: 64, color: AppColors.textMuted),
+                const SizedBox(height: AppSpacing.base),
+                Text(
+                  'Jeton non trouvé',
+                  style: AppTypography.h4.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  'Vérifiez l\'ID du jeton et réessayez',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          );
         }
 
         return SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
+          padding: AppSpacing.screenPaddingAll,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // Jeton status
               JetonStatusBadge(status: jeton.status),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: AppSpacing.xl),
 
-              // QR Code
+              // QR Code Card
               Container(
-                padding: const EdgeInsets.all(20),
+                padding: AppSpacing.cardPaddingAll,
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withValues(alpha: 0.2),
-                      spreadRadius: 2,
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+                  color: AppColors.cardBg,
+                  borderRadius: AppRadius.cardRadius,
+                  boxShadow: AppShadows.card,
                 ),
                 child: Column(
                   children: [
-                    QrImageView(
-                      data: jeton.qrCodeData,
-                      version: QrVersions.auto,
-                      size: 200.0,
-                      backgroundColor: Colors.white,
+                    // QR Code with white background
+                    Container(
+                      padding: AppSpacing.all(AppSpacing.base),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: AppRadius.mediumRadius,
+                      ),
+                      child: QrImageView(
+                        data: jeton.qrCodeData,
+                        version: QrVersions.auto,
+                        size: 200.0,
+                        backgroundColor: Colors.white,
+                      ),
                     ),
-                    const SizedBox(height: 16),
+
+                    const SizedBox(height: AppSpacing.base),
+
+                    // Code display
                     Text(
                       'Code: ${jeton.code}',
-                      style: Theme.of(context).textTheme.headlineSmall
-                          ?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'monospace',
-                          ),
-                    ),
-                    const SizedBox(height: 8),
-                    ElevatedButton.icon(
-                      onPressed: () => _copyToClipboard(jeton.code),
-                      icon: const Icon(Icons.copy, size: 16),
-                      label: const Text('Copier le code'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey.shade200,
-                        foregroundColor: Colors.black87,
+                      style: AppTypography.h3.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'monospace',
                       ),
+                    ),
+
+                    const SizedBox(height: AppSpacing.base),
+
+                    // Copy button
+                    SecondaryButton(
+                      text: 'Copier le code',
+                      icon: Icons.copy,
+                      onPressed: () => _copyToClipboard(jeton.code),
                     ),
                   ],
                 ),
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: AppSpacing.xl),
 
               // Jeton information
               JetonInfoCard(jeton: jeton),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: AppSpacing.xl),
 
-              // Expiration warning
-              if (jeton.isExpired)
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.red.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.red.shade200),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.warning, color: Colors.red.shade600),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          'Ce jeton a expiré. Les fonds non utilisés ont été retournés au séquestre.',
-                          style: TextStyle(
-                            color: Colors.red.shade800,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              else
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.green.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.green.shade200),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.info, color: Colors.green.shade600),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          'Présentez ce code QR ou le code à votre fournisseur pour acheter des matériaux.',
-                          style: TextStyle(color: Colors.green.shade800),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              // Status message
+              _buildStatusMessage(jeton),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: AppSpacing.xl),
 
               // Generate new jeton button (if current is expired or fully used)
               if (jeton.isExpired || jeton.status == 'FULLY_USED')
-                SizedBox(
+                PrimaryButton(
+                  text: 'Générer un nouveau jeton',
+                  icon: Icons.add,
+                  onPressed: () => controller.generateNewJeton(),
                   width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () => controller.generateNewJeton(),
-                    icon: const Icon(Icons.add),
-                    label: const Text('Générer un nouveau jeton'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).primaryColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                    ),
-                  ),
                 ),
             ],
           ),
         );
       }),
+    );
+  }
+
+  Widget _buildStatusMessage(dynamic jeton) {
+    if (jeton.isExpired) {
+      return Container(
+        padding: AppSpacing.cardPaddingAll,
+        decoration: BoxDecoration(
+          color: AppColors.accentDanger.withOpacity(0.1),
+          borderRadius: AppRadius.cardRadius,
+          border: Border.all(color: AppColors.accentDanger.withOpacity(0.3)),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.warning_rounded,
+              color: AppColors.accentDanger,
+              size: AppSpacing.iconSize,
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Jeton expiré',
+                    style: AppTypography.body.copyWith(
+                      color: AppColors.accentDanger,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    'Les fonds non utilisés ont été retournés au séquestre.',
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AppColors.accentDanger,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      padding: AppSpacing.cardPaddingAll,
+      decoration: BoxDecoration(
+        color: AppColors.accentSuccess.withOpacity(0.1),
+        borderRadius: AppRadius.cardRadius,
+        border: Border.all(color: AppColors.accentSuccess.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.info_rounded,
+            color: AppColors.accentSuccess,
+            size: AppSpacing.iconSize,
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Jeton actif',
+                  style: AppTypography.body.copyWith(
+                    color: AppColors.accentSuccess,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  'Présentez ce code QR ou le code à votre fournisseur pour acheter des matériaux.',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.accentSuccess,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -185,9 +277,11 @@ class JetonDisplayPage extends StatelessWidget {
       'Code copié',
       'Le code du jeton a été copié dans le presse-papiers',
       snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.green,
+      backgroundColor: AppColors.accentSuccess,
       colorText: Colors.white,
       duration: const Duration(seconds: 2),
+      borderRadius: AppRadius.mediumRadius.topLeft.x,
+      margin: AppSpacing.screenPaddingAll,
     );
   }
 }

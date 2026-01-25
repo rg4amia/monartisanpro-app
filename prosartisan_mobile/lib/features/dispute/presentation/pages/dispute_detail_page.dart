@@ -1,5 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../shared/widgets/buttons/primary_button.dart';
+import '../../../../shared/widgets/cards/info_card.dart';
+import '../../../../shared/widgets/cards/empty_state_card.dart';
 import '../../domain/models/dispute.dart';
 import '../controllers/dispute_controller.dart';
 import '../widgets/dispute_status_chip.dart';
@@ -12,8 +19,7 @@ import 'mediation_chat_page.dart';
 class DisputeDetailPage extends StatefulWidget {
   final String disputeId;
 
-  const DisputeDetailPage({Key? key, required this.disputeId})
-    : super(key: key);
+  const DisputeDetailPage({super.key, required this.disputeId});
 
   @override
   State<DisputeDetailPage> createState() => _DisputeDetailPageState();
@@ -31,10 +37,17 @@ class _DisputeDetailPageState extends State<DisputeDetailPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Détails du litige'),
-        backgroundColor: Theme.of(context).primaryColor,
-        foregroundColor: Colors.white,
+        title: Text(
+          'Détails du litige',
+          style: AppTypography.headingMedium.copyWith(
+            color: AppColors.textLight,
+          ),
+        ),
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.textLight,
+        elevation: 0,
         actions: [
           if (_controller.isAdmin)
             PopupMenuButton<String>(
@@ -54,7 +67,9 @@ class _DisputeDetailPageState extends State<DisputeDetailPage> {
       ),
       body: Obx(() {
         if (_controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
+          return Center(
+            child: CircularProgressIndicator(color: AppColors.primary),
+          );
         }
 
         final dispute = _controller.currentDispute.value;
@@ -64,29 +79,30 @@ class _DisputeDetailPageState extends State<DisputeDetailPage> {
 
         return RefreshIndicator(
           onRefresh: () => _controller.loadDispute(widget.disputeId),
+          color: AppColors.primary,
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(AppSpacing.md),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildDisputeHeader(dispute),
-                const SizedBox(height: 24),
+                SizedBox(height: AppSpacing.lg),
                 _buildDisputeDetails(dispute),
-                const SizedBox(height: 24),
+                SizedBox(height: AppSpacing.lg),
                 _buildEvidenceSection(dispute),
                 if (dispute.mediation != null) ...[
-                  const SizedBox(height: 24),
+                  SizedBox(height: AppSpacing.lg),
                   _buildMediationSection(dispute),
                 ],
                 if (dispute.arbitration != null) ...[
-                  const SizedBox(height: 24),
+                  SizedBox(height: AppSpacing.lg),
                   _buildArbitrationSection(dispute),
                 ],
                 if (dispute.resolution != null) ...[
-                  const SizedBox(height: 24),
+                  SizedBox(height: AppSpacing.lg),
                   _buildResolutionSection(dispute),
                 ],
-                const SizedBox(height: 24),
+                SizedBox(height: AppSpacing.lg),
                 _buildActionButtons(dispute),
               ],
             ),
@@ -97,32 +113,13 @@ class _DisputeDetailPageState extends State<DisputeDetailPage> {
   }
 
   Widget _buildErrorView() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.error_outline, size: 64, color: Colors.grey[400]),
-          const SizedBox(height: 16),
-          Text(
-            'Litige introuvable',
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(color: Colors.grey[600]),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Le litige demandé n\'existe pas ou vous n\'avez pas accès.',
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Retour'),
-          ),
-        ],
+    return EmptyStateCard(
+      icon: Icons.error_outline,
+      title: 'Litige introuvable',
+      subtitle: 'Le litige demandé n\'existe pas ou vous n\'avez pas accès.',
+      actionButton: PrimaryButton(
+        onPressed: () => Navigator.pop(context),
+        text: 'Retour',
       ),
     );
   }
@@ -253,8 +250,8 @@ class _DisputeDetailPageState extends State<DisputeDetailPage> {
                 Chip(
                   label: Text(mediation.isActive ? 'Active' : 'Terminée'),
                   backgroundColor: mediation.isActive
-                      ? Colors.blue.withOpacity(0.1)
-                      : Colors.grey.withOpacity(0.1),
+                      ? AppColors.info.withValues(alpha: 0.1)
+                      : AppColors.textSecondary.withValues(alpha: 0.1),
                 ),
               ],
             ),
