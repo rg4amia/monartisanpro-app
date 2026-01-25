@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:prosartisan_mobile/features/marketplace/presentation/controllers/artisan_search_controller.dart';
-import 'package:prosartisan_mobile/features/marketplace/presentation/widgets/category_filter_widget.dart';
-import 'package:prosartisan_mobile/features/marketplace/presentation/widgets/search_radius_slider.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../shared/widgets/cards/empty_state_card.dart';
+import '../controllers/artisan_search_controller.dart';
+import '../widgets/category_filter_widget.dart';
+import '../widgets/search_radius_slider.dart';
 
 class ArtisanSearchPage extends GetView<ArtisanSearchController> {
   const ArtisanSearchPage({super.key});
@@ -11,43 +16,55 @@ class ArtisanSearchPage extends GetView<ArtisanSearchController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Rechercher des artisans'),
-        backgroundColor: Colors.blue[600],
-        foregroundColor: Colors.white,
+        title: Text(
+          'Rechercher des artisans',
+          style: AppTypography.headingMedium.copyWith(
+            color: AppColors.textLight,
+          ),
+        ),
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.textLight,
+        elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.filter_list),
+            icon: Icon(
+              Icons.filter_list,
+              color: AppColors.textLight,
+            ),
             onPressed: _showFilterBottomSheet,
           ),
         ],
       ),
       body: Obx(() {
         if (controller.isLoading && controller.currentLocation == null) {
-          return const Center(
+          return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 16),
-                Text('Obtention de votre localisation...'),
+                CircularProgressIndicator(
+                  color: AppColors.primary,
+                ),
+                SizedBox(height: AppSpacing.md),
+                Text(
+                  'Obtention de votre localisation...',
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
               ],
             ),
           );
         }
 
         if (controller.currentLocation == null) {
-          return const Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.location_off, size: 64, color: Colors.grey),
-                SizedBox(height: 16),
-                Text('Localisation non disponible'),
-                SizedBox(height: 8),
-                Text(
-                  'Veuillez activer la géolocalisation pour rechercher des artisans',
-                  textAlign: TextAlign.center,
+          return EmptyStateCard(
+            icon: Icons.location_off,
+            title: 'Localisation non disponible',
+            subtitle: 'Veuillez activer la géolocalisation pour rechercher des artisans',
+          );
+        }
                   style: TextStyle(color: Colors.grey),
                 ),
               ],

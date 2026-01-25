@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:prosartisan_mobile/features/worksite/domain/models/jalon.dart';
-import 'package:prosartisan_mobile/features/worksite/presentation/controllers/worksite_controller.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../shared/widgets/buttons/primary_button.dart';
+import '../../../../shared/widgets/buttons/secondary_button.dart';
+import '../../../../shared/widgets/cards/info_card.dart';
+import '../../../../shared/widgets/cards/empty_state_card.dart';
+import '../../../worksite/domain/models/jalon.dart';
+import '../../../worksite/presentation/controllers/worksite_controller.dart';
 
 /// Milestone validation screen for clients
 ///
@@ -38,25 +46,32 @@ class _MilestoneValidationPageState extends State<MilestoneValidationPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Validation du Jalon'),
-        backgroundColor: Theme.of(context).primaryColor,
-        foregroundColor: Colors.white,
+        title: Text(
+          'Validation du Jalon',
+          style: AppTypography.headingMedium.copyWith(
+            color: AppColors.textLight,
+          ),
+        ),
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.textLight,
+        elevation: 0,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        padding: EdgeInsets.all(AppSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildJalonInfo(context),
-            const SizedBox(height: 24),
+            SizedBox(height: AppSpacing.lg),
             _buildProofSection(context),
-            const SizedBox(height: 24),
+            SizedBox(height: AppSpacing.lg),
             _buildAutoValidationInfo(context),
-            const SizedBox(height: 24),
+            SizedBox(height: AppSpacing.lg),
             if (_showContestForm) ...[
               _buildContestForm(context),
-              const SizedBox(height: 24),
+              SizedBox(height: AppSpacing.lg),
             ],
             _buildActionButtons(context),
           ],
@@ -66,73 +81,80 @@ class _MilestoneValidationPageState extends State<MilestoneValidationPage> {
   }
 
   Widget _buildJalonInfo(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).primaryColor,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: Text(
-                      '${widget.jalon.sequenceNumber}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
+    return Container(
+      padding: EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text(
+                    '${widget.jalon.sequenceNumber}',
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: AppColors.textLight,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Jalon ${widget.jalon.sequenceNumber}',
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Jalon ${widget.jalon.sequenceNumber}',
+                      style: AppTypography.headingSmall.copyWith(
+                        color: AppColors.textPrimary,
                       ),
-                      Text(
-                        widget.jalon.statusLabel,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: _getStatusColor(widget.jalon.status),
-                          fontWeight: FontWeight.w500,
-                        ),
+                    ),
+                    Text(
+                      widget.jalon.statusLabel,
+                      style: AppTypography.bodySmall.copyWith(
+                        color: _getStatusColor(widget.jalon.status),
+                        fontWeight: FontWeight.w500,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
+            ],
+          ),
+          SizedBox(height: AppSpacing.md),
+          Text(
+            widget.jalon.description,
+            style: AppTypography.bodyMedium.copyWith(
+              color: AppColors.textPrimary,
             ),
-            const SizedBox(height: 16),
-            Text(
-              widget.jalon.description,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Icon(Icons.payments, size: 16, color: Colors.grey[600]),
-                const SizedBox(width: 8),
-                Text(
-                  'Montant: ${widget.jalon.laborAmount.formatted}',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
+          ),
+          SizedBox(height: AppSpacing.sm),
+          Row(
+            children: [
+              Icon(Icons.payments, size: 16, color: AppColors.textSecondary),
+              SizedBox(width: AppSpacing.sm),
+              Text(
+                'Montant: ${widget.jalon.laborAmount.formatted}',
+                style: AppTypography.bodyMedium.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w500,
                 ),
-              ],
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -141,115 +163,100 @@ class _MilestoneValidationPageState extends State<MilestoneValidationPage> {
     final proof = widget.jalon.proof;
 
     if (proof == null) {
-      return Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              Icon(Icons.photo_camera, size: 48, color: Colors.grey[400]),
-              const SizedBox(height: 16),
-              Text(
-                'Aucune preuve soumise',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(color: Colors.grey[600]),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'L\'artisan n\'a pas encore soumis de preuve pour ce jalon',
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(color: Colors.grey[500]),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
+      return EmptyStateCard(
+        icon: Icons.photo_camera,
+        title: 'Aucune preuve soumise',
+        subtitle: 'L\'artisan n\'a pas encore soumis de preuve pour ce jalon',
       );
     }
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Preuve de livraison',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+    return Container(
+      padding: EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Preuve de livraison',
+            style: AppTypography.headingSmall.copyWith(
+              color: AppColors.textPrimary,
             ),
-            const SizedBox(height: 16),
+          ),
+          SizedBox(height: AppSpacing.md),
 
-            // Photo
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: CachedNetworkImage(
-                imageUrl: proof.photoUrl,
-                width: double.infinity,
+          // Photo
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+            child: CachedNetworkImage(
+              imageUrl: proof.photoUrl,
+              width: double.infinity,
+              height: 200,
+              fit: BoxFit.cover,
+              placeholder: (context, url) => Container(
                 height: 200,
-                fit: BoxFit.cover,
-                placeholder: (context, url) => Container(
-                  height: 200,
-                  color: Colors.grey[200],
-                  child: const Center(child: CircularProgressIndicator()),
-                ),
-                errorWidget: (context, url, error) => Container(
-                  height: 200,
-                  color: Colors.grey[200],
-                  child: const Center(
-                    child: Icon(Icons.error, color: Colors.red),
-                  ),
+                color: AppColors.border,
+                child: Center(
+                  child: CircularProgressIndicator(color: AppColors.primary),
                 ),
               ),
+              errorWidget: (context, url, error) => Container(
+                height: 200,
+                color: AppColors.border,
+                child: Center(child: Icon(Icons.error, color: AppColors.error)),
+              ),
             ),
+          ),
 
-            const SizedBox(height: 16),
+          SizedBox(height: AppSpacing.md),
 
-            // Location info
-            _buildLocationInfo(context, proof),
+          // Location info
+          _buildLocationInfo(context, proof),
 
-            const SizedBox(height: 16),
+          SizedBox(height: AppSpacing.md),
 
-            // Timestamp
-            Row(
-              children: [
-                Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
-                const SizedBox(width: 8),
-                Text(
-                  'Capturé le ${_formatDateTime(proof.capturedAt)}',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
+          // Timestamp
+          Row(
+            children: [
+              Icon(Icons.access_time, size: 16, color: AppColors.textSecondary),
+              SizedBox(width: AppSpacing.sm),
+              Text(
+                'Capturé le ${_formatDateTime(proof.capturedAt)}',
+                style: AppTypography.bodySmall.copyWith(
+                  color: AppColors.textSecondary,
                 ),
-              ],
-            ),
+              ),
+            ],
+          ),
 
-            // Integrity status
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(
-                  proof.integrityVerified ? Icons.verified : Icons.warning,
-                  size: 16,
-                  color: proof.integrityVerified ? Colors.green : Colors.orange,
+          // Integrity status
+          SizedBox(height: AppSpacing.sm),
+          Row(
+            children: [
+              Icon(
+                proof.integrityVerified ? Icons.verified : Icons.warning,
+                size: 16,
+                color: proof.integrityVerified
+                    ? AppColors.success
+                    : AppColors.warning,
+              ),
+              SizedBox(width: AppSpacing.sm),
+              Text(
+                proof.integrityVerified
+                    ? 'Intégrité vérifiée'
+                    : 'Intégrité non vérifiée',
+                style: AppTypography.bodySmall.copyWith(
+                  color: proof.integrityVerified
+                      ? AppColors.success
+                      : AppColors.warning,
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  proof.integrityVerified
-                      ? 'Intégrité vérifiée'
-                      : 'Intégrité non vérifiée',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: proof.integrityVerified
-                        ? Colors.green
-                        : Colors.orange,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

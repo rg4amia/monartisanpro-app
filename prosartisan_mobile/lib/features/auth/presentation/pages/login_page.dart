@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../shared/widgets/buttons/primary_button.dart';
+import '../../../../shared/widgets/buttons/secondary_button.dart';
 import '../controllers/auth_controller.dart';
 import 'register_page.dart';
 
@@ -57,55 +63,77 @@ class _LoginPageState extends State<LoginPage> {
     final authController = Get.find<AuthController>();
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
+          padding: EdgeInsets.all(AppSpacing.lg),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 48),
+                SizedBox(height: AppSpacing.xl * 2),
 
                 // Logo
-                Icon(
-                  Icons.construction,
-                  size: 80,
-                  color: Theme.of(context).primaryColor,
-                ),
+                Icon(Icons.construction, size: 80, color: AppColors.primary),
 
-                const SizedBox(height: 16),
+                SizedBox(height: AppSpacing.md),
 
                 // App name
                 Text(
                   AppStrings.appName,
-                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
+                  style: AppTypography.headingLarge.copyWith(
+                    color: AppColors.textPrimary,
                   ),
                   textAlign: TextAlign.center,
                 ),
 
-                const SizedBox(height: 8),
+                SizedBox(height: AppSpacing.sm),
 
                 // Login title
                 Text(
                   AppStrings.login,
-                  style: Theme.of(context).textTheme.headlineSmall,
+                  style: AppTypography.headingMedium.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
                   textAlign: TextAlign.center,
                 ),
 
-                const SizedBox(height: 48),
+                SizedBox(height: AppSpacing.xl * 2),
 
                 // Email field
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
                   decoration: InputDecoration(
                     labelText: AppStrings.email,
-                    prefixIcon: const Icon(Icons.email),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                    labelStyle: AppTypography.bodyMedium.copyWith(
+                      color: AppColors.textSecondary,
                     ),
+                    prefixIcon: Icon(
+                      Icons.email,
+                      color: AppColors.textSecondary,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                      borderSide: BorderSide(color: AppColors.border),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                      borderSide: BorderSide(color: AppColors.border),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                      borderSide: BorderSide(
+                        color: AppColors.primary,
+                        width: 2,
+                      ),
+                    ),
+                    filled: true,
+                    fillColor: AppColors.surface,
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -118,20 +146,30 @@ class _LoginPageState extends State<LoginPage> {
                   },
                 ),
 
-                const SizedBox(height: 16),
+                SizedBox(height: AppSpacing.md),
 
                 // Password field
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
                   decoration: InputDecoration(
                     labelText: AppStrings.password,
-                    prefixIcon: const Icon(Icons.lock),
+                    labelStyle: AppTypography.bodyMedium.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                    prefixIcon: Icon(
+                      Icons.lock,
+                      color: AppColors.textSecondary,
+                    ),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword
                             ? Icons.visibility
                             : Icons.visibility_off,
+                        color: AppColors.textSecondary,
                       ),
                       onPressed: () {
                         setState(() {
@@ -140,8 +178,22 @@ class _LoginPageState extends State<LoginPage> {
                       },
                     ),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                      borderSide: BorderSide(color: AppColors.border),
                     ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                      borderSide: BorderSide(color: AppColors.border),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                      borderSide: BorderSide(
+                        color: AppColors.primary,
+                        width: 2,
+                      ),
+                    ),
+                    filled: true,
+                    fillColor: AppColors.surface,
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -151,50 +203,38 @@ class _LoginPageState extends State<LoginPage> {
                   },
                 ),
 
-                const SizedBox(height: 24),
+                SizedBox(height: AppSpacing.lg),
 
                 // Login button
                 Obx(
-                  () => ElevatedButton(
+                  () => PrimaryButton(
                     onPressed: authController.isLoading.value
                         ? null
                         : _handleLogin,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: authController.isLoading.value
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
-                              ),
-                            ),
-                          )
-                        : const Text(
-                            AppStrings.signIn,
-                            style: TextStyle(fontSize: 16),
-                          ),
+                    text: AppStrings.signIn,
+                    isLoading: authController.isLoading.value,
+                    isFullWidth: true,
                   ),
                 ),
 
-                const SizedBox(height: 16),
+                SizedBox(height: AppSpacing.md),
 
                 // Register link
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(AppStrings.dontHaveAccount),
-                    TextButton(
+                    Text(
+                      AppStrings.dontHaveAccount,
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    SecondaryButton(
                       onPressed: () {
                         Get.to(() => const RegisterPage());
                       },
-                      child: const Text(AppStrings.signUp),
+                      text: AppStrings.signUp,
+                      isCompact: true,
                     ),
                   ],
                 ),

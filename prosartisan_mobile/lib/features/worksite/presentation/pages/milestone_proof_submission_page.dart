@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:prosartisan_mobile/features/worksite/domain/models/jalon.dart';
-import 'package:prosartisan_mobile/features/worksite/presentation/controllers/worksite_controller.dart';
-import 'package:prosartisan_mobile/features/worksite/presentation/pages/photo_capture_page.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../shared/widgets/buttons/primary_button.dart';
+import '../../../../shared/widgets/buttons/secondary_button.dart';
+import '../../../../shared/widgets/cards/info_card.dart';
+import '../../../../shared/widgets/cards/status_card.dart';
+import '../../../worksite/domain/models/jalon.dart';
+import '../../../worksite/presentation/controllers/worksite_controller.dart';
+import '../../../worksite/presentation/pages/photo_capture_page.dart';
 
 /// Milestone proof submission screen for artisans
 ///
@@ -25,25 +33,32 @@ class _MilestoneProofSubmissionPageState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Soumettre une Preuve'),
-        backgroundColor: Theme.of(context).primaryColor,
-        foregroundColor: Colors.white,
+        title: Text(
+          'Soumettre une Preuve',
+          style: AppTypography.headingMedium.copyWith(
+            color: AppColors.textLight,
+          ),
+        ),
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.textLight,
+        elevation: 0,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        padding: EdgeInsets.all(AppSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildJalonInfo(context),
-            const SizedBox(height: 24),
+            SizedBox(height: AppSpacing.lg),
             _buildStatusInfo(context),
-            const SizedBox(height: 24),
+            SizedBox(height: AppSpacing.lg),
             _buildInstructions(context),
-            const SizedBox(height: 24),
+            SizedBox(height: AppSpacing.lg),
             if (widget.jalon.hasProof) ...[
               _buildExistingProof(context),
-              const SizedBox(height: 24),
+              SizedBox(height: AppSpacing.lg),
             ],
             _buildActionButton(context),
           ],
@@ -53,128 +68,120 @@ class _MilestoneProofSubmissionPageState
   }
 
   Widget _buildJalonInfo(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).primaryColor,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: Text(
-                      '${widget.jalon.sequenceNumber}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                      ),
+    return Container(
+      padding: EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text(
+                    '${widget.jalon.sequenceNumber}',
+                    style: AppTypography.bodyLarge.copyWith(
+                      color: AppColors.textLight,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Jalon ${widget.jalon.sequenceNumber}',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        widget.jalon.statusLabel,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: _getStatusColor(widget.jalon.status),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              widget.jalon.description,
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.green[50],
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.green[200]!),
               ),
-              child: Row(
-                children: [
-                  Icon(Icons.payments, color: Colors.green[700]),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Montant à libérer: ${widget.jalon.laborAmount.formatted}',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.green[700],
-                      fontWeight: FontWeight.w600,
+              SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Jalon ${widget.jalon.sequenceNumber}',
+                      style: AppTypography.headingSmall.copyWith(
+                        color: AppColors.textPrimary,
+                      ),
                     ),
-                  ),
-                ],
+                    SizedBox(height: AppSpacing.xs),
+                    Text(
+                      widget.jalon.statusLabel,
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: _getStatusColor(widget.jalon.status),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
               ),
+            ],
+          ),
+          SizedBox(height: AppSpacing.md),
+          Text(
+            widget.jalon.description,
+            style: AppTypography.bodyLarge.copyWith(
+              color: AppColors.textPrimary,
             ),
-          ],
-        ),
+          ),
+          SizedBox(height: AppSpacing.md),
+          InfoCard(
+            title: 'Montant à libérer: ${widget.jalon.laborAmount.formatted}',
+            icon: Icons.payments,
+            backgroundColor: AppColors.success.withValues(alpha: 0.1),
+            borderColor: AppColors.success,
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildStatusInfo(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'État du jalon',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+    return Container(
+      padding: EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'État du jalon',
+            style: AppTypography.headingSmall.copyWith(
+              color: AppColors.textPrimary,
             ),
-            const SizedBox(height: 16),
-            _buildStatusStep('Travail en cours', widget.jalon.isPending, true),
-            _buildStatusStep(
-              'Preuve soumise',
-              widget.jalon.isSubmitted,
-              widget.jalon.hasProof,
-            ),
-            _buildStatusStep(
-              'Validation client',
-              widget.jalon.isValidated,
-              widget.jalon.isSubmitted,
-            ),
-            _buildStatusStep(
-              'Paiement libéré',
-              widget.jalon.isCompleted,
-              widget.jalon.isValidated,
-            ),
-          ],
-        ),
+          ),
+          SizedBox(height: AppSpacing.md),
+          _buildStatusStep('Travail en cours', widget.jalon.isPending, true),
+          _buildStatusStep(
+            'Preuve soumise',
+            widget.jalon.isSubmitted,
+            widget.jalon.hasProof,
+          ),
+          _buildStatusStep(
+            'Validation client',
+            widget.jalon.isValidated,
+            widget.jalon.isSubmitted,
+          ),
+          _buildStatusStep(
+            'Paiement libéré',
+            widget.jalon.isCompleted,
+            widget.jalon.isValidated,
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildStatusStep(String title, bool isCompleted, bool isActive) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      padding: EdgeInsets.symmetric(vertical: AppSpacing.xs),
       child: Row(
         children: [
           Container(
@@ -183,30 +190,30 @@ class _MilestoneProofSubmissionPageState
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: isCompleted
-                  ? Colors.green
+                  ? AppColors.success
                   : isActive
-                  ? Colors.orange
-                  : Colors.grey[300],
+                  ? AppColors.warning
+                  : AppColors.border,
             ),
             child: isCompleted
-                ? const Icon(Icons.check, color: Colors.white, size: 14)
+                ? Icon(Icons.check, color: AppColors.textLight, size: 14)
                 : isActive
-                ? const Icon(
+                ? Icon(
                     Icons.radio_button_unchecked,
-                    color: Colors.white,
+                    color: AppColors.textLight,
                     size: 14,
                   )
                 : null,
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: AppSpacing.sm),
           Text(
             title,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            style: AppTypography.bodyMedium.copyWith(
               color: isCompleted
-                  ? Colors.green
+                  ? AppColors.success
                   : isActive
-                  ? Colors.orange
-                  : Colors.grey[600],
+                  ? AppColors.warning
+                  : AppColors.textSecondary,
               fontWeight: isActive ? FontWeight.w500 : null,
             ),
           ),
@@ -216,68 +223,54 @@ class _MilestoneProofSubmissionPageState
   }
 
   Widget _buildInstructions(BuildContext context) {
-    return Card(
-      color: Colors.blue[50],
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.info, color: Colors.blue[700]),
-                const SizedBox(width: 8),
-                Text(
-                  'Instructions',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue[700],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            _buildInstructionItem('Prenez une photo claire du travail terminé'),
-            _buildInstructionItem(
-              'Assurez-vous que la localisation GPS est activée',
-            ),
-            _buildInstructionItem(
-              'La précision GPS doit être inférieure à 10 mètres',
-            ),
-            _buildInstructionItem(
-              'Le client aura 48h pour valider ou contester',
-            ),
-            _buildInstructionItem(
-              'Validation automatique après 48h sans réponse',
-            ),
-          ],
-        ),
+    return InfoCard(
+      title: 'Instructions',
+      subtitle: 'Suivez ces étapes pour soumettre votre preuve de travail',
+      icon: Icons.info,
+      backgroundColor: AppColors.info.withValues(alpha: 0.1),
+      borderColor: AppColors.info,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(height: AppSpacing.sm),
+          _buildInstructionItem('Prenez une photo claire du travail terminé'),
+          _buildInstructionItem(
+            'Assurez-vous que la localisation GPS est activée',
+          ),
+          _buildInstructionItem(
+            'La précision GPS doit être inférieure à 10 mètres',
+          ),
+          _buildInstructionItem('Le client aura 48h pour valider ou contester'),
+          _buildInstructionItem(
+            'Validation automatique après 48h sans réponse',
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildInstructionItem(String text) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2.0),
+      padding: EdgeInsets.symmetric(vertical: AppSpacing.xs),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             width: 6,
             height: 6,
-            margin: const EdgeInsets.only(top: 6),
+            margin: EdgeInsets.only(top: 6),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.blue[700],
+              color: AppColors.info,
             ),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
               text,
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: Colors.blue[700]),
+              style: AppTypography.bodySmall.copyWith(
+                color: AppColors.textPrimary,
+              ),
             ),
           ),
         ],
@@ -423,104 +416,52 @@ class _MilestoneProofSubmissionPageState
 
   Widget _buildActionButton(BuildContext context) {
     if (widget.jalon.isCompleted) {
-      return SizedBox(
-        width: double.infinity,
-        child: ElevatedButton.icon(
-          onPressed: null,
-          icon: const Icon(Icons.check_circle),
-          label: const Text('Jalon terminé'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.green,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-          ),
-        ),
+      return PrimaryButton(
+        onPressed: null,
+        text: 'Jalon terminé',
+        icon: Icons.check_circle,
+        backgroundColor: AppColors.success,
+        isFullWidth: true,
       );
     }
 
     if (widget.jalon.isContested) {
       return Column(
         children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.red[50],
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.red[200]!),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.warning, color: Colors.red[700]),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Jalon contesté',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Colors.red[700],
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                if (widget.jalon.contestReason != null) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    'Motif: ${widget.jalon.contestReason}',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyMedium?.copyWith(color: Colors.red[600]),
-                  ),
-                ],
-              ],
-            ),
+          InfoCard(
+            title: 'Jalon contesté',
+            subtitle: widget.jalon.contestReason != null
+                ? 'Motif: ${widget.jalon.contestReason}'
+                : 'Ce jalon a été contesté par le client',
+            icon: Icons.warning,
+            backgroundColor: AppColors.error.withValues(alpha: 0.1),
+            borderColor: AppColors.error,
           ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () => _navigateToPhotoCapture(),
-              icon: const Icon(Icons.camera_alt),
-              label: const Text('Soumettre une nouvelle preuve'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).primaryColor,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-            ),
+          SizedBox(height: AppSpacing.md),
+          PrimaryButton(
+            onPressed: () => _navigateToPhotoCapture(),
+            text: 'Soumettre une nouvelle preuve',
+            icon: Icons.camera_alt,
+            isFullWidth: true,
           ),
         ],
       );
     }
 
     if (widget.jalon.hasProof) {
-      return SizedBox(
-        width: double.infinity,
-        child: OutlinedButton.icon(
-          onPressed: () => _navigateToPhotoCapture(),
-          icon: const Icon(Icons.camera_alt),
-          label: const Text('Modifier la preuve'),
-          style: OutlinedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-          ),
-        ),
+      return SecondaryButton(
+        onPressed: () => _navigateToPhotoCapture(),
+        text: 'Modifier la preuve',
+        icon: Icons.camera_alt,
+        isFullWidth: true,
       );
     }
 
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton.icon(
-        onPressed: () => _navigateToPhotoCapture(),
-        icon: const Icon(Icons.camera_alt),
-        label: const Text('Prendre une photo'),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Theme.of(context).primaryColor,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-        ),
-      ),
+    return PrimaryButton(
+      onPressed: () => _navigateToPhotoCapture(),
+      text: 'Prendre une photo',
+      icon: Icons.camera_alt,
+      isFullWidth: true,
     );
   }
 
