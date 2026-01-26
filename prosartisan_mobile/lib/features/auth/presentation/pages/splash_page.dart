@@ -3,6 +3,11 @@ import 'package:get/get.dart';
 import '../controllers/auth_controller.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/app_shadows.dart';
 
 /// Splash screen with authentication check
 class SplashPage extends StatefulWidget {
@@ -80,7 +85,7 @@ class _SplashPageState extends State<SplashPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.orange,
+      backgroundColor: AppColors.accentPrimary,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -97,20 +102,14 @@ class _SplashPageState extends State<SplashPage>
                       width: 120,
                       height: 120,
                       decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
+                        color: AppColors.textPrimary,
+                        borderRadius: AppRadius.circular(AppSpacing.xl),
+                        boxShadow: AppShadows.floatingButton,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.construction,
                         size: 60,
-                        color: Colors.orange,
+                        color: AppColors.accentPrimary,
                       ),
                     ),
                   ),
@@ -118,7 +117,7 @@ class _SplashPageState extends State<SplashPage>
               },
             ),
 
-            const SizedBox(height: 30),
+            SizedBox(height: AppSpacing.xl),
 
             // App name animation
             AnimatedBuilder(
@@ -126,12 +125,11 @@ class _SplashPageState extends State<SplashPage>
               builder: (context, child) {
                 return FadeTransition(
                   opacity: _fadeAnimation,
-                  child: const Text(
+                  child: Text(
                     AppStrings.appName,
-                    style: TextStyle(
-                      fontSize: 32,
+                    style: AppTypography.h1.copyWith(
+                      color: AppColors.textPrimary,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
                       letterSpacing: 1.2,
                     ),
                   ),
@@ -139,7 +137,7 @@ class _SplashPageState extends State<SplashPage>
               },
             ),
 
-            const SizedBox(height: 10),
+            SizedBox(height: AppSpacing.sm),
 
             // Tagline animation
             AnimatedBuilder(
@@ -147,11 +145,10 @@ class _SplashPageState extends State<SplashPage>
               builder: (context, child) {
                 return FadeTransition(
                   opacity: _fadeAnimation,
-                  child: const Text(
+                  child: Text(
                     'Connecter les artisans aux clients',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.white70,
+                    style: AppTypography.body.copyWith(
+                      color: AppColors.textPrimary.withValues(alpha: 0.8),
                       fontWeight: FontWeight.w300,
                     ),
                   ),
@@ -159,7 +156,7 @@ class _SplashPageState extends State<SplashPage>
               },
             ),
 
-            const SizedBox(height: 60),
+            SizedBox(height: AppSpacing.xxl),
 
             // Loading indicator
             AnimatedBuilder(
@@ -167,11 +164,13 @@ class _SplashPageState extends State<SplashPage>
               builder: (context, child) {
                 return FadeTransition(
                   opacity: _fadeAnimation,
-                  child: const SizedBox(
+                  child: SizedBox(
                     width: 30,
                     height: 30,
                     child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        AppColors.textPrimary,
+                      ),
                       strokeWidth: 2,
                     ),
                   ),

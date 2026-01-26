@@ -447,7 +447,7 @@ class _DisputeReportPageState extends State<DisputeReportPage> {
 
   Future<void> _submitDispute() async {
     final success = await _controller.reportDispute();
-    if (success) {
+    if (success && mounted) {
       Navigator.pop(context, true);
     }
   }

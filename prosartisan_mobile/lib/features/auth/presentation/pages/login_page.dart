@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/constants/app_strings.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/theme/app_radius.dart';
 import '../../../../shared/widgets/buttons/primary_button.dart';
-import '../../../../shared/widgets/buttons/secondary_button.dart';
 import '../controllers/auth_controller.dart';
 import 'register_page.dart';
 
@@ -52,8 +51,8 @@ class _LoginPageState extends State<LoginPage> {
         AppStrings.loginFailed,
         authController.errorMessage.value,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+        backgroundColor: AppColors.accentDanger,
+        colorText: AppColors.textPrimary,
       );
     }
   }
@@ -63,7 +62,7 @@ class _LoginPageState extends State<LoginPage> {
     final authController = Get.find<AuthController>();
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.primaryBg,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.all(AppSpacing.lg),
@@ -75,14 +74,18 @@ class _LoginPageState extends State<LoginPage> {
                 SizedBox(height: AppSpacing.xl * 2),
 
                 // Logo
-                Icon(Icons.construction, size: 80, color: AppColors.primary),
+                Icon(
+                  Icons.construction,
+                  size: 80,
+                  color: AppColors.accentPrimary,
+                ),
 
                 SizedBox(height: AppSpacing.md),
 
                 // App name
                 Text(
                   AppStrings.appName,
-                  style: AppTypography.headingLarge.copyWith(
+                  style: AppTypography.h1.copyWith(
                     color: AppColors.textPrimary,
                   ),
                   textAlign: TextAlign.center,
@@ -93,7 +96,7 @@ class _LoginPageState extends State<LoginPage> {
                 // Login title
                 Text(
                   AppStrings.login,
-                  style: AppTypography.headingMedium.copyWith(
+                  style: AppTypography.h2.copyWith(
                     color: AppColors.textSecondary,
                   ),
                   textAlign: TextAlign.center,
@@ -105,12 +108,12 @@ class _LoginPageState extends State<LoginPage> {
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  style: AppTypography.bodyMedium.copyWith(
+                  style: AppTypography.body.copyWith(
                     color: AppColors.textPrimary,
                   ),
                   decoration: InputDecoration(
                     labelText: AppStrings.email,
-                    labelStyle: AppTypography.bodyMedium.copyWith(
+                    labelStyle: AppTypography.body.copyWith(
                       color: AppColors.textSecondary,
                     ),
                     prefixIcon: Icon(
@@ -118,22 +121,22 @@ class _LoginPageState extends State<LoginPage> {
                       color: AppColors.textSecondary,
                     ),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-                      borderSide: BorderSide(color: AppColors.border),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      borderSide: BorderSide(color: AppColors.overlayMedium),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-                      borderSide: BorderSide(color: AppColors.border),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      borderSide: BorderSide(color: AppColors.overlayMedium),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                       borderSide: BorderSide(
-                        color: AppColors.primary,
+                        color: AppColors.accentPrimary,
                         width: 2,
                       ),
                     ),
                     filled: true,
-                    fillColor: AppColors.surface,
+                    fillColor: AppColors.cardBg,
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -152,12 +155,12 @@ class _LoginPageState extends State<LoginPage> {
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
-                  style: AppTypography.bodyMedium.copyWith(
+                  style: AppTypography.body.copyWith(
                     color: AppColors.textPrimary,
                   ),
                   decoration: InputDecoration(
                     labelText: AppStrings.password,
-                    labelStyle: AppTypography.bodyMedium.copyWith(
+                    labelStyle: AppTypography.body.copyWith(
                       color: AppColors.textSecondary,
                     ),
                     prefixIcon: Icon(
@@ -178,22 +181,22 @@ class _LoginPageState extends State<LoginPage> {
                       },
                     ),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-                      borderSide: BorderSide(color: AppColors.border),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      borderSide: BorderSide(color: AppColors.overlayMedium),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-                      borderSide: BorderSide(color: AppColors.border),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      borderSide: BorderSide(color: AppColors.overlayMedium),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                       borderSide: BorderSide(
-                        color: AppColors.primary,
+                        color: AppColors.accentPrimary,
                         width: 2,
                       ),
                     ),
                     filled: true,
-                    fillColor: AppColors.surface,
+                    fillColor: AppColors.cardBg,
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -213,7 +216,6 @@ class _LoginPageState extends State<LoginPage> {
                         : _handleLogin,
                     text: AppStrings.signIn,
                     isLoading: authController.isLoading.value,
-                    isFullWidth: true,
                   ),
                 ),
 
@@ -225,7 +227,7 @@ class _LoginPageState extends State<LoginPage> {
                   children: [
                     Text(
                       AppStrings.dontHaveAccount,
-                      style: AppTypography.bodyMedium.copyWith(
+                      style: AppTypography.body.copyWith(
                         color: AppColors.textSecondary,
                       ),
                     ),
@@ -234,7 +236,6 @@ class _LoginPageState extends State<LoginPage> {
                         Get.to(() => const RegisterPage());
                       },
                       text: AppStrings.signUp,
-                      isCompact: true,
                     ),
                   ],
                 ),

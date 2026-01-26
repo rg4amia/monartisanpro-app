@@ -6,7 +6,6 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../shared/widgets/buttons/primary_button.dart';
-import '../../../../shared/widgets/buttons/secondary_button.dart';
 import '../controllers/auth_controller.dart';
 import 'kyc_upload_page.dart';
 
@@ -76,16 +75,16 @@ class _RegisterPageState extends State<RegisterPage> {
         AppStrings.registrationSuccess,
         'Bienvenue sur ProSartisan!',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
+        backgroundColor: AppColors.accentSuccess,
+        colorText: AppColors.textPrimary,
       );
     } else {
       Get.snackbar(
         AppStrings.registrationFailed,
         authController.errorMessage.value,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+        backgroundColor: AppColors.accentDanger,
+        colorText: AppColors.textPrimary,
       );
     }
   }
@@ -169,15 +168,15 @@ class _RegisterPageState extends State<RegisterPage> {
                     filled: true,
                     fillColor: AppColors.cardBg,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                       borderSide: BorderSide(color: AppColors.overlayMedium),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                       borderSide: BorderSide(color: AppColors.overlayMedium),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                       borderSide: BorderSide(
                         color: AppColors.accentPrimary,
                         width: 2,
@@ -216,15 +215,15 @@ class _RegisterPageState extends State<RegisterPage> {
                     filled: true,
                     fillColor: AppColors.cardBg,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                       borderSide: BorderSide(color: AppColors.overlayMedium),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                       borderSide: BorderSide(color: AppColors.overlayMedium),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                       borderSide: BorderSide(
                         color: AppColors.accentPrimary,
                         width: 2,
@@ -246,25 +245,64 @@ class _RegisterPageState extends State<RegisterPage> {
                 if (_selectedUserType == 'ARTISAN') ...[
                   DropdownButtonFormField<String>(
                     initialValue: _selectedTradeCategory,
+                    style: AppTypography.body.copyWith(
+                      color: AppColors.textPrimary,
+                    ),
+                    dropdownColor: AppColors.cardBg,
                     decoration: InputDecoration(
                       labelText: AppStrings.tradeCategory,
-                      prefixIcon: const Icon(Icons.work),
+                      labelStyle: AppTypography.body.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                      prefixIcon: Icon(
+                        Icons.work,
+                        color: AppColors.textSecondary,
+                      ),
+                      filled: true,
+                      fillColor: AppColors.cardBg,
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        borderSide: BorderSide(color: AppColors.overlayMedium),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        borderSide: BorderSide(color: AppColors.overlayMedium),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        borderSide: BorderSide(
+                          color: AppColors.accentPrimary,
+                          width: 2,
+                        ),
                       ),
                     ),
-                    items: const [
+                    items: [
                       DropdownMenuItem(
                         value: 'PLUMBER',
-                        child: Text(AppStrings.plumber),
+                        child: Text(
+                          AppStrings.plumber,
+                          style: AppTypography.body.copyWith(
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
                       ),
                       DropdownMenuItem(
                         value: 'ELECTRICIAN',
-                        child: Text(AppStrings.electrician),
+                        child: Text(
+                          AppStrings.electrician,
+                          style: AppTypography.body.copyWith(
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
                       ),
                       DropdownMenuItem(
                         value: 'MASON',
-                        child: Text(AppStrings.mason),
+                        child: Text(
+                          AppStrings.mason,
+                          style: AppTypography.body.copyWith(
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
                       ),
                     ],
                     onChanged: (value) {
@@ -279,18 +317,41 @@ class _RegisterPageState extends State<RegisterPage> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: AppSpacing.base),
                 ],
 
                 // Business name for fournisseurs
                 if (_selectedUserType == 'FOURNISSEUR') ...[
                   TextFormField(
                     controller: _businessNameController,
+                    style: AppTypography.body.copyWith(
+                      color: AppColors.textPrimary,
+                    ),
                     decoration: InputDecoration(
                       labelText: AppStrings.businessName,
-                      prefixIcon: const Icon(Icons.business),
+                      labelStyle: AppTypography.body.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                      prefixIcon: Icon(
+                        Icons.business,
+                        color: AppColors.textSecondary,
+                      ),
+                      filled: true,
+                      fillColor: AppColors.cardBg,
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        borderSide: BorderSide(color: AppColors.overlayMedium),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        borderSide: BorderSide(color: AppColors.overlayMedium),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        borderSide: BorderSide(
+                          color: AppColors.accentPrimary,
+                          width: 2,
+                        ),
                       ),
                     ),
                     validator: (value) {
@@ -300,21 +361,31 @@ class _RegisterPageState extends State<RegisterPage> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: AppSpacing.base),
                 ],
 
                 // Password field
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
+                  style: AppTypography.body.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
                   decoration: InputDecoration(
                     labelText: AppStrings.password,
-                    prefixIcon: const Icon(Icons.lock),
+                    labelStyle: AppTypography.body.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                    prefixIcon: Icon(
+                      Icons.lock,
+                      color: AppColors.textSecondary,
+                    ),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword
                             ? Icons.visibility
                             : Icons.visibility_off,
+                        color: AppColors.textSecondary,
                       ),
                       onPressed: () {
                         setState(() {
@@ -322,8 +393,22 @@ class _RegisterPageState extends State<RegisterPage> {
                         });
                       },
                     ),
+                    filled: true,
+                    fillColor: AppColors.cardBg,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      borderSide: BorderSide(color: AppColors.overlayMedium),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      borderSide: BorderSide(color: AppColors.overlayMedium),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      borderSide: BorderSide(
+                        color: AppColors.accentPrimary,
+                        width: 2,
+                      ),
                     ),
                   ),
                   validator: (value) {
@@ -337,20 +422,30 @@ class _RegisterPageState extends State<RegisterPage> {
                   },
                 ),
 
-                const SizedBox(height: 16),
+                SizedBox(height: AppSpacing.base),
 
                 // Confirm password field
                 TextFormField(
                   controller: _confirmPasswordController,
                   obscureText: _obscureConfirmPassword,
+                  style: AppTypography.body.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
                   decoration: InputDecoration(
                     labelText: AppStrings.confirmPassword,
-                    prefixIcon: const Icon(Icons.lock),
+                    labelStyle: AppTypography.body.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                    prefixIcon: Icon(
+                      Icons.lock,
+                      color: AppColors.textSecondary,
+                    ),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscureConfirmPassword
                             ? Icons.visibility
                             : Icons.visibility_off,
+                        color: AppColors.textSecondary,
                       ),
                       onPressed: () {
                         setState(() {
@@ -358,8 +453,22 @@ class _RegisterPageState extends State<RegisterPage> {
                         });
                       },
                     ),
+                    filled: true,
+                    fillColor: AppColors.cardBg,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      borderSide: BorderSide(color: AppColors.overlayMedium),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      borderSide: BorderSide(color: AppColors.overlayMedium),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      borderSide: BorderSide(
+                        color: AppColors.accentPrimary,
+                        width: 2,
+                      ),
                     ),
                   ),
                   validator: (value) {
@@ -373,50 +482,51 @@ class _RegisterPageState extends State<RegisterPage> {
                   },
                 ),
 
-                const SizedBox(height: 24),
+                SizedBox(height: AppSpacing.lg),
 
                 // Register button
                 Obx(
-                  () => ElevatedButton(
+                  () => PrimaryButton(
                     onPressed: authController.isLoading.value
                         ? null
                         : _handleRegister,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: authController.isLoading.value
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
-                              ),
-                            ),
-                          )
-                        : const Text(
-                            AppStrings.signUp,
-                            style: TextStyle(fontSize: 16),
-                          ),
+                    text: AppStrings.signUp,
+                    isLoading: authController.isLoading.value,
                   ),
                 ),
 
-                const SizedBox(height: 16),
+                SizedBox(height: AppSpacing.base),
 
                 // Login link
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(AppStrings.alreadyHaveAccount),
-                    TextButton(
-                      onPressed: () {
-                        Get.back();
-                      },
-                      child: const Text(AppStrings.signIn),
+                    Text(
+                      AppStrings.alreadyHaveAccount,
+                      style: AppTypography.body.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          Get.back();
+                        },
+                        borderRadius: AppRadius.buttonRadius,
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: AppSpacing.sm,
+                            vertical: AppSpacing.xs,
+                          ),
+                          child: Text(
+                            AppStrings.signIn,
+                            style: AppTypography.button.copyWith(
+                              color: AppColors.accentPrimary,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -445,47 +555,56 @@ class _RegisterPageState extends State<RegisterPage> {
           }
         });
       },
+      borderRadius: AppRadius.cardRadius,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(AppSpacing.base),
         decoration: BoxDecoration(
           border: Border.all(
-            color: isSelected ? Theme.of(context).primaryColor : Colors.grey,
+            color: isSelected
+                ? AppColors.accentPrimary
+                : AppColors.overlayMedium,
             width: isSelected ? 2 : 1,
           ),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: AppRadius.cardRadius,
           color: isSelected
-              ? Theme.of(context).primaryColor.withValues(alpha: 0.1)
-              : null,
+              ? AppColors.accentPrimary.withValues(alpha: 0.1)
+              : AppColors.cardBg,
         ),
         child: Row(
           children: [
             Icon(
               icon,
               size: 40,
-              color: isSelected ? Theme.of(context).primaryColor : Colors.grey,
+              color: isSelected
+                  ? AppColors.accentPrimary
+                  : AppColors.textSecondary,
             ),
-            const SizedBox(width: 16),
+            SizedBox(width: AppSpacing.base),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     title,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    style: AppTypography.sectionTitle.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: isSelected ? Theme.of(context).primaryColor : null,
+                      color: isSelected
+                          ? AppColors.accentPrimary
+                          : AppColors.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: AppSpacing.xs),
                   Text(
                     description,
-                    style: Theme.of(context).textTheme.bodySmall,
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ],
               ),
             ),
             if (isSelected)
-              Icon(Icons.check_circle, color: Theme.of(context).primaryColor),
+              Icon(Icons.check_circle, color: AppColors.accentPrimary),
           ],
         ),
       ),

@@ -4,7 +4,6 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/app_radius.dart';
-import '../../../../shared/widgets/cards/info_card.dart';
 import '../../../../shared/widgets/cards/empty_state_card.dart';
 import '../../../worksite/domain/models/chantier.dart';
 import '../../../worksite/domain/models/jalon.dart';

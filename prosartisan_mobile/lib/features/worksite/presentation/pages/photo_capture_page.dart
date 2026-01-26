@@ -277,9 +277,12 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        border: Border.all(color: AppColors.border, style: BorderStyle.solid),
-        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-        color: AppColors.background,
+        border: Border.all(
+          color: AppColors.overlayMedium,
+          style: BorderStyle.solid,
+        ),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        color: AppColors.cardBg,
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -288,9 +291,7 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
           SizedBox(height: AppSpacing.md),
           Text(
             'Aucune photo capturée',
-            style: AppTypography.bodyLarge.copyWith(
-              color: AppColors.textSecondary,
-            ),
+            style: AppTypography.body.copyWith(color: AppColors.textSecondary),
           ),
           SizedBox(height: AppSpacing.sm),
           Text(
@@ -313,17 +314,19 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
             title: 'Erreur',
             subtitle: _error!,
             icon: Icons.error,
-            backgroundColor: AppColors.error.withValues(alpha: 0.1),
-            borderColor: AppColors.error,
+            backgroundColor: AppColors.accentDanger.withValues(alpha: 0.1),
+            iconColor: AppColors.accentDanger,
           ),
           SizedBox(height: AppSpacing.md),
         ],
-        PrimaryButton(
-          onPressed: _canSubmit() ? _submitProof : null,
-          text: _isSubmitting ? 'Envoi en cours...' : 'Soumettre la preuve',
-          icon: Icons.send,
-          isLoading: _isSubmitting,
-          isFullWidth: true,
+        SizedBox(
+          width: double.infinity,
+          child: PrimaryButton(
+            onPressed: _canSubmit() ? _submitProof : null,
+            text: _isSubmitting ? 'Envoi en cours...' : 'Soumettre la preuve',
+            icon: Icons.send,
+            isLoading: _isSubmitting,
+          ),
         ),
       ],
     );

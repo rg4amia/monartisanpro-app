@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_radius.dart';
 import '../../domain/models/jalon.dart';
 
 /// Card widget for displaying milestone information
@@ -19,13 +19,13 @@ class MilestoneCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-        border: Border.all(color: AppColors.border),
+        color: AppColors.cardBg,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.overlayMedium),
       ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         child: Padding(
           padding: EdgeInsets.all(AppSpacing.md),
           child: Column(
@@ -61,15 +61,14 @@ class MilestoneCard extends StatelessWidget {
           child: Center(
             child: Text(
               '${jalon.sequenceNumber}',
-              style: const TextStyle(
-                color: Colors.white,
+              style: AppTypography.badge.copyWith(
+                color: AppColors.textPrimary,
                 fontWeight: FontWeight.bold,
-                fontSize: 14,
               ),
             ),
           ),
         ),
-        const SizedBox(width: 12),
+        SizedBox(width: AppSpacing.md),
 
         // Status and title
         Expanded(
@@ -78,39 +77,44 @@ class MilestoneCard extends StatelessWidget {
             children: [
               Text(
                 'Jalon ${jalon.sequenceNumber}',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                style: AppTypography.sectionTitle.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                ),
               ),
-              const SizedBox(height: 2),
+              SizedBox(height: AppSpacing.xs),
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 2,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: AppSpacing.sm,
+                      vertical: AppSpacing.xs,
                     ),
                     decoration: BoxDecoration(
-                      color: _getStatusColor(jalon.status).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
+                      color: _getStatusColor(
+                        jalon.status,
+                      ).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(AppRadius.badge),
                       border: Border.all(
-                        color: _getStatusColor(jalon.status).withOpacity(0.3),
+                        color: _getStatusColor(
+                          jalon.status,
+                        ).withValues(alpha: 0.3),
                       ),
                     ),
                     child: Text(
                       jalon.statusLabel,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      style: AppTypography.badge.copyWith(
                         color: _getStatusColor(jalon.status),
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
                   if (jalon.hasProof) ...[
-                    const SizedBox(width: 8),
+                    SizedBox(width: AppSpacing.sm),
                     Icon(
                       Icons.photo_camera,
                       size: 16,
-                      color: Colors.green[600],
+                      color: AppColors.accentSuccess,
                     ),
                   ],
                 ],
@@ -132,7 +136,7 @@ class MilestoneCard extends StatelessWidget {
   Widget _buildDescription(BuildContext context) {
     return Text(
       jalon.description,
-      style: Theme.of(context).textTheme.bodyMedium,
+      style: AppTypography.body.copyWith(color: AppColors.textPrimary),
       maxLines: 2,
       overflow: TextOverflow.ellipsis,
     );
@@ -142,13 +146,13 @@ class MilestoneCard extends StatelessWidget {
     return Row(
       children: [
         // Amount
-        Icon(Icons.payments, size: 16, color: Colors.grey[600]),
-        const SizedBox(width: 4),
+        Icon(Icons.payments, size: 16, color: AppColors.textSecondary),
+        SizedBox(width: AppSpacing.xs),
         Text(
           jalon.laborAmount.formatted,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          style: AppTypography.bodySmall.copyWith(
             fontWeight: FontWeight.w500,
-            color: Colors.grey[700],
+            color: AppColors.textSecondary,
           ),
         ),
 
@@ -159,26 +163,30 @@ class MilestoneCard extends StatelessWidget {
           Icon(
             Icons.timer,
             size: 16,
-            color: jalon.isAutoValidationDue ? Colors.red : Colors.orange,
+            color: jalon.isAutoValidationDue
+                ? AppColors.accentDanger
+                : AppColors.accentWarning,
           ),
-          const SizedBox(width: 4),
+          SizedBox(width: AppSpacing.xs),
           Text(
             jalon.isAutoValidationDue
                 ? 'Échéance dépassée'
                 : '${jalon.hoursUntilAutoValidation?.toStringAsFixed(0)}h restantes',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: jalon.isAutoValidationDue ? Colors.red : Colors.orange,
+            style: AppTypography.bodySmall.copyWith(
+              color: jalon.isAutoValidationDue
+                  ? AppColors.accentDanger
+                  : AppColors.accentWarning,
               fontWeight: FontWeight.w500,
             ),
           ),
         ] else if (jalon.validatedAt != null) ...[
-          Icon(Icons.check_circle, size: 16, color: Colors.green[600]),
-          const SizedBox(width: 4),
+          Icon(Icons.check_circle, size: 16, color: AppColors.accentSuccess),
+          SizedBox(width: AppSpacing.xs),
           Text(
             'Validé le ${_formatDate(jalon.validatedAt!)}',
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: Colors.green[600]),
+            style: AppTypography.bodySmall.copyWith(
+              color: AppColors.accentSuccess,
+            ),
           ),
         ],
       ],
@@ -188,23 +196,28 @@ class MilestoneCard extends StatelessWidget {
   Widget _buildUrgentBanner(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
       decoration: BoxDecoration(
-        color: Colors.red[50],
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: Colors.red[200]!),
+        color: AppColors.accentDanger.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(
+          color: AppColors.accentDanger.withValues(alpha: 0.3),
+        ),
       ),
       child: Row(
         children: [
-          Icon(Icons.warning, size: 16, color: Colors.red[700]),
-          const SizedBox(width: 8),
+          Icon(Icons.warning, size: 16, color: AppColors.accentDanger),
+          SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
               jalon.isAutoValidationDue
                   ? 'Validation automatique imminente'
                   : 'Action urgente requise',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Colors.red[700],
+              style: AppTypography.bodySmall.copyWith(
+                color: AppColors.accentDanger,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -234,11 +247,11 @@ class MilestoneCard extends StatelessWidget {
       case 'PENDING':
         return AppColors.textSecondary;
       case 'SUBMITTED':
-        return AppColors.warning;
+        return AppColors.accentWarning;
       case 'VALIDATED':
-        return AppColors.success;
+        return AppColors.accentSuccess;
       case 'CONTESTED':
-        return AppColors.error;
+        return AppColors.accentDanger;
       default:
         return AppColors.textSecondary;
     }

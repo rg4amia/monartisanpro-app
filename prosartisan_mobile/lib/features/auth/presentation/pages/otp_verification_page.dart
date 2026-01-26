@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../../../core/constants/app_strings.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../shared/widgets/buttons/primary_button.dart';
-import '../../../../shared/widgets/buttons/secondary_button.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../shared/widgets/buttons/primary_button.dart'
+    show PrimaryButton, SecondaryButton;
 import '../controllers/otp_controller.dart';
 
 /// OTP verification page
@@ -66,8 +66,8 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
         'Erreur',
         'Veuillez entrer le code complet',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+        backgroundColor: AppColors.accentDanger,
+        colorText: AppColors.textPrimary,
       );
       return;
     }
@@ -84,8 +84,8 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
         AppStrings.otpVerified,
         'Vérification réussie',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
+        backgroundColor: AppColors.accentSuccess,
+        colorText: AppColors.textPrimary,
       );
 
       if (widget.onVerified != null) {
@@ -98,8 +98,8 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
         'Erreur',
         otpController.errorMessage.value,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+        backgroundColor: AppColors.accentDanger,
+        colorText: AppColors.textPrimary,
       );
     }
   }
@@ -114,16 +114,16 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
         AppStrings.otpSent,
         'Un nouveau code a été envoyé',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
+        backgroundColor: AppColors.accentSuccess,
+        colorText: AppColors.textPrimary,
       );
     } else {
       Get.snackbar(
         'Erreur',
         otpController.errorMessage.value,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+        backgroundColor: AppColors.accentDanger,
+        colorText: AppColors.textPrimary,
       );
     }
   }
@@ -133,16 +133,14 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
     final otpController = Get.find<OtpController>();
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.primaryBg,
       appBar: AppBar(
         title: Text(
           AppStrings.otpVerification,
-          style: AppTypography.headingMedium.copyWith(
-            color: AppColors.textLight,
-          ),
+          style: AppTypography.h4.copyWith(color: AppColors.textPrimary),
         ),
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.textLight,
+        backgroundColor: AppColors.accentPrimary,
+        foregroundColor: AppColors.textPrimary,
         elevation: 0,
       ),
       body: SafeArea(
@@ -154,16 +152,14 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
               SizedBox(height: AppSpacing.xl),
 
               // Icon
-              Icon(Icons.sms, size: 80, color: AppColors.primary),
+              Icon(Icons.sms, size: 80, color: AppColors.accentPrimary),
 
               SizedBox(height: AppSpacing.lg),
 
               // Title
               Text(
                 AppStrings.enterOtp,
-                style: AppTypography.headingMedium.copyWith(
-                  color: AppColors.textPrimary,
-                ),
+                style: AppTypography.h2.copyWith(color: AppColors.textPrimary),
                 textAlign: TextAlign.center,
               ),
 
@@ -172,7 +168,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
               // Subtitle
               Text(
                 '${AppStrings.otpSentTo} ${widget.phoneNumber}',
-                style: AppTypography.bodyMedium.copyWith(
+                style: AppTypography.body.copyWith(
                   color: AppColors.textSecondary,
                 ),
                 textAlign: TextAlign.center,
@@ -192,34 +188,32 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
                       textAlign: TextAlign.center,
                       keyboardType: TextInputType.number,
                       maxLength: 1,
-                      style: AppTypography.headingMedium.copyWith(
+                      style: AppTypography.h3.copyWith(
                         color: AppColors.textPrimary,
                       ),
                       decoration: InputDecoration(
                         counterText: '',
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppTheme.radiusMd,
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          borderSide: BorderSide(
+                            color: AppColors.overlayMedium,
                           ),
-                          borderSide: BorderSide(color: AppColors.border),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppTheme.radiusMd,
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          borderSide: BorderSide(
+                            color: AppColors.overlayMedium,
                           ),
-                          borderSide: BorderSide(color: AppColors.border),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppTheme.radiusMd,
-                          ),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
                           borderSide: BorderSide(
-                            color: AppColors.primary,
+                            color: AppColors.accentPrimary,
                             width: 2,
                           ),
                         ),
                         filled: true,
-                        fillColor: AppColors.surface,
+                        fillColor: AppColors.cardBg,
                       ),
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       onChanged: (value) {
@@ -249,7 +243,6 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
                       : _handleVerify,
                   text: AppStrings.verify,
                   isLoading: otpController.isLoading.value,
-                  isFullWidth: true,
                 ),
               ),
 
@@ -264,7 +257,6 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
                   text: countdown > 0
                       ? '${AppStrings.resendOtp} (${countdown}s)'
                       : AppStrings.resendOtp,
-                  isFullWidth: true,
                 );
               }),
             ],

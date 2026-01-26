@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/theme/app_radius.dart';
 import '../../../../shared/widgets/buttons/primary_button.dart';
 import '../../../../shared/widgets/cards/empty_state_card.dart';
 import '../controllers/transaction_history_controller.dart';
@@ -28,20 +28,18 @@ class TransactionHistoryPage extends StatelessWidget {
     });
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.primaryBg,
       appBar: AppBar(
         title: Text(
           'Historique des transactions',
-          style: AppTypography.headingMedium.copyWith(
-            color: AppColors.textLight,
-          ),
+          style: AppTypography.h2.copyWith(color: AppColors.textPrimary),
         ),
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.textLight,
+        backgroundColor: AppColors.accentPrimary,
+        foregroundColor: AppColors.textPrimary,
         elevation: 0,
         actions: [
           IconButton(
-            icon: Icon(Icons.refresh, color: AppColors.textLight),
+            icon: Icon(Icons.refresh, color: AppColors.textPrimary),
             onPressed: () => controller.refreshTransactions(),
           ),
         ],
@@ -55,9 +53,9 @@ class TransactionHistoryPage extends StatelessWidget {
               vertical: AppSpacing.sm,
             ),
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: AppColors.cardBg,
               border: Border(
-                bottom: BorderSide(color: AppColors.border, width: 1),
+                bottom: BorderSide(color: AppColors.overlayMedium, width: 1),
               ),
             ),
             child: TransactionFilterChips(
@@ -72,7 +70,9 @@ class TransactionHistoryPage extends StatelessWidget {
               if (controller.isLoading.value &&
                   controller.transactions.isEmpty) {
                 return Center(
-                  child: CircularProgressIndicator(color: AppColors.primary),
+                  child: CircularProgressIndicator(
+                    color: AppColors.accentPrimary,
+                  ),
                 );
               }
 
@@ -86,7 +86,7 @@ class TransactionHistoryPage extends StatelessWidget {
 
               return RefreshIndicator(
                 onRefresh: () => controller.refreshTransactions(),
-                color: AppColors.primary,
+                color: AppColors.accentPrimary,
                 child: ListView.builder(
                   padding: EdgeInsets.all(AppSpacing.md),
                   itemCount:
@@ -100,7 +100,7 @@ class TransactionHistoryPage extends StatelessWidget {
                           padding: EdgeInsets.all(AppSpacing.md),
                           child: Center(
                             child: CircularProgressIndicator(
-                              color: AppColors.primary,
+                              color: AppColors.accentPrimary,
                             ),
                           ),
                         );
@@ -111,7 +111,7 @@ class TransactionHistoryPage extends StatelessWidget {
                           child: PrimaryButton(
                             onPressed: () => controller.loadMoreTransactions(),
                             text: 'Charger plus',
-                            isFullWidth: true,
+                            width: double.infinity,
                           ),
                         );
                       }
@@ -140,11 +140,9 @@ class TransactionHistoryPage extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.cardBg,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(AppTheme.radiusLg),
-        ),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
       ),
       builder: (context) => DraggableScrollableSheet(
         initialChildSize: 0.7,
@@ -162,7 +160,7 @@ class TransactionHistoryPage extends StatelessWidget {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: AppColors.border,
+                    color: AppColors.overlayMedium,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -173,9 +171,7 @@ class TransactionHistoryPage extends StatelessWidget {
               // Title
               Text(
                 'Détails de la transaction',
-                style: AppTypography.headingMedium.copyWith(
-                  color: AppColors.textPrimary,
-                ),
+                style: AppTypography.h2.copyWith(color: AppColors.textPrimary),
               ),
 
               SizedBox(height: AppSpacing.lg),
@@ -205,7 +201,7 @@ class TransactionHistoryPage extends StatelessWidget {
               PrimaryButton(
                 onPressed: () => Navigator.of(context).pop(),
                 text: 'Fermer',
-                isFullWidth: true,
+                width: double.infinity,
               ),
             ],
           ),
@@ -224,7 +220,7 @@ class TransactionHistoryPage extends StatelessWidget {
             width: 120,
             child: Text(
               label,
-              style: AppTypography.bodyMedium.copyWith(
+              style: AppTypography.body.copyWith(
                 color: AppColors.textSecondary,
                 fontWeight: FontWeight.w500,
               ),
@@ -233,7 +229,7 @@ class TransactionHistoryPage extends StatelessWidget {
           Expanded(
             child: Text(
               value,
-              style: AppTypography.bodyMedium.copyWith(
+              style: AppTypography.body.copyWith(
                 color: AppColors.textPrimary,
                 fontWeight: FontWeight.w500,
               ),

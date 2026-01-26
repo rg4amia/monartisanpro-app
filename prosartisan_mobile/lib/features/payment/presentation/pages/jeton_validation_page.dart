@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 import 'package:geolocator/geolocator.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../shared/widgets/buttons/primary_button.dart';
-import '../../../../shared/widgets/buttons/secondary_button.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../shared/widgets/buttons/primary_button.dart'
+    show PrimaryButton, SecondaryButton;
 import '../../../../shared/widgets/cards/info_card.dart';
 import '../controllers/jeton_validation_controller.dart';
 import '../widgets/amount_input_field.dart';
@@ -39,22 +39,20 @@ class _JetonValidationPageState extends State<JetonValidationPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.primaryBg,
       appBar: AppBar(
         title: Text(
           'Validation Jeton',
-          style: AppTypography.headingMedium.copyWith(
-            color: AppColors.textLight,
-          ),
+          style: AppTypography.h4.copyWith(color: AppColors.textPrimary),
         ),
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.textLight,
+        backgroundColor: AppColors.accentPrimary,
+        foregroundColor: AppColors.textPrimary,
         elevation: 0,
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
           return Center(
-            child: CircularProgressIndicator(color: AppColors.primary),
+            child: CircularProgressIndicator(color: AppColors.accentPrimary),
           );
         }
 
@@ -66,10 +64,10 @@ class _JetonValidationPageState extends State<JetonValidationPage> {
               padding: EdgeInsets.all(AppSpacing.md),
               decoration: BoxDecoration(
                 color: controller.hasGpsPermission.value
-                    ? AppColors.success.withValues(alpha: 0.1)
-                    : AppColors.error.withValues(alpha: 0.1),
+                    ? AppColors.accentSuccess.withValues(alpha: 0.1)
+                    : AppColors.accentDanger.withValues(alpha: 0.1),
                 border: Border(
-                  bottom: BorderSide(color: AppColors.border, width: 1),
+                  bottom: BorderSide(color: AppColors.overlayMedium, width: 1),
                 ),
               ),
               child: GPSStatusIndicator(
@@ -94,9 +92,9 @@ class _JetonValidationPageState extends State<JetonValidationPage> {
             Container(
               padding: EdgeInsets.all(AppSpacing.md),
               decoration: BoxDecoration(
-                color: AppColors.surface,
+                color: AppColors.cardBg,
                 border: Border(
-                  top: BorderSide(color: AppColors.border, width: 1),
+                  top: BorderSide(color: AppColors.overlayMedium, width: 1),
                 ),
               ),
               child: Column(
@@ -121,7 +119,6 @@ class _JetonValidationPageState extends State<JetonValidationPage> {
                           ? () => _validateJeton()
                           : null,
                       text: 'Valider le jeton',
-                      isFullWidth: true,
                     ),
                 ],
               ),
@@ -139,25 +136,23 @@ class _JetonValidationPageState extends State<JetonValidationPage> {
         children: [
           Text(
             'Scannez le QR code du jeton',
-            style: AppTypography.bodyLarge.copyWith(
-              color: AppColors.textPrimary,
-            ),
+            style: AppTypography.body.copyWith(color: AppColors.textPrimary),
             textAlign: TextAlign.center,
           ),
           SizedBox(height: AppSpacing.md),
           Expanded(
             child: Container(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-                border: Border.all(color: AppColors.border, width: 2),
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                border: Border.all(color: AppColors.overlayMedium, width: 2),
               ),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 child: QRView(
                   key: qrKey,
                   onQRViewCreated: _onQRViewCreated,
                   overlay: QrScannerOverlayShape(
-                    borderColor: AppColors.primary,
+                    borderColor: AppColors.accentPrimary,
                     borderRadius: 10,
                     borderLength: 30,
                     borderWidth: 10,
@@ -179,44 +174,43 @@ class _JetonValidationPageState extends State<JetonValidationPage> {
         children: [
           Text(
             'Saisissez le code du jeton',
-            style: AppTypography.bodyLarge.copyWith(
-              color: AppColors.textPrimary,
-            ),
+            style: AppTypography.body.copyWith(color: AppColors.textPrimary),
             textAlign: TextAlign.center,
           ),
           SizedBox(height: AppSpacing.lg),
           TextField(
             controller: controller.manualCodeController,
-            style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.textPrimary,
-            ),
+            style: AppTypography.body.copyWith(color: AppColors.textPrimary),
             decoration: InputDecoration(
               labelText: 'Code du jeton (PA-XXXX)',
-              labelStyle: AppTypography.bodyMedium.copyWith(
+              labelStyle: AppTypography.body.copyWith(
                 color: AppColors.textSecondary,
               ),
               hintText: 'PA-1234',
-              hintStyle: AppTypography.bodyMedium.copyWith(
+              hintStyle: AppTypography.body.copyWith(
                 color: AppColors.textSecondary,
               ),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-                borderSide: BorderSide(color: AppColors.border),
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                borderSide: BorderSide(color: AppColors.overlayMedium),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-                borderSide: BorderSide(color: AppColors.border),
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                borderSide: BorderSide(color: AppColors.overlayMedium),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-                borderSide: BorderSide(color: AppColors.primary, width: 2),
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                borderSide: BorderSide(
+                  color: AppColors.accentPrimary,
+                  width: 2,
+                ),
               ),
               prefixIcon: Icon(
                 Icons.confirmation_number,
                 color: AppColors.textSecondary,
               ),
               filled: true,
-              fillColor: AppColors.surface,
+              fillColor: AppColors.cardBg,
             ),
             textCapitalization: TextCapitalization.characters,
             onChanged: (value) => controller.setScannedCode(value),
@@ -230,15 +224,15 @@ class _JetonValidationPageState extends State<JetonValidationPage> {
     return Container(
       padding: EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: Border(top: BorderSide(color: AppColors.border)),
+        color: AppColors.cardBg,
+        border: Border(top: BorderSide(color: AppColors.overlayMedium)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Montant à utiliser',
-            style: AppTypography.headingSmall.copyWith(
+            style: AppTypography.sectionTitle.copyWith(
               color: AppColors.textPrimary,
             ),
           ),
@@ -251,8 +245,8 @@ class _JetonValidationPageState extends State<JetonValidationPage> {
               subtitle:
                   'Montant disponible: ${controller.jetonInfo.value!.remainingAmountFormatted}',
               icon: Icons.confirmation_number,
-              backgroundColor: AppColors.info.withValues(alpha: 0.1),
-              borderColor: AppColors.info,
+              backgroundColor: AppColors.accentPrimary.withValues(alpha: 0.1),
+              iconColor: AppColors.accentPrimary,
             ),
 
           SizedBox(height: AppSpacing.md),
@@ -298,8 +292,8 @@ class _JetonValidationPageState extends State<JetonValidationPage> {
         'Validation réussie',
         'Le jeton a été validé avec succès',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
+        backgroundColor: AppColors.accentSuccess,
+        colorText: AppColors.textPrimary,
         duration: const Duration(seconds: 3),
       );
 
@@ -312,8 +306,8 @@ class _JetonValidationPageState extends State<JetonValidationPage> {
         'Erreur de localisation',
         'Impossible d\'obtenir votre position GPS',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+        backgroundColor: AppColors.accentDanger,
+        colorText: AppColors.textPrimary,
       );
     }
   }

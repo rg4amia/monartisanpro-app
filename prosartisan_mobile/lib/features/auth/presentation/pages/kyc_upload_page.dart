@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../shared/widgets/buttons/primary_button.dart';
+import '../../../../shared/widgets/cards/info_card.dart';
 import '../controllers/kyc_controller.dart';
 
 /// KYC document upload page
@@ -38,8 +44,8 @@ class _KycUploadPageState extends State<KycUploadPage> {
         AppStrings.kycSubmitted,
         'Vos documents sont en cours de vérification',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
+        backgroundColor: AppColors.accentSuccess,
+        colorText: AppColors.textPrimary,
       );
 
       // Navigate to home
@@ -49,8 +55,8 @@ class _KycUploadPageState extends State<KycUploadPage> {
         'Erreur',
         kycController.errorMessage.value,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+        backgroundColor: AppColors.accentDanger,
+        colorText: AppColors.textPrimary,
       );
     }
   }
@@ -58,12 +64,19 @@ class _KycUploadPageState extends State<KycUploadPage> {
   void _showImageSourceDialog(bool isIdDocument) {
     showModalBottomSheet(
       context: context,
+      backgroundColor: AppColors.cardBg,
+      shape: RoundedRectangleBorder(borderRadius: AppRadius.modalRadius),
       builder: (context) => SafeArea(
         child: Wrap(
           children: [
             ListTile(
-              leading: const Icon(Icons.camera_alt),
-              title: const Text(AppStrings.takePhoto),
+              leading: Icon(Icons.camera_alt, color: AppColors.accentPrimary),
+              title: Text(
+                AppStrings.takePhoto,
+                style: AppTypography.body.copyWith(
+                  color: AppColors.textPrimary,
+                ),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 final kycController = Get.find<KycController>();
@@ -75,8 +88,16 @@ class _KycUploadPageState extends State<KycUploadPage> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text(AppStrings.chooseFromGallery),
+              leading: Icon(
+                Icons.photo_library,
+                color: AppColors.accentPrimary,
+              ),
+              title: Text(
+                AppStrings.chooseFromGallery,
+                style: AppTypography.body.copyWith(
+                  color: AppColors.textPrimary,
+                ),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 final kycController = Get.find<KycController>();
@@ -98,36 +119,36 @@ class _KycUploadPageState extends State<KycUploadPage> {
     final kycController = Get.find<KycController>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text(AppStrings.kycVerification)),
+      backgroundColor: AppColors.primaryBg,
+      appBar: AppBar(
+        title: Text(
+          AppStrings.kycVerification,
+          style: AppTypography.h4.copyWith(color: AppColors.textPrimary),
+        ),
+        backgroundColor: Colors.transparent,
+        foregroundColor: AppColors.textPrimary,
+        elevation: 0,
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
+          padding: EdgeInsets.all(AppSpacing.lg),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Info card
-                Card(
-                  color: Colors.blue.shade50,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      children: [
-                        Icon(Icons.info, color: Colors.blue.shade700),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            AppStrings.kycRequired,
-                            style: TextStyle(color: Colors.blue.shade700),
-                          ),
-                        ),
-                      ],
-                    ),
+                InfoCard(
+                  title: 'Vérification requise',
+                  subtitle: AppStrings.kycRequired,
+                  icon: Icons.info,
+                  backgroundColor: AppColors.accentPrimary.withValues(
+                    alpha: 0.1,
                   ),
+                  iconColor: AppColors.accentPrimary,
                 ),
 
-                const SizedBox(height: 24),
+                SizedBox(height: AppSpacing.lg),
 
                 // ID type selection
                 Obx(
@@ -135,19 +156,50 @@ class _KycUploadPageState extends State<KycUploadPage> {
                     initialValue: kycController.idType.value,
                     decoration: InputDecoration(
                       labelText: AppStrings.idType,
-                      prefixIcon: const Icon(Icons.badge),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                      labelStyle: AppTypography.body.copyWith(
+                        color: AppColors.textSecondary,
                       ),
+                      prefixIcon: Icon(
+                        Icons.badge,
+                        color: AppColors.accentPrimary,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: AppRadius.inputRadius,
+                        borderSide: BorderSide(color: AppColors.overlayMedium),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: AppRadius.inputRadius,
+                        borderSide: BorderSide(color: AppColors.overlayMedium),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: AppRadius.inputRadius,
+                        borderSide: BorderSide(color: AppColors.accentPrimary),
+                      ),
+                      filled: true,
+                      fillColor: AppColors.cardBg,
                     ),
-                    items: const [
+                    style: AppTypography.body.copyWith(
+                      color: AppColors.textPrimary,
+                    ),
+                    dropdownColor: AppColors.cardBg,
+                    items: [
                       DropdownMenuItem(
                         value: 'CNI',
-                        child: Text(AppStrings.cni),
+                        child: Text(
+                          AppStrings.cni,
+                          style: AppTypography.body.copyWith(
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
                       ),
                       DropdownMenuItem(
                         value: 'PASSPORT',
-                        child: Text(AppStrings.passport),
+                        child: Text(
+                          AppStrings.passport,
+                          style: AppTypography.body.copyWith(
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
                       ),
                     ],
                     onChanged: (value) {
@@ -158,17 +210,41 @@ class _KycUploadPageState extends State<KycUploadPage> {
                   ),
                 ),
 
-                const SizedBox(height: 16),
+                SizedBox(height: AppSpacing.base),
 
                 // ID number field
                 TextFormField(
                   controller: _idNumberController,
+                  style: AppTypography.body.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
                   decoration: InputDecoration(
                     labelText: AppStrings.idNumber,
-                    prefixIcon: const Icon(Icons.numbers),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                    labelStyle: AppTypography.body.copyWith(
+                      color: AppColors.textSecondary,
                     ),
+                    prefixIcon: Icon(
+                      Icons.numbers,
+                      color: AppColors.accentPrimary,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: AppRadius.inputRadius,
+                      borderSide: BorderSide(color: AppColors.overlayMedium),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: AppRadius.inputRadius,
+                      borderSide: BorderSide(color: AppColors.overlayMedium),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: AppRadius.inputRadius,
+                      borderSide: BorderSide(color: AppColors.accentPrimary),
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: AppRadius.inputRadius,
+                      borderSide: BorderSide(color: AppColors.accentDanger),
+                    ),
+                    filled: true,
+                    fillColor: AppColors.cardBg,
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -178,15 +254,17 @@ class _KycUploadPageState extends State<KycUploadPage> {
                   },
                 ),
 
-                const SizedBox(height: 24),
+                SizedBox(height: AppSpacing.lg),
 
                 // ID document upload
                 Text(
                   AppStrings.uploadIdDocument,
-                  style: Theme.of(context).textTheme.titleMedium,
+                  style: AppTypography.sectionTitle.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
                 ),
 
-                const SizedBox(height: 12),
+                SizedBox(height: AppSpacing.md),
 
                 Obx(
                   () => _buildImageUploadCard(
@@ -196,15 +274,17 @@ class _KycUploadPageState extends State<KycUploadPage> {
                   ),
                 ),
 
-                const SizedBox(height: 24),
+                SizedBox(height: AppSpacing.lg),
 
                 // Selfie upload
                 Text(
                   AppStrings.uploadSelfie,
-                  style: Theme.of(context).textTheme.titleMedium,
+                  style: AppTypography.sectionTitle.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
                 ),
 
-                const SizedBox(height: 12),
+                SizedBox(height: AppSpacing.md),
 
                 Obx(
                   () => _buildImageUploadCard(
@@ -214,46 +294,44 @@ class _KycUploadPageState extends State<KycUploadPage> {
                   ),
                 ),
 
-                const SizedBox(height: 32),
+                SizedBox(height: AppSpacing.xl),
 
                 // Submit button
                 Obx(
-                  () => ElevatedButton(
+                  () => PrimaryButton(
+                    text: AppStrings.submit,
                     onPressed: kycController.isLoading.value
                         ? null
                         : _handleSubmit,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: kycController.isLoading.value
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
-                              ),
-                            ),
-                          )
-                        : const Text(
-                            AppStrings.submit,
-                            style: TextStyle(fontSize: 16),
-                          ),
+                    isLoading: kycController.isLoading.value,
                   ),
                 ),
 
-                const SizedBox(height: 16),
+                SizedBox(height: AppSpacing.base),
 
                 // Skip button (optional)
-                TextButton(
-                  onPressed: () {
-                    Get.offAllNamed('/home');
-                  },
-                  child: const Text(AppStrings.skip),
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () {
+                      Get.offAllNamed('/home');
+                    },
+                    borderRadius: AppRadius.buttonRadius,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: AppSpacing.base,
+                        vertical: AppSpacing.md,
+                      ),
+                      child: Center(
+                        child: Text(
+                          AppStrings.skip,
+                          style: AppTypography.button.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -270,27 +348,30 @@ class _KycUploadPageState extends State<KycUploadPage> {
   }) {
     return InkWell(
       onTap: onTap,
+      borderRadius: AppRadius.cardRadius,
       child: Container(
         height: 200,
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey),
-          borderRadius: BorderRadius.circular(12),
-          color: Colors.grey.shade100,
+          border: Border.all(color: AppColors.overlayMedium),
+          borderRadius: AppRadius.cardRadius,
+          color: AppColors.cardBg,
         ),
         child: image == null
             ? Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(icon, size: 48, color: Colors.grey),
-                  const SizedBox(height: 8),
+                  Icon(icon, size: 48, color: AppColors.textSecondary),
+                  SizedBox(height: AppSpacing.sm),
                   Text(
                     'Appuyez pour ajouter une photo',
-                    style: TextStyle(color: Colors.grey.shade600),
+                    style: AppTypography.body.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ],
               )
             : ClipRRect(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: AppRadius.cardRadius,
                 child: Image.file(image, fit: BoxFit.cover),
               ),
       ),

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
@@ -29,22 +28,20 @@ class PaymentInitiationPage extends StatelessWidget {
     final PaymentController controller = Get.put(PaymentController());
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.primaryBg,
       appBar: AppBar(
         title: Text(
           'Paiement',
-          style: AppTypography.headingMedium.copyWith(
-            color: AppColors.textLight,
-          ),
+          style: AppTypography.h4.copyWith(color: AppColors.textPrimary),
         ),
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.textLight,
+        backgroundColor: AppColors.accentPrimary,
+        foregroundColor: AppColors.textPrimary,
         elevation: 0,
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
           return Center(
-            child: CircularProgressIndicator(color: AppColors.primary),
+            child: CircularProgressIndicator(color: AppColors.accentPrimary),
           );
         }
 
@@ -61,7 +58,7 @@ class PaymentInitiationPage extends StatelessWidget {
               // Payment method selection
               Text(
                 'Choisissez votre méthode de paiement',
-                style: AppTypography.headingSmall.copyWith(
+                style: AppTypography.sectionTitle.copyWith(
                   color: AppColors.textPrimary,
                 ),
               ),
@@ -72,7 +69,7 @@ class PaymentInitiationPage extends StatelessWidget {
               MobileMoneyOptionCard(
                 provider: 'Wave',
                 icon: Icons.waves,
-                color: AppColors.info,
+                color: AppColors.accentPrimary,
                 onTap: () => _initiatePayment(controller, 'wave'),
               ),
 
@@ -81,7 +78,7 @@ class PaymentInitiationPage extends StatelessWidget {
               MobileMoneyOptionCard(
                 provider: 'Orange Money',
                 icon: Icons.phone_android,
-                color: AppColors.warning,
+                color: AppColors.accentWarning,
                 onTap: () => _initiatePayment(controller, 'orange'),
               ),
 
@@ -90,7 +87,7 @@ class PaymentInitiationPage extends StatelessWidget {
               MobileMoneyOptionCard(
                 provider: 'MTN Mobile Money',
                 icon: Icons.phone_iphone,
-                color: AppColors.accent,
+                color: AppColors.accentSuccess,
                 onTap: () => _initiatePayment(controller, 'mtn'),
               ),
 
@@ -102,8 +99,8 @@ class PaymentInitiationPage extends StatelessWidget {
                 subtitle:
                     'Vos fonds seront sécurisés dans un compte séquestre jusqu\'à la validation des travaux.',
                 icon: Icons.security,
-                backgroundColor: AppColors.info.withValues(alpha: 0.1),
-                borderColor: AppColors.info,
+                backgroundColor: AppColors.accentPrimary.withValues(alpha: 0.1),
+                iconColor: AppColors.accentPrimary,
               ),
             ],
           ),
