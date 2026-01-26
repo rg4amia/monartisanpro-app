@@ -63,19 +63,19 @@ class TransactionListItem extends StatelessWidget {
     switch (transaction.type) {
       case 'ESCROW_BLOCK':
         icon = Icons.lock;
-        color = AppColors.warning;
+        color = AppColors.accentWarning;
         break;
       case 'MATERIAL_RELEASE':
         icon = Icons.build;
-        color = AppColors.info;
+        color = AppColors.accentPrimary;
         break;
       case 'LABOR_RELEASE':
         icon = Icons.work;
-        color = AppColors.success;
+        color = AppColors.accentSuccess;
         break;
       case 'REFUND':
         icon = Icons.undo;
-        color = AppColors.error;
+        color = AppColors.accentDanger;
         break;
       default:
         icon = Icons.account_balance_wallet;
@@ -87,7 +87,7 @@ class TransactionListItem extends StatelessWidget {
       height: 40,
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Icon(icon, color: color, size: 20),
     );
@@ -99,15 +99,15 @@ class TransactionListItem extends StatelessWidget {
 
     switch (transaction.status) {
       case 'PENDING':
-        color = AppColors.warning;
+        color = AppColors.accentWarning;
         label = 'En attente';
         break;
       case 'COMPLETED':
-        color = AppColors.success;
+        color = AppColors.accentSuccess;
         label = 'Terminée';
         break;
       case 'FAILED':
-        color = AppColors.error;
+        color = AppColors.accentDanger;
         label = 'Échouée';
         break;
       default:
@@ -122,7 +122,7 @@ class TransactionListItem extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Text(
@@ -138,12 +138,12 @@ class TransactionListItem extends StatelessWidget {
   Color _getAmountColor() {
     switch (transaction.type) {
       case 'ESCROW_BLOCK':
-        return AppColors.warning;
+        return AppColors.accentWarning;
       case 'MATERIAL_RELEASE':
       case 'LABOR_RELEASE':
-        return AppColors.success;
+        return AppColors.accentSuccess;
       case 'REFUND':
-        return AppColors.info;
+        return AppColors.accentPrimary;
       default:
         return AppColors.textPrimary;
     }
