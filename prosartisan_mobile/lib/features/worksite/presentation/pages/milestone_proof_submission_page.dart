@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/theme/app_radius.dart';
 import '../../../../shared/widgets/buttons/primary_button.dart';
-import '../../../../shared/widgets/buttons/secondary_button.dart';
 import '../../../../shared/widgets/cards/info_card.dart';
-import '../../../../shared/widgets/cards/status_card.dart';
 import '../../../worksite/domain/models/jalon.dart';
 import '../../../worksite/presentation/controllers/worksite_controller.dart';
 import '../../../worksite/presentation/pages/photo_capture_page.dart';
@@ -33,16 +31,14 @@ class _MilestoneProofSubmissionPageState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.primaryBg,
       appBar: AppBar(
         title: Text(
           'Soumettre une Preuve',
-          style: AppTypography.headingMedium.copyWith(
-            color: AppColors.textLight,
-          ),
+          style: AppTypography.h4.copyWith(color: AppColors.textPrimary),
         ),
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.textLight,
+        backgroundColor: AppColors.accentPrimary,
+        foregroundColor: AppColors.textPrimary,
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -71,9 +67,9 @@ class _MilestoneProofSubmissionPageState
     return Container(
       padding: EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-        border: Border.all(color: AppColors.border),
+        color: AppColors.cardBg,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.overlayMedium),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -84,14 +80,14 @@ class _MilestoneProofSubmissionPageState
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: AppColors.primary,
+                  color: AppColors.accentPrimary,
                   shape: BoxShape.circle,
                 ),
                 child: Center(
                   child: Text(
                     '${widget.jalon.sequenceNumber}',
-                    style: AppTypography.bodyLarge.copyWith(
-                      color: AppColors.textLight,
+                    style: AppTypography.body.copyWith(
+                      color: AppColors.textPrimary,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -104,14 +100,14 @@ class _MilestoneProofSubmissionPageState
                   children: [
                     Text(
                       'Jalon ${widget.jalon.sequenceNumber}',
-                      style: AppTypography.headingSmall.copyWith(
+                      style: AppTypography.sectionTitle.copyWith(
                         color: AppColors.textPrimary,
                       ),
                     ),
                     SizedBox(height: AppSpacing.xs),
                     Text(
                       widget.jalon.statusLabel,
-                      style: AppTypography.bodyMedium.copyWith(
+                      style: AppTypography.body.copyWith(
                         color: _getStatusColor(widget.jalon.status),
                         fontWeight: FontWeight.w500,
                       ),
@@ -124,16 +120,15 @@ class _MilestoneProofSubmissionPageState
           SizedBox(height: AppSpacing.md),
           Text(
             widget.jalon.description,
-            style: AppTypography.bodyLarge.copyWith(
-              color: AppColors.textPrimary,
-            ),
+            style: AppTypography.body.copyWith(color: AppColors.textPrimary),
           ),
           SizedBox(height: AppSpacing.md),
           InfoCard(
-            title: 'Montant à libérer: ${widget.jalon.laborAmount.formatted}',
+            title: 'Montant à libérer',
+            subtitle: widget.jalon.laborAmount.formatted,
             icon: Icons.payments,
-            backgroundColor: AppColors.success.withValues(alpha: 0.1),
-            borderColor: AppColors.success,
+            backgroundColor: AppColors.accentSuccess.withValues(alpha: 0.1),
+            iconColor: AppColors.accentSuccess,
           ),
         ],
       ),
@@ -144,16 +139,16 @@ class _MilestoneProofSubmissionPageState
     return Container(
       padding: EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-        border: Border.all(color: AppColors.border),
+        color: AppColors.cardBg,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.overlayMedium),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'État du jalon',
-            style: AppTypography.headingSmall.copyWith(
+            style: AppTypography.sectionTitle.copyWith(
               color: AppColors.textPrimary,
             ),
           ),
@@ -190,17 +185,17 @@ class _MilestoneProofSubmissionPageState
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: isCompleted
-                  ? AppColors.success
+                  ? AppColors.accentSuccess
                   : isActive
-                  ? AppColors.warning
-                  : AppColors.border,
+                  ? AppColors.accentWarning
+                  : AppColors.overlayMedium,
             ),
             child: isCompleted
-                ? Icon(Icons.check, color: AppColors.textLight, size: 14)
+                ? Icon(Icons.check, color: AppColors.textPrimary, size: 14)
                 : isActive
                 ? Icon(
                     Icons.radio_button_unchecked,
-                    color: AppColors.textLight,
+                    color: AppColors.textPrimary,
                     size: 14,
                   )
                 : null,
@@ -208,11 +203,11 @@ class _MilestoneProofSubmissionPageState
           SizedBox(width: AppSpacing.sm),
           Text(
             title,
-            style: AppTypography.bodyMedium.copyWith(
+            style: AppTypography.body.copyWith(
               color: isCompleted
-                  ? AppColors.success
+                  ? AppColors.accentSuccess
                   : isActive
-                  ? AppColors.warning
+                  ? AppColors.accentWarning
                   : AppColors.textSecondary,
               fontWeight: isActive ? FontWeight.w500 : null,
             ),
@@ -223,29 +218,46 @@ class _MilestoneProofSubmissionPageState
   }
 
   Widget _buildInstructions(BuildContext context) {
-    return InfoCard(
-      title: 'Instructions',
-      subtitle: 'Suivez ces étapes pour soumettre votre preuve de travail',
-      icon: Icons.info,
-      backgroundColor: AppColors.info.withValues(alpha: 0.1),
-      borderColor: AppColors.info,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(height: AppSpacing.sm),
-          _buildInstructionItem('Prenez une photo claire du travail terminé'),
-          _buildInstructionItem(
-            'Assurez-vous que la localisation GPS est activée',
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InfoCard(
+          title: 'Instructions',
+          subtitle: 'Suivez ces étapes pour soumettre votre preuve de travail',
+          icon: Icons.info,
+          backgroundColor: AppColors.accentPrimary.withValues(alpha: 0.1),
+          iconColor: AppColors.accentPrimary,
+        ),
+        SizedBox(height: AppSpacing.sm),
+        Container(
+          padding: EdgeInsets.all(AppSpacing.base),
+          decoration: BoxDecoration(
+            color: AppColors.cardBg,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            border: Border.all(color: AppColors.overlayMedium),
           ),
-          _buildInstructionItem(
-            'La précision GPS doit être inférieure à 10 mètres',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildInstructionItem(
+                'Prenez une photo claire du travail terminé',
+              ),
+              _buildInstructionItem(
+                'Assurez-vous que la localisation GPS est activée',
+              ),
+              _buildInstructionItem(
+                'La précision GPS doit être inférieure à 10 mètres',
+              ),
+              _buildInstructionItem(
+                'Le client aura 48h pour valider ou contester',
+              ),
+              _buildInstructionItem(
+                'Validation automatique après 48h sans réponse',
+              ),
+            ],
           ),
-          _buildInstructionItem('Le client aura 48h pour valider ou contester'),
-          _buildInstructionItem(
-            'Validation automatique après 48h sans réponse',
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -261,7 +273,7 @@ class _MilestoneProofSubmissionPageState
             margin: EdgeInsets.only(top: 6),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.info,
+              color: AppColors.accentPrimary,
             ),
           ),
           SizedBox(width: AppSpacing.sm),
@@ -420,8 +432,7 @@ class _MilestoneProofSubmissionPageState
         onPressed: null,
         text: 'Jalon terminé',
         icon: Icons.check_circle,
-        backgroundColor: AppColors.success,
-        isFullWidth: true,
+        backgroundColor: AppColors.accentSuccess,
       );
     }
 
@@ -434,26 +445,35 @@ class _MilestoneProofSubmissionPageState
                 ? 'Motif: ${widget.jalon.contestReason}'
                 : 'Ce jalon a été contesté par le client',
             icon: Icons.warning,
-            backgroundColor: AppColors.error.withValues(alpha: 0.1),
-            borderColor: AppColors.error,
+            backgroundColor: AppColors.accentDanger.withValues(alpha: 0.1),
+            iconColor: AppColors.accentDanger,
           ),
           SizedBox(height: AppSpacing.md),
           PrimaryButton(
             onPressed: () => _navigateToPhotoCapture(),
             text: 'Soumettre une nouvelle preuve',
             icon: Icons.camera_alt,
-            isFullWidth: true,
           ),
         ],
       );
     }
 
     if (widget.jalon.hasProof) {
-      return SecondaryButton(
-        onPressed: () => _navigateToPhotoCapture(),
-        text: 'Modifier la preuve',
-        icon: Icons.camera_alt,
-        isFullWidth: true,
+      return Container(
+        width: double.infinity,
+        height: 48,
+        child: OutlinedButton.icon(
+          onPressed: () => _navigateToPhotoCapture(),
+          icon: Icon(Icons.camera_alt),
+          label: Text('Modifier la preuve'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppColors.accentPrimary,
+            side: BorderSide(color: AppColors.accentPrimary),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+          ),
+        ),
       );
     }
 
@@ -461,7 +481,6 @@ class _MilestoneProofSubmissionPageState
       onPressed: () => _navigateToPhotoCapture(),
       text: 'Prendre une photo',
       icon: Icons.camera_alt,
-      isFullWidth: true,
     );
   }
 
@@ -482,15 +501,15 @@ class _MilestoneProofSubmissionPageState
   Color _getStatusColor(String status) {
     switch (status) {
       case 'PENDING':
-        return Colors.grey;
+        return AppColors.textSecondary;
       case 'SUBMITTED':
-        return Colors.orange;
+        return AppColors.accentWarning;
       case 'VALIDATED':
-        return Colors.green;
+        return AppColors.accentSuccess;
       case 'CONTESTED':
-        return Colors.red;
+        return AppColors.accentDanger;
       default:
-        return Colors.grey;
+        return AppColors.textSecondary;
     }
   }
 

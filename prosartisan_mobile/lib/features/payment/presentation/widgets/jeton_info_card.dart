@@ -1,110 +1,114 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/jeton.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_radius.dart';
 
 /// Jeton information card widget
 class JetonInfoCard extends StatelessWidget {
   final Jeton jeton;
 
-  const JetonInfoCard({Key? key, required this.jeton}) : super(key: key);
+  const JetonInfoCard({super.key, required this.jeton});
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.cardBg,
+        borderRadius: AppRadius.cardRadius,
+        border: Border.all(color: AppColors.overlayLight),
+      ),
+      padding: EdgeInsets.all(AppSpacing.base),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Informations du jeton',
+            style: AppTypography.sectionTitle.copyWith(
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          SizedBox(height: AppSpacing.base),
+
+          _buildInfoRow(
+            'Montant total',
+            jeton.totalAmountFormatted,
+            Icons.account_balance_wallet,
+          ),
+
+          _buildInfoRow(
+            'Montant utilisé',
+            jeton.usedAmountFormatted,
+            Icons.shopping_cart,
+          ),
+
+          _buildInfoRow(
+            'Montant restant',
+            jeton.remainingAmountFormatted,
+            Icons.savings,
+            valueColor: AppColors.accentSuccess,
+          ),
+
+          Container(
+            height: 1,
+            margin: EdgeInsets.symmetric(vertical: AppSpacing.md),
+            color: AppColors.overlayMedium,
+          ),
+
+          _buildInfoRow(
+            'Créé le',
+            _formatDate(jeton.createdAt),
+            Icons.calendar_today,
+          ),
+
+          _buildInfoRow(
+            'Expire le',
+            _formatDate(jeton.expiresAt),
+            Icons.schedule,
+            valueColor: jeton.isExpired ? AppColors.accentDanger : null,
+          ),
+
+          if (jeton.authorizedSuppliers.isNotEmpty) ...[
+            SizedBox(height: AppSpacing.md),
             Text(
-              'Informations du jeton',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-
-            _buildInfoRow(
-              context,
-              'Montant total',
-              jeton.totalAmountFormatted,
-              Icons.account_balance_wallet,
-            ),
-
-            _buildInfoRow(
-              context,
-              'Montant utilisé',
-              jeton.usedAmountFormatted,
-              Icons.shopping_cart,
-            ),
-
-            _buildInfoRow(
-              context,
-              'Montant restant',
-              jeton.remainingAmountFormatted,
-              Icons.savings,
-              valueColor: Colors.green.shade600,
-            ),
-
-            const Divider(height: 24),
-
-            _buildInfoRow(
-              context,
-              'Créé le',
-              _formatDate(jeton.createdAt),
-              Icons.calendar_today,
-            ),
-
-            _buildInfoRow(
-              context,
-              'Expire le',
-              _formatDate(jeton.expiresAt),
-              Icons.schedule,
-              valueColor: jeton.isExpired ? Colors.red : null,
-            ),
-
-            if (jeton.authorizedSuppliers.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Text(
-                'Fournisseurs autorisés: ${jeton.authorizedSuppliers.length}',
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
+              'Fournisseurs autorisés: ${jeton.authorizedSuppliers.length}',
+              style: AppTypography.bodySmall.copyWith(
+                color: AppColors.textSecondary,
               ),
-            ],
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
 
   Widget _buildInfoRow(
-    BuildContext context,
     String label,
     String value,
     IconData icon, {
     Color? valueColor,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: EdgeInsets.symmetric(vertical: AppSpacing.xs),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: Colors.grey.shade600),
-          const SizedBox(width: 12),
+          Icon(icon, size: 20, color: AppColors.textSecondary),
+          SizedBox(width: AppSpacing.md),
           Expanded(
             child: Text(
               label,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade700),
+              style: AppTypography.body.copyWith(
+                color: AppColors.textSecondary,
+              ),
             ),
           ),
           Text(
             value,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            style: AppTypography.body.copyWith(
               fontWeight: FontWeight.w500,
-              color: valueColor,
+              color: valueColor ?? AppColors.textPrimary,
             ),
           ),
         ],

@@ -1,10 +1,11 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide TextButton;
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../shared/widgets/navigation/bottom_nav_bar.dart';
-import '../../../../shared/widgets/buttons/primary_button.dart';
+import '../../../../shared/widgets/buttons/primary_button.dart'
+    show PrimaryButton, SecondaryButton, TextButton;
 
 /// Page du profil utilisateur
 class ProfilePage extends StatelessWidget {
@@ -201,13 +202,9 @@ class ProfilePage extends StatelessWidget {
         ),
         actions: [
           TextButton(
+            text: 'Annuler',
             onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Annuler',
-              style: AppTypography.button.copyWith(
-                color: AppColors.textSecondary,
-              ),
-            ),
+            textColor: AppColors.textSecondary,
           ),
           ElevatedButton(
             onPressed: () {

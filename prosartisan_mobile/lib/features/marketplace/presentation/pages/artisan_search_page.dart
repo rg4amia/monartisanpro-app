@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/theme/app_radius.dart';
 import '../../../../shared/widgets/cards/empty_state_card.dart';
 import '../controllers/artisan_search_controller.dart';
 import '../widgets/category_filter_widget.dart';
@@ -16,23 +16,18 @@ class ArtisanSearchPage extends GetView<ArtisanSearchController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.primaryBg,
       appBar: AppBar(
         title: Text(
           'Rechercher des artisans',
-          style: AppTypography.headingMedium.copyWith(
-            color: AppColors.textLight,
-          ),
+          style: AppTypography.h4.copyWith(color: AppColors.textPrimary),
         ),
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.textLight,
+        backgroundColor: Colors.transparent,
+        foregroundColor: AppColors.textPrimary,
         elevation: 0,
         actions: [
           IconButton(
-            icon: Icon(
-              Icons.filter_list,
-              color: AppColors.textLight,
-            ),
+            icon: Icon(Icons.filter_list, color: AppColors.textPrimary),
             onPressed: _showFilterBottomSheet,
           ),
         ],
@@ -43,13 +38,11 @@ class ArtisanSearchPage extends GetView<ArtisanSearchController> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                CircularProgressIndicator(
-                  color: AppColors.primary,
-                ),
+                CircularProgressIndicator(color: AppColors.accentPrimary),
                 SizedBox(height: AppSpacing.md),
                 Text(
                   'Obtention de votre localisation...',
-                  style: AppTypography.bodyMedium.copyWith(
+                  style: AppTypography.body.copyWith(
                     color: AppColors.textSecondary,
                   ),
                 ),
@@ -62,13 +55,8 @@ class ArtisanSearchPage extends GetView<ArtisanSearchController> {
           return EmptyStateCard(
             icon: Icons.location_off,
             title: 'Localisation non disponible',
-            subtitle: 'Veuillez activer la géolocalisation pour rechercher des artisans',
-          );
-        }
-                  style: TextStyle(color: Colors.grey),
-                ),
-              ],
-            ),
+            subtitle:
+                'Veuillez activer la géolocalisation pour rechercher des artisans',
           );
         }
 
@@ -96,23 +84,26 @@ class ArtisanSearchPage extends GetView<ArtisanSearchController> {
               top: 16,
               left: 16,
               right: 16,
-              child: Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      CategoryFilterWidget(
-                        selectedCategory: controller.selectedCategory,
-                        onCategoryChanged: controller.setCategory,
-                      ),
-                      const SizedBox(height: 8),
-                      SearchRadiusSlider(
-                        value: controller.searchRadius,
-                        onChanged: controller.setSearchRadius,
-                      ),
-                    ],
-                  ),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppColors.cardBg,
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  border: Border.all(color: AppColors.overlayLight),
+                ),
+                padding: EdgeInsets.all(AppSpacing.md),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CategoryFilterWidget(
+                      selectedCategory: controller.selectedCategory,
+                      onCategoryChanged: controller.setCategory,
+                    ),
+                    SizedBox(height: AppSpacing.sm),
+                    SearchRadiusSlider(
+                      value: controller.searchRadius,
+                      onChanged: controller.setSearchRadius,
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -123,20 +114,31 @@ class ArtisanSearchPage extends GetView<ArtisanSearchController> {
                 bottom: 16,
                 left: 16,
                 right: 16,
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      children: [
-                        const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.cardBg,
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    border: Border.all(color: AppColors.overlayLight),
+                  ),
+                  padding: EdgeInsets.all(AppSpacing.base),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.accentPrimary,
                         ),
-                        const SizedBox(width: 12),
-                        const Text('Recherche en cours...'),
-                      ],
-                    ),
+                      ),
+                      SizedBox(width: AppSpacing.md),
+                      Text(
+                        'Recherche en cours...',
+                        style: AppTypography.body.copyWith(
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -147,24 +149,35 @@ class ArtisanSearchPage extends GetView<ArtisanSearchController> {
                 bottom: 16,
                 left: 16,
                 right: 16,
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      children: [
-                        Icon(Icons.person, color: Colors.blue[600]),
-                        const SizedBox(width: 8),
-                        Text(
-                          '${controller.artisans.length} artisan(s) trouvé(s)',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.cardBg,
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    border: Border.all(color: AppColors.overlayLight),
+                  ),
+                  padding: EdgeInsets.all(AppSpacing.base),
+                  child: Row(
+                    children: [
+                      Icon(Icons.person, color: AppColors.accentPrimary),
+                      SizedBox(width: AppSpacing.sm),
+                      Text(
+                        '${controller.artisans.length} artisan(s) trouvé(s)',
+                        style: AppTypography.body.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
                         ),
-                        const Spacer(),
-                        TextButton(
-                          onPressed: _showArtisansList,
-                          child: const Text('Voir la liste'),
+                      ),
+                      const Spacer(),
+                      TextButton(
+                        onPressed: _showArtisansList,
+                        child: Text(
+                          'Voir la liste',
+                          style: AppTypography.body.copyWith(
+                            color: AppColors.accentPrimary,
+                          ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -173,9 +186,9 @@ class ArtisanSearchPage extends GetView<ArtisanSearchController> {
       }),
       floatingActionButton: FloatingActionButton(
         onPressed: () => Get.toNamed('/mission/create'),
-        backgroundColor: Colors.blue[600],
+        backgroundColor: AppColors.accentPrimary,
         tooltip: 'Créer une mission',
-        child: const Icon(Icons.add, color: Colors.white),
+        child: Icon(Icons.add, color: AppColors.textPrimary),
       ),
     );
   }
@@ -183,20 +196,30 @@ class ArtisanSearchPage extends GetView<ArtisanSearchController> {
   void _showFilterBottomSheet() {
     Get.bottomSheet(
       Container(
-        padding: const EdgeInsets.all(20),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        padding: EdgeInsets.all(AppSpacing.lg),
+        decoration: BoxDecoration(
+          color: AppColors.cardBg,
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppRadius.xl),
+          ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Filtres de recherche', style: Get.textTheme.headlineSmall),
-            const SizedBox(height: 20),
+            Text(
+              'Filtres de recherche',
+              style: AppTypography.h3.copyWith(color: AppColors.textPrimary),
+            ),
+            SizedBox(height: AppSpacing.lg),
 
-            Text('Catégorie d\'artisan', style: Get.textTheme.titleMedium),
-            const SizedBox(height: 8),
+            Text(
+              'Catégorie d\'artisan',
+              style: AppTypography.sectionTitle.copyWith(
+                color: AppColors.textPrimary,
+              ),
+            ),
+            SizedBox(height: AppSpacing.sm),
             Obx(
               () => CategoryFilterWidget(
                 selectedCategory: controller.selectedCategory,
@@ -205,10 +228,15 @@ class ArtisanSearchPage extends GetView<ArtisanSearchController> {
               ),
             ),
 
-            const SizedBox(height: 20),
+            SizedBox(height: AppSpacing.lg),
 
-            Text('Rayon de recherche', style: Get.textTheme.titleMedium),
-            const SizedBox(height: 8),
+            Text(
+              'Rayon de recherche',
+              style: AppTypography.sectionTitle.copyWith(
+                color: AppColors.textPrimary,
+              ),
+            ),
+            SizedBox(height: AppSpacing.sm),
             Obx(
               () => SearchRadiusSlider(
                 value: controller.searchRadius,
@@ -217,7 +245,7 @@ class ArtisanSearchPage extends GetView<ArtisanSearchController> {
               ),
             ),
 
-            const SizedBox(height: 20),
+            SizedBox(height: AppSpacing.lg),
 
             SizedBox(
               width: double.infinity,
@@ -227,10 +255,19 @@ class ArtisanSearchPage extends GetView<ArtisanSearchController> {
                   controller.searchArtisans();
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue[600],
-                  foregroundColor: Colors.white,
+                  backgroundColor: AppColors.accentPrimary,
+                  foregroundColor: AppColors.textPrimary,
+                  padding: EdgeInsets.symmetric(vertical: AppSpacing.base),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
                 ),
-                child: const Text('Appliquer les filtres'),
+                child: Text(
+                  'Appliquer les filtres',
+                  style: AppTypography.button.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
+                ),
               ),
             ),
           ],
@@ -243,25 +280,32 @@ class ArtisanSearchPage extends GetView<ArtisanSearchController> {
     Get.bottomSheet(
       Container(
         height: Get.height * 0.7,
-        padding: const EdgeInsets.all(20),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        padding: EdgeInsets.all(AppSpacing.lg),
+        decoration: BoxDecoration(
+          color: AppColors.cardBg,
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppRadius.xl),
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Text('Artisans trouvés', style: Get.textTheme.headlineSmall),
+                Text(
+                  'Artisans trouvés',
+                  style: AppTypography.h3.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
+                ),
                 const Spacer(),
                 IconButton(
                   onPressed: () => Get.back(),
-                  icon: const Icon(Icons.close),
+                  icon: Icon(Icons.close, color: AppColors.textPrimary),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: AppSpacing.base),
 
             Expanded(
               child: Obx(
@@ -276,51 +320,77 @@ class ArtisanSearchPage extends GetView<ArtisanSearchController> {
                       controller.currentLocation!,
                     );
 
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 8),
+                    return Container(
+                      margin: EdgeInsets.only(bottom: AppSpacing.sm),
+                      decoration: BoxDecoration(
+                        color: AppColors.secondaryBg,
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        border: Border.all(color: AppColors.overlayLight),
+                      ),
                       child: ListTile(
                         leading: CircleAvatar(
                           backgroundColor: isGolden
-                              ? Colors.amber
-                              : Colors.blue,
+                              ? AppColors.accentWarning
+                              : AppColors.accentPrimary,
                           child: Text(
                             artisan.category.displayName[0],
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: AppTypography.body.copyWith(
+                              color: AppColors.textPrimary,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
                         title: Text(
                           artisan.businessName ?? artisan.email,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          style: AppTypography.body.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
                         ),
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(artisan.category.displayName),
-                            const SizedBox(height: 4),
+                            Text(
+                              artisan.category.displayName,
+                              style: AppTypography.bodySmall.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                            SizedBox(height: AppSpacing.xs),
                             Row(
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.star,
-                                  color: Colors.amber,
+                                  color: AppColors.accentWarning,
                                   size: 16,
                                 ),
-                                const SizedBox(width: 4),
-                                Text(artisan.averageRating.toStringAsFixed(1)),
-                                const SizedBox(width: 8),
-                                Text('Score: ${artisan.nzassaScore.toInt()}'),
-                                const SizedBox(width: 8),
+                                SizedBox(width: AppSpacing.xs),
+                                Text(
+                                  artisan.averageRating.toStringAsFixed(1),
+                                  style: AppTypography.bodySmall.copyWith(
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                                SizedBox(width: AppSpacing.sm),
+                                Text(
+                                  'Score: ${artisan.nzassaScore.toInt()}',
+                                  style: AppTypography.bodySmall.copyWith(
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                                SizedBox(width: AppSpacing.sm),
                                 Text(
                                   '${(distance / 1000).toStringAsFixed(1)} km',
+                                  style: AppTypography.bodySmall.copyWith(
+                                    color: AppColors.textSecondary,
+                                  ),
                                 ),
                               ],
                             ),
                           ],
                         ),
                         trailing: isGolden
-                            ? const Icon(Icons.star, color: Colors.amber)
+                            ? Icon(Icons.star, color: AppColors.accentWarning)
                             : null,
                         onTap: () {
                           Get.back();

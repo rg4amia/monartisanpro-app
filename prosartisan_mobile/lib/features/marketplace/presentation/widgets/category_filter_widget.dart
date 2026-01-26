@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:prosartisan_mobile/features/marketplace/domain/entities/mission.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_radius.dart';
 
 class CategoryFilterWidget extends StatelessWidget {
   final TradeCategory? selectedCategory;
@@ -26,12 +30,12 @@ class CategoryFilterWidget extends StatelessWidget {
               isSelected: selectedCategory == null,
               onTap: () => onCategoryChanged(null),
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: AppSpacing.sm),
           ],
 
           ...TradeCategory.values.map(
             (category) => Padding(
-              padding: const EdgeInsets.only(right: 8),
+              padding: EdgeInsets.only(right: AppSpacing.sm),
               child: _buildCategoryChip(
                 label: category.displayName,
                 icon: _getCategoryIcon(category),
@@ -58,18 +62,25 @@ class CategoryFilterWidget extends StatelessWidget {
           Icon(
             icon,
             size: 16,
-            color: isSelected ? Colors.white : Colors.blue[600],
+            color: isSelected ? AppColors.textPrimary : AppColors.accentPrimary,
           ),
-          const SizedBox(width: 4),
+          SizedBox(width: AppSpacing.xs),
           Text(label),
         ],
       ),
       selected: isSelected,
       onSelected: (_) => onTap(),
-      selectedColor: Colors.blue[600],
-      checkmarkColor: Colors.white,
-      labelStyle: TextStyle(
-        color: isSelected ? Colors.white : Colors.blue[600],
+      selectedColor: AppColors.accentPrimary,
+      backgroundColor: AppColors.cardBg,
+      checkmarkColor: AppColors.textPrimary,
+      shape: RoundedRectangleBorder(
+        borderRadius: AppRadius.buttonRadius,
+        side: BorderSide(
+          color: isSelected ? AppColors.accentPrimary : AppColors.overlayMedium,
+        ),
+      ),
+      labelStyle: AppTypography.bodySmall.copyWith(
+        color: isSelected ? AppColors.textPrimary : AppColors.accentPrimary,
         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
       ),
     );

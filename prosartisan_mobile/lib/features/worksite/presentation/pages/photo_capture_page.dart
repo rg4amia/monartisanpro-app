@@ -3,12 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/theme/app_radius.dart';
 import '../../../../shared/widgets/buttons/primary_button.dart';
-import '../../../../shared/widgets/buttons/secondary_button.dart';
 import '../../../../shared/widgets/cards/info_card.dart';
 import '../controllers/worksite_controller.dart';
 
@@ -49,16 +48,14 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.primaryBg,
       appBar: AppBar(
         title: Text(
           'Preuve de Livraison',
-          style: AppTypography.headingMedium.copyWith(
-            color: AppColors.textLight,
-          ),
+          style: AppTypography.h4.copyWith(color: AppColors.textPrimary),
         ),
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.textLight,
+        backgroundColor: AppColors.accentPrimary,
+        foregroundColor: AppColors.textPrimary,
         elevation: 0,
       ),
       body: Padding(
@@ -84,8 +81,8 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
       title: 'Jalon à valider',
       subtitle: widget.jalonDescription,
       icon: Icons.assignment,
-      backgroundColor: AppColors.info.withValues(alpha: 0.1),
-      borderColor: AppColors.info,
+      backgroundColor: AppColors.accentPrimary.withValues(alpha: 0.1),
+      iconColor: AppColors.accentPrimary,
     );
   }
 
@@ -93,9 +90,9 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
     return Container(
       padding: EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-        border: Border.all(color: AppColors.border),
+        color: AppColors.cardBg,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.overlayMedium),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -107,13 +104,13 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
                     ? Icons.location_on
                     : Icons.location_off,
                 color: _currentPosition != null
-                    ? AppColors.success
-                    : AppColors.error,
+                    ? AppColors.accentSuccess
+                    : AppColors.accentDanger,
               ),
               SizedBox(width: AppSpacing.sm),
               Text(
                 'Localisation GPS',
-                style: AppTypography.headingSmall.copyWith(
+                style: AppTypography.sectionTitle.copyWith(
                   color: AppColors.textPrimary,
                 ),
               ),
@@ -139,28 +136,38 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
               'Précision: ${_currentPosition!.accuracy.toStringAsFixed(1)}m',
               style: AppTypography.bodySmall.copyWith(
                 color: _currentPosition!.accuracy <= 10
-                    ? AppColors.success
-                    : AppColors.warning,
+                    ? AppColors.accentSuccess
+                    : AppColors.accentWarning,
               ),
             ),
             if (_currentPosition!.accuracy > 10)
               Text(
                 'Attention: Précision GPS faible (>10m)',
                 style: AppTypography.bodySmall.copyWith(
-                  color: AppColors.warning,
+                  color: AppColors.accentWarning,
                 ),
               ),
           ] else ...[
             Text(
               'Localisation non disponible',
-              style: AppTypography.bodyMedium.copyWith(color: AppColors.error),
+              style: AppTypography.body.copyWith(color: AppColors.accentDanger),
             ),
             SizedBox(height: AppSpacing.sm),
-            SecondaryButton(
-              onPressed: _getCurrentLocation,
-              text: 'Réessayer',
-              icon: Icons.refresh,
-              isCompact: true,
+            Container(
+              width: double.infinity,
+              height: 40,
+              child: OutlinedButton.icon(
+                onPressed: _getCurrentLocation,
+                icon: Icon(Icons.refresh),
+                label: Text('Réessayer'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.accentPrimary,
+                  side: BorderSide(color: AppColors.accentPrimary),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
+                ),
+              ),
             ),
           ],
         ],
@@ -173,15 +180,15 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
       child: Container(
         padding: EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-          border: Border.all(color: AppColors.border),
+          color: AppColors.cardBg,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(color: AppColors.overlayMedium),
         ),
         child: Column(
           children: [
             Text(
               'Photo de preuve',
-              style: AppTypography.headingSmall.copyWith(
+              style: AppTypography.sectionTitle.copyWith(
                 color: AppColors.textPrimary,
               ),
             ),
@@ -195,20 +202,54 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                SecondaryButton(
-                  onPressed: _isCapturing
-                      ? null
-                      : () => _capturePhoto(ImageSource.camera),
-                  text: 'Appareil photo',
-                  icon: _isCapturing ? null : Icons.camera_alt,
-                  isLoading: _isCapturing,
+                Expanded(
+                  child: Container(
+                    height: 48,
+                    margin: EdgeInsets.only(right: AppSpacing.sm),
+                    child: OutlinedButton.icon(
+                      onPressed: _isCapturing
+                          ? null
+                          : () => _capturePhoto(ImageSource.camera),
+                      icon: _isCapturing
+                          ? SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.accentPrimary,
+                              ),
+                            )
+                          : Icon(Icons.camera_alt),
+                      label: Text('Appareil photo'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.accentPrimary,
+                        side: BorderSide(color: AppColors.accentPrimary),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-                SecondaryButton(
-                  onPressed: _isCapturing
-                      ? null
-                      : () => _capturePhoto(ImageSource.gallery),
-                  text: 'Galerie',
-                  icon: Icons.photo_library,
+                Expanded(
+                  child: Container(
+                    height: 48,
+                    margin: EdgeInsets.only(left: AppSpacing.sm),
+                    child: OutlinedButton.icon(
+                      onPressed: _isCapturing
+                          ? null
+                          : () => _capturePhoto(ImageSource.gallery),
+                      icon: Icon(Icons.photo_library),
+                      label: Text('Galerie'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.accentPrimary,
+                        side: BorderSide(color: AppColors.accentPrimary),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -222,11 +263,11 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        border: Border.all(color: AppColors.border),
-        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+        border: Border.all(color: AppColors.overlayMedium),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         child: Image.file(_capturedImage!, fit: BoxFit.contain),
       ),
     );

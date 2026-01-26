@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../shared/widgets/cards/empty_state_card.dart';
+import '../../../../core/theme/app_radius.dart';
 import '../../domain/models/dispute.dart';
 import '../controllers/dispute_controller.dart';
 import '../widgets/message_bubble_widget.dart';
@@ -60,20 +59,27 @@ class _MediationChatPageState extends State<MediationChatPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.primaryBg,
       appBar: AppBar(
-        title: const Text('Médiation'),
-        backgroundColor: Theme.of(context).primaryColor,
-        foregroundColor: Colors.white,
+        title: Text(
+          'Médiation',
+          style: AppTypography.h4.copyWith(color: AppColors.textPrimary),
+        ),
+        backgroundColor: Colors.transparent,
+        foregroundColor: AppColors.textPrimary,
+        elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.info_outline),
+            icon: Icon(Icons.info_outline, color: AppColors.textPrimary),
             onPressed: _showMediationInfo,
           ),
         ],
       ),
       body: Obx(() {
         if (_controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
+          return Center(
+            child: CircularProgressIndicator(color: AppColors.accentPrimary),
+          );
         }
 
         final dispute = _controller.currentDispute.value;
@@ -97,21 +103,24 @@ class _MediationChatPageState extends State<MediationChatPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.forum_outlined, size: 64, color: Colors.grey[400]),
-          const SizedBox(height: 16),
+          Icon(Icons.forum_outlined, size: 64, color: AppColors.textMuted),
+          SizedBox(height: AppSpacing.base),
           Text(
             'Aucune médiation active',
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(color: Colors.grey[600]),
+            style: AppTypography.sectionTitle.copyWith(
+              color: AppColors.textSecondary,
+            ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'La médiation n\'a pas encore été initiée pour ce litige.',
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
-            textAlign: TextAlign.center,
+          SizedBox(height: AppSpacing.sm),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+            child: Text(
+              'La médiation n\'a pas encore été initiée pour ce litige.',
+              style: AppTypography.body.copyWith(
+                color: AppColors.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
           ),
         ],
       ),
@@ -120,34 +129,38 @@ class _MediationChatPageState extends State<MediationChatPage> {
 
   Widget _buildMediationHeader(Mediation mediation) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(AppSpacing.base),
       decoration: BoxDecoration(
         color: mediation.isActive
-            ? AppColors.success.withValues(alpha: 0.1)
+            ? AppColors.accentSuccess.withValues(alpha: 0.1)
             : AppColors.textSecondary.withValues(alpha: 0.1),
-        border: Border(bottom: BorderSide(color: Colors.grey[300]!)),
+        border: Border(bottom: BorderSide(color: AppColors.overlayMedium)),
       ),
       child: Row(
         children: [
           Icon(
             mediation.isActive ? Icons.circle : Icons.circle_outlined,
-            color: mediation.isActive ? Colors.green : Colors.grey,
+            color: mediation.isActive
+                ? AppColors.accentSuccess
+                : AppColors.textSecondary,
             size: 12,
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: AppSpacing.sm),
           Text(
             mediation.isActive ? 'Médiation active' : 'Médiation terminée',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            style: AppTypography.body.copyWith(
               fontWeight: FontWeight.bold,
-              color: mediation.isActive ? Colors.green[700] : Colors.grey[700],
+              color: mediation.isActive
+                  ? AppColors.accentSuccess
+                  : AppColors.textSecondary,
             ),
           ),
           const Spacer(),
           Text(
             '${mediation.communicationsCount} messages',
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
+            style: AppTypography.bodySmall.copyWith(
+              color: AppColors.textSecondary,
+            ),
           ),
         ],
       ),
@@ -166,22 +179,25 @@ class _MediationChatPageState extends State<MediationChatPage> {
               Icon(
                 Icons.chat_bubble_outline,
                 size: 48,
-                color: Colors.grey[400],
+                color: AppColors.textMuted,
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: AppSpacing.base),
               Text(
                 'Aucun message',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(color: Colors.grey[600]),
+                style: AppTypography.sectionTitle.copyWith(
+                  color: AppColors.textSecondary,
+                ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Commencez la conversation avec le médiateur',
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
-                textAlign: TextAlign.center,
+              SizedBox(height: AppSpacing.sm),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+                child: Text(
+                  'Commencez la conversation avec le médiateur',
+                  style: AppTypography.body.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
               ),
             ],
           ),
@@ -190,7 +206,7 @@ class _MediationChatPageState extends State<MediationChatPage> {
 
       return ListView.builder(
         controller: _scrollController,
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(AppSpacing.base),
         itemCount: messages.length,
         itemBuilder: (context, index) {
           final message = messages[index];
@@ -211,19 +227,21 @@ class _MediationChatPageState extends State<MediationChatPage> {
 
       if (mediation == null || !mediation.isActive) {
         return Container(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(AppSpacing.base),
           decoration: BoxDecoration(
-            color: Colors.grey[100],
-            border: Border(top: BorderSide(color: Colors.grey[300]!)),
+            color: AppColors.cardBg,
+            border: Border(top: BorderSide(color: AppColors.overlayMedium)),
           ),
           child: Row(
             children: [
-              Icon(Icons.info_outline, color: Colors.grey[600]),
-              const SizedBox(width: 8),
+              Icon(Icons.info_outline, color: AppColors.textSecondary),
+              SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
                   'La médiation n\'est plus active',
-                  style: TextStyle(color: Colors.grey[600]),
+                  style: AppTypography.body.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ),
             ],
@@ -232,22 +250,44 @@ class _MediationChatPageState extends State<MediationChatPage> {
       }
 
       return Container(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(AppSpacing.base),
         decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border(top: BorderSide(color: Colors.grey[300]!)),
+          color: AppColors.cardBg,
+          border: Border(top: BorderSide(color: AppColors.overlayMedium)),
         ),
         child: Row(
           children: [
             Expanded(
               child: TextField(
                 controller: _messageController,
-                decoration: const InputDecoration(
+                style: AppTypography.body.copyWith(
+                  color: AppColors.textPrimary,
+                ),
+                decoration: InputDecoration(
                   hintText: 'Tapez votre message...',
-                  border: OutlineInputBorder(),
+                  hintStyle: AppTypography.body.copyWith(
+                    color: AppColors.textMuted,
+                  ),
+                  filled: true,
+                  fillColor: AppColors.elevatedBg,
+                  border: OutlineInputBorder(
+                    borderRadius: AppRadius.inputRadius,
+                    borderSide: BorderSide(color: AppColors.overlayMedium),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: AppRadius.inputRadius,
+                    borderSide: BorderSide(color: AppColors.overlayMedium),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: AppRadius.inputRadius,
+                    borderSide: BorderSide(
+                      color: AppColors.accentPrimary,
+                      width: 2,
+                    ),
+                  ),
                   contentPadding: EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
+                    horizontal: AppSpacing.base,
+                    vertical: AppSpacing.md,
                   ),
                 ),
                 maxLines: null,
@@ -255,7 +295,7 @@ class _MediationChatPageState extends State<MediationChatPage> {
                 onChanged: (value) => _controller.setMessageText(value),
               ),
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: AppSpacing.sm),
             Obx(
               () => IconButton(
                 onPressed:
@@ -264,15 +304,23 @@ class _MediationChatPageState extends State<MediationChatPage> {
                     ? null
                     : _sendMessage,
                 icon: _controller.isSubmitting.value
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 20,
                         height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
                       )
-                    : const Icon(Icons.send),
+                    : Icon(Icons.send, color: Colors.white),
                 style: IconButton.styleFrom(
-                  backgroundColor: Theme.of(context).primaryColor,
+                  backgroundColor: AppColors.accentPrimary,
                   foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: AppRadius.circular(
+                      AppSpacing.minTouchTarget / 2,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -289,7 +337,12 @@ class _MediationChatPageState extends State<MediationChatPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Informations sur la médiation'),
+        backgroundColor: AppColors.cardBg,
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.largeRadius),
+        title: Text(
+          'Informations sur la médiation',
+          style: AppTypography.h4.copyWith(color: AppColors.textPrimary),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -304,14 +357,24 @@ class _MediationChatPageState extends State<MediationChatPage> {
                 _buildInfoRow('Terminée le', _formatDate(mediation.endedAt!)),
               _buildInfoRow('Messages', '${mediation.communicationsCount}'),
             ] else ...[
-              const Text('Aucune médiation active pour ce litige.'),
+              Text(
+                'Aucune médiation active pour ce litige.',
+                style: AppTypography.body.copyWith(
+                  color: AppColors.textPrimary,
+                ),
+              ),
             ],
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Fermer'),
+            child: Text(
+              'Fermer',
+              style: AppTypography.button.copyWith(
+                color: AppColors.accentPrimary,
+              ),
+            ),
           ),
         ],
       ),
@@ -320,7 +383,7 @@ class _MediationChatPageState extends State<MediationChatPage> {
 
   Widget _buildInfoRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: EdgeInsets.symmetric(vertical: AppSpacing.xs),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -328,10 +391,18 @@ class _MediationChatPageState extends State<MediationChatPage> {
             width: 100,
             child: Text(
               '$label:',
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: AppTypography.body.copyWith(
+                fontWeight: FontWeight.bold,
+                color: AppColors.textSecondary,
+              ),
             ),
           ),
-          Expanded(child: Text(value)),
+          Expanded(
+            child: Text(
+              value,
+              style: AppTypography.body.copyWith(color: AppColors.textPrimary),
+            ),
+          ),
         ],
       ),
     );

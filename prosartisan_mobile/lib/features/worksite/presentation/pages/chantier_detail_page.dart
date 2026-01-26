@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/theme/app_radius.dart';
 import '../../../../shared/widgets/cards/info_card.dart';
 import '../../../../shared/widgets/cards/empty_state_card.dart';
 import '../../../worksite/domain/models/chantier.dart';
@@ -31,20 +31,18 @@ class ChantierDetailPage extends StatelessWidget {
     });
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.primaryBg,
       appBar: AppBar(
         title: Text(
           'Détails du Chantier',
-          style: AppTypography.headingMedium.copyWith(
-            color: AppColors.textLight,
-          ),
+          style: AppTypography.h4.copyWith(color: AppColors.textPrimary),
         ),
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.textLight,
+        backgroundColor: Colors.transparent,
+        foregroundColor: AppColors.textPrimary,
         elevation: 0,
         actions: [
           IconButton(
-            icon: Icon(Icons.refresh, color: AppColors.textLight),
+            icon: Icon(Icons.refresh, color: AppColors.textPrimary),
             onPressed: () => controller.refreshCurrentChantier(),
           ),
         ],
@@ -52,7 +50,7 @@ class ChantierDetailPage extends StatelessWidget {
       body: Obx(() {
         if (controller.isLoading && controller.currentChantier == null) {
           return Center(
-            child: CircularProgressIndicator(color: AppColors.primary),
+            child: CircularProgressIndicator(color: AppColors.accentPrimary),
           );
         }
 
@@ -67,7 +65,7 @@ class ChantierDetailPage extends StatelessWidget {
 
         return RefreshIndicator(
           onRefresh: () => controller.refreshCurrentChantier(),
-          color: AppColors.primary,
+          color: AppColors.accentPrimary,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: EdgeInsets.all(AppSpacing.md),
@@ -90,129 +88,143 @@ class ChantierDetailPage extends StatelessWidget {
   }
 
   Widget _buildChantierHeader(BuildContext context, Chantier chantier) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  _getStatusIcon(chantier.status),
-                  color: _getStatusColor(chantier.status),
-                  size: 24,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    chantier.statusLabel,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: _getStatusColor(chantier.status),
-                      fontWeight: FontWeight.bold,
-                    ),
+    return Container(
+      padding: EdgeInsets.all(AppSpacing.base),
+      decoration: BoxDecoration(
+        color: AppColors.cardBg,
+        borderRadius: AppRadius.cardRadius,
+        border: Border.all(color: AppColors.overlayMedium),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                _getStatusIcon(chantier.status),
+                color: _getStatusColor(chantier.status),
+                size: 24,
+              ),
+              SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  chantier.statusLabel,
+                  style: AppTypography.sectionTitle.copyWith(
+                    color: _getStatusColor(chantier.status),
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            _buildInfoRow(
-              context,
-              'Démarré le',
-              _formatDate(chantier.startedAt),
-              Icons.calendar_today,
-            ),
-            if (chantier.completedAt != null) ...[
-              const SizedBox(height: 8),
-              _buildInfoRow(
-                context,
-                'Terminé le',
-                _formatDate(chantier.completedAt!),
-                Icons.check_circle,
               ),
             ],
-            const SizedBox(height: 8),
+          ),
+          SizedBox(height: AppSpacing.md),
+          _buildInfoRow(
+            context,
+            'Démarré le',
+            _formatDate(chantier.startedAt),
+            Icons.calendar_today,
+          ),
+          if (chantier.completedAt != null) ...[
+            SizedBox(height: AppSpacing.sm),
             _buildInfoRow(
               context,
-              'Jalons',
-              '${chantier.completedMilestonesCount}/${chantier.milestonesCount}',
-              Icons.flag,
+              'Terminé le',
+              _formatDate(chantier.completedAt!),
+              Icons.check_circle,
             ),
           ],
-        ),
+          SizedBox(height: AppSpacing.sm),
+          _buildInfoRow(
+            context,
+            'Jalons',
+            '${chantier.completedMilestonesCount}/${chantier.milestonesCount}',
+            Icons.flag,
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildProgressSection(BuildContext context, Chantier chantier) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+    return Container(
+      padding: EdgeInsets.all(AppSpacing.base),
+      decoration: BoxDecoration(
+        color: AppColors.cardBg,
+        borderRadius: AppRadius.cardRadius,
+        border: Border.all(color: AppColors.overlayMedium),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Progression',
+            style: AppTypography.sectionTitle.copyWith(
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          SizedBox(height: AppSpacing.base),
+          WorksiteProgressIndicator(
+            progress: chantier.progressPercentage / 100,
+            completedMilestones: chantier.completedMilestonesCount,
+            totalMilestones: chantier.milestonesCount,
+          ),
+          SizedBox(height: AppSpacing.base),
+          if (chantier.nextMilestone != null) ...[
             Text(
-              'Progression',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            WorksiteProgressIndicator(
-              progress: chantier.progressPercentage / 100,
-              completedMilestones: chantier.completedMilestonesCount,
-              totalMilestones: chantier.milestonesCount,
-            ),
-            const SizedBox(height: 16),
-            if (chantier.nextMilestone != null) ...[
-              Text(
-                'Prochain jalon',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+              'Prochain jalon',
+              style: AppTypography.body.copyWith(
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
               ),
-              const SizedBox(height: 8),
-              Text(
-                chantier.nextMilestone!.description,
-                style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            SizedBox(height: AppSpacing.sm),
+            Text(
+              chantier.nextMilestone!.description,
+              style: AppTypography.body.copyWith(
+                color: AppColors.textSecondary,
               ),
-            ],
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
 
   Widget _buildFinancialSection(BuildContext context, Chantier chantier) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Informations financières',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+    return Container(
+      padding: EdgeInsets.all(AppSpacing.base),
+      decoration: BoxDecoration(
+        color: AppColors.cardBg,
+        borderRadius: AppRadius.cardRadius,
+        border: Border.all(color: AppColors.overlayMedium),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Informations financières',
+            style: AppTypography.sectionTitle.copyWith(
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
             ),
-            const SizedBox(height: 16),
-            _buildFinancialRow(
-              context,
-              'Montant total',
-              chantier.totalLaborAmount.formatted,
-              Icons.account_balance_wallet,
-            ),
-            const SizedBox(height: 8),
-            _buildFinancialRow(
-              context,
-              'Montant libéré',
-              chantier.completedLaborAmount.formatted,
-              Icons.payments,
-              color: Colors.green,
-            ),
-          ],
-        ),
+          ),
+          SizedBox(height: AppSpacing.base),
+          _buildFinancialRow(
+            context,
+            'Montant total',
+            chantier.totalLaborAmount.formatted,
+            Icons.account_balance_wallet,
+          ),
+          SizedBox(height: AppSpacing.sm),
+          _buildFinancialRow(
+            context,
+            'Montant libéré',
+            chantier.completedLaborAmount.formatted,
+            Icons.payments,
+            color: AppColors.accentSuccess,
+          ),
+        ],
       ),
     );
   }
@@ -223,22 +235,33 @@ class ChantierDetailPage extends StatelessWidget {
       children: [
         Text(
           'Jalons (${chantier.milestonesCount})',
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          style: AppTypography.sectionTitle.copyWith(
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: AppSpacing.base),
         if (chantier.milestones.isEmpty)
-          const Card(
-            child: Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Center(child: Text('Aucun jalon défini')),
+          Container(
+            padding: EdgeInsets.all(AppSpacing.base),
+            decoration: BoxDecoration(
+              color: AppColors.cardBg,
+              borderRadius: AppRadius.cardRadius,
+              border: Border.all(color: AppColors.overlayMedium),
+            ),
+            child: Center(
+              child: Text(
+                'Aucun jalon défini',
+                style: AppTypography.body.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
             ),
           )
         else
           ...chantier.milestones.map(
             (jalon) => Padding(
-              padding: const EdgeInsets.only(bottom: 12.0),
+              padding: EdgeInsets.only(bottom: AppSpacing.md),
               child: MilestoneCard(
                 jalon: jalon,
                 onTap: () => _navigateToMilestone(jalon),
@@ -257,20 +280,19 @@ class ChantierDetailPage extends StatelessWidget {
   ) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: Colors.grey[600]),
-        const SizedBox(width: 8),
+        Icon(icon, size: 16, color: AppColors.textSecondary),
+        SizedBox(width: AppSpacing.sm),
         Text(
           '$label: ',
-          style: Theme.of(
-            context,
-          ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+          style: AppTypography.body.copyWith(color: AppColors.textSecondary),
         ),
         Expanded(
           child: Text(
             value,
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
+            style: AppTypography.body.copyWith(
+              fontWeight: FontWeight.w500,
+              color: AppColors.textPrimary,
+            ),
           ),
         ),
       ],
@@ -286,20 +308,18 @@ class ChantierDetailPage extends StatelessWidget {
   }) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: color ?? Colors.grey[600]),
-        const SizedBox(width: 8),
+        Icon(icon, size: 16, color: color ?? AppColors.textSecondary),
+        SizedBox(width: AppSpacing.sm),
         Text(
           '$label: ',
-          style: Theme.of(
-            context,
-          ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+          style: AppTypography.body.copyWith(color: AppColors.textSecondary),
         ),
         Expanded(
           child: Text(
             value,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            style: AppTypography.body.copyWith(
               fontWeight: FontWeight.w600,
-              color: color,
+              color: color ?? AppColors.textPrimary,
             ),
           ),
         ),
@@ -323,13 +343,13 @@ class ChantierDetailPage extends StatelessWidget {
   Color _getStatusColor(String status) {
     switch (status) {
       case 'IN_PROGRESS':
-        return Colors.orange;
+        return AppColors.accentWarning;
       case 'COMPLETED':
-        return Colors.green;
+        return AppColors.accentSuccess;
       case 'DISPUTED':
-        return Colors.red;
+        return AppColors.accentDanger;
       default:
-        return Colors.grey;
+        return AppColors.textSecondary;
     }
   }
 

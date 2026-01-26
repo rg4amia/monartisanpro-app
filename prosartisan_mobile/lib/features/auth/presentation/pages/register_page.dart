@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/constants/app_strings.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/theme/app_radius.dart';
 import '../../../../shared/widgets/buttons/primary_button.dart';
 import '../../../../shared/widgets/buttons/secondary_button.dart';
 import '../controllers/auth_controller.dart';
@@ -95,10 +95,19 @@ class _RegisterPageState extends State<RegisterPage> {
     final authController = Get.find<AuthController>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text(AppStrings.register)),
+      backgroundColor: AppColors.primaryBg,
+      appBar: AppBar(
+        title: Text(
+          AppStrings.register,
+          style: AppTypography.h4.copyWith(color: AppColors.textPrimary),
+        ),
+        backgroundColor: Colors.transparent,
+        foregroundColor: AppColors.textPrimary,
+        elevation: 0,
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
+          padding: EdgeInsets.all(AppSpacing.screenPadding),
           child: Form(
             key: _formKey,
             child: Column(
@@ -107,10 +116,12 @@ class _RegisterPageState extends State<RegisterPage> {
                 // User type selection
                 Text(
                   AppStrings.selectUserType,
-                  style: Theme.of(context).textTheme.titleMedium,
+                  style: AppTypography.sectionTitle.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
                 ),
 
-                const SizedBox(height: 16),
+                SizedBox(height: AppSpacing.base),
 
                 _buildUserTypeCard(
                   'CLIENT',
@@ -119,7 +130,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   Icons.person,
                 ),
 
-                const SizedBox(height: 12),
+                SizedBox(height: AppSpacing.md),
 
                 _buildUserTypeCard(
                   'ARTISAN',
@@ -128,7 +139,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   Icons.construction,
                 ),
 
-                const SizedBox(height: 12),
+                SizedBox(height: AppSpacing.md),
 
                 _buildUserTypeCard(
                   'FOURNISSEUR',
@@ -137,17 +148,40 @@ class _RegisterPageState extends State<RegisterPage> {
                   Icons.store,
                 ),
 
-                const SizedBox(height: 24),
+                SizedBox(height: AppSpacing.xl),
 
                 // Email field
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
+                  style: AppTypography.body.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
                   decoration: InputDecoration(
                     labelText: AppStrings.email,
-                    prefixIcon: const Icon(Icons.email),
+                    labelStyle: AppTypography.body.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                    prefixIcon: Icon(
+                      Icons.email,
+                      color: AppColors.textSecondary,
+                    ),
+                    filled: true,
+                    fillColor: AppColors.cardBg,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                      borderSide: BorderSide(color: AppColors.overlayMedium),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                      borderSide: BorderSide(color: AppColors.overlayMedium),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                      borderSide: BorderSide(
+                        color: AppColors.accentPrimary,
+                        width: 2,
+                      ),
                     ),
                   ),
                   validator: (value) {
@@ -161,17 +195,40 @@ class _RegisterPageState extends State<RegisterPage> {
                   },
                 ),
 
-                const SizedBox(height: 16),
+                SizedBox(height: AppSpacing.base),
 
                 // Phone number field
                 TextFormField(
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
+                  style: AppTypography.body.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
                   decoration: InputDecoration(
                     labelText: AppStrings.phoneNumber,
-                    prefixIcon: const Icon(Icons.phone),
+                    labelStyle: AppTypography.body.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                    prefixIcon: Icon(
+                      Icons.phone,
+                      color: AppColors.textSecondary,
+                    ),
+                    filled: true,
+                    fillColor: AppColors.cardBg,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                      borderSide: BorderSide(color: AppColors.overlayMedium),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                      borderSide: BorderSide(color: AppColors.overlayMedium),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                      borderSide: BorderSide(
+                        color: AppColors.accentPrimary,
+                        width: 2,
+                      ),
                     ),
                   ),
                   validator: (value) {
@@ -183,7 +240,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   },
                 ),
 
-                const SizedBox(height: 16),
+                SizedBox(height: AppSpacing.base),
 
                 // Trade category for artisans
                 if (_selectedUserType == 'ARTISAN') ...[

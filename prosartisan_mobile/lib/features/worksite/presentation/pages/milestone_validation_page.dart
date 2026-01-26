@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../shared/widgets/buttons/primary_button.dart';
-import '../../../../shared/widgets/buttons/secondary_button.dart';
-import '../../../../shared/widgets/cards/info_card.dart';
+import '../../../../core/theme/app_radius.dart';
 import '../../../../shared/widgets/cards/empty_state_card.dart';
 import '../../../worksite/domain/models/jalon.dart';
 import '../../../worksite/presentation/controllers/worksite_controller.dart';
@@ -46,16 +43,14 @@ class _MilestoneValidationPageState extends State<MilestoneValidationPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.primaryBg,
       appBar: AppBar(
         title: Text(
           'Validation du Jalon',
-          style: AppTypography.headingMedium.copyWith(
-            color: AppColors.textLight,
-          ),
+          style: AppTypography.h4.copyWith(color: AppColors.textPrimary),
         ),
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.textLight,
+        backgroundColor: AppColors.accentPrimary,
+        foregroundColor: AppColors.textPrimary,
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -84,9 +79,9 @@ class _MilestoneValidationPageState extends State<MilestoneValidationPage> {
     return Container(
       padding: EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-        border: Border.all(color: AppColors.border),
+        color: AppColors.cardBg,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.overlayMedium),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -97,14 +92,14 @@ class _MilestoneValidationPageState extends State<MilestoneValidationPage> {
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: AppColors.primary,
+                  color: AppColors.accentPrimary,
                   shape: BoxShape.circle,
                 ),
                 child: Center(
                   child: Text(
                     '${widget.jalon.sequenceNumber}',
-                    style: AppTypography.bodyMedium.copyWith(
-                      color: AppColors.textLight,
+                    style: AppTypography.body.copyWith(
+                      color: AppColors.textPrimary,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -117,7 +112,7 @@ class _MilestoneValidationPageState extends State<MilestoneValidationPage> {
                   children: [
                     Text(
                       'Jalon ${widget.jalon.sequenceNumber}',
-                      style: AppTypography.headingSmall.copyWith(
+                      style: AppTypography.sectionTitle.copyWith(
                         color: AppColors.textPrimary,
                       ),
                     ),
@@ -136,9 +131,7 @@ class _MilestoneValidationPageState extends State<MilestoneValidationPage> {
           SizedBox(height: AppSpacing.md),
           Text(
             widget.jalon.description,
-            style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.textPrimary,
-            ),
+            style: AppTypography.body.copyWith(color: AppColors.textPrimary),
           ),
           SizedBox(height: AppSpacing.sm),
           Row(
@@ -147,7 +140,7 @@ class _MilestoneValidationPageState extends State<MilestoneValidationPage> {
               SizedBox(width: AppSpacing.sm),
               Text(
                 'Montant: ${widget.jalon.laborAmount.formatted}',
-                style: AppTypography.bodyMedium.copyWith(
+                style: AppTypography.body.copyWith(
                   color: AppColors.textPrimary,
                   fontWeight: FontWeight.w500,
                 ),
@@ -173,16 +166,16 @@ class _MilestoneValidationPageState extends State<MilestoneValidationPage> {
     return Container(
       padding: EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-        border: Border.all(color: AppColors.border),
+        color: AppColors.cardBg,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.overlayMedium),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Preuve de livraison',
-            style: AppTypography.headingSmall.copyWith(
+            style: AppTypography.sectionTitle.copyWith(
               color: AppColors.textPrimary,
             ),
           ),
@@ -190,7 +183,7 @@ class _MilestoneValidationPageState extends State<MilestoneValidationPage> {
 
           // Photo
           ClipRRect(
-            borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+            borderRadius: BorderRadius.circular(AppRadius.md),
             child: CachedNetworkImage(
               imageUrl: proof.photoUrl,
               width: double.infinity,
@@ -198,15 +191,19 @@ class _MilestoneValidationPageState extends State<MilestoneValidationPage> {
               fit: BoxFit.cover,
               placeholder: (context, url) => Container(
                 height: 200,
-                color: AppColors.border,
+                color: AppColors.overlayMedium,
                 child: Center(
-                  child: CircularProgressIndicator(color: AppColors.primary),
+                  child: CircularProgressIndicator(
+                    color: AppColors.accentPrimary,
+                  ),
                 ),
               ),
               errorWidget: (context, url, error) => Container(
                 height: 200,
-                color: AppColors.border,
-                child: Center(child: Icon(Icons.error, color: AppColors.error)),
+                color: AppColors.overlayMedium,
+                child: Center(
+                  child: Icon(Icons.error, color: AppColors.accentDanger),
+                ),
               ),
             ),
           ),
@@ -240,8 +237,8 @@ class _MilestoneValidationPageState extends State<MilestoneValidationPage> {
                 proof.integrityVerified ? Icons.verified : Icons.warning,
                 size: 16,
                 color: proof.integrityVerified
-                    ? AppColors.success
-                    : AppColors.warning,
+                    ? AppColors.accentSuccess
+                    : AppColors.accentWarning,
               ),
               SizedBox(width: AppSpacing.sm),
               Text(
@@ -250,8 +247,8 @@ class _MilestoneValidationPageState extends State<MilestoneValidationPage> {
                     : 'Intégrité non vérifiée',
                 style: AppTypography.bodySmall.copyWith(
                   color: proof.integrityVerified
-                      ? AppColors.success
-                      : AppColors.warning,
+                      ? AppColors.accentSuccess
+                      : AppColors.accentWarning,
                 ),
               ),
             ],
@@ -263,46 +260,49 @@ class _MilestoneValidationPageState extends State<MilestoneValidationPage> {
 
   Widget _buildLocationInfo(BuildContext context, ProofOfDelivery proof) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey[200]!),
+        color: AppColors.secondaryBg,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(color: AppColors.overlayMedium),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.location_on, size: 16, color: Colors.grey[600]),
-              const SizedBox(width: 8),
+              Icon(Icons.location_on, size: 16, color: AppColors.textSecondary),
+              SizedBox(width: AppSpacing.sm),
               Text(
                 'Localisation GPS',
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w500),
+                style: AppTypography.bodySmall.copyWith(
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textPrimary,
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: AppSpacing.sm),
           Text(
             'Lat: ${proof.location.latitude.toStringAsFixed(6)}',
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(fontFamily: 'monospace'),
+            style: AppTypography.bodySmall.copyWith(
+              fontFamily: 'monospace',
+              color: AppColors.textSecondary,
+            ),
           ),
           Text(
             'Lng: ${proof.location.longitude.toStringAsFixed(6)}',
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(fontFamily: 'monospace'),
+            style: AppTypography.bodySmall.copyWith(
+              fontFamily: 'monospace',
+              color: AppColors.textSecondary,
+            ),
           ),
           Text(
             'Précision: ${proof.location.accuracy.toStringAsFixed(1)}m',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            style: AppTypography.bodySmall.copyWith(
               color: proof.location.accuracy <= 10
-                  ? Colors.green
-                  : Colors.orange,
+                  ? AppColors.accentSuccess
+                  : AppColors.accentWarning,
             ),
           ),
         ],
@@ -319,123 +319,177 @@ class _MilestoneValidationPageState extends State<MilestoneValidationPage> {
     final isUrgent = hoursRemaining <= 6;
     final isPastDeadline = widget.jalon.isAutoValidationDue;
 
-    return Card(
-      color: isPastDeadline
-          ? Colors.red[50]
-          : (isUrgent ? Colors.orange[50] : null),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  isPastDeadline ? Icons.warning : Icons.timer,
+    return Container(
+      padding: EdgeInsets.all(AppSpacing.base),
+      decoration: BoxDecoration(
+        color: isPastDeadline
+            ? AppColors.accentDanger.withValues(alpha: 0.1)
+            : (isUrgent
+                  ? AppColors.accentWarning.withValues(alpha: 0.1)
+                  : AppColors.cardBg),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.overlayMedium),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                isPastDeadline ? Icons.warning : Icons.timer,
+                color: isPastDeadline
+                    ? AppColors.accentDanger
+                    : (isUrgent
+                          ? AppColors.accentWarning
+                          : AppColors.accentPrimary),
+              ),
+              SizedBox(width: AppSpacing.sm),
+              Text(
+                'Validation automatique',
+                style: AppTypography.sectionTitle.copyWith(
+                  fontWeight: FontWeight.bold,
                   color: isPastDeadline
-                      ? Colors.red
-                      : (isUrgent ? Colors.orange : Colors.blue),
+                      ? AppColors.accentDanger
+                      : AppColors.textPrimary,
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  'Validation automatique',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: isPastDeadline ? Colors.red : null,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            if (isPastDeadline) ...[
-              const Text(
-                'Le délai de validation est dépassé. Ce jalon sera validé automatiquement.',
-                style: TextStyle(color: Colors.red),
-              ),
-            ] else ...[
-              Text(
-                'Temps restant: ${hoursRemaining.toStringAsFixed(1)} heures',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: isUrgent ? Colors.orange : null,
-                  fontWeight: isUrgent ? FontWeight.w500 : null,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Échéance: ${_formatDateTime(widget.jalon.autoValidationDeadline!)}',
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
               ),
             ],
+          ),
+          SizedBox(height: AppSpacing.sm),
+          if (isPastDeadline) ...[
+            Text(
+              'Le délai de validation est dépassé. Ce jalon sera validé automatiquement.',
+              style: AppTypography.body.copyWith(color: AppColors.accentDanger),
+            ),
+          ] else ...[
+            Text(
+              'Temps restant: ${hoursRemaining.toStringAsFixed(1)} heures',
+              style: AppTypography.body.copyWith(
+                color: isUrgent
+                    ? AppColors.accentWarning
+                    : AppColors.textPrimary,
+                fontWeight: isUrgent ? FontWeight.w500 : null,
+              ),
+            ),
+            SizedBox(height: AppSpacing.xs),
+            Text(
+              'Échéance: ${_formatDateTime(widget.jalon.autoValidationDeadline!)}',
+              style: AppTypography.bodySmall.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
 
   Widget _buildContestForm(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Motif de contestation',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+    return Container(
+      padding: EdgeInsets.all(AppSpacing.base),
+      decoration: BoxDecoration(
+        color: AppColors.cardBg,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.overlayMedium),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Motif de contestation',
+            style: AppTypography.sectionTitle.copyWith(
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _contestReasonController,
-              maxLines: 4,
-              decoration: const InputDecoration(
-                hintText: 'Expliquez pourquoi vous contestez ce jalon...',
-                border: OutlineInputBorder(),
+          ),
+          SizedBox(height: AppSpacing.base),
+          TextField(
+            controller: _contestReasonController,
+            maxLines: 4,
+            style: AppTypography.body.copyWith(color: AppColors.textPrimary),
+            decoration: InputDecoration(
+              hintText: 'Expliquez pourquoi vous contestez ce jalon...',
+              hintStyle: AppTypography.body.copyWith(
+                color: AppColors.textMuted,
+              ),
+              filled: true,
+              fillColor: AppColors.secondaryBg,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                borderSide: BorderSide(color: AppColors.overlayMedium),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                borderSide: BorderSide(color: AppColors.overlayMedium),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                borderSide: BorderSide(
+                  color: AppColors.accentPrimary,
+                  width: 2,
+                ),
               ),
             ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () {
-                      setState(() {
-                        _showContestForm = false;
-                        _contestReasonController.clear();
-                      });
-                    },
-                    child: const Text('Annuler'),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: _isContesting ? null : _contestJalon,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
+          ),
+          SizedBox(height: AppSpacing.base),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () {
+                    setState(() {
+                      _showContestForm = false;
+                      _contestReasonController.clear();
+                    });
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.textSecondary,
+                    side: BorderSide(color: AppColors.overlayMedium),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
-                    child: _isContesting
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
-                              ),
-                            ),
-                          )
-                        : const Text('Contester'),
+                  ),
+                  child: Text(
+                    'Annuler',
+                    style: AppTypography.button.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ),
-              ],
-            ),
-          ],
-        ),
+              ),
+              SizedBox(width: AppSpacing.base),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: _isContesting ? null : _contestJalon,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.accentDanger,
+                    foregroundColor: AppColors.textPrimary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
+                  ),
+                  child: _isContesting
+                      ? SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              AppColors.textPrimary,
+                            ),
+                          ),
+                        )
+                      : Text(
+                          'Contester',
+                          style: AppTypography.button.copyWith(
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -451,14 +505,37 @@ class _MilestoneValidationPageState extends State<MilestoneValidationPage> {
         if (!_showContestForm) ...[
           TextField(
             controller: _commentController,
-            decoration: const InputDecoration(
+            style: AppTypography.body.copyWith(color: AppColors.textPrimary),
+            decoration: InputDecoration(
               labelText: 'Commentaire (optionnel)',
+              labelStyle: AppTypography.body.copyWith(
+                color: AppColors.textSecondary,
+              ),
               hintText: 'Ajoutez un commentaire sur ce jalon...',
-              border: OutlineInputBorder(),
+              hintStyle: AppTypography.body.copyWith(
+                color: AppColors.textMuted,
+              ),
+              filled: true,
+              fillColor: AppColors.cardBg,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                borderSide: BorderSide(color: AppColors.overlayMedium),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                borderSide: BorderSide(color: AppColors.overlayMedium),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                borderSide: BorderSide(
+                  color: AppColors.accentPrimary,
+                  width: 2,
+                ),
+              ),
             ),
             maxLines: 2,
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: AppSpacing.base),
         ],
 
         // Action buttons
@@ -474,18 +551,23 @@ class _MilestoneValidationPageState extends State<MilestoneValidationPage> {
                             _showContestForm = true;
                           });
                         },
-                  icon: const Icon(Icons.close, color: Colors.red),
-                  label: const Text(
+                  icon: Icon(Icons.close, color: AppColors.accentDanger),
+                  label: Text(
                     'Contester',
-                    style: TextStyle(color: Colors.red),
+                    style: AppTypography.button.copyWith(
+                      color: AppColors.accentDanger,
+                    ),
                   ),
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Colors.red),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    side: BorderSide(color: AppColors.accentDanger),
+                    padding: EdgeInsets.symmetric(vertical: AppSpacing.base),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(width: 16),
+              SizedBox(width: AppSpacing.base),
             ],
             Expanded(
               child: ElevatedButton.icon(
@@ -493,22 +575,30 @@ class _MilestoneValidationPageState extends State<MilestoneValidationPage> {
                     ? null
                     : _validateJalon,
                 icon: _isValidating
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 16,
                         height: 16,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
                           valueColor: AlwaysStoppedAnimation<Color>(
-                            Colors.white,
+                            AppColors.textPrimary,
                           ),
                         ),
                       )
-                    : const Icon(Icons.check),
-                label: Text(_isValidating ? 'Validation...' : 'Valider'),
+                    : Icon(Icons.check),
+                label: Text(
+                  _isValidating ? 'Validation...' : 'Valider',
+                  style: AppTypography.button.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
+                ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: AppColors.accentSuccess,
+                  foregroundColor: AppColors.textPrimary,
+                  padding: EdgeInsets.symmetric(vertical: AppSpacing.base),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
                 ),
               ),
             ),
@@ -572,15 +662,15 @@ class _MilestoneValidationPageState extends State<MilestoneValidationPage> {
   Color _getStatusColor(String status) {
     switch (status) {
       case 'PENDING':
-        return Colors.grey;
+        return AppColors.textSecondary;
       case 'SUBMITTED':
-        return Colors.orange;
+        return AppColors.accentWarning;
       case 'VALIDATED':
-        return Colors.green;
+        return AppColors.accentSuccess;
       case 'CONTESTED':
-        return Colors.red;
+        return AppColors.accentDanger;
       default:
-        return Colors.grey;
+        return AppColors.textSecondary;
     }
   }
 

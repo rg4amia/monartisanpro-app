@@ -2,13 +2,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../shared/widgets/buttons/primary_button.dart';
-import '../../../../shared/widgets/buttons/secondary_button.dart';
-import '../../../../shared/widgets/cards/info_card.dart';
+import '../../../../core/theme/app_radius.dart';
 import '../../domain/models/dispute.dart';
 import '../controllers/dispute_controller.dart';
 import '../widgets/evidence_upload_widget.dart';
@@ -57,21 +54,23 @@ class _DisputeReportPageState extends State<DisputeReportPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.primaryBg,
       appBar: AppBar(
         title: Text(
           'Signaler un litige',
-          style: AppTypography.headingMedium.copyWith(
-            color: AppColors.textLight,
-          ),
+          style: AppTypography.h4.copyWith(color: AppColors.textPrimary),
         ),
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.textLight,
+        backgroundColor: Colors.transparent,
+        foregroundColor: AppColors.textPrimary,
         elevation: 0,
       ),
       body: Obx(
         () => _controller.isSubmitting.value
-            ? Center(child: CircularProgressIndicator(color: AppColors.primary))
+            ? Center(
+                child: CircularProgressIndicator(
+                  color: AppColors.accentPrimary,
+                ),
+              )
             : _buildForm(),
       ),
     );
@@ -79,18 +78,18 @@ class _DisputeReportPageState extends State<DisputeReportPage> {
 
   Widget _buildForm() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
+      padding: EdgeInsets.all(AppSpacing.base),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildMissionInfo(),
-          const SizedBox(height: 24),
+          SizedBox(height: AppSpacing.xl),
           _buildDisputeTypeSelector(),
-          const SizedBox(height: 24),
+          SizedBox(height: AppSpacing.xl),
           _buildDescriptionField(),
-          const SizedBox(height: 24),
+          SizedBox(height: AppSpacing.xl),
           _buildEvidenceSection(),
-          const SizedBox(height: 32),
+          SizedBox(height: AppSpacing.xxxl),
           _buildSubmitButton(),
         ],
       ),
@@ -98,34 +97,38 @@ class _DisputeReportPageState extends State<DisputeReportPage> {
   }
 
   Widget _buildMissionInfo() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Informations de la mission',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+    return Container(
+      padding: EdgeInsets.all(AppSpacing.base),
+      decoration: BoxDecoration(
+        color: AppColors.cardBg,
+        borderRadius: AppRadius.cardRadius,
+        border: Border.all(color: AppColors.overlayMedium),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Informations de la mission',
+            style: AppTypography.sectionTitle.copyWith(
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
             ),
-            const SizedBox(height: 8),
-            if (widget.missionTitle != null) ...[
-              Text(
-                'Mission: ${widget.missionTitle}',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 4),
-            ],
-            if (widget.defendantName != null) ...[
-              Text(
-                'Contre: ${widget.defendantName}',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-            ],
+          ),
+          SizedBox(height: AppSpacing.sm),
+          if (widget.missionTitle != null) ...[
+            Text(
+              'Mission: ${widget.missionTitle}',
+              style: AppTypography.body.copyWith(color: AppColors.textPrimary),
+            ),
+            SizedBox(height: AppSpacing.xs),
           ],
-        ),
+          if (widget.defendantName != null) ...[
+            Text(
+              'Contre: ${widget.defendantName}',
+              style: AppTypography.body.copyWith(color: AppColors.textPrimary),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -136,15 +139,16 @@ class _DisputeReportPageState extends State<DisputeReportPage> {
       children: [
         Text(
           'Type de litige *',
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          style: AppTypography.sectionTitle.copyWith(
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: AppSpacing.sm),
         Obx(
           () => Wrap(
-            spacing: 8.0,
-            runSpacing: 8.0,
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
             children: DisputeType.allTypes.map((type) {
               final isSelected = _controller.selectedType.value == type;
               return FilterChip(
@@ -152,7 +156,7 @@ class _DisputeReportPageState extends State<DisputeReportPage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(_controller.getTypeIcon(type)),
-                    const SizedBox(width: 4),
+                    SizedBox(width: AppSpacing.xs),
                     Text(type.label),
                   ],
                 ),
@@ -162,8 +166,17 @@ class _DisputeReportPageState extends State<DisputeReportPage> {
                     _controller.setDisputeType(type);
                   }
                 },
-                selectedColor: AppColors.primary.withValues(alpha: 0.2),
-                checkmarkColor: AppColors.primary,
+                backgroundColor: AppColors.cardBg,
+                selectedColor: AppColors.accentPrimary.withValues(alpha: 0.2),
+                checkmarkColor: AppColors.accentPrimary,
+                labelStyle: AppTypography.bodySmall.copyWith(
+                  color: isSelected
+                      ? AppColors.accentPrimary
+                      : AppColors.textSecondary,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: AppRadius.buttonRadius,
+                ),
               );
             }).toList(),
           ),
@@ -178,28 +191,43 @@ class _DisputeReportPageState extends State<DisputeReportPage> {
       children: [
         Text(
           'Description du litige *',
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          style: AppTypography.sectionTitle.copyWith(
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: AppSpacing.sm),
         TextFormField(
           controller: _descriptionController,
           maxLines: 5,
           maxLength: 2000,
-          decoration: const InputDecoration(
+          style: AppTypography.body.copyWith(color: AppColors.textPrimary),
+          decoration: InputDecoration(
             hintText: 'Décrivez en détail le problème rencontré...',
-            border: OutlineInputBorder(),
+            hintStyle: AppTypography.body.copyWith(color: AppColors.textMuted),
+            filled: true,
+            fillColor: AppColors.cardBg,
+            border: OutlineInputBorder(
+              borderRadius: AppRadius.inputRadius,
+              borderSide: BorderSide(color: AppColors.overlayMedium),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: AppRadius.inputRadius,
+              borderSide: BorderSide(color: AppColors.overlayMedium),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: AppRadius.inputRadius,
+              borderSide: BorderSide(color: AppColors.accentPrimary, width: 2),
+            ),
             alignLabelWithHint: true,
+            contentPadding: AppSpacing.inputPaddingDefault,
           ),
           onChanged: (value) => _controller.setDescription(value),
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: AppSpacing.xs),
         Text(
           'Minimum 10 caractères requis',
-          style: Theme.of(
-            context,
-          ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
+          style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
         ),
       ],
     );
@@ -213,26 +241,32 @@ class _DisputeReportPageState extends State<DisputeReportPage> {
           children: [
             Text(
               'Preuves (optionnel)',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              style: AppTypography.sectionTitle.copyWith(
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
             ),
             const Spacer(),
             TextButton.icon(
               onPressed: _showEvidenceOptions,
-              icon: const Icon(Icons.add),
-              label: const Text('Ajouter'),
+              icon: Icon(Icons.add, color: AppColors.accentPrimary),
+              label: Text(
+                'Ajouter',
+                style: AppTypography.button.copyWith(
+                  color: AppColors.accentPrimary,
+                ),
+              ),
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: AppSpacing.sm),
         Text(
           'Ajoutez des photos, documents ou liens pour appuyer votre litige',
-          style: Theme.of(
-            context,
-          ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
+          style: AppTypography.bodySmall.copyWith(
+            color: AppColors.textSecondary,
+          ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: AppSpacing.base),
         Obx(
           () => EvidenceUploadWidget(
             evidenceFiles: _controller.evidenceFiles,
@@ -251,13 +285,17 @@ class _DisputeReportPageState extends State<DisputeReportPage> {
       child: ElevatedButton(
         onPressed: _submitDispute,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Theme.of(context).primaryColor,
+          backgroundColor: AppColors.accentPrimary,
           foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 16),
+          padding: EdgeInsets.symmetric(vertical: AppSpacing.base),
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.buttonRadius),
         ),
-        child: const Text(
+        child: Text(
           'Signaler le litige',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          style: AppTypography.button.copyWith(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
     );
@@ -266,29 +304,46 @@ class _DisputeReportPageState extends State<DisputeReportPage> {
   void _showEvidenceOptions() {
     showModalBottomSheet(
       context: context,
+      backgroundColor: AppColors.cardBg,
+      shape: RoundedRectangleBorder(borderRadius: AppRadius.modalRadius),
       builder: (context) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.camera_alt),
-              title: const Text('Prendre une photo'),
+              leading: Icon(Icons.camera_alt, color: AppColors.textPrimary),
+              title: Text(
+                'Prendre une photo',
+                style: AppTypography.body.copyWith(
+                  color: AppColors.textPrimary,
+                ),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 _pickImage(ImageSource.camera);
               },
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text('Choisir depuis la galerie'),
+              leading: Icon(Icons.photo_library, color: AppColors.textPrimary),
+              title: Text(
+                'Choisir depuis la galerie',
+                style: AppTypography.body.copyWith(
+                  color: AppColors.textPrimary,
+                ),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 _pickImage(ImageSource.gallery);
               },
             ),
             ListTile(
-              leading: const Icon(Icons.link),
-              title: const Text('Ajouter un lien'),
+              leading: Icon(Icons.link, color: AppColors.textPrimary),
+              title: Text(
+                'Ajouter un lien',
+                style: AppTypography.body.copyWith(
+                  color: AppColors.textPrimary,
+                ),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 _showAddUrlDialog();
@@ -327,19 +382,48 @@ class _DisputeReportPageState extends State<DisputeReportPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Ajouter un lien'),
+        backgroundColor: AppColors.cardBg,
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.largeRadius),
+        title: Text(
+          'Ajouter un lien',
+          style: AppTypography.h4.copyWith(color: AppColors.textPrimary),
+        ),
         content: TextField(
           controller: urlController,
-          decoration: const InputDecoration(
+          style: AppTypography.body.copyWith(color: AppColors.textPrimary),
+          decoration: InputDecoration(
             hintText: 'https://exemple.com/document.pdf',
             labelText: 'URL du document',
+            hintStyle: AppTypography.body.copyWith(color: AppColors.textMuted),
+            labelStyle: AppTypography.bodySmall.copyWith(
+              color: AppColors.textSecondary,
+            ),
+            filled: true,
+            fillColor: AppColors.elevatedBg,
+            border: OutlineInputBorder(
+              borderRadius: AppRadius.inputRadius,
+              borderSide: BorderSide(color: AppColors.overlayMedium),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: AppRadius.inputRadius,
+              borderSide: BorderSide(color: AppColors.overlayMedium),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: AppRadius.inputRadius,
+              borderSide: BorderSide(color: AppColors.accentPrimary, width: 2),
+            ),
           ),
           keyboardType: TextInputType.url,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Annuler'),
+            child: Text(
+              'Annuler',
+              style: AppTypography.button.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
           ),
           TextButton(
             onPressed: () {
@@ -349,7 +433,12 @@ class _DisputeReportPageState extends State<DisputeReportPage> {
                 Navigator.pop(context);
               }
             },
-            child: const Text('Ajouter'),
+            child: Text(
+              'Ajouter',
+              style: AppTypography.button.copyWith(
+                color: AppColors.accentPrimary,
+              ),
+            ),
           ),
         ],
       ),

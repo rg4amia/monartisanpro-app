@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../core/theme/app_spacing.dart';
 
 class SearchRadiusSlider extends StatelessWidget {
   final double value;
@@ -21,36 +24,39 @@ class SearchRadiusSlider extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Rayon de recherche',
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: AppTypography.body.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                ),
               ),
               Text(
                 '${value.toStringAsFixed(1)} km',
-                style: TextStyle(
-                  color: Colors.blue[600],
+                style: AppTypography.body.copyWith(
+                  color: AppColors.accentPrimary,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: AppSpacing.sm),
         ],
 
         Row(
           children: [
             if (!showLabel) ...[
-              const Icon(Icons.location_on, size: 16, color: Colors.grey),
-              const SizedBox(width: 8),
+              Icon(Icons.location_on, size: 16, color: AppColors.textSecondary),
+              SizedBox(width: AppSpacing.sm),
             ],
 
             Expanded(
               child: SliderTheme(
                 data: SliderTheme.of(context).copyWith(
-                  activeTrackColor: Colors.blue[600],
-                  inactiveTrackColor: Colors.blue[100],
-                  thumbColor: Colors.blue[600],
-                  overlayColor: Colors.blue[100],
+                  activeTrackColor: AppColors.accentPrimary,
+                  inactiveTrackColor: AppColors.overlayMedium,
+                  thumbColor: AppColors.accentPrimary,
+                  overlayColor: AppColors.accentPrimary.withValues(alpha: 0.2),
                   trackHeight: 4,
                   thumbShape: const RoundSliderThumbShape(
                     enabledThumbRadius: 8,
@@ -67,14 +73,13 @@ class SearchRadiusSlider extends StatelessWidget {
             ),
 
             if (!showLabel) ...[
-              const SizedBox(width: 8),
+              SizedBox(width: AppSpacing.sm),
               SizedBox(
                 width: 50,
                 child: Text(
                   '${value.toStringAsFixed(1)} km',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.blue[600],
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.accentPrimary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -84,17 +89,21 @@ class SearchRadiusSlider extends StatelessWidget {
         ),
 
         if (showLabel) ...[
-          const SizedBox(height: 4),
+          SizedBox(height: AppSpacing.xs),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 '1 km',
-                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                style: AppTypography.caption.copyWith(
+                  color: AppColors.textSecondary,
+                ),
               ),
               Text(
                 '50 km',
-                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                style: AppTypography.caption.copyWith(
+                  color: AppColors.textSecondary,
+                ),
               ),
             ],
           ),
