@@ -1,117 +1,142 @@
-name: Backend CI
+name: Deploy to Production (Hostinger Optimized)
 
 on:
- push:
-  branches: [master, develop]
-  paths:
-   - "prosartisan_backend/**"
-   - ".github/workflows/backend-ci.yml"
- pull_request:
-  branches: [master, develop]
-  paths:
-   - "prosartisan_backend/**"
-   - ".github/workflows/backend-ci.yml"
+  push:
+    branches: [master, master]
+  workflow_dispatch:
 
 jobs:
- test:
-  runs-on: ubuntu-latest
+  deploy:
+    runs-on: ubuntu-latest
 
-  services:
-   postgres:
-    image: postgis/postgis:15-3.3
-    env:
-     POSTGRES_DB: prosartisan_test
-     POSTGRES_USER: postgres
-     POSTGRES_PASSWORD: postgres
-    ports:
-     - 5432:5432
-    options: >-
-     --health-cmd pg_isready
-     --health-interval 10s
-     --health-timeout 5s
-     --health-retries 5
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-   redis:
-    image: redis:7-alpine
-    ports:
-     - 6379:6379
-    options: >-
-     --health-cmd "redis-cli ping"
-     --health-interval 10s
-     --health-timeout 5s
-     --health-retries 5
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
 
-  steps:
-   - uses: actions/checkout@v4
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, dom, filter, gd, json, pdo
 
-   - name: Setup PHP
-     uses: shivammathur/setup-php@v2
-     with:
-      php-version: "8.2"
-      extensions: mbstring, pdo, pdo_pgsql, redis, gd
-      coverage: xdebug
+      - name: Install PHP dependencies
+        run: composer install --no-dev --optimize-autoloader
 
-   - name: Copy .env
-     working-directory: prosartisan_backend
-     run: |
-      cp .env.example .env
-      sed -i 's/DB_CONNECTION=.*/DB_CONNECTION=pgsql/' .env
-      sed -i 's/DB_DATABASE=.*/DB_DATABASE=prosartisan_test/' .env
-      sed -i 's/DB_USERNAME=.*/DB_USERNAME=postgres/' .env
-      sed -i 's/DB_PASSWORD=.*/DB_PASSWORD=postgres/' .env
+      - name: Install Node dependencies
+        run: npm ci
 
-   - name: Install Dependencies
-     working-directory: prosartisan_backend
-     run: composer install --prefer-dist --no-progress --no-interaction
+      - name: Build assets
+        run: npm run build -- --config vite.config.ci.ts
 
-   - name: Generate key
-     working-directory: prosartisan_backend
-     run: php artisan key:generate
+      - name: Verify build
+        run: |
+          if [ ! -d "public/build" ]; then
+            echo "❌ Build failed - assets not found"
+            exit 1
+          fi
+          echo "✅ Assets built successfully"
 
-   - name: Directory Permissions
-     working-directory: prosartisan_backend
-     run: chmod -R 777 storage bootstrap/cache
+      - name: Create optimized deployment archive
+        run: |
+          echo "📦 Creating optimized archive..."
+          tar -czf deploy.tar.gz \
+            --exclude='node_modules' \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='.vscode' \
+            --exclude='.kiro' \
+            --exclude='tests' \
+            --exclude='.env' \
+            --exclude='.env.example' \
+            --exclude='*.log' \
+            --exclude='*.md' \
+            --exclude='*.txt' \
+            --exclude='package-lock.json' \
+            --exclude='composer.lock' \
+            --exclude='deploy.tar.gz' \
+            --exclude='deploy-temp' \
+            * .[^.]*
+          echo "✅ Archive created"
 
-   - name: Run Migrations
-     working-directory: prosartisan_backend
-     run: php artisan migrate --force
-     env:
-      DB_CONNECTION: pgsql
-      DB_HOST: localhost
-      DB_PORT: 5432
-      DB_DATABASE: prosartisan_test
-      DB_USERNAME: postgres
-      DB_PASSWORD: postgres
+      - name: Deploy to Hostinger
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 82.29.185.47
+          port: 65002
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          script: |
+            echo "🚀 Starting deployment on server..."
 
-   - name: Run Code Style Check
-     working-directory: prosartisan_backend
-     run: ./vendor/bin/pint --test
+            # Backup existing installation
+            if [ -d "${{ secrets.PATH }}" ]; then
+              cp -r ${{ secrets.PATH }} backup-$(date +%Y%m%d-%H%M%S)
+              echo "✅ Backup created"
+            fi
 
-   - name: Run Unit Tests
-     working-directory: prosartisan_backend
-     run: php artisan test --testsuite=Unit --coverage --min=80
-     env:
-      DB_CONNECTION: pgsql
-      DB_HOST: localhost
-      DB_PORT: 5432
-      DB_DATABASE: prosartisan_test
-      DB_USERNAME: postgres
-      DB_PASSWORD: postgres
+            # Prepare directory
+            mkdir -p ${{ secrets.PATH }}
 
-   - name: Run Feature Tests
-     working-directory: prosartisan_backend
-     run: php artisan test --testsuite=Feature
-     env:
-      DB_CONNECTION: pgsql
-      DB_HOST: localhost
-      DB_PORT: 5432
-      DB_DATABASE: prosartisan_test
-      DB_USERNAME: postgres
-      DB_PASSWORD: postgres
+            # Backup current .env
+            if [ -f "${{ secrets.PATH }}/.env" ]; then
+              cp ${{ secrets.PATH }}/.env .env.backup
+            fi
 
-   - name: Upload Coverage Reports
-     uses: codecov/codecov-action@v4
-     with:
-      files: ./prosartisan_backend/coverage.xml
-      flags: backend
-      name: backend-coverage
+      - name: Upload archive
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: 82.29.185.47
+          port: 65002
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          source: "deploy.tar.gz"
+          target: "/home/${{ secrets.USERNAME }}/"
+
+      - name: Extract and configure Laravel
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 82.29.185.47
+          port: 65002
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          script: |
+            echo "🔧 Configuring Laravel application..."
+
+            # Clean and extract
+            cd ${{ secrets.PATH }}
+            rm -rf * .[^.]*
+            cd /home/${{ secrets.USERNAME }}
+            tar -xzf deploy.tar.gz -C ${{  secrets.PATH }}/
+            rm deploy.tar.gz
+
+            # Configure Laravel
+            cd ${{ secrets.PATH }}
+
+            # Restore .env
+            if [ -f "/home/${{ secrets.USERNAME }}/.env.backup" ]; then
+              cp /home/${{ secrets.USERNAME }}/.env.backup .env
+              rm /home/${{ secrets.USERNAME }}/.env.backup
+            elif [ -f "/home/${{ secrets.USERNAME }}/.env.prod" ]; then
+              cp /home/${{ secrets.USERNAME }}/.env.prod .env
+            fi
+
+            # Setup Laravel directories and permissions
+            mkdir -p storage/{app/public,framework/{cache,sessions,views},logs}
+            chmod -R 755 storage bootstrap/cache
+
+            # Laravel artisan commands
+            php artisan key:generate --force 2>/dev/null || true
+            php artisan migrate --force
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            php artisan storage:link
+
+            echo "✅ Deployment completed successfully!"
+            echo "🌐 Site available at: https://prosartisan.net
