@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_radius.dart';
 
 /// Mobile money option card widget
 class MobileMoneyOptionCard extends StatelessWidget {
@@ -23,13 +23,13 @@ class MobileMoneyOptionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-        border: Border.all(color: AppColors.border),
+        color: AppColors.cardBg,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.overlayMedium),
       ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         child: Padding(
           padding: EdgeInsets.all(AppSpacing.md),
           child: Row(
@@ -39,7 +39,7 @@ class MobileMoneyOptionCard extends StatelessWidget {
                 height: 48,
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: Icon(icon, color: color, size: 24),
               ),
@@ -47,7 +47,7 @@ class MobileMoneyOptionCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   provider,
-                  style: AppTypography.bodyLarge.copyWith(
+                  style: AppTypography.body.copyWith(
                     color: AppColors.textPrimary,
                     fontWeight: FontWeight.w500,
                   ),

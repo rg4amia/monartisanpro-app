@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_radius.dart';
 import '../../domain/entities/transaction.dart';
 
 /// Transaction list item widget
@@ -17,15 +17,15 @@ class TransactionListItem extends StatelessWidget {
     return Container(
       margin: EdgeInsets.only(bottom: AppSpacing.sm),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-        border: Border.all(color: AppColors.border),
+        color: AppColors.cardBg,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.overlayMedium),
       ),
       child: ListTile(
         leading: _buildTransactionIcon(),
         title: Text(
           _getTransactionTypeDisplayName(transaction.type),
-          style: AppTypography.bodyMedium.copyWith(
+          style: AppTypography.body.copyWith(
             color: AppColors.textPrimary,
             fontWeight: FontWeight.w500,
           ),
@@ -36,7 +36,7 @@ class TransactionListItem extends StatelessWidget {
             SizedBox(height: AppSpacing.xs),
             Text(
               transaction.amountFormatted,
-              style: AppTypography.bodyMedium.copyWith(
+              style: AppTypography.body.copyWith(
                 fontWeight: FontWeight.bold,
                 color: _getAmountColor(),
               ),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_radius.dart';
 
 /// Jeton status badge widget
 class JetonStatusBadge extends StatelessWidget {
@@ -21,7 +21,7 @@ class JetonStatusBadge extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: statusInfo['color'].withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
           color: statusInfo['color'].withValues(alpha: 0.3),
           width: 1,
@@ -49,25 +49,25 @@ class JetonStatusBadge extends StatelessWidget {
       case 'ACTIVE':
         return {
           'label': 'Actif',
-          'color': AppColors.success,
+          'color': AppColors.accentSuccess,
           'icon': Icons.check_circle,
         };
       case 'PARTIALLY_USED':
         return {
           'label': 'Partiellement utilisé',
-          'color': AppColors.warning,
+          'color': AppColors.accentWarning,
           'icon': Icons.pie_chart,
         };
       case 'FULLY_USED':
         return {
           'label': 'Entièrement utilisé',
-          'color': AppColors.info,
+          'color': AppColors.accentPrimary,
           'icon': Icons.done_all,
         };
       case 'EXPIRED':
         return {
           'label': 'Expiré',
-          'color': AppColors.error,
+          'color': AppColors.accentDanger,
           'icon': Icons.access_time,
         };
       default:

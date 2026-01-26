@@ -293,65 +293,71 @@ class _MilestoneProofSubmissionPageState
   Widget _buildExistingProof(BuildContext context) {
     final proof = widget.jalon.proof!;
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Preuve déjà soumise',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+    return Container(
+      padding: EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.cardBg,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.overlayMedium),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Preuve déjà soumise',
+            style: AppTypography.sectionTitle.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.bold,
             ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.green[50],
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.green[200]!),
+          ),
+          SizedBox(height: AppSpacing.md),
+          Container(
+            padding: EdgeInsets.all(AppSpacing.sm),
+            decoration: BoxDecoration(
+              color: AppColors.accentSuccess.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              border: Border.all(
+                color: AppColors.accentSuccess.withValues(alpha: 0.3),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.check_circle, color: Colors.green[700]),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Preuve soumise avec succès',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.green[700],
-                          fontWeight: FontWeight.w500,
-                        ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.check_circle, color: AppColors.accentSuccess),
+                    SizedBox(width: AppSpacing.xs),
+                    Text(
+                      'Preuve soumise avec succès',
+                      style: AppTypography.body.copyWith(
+                        color: AppColors.accentSuccess,
+                        fontWeight: FontWeight.w500,
                       ),
-                    ],
+                    ),
+                  ],
+                ),
+                SizedBox(height: AppSpacing.xs),
+                Text(
+                  'Soumis le ${_formatDateTime(proof.capturedAt)}',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.accentSuccess,
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Soumis le ${_formatDateTime(proof.capturedAt)}',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: Colors.green[600]),
+                ),
+                Text(
+                  'Localisation: ${proof.location.latitude.toStringAsFixed(4)}, ${proof.location.longitude.toStringAsFixed(4)}',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.accentSuccess,
                   ),
-                  Text(
-                    'Localisation: ${proof.location.latitude.toStringAsFixed(4)}, ${proof.location.longitude.toStringAsFixed(4)}',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: Colors.green[600]),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
+          ),
 
-            if (widget.jalon.autoValidationDeadline != null) ...[
-              const SizedBox(height: 16),
-              _buildAutoValidationInfo(context),
-            ],
+          if (widget.jalon.autoValidationDeadline != null) ...[
+            SizedBox(height: AppSpacing.md),
+            _buildAutoValidationInfo(context),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -361,18 +367,34 @@ class _MilestoneProofSubmissionPageState
     final isUrgent = hoursRemaining <= 6;
     final isPastDeadline = widget.jalon.isAutoValidationDue;
 
+    Color backgroundColor;
+    Color borderColor;
+    Color iconColor;
+    Color textColor;
+
+    if (isPastDeadline) {
+      backgroundColor = AppColors.accentSuccess.withValues(alpha: 0.1);
+      borderColor = AppColors.accentSuccess.withValues(alpha: 0.3);
+      iconColor = AppColors.accentSuccess;
+      textColor = AppColors.accentSuccess;
+    } else if (isUrgent) {
+      backgroundColor = AppColors.accentWarning.withValues(alpha: 0.1);
+      borderColor = AppColors.accentWarning.withValues(alpha: 0.3);
+      iconColor = AppColors.accentWarning;
+      textColor = AppColors.accentWarning;
+    } else {
+      backgroundColor = AppColors.accentPrimary.withValues(alpha: 0.1);
+      borderColor = AppColors.accentPrimary.withValues(alpha: 0.3);
+      iconColor = AppColors.accentPrimary;
+      textColor = AppColors.accentPrimary;
+    }
+
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(AppSpacing.sm),
       decoration: BoxDecoration(
-        color: isPastDeadline
-            ? Colors.green[50]
-            : (isUrgent ? Colors.orange[50] : Colors.blue[50]),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: isPastDeadline
-              ? Colors.green[200]!
-              : (isUrgent ? Colors.orange[200]! : Colors.blue[200]!),
-        ),
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(color: borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -381,44 +403,34 @@ class _MilestoneProofSubmissionPageState
             children: [
               Icon(
                 isPastDeadline ? Icons.check_circle : Icons.timer,
-                color: isPastDeadline
-                    ? Colors.green[700]
-                    : (isUrgent ? Colors.orange[700] : Colors.blue[700]),
+                color: iconColor,
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: AppSpacing.xs),
               Text(
                 isPastDeadline
                     ? 'Validation automatique'
                     : 'En attente de validation',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: isPastDeadline
-                      ? Colors.green[700]
-                      : (isUrgent ? Colors.orange[700] : Colors.blue[700]),
+                style: AppTypography.body.copyWith(
+                  color: textColor,
                   fontWeight: FontWeight.w500,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: AppSpacing.xs / 2),
           if (isPastDeadline) ...[
             Text(
               'Ce jalon sera validé automatiquement',
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: Colors.green[600]),
+              style: AppTypography.bodySmall.copyWith(color: textColor),
             ),
           ] else ...[
             Text(
               'Temps restant: ${hoursRemaining.toStringAsFixed(1)} heures',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: isUrgent ? Colors.orange[600] : Colors.blue[600],
-              ),
+              style: AppTypography.bodySmall.copyWith(color: textColor),
             ),
             Text(
               'Échéance: ${_formatDateTime(widget.jalon.autoValidationDeadline!)}',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: isUrgent ? Colors.orange[600] : Colors.blue[600],
-              ),
+              style: AppTypography.bodySmall.copyWith(color: textColor),
             ),
           ],
         ],
@@ -459,7 +471,7 @@ class _MilestoneProofSubmissionPageState
     }
 
     if (widget.jalon.hasProof) {
-      return Container(
+      return SizedBox(
         width: double.infinity,
         height: 48,
         child: OutlinedButton.icon(
