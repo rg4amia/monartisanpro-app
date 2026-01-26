@@ -23,18 +23,22 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: "8.2"
-          extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, dom, filter, gd, json, pdo
+          extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, dom, filter, gd, json, pdo, pgsql
 
       - name: Install PHP dependencies
+        working-directory: ./prosartisan_backend
         run: composer install --no-dev --optimize-autoloader
 
       - name: Install Node dependencies
+        working-directory: ./prosartisan_backend
         run: npm ci
 
       - name: Build assets
-        run: npm run build -- --config vite.config.ci.ts
+        working-directory: ./prosartisan_backend
+        run: npm run build
 
       - name: Verify build
+        working-directory: ./prosartisan_backend
         run: |
           if [ ! -d "public/build" ]; then
             echo "❌ Build failed - assets not found"
@@ -43,9 +47,10 @@ jobs:
           echo "✅ Assets built successfully"
 
       - name: Create optimized deployment archive
+        working-directory: ./prosartisan_backend
         run: |
           echo "📦 Creating optimized archive..."
-          tar -czf deploy.tar.gz \
+          tar -czf ../deploy.tar.gz \
             --exclude='node_modules' \
             --exclude='.git' \
             --exclude='.github' \
@@ -61,7 +66,9 @@ jobs:
             --exclude='composer.lock' \
             --exclude='deploy.tar.gz' \
             --exclude='deploy-temp' \
-            * .[^.]*
+            --exclude='storage/logs/*' \
+            --exclude='bootstrap/cache/*' \
+            .
           echo "✅ Archive created"
 
       - name: Deploy to Hostinger
@@ -74,18 +81,23 @@ jobs:
           script: |
             echo "🚀 Starting deployment on server..."
 
+            DEPLOY_PATH="/home/u398732316/domains/prosartisan.net/public_html/monartisanpro-app/prosartisan_backend"
+
             # Backup existing installation
-            if [ -d "${{ secrets.PATH }}" ]; then
-              cp -r ${{ secrets.PATH }} backup-$(date +%Y%m%d-%H%M%S)
-              echo "✅ Backup created"
+            if [ -d "$DEPLOY_PATH" ]; then
+              BACKUP_DIR="/home/u398732316/backups/backup-$(date +%Y%m%d-%H%M%S)"
+              mkdir -p /home/u398732316/backups
+              cp -r "$DEPLOY_PATH" "$BACKUP_DIR"
+              echo "✅ Backup created at $BACKUP_DIR"
             fi
 
             # Prepare directory
-            mkdir -p ${{ secrets.PATH }}
+            mkdir -p "$DEPLOY_PATH"
 
             # Backup current .env
-            if [ -f "${{ secrets.PATH }}/.env" ]; then
-              cp ${{ secrets.PATH }}/.env .env.backup
+            if [ -f "$DEPLOY_PATH/.env" ]; then
+              cp "$DEPLOY_PATH/.env" /home/u398732316/.env.backup
+              echo "✅ .env backed up"
             fi
 
       - name: Upload archive
@@ -96,7 +108,7 @@ jobs:
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.SERVER_PASSWORD }}
           source: "deploy.tar.gz"
-          target: "/home/${{ secrets.USERNAME }}/"
+          target: "/home/u398732316/"
 
       - name: Extract and configure Laravel
         uses: appleboy/ssh-action@v1.0.3
@@ -108,35 +120,56 @@ jobs:
           script: |
             echo "🔧 Configuring Laravel application..."
 
-            # Clean and extract
-            cd ${{ secrets.PATH }}
-            rm -rf * .[^.]*
-            cd /home/${{ secrets.USERNAME }}
-            tar -xzf deploy.tar.gz -C ${{  secrets.PATH }}/
-            rm deploy.tar.gz
+            DEPLOY_PATH="/home/u398732316/domains/prosartisan.net/public_html/monartisanpro-app/prosartisan_backend"
 
-            # Configure Laravel
-            cd ${{ secrets.PATH }}
+            # Extract archive
+            cd "$DEPLOY_PATH"
+
+            # Remove old files but keep storage and .env
+            find . -mindepth 1 -maxdepth 1 ! -name 'storage' ! -name '.env' -exec rm -rf {} +
+
+            # Extract new files
+            tar -xzf /home/u398732316/deploy.tar.gz -C "$DEPLOY_PATH"
+            rm /home/u398732316/deploy.tar.gz
 
             # Restore .env
-            if [ -f "/home/${{ secrets.USERNAME }}/.env.backup" ]; then
-              cp /home/${{ secrets.USERNAME }}/.env.backup .env
-              rm /home/${{ secrets.USERNAME }}/.env.backup
-            elif [ -f "/home/${{ secrets.USERNAME }}/.env.prod" ]; then
-              cp /home/${{ secrets.USERNAME }}/.env.prod .env
+            if [ -f "/home/u398732316/.env.backup" ]; then
+              cp /home/u398732316/.env.backup "$DEPLOY_PATH/.env"
+              rm /home/u398732316/.env.backup
+              echo "✅ .env restored"
+            elif [ -f "/home/u398732316/.env.prod" ]; then
+              cp /home/u398732316/.env.prod "$DEPLOY_PATH/.env"
+              echo "✅ Production .env copied"
+            else
+              echo "⚠️  No .env file found - please configure manually"
             fi
 
             # Setup Laravel directories and permissions
-            mkdir -p storage/{app/public,framework/{cache,sessions,views},logs}
+            mkdir -p storage/{app/{public,private},framework/{cache/data,sessions,views,testing},logs}
+            mkdir -p bootstrap/cache
+
+            # Set proper permissions
             chmod -R 755 storage bootstrap/cache
+            chmod -R 775 storage/logs
+
+            # Ensure storage directories are writable
+            find storage -type d -exec chmod 775 {} \;
+            find storage -type f -exec chmod 664 {} \;
 
             # Laravel artisan commands
-            php artisan key:generate --force 2>/dev/null || true
-            php artisan migrate --force
+            php artisan key:generate --force 2>/dev/null || echo "⚠️  Key already exists"
+            php artisan storage:link --force 2>/dev/null || echo "⚠️  Storage link exists"
+
+            # Run migrations
+            php artisan migrate --force || echo "⚠️  Migration issues - check manually"
+
+            # Cache optimization
             php artisan config:cache
             php artisan route:cache
             php artisan view:cache
-            php artisan storage:link
+
+            # Clear old caches
+            php artisan cache:clear 2>/dev/null || true
 
             echo "✅ Deployment completed successfully!"
-            echo "🌐 Site available at: https://prosartisan.net
+            echo "🌐 Site available at: https://prosartisan.net"
