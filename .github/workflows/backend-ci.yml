@@ -78,7 +78,7 @@ jobs:
           host: 82.29.185.47
           port: 65002
           username: ${{ secrets.USERNAME }}
-          password: ${{ secrets.SERVER_PASSWORD }}
+          ssh: ${{ secrets.SERVER_PASSWORD }}
           script: |
             echo "🚀 Starting deployment on server..."
 
