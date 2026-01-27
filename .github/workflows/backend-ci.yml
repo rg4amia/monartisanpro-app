@@ -78,7 +78,7 @@ jobs:
           host: 82.29.185.47
           port: 65002
           username: ${{ secrets.USERNAME }}
-          ssh: ${{ secrets.SERVER_PASSWORD }}
+          key: ${{ secrets.SSH_KEY }}
           script: |
             echo "🚀 Starting deployment on server..."
 
@@ -107,7 +107,7 @@ jobs:
           host: 82.29.185.47
           port: 65002
           username: ${{ secrets.USERNAME }}
-          password: ${{ secrets.SERVER_PASSWORD }}
+          key: ${{ secrets.SSH_KEY }}
           source: "deploy.tar.gz"
           target: "/home/u398732316/"
 
@@ -117,7 +117,7 @@ jobs:
           host: 82.29.185.47
           port: 65002
           username: ${{ secrets.USERNAME }}
-          password: ${{ secrets.SERVER_PASSWORD }}
+          key: ${{ secrets.SSH_KEY }}
           script: |
             echo "🔧 Configuring Laravel application..."
 
