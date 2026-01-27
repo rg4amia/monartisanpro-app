@@ -31,7 +31,6 @@ return new class extends Migration
         Schema::table('artisan_profiles', function (Blueprint $table) {
             // Composite index for KYC verified artisans by category
             $table->index(['trade_category', 'is_kyc_verified'], 'idx_artisan_category_kyc');
-            // Note: is_kyc_verified index already exists from create_artisan_profiles_table migration
         });
 
         // Add composite indexes for missions table
@@ -118,33 +117,6 @@ return new class extends Migration
                 // Index for defendant
                 $table->index('defendant_id');
             });
-        }
-
-        // Add additional PostGIS spatial indexes for PostgreSQL
-        if (DB::getDriverName() === 'pgsql') {
-            // Ensure all geography columns have proper spatial indexes
-            $spatialIndexes = [
-                'artisan_profiles' => 'location',
-                'fournisseur_profiles' => 'shop_location',
-                'referent_zone_profiles' => 'coverage_area',
-                'missions' => 'location'
-            ];
-
-            foreach ($spatialIndexes as $table => $column) {
-                if (Schema::hasTable($table)) {
-                    // Check if index doesn't already exist
-                    $indexName = "idx_{$table}_{$column}_gist";
-                    $existingIndex = DB::select("
-                        SELECT indexname
-                        FROM pg_indexes
-                        WHERE tablename = ? AND indexname = ?
-                    ", [$table, $indexName]);
-
-                    if (empty($existingIndex)) {
-                        DB::statement("CREATE INDEX {$indexName} ON {$table} USING GIST({$column})");
-                    }
-                }
-            }
         }
     }
 
