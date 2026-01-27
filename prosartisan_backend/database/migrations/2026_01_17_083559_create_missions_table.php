@@ -20,6 +20,11 @@ return new class extends Migration
             $table->bigInteger('budget_min_centimes');
             $table->bigInteger('budget_max_centimes');
             $table->string('status', 50)->default('OPEN'); // OPEN, QUOTED, ACCEPTED, CANCELLED
+
+            // Location stored as separate latitude/longitude for MySQL compatibility
+            $table->decimal('latitude', 10, 8)->nullable();
+            $table->decimal('longitude', 11, 8)->nullable();
+
             $table->timestamps();
 
             // Foreign key constraint
@@ -30,18 +35,10 @@ return new class extends Migration
             $table->index('status');
             $table->index('trade_category');
             $table->index('created_at');
-        });
 
-        // Add PostGIS geography column for location (PostgreSQL only)
-        if (DB::getDriverName() === 'pgsql') {
-            DB::statement('ALTER TABLE missions ADD COLUMN location GEOGRAPHY(POINT, 4326)');
-            DB::statement('CREATE INDEX idx_missions_location ON missions USING GIST(location)');
-        } else {
-            // For SQLite/MySQL, use separate latitude/longitude columns
-            Schema::table('missions', function (Blueprint $table) {
-                $table->text('location')->nullable(); // Store as JSON
-            });
-        }
+            // Spatial index for location-based queries
+            $table->index(['latitude', 'longitude']);
+        });
     }
 
     /**

@@ -19,6 +19,11 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->uuid('user_id');
             $table->string('business_name', 255);
+
+            // Shop location stored as separate latitude/longitude for MySQL compatibility
+            $table->decimal('shop_latitude', 10, 8)->nullable();
+            $table->decimal('shop_longitude', 11, 8)->nullable();
+
             $table->timestamps();
 
             // Foreign key constraint
@@ -29,18 +34,10 @@ return new class extends Migration
 
             // Index on user_id for fast lookups
             $table->index('user_id');
-        });
 
-        // Add location column based on database driver
-        if (DB::connection()->getDriverName() === 'sqlite') {
-            // For SQLite (testing), use TEXT to store JSON representation of coordinates
-            DB::statement('ALTER TABLE fournisseur_profiles ADD COLUMN shop_location TEXT');
-        } else {
-            // For PostgreSQL (production), use PostGIS geography column
-            DB::statement('ALTER TABLE fournisseur_profiles ADD COLUMN shop_location GEOGRAPHY(POINT, 4326)');
-            // Create spatial index on shop_location for efficient proximity queries
-            DB::statement('CREATE INDEX idx_fournisseur_location ON fournisseur_profiles USING GIST(shop_location)');
-        }
+            // Spatial index for location-based queries
+            $table->index(['shop_latitude', 'shop_longitude']);
+        });
     }
 
     /**

@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\Sector;
+use App\Models\Trade;
 use Illuminate\Database\Seeder;
 
 class TradeSeeder extends Seeder
@@ -11,7 +13,7 @@ class TradeSeeder extends Seeder
      */
     public function run(): void
     {
-        $csvPath = base_path('../Base secteur activié et metier.csv');
+        $csvPath = base_path('../base_secteur_activite_metier.csv');
         if (! file_exists($csvPath)) {
             $this->command->error("CSV file not found at: $csvPath");
 
@@ -38,12 +40,12 @@ class TradeSeeder extends Seeder
                 continue;
             }
 
-            $sector = \App\Models\Sector::firstOrCreate(
+            $sector = Sector::firstOrCreate(
                 ['name' => $sectorName]
             );
 
             // Check if trade exists to avoid unique constraint violation in race conditions or seeder re-runs
-            $tradeExists = \App\Models\Trade::where('name', $tradeName)
+            $tradeExists = Trade::where('name', $tradeName)
                 ->where('sector_id', $sector->id)
                 ->exists();
 

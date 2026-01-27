@@ -23,6 +23,11 @@ return new class extends Migration
    $table->bigInteger('budget_min_centimes');
    $table->bigInteger('budget_max_centimes');
    $table->string('status', 50)->default('OPEN'); // OPEN, QUOTED, ACCEPTED, CANCELLED
+
+   // Location stored as separate latitude/longitude for MySQL compatibility
+   $table->decimal('latitude', 10, 8)->nullable();
+   $table->decimal('longitude', 11, 8)->nullable();
+
    $table->timestamps();
 
    // Foreign key constraint
@@ -36,18 +41,10 @@ return new class extends Migration
    $table->index('status');
    $table->index('trade_category');
    $table->index('created_at');
-  });
 
-  // Add location column based on database driver
-  if (DB::connection()->getDriverName() === 'sqlite') {
-   // For SQLite (testing), use TEXT tostore JSON representation of coordinates
-   DB::statement('ALTER TABLE missions ADD COLUMN location TEXT');
-  } else {
-   // For PostgreSQL (production), use PostGIS geography column
-   DB::statement('ALTER TABLE missions ADD COLUMN location GEOGRAPHY(POINT, 4326) NOT NULL');
-   // Create spatial index on location for efficient proximity queries
-   DB::statement('CREATE INDEX idx_missions_location ON missions USING GIST(location)');
-  }
+   // Spatial index for location-based queries
+   $table->index(['latitude', 'longitude']);
+  });
  }
 
  /**

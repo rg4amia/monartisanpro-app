@@ -19,6 +19,11 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->uuid('user_id');
             $table->string('zone', 255); // Geographic zone name (e.g., "Abidjan Nord")
+
+            // Coverage area stored as separate latitude/longitude for MySQL compatibility
+            $table->decimal('coverage_latitude', 10, 8)->nullable();
+            $table->decimal('coverage_longitude', 11, 8)->nullable();
+
             $table->timestamps();
 
             // Foreign key constraint
@@ -30,18 +35,10 @@ return new class extends Migration
             // Index on user_id for fast lookups
             $table->index('user_id');
             $table->index('zone');
-        });
 
-        // Add location column based on database driver
-        if (DB::connection()->getDriverName() === 'sqlite') {
-            // For SQLite (testing), use TEXT to store JSON representation of coordinates
-            DB::statement('ALTER TABLE referent_zone_profiles ADD COLUMN coverage_area TEXT');
-        } else {
-            // For PostgreSQL (production), use PostGIS geography column
-            DB::statement('ALTER TABLE referent_zone_profiles ADD COLUMN coverage_area GEOGRAPHY(POINT, 4326)');
-            // Create spatial index on coverage_area
-            DB::statement('CREATE INDEX idx_referent_coverage_area ON referent_zone_profiles USING GIST(coverage_area)');
-        }
+            // Spatial index for location-based queries
+            $table->index(['coverage_latitude', 'coverage_longitude']);
+        });
     }
 
     /**

@@ -20,7 +20,12 @@ return new class extends Migration
             $table->uuid('user_id');
             $table->string('trade_category', 50); // PLUMBER, ELECTRICIAN, MASON
             $table->boolean('is_kyc_verified')->default(false);
-            $table->jsonb('kyc_documents')->nullable();
+            $table->json('kyc_documents')->nullable();
+
+            // Location stored as separate latitude/longitude for MySQL compatibility
+            $table->decimal('latitude', 10, 8)->nullable();
+            $table->decimal('longitude', 11, 8)->nullable();
+
             $table->timestamps();
 
             // Foreign key constraint
@@ -33,18 +38,10 @@ return new class extends Migration
             $table->index('user_id');
             $table->index('trade_category');
             $table->index('is_kyc_verified');
-        });
 
-        // Add location column based on database driver
-        if (DB::connection()->getDriverName() === 'sqlite') {
-            // For SQLite (testing), use TEXT to store JSON representation of coordinates
-            DB::statement('ALTER TABLE artisan_profiles ADD COLUMN location TEXT');
-        } else {
-            // For PostgreSQL (production), use PostGIS geography column
-            DB::statement('ALTER TABLE artisan_profiles ADD COLUMN location GEOGRAPHY(POINT, 4326)');
-            // Create spatial index on location for efficient proximity queries
-            DB::statement('CREATE INDEX idx_artisan_location ON artisan_profiles USING GIST(location)');
-        }
+            // Spatial index for location-based queries
+            $table->index(['latitude', 'longitude']);
+        });
     }
 
     /**
