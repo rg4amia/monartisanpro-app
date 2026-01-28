@@ -136,7 +136,6 @@ return new class extends Migration
         // Drop composite indexes for artisan_profiles table
         Schema::table('artisan_profiles', function (Blueprint $table) {
             $table->dropIndex('idx_artisan_category_kyc');
-            // Note: is_kyc_verified index is owned by create_artisan_profiles_table migration
         });
 
         // Drop composite indexes for missions table
@@ -199,23 +198,6 @@ return new class extends Migration
                 $table->dropIndex(['reporter_id']);
                 $table->dropIndex(['defendant_id']);
             });
-        }
-
-        // Drop additional PostGIS spatial indexes for PostgreSQL
-        if (DB::getDriverName() === 'pgsql') {
-            $spatialIndexes = [
-                'artisan_profiles' => 'location',
-                'fournisseur_profiles' => 'shop_location',
-                'referent_zone_profiles' => 'coverage_area',
-                'missions' => 'location'
-            ];
-
-            foreach ($spatialIndexes as $table => $column) {
-                if (Schema::hasTable($table)) {
-                    $indexName = "idx_{$table}_{$column}_gist";
-                    DB::statement("DROP INDEX IF EXISTS {$indexName}");
-                }
-            }
         }
     }
 };
