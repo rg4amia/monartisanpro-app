@@ -83,6 +83,7 @@ jobs:
             echo "🚀 Starting deployment on server..."
 
             DEPLOY_PATH="/home/u398732316/domains/prosartisan.net/public_html/monartisanpro-app/prosartisan_backend"
+            PUBLIC_HTML="/home/u398732316/domains/prosartisan.net/public_html"
 
             # Backup existing installation
             if [ -d "$DEPLOY_PATH" ]; then
@@ -122,6 +123,7 @@ jobs:
             echo "🔧 Configuring Laravel application..."
 
             DEPLOY_PATH="/home/u398732316/domains/prosartisan.net/public_html/monartisanpro-app/prosartisan_backend"
+            PUBLIC_HTML="/home/u398732316/domains/prosartisan.net/public_html"
 
             # Extract archive
             cd "$DEPLOY_PATH"
@@ -171,6 +173,19 @@ jobs:
 
             # Clear old caches
             php artisan cache:clear 2>/dev/null || true
+
+            # Configure root .htaccess to redirect to Laravel public folder
+            echo "🔧 Configuring root .htaccess..."
+            cat > "$PUBLIC_HTML/.htaccess" << 'EOF'
+            <IfModule mod_rewrite.c>
+                RewriteEngine On
+                
+                # Redirect all requests to Laravel public folder
+                RewriteCond %{REQUEST_URI} !^/monartisanpro-app/prosartisan_backend/public
+                RewriteRule ^(.*)$ /monartisanpro-app/prosartisan_backend/public/$1 [L]
+            </IfModule>
+            EOF
+            echo "✅ Root .htaccess configured"
 
             echo "✅ Deployment completed successfully!"
             echo "🌐 Site available at: https://prosartisan.net"
