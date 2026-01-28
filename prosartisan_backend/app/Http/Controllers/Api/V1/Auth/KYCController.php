@@ -36,9 +36,7 @@ class KYCController extends Controller
      * Uploads and verifies KYC documents for Artisan or Fournisseur
      * Requires authentication
      *
-     * @param string $id User ID
-     * @param UploadKYCRequest $request
-     * @return JsonResponse
+     * @param  string  $id  User ID
      */
     public function uploadKYC(string $id, UploadKYCRequest $request): JsonResponse
     {
@@ -59,7 +57,7 @@ class KYCController extends Controller
 
             // Check if user is Artisan or Fournisseur
             $userType = $user->getType()->getValue();
-            if (!in_array($userType, ['ARTISAN', 'FOURNISSEUR'])) {
+            if (! in_array($userType, ['ARTISAN', 'FOURNISSEUR'])) {
                 return response()->json([
                     'error' => 'INVALID_USER_TYPE',
                     'message' => 'La vérification KYC est requise uniquement pour les artisans et fournisseurs',
@@ -77,7 +75,7 @@ class KYCController extends Controller
                 idNumber: $validated['id_number'],
                 idDocumentUrl: Storage::url($idDocumentPath),
                 selfieUrl: Storage::url($selfiePath),
-                submittedAt: new \DateTime()
+                submittedAt: new \DateTime
             );
 
             // Verify KYC documents
@@ -124,14 +122,13 @@ class KYCController extends Controller
     /**
      * Upload a file to storage
      *
-     * @param \Illuminate\Http\UploadedFile $file
-     * @param string $directory
+     * @param  \Illuminate\Http\UploadedFile  $file
      * @return string File path
      */
     private function uploadFile($file, string $directory): string
     {
         // Generate unique filename
-        $filename = uniqid() . '_' . time() . '.' . $file->getClientOriginalExtension();
+        $filename = uniqid().'_'.time().'.'.$file->getClientOriginalExtension();
 
         // Store file
         $path = $file->storeAs($directory, $filename, 'public');

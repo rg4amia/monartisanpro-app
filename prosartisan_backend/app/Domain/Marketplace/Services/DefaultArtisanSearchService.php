@@ -32,9 +32,9 @@ class DefaultArtisanSearchService implements ArtisanSearchService
      * - 2.2: Show artisans within 1km with golden markers at top of results
      * - 2.6: Sort search results by proximity first, then by Score_N'Zassa
      *
-     * @param GPS_Coordinates $location Client's search location
-     * @param TradeCategory|null $category Optional trade category filter
-     * @param float $radiusKm Search radius in kilometers (default 10km)
+     * @param  GPS_Coordinates  $location  Client's search location
+     * @param  TradeCategory|null  $category  Optional trade category filter
+     * @param  float  $radiusKm  Search radius in kilometers (default 10km)
      * @return array Array of arrays with keys: 'artisan' (Artisan), 'distance' (float), 'is_nearby' (bool)
      */
     public function searchNearby(
@@ -67,8 +67,8 @@ class DefaultArtisanSearchService implements ArtisanSearchService
      * 2. Mark artisans ≤1km as "nearby"
      * 3. Sort by: is_nearby DESC, score DESC, distance ASC
      *
-     * @param array $artisans Array of Artisan entities
-     * @param GPS_Coordinates $clientLocation Client's location for distance calculation
+     * @param  array  $artisans  Array of Artisan entities
+     * @param  GPS_Coordinates  $clientLocation  Client's location for distance calculation
      * @return array Array of arrays with keys: 'artisan', 'distance', 'is_nearby', 'score'
      */
     public function applyProximityBoost(array $artisans, GPS_Coordinates $clientLocation): array

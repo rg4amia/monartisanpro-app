@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Api\V1\Financial;
 
-use App\Http\Controllers\Controller;
 use App\Application\UseCases\Financial\BlockEscrowFunds\BlockEscrowFundsCommand;
 use App\Application\UseCases\Financial\BlockEscrowFunds\BlockEscrowFundsHandler;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\Financial\BlockEscrowRequest;
 use App\Http\Resources\Financial\SequestreResource;
 use Illuminate\Http\JsonResponse;
@@ -30,9 +30,6 @@ class EscrowController extends Controller
      * Block funds in escrow after quote acceptance
      *
      * POST /api/v1/escrow/block
-     *
-     * @param BlockEscrowRequest $request
-     * @return JsonResponse
      */
     public function block(BlockEscrowRequest $request): JsonResponse
     {
@@ -50,25 +47,25 @@ class EscrowController extends Controller
             Log::info('Escrow funds blocked successfully', [
                 'sequestre_id' => $sequestre->getId()->getValue(),
                 'mission_id' => $request->validated('mission_id'),
-                'total_amount' => $request->validated('total_amount_centimes')
+                'total_amount' => $request->validated('total_amount_centimes'),
             ]);
 
             return response()->json([
                 'status' => 'success',
                 'message' => 'Funds blocked in escrow successfully',
-                'data' => new SequestreResource($sequestre)
+                'data' => new SequestreResource($sequestre),
             ], 201);
         } catch (\Exception $e) {
             Log::error('Failed to block escrow funds', [
                 'error' => $e->getMessage(),
                 'mission_id' => $request->validated('mission_id'),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
                 'status' => 'error',
                 'message' => 'Failed to block funds in escrow',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }

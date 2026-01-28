@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Api\V1\Payment;
 
 use App\Http\Controllers\Controller;
 use App\Infrastructure\Services\MobileMoney\MobileMoneyWebhookHandler;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -27,9 +27,6 @@ class WebhookController extends Controller
 
     /**
      * Handle Wave webhook callback
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function handleWave(Request $request): JsonResponse
     {
@@ -45,9 +42,6 @@ class WebhookController extends Controller
 
     /**
      * Handle Orange Money webhook callback
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function handleOrangeMoney(Request $request): JsonResponse
     {
@@ -63,9 +57,6 @@ class WebhookController extends Controller
 
     /**
      * Handle MTN Mobile Money webhook callback
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function handleMTN(Request $request): JsonResponse
     {
@@ -81,9 +72,6 @@ class WebhookController extends Controller
 
     /**
      * Handle generic webhook callback (auto-detect provider)
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function handleGeneric(Request $request): JsonResponse
     {
@@ -106,15 +94,13 @@ class WebhookController extends Controller
                 Log::warning('Unknown webhook provider', [
                     'headers' => $request->headers->all(),
                 ]);
+
                 return response()->json(['status' => 'error', 'message' => 'Unknown provider'], 400);
         }
     }
 
     /**
      * Detect mobile money provider from request
-     *
-     * @param Request $request
-     * @return string|null
      */
     private function detectProvider(Request $request): ?string
     {

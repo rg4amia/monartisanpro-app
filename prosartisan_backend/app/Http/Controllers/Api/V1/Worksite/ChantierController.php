@@ -4,12 +4,10 @@ namespace App\Http\Controllers\Api\V1\Worksite;
 
 use App\Domain\Identity\Models\ValueObjects\UserId;
 use App\Domain\Marketplace\Models\ValueObjects\MissionId;
-use App\Domain\Shared\ValueObjects\GPS_Coordinates;
 use App\Domain\Shared\ValueObjects\MoneyAmount;
 use App\Domain\Worksite\Models\Chantier\Chantier;
 use App\Domain\Worksite\Models\Jalon\Jalon;
 use App\Domain\Worksite\Models\ValueObjects\ChantierId;
-use App\Domain\Worksite\Models\ValueObjects\ProofOfDelivery;
 use App\Domain\Worksite\Repositories\ChantierRepository;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Worksite\CreateChantierRequest;
@@ -18,8 +16,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\ValidationException;
 
 /**
  * API Controller for Chantier (Worksite) management
@@ -57,7 +53,7 @@ class ChantierController extends Controller
                 return response()->json([
                     'error' => 'CHANTIER_ALREADY_EXISTS',
                     'message' => 'Un chantier existe déjà pour cette mission',
-                    'status_code' => 409
+                    'status_code' => 409,
                 ], 409);
             }
 
@@ -83,29 +79,29 @@ class ChantierController extends Controller
                 'chantier_id' => $chantier->getId()->getValue(),
                 'mission_id' => $missionId->getValue(),
                 'artisan_id' => $artisanId->getValue(),
-                'milestones_count' => count($chantier->getAllMilestones())
+                'milestones_count' => count($chantier->getAllMilestones()),
             ]);
 
             return response()->json([
                 'message' => 'Chantier créé avec succès',
-                'data' => new ChantierResource($chantier)
+                'data' => new ChantierResource($chantier),
             ], 201);
         } catch (\InvalidArgumentException $e) {
             return response()->json([
                 'error' => 'INVALID_DATA',
                 'message' => $e->getMessage(),
-                'status_code' => 400
+                'status_code' => 400,
             ], 400);
         } catch (\Exception $e) {
             Log::error('Failed to create chantier', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
                 'error' => 'CHANTIER_CREATION_FAILED',
                 'message' => 'Erreur lors de la création du chantier',
-                'status_code' => 500
+                'status_code' => 500,
             ], 500);
         }
     }
@@ -122,11 +118,11 @@ class ChantierController extends Controller
             $chantierId = ChantierId::fromString($id);
             $chantier = $this->chantierRepository->findById($chantierId);
 
-            if (!$chantier) {
+            if (! $chantier) {
                 return response()->json([
                     'error' => 'CHANTIER_NOT_FOUND',
                     'message' => 'Chantier non trouvé',
-                    'status_code' => 404
+                    'status_code' => 404,
                 ], 404);
             }
 
@@ -139,29 +135,29 @@ class ChantierController extends Controller
                 return response()->json([
                     'error' => 'ACCESS_DENIED',
                     'message' => 'Accès refusé à ce chantier',
-                    'status_code' => 403
+                    'status_code' => 403,
                 ], 403);
             }
 
             return response()->json([
-                'data' => new ChantierResource($chantier)
+                'data' => new ChantierResource($chantier),
             ]);
         } catch (\InvalidArgumentException $e) {
             return response()->json([
                 'error' => 'INVALID_CHANTIER_ID',
                 'message' => 'ID de chantier invalide',
-                'status_code' => 400
+                'status_code' => 400,
             ], 400);
         } catch (\Exception $e) {
             Log::error('Failed to retrieve chantier', [
                 'chantier_id' => $id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             return response()->json([
                 'error' => 'CHANTIER_RETRIEVAL_FAILED',
                 'message' => 'Erreur lors de la récupération du chantier',
-                'status_code' => 500
+                'status_code' => 500,
             ], 500);
         }
     }
@@ -195,7 +191,7 @@ class ChantierController extends Controller
 
             foreach ($chantiers as $chantier) {
                 $id = $chantier->getId()->getValue();
-                if (!in_array($id, $seenIds)) {
+                if (! in_array($id, $seenIds)) {
                     $uniqueChantiers[] = $chantier;
                     $seenIds[] = $id;
                 }
@@ -210,19 +206,19 @@ class ChantierController extends Controller
                 'data' => ChantierResource::collection($uniqueChantiers),
                 'meta' => [
                     'total' => count($uniqueChantiers),
-                    'user_type_filter' => $userType
-                ]
+                    'user_type_filter' => $userType,
+                ],
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to retrieve chantiers', [
                 'user_id' => Auth::id(),
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             return response()->json([
                 'error' => 'CHANTIERS_RETRIEVAL_FAILED',
                 'message' => 'Erreur lors de la récupération des chantiers',
-                'status_code' => 500
+                'status_code' => 500,
             ], 500);
         }
     }

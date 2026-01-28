@@ -36,7 +36,7 @@ class AuthenticateAPI
             // Get token from Authorization header
             $authHeader = $request->header('Authorization');
 
-            if (!$authHeader || !str_starts_with($authHeader, 'Bearer ')) {
+            if (! $authHeader || ! str_starts_with($authHeader, 'Bearer ')) {
                 return response()->json([
                     'error' => 'UNAUTHORIZED',
                     'message' => 'Token d\'authentification manquant',

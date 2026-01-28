@@ -15,24 +15,24 @@ use App\Domain\Worksite\Services\DTOs\ValidationResult;
  */
 interface MilestoneValidationService
 {
- /**
-  * Validate proof of delivery
-  *
-  * Requirement 6.2: Validate GPS-tagged photo with timestamp
-  */
- public function validateProof(ProofOfDelivery $proof): ValidationResult;
+    /**
+     * Validate proof of delivery
+     *
+     * Requirement 6.2: Validate GPS-tagged photo with timestamp
+     */
+    public function validateProof(ProofOfDelivery $proof): ValidationResult;
 
- /**
-  * Generate OTP for client validation
-  *
-  * Requirement 6.4: OTP fallback when GPS is unavailable
-  */
- public function generateOTP(PhoneNumber $clientPhone): OTP;
+    /**
+     * Generate OTP for client validation
+     *
+     * Requirement 6.4: OTP fallback when GPS is unavailable
+     */
+    public function generateOTP(PhoneNumber $clientPhone): OTP;
 
- /**
-  * Verify OTP code
-  *
-  * Requirement 6.4: Verify OTP for milestone validation
-  */
- public function verifyOTP(PhoneNumber $phone, string $code): bool;
+    /**
+     * Verify OTP code
+     *
+     * Requirement 6.4: Verify OTP for milestone validation
+     */
+    public function verifyOTP(PhoneNumber $phone, string $code): bool;
 }

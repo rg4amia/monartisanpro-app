@@ -26,313 +26,314 @@ use PHPUnit\Framework\TestCase;
  */
 class LocationPrivacyServiceTest extends TestCase
 {
- private MissionRepository $mockRepository;
- private DefaultLocationPrivacyService $service;
+    private MissionRepository $mockRepository;
 
- protected function setUp(): void
- {
-  parent::setUp();
+    private DefaultLocationPrivacyService $service;
 
-  $this->mockRepository = $this->createMock(MissionRepository::class);
-  $this->service = new DefaultLocationPrivacyService($this->mockRepository);
- }
+    protected function setUp(): void
+    {
+        parent::setUp();
 
- /**
-  * Test that blurCoordinates returns coordinates within specified radius
-  * Requirement 2.4: Apply 50m blur to GPS coordinates
-  */
- public function test_blur_coordinates_returns_coordinates_within_radius(): void
- {
-  $originalCoords = new GPS_Coordinates(5.3600, -4.0083); // Abidjan
-  $blurRadius = 50; // meters
+        $this->mockRepository = $this->createMock(MissionRepository::class);
+        $this->service = new DefaultLocationPrivacyService($this->mockRepository);
+    }
 
-  $blurredCoords = $this->service->blurCoordinates($originalCoords, $blurRadius);
+    /**
+     * Test that blurCoordinates returns coordinates within specified radius
+     * Requirement 2.4: Apply 50m blur to GPS coordinates
+     */
+    public function test_blur_coordinates_returns_coordinates_within_radius(): void
+    {
+        $originalCoords = new GPS_Coordinates(5.3600, -4.0083); // Abidjan
+        $blurRadius = 50; // meters
 
-  // Calculate distance between original and blurred coordinates
-  $distance = $originalCoords->distanceTo($blurredCoords);
+        $blurredCoords = $this->service->blurCoordinates($originalCoords, $blurRadius);
 
-  // Blurred coordinates should be within the specified radius
-  $this->assertLessThanOrEqual(
-   $blurRadius,
-   $distance,
-   "Blurred coordinates should be within {$blurRadius}m of original"
-  );
- }
+        // Calculate distance between original and blurred coordinates
+        $distance = $originalCoords->distanceTo($blurredCoords);
 
- /**
-  * Test that blurCoordinates uses default 50m radius when not specified
-  * Requirement 2.4: Default blur radius is 50m
-  */
- public function test_blur_coordinates_uses_default_50m_radius(): void
- {
-  $originalCoords = new GPS_Coordinates(5.3600, -4.0083);
+        // Blurred coordinates should be within the specified radius
+        $this->assertLessThanOrEqual(
+            $blurRadius,
+            $distance,
+            "Blurred coordinates should be within {$blurRadius}m of original"
+        );
+    }
 
-  $blurredCoords = $this->service->blurCoordinates($originalCoords);
+    /**
+     * Test that blurCoordinates uses default 50m radius when not specified
+     * Requirement 2.4: Default blur radius is 50m
+     */
+    public function test_blur_coordinates_uses_default_50m_radius(): void
+    {
+        $originalCoords = new GPS_Coordinates(5.3600, -4.0083);
 
-  $distance = $originalCoords->distanceTo($blurredCoords);
+        $blurredCoords = $this->service->blurCoordinates($originalCoords);
 
-  // Should be within default 50m radius
-  $this->assertLessThanOrEqual(50, $distance);
- }
+        $distance = $originalCoords->distanceTo($blurredCoords);
 
- /**
-  * Test that blurCoordinates produces different results on multiple calls
-  * (randomness check)
-  */
- public function test_blur_coordinates_produces_random_results(): void
- {
-  $originalCoords = new GPS_Coordinates(5.3600, -4.0083);
+        // Should be within default 50m radius
+        $this->assertLessThanOrEqual(50, $distance);
+    }
 
-  $blurred1 = $this->service->blurCoordinates($originalCoords);
-  $blurred2 = $this->service->blurCoordinates($originalCoords);
-  $blurred3 = $this->service->blurCoordinates($originalCoords);
+    /**
+     * Test that blurCoordinates produces different results on multiple calls
+     * (randomness check)
+     */
+    public function test_blur_coordinates_produces_random_results(): void
+    {
+        $originalCoords = new GPS_Coordinates(5.3600, -4.0083);
 
-  // At least one should be different (very high probability with random blur)
-  $allSame = $blurred1->equals($blurred2) && $blurred2->equals($blurred3);
+        $blurred1 = $this->service->blurCoordinates($originalCoords);
+        $blurred2 = $this->service->blurCoordinates($originalCoords);
+        $blurred3 = $this->service->blurCoordinates($originalCoords);
 
-  $this->assertFalse(
-   $allSame,
-   'Blurred coordinates should vary due to randomness'
-  );
- }
+        // At least one should be different (very high probability with random blur)
+        $allSame = $blurred1->equals($blurred2) && $blurred2->equals($blurred3);
 
- /**
-  * Test that blurCoordinates rejects negative radius
-  */
- public function test_blur_coordinates_rejects_negative_radius(): void
- {
-  $this->expectException(InvalidArgumentException::class);
-  $this->expectExceptionMessage('Blur radius must be positive');
+        $this->assertFalse(
+            $allSame,
+            'Blurred coordinates should vary due to randomness'
+        );
+    }
 
-  $coords = new GPS_Coordinates(5.3600, -4.0083);
-  $this->service->blurCoordinates($coords, -10);
- }
+    /**
+     * Test that blurCoordinates rejects negative radius
+     */
+    public function test_blur_coordinates_rejects_negative_radius(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Blur radius must be positive');
 
- /**
-  * Test that blurCoordinates rejects zero radius
-  */
- public function test_blur_coordinates_rejects_zero_radius(): void
- {
-  $this->expectException(InvalidArgumentException::class);
-  $this->expectExceptionMessage('Blur radius must be positive');
+        $coords = new GPS_Coordinates(5.3600, -4.0083);
+        $this->service->blurCoordinates($coords, -10);
+    }
 
-  $coords = new GPS_Coordinates(5.3600, -4.0083);
-  $this->service->blurCoordinates($coords, 0);
- }
+    /**
+     * Test that blurCoordinates rejects zero radius
+     */
+    public function test_blur_coordinates_rejects_zero_radius(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Blur radius must be positive');
 
- /**
-  * Test that blurCoordinates works with different radius values
-  */
- public function test_blur_coordinates_respects_custom_radius(): void
- {
-  $originalCoords = new GPS_Coordinates(5.3600, -4.0083);
-  $customRadius = 100; // meters
+        $coords = new GPS_Coordinates(5.3600, -4.0083);
+        $this->service->blurCoordinates($coords, 0);
+    }
 
-  $blurredCoords = $this->service->blurCoordinates($originalCoords, $customRadius);
+    /**
+     * Test that blurCoordinates works with different radius values
+     */
+    public function test_blur_coordinates_respects_custom_radius(): void
+    {
+        $originalCoords = new GPS_Coordinates(5.3600, -4.0083);
+        $customRadius = 100; // meters
 
-  $distance = $originalCoords->distanceTo($blurredCoords);
+        $blurredCoords = $this->service->blurCoordinates($originalCoords, $customRadius);
 
-  $this->assertLessThanOrEqual($customRadius, $distance);
- }
+        $distance = $originalCoords->distanceTo($blurredCoords);
 
- /**
-  * Test that revealExactLocation returns exact coordinates for authorized artisan
-  * Requirement 3.5: Reveal exact coordinates after quote acceptance
-  */
- public function test_reveal_exact_location_returns_exact_coordinates_for_authorized_artisan(): void
- {
-  $missionId = MissionId::generate();
-  $artisanId = UserId::generate();
-  $clientId = UserId::generate();
-  $exactLocation = new GPS_Coordinates(5.3600, -4.0083);
+        $this->assertLessThanOrEqual($customRadius, $distance);
+    }
 
-  // Create a mission with an accepted quote from the artisan
-  $mission = $this->createMissionWithAcceptedQuote($missionId, $clientId, $artisanId, $exactLocation);
+    /**
+     * Test that revealExactLocation returns exact coordinates for authorized artisan
+     * Requirement 3.5: Reveal exact coordinates after quote acceptance
+     */
+    public function test_reveal_exact_location_returns_exact_coordinates_for_authorized_artisan(): void
+    {
+        $missionId = MissionId::generate();
+        $artisanId = UserId::generate();
+        $clientId = UserId::generate();
+        $exactLocation = new GPS_Coordinates(5.3600, -4.0083);
 
-  $this->mockRepository
-   ->expects($this->once())
-   ->method('findById')
-   ->with($missionId)
-   ->willReturn($mission);
+        // Create a mission with an accepted quote from the artisan
+        $mission = $this->createMissionWithAcceptedQuote($missionId, $clientId, $artisanId, $exactLocation);
 
-  $revealedLocation = $this->service->revealExactLocation($missionId, $artisanId);
+        $this->mockRepository
+            ->expects($this->once())
+            ->method('findById')
+            ->with($missionId)
+            ->willReturn($mission);
 
-  // Should return exact coordinates
-  $this->assertTrue($exactLocation->equals($revealedLocation));
- }
+        $revealedLocation = $this->service->revealExactLocation($missionId, $artisanId);
 
- /**
-  * Test that revealExactLocation throws exception for non-existent mission
-  */
- public function test_reveal_exact_location_throws_exception_for_non_existent_mission(): void
- {
-  $missionId = MissionId::generate();
-  $artisanId = UserId::generate();
+        // Should return exact coordinates
+        $this->assertTrue($exactLocation->equals($revealedLocation));
+    }
 
-  $this->mockRepository
-   ->expects($this->once())
-   ->method('findById')
-   ->with($missionId)
-   ->willReturn(null);
+    /**
+     * Test that revealExactLocation throws exception for non-existent mission
+     */
+    public function test_reveal_exact_location_throws_exception_for_non_existent_mission(): void
+    {
+        $missionId = MissionId::generate();
+        $artisanId = UserId::generate();
 
-  $this->expectException(InvalidArgumentException::class);
-  $this->expectExceptionMessage("Mission {$missionId->getValue()} not found");
+        $this->mockRepository
+            ->expects($this->once())
+            ->method('findById')
+            ->with($missionId)
+            ->willReturn(null);
 
-  $this->service->revealExactLocation($missionId, $artisanId);
- }
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage("Mission {$missionId->getValue()} not found");
 
- /**
-  * Test that revealExactLocation throws exception when no quote is accepted
-  */
- public function test_reveal_exact_location_throws_exception_when_no_quote_accepted(): void
- {
-  $missionId = MissionId::generate();
-  $artisanId = UserId::generate();
-  $clientId = UserId::generate();
-  $location = new GPS_Coordinates(5.3600, -4.0083);
+        $this->service->revealExactLocation($missionId, $artisanId);
+    }
 
-  // Create mission without accepted quote
-  $mission = $this->createMissionWithoutAcceptedQuote($missionId, $clientId, $location);
+    /**
+     * Test that revealExactLocation throws exception when no quote is accepted
+     */
+    public function test_reveal_exact_location_throws_exception_when_no_quote_accepted(): void
+    {
+        $missionId = MissionId::generate();
+        $artisanId = UserId::generate();
+        $clientId = UserId::generate();
+        $location = new GPS_Coordinates(5.3600, -4.0083);
 
-  $this->mockRepository
-   ->expects($this->once())
-   ->method('findById')
-   ->with($missionId)
-   ->willReturn($mission);
+        // Create mission without accepted quote
+        $mission = $this->createMissionWithoutAcceptedQuote($missionId, $clientId, $location);
 
-  $this->expectException(InvalidArgumentException::class);
-  $this->expectExceptionMessage("No accepted quote found for mission {$missionId->getValue()}");
+        $this->mockRepository
+            ->expects($this->once())
+            ->method('findById')
+            ->with($missionId)
+            ->willReturn($mission);
 
-  $this->service->revealExactLocation($missionId, $artisanId);
- }
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage("No accepted quote found for mission {$missionId->getValue()}");
 
- /**
-  * Test that revealExactLocation throws exception for unauthorized artisan
-  * Requirement 3.5: Only artisan with accepted quote can view exact location
-  */
- public function test_reveal_exact_location_throws_exception_for_unauthorized_artisan(): void
- {
-  $missionId = MissionId::generate();
-  $authorizedArtisanId = UserId::generate();
-  $unauthorizedArtisanId = UserId::generate();
-  $clientId = UserId::generate();
-  $location = new GPS_Coordinates(5.3600, -4.0083);
+        $this->service->revealExactLocation($missionId, $artisanId);
+    }
 
-  // Create mission with accepted quote from authorized artisan
-  $mission = $this->createMissionWithAcceptedQuote($missionId, $clientId, $authorizedArtisanId, $location);
+    /**
+     * Test that revealExactLocation throws exception for unauthorized artisan
+     * Requirement 3.5: Only artisan with accepted quote can view exact location
+     */
+    public function test_reveal_exact_location_throws_exception_for_unauthorized_artisan(): void
+    {
+        $missionId = MissionId::generate();
+        $authorizedArtisanId = UserId::generate();
+        $unauthorizedArtisanId = UserId::generate();
+        $clientId = UserId::generate();
+        $location = new GPS_Coordinates(5.3600, -4.0083);
 
-  $this->mockRepository
-   ->expects($this->once())
-   ->method('findById')
-   ->with($missionId)
-   ->willReturn($mission);
+        // Create mission with accepted quote from authorized artisan
+        $mission = $this->createMissionWithAcceptedQuote($missionId, $clientId, $authorizedArtisanId, $location);
 
-  $this->expectException(InvalidArgumentException::class);
-  $this->expectExceptionMessage(
-   "Artisan {$unauthorizedArtisanId->getValue()} is not authorized to view exact location"
-  );
+        $this->mockRepository
+            ->expects($this->once())
+            ->method('findById')
+            ->with($missionId)
+            ->willReturn($mission);
 
-  // Try to reveal location with different artisan ID
-  $this->service->revealExactLocation($missionId, $unauthorizedArtisanId);
- }
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage(
+            "Artisan {$unauthorizedArtisanId->getValue()} is not authorized to view exact location"
+        );
 
- /**
-  * Test that blurred and exact coordinates are different
-  */
- public function test_blurred_and_exact_coordinates_are_different(): void
- {
-  $exactCoords = new GPS_Coordinates(5.3600, -4.0083);
-  $blurredCoords = $this->service->blurCoordinates($exactCoords);
+        // Try to reveal location with different artisan ID
+        $this->service->revealExactLocation($missionId, $unauthorizedArtisanId);
+    }
 
-  $this->assertFalse(
-   $exactCoords->equals($blurredCoords),
-   'Blurred coordinates should differ from exact coordinates'
-  );
- }
+    /**
+     * Test that blurred and exact coordinates are different
+     */
+    public function test_blurred_and_exact_coordinates_are_different(): void
+    {
+        $exactCoords = new GPS_Coordinates(5.3600, -4.0083);
+        $blurredCoords = $this->service->blurCoordinates($exactCoords);
 
- /**
-  * Test that blurring preserves coordinate validity
-  */
- public function test_blur_preserves_coordinate_validity(): void
- {
-  // Test with edge case coordinates
-  $northPole = new GPS_Coordinates(89.0, 0.0);
-  $southPole = new GPS_Coordinates(-89.0, 0.0);
-  $dateLine = new GPS_Coordinates(0.0, 179.0);
+        $this->assertFalse(
+            $exactCoords->equals($blurredCoords),
+            'Blurred coordinates should differ from exact coordinates'
+        );
+    }
 
-  // Should not throw exceptions
-  $blurredNorth = $this->service->blurCoordinates($northPole);
-  $blurredSouth = $this->service->blurCoordinates($southPole);
-  $blurredDate = $this->service->blurCoordinates($dateLine);
+    /**
+     * Test that blurring preserves coordinate validity
+     */
+    public function test_blur_preserves_coordinate_validity(): void
+    {
+        // Test with edge case coordinates
+        $northPole = new GPS_Coordinates(89.0, 0.0);
+        $southPole = new GPS_Coordinates(-89.0, 0.0);
+        $dateLine = new GPS_Coordinates(0.0, 179.0);
 
-  // Verify they are valid GPS_Coordinates objects
-  $this->assertInstanceOf(GPS_Coordinates::class, $blurredNorth);
-  $this->assertInstanceOf(GPS_Coordinates::class, $blurredSouth);
-  $this->assertInstanceOf(GPS_Coordinates::class, $blurredDate);
- }
+        // Should not throw exceptions
+        $blurredNorth = $this->service->blurCoordinates($northPole);
+        $blurredSouth = $this->service->blurCoordinates($southPole);
+        $blurredDate = $this->service->blurCoordinates($dateLine);
 
- /**
-  * Helper method to create a mission with an accepted quote
-  */
- private function createMissionWithAcceptedQuote(
-  MissionId $missionId,
-  UserId $clientId,
-  UserId $artisanId,
-  GPS_Coordinates $location
- ): Mission {
-  // Create a real mission
-  $mission = new Mission(
-   $missionId,
-   $clientId,
-   'Test mission description',
-   TradeCategory::PLUMBER(),
-   $location,
-   MoneyAmount::fromCentimes(100000), // 1000 XOF
-   MoneyAmount::fromCentimes(500000)  // 5000 XOF
-  );
+        // Verify they are valid GPS_Coordinates objects
+        $this->assertInstanceOf(GPS_Coordinates::class, $blurredNorth);
+        $this->assertInstanceOf(GPS_Coordinates::class, $blurredSouth);
+        $this->assertInstanceOf(GPS_Coordinates::class, $blurredDate);
+    }
 
-  // Create a devis with line items
-  $lineItems = [
-   new DevisLine(
-    'Materials',
-    1,
-    MoneyAmount::fromCentimes(200000),
-    DevisLineType::MATERIAL()
-   ),
-   new DevisLine(
-    'Labor',
-    1,
-    MoneyAmount::fromCentimes(100000),
-    DevisLineType::LABOR()
-   ),
-  ];
+    /**
+     * Helper method to create a mission with an accepted quote
+     */
+    private function createMissionWithAcceptedQuote(
+        MissionId $missionId,
+        UserId $clientId,
+        UserId $artisanId,
+        GPS_Coordinates $location
+    ): Mission {
+        // Create a real mission
+        $mission = new Mission(
+            $missionId,
+            $clientId,
+            'Test mission description',
+            TradeCategory::PLUMBER(),
+            $location,
+            MoneyAmount::fromCentimes(100000), // 1000 XOF
+            MoneyAmount::fromCentimes(500000)  // 5000 XOF
+        );
 
-  $devis = Devis::create($missionId, $artisanId, $lineItems);
+        // Create a devis with line items
+        $lineItems = [
+            new DevisLine(
+                'Materials',
+                1,
+                MoneyAmount::fromCentimes(200000),
+                DevisLineType::MATERIAL()
+            ),
+            new DevisLine(
+                'Labor',
+                1,
+                MoneyAmount::fromCentimes(100000),
+                DevisLineType::LABOR()
+            ),
+        ];
 
-  // Add the devis to the mission and accept it
-  $mission->addQuote($devis);
-  $mission->acceptQuote($devis->getId());
+        $devis = Devis::create($missionId, $artisanId, $lineItems);
 
-  return $mission;
- }
+        // Add the devis to the mission and accept it
+        $mission->addQuote($devis);
+        $mission->acceptQuote($devis->getId());
 
- /**
-  * Helper method to create a mission without accepted quote
-  */
- private function createMissionWithoutAcceptedQuote(
-  MissionId $missionId,
-  UserId $clientId,
-  GPS_Coordinates $location
- ): Mission {
-  // Create a real mission without any quotes
-  return new Mission(
-   $missionId,
-   $clientId,
-   'Test mission description',
-   TradeCategory::PLUMBER(),
-   $location,
-   MoneyAmount::fromCentimes(100000),
-   MoneyAmount::fromCentimes(500000)
-  );
- }
+        return $mission;
+    }
+
+    /**
+     * Helper method to create a mission without accepted quote
+     */
+    private function createMissionWithoutAcceptedQuote(
+        MissionId $missionId,
+        UserId $clientId,
+        GPS_Coordinates $location
+    ): Mission {
+        // Create a real mission without any quotes
+        return new Mission(
+            $missionId,
+            $clientId,
+            'Test mission description',
+            TradeCategory::PLUMBER(),
+            $location,
+            MoneyAmount::fromCentimes(100000),
+            MoneyAmount::fromCentimes(500000)
+        );
+    }
 }

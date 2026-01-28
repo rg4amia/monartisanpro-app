@@ -9,10 +9,10 @@ namespace App\Application\UseCases\Financial\GetTransactionHistory;
  */
 final class GetTransactionHistoryQuery
 {
- public function __construct(
-  public readonly string $userId,
-  public readonly int $page = 1,
-  public readonly int $limit = 20,
-  public readonly ?string $type = null
- ) {}
+    public function __construct(
+        public readonly string $userId,
+        public readonly int $page = 1,
+        public readonly int $limit = 20,
+        public readonly ?string $type = null
+    ) {}
 }

@@ -31,7 +31,9 @@ use Illuminate\Support\Facades\Log;
 class LaravelAuthenticationService implements AuthenticationService
 {
     private const TOKEN_EXPIRATION_HOURS = 24;
+
     private const OTP_CACHE_PREFIX = 'otp:';
+
     private const OTP_EXPIRATION_MINUTES = 5;
 
     public function __construct(
@@ -48,7 +50,7 @@ class LaravelAuthenticationService implements AuthenticationService
         $user = $this->userRepository->findByEmail($email);
 
         if ($user === null) {
-            throw new InvalidCredentialsException();
+            throw new InvalidCredentialsException;
         }
 
         // Check if account is locked
@@ -58,16 +60,16 @@ class LaravelAuthenticationService implements AuthenticationService
 
         // Check if account is suspended
         if ($user->isSuspended()) {
-            throw new AccountSuspendedException();
+            throw new AccountSuspendedException;
         }
 
         // Verify password
-        if (!$user->verifyPassword($password)) {
+        if (! $user->verifyPassword($password)) {
             // Record failed attempt
             $user->recordFailedLoginAttempt();
             $this->userRepository->save($user);
 
-            throw new InvalidCredentialsException();
+            throw new InvalidCredentialsException;
         }
 
         // Reset failed attempts on successful login
@@ -88,7 +90,7 @@ class LaravelAuthenticationService implements AuthenticationService
             $otp = OTP::generate($phone);
 
             // Store OTP in cache with expiration
-            $cacheKey = self::OTP_CACHE_PREFIX . $phone->getValue();
+            $cacheKey = self::OTP_CACHE_PREFIX.$phone->getValue();
             Cache::put($cacheKey, $otp->getCode(), now()->addMinutes(self::OTP_EXPIRATION_MINUTES));
 
             // Send OTP via SMS if service is available
@@ -111,7 +113,7 @@ class LaravelAuthenticationService implements AuthenticationService
      */
     public function verifyOTP(PhoneNumber $phone, string $code): bool
     {
-        $cacheKey = self::OTP_CACHE_PREFIX . $phone->getValue();
+        $cacheKey = self::OTP_CACHE_PREFIX.$phone->getValue();
         $storedCode = Cache::get($cacheKey);
 
         if ($storedCode === null) {
@@ -143,7 +145,7 @@ class LaravelAuthenticationService implements AuthenticationService
         ];
 
         // Calculate expiration
-        $expiresAt = new DateTime('+' . self::TOKEN_EXPIRATION_HOURS . ' hours');
+        $expiresAt = new DateTime('+'.self::TOKEN_EXPIRATION_HOURS.' hours');
 
         // Generate JWT token using simple encoding
         // In production, use a proper JWT library like firebase/php-jwt
@@ -166,7 +168,7 @@ class LaravelAuthenticationService implements AuthenticationService
             }
 
             // Return user ID
-            if (!isset($payload['user_id'])) {
+            if (! isset($payload['user_id'])) {
                 throw new InvalidTokenException('Invalid token payload');
             }
 
@@ -198,8 +200,8 @@ class LaravelAuthenticationService implements AuthenticationService
     /**
      * Encode payload into JWT token
      *
-     * @param array $payload Token payload
-     * @param DateTime $expiresAt Expiration time
+     * @param  array  $payload  Token payload
+     * @param  DateTime  $expiresAt  Expiration time
      * @return string JWT token
      */
     private function encodeJWT(array $payload, DateTime $expiresAt): string
@@ -213,7 +215,7 @@ class LaravelAuthenticationService implements AuthenticationService
         // Create header
         $header = [
             'typ' => 'JWT',
-            'alg' => 'HS256'
+            'alg' => 'HS256',
         ];
 
         // Encode header and payload
@@ -231,8 +233,9 @@ class LaravelAuthenticationService implements AuthenticationService
     /**
      * Decode JWT token and verify signature
      *
-     * @param string $token JWT token
+     * @param  string  $token  JWT token
      * @return array Token payload
+     *
      * @throws InvalidTokenException
      */
     private function decodeJWT(string $token): array

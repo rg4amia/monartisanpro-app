@@ -17,8 +17,7 @@ class AuthResource extends JsonResource
     /**
      * Create a new resource instance.
      *
-     * @param mixed $resource
-     * @param string $token
+     * @param  mixed  $resource
      */
     public function __construct($resource, string $token)
     {

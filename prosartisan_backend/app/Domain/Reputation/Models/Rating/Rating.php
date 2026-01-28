@@ -13,96 +13,103 @@ use DateTime;
  */
 class Rating
 {
- private RatingId $id;
- private MissionId $missionId;
- private UserId $clientId;
- private UserId $artisanId;
- private RatingValue $rating;
- private ?string $comment;
- private DateTime $createdAt;
- private DateTime $updatedAt;
+    private RatingId $id;
 
- public function __construct(
-  RatingId $id,
-  MissionId $missionId,
-  UserId $clientId,
-  UserId $artisanId,
-  RatingValue $rating,
-  ?string $comment = null,
-  ?DateTime $createdAt = null,
-  ?DateTime $updatedAt = null
- ) {
-  $this->id = $id;
-  $this->missionId = $missionId;
-  $this->clientId = $clientId;
-  $this->artisanId = $artisanId;
-  $this->rating = $rating;
-  $this->comment = $comment;
-  $this->createdAt = $createdAt ?? new DateTime();
-  $this->updatedAt = $updatedAt ?? new DateTime();
- }
+    private MissionId $missionId;
 
- public static function create(
-  MissionId $missionId,
-  UserId $clientId,
-  UserId $artisanId,
-  RatingValue $rating,
-  ?string $comment = null
- ): self {
-  return new self(
-   RatingId::generate(),
-   $missionId,
-   $clientId,
-   $artisanId,
-   $rating,
-   $comment
-  );
- }
+    private UserId $clientId;
 
- public function updateRating(RatingValue $rating, ?string $comment = null): void
- {
-  $this->rating = $rating;
-  $this->comment = $comment;
-  $this->updatedAt = new DateTime();
- }
+    private UserId $artisanId;
 
- public function getId(): RatingId
- {
-  return $this->id;
- }
+    private RatingValue $rating;
 
- public function getMissionId(): MissionId
- {
-  return $this->missionId;
- }
+    private ?string $comment;
 
- public function getClientId(): UserId
- {
-  return $this->clientId;
- }
+    private DateTime $createdAt;
 
- public function getArtisanId(): UserId
- {
-  return $this->artisanId;
- }
+    private DateTime $updatedAt;
 
- public function getRating(): RatingValue
- {
-  return $this->rating;
- }
+    public function __construct(
+        RatingId $id,
+        MissionId $missionId,
+        UserId $clientId,
+        UserId $artisanId,
+        RatingValue $rating,
+        ?string $comment = null,
+        ?DateTime $createdAt = null,
+        ?DateTime $updatedAt = null
+    ) {
+        $this->id = $id;
+        $this->missionId = $missionId;
+        $this->clientId = $clientId;
+        $this->artisanId = $artisanId;
+        $this->rating = $rating;
+        $this->comment = $comment;
+        $this->createdAt = $createdAt ?? new DateTime;
+        $this->updatedAt = $updatedAt ?? new DateTime;
+    }
 
- public function getComment(): ?string
- {
-  return $this->comment;
- }
+    public static function create(
+        MissionId $missionId,
+        UserId $clientId,
+        UserId $artisanId,
+        RatingValue $rating,
+        ?string $comment = null
+    ): self {
+        return new self(
+            RatingId::generate(),
+            $missionId,
+            $clientId,
+            $artisanId,
+            $rating,
+            $comment
+        );
+    }
 
- public function getCreatedAt(): DateTime
- {
-  return $this->createdAt;
- }
+    public function updateRating(RatingValue $rating, ?string $comment = null): void
+    {
+        $this->rating = $rating;
+        $this->comment = $comment;
+        $this->updatedAt = new DateTime;
+    }
 
- public function getUpdatedAt(): DateTime
- {
-  return $this->updatedAt;
- }
+    public function getId(): RatingId
+    {
+        return $this->id;
+    }
+
+    public function getMissionId(): MissionId
+    {
+        return $this->missionId;
+    }
+
+    public function getClientId(): UserId
+    {
+        return $this->clientId;
+    }
+
+    public function getArtisanId(): UserId
+    {
+        return $this->artisanId;
+    }
+
+    public function getRating(): RatingValue
+    {
+        return $this->rating;
+    }
+
+    public function getComment(): ?string
+    {
+        return $this->comment;
+    }
+
+    public function getCreatedAt(): DateTime
+    {
+        return $this->createdAt;
+    }
+
+    public function getUpdatedAt(): DateTime
+    {
+        return $this->updatedAt;
+    }
 }

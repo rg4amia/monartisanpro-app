@@ -4,8 +4,8 @@ namespace App\Domain\Financial\Repositories;
 
 use App\Domain\Financial\Models\Sequestre\Sequestre;
 use App\Domain\Financial\Models\ValueObjects\SequestreId;
-use App\Domain\Marketplace\Models\ValueObjects\MissionId;
 use App\Domain\Identity\Models\ValueObjects\UserId;
+use App\Domain\Marketplace\Models\ValueObjects\MissionId;
 
 /**
  * Repository interface for Sequestre aggregate

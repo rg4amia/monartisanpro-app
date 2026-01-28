@@ -11,9 +11,11 @@ use InvalidArgumentException;
 final class Currency
 {
     private const XOF_CODE = 'XOF';
+
     private const XOF_SYMBOL = 'FCFA';
 
     private string $code;
+
     private string $symbol;
 
     private function __construct(string $code, string $symbol)

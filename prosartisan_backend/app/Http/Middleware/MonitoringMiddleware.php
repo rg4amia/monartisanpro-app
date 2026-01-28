@@ -2,8 +2,8 @@
 
 namespace App\Http\Middleware;
 
-use App\Infrastructure\Services\Monitoring\StructuredLogger;
 use App\Infrastructure\Services\Monitoring\MetricsCollector;
+use App\Infrastructure\Services\Monitoring\StructuredLogger;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -25,7 +25,7 @@ class MonitoringMiddleware
         $correlationId = $request->header('X-Correlation-ID') ?? StructuredLogger::setCorrelationId();
 
         // Start timing
-        $timing = StructuredLogger::startTiming($request->getMethod() . ' ' . $request->getPathInfo());
+        $timing = StructuredLogger::startTiming($request->getMethod().' '.$request->getPathInfo());
 
         // Log incoming request
         StructuredLogger::info('Incoming request', [
@@ -49,7 +49,7 @@ class MonitoringMiddleware
             // Record response time metric
             $responseTime = (microtime(true) - $timing['start_time']) * 1000;
             MetricsCollector::recordResponseTime(
-                $request->getMethod() . ' ' . $request->getPathInfo(),
+                $request->getMethod().' '.$request->getPathInfo(),
                 $responseTime
             );
 
@@ -74,7 +74,7 @@ class MonitoringMiddleware
             // Record error metric
             MetricsCollector::recordError(
                 get_class($e),
-                $request->getMethod() . ' ' . $request->getPathInfo(),
+                $request->getMethod().' '.$request->getPathInfo(),
                 $e->getMessage()
             );
 

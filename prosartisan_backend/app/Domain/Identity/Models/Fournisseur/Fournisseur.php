@@ -20,7 +20,9 @@ use DateTime;
 final class Fournisseur extends User
 {
     private string $businessName;
+
     private GPS_Coordinates $shopLocation;
+
     private bool $isKYCVerified;
 
     public function __construct(
@@ -87,7 +89,7 @@ final class Fournisseur extends User
     {
         parent::verifyKYC($documents);
         $this->isKYCVerified = true;
-        $this->updatedAt = new DateTime();
+        $this->updatedAt = new DateTime;
     }
 
     /**
@@ -95,7 +97,7 @@ final class Fournisseur extends User
      */
     public function canValidateJetons(): bool
     {
-        return $this->isKYCVerified && $this->isActive() && !$this->isLocked();
+        return $this->isKYCVerified && $this->isActive() && ! $this->isLocked();
     }
 
     /**
@@ -108,7 +110,7 @@ final class Fournisseur extends User
         }
 
         $this->businessName = $newBusinessName;
-        $this->updatedAt = new DateTime();
+        $this->updatedAt = new DateTime;
     }
 
     /**
@@ -117,7 +119,7 @@ final class Fournisseur extends User
     public function updateShopLocation(GPS_Coordinates $newLocation): void
     {
         $this->shopLocation = $newLocation;
-        $this->updatedAt = new DateTime();
+        $this->updatedAt = new DateTime;
     }
 
     /**
@@ -126,7 +128,7 @@ final class Fournisseur extends User
     public function updatePhoneNumber(PhoneNumber $newPhoneNumber): void
     {
         $this->phoneNumber = $newPhoneNumber;
-        $this->updatedAt = new DateTime();
+        $this->updatedAt = new DateTime;
     }
 
     // Getters
@@ -147,6 +149,7 @@ final class Fournisseur extends User
         if ($this->phoneNumber === null) {
             throw new \LogicException('Fournisseur must have a phone number');
         }
+
         return $this->phoneNumber;
     }
 

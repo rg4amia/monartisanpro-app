@@ -33,7 +33,7 @@ class CreateQuoteRequest extends FormRequest
             'line_items.*.unit_price_centimes' => ['required', 'integer', 'min:1'],
             'line_items.*.type' => ['required', 'string', Rule::in([
                 DevisLineType::MATERIAL,
-                DevisLineType::LABOR
+                DevisLineType::LABOR,
             ])],
         ];
     }
@@ -66,7 +66,7 @@ class CreateQuoteRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         // Ensure line_items is an array
-        if (!is_array($this->line_items)) {
+        if (! is_array($this->line_items)) {
             $this->merge(['line_items' => []]);
         }
     }

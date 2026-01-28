@@ -15,8 +15,11 @@ use DateTime;
 final class FundsBlocked
 {
     public SequestreId $sequestreId;
+
     public MissionId $missionId;
+
     public MoneyAmount $totalAmount;
+
     public DateTime $occurredAt;
 
     public function __construct(
@@ -28,7 +31,7 @@ final class FundsBlocked
         $this->sequestreId = $sequestreId;
         $this->missionId = $missionId;
         $this->totalAmount = $totalAmount;
-        $this->occurredAt = $occurredAt ?? new DateTime();
+        $this->occurredAt = $occurredAt ?? new DateTime;
     }
 
     public function toArray(): array

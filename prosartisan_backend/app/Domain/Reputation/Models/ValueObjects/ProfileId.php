@@ -45,7 +45,7 @@ final class ProfileId
 
     private function validateUuid(string $value): void
     {
-        if (!Str::isUuid($value)) {
+        if (! Str::isUuid($value)) {
             throw new InvalidArgumentException("Invalid UUID format: {$value}");
         }
     }

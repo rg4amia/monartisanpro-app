@@ -9,11 +9,11 @@ namespace App\Application\UseCases\Financial\BlockEscrowFunds;
  */
 final class BlockEscrowFundsCommand
 {
- public function __construct(
-  public readonly string $missionId,
-  public readonly string $devisId,
-  public readonly string $clientId,
-  public readonly string $artisanId,
-  public readonly int $totalAmountCentimes
- ) {}
+    public function __construct(
+        public readonly string $missionId,
+        public readonly string $devisId,
+        public readonly string $clientId,
+        public readonly string $artisanId,
+        public readonly int $totalAmountCentimes
+    ) {}
 }

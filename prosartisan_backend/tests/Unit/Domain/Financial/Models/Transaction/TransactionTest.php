@@ -5,7 +5,6 @@ namespace Tests\Unit\Domain\Financial\Models\Transaction;
 use App\Domain\Financial\Models\Transaction\Transaction;
 use App\Domain\Financial\Models\ValueObjects\TransactionId;
 use App\Domain\Financial\Models\ValueObjects\TransactionType;
-use App\Domain\Financial\Models\ValueObjects\TransactionStatus;
 use App\Domain\Identity\Models\ValueObjects\UserId;
 use App\Domain\Shared\ValueObjects\MoneyAmount;
 use DateTime;
@@ -15,7 +14,9 @@ use PHPUnit\Framework\TestCase;
 class TransactionTest extends TestCase
 {
     private UserId $fromUserId;
+
     private UserId $toUserId;
+
     private MoneyAmount $amount;
 
     protected function setUp(): void

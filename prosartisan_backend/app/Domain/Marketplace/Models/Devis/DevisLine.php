@@ -13,8 +13,11 @@ use InvalidArgumentException;
 final class DevisLine
 {
     private string $description;
+
     private int $quantity;
+
     private MoneyAmount $unitPrice;
+
     private DevisLineType $type;
 
     public function __construct(

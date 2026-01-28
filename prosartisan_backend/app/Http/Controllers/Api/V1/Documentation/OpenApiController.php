@@ -14,45 +14,41 @@ use Illuminate\Support\Facades\File;
  */
 class OpenApiController extends Controller
 {
- /**
-  * Get the OpenAPI specification in JSON format
-  *
-  * @return JsonResponse
-  */
- public function getSpec(): JsonResponse
- {
-  $specPath = storage_path('api-docs/api-docs.json');
+    /**
+     * Get the OpenAPI specification in JSON format
+     */
+    public function getSpec(): JsonResponse
+    {
+        $specPath = storage_path('api-docs/api-docs.json');
 
-  if (!File::exists($specPath)) {
-   return response()->json([
-    'error' => 'DOCUMENTATION_NOT_FOUND',
-    'message' => 'API documentation not found',
-    'status_code' => 404
-   ], 404);
-  }
+        if (! File::exists($specPath)) {
+            return response()->json([
+                'error' => 'DOCUMENTATION_NOT_FOUND',
+                'message' => 'API documentation not found',
+                'status_code' => 404,
+            ], 404);
+        }
 
-  $spec = File::get($specPath);
-  $decodedSpec = json_decode($spec, true);
+        $spec = File::get($specPath);
+        $decodedSpec = json_decode($spec, true);
 
-  if (json_last_error() !== JSON_ERROR_NONE) {
-   return response()->json([
-    'error' => 'INVALID_DOCUMENTATION',
-    'message' => 'API documentation is malformed',
-    'status_code' => 500
-   ], 500);
-  }
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return response()->json([
+                'error' => 'INVALID_DOCUMENTATION',
+                'message' => 'API documentation is malformed',
+                'status_code' => 500,
+            ], 500);
+        }
 
-  return response()->json($decodedSpec);
- }
+        return response()->json($decodedSpec);
+    }
 
- /**
-  * Serve the Swagger UI documentation page
-  *
-  * @return Response
-  */
- public function getSwaggerUI(): Response
- {
-  $html = '<!DOCTYPE html>
+    /**
+     * Serve the Swagger UI documentation page
+     */
+    public function getSwaggerUI(): Response
+    {
+        $html = '<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -80,7 +76,7 @@ class OpenApiController extends Controller
     <script>
         window.onload = function() {
             const ui = SwaggerUIBundle({
-                url: "' . url('/api/v1/docs/spec') . '",
+                url: "'.url('/api/v1/docs/spec').'",
                 dom_id: "#swagger-ui",
                 deepLinking: true,
                 presets: [
@@ -103,6 +99,6 @@ class OpenApiController extends Controller
 </body>
 </html>';
 
-  return response($html)->header('Content-Type', 'text/html');
- }
+        return response($html)->header('Content-Type', 'text/html');
+    }
 }

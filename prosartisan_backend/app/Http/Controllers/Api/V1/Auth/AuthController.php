@@ -47,9 +47,6 @@ class AuthController extends Controller
      *
      * Creates a new user account (Client, Artisan, or Fournisseur)
      * Artisans and Fournisseurs require KYC verification before full access
-     *
-     * @param RegisterRequest $request
-     * @return JsonResponse
      */
     public function register(RegisterRequest $request): JsonResponse
     {
@@ -107,9 +104,6 @@ class AuthController extends Controller
      *
      * Authenticates user with email and password
      * Returns JWT token on success
-     *
-     * @param LoginRequest $request
-     * @return JsonResponse
      */
     public function login(LoginRequest $request): JsonResponse
     {
@@ -126,7 +120,7 @@ class AuthController extends Controller
             $user = $this->userRepository->findByEmail($email);
 
             if ($user === null) {
-                throw new InvalidCredentialsException();
+                throw new InvalidCredentialsException;
             }
 
             // Return response with user data and token
@@ -173,9 +167,6 @@ class AuthController extends Controller
      * POST /api/v1/auth/otp/generate
      *
      * Generates and sends a 6-digit OTP code via SMS
-     *
-     * @param GenerateOTPRequest $request
-     * @return JsonResponse
      */
     public function generateOTP(GenerateOTPRequest $request): JsonResponse
     {
@@ -221,9 +212,6 @@ class AuthController extends Controller
      * POST /api/v1/auth/otp/verify
      *
      * Verifies a 6-digit OTP code
-     *
-     * @param VerifyOTPRequest $request
-     * @return JsonResponse
      */
     public function verifyOTP(VerifyOTPRequest $request): JsonResponse
     {
@@ -236,7 +224,7 @@ class AuthController extends Controller
             // Verify OTP
             $isValid = $this->authService->verifyOTP($phoneNumber, $validated['code']);
 
-            if (!$isValid) {
+            if (! $isValid) {
                 return response()->json([
                     'error' => 'INVALID_OTP',
                     'message' => 'Code OTP invalide ou expiré',

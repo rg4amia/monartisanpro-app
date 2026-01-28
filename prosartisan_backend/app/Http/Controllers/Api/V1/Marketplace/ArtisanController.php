@@ -36,7 +36,7 @@ class ArtisanController extends Controller
             'category' => ['nullable', 'string', Rule::in([
                 TradeCategory::PLUMBER,
                 TradeCategory::ELECTRICIAN,
-                TradeCategory::MASON
+                TradeCategory::MASON,
             ])],
             'radius_km' => ['nullable', 'numeric', 'min:0.1', 'max:50'],
             'page' => ['nullable', 'integer', 'min:1'],
@@ -71,7 +71,7 @@ class ArtisanController extends Controller
                 'distance_meters' => $result['distance'],
                 'distance_km' => round($result['distance'] / 1000, 2),
                 'is_nearby' => $result['is_nearby'], // Within 1km (golden marker)
-                'score' => $result['score'] // N'Zassa score (placeholder for now)
+                'score' => $result['score'], // N'Zassa score (placeholder for now)
             ];
         }, $paginatedResults);
 
@@ -82,7 +82,7 @@ class ArtisanController extends Controller
             'meta' => [
                 'search_location' => [
                     'latitude' => $location->getLatitude(),
-                    'longitude' => $location->getLongitude()
+                    'longitude' => $location->getLongitude(),
                 ],
                 'search_radius_km' => $radiusKm,
                 'category_filter' => $category?->getValue(),
@@ -92,14 +92,14 @@ class ArtisanController extends Controller
                 'last_page' => $lastPage,
                 'from' => $offset + 1,
                 'to' => min($offset + $perPage, $total),
-                'nearby_count' => count(array_filter($results, fn($r) => $r['is_nearby']))
+                'nearby_count' => count(array_filter($results, fn ($r) => $r['is_nearby'])),
             ],
             'links' => [
                 'first' => $request->fullUrlWithQuery(['page' => 1]),
                 'last' => $request->fullUrlWithQuery(['page' => $lastPage]),
                 'prev' => $page > 1 ? $request->fullUrlWithQuery(['page' => $page - 1]) : null,
                 'next' => $page < $lastPage ? $request->fullUrlWithQuery(['page' => $page + 1]) : null,
-            ]
+            ],
         ]);
     }
 }

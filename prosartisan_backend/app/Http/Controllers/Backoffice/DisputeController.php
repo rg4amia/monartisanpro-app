@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers\Backoffice;
 
+use App\Domain\Dispute\Models\ValueObjects\DecisionType;
+use App\Domain\Dispute\Models\ValueObjects\DisputeStatus;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
-use App\Domain\Dispute\Models\ValueObjects\DisputeStatus;
-use App\Domain\Dispute\Models\ValueObjects\DecisionType;
+use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
 
 class DisputeController extends Controller
 {
@@ -20,7 +20,7 @@ class DisputeController extends Controller
                 'missions.description as mission_description',
                 'reporter.email as reporter_email',
                 'defendant.email as defendant_email',
-                'mediator.email as mediator_email'
+                'mediator.email as mediator_email',
             ])
             ->leftJoin('missions', 'litiges.mission_id', '=', 'missions.id')
             ->leftJoin('users as reporter', 'litiges.reporter_id', '=', 'reporter.id')
@@ -69,7 +69,7 @@ class DisputeController extends Controller
                 'defendant.email as defendant_email',
                 'mediator.email as mediator_email',
                 'sequestres.total_amount_centimes',
-                'sequestres.status as sequestre_status'
+                'sequestres.status as sequestre_status',
             ])
             ->leftJoin('missions', 'litiges.mission_id', '=', 'missions.id')
             ->leftJoin('users as reporter', 'litiges.reporter_id', '=', 'reporter.id')
@@ -79,7 +79,7 @@ class DisputeController extends Controller
             ->where('litiges.id', $id)
             ->first();
 
-        if (!$dispute) {
+        if (! $dispute) {
             abort(404);
         }
 
@@ -87,7 +87,7 @@ class DisputeController extends Controller
         $communications = DB::table('mediation_communications')
             ->select([
                 'mediation_communications.*',
-                'users.email as sender_email'
+                'users.email as sender_email',
             ])
             ->leftJoin('users', 'mediation_communications.sender_id', '=', 'users.id')
             ->where('mediation_communications.litige_id', $id)
@@ -188,7 +188,8 @@ class DisputeController extends Controller
             return back()->with('success', 'Décision d\'arbitrage rendue avec succès.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withErrors(['error' => 'Erreur lors du rendu de la décision: ' . $e->getMessage()]);
+
+            return back()->withErrors(['error' => 'Erreur lors du rendu de la décision: '.$e->getMessage()]);
         }
     }
 
@@ -231,7 +232,7 @@ class DisputeController extends Controller
                         ->where('id', $sequestreId)
                         ->update([
                             'status' => 'PARTIALLY_REFUNDED',
-                            'refunded_amount_centimes' => $amountCentimes
+                            'refunded_amount_centimes' => $amountCentimes,
                         ]);
                 }
                 break;

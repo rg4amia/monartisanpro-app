@@ -14,12 +14,12 @@ use DateTime;
  */
 final class QuoteSubmitted
 {
- public function __construct(
-  public readonly DevisId $devisId,
-  public readonly MissionId $missionId,
-  public readonly UserId $artisanId,
-  public readonly UserId $clientId,
-  public readonly MoneyAmount $totalAmount,
-  public readonly DateTime $occurredAt
- ) {}
+    public function __construct(
+        public readonly DevisId $devisId,
+        public readonly MissionId $missionId,
+        public readonly UserId $artisanId,
+        public readonly UserId $clientId,
+        public readonly MoneyAmount $totalAmount,
+        public readonly DateTime $occurredAt
+    ) {}
 }

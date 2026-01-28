@@ -13,6 +13,7 @@ use Tests\TestCase;
 class GPSUtilityServiceTest extends TestCase
 {
     private GPSUtilityService $gpsService;
+
     private SMSService $mockSmsService;
 
     protected function setUp(): void
@@ -197,7 +198,7 @@ class GPSUtilityServiceTest extends TestCase
                 'code' => $code,
                 'expires_at' => now()->addMinutes(3)->format('Y-m-d H:i:s'),
                 'context' => $context,
-                'created_at' => now()->format('Y-m-d H:i:s')
+                'created_at' => now()->format('Y-m-d H:i:s'),
             ]);
 
         Cache::shouldReceive('forget')
@@ -225,7 +226,7 @@ class GPSUtilityServiceTest extends TestCase
                 'code' => $code,
                 'expires_at' => now()->subMinutes(1)->format('Y-m-d H:i:s'), // Expired
                 'context' => 'gps_fallback',
-                'created_at' => now()->subMinutes(6)->format('Y-m-d H:i:s')
+                'created_at' => now()->subMinutes(6)->format('Y-m-d H:i:s'),
             ]);
 
         Cache::shouldReceive('forget')
@@ -253,7 +254,7 @@ class GPSUtilityServiceTest extends TestCase
                 'code' => '123456', // Different code
                 'expires_at' => now()->addMinutes(3)->format('Y-m-d H:i:s'),
                 'context' => 'gps_fallback',
-                'created_at' => now()->format('Y-m-d H:i:s')
+                'created_at' => now()->format('Y-m-d H:i:s'),
             ]);
 
         // Act

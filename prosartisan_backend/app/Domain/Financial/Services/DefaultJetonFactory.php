@@ -12,30 +12,30 @@ use App\Domain\Identity\Models\ValueObjects\UserId;
  */
 final class DefaultJetonFactory implements JetonFactory
 {
- public function createJeton(Sequestre $sequestre, Artisan $artisan, array $nearbySuppliers): JetonMateriel
- {
-  // Extract supplier IDs from nearby suppliers
-  $supplierIds = array_map(function ($supplier) {
-   return $supplier->getId();
-  }, $nearbySuppliers);
+    public function createJeton(Sequestre $sequestre, Artisan $artisan, array $nearbySuppliers): JetonMateriel
+    {
+        // Extract supplier IDs from nearby suppliers
+        $supplierIds = array_map(function ($supplier) {
+            return $supplier->getId();
+        }, $nearbySuppliers);
 
-  return $this->createJetonWithSuppliers($sequestre, $artisan, $supplierIds);
- }
+        return $this->createJetonWithSuppliers($sequestre, $artisan, $supplierIds);
+    }
 
- public function createJetonWithSuppliers(Sequestre $sequestre, Artisan $artisan, array $authorizedSupplierIds): JetonMateriel
- {
-  // Validate supplier IDs
-  foreach ($authorizedSupplierIds as $supplierId) {
-   if (!$supplierId instanceof UserId) {
-    throw new \InvalidArgumentException('All supplier IDs must be UserId instances');
-   }
-  }
+    public function createJetonWithSuppliers(Sequestre $sequestre, Artisan $artisan, array $authorizedSupplierIds): JetonMateriel
+    {
+        // Validate supplier IDs
+        foreach ($authorizedSupplierIds as $supplierId) {
+            if (! $supplierId instanceof UserId) {
+                throw new \InvalidArgumentException('All supplier IDs must be UserId instances');
+            }
+        }
 
-  return JetonMateriel::create(
-   $sequestre->getId(),
-   $artisan->getId(),
-   $sequestre->getRemainingMaterials(),
-   $authorizedSupplierIds
-  );
- }
+        return JetonMateriel::create(
+            $sequestre->getId(),
+            $artisan->getId(),
+            $sequestre->getRemainingMaterials(),
+            $authorizedSupplierIds
+        );
+    }
 }

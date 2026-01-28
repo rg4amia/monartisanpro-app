@@ -3,9 +3,9 @@
 namespace App\Domain\Worksite\Events;
 
 use App\Domain\Identity\Models\ValueObjects\UserId;
+use App\Domain\Shared\ValueObjects\GPS_Coordinates;
 use App\Domain\Worksite\Models\ValueObjects\ChantierId;
 use App\Domain\Worksite\Models\ValueObjects\JalonId;
-use App\Domain\Shared\ValueObjects\GPS_Coordinates;
 use DateTime;
 
 /**
@@ -14,13 +14,13 @@ use DateTime;
  */
 final class MilestoneProofSubmitted
 {
- public function __construct(
-  public readonly JalonId $jalonId,
-  public readonly ChantierId $chantierId,
-  public readonly UserId $artisanId,
-  public readonly UserId $clientId,
-  public readonly string $photoUrl,
-  public readonly GPS_Coordinates $location,
-  public readonly DateTime $occurredAt
- ) {}
+    public function __construct(
+        public readonly JalonId $jalonId,
+        public readonly ChantierId $chantierId,
+        public readonly UserId $artisanId,
+        public readonly UserId $clientId,
+        public readonly string $photoUrl,
+        public readonly GPS_Coordinates $location,
+        public readonly DateTime $occurredAt
+    ) {}
 }

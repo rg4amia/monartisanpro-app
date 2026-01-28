@@ -17,7 +17,7 @@ class AccountLockedException extends Exception
         $this->lockedUntil = $lockedUntil;
 
         if ($lockedUntil !== null) {
-            $message .= '. Please try again after ' . $lockedUntil->format('Y-m-d H:i:s');
+            $message .= '. Please try again after '.$lockedUntil->format('Y-m-d H:i:s');
         }
 
         parent::__construct($message);

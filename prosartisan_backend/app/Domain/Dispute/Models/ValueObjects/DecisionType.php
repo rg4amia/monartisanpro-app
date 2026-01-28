@@ -10,8 +10,11 @@ use InvalidArgumentException;
 final class DecisionType
 {
     public const REFUND_CLIENT = 'REFUND_CLIENT';
+
     public const PAY_ARTISAN = 'PAY_ARTISAN';
+
     public const PARTIAL_REFUND = 'PARTIAL_REFUND';
+
     public const FREEZE_FUNDS = 'FREEZE_FUNDS';
 
     private const VALID_TYPES = [
@@ -103,9 +106,9 @@ final class DecisionType
 
     private function validateType(string $value): void
     {
-        if (!in_array($value, self::VALID_TYPES, true)) {
+        if (! in_array($value, self::VALID_TYPES, true)) {
             throw new InvalidArgumentException(
-                "Invalid decision type: {$value}. Valid types are: " . implode(', ', self::VALID_TYPES)
+                "Invalid decision type: {$value}. Valid types are: ".implode(', ', self::VALID_TYPES)
             );
         }
     }

@@ -12,6 +12,7 @@ use InvalidArgumentException;
 final class KYCDocuments
 {
     private const ID_TYPE_CNI = 'CNI';
+
     private const ID_TYPE_PASSPORT = 'PASSPORT';
 
     private const VALID_ID_TYPES = [
@@ -20,9 +21,13 @@ final class KYCDocuments
     ];
 
     private string $idType;
+
     private string $idNumber;
+
     private string $idDocumentUrl;
+
     private string $selfieUrl;
+
     private DateTime $submittedAt;
 
     public function __construct(
@@ -41,7 +46,7 @@ final class KYCDocuments
         $this->idNumber = $idNumber;
         $this->idDocumentUrl = $idDocumentUrl;
         $this->selfieUrl = $selfieUrl;
-        $this->submittedAt = $submittedAt ?? new DateTime();
+        $this->submittedAt = $submittedAt ?? new DateTime;
     }
 
     public static function fromArray(array $data): self
@@ -105,9 +110,9 @@ final class KYCDocuments
     {
         $idType = strtoupper($idType);
 
-        if (!in_array($idType, self::VALID_ID_TYPES, true)) {
+        if (! in_array($idType, self::VALID_ID_TYPES, true)) {
             throw new InvalidArgumentException(
-                "Invalid ID type: {$idType}. Must be one of: " . implode(', ', self::VALID_ID_TYPES)
+                "Invalid ID type: {$idType}. Must be one of: ".implode(', ', self::VALID_ID_TYPES)
             );
         }
     }
@@ -130,7 +135,7 @@ final class KYCDocuments
         }
 
         // Basic URL validation - can be enhanced based on storage solution
-        if (!filter_var($url, FILTER_VALIDATE_URL) && !str_starts_with($url, '/')) {
+        if (! filter_var($url, FILTER_VALIDATE_URL) && ! str_starts_with($url, '/')) {
             throw new InvalidArgumentException("{$fieldName} must be a valid URL or path");
         }
     }

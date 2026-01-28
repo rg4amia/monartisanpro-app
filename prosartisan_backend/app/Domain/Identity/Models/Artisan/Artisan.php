@@ -13,7 +13,6 @@ use App\Domain\Identity\Models\ValueObjects\UserId;
 use App\Domain\Identity\Models\ValueObjects\UserType;
 use App\Domain\Shared\ValueObjects\GPS_Coordinates;
 use DateTime;
-use InvalidArgumentException;
 
 /**
  * Artisan entity representing a skilled tradesperson
@@ -22,8 +21,11 @@ use InvalidArgumentException;
 final class Artisan extends User
 {
     private TradeCategory $category;
+
     private PhoneNumber $phoneNumber;
+
     private GPS_Coordinates $location;
+
     private bool $isKYCVerified;
 
     public function __construct(
@@ -88,7 +90,7 @@ final class Artisan extends User
     {
         parent::verifyKYC($documents);
         $this->isKYCVerified = true;
-        $this->updatedAt = new DateTime();
+        $this->updatedAt = new DateTime;
     }
 
     /**
@@ -97,7 +99,7 @@ final class Artisan extends User
      */
     public function canAcceptMissions(): bool
     {
-        return $this->isKYCVerified && $this->isActive() && !$this->isLocked();
+        return $this->isKYCVerified && $this->isActive() && ! $this->isLocked();
     }
 
     /**
@@ -106,7 +108,7 @@ final class Artisan extends User
     public function updateLocation(GPS_Coordinates $newLocation): void
     {
         $this->location = $newLocation;
-        $this->updatedAt = new DateTime();
+        $this->updatedAt = new DateTime;
     }
 
     /**
@@ -115,7 +117,7 @@ final class Artisan extends User
     public function changeCategory(TradeCategory $newCategory): void
     {
         $this->category = $newCategory;
-        $this->updatedAt = new DateTime();
+        $this->updatedAt = new DateTime;
     }
 
     /**
@@ -124,7 +126,7 @@ final class Artisan extends User
     public function updatePhoneNumber(PhoneNumber $newPhoneNumber): void
     {
         $this->phoneNumber = $newPhoneNumber;
-        $this->updatedAt = new DateTime();
+        $this->updatedAt = new DateTime;
     }
 
     /**

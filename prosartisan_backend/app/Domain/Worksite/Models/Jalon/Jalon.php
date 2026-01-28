@@ -2,14 +2,14 @@
 
 namespace App\Domain\Worksite\Models\Jalon;
 
+use App\Domain\Identity\Models\ValueObjects\UserId;
+use App\Domain\Shared\Services\DomainEventDispatcher;
 use App\Domain\Shared\ValueObjects\MoneyAmount;
+use App\Domain\Worksite\Events\MilestoneValidated;
 use App\Domain\Worksite\Models\ValueObjects\ChantierId;
 use App\Domain\Worksite\Models\ValueObjects\JalonId;
 use App\Domain\Worksite\Models\ValueObjects\JalonStatus;
 use App\Domain\Worksite\Models\ValueObjects\ProofOfDelivery;
-use App\Domain\Worksite\Events\MilestoneValidated;
-use App\Domain\Shared\Services\DomainEventDispatcher;
-use App\Domain\Identity\Models\ValueObjects\UserId;
 use DateTime;
 use InvalidArgumentException;
 
@@ -22,16 +22,27 @@ use InvalidArgumentException;
 final class Jalon
 {
     private JalonId $id;
+
     private ChantierId $chantierId;
+
     private string $description;
+
     private MoneyAmount $laborAmount;
+
     private int $sequenceNumber;
+
     private JalonStatus $status;
+
     private ?ProofOfDelivery $proof;
+
     private DateTime $createdAt;
+
     private ?DateTime $submittedAt;
+
     private ?DateTime $validatedAt;
+
     private ?DateTime $autoValidationDeadline;
+
     private ?string $contestReason;
 
     private const AUTO_VALIDATION_HOURS = 48;
@@ -61,7 +72,7 @@ final class Jalon
         $this->sequenceNumber = $sequenceNumber;
         $this->status = $status ?? JalonStatus::pending();
         $this->proof = $proof;
-        $this->createdAt = $createdAt ?? new DateTime();
+        $this->createdAt = $createdAt ?? new DateTime;
         $this->submittedAt = $submittedAt;
         $this->validatedAt = $validatedAt;
         $this->autoValidationDeadline = $autoValidationDeadline;
@@ -95,23 +106,23 @@ final class Jalon
      */
     public function submitProof(ProofOfDelivery $proof): void
     {
-        if (!$this->status->isPending()) {
+        if (! $this->status->isPending()) {
             throw new InvalidArgumentException(
                 "Cannot submit proof for jalon in status: {$this->status->getValue()}"
             );
         }
 
-        if (!$proof->verifyIntegrity()) {
+        if (! $proof->verifyIntegrity()) {
             throw new InvalidArgumentException('Proof of delivery failed integrity verification');
         }
 
         $this->proof = $proof;
         $this->status = JalonStatus::submitted();
-        $this->submittedAt = new DateTime();
+        $this->submittedAt = new DateTime;
 
         // Set auto-validation deadline (48 hours from submission)
         $this->autoValidationDeadline = (clone $this->submittedAt)
-            ->modify('+' . self::AUTO_VALIDATION_HOURS . ' hours');
+            ->modify('+'.self::AUTO_VALIDATION_HOURS.' hours');
     }
 
     /**
@@ -121,14 +132,14 @@ final class Jalon
      */
     public function validate(UserId $clientId, UserId $artisanId): void
     {
-        if (!$this->status->isSubmitted()) {
+        if (! $this->status->isSubmitted()) {
             throw new InvalidArgumentException(
                 "Cannot validate jalon in status: {$this->status->getValue()}"
             );
         }
 
         $this->status = JalonStatus::validated();
-        $this->validatedAt = new DateTime();
+        $this->validatedAt = new DateTime;
         $this->autoValidationDeadline = null; // Clear deadline since manually validated
 
         // Fire MilestoneValidated domain event
@@ -139,7 +150,7 @@ final class Jalon
             $artisanId,
             $this->laborAmount,
             false, // Not auto-validated
-            new DateTime()
+            new DateTime
         ));
     }
 
@@ -150,7 +161,7 @@ final class Jalon
      */
     public function contest(string $reason): void
     {
-        if (!$this->status->isSubmitted()) {
+        if (! $this->status->isSubmitted()) {
             throw new InvalidArgumentException(
                 "Cannot contest jalon in status: {$this->status->getValue()}"
             );
@@ -172,20 +183,20 @@ final class Jalon
      */
     public function autoValidate(UserId $clientId, UserId $artisanId): void
     {
-        if (!$this->status->isSubmitted()) {
+        if (! $this->status->isSubmitted()) {
             throw new InvalidArgumentException(
                 "Cannot auto-validate jalon in status: {$this->status->getValue()}"
             );
         }
 
-        if (!$this->isAutoValidationDue()) {
+        if (! $this->isAutoValidationDue()) {
             throw new InvalidArgumentException(
                 'Auto-validation deadline has not been reached'
             );
         }
 
         $this->status = JalonStatus::validated();
-        $this->validatedAt = new DateTime();
+        $this->validatedAt = new DateTime;
         $this->autoValidationDeadline = null;
 
         // Fire MilestoneValidated domain event
@@ -196,7 +207,7 @@ final class Jalon
             $artisanId,
             $this->laborAmount,
             true, // Auto-validated
-            new DateTime()
+            new DateTime
         ));
     }
 
@@ -211,11 +222,11 @@ final class Jalon
             return false;
         }
 
-        if (!$this->status->isSubmitted()) {
+        if (! $this->status->isSubmitted()) {
             return false;
         }
 
-        return new DateTime() >= $this->autoValidationDeadline;
+        return new DateTime >= $this->autoValidationDeadline;
     }
 
     /**
@@ -243,12 +254,13 @@ final class Jalon
             return null;
         }
 
-        $now = new DateTime();
+        $now = new DateTime;
         if ($now >= $this->autoValidationDeadline) {
             return 0.0;
         }
 
         $diff = $this->autoValidationDeadline->getTimestamp() - $now->getTimestamp();
+
         return $diff / 3600; // Convert seconds to hours
     }
 

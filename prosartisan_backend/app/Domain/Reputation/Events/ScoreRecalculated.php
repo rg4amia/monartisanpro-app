@@ -11,22 +11,26 @@ use DateTime;
  */
 class ScoreRecalculated
 {
- public UserId $artisanId;
- public NZassaScore $oldScore;
- public NZassaScore $newScore;
- public string $reason;
- public DateTime $occurredAt;
+    public UserId $artisanId;
 
- public function __construct(
-  UserId $artisanId,
-  NZassaScore $oldScore,
-  NZassaScore $newScore,
-  string $reason
- ) {
-  $this->artisanId = $artisanId;
-  $this->oldScore = $oldScore;
-  $this->newScore = $newScore;
-  $this->reason = $reason;
-  $this->occurredAt = new DateTime();
- }
+    public NZassaScore $oldScore;
+
+    public NZassaScore $newScore;
+
+    public string $reason;
+
+    public DateTime $occurredAt;
+
+    public function __construct(
+        UserId $artisanId,
+        NZassaScore $oldScore,
+        NZassaScore $newScore,
+        string $reason
+    ) {
+        $this->artisanId = $artisanId;
+        $this->oldScore = $oldScore;
+        $this->newScore = $newScore;
+        $this->reason = $reason;
+        $this->occurredAt = new DateTime;
+    }
 }

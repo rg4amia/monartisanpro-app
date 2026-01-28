@@ -3,9 +3,9 @@
 namespace App\Infrastructure\Services\Security;
 
 use App\Domain\Shared\Services\EncryptionService;
+use Exception;
 use Illuminate\Contracts\Encryption\Encrypter;
 use Illuminate\Support\Facades\Hash;
-use Exception;
 
 /**
  * Laravel implementation of EncryptionService
@@ -28,7 +28,7 @@ class LaravelEncryptionService implements EncryptionService
         try {
             return $this->encrypter->encrypt($data);
         } catch (\Exception $e) {
-            throw new Exception('Failed to encrypt data: ' . $e->getMessage(), 0, $e);
+            throw new Exception('Failed to encrypt data: '.$e->getMessage(), 0, $e);
         }
     }
 
@@ -40,7 +40,7 @@ class LaravelEncryptionService implements EncryptionService
         try {
             return $this->encrypter->decrypt($encryptedData);
         } catch (\Exception $e) {
-            throw new Exception('Failed to decrypt data: ' . $e->getMessage(), 0, $e);
+            throw new Exception('Failed to decrypt data: '.$e->getMessage(), 0, $e);
         }
     }
 
@@ -50,7 +50,7 @@ class LaravelEncryptionService implements EncryptionService
     public function hash(string $data, ?string $salt = null): string
     {
         if ($salt !== null) {
-            $data = $salt . $data;
+            $data = $salt.$data;
         }
 
         return Hash::make($data);
@@ -78,7 +78,7 @@ class LaravelEncryptionService implements EncryptionService
     public function encryptFile(string $filePath, string $outputPath): bool
     {
         try {
-            if (!file_exists($filePath)) {
+            if (! file_exists($filePath)) {
                 throw new Exception("Source file does not exist: {$filePath}");
             }
 
@@ -96,7 +96,7 @@ class LaravelEncryptionService implements EncryptionService
 
             return true;
         } catch (\Exception $e) {
-            throw new Exception('Failed to encrypt file: ' . $e->getMessage(), 0, $e);
+            throw new Exception('Failed to encrypt file: '.$e->getMessage(), 0, $e);
         }
     }
 
@@ -106,7 +106,7 @@ class LaravelEncryptionService implements EncryptionService
     public function decryptFile(string $encryptedFilePath, string $outputPath): bool
     {
         try {
-            if (!file_exists($encryptedFilePath)) {
+            if (! file_exists($encryptedFilePath)) {
                 throw new Exception("Encrypted file does not exist: {$encryptedFilePath}");
             }
 
@@ -124,7 +124,7 @@ class LaravelEncryptionService implements EncryptionService
 
             return true;
         } catch (\Exception $e) {
-            throw new Exception('Failed to decrypt file: ' . $e->getMessage(), 0, $e);
+            throw new Exception('Failed to decrypt file: '.$e->getMessage(), 0, $e);
         }
     }
 }

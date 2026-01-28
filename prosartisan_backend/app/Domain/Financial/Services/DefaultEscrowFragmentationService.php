@@ -12,6 +12,7 @@ use App\Domain\Shared\ValueObjects\MoneyAmount;
 final class DefaultEscrowFragmentationService implements EscrowFragmentationService
 {
     private const MATERIALS_PERCENTAGE = 65;
+
     private const LABOR_PERCENTAGE = 35;
 
     public function calculateFragmentation(MoneyAmount $total): array

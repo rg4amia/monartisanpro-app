@@ -4,8 +4,8 @@ namespace App\Domain\Financial\Models\JetonValidation;
 
 use App\Domain\Financial\Models\ValueObjects\JetonId;
 use App\Domain\Identity\Models\ValueObjects\UserId;
-use App\Domain\Shared\ValueObjects\MoneyAmount;
 use App\Domain\Shared\ValueObjects\GPS_Coordinates;
+use App\Domain\Shared\ValueObjects\MoneyAmount;
 use DateTime;
 
 /**
@@ -19,16 +19,27 @@ use DateTime;
 final class JetonValidation
 {
     private string $id;
+
     private JetonId $jetonId;
+
     private UserId $fournisseurId;
+
     private UserId $artisanId;
+
     private MoneyAmount $amountUsed;
+
     private GPS_Coordinates $artisanLocation;
+
     private GPS_Coordinates $supplierLocation;
+
     private float $distanceMeters;
+
     private string $validationStatus;
+
     private ?string $validationNotes;
+
     private DateTime $validatedAt;
+
     private DateTime $createdAt;
 
     public function __construct(
@@ -55,8 +66,8 @@ final class JetonValidation
         $this->distanceMeters = $distanceMeters;
         $this->validationStatus = $validationStatus;
         $this->validationNotes = $validationNotes;
-        $this->validatedAt = $validatedAt ?? new DateTime();
-        $this->createdAt = $createdAt ?? new DateTime();
+        $this->validatedAt = $validatedAt ?? new DateTime;
+        $this->createdAt = $createdAt ?? new DateTime;
     }
 
     /**

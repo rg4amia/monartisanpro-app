@@ -17,7 +17,6 @@ interface EscrowFragmentationService
     /**
      * Calculate fragmentation amounts
      *
-     * @param MoneyAmount $total
      * @return array{materials: MoneyAmount, labor: MoneyAmount}
      */
     public function calculateFragmentation(MoneyAmount $total): array;

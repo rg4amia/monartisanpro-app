@@ -16,77 +16,80 @@ use InvalidArgumentException;
  */
 final class Arbitration
 {
- private UserId $arbitratorId;
- private ArbitrationDecision $decision;
- private string $justification;
- private DateTime $renderedAt;
+    private UserId $arbitratorId;
 
- public function __construct(
-  UserId $arbitratorId,
-  ArbitrationDecision $decision,
-  string $justification,
-  ?DateTime $renderedAt = null
- ) {
-  $this->validateJustification($justification);
+    private ArbitrationDecision $decision;
 
-  $this->arbitratorId = $arbitratorId;
-  $this->decision = $decision;
-  $this->justification = $justification;
-  $this->renderedAt = $renderedAt ?? new DateTime();
- }
+    private string $justification;
 
- /**
-  * Create arbitration with decision
-  *
-  * Requirement 9.6: Render arbitration decision
-  */
- public static function renderDecision(
-  UserId $arbitratorId,
-  ArbitrationDecision $decision,
-  string $justification
- ): self {
-  return new self($arbitratorId, $decision, $justification);
- }
+    private DateTime $renderedAt;
 
- // Getters
- public function getArbitratorId(): UserId
- {
-  return $this->arbitratorId;
- }
+    public function __construct(
+        UserId $arbitratorId,
+        ArbitrationDecision $decision,
+        string $justification,
+        ?DateTime $renderedAt = null
+    ) {
+        $this->validateJustification($justification);
 
- public function getDecision(): ArbitrationDecision
- {
-  return $this->decision;
- }
+        $this->arbitratorId = $arbitratorId;
+        $this->decision = $decision;
+        $this->justification = $justification;
+        $this->renderedAt = $renderedAt ?? new DateTime;
+    }
 
- public function getJustification(): string
- {
-  return $this->justification;
- }
+    /**
+     * Create arbitration with decision
+     *
+     * Requirement 9.6: Render arbitration decision
+     */
+    public static function renderDecision(
+        UserId $arbitratorId,
+        ArbitrationDecision $decision,
+        string $justification
+    ): self {
+        return new self($arbitratorId, $decision, $justification);
+    }
 
- public function getRenderedAt(): DateTime
- {
-  return $this->renderedAt;
- }
+    // Getters
+    public function getArbitratorId(): UserId
+    {
+        return $this->arbitratorId;
+    }
 
- public function toArray(): array
- {
-  return [
-   'arbitrator_id' => $this->arbitratorId->getValue(),
-   'decision' => $this->decision->toArray(),
-   'justification' => $this->justification,
-   'rendered_at' => $this->renderedAt->format('Y-m-d H:i:s'),
-  ];
- }
+    public function getDecision(): ArbitrationDecision
+    {
+        return $this->decision;
+    }
 
- private function validateJustification(string $justification): void
- {
-  if (empty(trim($justification))) {
-   throw new InvalidArgumentException('Arbitration justification cannot be empty');
-  }
+    public function getJustification(): string
+    {
+        return $this->justification;
+    }
 
-  if (strlen($justification) < 10) {
-   throw new InvalidArgumentException('Arbitration justification must be at least 10 characters long');
-  }
- }
+    public function getRenderedAt(): DateTime
+    {
+        return $this->renderedAt;
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'arbitrator_id' => $this->arbitratorId->getValue(),
+            'decision' => $this->decision->toArray(),
+            'justification' => $this->justification,
+            'rendered_at' => $this->renderedAt->format('Y-m-d H:i:s'),
+        ];
+    }
+
+    private function validateJustification(string $justification): void
+    {
+        if (empty(trim($justification))) {
+            throw new InvalidArgumentException('Arbitration justification cannot be empty');
+        }
+
+        if (strlen($justification) < 10) {
+            throw new InvalidArgumentException('Arbitration justification must be at least 10 characters long');
+        }
+    }
 }

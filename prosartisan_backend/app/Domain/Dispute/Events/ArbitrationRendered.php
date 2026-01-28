@@ -26,7 +26,7 @@ final class ArbitrationRendered
         return new self(
             $litigeId,
             $decision,
-            new DateTime()
+            new DateTime
         );
     }
 

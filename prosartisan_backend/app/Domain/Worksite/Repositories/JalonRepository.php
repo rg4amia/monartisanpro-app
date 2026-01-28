@@ -13,30 +13,30 @@ use App\Domain\Worksite\Models\ValueObjects\JalonId;
  */
 interface JalonRepository
 {
- /**
-  * Save a jalon
-  */
- public function save(Jalon $jalon): void;
+    /**
+     * Save a jalon
+     */
+    public function save(Jalon $jalon): void;
 
- /**
-  * Find jalon by ID
-  */
- public function findById(JalonId $id): ?Jalon;
+    /**
+     * Find jalon by ID
+     */
+    public function findById(JalonId $id): ?Jalon;
 
- /**
-  * Find all jalons for a chantier
-  */
- public function findByChantierId(ChantierId $chantierId): array;
+    /**
+     * Find all jalons for a chantier
+     */
+    public function findByChantierId(ChantierId $chantierId): array;
 
- /**
-  * Find jalons that need auto-validation (deadline passed)
-  *
-  * Requirement 6.5: Support cron job for auto-validation
-  */
- public function findPendingAutoValidations(): array;
+    /**
+     * Find jalons that need auto-validation (deadline passed)
+     *
+     * Requirement 6.5: Support cron job for auto-validation
+     */
+    public function findPendingAutoValidations(): array;
 
- /**
-  * Find jalons by status
-  */
- public function findByStatus(string $status): array;
+    /**
+     * Find jalons by status
+     */
+    public function findByStatus(string $status): array;
 }

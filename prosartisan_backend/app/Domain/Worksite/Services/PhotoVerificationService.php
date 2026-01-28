@@ -13,24 +13,24 @@ use DateTime;
  */
 interface PhotoVerificationService
 {
- /**
-  * Extract GPS coordinates from photo EXIF data
-  *
-  * Requirement 6.2: Extract GPS from photo metadata
-  */
- public function extractGPSFromExif(string $photoUrl): ?GPS_Coordinates;
+    /**
+     * Extract GPS coordinates from photo EXIF data
+     *
+     * Requirement 6.2: Extract GPS from photo metadata
+     */
+    public function extractGPSFromExif(string $photoUrl): ?GPS_Coordinates;
 
- /**
-  * Verify photo timestamp is reasonable
-  *
-  * Requirement 6.2: Verify photo timestamp integrity
-  */
- public function verifyTimestamp(DateTime $capturedAt): bool;
+    /**
+     * Verify photo timestamp is reasonable
+     *
+     * Requirement 6.2: Verify photo timestamp integrity
+     */
+    public function verifyTimestamp(DateTime $capturedAt): bool;
 
- /**
-  * Verify photo integrity and accessibility
-  *
-  * Requirement 6.2: Ensure photo is valid and accessible
-  */
- public function verifyPhotoIntegrity(string $photoUrl): bool;
+    /**
+     * Verify photo integrity and accessibility
+     *
+     * Requirement 6.2: Ensure photo is valid and accessible
+     */
+    public function verifyPhotoIntegrity(string $photoUrl): bool;
 }

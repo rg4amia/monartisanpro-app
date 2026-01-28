@@ -9,9 +9,9 @@ namespace App\Application\UseCases\Financial\GenerateJeton;
  */
 final class GenerateJetonCommand
 {
- public function __construct(
-  public readonly string $sequestreId,
-  public readonly string $artisanId,
-  public readonly array $supplierIds = []
- ) {}
+    public function __construct(
+        public readonly string $sequestreId,
+        public readonly string $artisanId,
+        public readonly array $supplierIds = []
+    ) {}
 }

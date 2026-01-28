@@ -16,7 +16,6 @@ class DisputeResource extends JsonResource
     /**
      * Transform the resource into an array.
      *
-     * @param Request $request
      * @return array<string, mixed>
      */
     public function toArray(Request $request): array
@@ -41,15 +40,15 @@ class DisputeResource extends JsonResource
             ],
             'mediation' => $this->when(
                 $litige->getMediation(),
-                fn() => new MediationResource($litige->getMediation())
+                fn () => new MediationResource($litige->getMediation())
             ),
             'arbitration' => $this->when(
                 $litige->getArbitration(),
-                fn() => new ArbitrationResource($litige->getArbitration())
+                fn () => new ArbitrationResource($litige->getArbitration())
             ),
             'resolution' => $this->when(
                 $litige->getResolution(),
-                fn() => new ResolutionResource($litige->getResolution())
+                fn () => new ResolutionResource($litige->getResolution())
             ),
             'created_at' => $litige->getCreatedAt()->format('Y-m-d H:i:s'),
             'resolved_at' => $litige->getResolvedAt()?->format('Y-m-d H:i:s'),

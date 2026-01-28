@@ -8,13 +8,21 @@ namespace App\Domain\Reputation\Models\ValueObjects;
 final class ReputationMetrics
 {
     private float $reliabilityScore; // 40% weight
+
     private float $integrityScore; // 30% weight
+
     private float $qualityScore; // 20% weight
+
     private float $reactivityScore; // 10% weight
+
     private int $completedProjects;
+
     private int $acceptedProjects;
+
     private float $averageRating;
+
     private float $averageResponseTimeHours;
+
     private int $fraudAttempts;
 
     public function __construct(

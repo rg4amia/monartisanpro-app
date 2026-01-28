@@ -10,7 +10,9 @@ use InvalidArgumentException;
 final class DevisStatus
 {
     public const PENDING = 'PENDING';
+
     public const ACCEPTED = 'ACCEPTED';
+
     public const REJECTED = 'REJECTED';
 
     private const VALID_STATUSES = [
@@ -96,9 +98,9 @@ final class DevisStatus
 
     private function validateStatus(string $value): void
     {
-        if (!in_array($value, self::VALID_STATUSES, true)) {
+        if (! in_array($value, self::VALID_STATUSES, true)) {
             throw new InvalidArgumentException(
-                "Invalid devis status: {$value}. Valid statuses are: " . implode(', ', self::VALID_STATUSES)
+                "Invalid devis status: {$value}. Valid statuses are: ".implode(', ', self::VALID_STATUSES)
             );
         }
     }

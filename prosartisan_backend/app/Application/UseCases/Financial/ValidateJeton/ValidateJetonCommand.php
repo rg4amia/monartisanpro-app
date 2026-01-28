@@ -9,13 +9,13 @@ namespace App\Application\UseCases\Financial\ValidateJeton;
  */
 final class ValidateJetonCommand
 {
- public function __construct(
-  public readonly string $jetonCode,
-  public readonly string $fournisseurId,
-  public readonly int $amountCentimes,
-  public readonly float $artisanLatitude,
-  public readonly float $artisanLongitude,
-  public readonly float $supplierLatitude,
-  public readonly float $supplierLongitude
- ) {}
+    public function __construct(
+        public readonly string $jetonCode,
+        public readonly string $fournisseurId,
+        public readonly int $amountCentimes,
+        public readonly float $artisanLatitude,
+        public readonly float $artisanLongitude,
+        public readonly float $supplierLatitude,
+        public readonly float $supplierLongitude
+    ) {}
 }

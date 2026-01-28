@@ -11,13 +11,19 @@ use InvalidArgumentException;
 final class GPS_Coordinates
 {
     private float $latitude;
+
     private float $longitude;
+
     private float $accuracy; // in meters
 
     private const EARTH_RADIUS_KM = 6371;
+
     private const MIN_LATITUDE = -90.0;
+
     private const MAX_LATITUDE = 90.0;
+
     private const MIN_LONGITUDE = -180.0;
+
     private const MAX_LONGITUDE = 180.0;
 
     public function __construct(float $latitude, float $longitude, float $accuracy = 10.0)

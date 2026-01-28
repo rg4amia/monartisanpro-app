@@ -9,104 +9,107 @@ use InvalidArgumentException;
  */
 final class JalonStatus
 {
- public const PENDING = 'PENDING';
- public const SUBMITTED = 'SUBMITTED';
- public const VALIDATED = 'VALIDATED';
- public const CONTESTED = 'CONTESTED';
+    public const PENDING = 'PENDING';
 
- private const VALID_STATUSES = [
-  self::PENDING,
-  self::SUBMITTED,
-  self::VALIDATED,
-  self::CONTESTED,
- ];
+    public const SUBMITTED = 'SUBMITTED';
 
- private const FRENCH_LABELS = [
-  self::PENDING => 'En attente',
-  self::SUBMITTED => 'Soumis',
-  self::VALIDATED => 'Validé',
-  self::CONTESTED => 'Contesté',
- ];
+    public const VALIDATED = 'VALIDATED';
 
- private string $value;
+    public const CONTESTED = 'CONTESTED';
 
- public function __construct(string $value)
- {
-  $this->validateStatus($value);
-  $this->value = $value;
- }
+    private const VALID_STATUSES = [
+        self::PENDING,
+        self::SUBMITTED,
+        self::VALIDATED,
+        self::CONTESTED,
+    ];
 
- public static function pending(): self
- {
-  return new self(self::PENDING);
- }
+    private const FRENCH_LABELS = [
+        self::PENDING => 'En attente',
+        self::SUBMITTED => 'Soumis',
+        self::VALIDATED => 'Validé',
+        self::CONTESTED => 'Contesté',
+    ];
 
- public static function submitted(): self
- {
-  return new self(self::SUBMITTED);
- }
+    private string $value;
 
- public static function validated(): self
- {
-  return new self(self::VALIDATED);
- }
+    public function __construct(string $value)
+    {
+        $this->validateStatus($value);
+        $this->value = $value;
+    }
 
- public static function contested(): self
- {
-  return new self(self::CONTESTED);
- }
+    public static function pending(): self
+    {
+        return new self(self::PENDING);
+    }
 
- public static function fromString(string $value): self
- {
-  return new self($value);
- }
+    public static function submitted(): self
+    {
+        return new self(self::SUBMITTED);
+    }
 
- public function getValue(): string
- {
-  return $this->value;
- }
+    public static function validated(): self
+    {
+        return new self(self::VALIDATED);
+    }
 
- public function getFrenchLabel(): string
- {
-  return self::FRENCH_LABELS[$this->value];
- }
+    public static function contested(): self
+    {
+        return new self(self::CONTESTED);
+    }
 
- public function isPending(): bool
- {
-  return $this->value === self::PENDING;
- }
+    public static function fromString(string $value): self
+    {
+        return new self($value);
+    }
 
- public function isSubmitted(): bool
- {
-  return $this->value === self::SUBMITTED;
- }
+    public function getValue(): string
+    {
+        return $this->value;
+    }
 
- public function isValidated(): bool
- {
-  return $this->value === self::VALIDATED;
- }
+    public function getFrenchLabel(): string
+    {
+        return self::FRENCH_LABELS[$this->value];
+    }
 
- public function isContested(): bool
- {
-  return $this->value === self::CONTESTED;
- }
+    public function isPending(): bool
+    {
+        return $this->value === self::PENDING;
+    }
 
- public function equals(JalonStatus $other): bool
- {
-  return $this->value === $other->value;
- }
+    public function isSubmitted(): bool
+    {
+        return $this->value === self::SUBMITTED;
+    }
 
- public function __toString(): string
- {
-  return $this->value;
- }
+    public function isValidated(): bool
+    {
+        return $this->value === self::VALIDATED;
+    }
 
- private function validateStatus(string $value): void
- {
-  if (!in_array($value, self::VALID_STATUSES, true)) {
-   throw new InvalidArgumentException(
-    "Invalid jalon status: {$value}. Valid statuses are: " . implode(', ', self::VALID_STATUSES)
-   );
-  }
- }
+    public function isContested(): bool
+    {
+        return $this->value === self::CONTESTED;
+    }
+
+    public function equals(JalonStatus $other): bool
+    {
+        return $this->value === $other->value;
+    }
+
+    public function __toString(): string
+    {
+        return $this->value;
+    }
+
+    private function validateStatus(string $value): void
+    {
+        if (! in_array($value, self::VALID_STATUSES, true)) {
+            throw new InvalidArgumentException(
+                "Invalid jalon status: {$value}. Valid statuses are: ".implode(', ', self::VALID_STATUSES)
+            );
+        }
+    }
 }

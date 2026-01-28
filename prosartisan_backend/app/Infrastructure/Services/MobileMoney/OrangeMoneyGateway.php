@@ -5,13 +5,13 @@ namespace App\Infrastructure\Services\MobileMoney;
 use App\Domain\Financial\Services\MobileMoneyGateway;
 use App\Domain\Financial\Services\MobileMoneyTransactionResult;
 use App\Domain\Financial\Services\MobileMoneyTransactionStatus;
-use App\Domain\Identity\Models\ValueObjects\UserId;
 use App\Domain\Identity\Models\ValueObjects\PhoneNumber;
+use App\Domain\Identity\Models\ValueObjects\UserId;
 use App\Domain\Shared\ValueObjects\MoneyAmount;
+use DateTime;
+use Exception;
 use Illuminate\Http\Client\Factory as HttpClient;
 use Illuminate\Support\Facades\Log;
-use Exception;
-use DateTime;
 
 /**
  * Orange Money Gateway Implementation
@@ -24,11 +24,17 @@ use DateTime;
 final class OrangeMoneyGateway implements MobileMoneyGateway
 {
     private HttpClient $httpClient;
+
     private string $clientId;
+
     private string $clientSecret;
+
     private string $baseUrl;
+
     private string $webhookSecret;
+
     private ?string $accessToken = null;
+
     private ?DateTime $tokenExpiresAt = null;
 
     public function __construct(
@@ -53,7 +59,7 @@ final class OrangeMoneyGateway implements MobileMoneyGateway
     ): MobileMoneyTransactionResult {
         try {
             $accessToken = $this->getAccessToken();
-            if (!$accessToken) {
+            if (! $accessToken) {
                 return MobileMoneyTransactionResult::failure(
                     'Impossible d\'obtenir le token d\'accès Orange Money',
                     'ORANGE_AUTH_ERROR'
@@ -81,12 +87,12 @@ final class OrangeMoneyGateway implements MobileMoneyGateway
 
             $response = $this->httpClient
                 ->withHeaders([
-                    'Authorization' => 'Bearer ' . $accessToken,
+                    'Authorization' => 'Bearer '.$accessToken,
                     'Content-Type' => 'application/json',
                     'Accept' => 'application/json',
                 ])
                 ->timeout(30)
-                ->post($this->baseUrl . '/omcoreapis/1.0.2/mp/pay', $payload);
+                ->post($this->baseUrl.'/omcoreapis/1.0.2/mp/pay', $payload);
 
             if ($response->successful()) {
                 $data = $response->json();
@@ -121,7 +127,7 @@ final class OrangeMoneyGateway implements MobileMoneyGateway
             ]);
 
             return MobileMoneyTransactionResult::failure(
-                'Erreur de connexion avec Orange Money: ' . $e->getMessage(),
+                'Erreur de connexion avec Orange Money: '.$e->getMessage(),
                 'ORANGE_CONNECTION_ERROR'
             );
         }
@@ -137,7 +143,7 @@ final class OrangeMoneyGateway implements MobileMoneyGateway
     ): MobileMoneyTransactionResult {
         try {
             $accessToken = $this->getAccessToken();
-            if (!$accessToken) {
+            if (! $accessToken) {
                 return MobileMoneyTransactionResult::failure(
                     'Impossible d\'obtenir le token d\'accès Orange Money',
                     'ORANGE_AUTH_ERROR'
@@ -166,12 +172,12 @@ final class OrangeMoneyGateway implements MobileMoneyGateway
 
             $response = $this->httpClient
                 ->withHeaders([
-                    'Authorization' => 'Bearer ' . $accessToken,
+                    'Authorization' => 'Bearer '.$accessToken,
                     'Content-Type' => 'application/json',
                     'Accept' => 'application/json',
                 ])
                 ->timeout(30)
-                ->post($this->baseUrl . '/omcoreapis/1.0.2/mp/push', $payload);
+                ->post($this->baseUrl.'/omcoreapis/1.0.2/mp/push', $payload);
 
             if ($response->successful()) {
                 $data = $response->json();
@@ -206,7 +212,7 @@ final class OrangeMoneyGateway implements MobileMoneyGateway
             ]);
 
             return MobileMoneyTransactionResult::failure(
-                'Erreur de connexion avec Orange Money: ' . $e->getMessage(),
+                'Erreur de connexion avec Orange Money: '.$e->getMessage(),
                 'ORANGE_CONNECTION_ERROR'
             );
         }
@@ -233,7 +239,7 @@ final class OrangeMoneyGateway implements MobileMoneyGateway
     {
         try {
             $accessToken = $this->getAccessToken();
-            if (!$accessToken) {
+            if (! $accessToken) {
                 return new MobileMoneyTransactionStatus(
                     'FAILED',
                     $providerTransactionId,
@@ -244,11 +250,11 @@ final class OrangeMoneyGateway implements MobileMoneyGateway
 
             $response = $this->httpClient
                 ->withHeaders([
-                    'Authorization' => 'Bearer ' . $accessToken,
+                    'Authorization' => 'Bearer '.$accessToken,
                     'Accept' => 'application/json',
                 ])
                 ->timeout(15)
-                ->get($this->baseUrl . '/omcoreapis/1.0.2/mp/transactions/' . $providerTransactionId);
+                ->get($this->baseUrl.'/omcoreapis/1.0.2/mp/transactions/'.$providerTransactionId);
 
             if ($response->successful()) {
                 $data = $response->json();
@@ -288,7 +294,7 @@ final class OrangeMoneyGateway implements MobileMoneyGateway
                 'FAILED',
                 $providerTransactionId,
                 null,
-                'Erreur de connexion: ' . $e->getMessage()
+                'Erreur de connexion: '.$e->getMessage()
             );
         }
     }
@@ -316,13 +322,14 @@ final class OrangeMoneyGateway implements MobileMoneyGateway
     public function verifyWebhookSignature(string $payload, string $signature): bool
     {
         $expectedSignature = hash_hmac('sha256', $payload, $this->webhookSecret);
+
         return hash_equals($expectedSignature, $signature);
     }
 
     private function getAccessToken(): ?string
     {
         // Check if current token is still valid
-        if ($this->accessToken && $this->tokenExpiresAt && $this->tokenExpiresAt > new DateTime()) {
+        if ($this->accessToken && $this->tokenExpiresAt && $this->tokenExpiresAt > new DateTime) {
             return $this->accessToken;
         }
 
@@ -333,7 +340,7 @@ final class OrangeMoneyGateway implements MobileMoneyGateway
                     'Accept' => 'application/json',
                 ])
                 ->timeout(15)
-                ->post($this->baseUrl . '/oauth/token', [
+                ->post($this->baseUrl.'/oauth/token', [
                     'grant_type' => 'client_credentials',
                     'client_id' => $this->clientId,
                     'client_secret' => $this->clientSecret,
@@ -345,7 +352,7 @@ final class OrangeMoneyGateway implements MobileMoneyGateway
 
                 // Set expiration time (subtract 60 seconds for safety)
                 $expiresIn = $data['expires_in'] ?? 3600;
-                $this->tokenExpiresAt = (new DateTime())->modify('+' . ($expiresIn - 60) . ' seconds');
+                $this->tokenExpiresAt = (new DateTime)->modify('+'.($expiresIn - 60).' seconds');
 
                 return $this->accessToken;
             }
@@ -372,9 +379,9 @@ final class OrangeMoneyGateway implements MobileMoneyGateway
 
         // Ensure it starts with +225
         if (preg_match('/^(\+225|225)(.+)$/', $cleanPhone, $matches)) {
-            return '+225' . $matches[2];
+            return '+225'.$matches[2];
         } elseif (preg_match('/^0(.+)$/', $cleanPhone, $matches)) {
-            return '+225' . $matches[1];
+            return '+225'.$matches[1];
         }
 
         return $cleanPhone;

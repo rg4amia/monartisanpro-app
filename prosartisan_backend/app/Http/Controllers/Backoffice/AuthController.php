@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers\Backoffice;
 
+use App\Domain\Identity\Models\ValueObjects\UserType;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
-use App\Domain\Identity\Models\ValueObjects\UserType;
 
 class AuthController extends Controller
 {
@@ -27,7 +27,7 @@ class AuthController extends Controller
         // Check if user exists and is admin
         $user = \App\Models\User::where('email', $request->email)->first();
 
-        if (!$user || !Hash::check($request->password, $user->password_hash)) {
+        if (! $user || ! Hash::check($request->password, $user->password_hash)) {
             throw ValidationException::withMessages([
                 'email' => ['Les informations d\'identification fournies sont incorrectes.'],
             ]);

@@ -10,38 +10,40 @@ use DateTime;
  */
 final class MediationCommunication
 {
- private string $message;
- private UserId $senderId;
- private DateTime $sentAt;
+    private string $message;
 
- public function __construct(string $message, UserId $senderId, DateTime $sentAt)
- {
-  $this->message = $message;
-  $this->senderId = $senderId;
-  $this->sentAt = $sentAt;
- }
+    private UserId $senderId;
 
- public function getMessage(): string
- {
-  return $this->message;
- }
+    private DateTime $sentAt;
 
- public function getSenderId(): UserId
- {
-  return $this->senderId;
- }
+    public function __construct(string $message, UserId $senderId, DateTime $sentAt)
+    {
+        $this->message = $message;
+        $this->senderId = $senderId;
+        $this->sentAt = $sentAt;
+    }
 
- public function getSentAt(): DateTime
- {
-  return $this->sentAt;
- }
+    public function getMessage(): string
+    {
+        return $this->message;
+    }
 
- public function toArray(): array
- {
-  return [
-   'message' => $this->message,
-   'sender_id' => $this->senderId->getValue(),
-   'sent_at' => $this->sentAt->format('Y-m-d H:i:s'),
-  ];
- }
+    public function getSenderId(): UserId
+    {
+        return $this->senderId;
+    }
+
+    public function getSentAt(): DateTime
+    {
+        return $this->sentAt;
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'message' => $this->message,
+            'sender_id' => $this->senderId->getValue(),
+            'sent_at' => $this->sentAt->format('Y-m-d H:i:s'),
+        ];
+    }
 }

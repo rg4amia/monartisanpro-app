@@ -2,9 +2,9 @@
 
 namespace App\Domain\Worksite\Events;
 
-use App\Domain\Worksite\Models\ValueObjects\ChantierId;
-use App\Domain\Marketplace\Models\ValueObjects\MissionId;
 use App\Domain\Identity\Models\ValueObjects\UserId;
+use App\Domain\Marketplace\Models\ValueObjects\MissionId;
+use App\Domain\Worksite\Models\ValueObjects\ChantierId;
 use DateTime;
 
 /**
@@ -14,11 +14,11 @@ use DateTime;
  */
 final class ChantierCompleted
 {
- public function __construct(
-  public readonly ChantierId $chantierId,
-  public readonly MissionId $missionId,
-  public readonly UserId $artisanId,
-  public readonly UserId $clientId,
-  public readonly DateTime $occurredAt
- ) {}
+    public function __construct(
+        public readonly ChantierId $chantierId,
+        public readonly MissionId $missionId,
+        public readonly UserId $artisanId,
+        public readonly UserId $clientId,
+        public readonly DateTime $occurredAt
+    ) {}
 }

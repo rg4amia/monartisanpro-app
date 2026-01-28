@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Api\V1\Financial;
 
-use App\Http\Controllers\Controller;
-use App\Application\UseCases\Financial\GetTransactionHistory\GetTransactionHistoryQuery;
 use App\Application\UseCases\Financial\GetTransactionHistory\GetTransactionHistoryHandler;
+use App\Application\UseCases\Financial\GetTransactionHistory\GetTransactionHistoryQuery;
+use App\Http\Controllers\Controller;
 use App\Http\Resources\Financial\TransactionResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -31,9 +31,6 @@ class TransactionController extends Controller
      * Get transaction history for authenticated user
      *
      * GET /api/v1/transactions
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function index(Request $request): JsonResponse
     {
@@ -55,7 +52,7 @@ class TransactionController extends Controller
             Log::info('Transaction history retrieved', [
                 'user_id' => $userId,
                 'page' => $page,
-                'count' => count($result['transactions'])
+                'count' => count($result['transactions']),
             ]);
 
             return response()->json([
@@ -66,21 +63,21 @@ class TransactionController extends Controller
                         'current_page' => $page,
                         'per_page' => $limit,
                         'total' => $result['total'],
-                        'last_page' => ceil($result['total'] / $limit)
-                    ]
-                ]
+                        'last_page' => ceil($result['total'] / $limit),
+                    ],
+                ],
             ], 200);
         } catch (\Exception $e) {
             Log::error('Failed to retrieve transaction history', [
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
                 'status' => 'error',
                 'message' => 'Failed to retrieve transaction history',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }

@@ -13,30 +13,30 @@ use App\Domain\Identity\Models\ValueObjects\UserId;
  */
 interface JetonValidationRepository
 {
- /**
-  * Save validation to persistence
-  *
-  * Note: This is append-only - validations are never updated
-  */
- public function save(JetonValidation $validation): void;
+    /**
+     * Save validation to persistence
+     *
+     * Note: This is append-only - validations are never updated
+     */
+    public function save(JetonValidation $validation): void;
 
- /**
-  * Find validation by ID
-  */
- public function findById(string $id): ?JetonValidation;
+    /**
+     * Find validation by ID
+     */
+    public function findById(string $id): ?JetonValidation;
 
- /**
-  * Find validations by jeton ID
-  */
- public function findByJetonId(JetonId $jetonId): array;
+    /**
+     * Find validations by jeton ID
+     */
+    public function findByJetonId(JetonId $jetonId): array;
 
- /**
-  * Find validations by supplier ID
-  */
- public function findByFournisseurId(UserId $fournisseurId): array;
+    /**
+     * Find validations by supplier ID
+     */
+    public function findByFournisseurId(UserId $fournisseurId): array;
 
- /**
-  * Find validations by artisan ID
-  */
- public function findByArtisanId(UserId $artisanId): array;
+    /**
+     * Find validations by artisan ID
+     */
+    public function findByArtisanId(UserId $artisanId): array;
 }

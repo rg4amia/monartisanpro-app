@@ -16,7 +16,7 @@ final class PhoneNumber
     {
         $value = $this->normalize($value);
 
-        if (!$this->isValid($value)) {
+        if (! $this->isValid($value)) {
             throw new InvalidArgumentException("Invalid phone number: {$value}");
         }
 
@@ -39,12 +39,12 @@ final class PhoneNumber
 
         // If starts with 0, replace with +225 (Côte d'Ivoire country code)
         if (str_starts_with($normalized, '0')) {
-            $normalized = '+225' . substr($normalized, 1);
+            $normalized = '+225'.substr($normalized, 1);
         }
 
         // If doesn't start with +, add +225
-        if (!str_starts_with($normalized, '+')) {
-            $normalized = '+225' . $normalized;
+        if (! str_starts_with($normalized, '+')) {
+            $normalized = '+225'.$normalized;
         }
 
         return $normalized;
@@ -82,8 +82,9 @@ final class PhoneNumber
     {
         if (str_starts_with($this->value, '+225')) {
             $number = substr($this->value, 4); // Remove +225
-            return '+225 ' . substr($number, 0, 2) . ' ' . substr($number, 2, 2) . ' ' .
-                substr($number, 4, 2) . ' ' . substr($number, 6, 2) . ' ' . substr($number, 8, 2);
+
+            return '+225 '.substr($number, 0, 2).' '.substr($number, 2, 2).' '.
+                substr($number, 4, 2).' '.substr($number, 6, 2).' '.substr($number, 8, 2);
         }
 
         return $this->value;

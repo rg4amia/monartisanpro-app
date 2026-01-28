@@ -25,7 +25,7 @@ final class UserId
 
     public static function fromString(string $uuid): self
     {
-        if (!Uuid::isValid($uuid)) {
+        if (! Uuid::isValid($uuid)) {
             throw new InvalidArgumentException("Invalid UUID format: {$uuid}");
         }
 

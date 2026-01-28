@@ -10,9 +10,13 @@ use InvalidArgumentException;
 final class DisputeStatus
 {
     public const OPEN = 'OPEN';
+
     public const IN_MEDIATION = 'IN_MEDIATION';
+
     public const IN_ARBITRATION = 'IN_ARBITRATION';
+
     public const RESOLVED = 'RESOLVED';
+
     public const CLOSED = 'CLOSED';
 
     private const VALID_STATUSES = [
@@ -116,9 +120,9 @@ final class DisputeStatus
 
     private function validateStatus(string $value): void
     {
-        if (!in_array($value, self::VALID_STATUSES, true)) {
+        if (! in_array($value, self::VALID_STATUSES, true)) {
             throw new InvalidArgumentException(
-                "Invalid dispute status: {$value}. Valid statuses are: " . implode(', ', self::VALID_STATUSES)
+                "Invalid dispute status: {$value}. Valid statuses are: ".implode(', ', self::VALID_STATUSES)
             );
         }
     }

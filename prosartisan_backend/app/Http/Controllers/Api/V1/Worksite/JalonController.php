@@ -46,11 +46,11 @@ class JalonController extends Controller
             $jalonId = JalonId::fromString($id);
             $jalon = $this->jalonRepository->findById($jalonId);
 
-            if (!$jalon) {
+            if (! $jalon) {
                 return response()->json([
                     'error' => 'JALON_NOT_FOUND',
                     'message' => 'Jalon non trouvé',
-                    'status_code' => 404
+                    'status_code' => 404,
                 ], 404);
             }
 
@@ -90,32 +90,32 @@ class JalonController extends Controller
                 'gps_coordinates' => [
                     'latitude' => $gpsCoordinates->getLatitude(),
                     'longitude' => $gpsCoordinates->getLongitude(),
-                    'accuracy' => $gpsCoordinates->getAccuracy()
+                    'accuracy' => $gpsCoordinates->getAccuracy(),
                 ],
-                'auto_validation_deadline' => $jalon->getAutoValidationDeadline()?->format('Y-m-d H:i:s')
+                'auto_validation_deadline' => $jalon->getAutoValidationDeadline()?->format('Y-m-d H:i:s'),
             ]);
 
             return response()->json([
                 'message' => 'Preuve de livraison soumise avec succès',
-                'data' => new JalonResource($jalon)
+                'data' => new JalonResource($jalon),
             ]);
         } catch (\InvalidArgumentException $e) {
             return response()->json([
                 'error' => 'INVALID_PROOF_DATA',
                 'message' => $e->getMessage(),
-                'status_code' => 400
+                'status_code' => 400,
             ], 400);
         } catch (\Exception $e) {
             Log::error('Failed to submit jalon proof', [
                 'jalon_id' => $id,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
                 'error' => 'PROOF_SUBMISSION_FAILED',
                 'message' => 'Erreur lors de la soumission de la preuve',
-                'status_code' => 500
+                'status_code' => 500,
             ], 500);
         }
     }
@@ -132,11 +132,11 @@ class JalonController extends Controller
             $jalonId = JalonId::fromString($id);
             $jalon = $this->jalonRepository->findById($jalonId);
 
-            if (!$jalon) {
+            if (! $jalon) {
                 return response()->json([
                     'error' => 'JALON_NOT_FOUND',
                     'message' => 'Jalon non trouvé',
-                    'status_code' => 404
+                    'status_code' => 404,
                 ], 404);
             }
 
@@ -150,29 +150,29 @@ class JalonController extends Controller
             Log::info('Jalon validated', [
                 'jalon_id' => $jalonId->getValue(),
                 'validated_by' => Auth::id(),
-                'validated_at' => $jalon->getValidatedAt()?->format('Y-m-d H:i:s')
+                'validated_at' => $jalon->getValidatedAt()?->format('Y-m-d H:i:s'),
             ]);
 
             return response()->json([
                 'message' => 'Jalon validé avec succès',
-                'data' => new JalonResource($jalon)
+                'data' => new JalonResource($jalon),
             ]);
         } catch (\InvalidArgumentException $e) {
             return response()->json([
                 'error' => 'VALIDATION_ERROR',
                 'message' => $e->getMessage(),
-                'status_code' => 400
+                'status_code' => 400,
             ], 400);
         } catch (\Exception $e) {
             Log::error('Failed to validate jalon', [
                 'jalon_id' => $id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             return response()->json([
                 'error' => 'VALIDATION_FAILED',
                 'message' => 'Erreur lors de la validation du jalon',
-                'status_code' => 500
+                'status_code' => 500,
             ], 500);
         }
     }
@@ -191,11 +191,11 @@ class JalonController extends Controller
             $jalonId = JalonId::fromString($id);
             $jalon = $this->jalonRepository->findById($jalonId);
 
-            if (!$jalon) {
+            if (! $jalon) {
                 return response()->json([
                     'error' => 'JALON_NOT_FOUND',
                     'message' => 'Jalon non trouvé',
-                    'status_code' => 404
+                    'status_code' => 404,
                 ], 404);
             }
 
@@ -209,29 +209,29 @@ class JalonController extends Controller
             Log::info('Jalon contested', [
                 'jalon_id' => $jalonId->getValue(),
                 'contested_by' => Auth::id(),
-                'reason' => $validated['reason']
+                'reason' => $validated['reason'],
             ]);
 
             return response()->json([
                 'message' => 'Jalon contesté avec succès',
-                'data' => new JalonResource($jalon)
+                'data' => new JalonResource($jalon),
             ]);
         } catch (\InvalidArgumentException $e) {
             return response()->json([
                 'error' => 'CONTEST_ERROR',
                 'message' => $e->getMessage(),
-                'status_code' => 400
+                'status_code' => 400,
             ], 400);
         } catch (\Exception $e) {
             Log::error('Failed to contest jalon', [
                 'jalon_id' => $id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             return response()->json([
                 'error' => 'CONTEST_FAILED',
                 'message' => 'Erreur lors de la contestation du jalon',
-                'status_code' => 500
+                'status_code' => 500,
             ], 500);
         }
     }
@@ -247,35 +247,35 @@ class JalonController extends Controller
             $jalonId = JalonId::fromString($id);
             $jalon = $this->jalonRepository->findById($jalonId);
 
-            if (!$jalon) {
+            if (! $jalon) {
                 return response()->json([
                     'error' => 'JALON_NOT_FOUND',
                     'message' => 'Jalon non trouvé',
-                    'status_code' => 404
+                    'status_code' => 404,
                 ], 404);
             }
 
             // Authorization check would be done here in a real implementation
 
             return response()->json([
-                'data' => new JalonResource($jalon)
+                'data' => new JalonResource($jalon),
             ]);
         } catch (\InvalidArgumentException $e) {
             return response()->json([
                 'error' => 'INVALID_JALON_ID',
                 'message' => 'ID de jalon invalide',
-                'status_code' => 400
+                'status_code' => 400,
             ], 400);
         } catch (\Exception $e) {
             Log::error('Failed to retrieve jalon', [
                 'jalon_id' => $id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             return response()->json([
                 'error' => 'JALON_RETRIEVAL_FAILED',
                 'message' => 'Erreur lors de la récupération du jalon',
-                'status_code' => 500
+                'status_code' => 500,
             ], 500);
         }
     }

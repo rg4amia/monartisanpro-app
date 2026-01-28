@@ -6,7 +6,6 @@ use App\Domain\Identity\Models\ValueObjects\UserId;
 use App\Domain\Shared\Services\FraudDetectionService;
 use App\Domain\Shared\ValueObjects\MoneyAmount;
 use App\Domain\Shared\ValueObjects\SuspiciousActivityResult;
-use DateTime;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -21,17 +20,23 @@ use Illuminate\Support\Facades\Log;
 class DefaultFraudDetectionService implements FraudDetectionService
 {
     private const CACHE_PREFIX = 'fraud_detection:';
+
     private const CACHE_TTL_MINUTES = 15;
 
     // Risk score thresholds
     private const LOW_RISK_THRESHOLD = 30;
+
     private const MEDIUM_RISK_THRESHOLD = 60;
+
     private const HIGH_RISK_THRESHOLD = 80;
 
     // Pattern detection constants
     private const MAX_FAILED_LOGINS_PER_HOUR = 10;
+
     private const MAX_TRANSACTIONS_PER_HOUR = 20;
+
     private const UNUSUAL_AMOUNT_MULTIPLIER = 5.0; // 5x average transaction
+
     private const MIN_TRANSACTIONS_FOR_ANALYSIS = 3;
 
     /**
@@ -39,7 +44,7 @@ class DefaultFraudDetectionService implements FraudDetectionService
      */
     public function detectSuspiciousActivity(UserId $userId): SuspiciousActivityResult
     {
-        $cacheKey = self::CACHE_PREFIX . 'activity:' . $userId->getValue();
+        $cacheKey = self::CACHE_PREFIX.'activity:'.$userId->getValue();
 
         // Check cache first
         $cached = Cache::get($cacheKey);
@@ -225,7 +230,7 @@ class DefaultFraudDetectionService implements FraudDetectionService
 
         // Set flag in cache for quick access
         Cache::put(
-            self::CACHE_PREFIX . 'flagged:' . $userId->getValue(),
+            self::CACHE_PREFIX.'flagged:'.$userId->getValue(),
             true,
             now()->addDays(7) // Flags expire after 7 days if not reviewed
         );
@@ -243,7 +248,7 @@ class DefaultFraudDetectionService implements FraudDetectionService
     public function isAccountFlagged(UserId $userId): bool
     {
         // Check cache first
-        $cached = Cache::get(self::CACHE_PREFIX . 'flagged:' . $userId->getValue());
+        $cached = Cache::get(self::CACHE_PREFIX.'flagged:'.$userId->getValue());
         if ($cached !== null) {
             return $cached;
         }
@@ -257,7 +262,7 @@ class DefaultFraudDetectionService implements FraudDetectionService
 
         // Cache result
         Cache::put(
-            self::CACHE_PREFIX . 'flagged:' . $userId->getValue(),
+            self::CACHE_PREFIX.'flagged:'.$userId->getValue(),
             $flagged,
             now()->addMinutes(self::CACHE_TTL_MINUTES)
         );
@@ -314,7 +319,7 @@ class DefaultFraudDetectionService implements FraudDetectionService
         ]);
 
         // Clear cached activity analysis to force re-evaluation
-        Cache::forget(self::CACHE_PREFIX . 'activity:' . $userId->getValue());
+        Cache::forget(self::CACHE_PREFIX.'activity:'.$userId->getValue());
     }
 
     /**
@@ -323,6 +328,7 @@ class DefaultFraudDetectionService implements FraudDetectionService
     public function getFraudScore(UserId $userId): int
     {
         $result = $this->detectSuspiciousActivity($userId);
+
         return $result->getRiskScore();
     }
 
@@ -406,7 +412,7 @@ class DefaultFraudDetectionService implements FraudDetectionService
     {
         $user = DB::table('users')->where('id', $userId->getValue())->first();
 
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 

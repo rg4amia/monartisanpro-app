@@ -2,8 +2,8 @@
 
 namespace App\Domain\Dispute\Models\ValueObjects;
 
-use Ramsey\Uuid\Uuid;
 use InvalidArgumentException;
+use Ramsey\Uuid\Uuid;
 
 /**
  * Value object representing a Litige identifier
@@ -45,7 +45,7 @@ final class LitigeId
 
     private function validateUuid(string $value): void
     {
-        if (!Uuid::isValid($value)) {
+        if (! Uuid::isValid($value)) {
             throw new InvalidArgumentException("Invalid UUID format: {$value}");
         }
     }

@@ -12,23 +12,24 @@ use App\Domain\Shared\Services\SMSNotificationService;
  */
 class SMSServiceAdapter implements SMSService
 {
- private SMSNotificationService $smsNotificationService;
+    private SMSNotificationService $smsNotificationService;
 
- public function __construct(SMSNotificationService $smsNotificationService)
- {
-  $this->smsNotificationService = $smsNotificationService;
- }
+    public function __construct(SMSNotificationService $smsNotificationService)
+    {
+        $this->smsNotificationService = $smsNotificationService;
+    }
 
- /**
-  * Send an SMS message to a phone number
-  *
-  * @param PhoneNumber $phone Recipient phone number
-  * @param string $message SMS message content
-  * @return bool True if sent successfully
-  * @throws \Exception If sending fails
-  */
- public function send(PhoneNumber $phone, string $message): bool
- {
-  return $this->smsNotificationService->sendSMS($phone, $message);
- }
+    /**
+     * Send an SMS message to a phone number
+     *
+     * @param  PhoneNumber  $phone  Recipient phone number
+     * @param  string  $message  SMS message content
+     * @return bool True if sent successfully
+     *
+     * @throws \Exception If sending fails
+     */
+    public function send(PhoneNumber $phone, string $message): bool
+    {
+        return $this->smsNotificationService->sendSMS($phone, $message);
+    }
 }

@@ -20,17 +20,29 @@ use InvalidArgumentException;
 class User
 {
     protected UserId $id;
+
     protected Email $email;
+
     protected HashedPassword $password;
+
     protected UserType $type;
+
     protected AccountStatus $status;
+
     protected ?KYCDocuments $kycDocuments;
+
     protected ?PhoneNumber $phoneNumber;
+
     protected ?string $deviceToken;
+
     protected NotificationPreferences $notificationPreferences;
+
     protected DateTime $createdAt;
+
     protected DateTime $updatedAt;
+
     protected int $failedLoginAttempts;
+
     protected ?DateTime $lockedUntil;
 
     public function __construct(
@@ -54,9 +66,9 @@ class User
         $this->kycDocuments = $kycDocuments;
         $this->phoneNumber = $phoneNumber;
         $this->deviceToken = $deviceToken;
-        $this->notificationPreferences = $notificationPreferences ?? new NotificationPreferences();
-        $this->createdAt = $createdAt ?? new DateTime();
-        $this->updatedAt = $updatedAt ?? new DateTime();
+        $this->notificationPreferences = $notificationPreferences ?? new NotificationPreferences;
+        $this->createdAt = $createdAt ?? new DateTime;
+        $this->updatedAt = $updatedAt ?? new DateTime;
         $this->failedLoginAttempts = 0;
         $this->lockedUntil = null;
     }
@@ -87,7 +99,7 @@ class User
     {
         $this->kycDocuments = $documents;
         $this->activate();
-        $this->updatedAt = new DateTime();
+        $this->updatedAt = new DateTime;
     }
 
     /**
@@ -96,7 +108,7 @@ class User
     public function activate(): void
     {
         $this->status = AccountStatus::ACTIVE();
-        $this->updatedAt = new DateTime();
+        $this->updatedAt = new DateTime;
     }
 
     /**
@@ -109,7 +121,7 @@ class User
         }
 
         $this->status = AccountStatus::SUSPENDED();
-        $this->updatedAt = new DateTime();
+        $this->updatedAt = new DateTime;
     }
 
     /**
@@ -121,10 +133,11 @@ class User
             return false;
         }
 
-        $now = new DateTime();
+        $now = new DateTime;
         if ($now >= $this->lockedUntil) {
             // Lock period has expired, unlock the account
             $this->unlock();
+
             return false;
         }
 
@@ -138,7 +151,7 @@ class User
     public function recordFailedLoginAttempt(): void
     {
         $this->failedLoginAttempts++;
-        $this->updatedAt = new DateTime();
+        $this->updatedAt = new DateTime;
 
         if ($this->failedLoginAttempts >= 3) {
             $this->lockAccount();
@@ -151,7 +164,7 @@ class User
     public function resetFailedLoginAttempts(): void
     {
         $this->failedLoginAttempts = 0;
-        $this->updatedAt = new DateTime();
+        $this->updatedAt = new DateTime;
     }
 
     /**
@@ -160,7 +173,7 @@ class User
     private function lockAccount(): void
     {
         $this->lockedUntil = new DateTime('+15 minutes');
-        $this->updatedAt = new DateTime();
+        $this->updatedAt = new DateTime;
     }
 
     /**
@@ -170,7 +183,7 @@ class User
     {
         $this->lockedUntil = null;
         $this->failedLoginAttempts = 0;
-        $this->updatedAt = new DateTime();
+        $this->updatedAt = new DateTime;
     }
 
     /**
@@ -187,7 +200,7 @@ class User
     public function changePassword(HashedPassword $newPassword): void
     {
         $this->password = $newPassword;
-        $this->updatedAt = new DateTime();
+        $this->updatedAt = new DateTime;
     }
 
     /**
@@ -290,7 +303,7 @@ class User
     public function updateDeviceToken(?string $deviceToken): void
     {
         $this->deviceToken = $deviceToken;
-        $this->updatedAt = new DateTime();
+        $this->updatedAt = new DateTime;
     }
 
     /**
@@ -299,7 +312,7 @@ class User
     public function updateNotificationPreferences(NotificationPreferences $preferences): void
     {
         $this->notificationPreferences = $preferences;
-        $this->updatedAt = new DateTime();
+        $this->updatedAt = new DateTime;
     }
 
     public function getPhoneNumber(): ?PhoneNumber

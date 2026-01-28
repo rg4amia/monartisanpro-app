@@ -15,107 +15,110 @@ use InvalidArgumentException;
  */
 final class Mediation
 {
- private UserId $mediatorId;
- private array $communications; // Array of MediationCommunication
- private DateTime $startedAt;
- private ?DateTime $endedAt;
+    private UserId $mediatorId;
 
- public function __construct(
-  UserId $mediatorId,
-  ?array $communications = null,
-  ?DateTime $startedAt = null,
-  ?DateTime $endedAt = null
- ) {
-  $this->mediatorId = $mediatorId;
-  $this->communications = $communications ?? [];
-  $this->startedAt = $startedAt ?? new DateTime();
-  $this->endedAt = $endedAt;
- }
+    private array $communications; // Array of MediationCommunication
 
- /**
-  * Add a communication message to the mediation
-  *
-  * Requirement 9.5: Provide communication channel during mediation
-  */
- public function addCommunication(string $message, UserId $senderId): void
- {
-  if (empty(trim($message))) {
-   throw new InvalidArgumentException('Communication message cannot be empty');
-  }
+    private DateTime $startedAt;
 
-  $communication = new MediationCommunication(
-   $message,
-   $senderId,
-   new DateTime()
-  );
+    private ?DateTime $endedAt;
 
-  $this->communications[] = $communication;
- }
+    public function __construct(
+        UserId $mediatorId,
+        ?array $communications = null,
+        ?DateTime $startedAt = null,
+        ?DateTime $endedAt = null
+    ) {
+        $this->mediatorId = $mediatorId;
+        $this->communications = $communications ?? [];
+        $this->startedAt = $startedAt ?? new DateTime;
+        $this->endedAt = $endedAt;
+    }
 
- /**
-  * End the mediation process
-  */
- public function end(): void
- {
-  if ($this->endedAt !== null) {
-   throw new InvalidArgumentException('Mediation is already ended');
-  }
+    /**
+     * Add a communication message to the mediation
+     *
+     * Requirement 9.5: Provide communication channel during mediation
+     */
+    public function addCommunication(string $message, UserId $senderId): void
+    {
+        if (empty(trim($message))) {
+            throw new InvalidArgumentException('Communication message cannot be empty');
+        }
 
-  $this->endedAt = new DateTime();
- }
+        $communication = new MediationCommunication(
+            $message,
+            $senderId,
+            new DateTime
+        );
 
- /**
-  * Check if mediation is active
-  */
- public function isActive(): bool
- {
-  return $this->endedAt === null;
- }
+        $this->communications[] = $communication;
+    }
 
- /**
-  * Get all communications
-  */
- public function getCommunications(): array
- {
-  return $this->communications;
- }
+    /**
+     * End the mediation process
+     */
+    public function end(): void
+    {
+        if ($this->endedAt !== null) {
+            throw new InvalidArgumentException('Mediation is already ended');
+        }
 
- /**
-  * Get communications count
-  */
- public function getCommunicationsCount(): int
- {
-  return count($this->communications);
- }
+        $this->endedAt = new DateTime;
+    }
 
- // Getters
- public function getMediatorId(): UserId
- {
-  return $this->mediatorId;
- }
+    /**
+     * Check if mediation is active
+     */
+    public function isActive(): bool
+    {
+        return $this->endedAt === null;
+    }
 
- public function getStartedAt(): DateTime
- {
-  return $this->startedAt;
- }
+    /**
+     * Get all communications
+     */
+    public function getCommunications(): array
+    {
+        return $this->communications;
+    }
 
- public function getEndedAt(): ?DateTime
- {
-  return $this->endedAt;
- }
+    /**
+     * Get communications count
+     */
+    public function getCommunicationsCount(): int
+    {
+        return count($this->communications);
+    }
 
- public function toArray(): array
- {
-  return [
-   'mediator_id' => $this->mediatorId->getValue(),
-   'communications_count' => $this->getCommunicationsCount(),
-   'communications' => array_map(
-    fn(MediationCommunication $comm) => $comm->toArray(),
-    $this->communications
-   ),
-   'is_active' => $this->isActive(),
-   'started_at' => $this->startedAt->format('Y-m-d H:i:s'),
-   'ended_at' => $this->endedAt?->format('Y-m-d H:i:s'),
-  ];
- }
+    // Getters
+    public function getMediatorId(): UserId
+    {
+        return $this->mediatorId;
+    }
+
+    public function getStartedAt(): DateTime
+    {
+        return $this->startedAt;
+    }
+
+    public function getEndedAt(): ?DateTime
+    {
+        return $this->endedAt;
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'mediator_id' => $this->mediatorId->getValue(),
+            'communications_count' => $this->getCommunicationsCount(),
+            'communications' => array_map(
+                fn (MediationCommunication $comm) => $comm->toArray(),
+                $this->communications
+            ),
+            'is_active' => $this->isActive(),
+            'started_at' => $this->startedAt->format('Y-m-d H:i:s'),
+            'ended_at' => $this->endedAt?->format('Y-m-d H:i:s'),
+        ];
+    }
 }

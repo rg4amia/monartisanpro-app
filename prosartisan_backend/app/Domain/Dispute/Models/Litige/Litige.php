@@ -2,6 +2,7 @@
 
 namespace App\Domain\Dispute\Models\Litige;
 
+use App\Domain\Dispute\Events\DisputeReported;
 use App\Domain\Dispute\Models\Arbitrage\Arbitration;
 use App\Domain\Dispute\Models\Mediation\Mediation;
 use App\Domain\Dispute\Models\ValueObjects\DisputeStatus;
@@ -10,7 +11,6 @@ use App\Domain\Dispute\Models\ValueObjects\LitigeId;
 use App\Domain\Dispute\Models\ValueObjects\Resolution;
 use App\Domain\Identity\Models\ValueObjects\UserId;
 use App\Domain\Marketplace\Models\ValueObjects\MissionId;
-use App\Domain\Dispute\Events\DisputeReported;
 use App\Domain\Shared\Services\DomainEventDispatcher;
 use DateTime;
 use InvalidArgumentException;
@@ -25,17 +25,29 @@ use InvalidArgumentException;
 final class Litige
 {
     private LitigeId $id;
+
     private MissionId $missionId;
+
     private UserId $reporterId;
+
     private UserId $defendantId;
+
     private DisputeType $type;
+
     private string $description;
+
     private array $evidence; // URLs to photos/documents
+
     private DisputeStatus $status;
+
     private ?Mediation $mediation;
+
     private ?Arbitration $arbitration;
+
     private ?Resolution $resolution;
+
     private DateTime $createdAt;
+
     private ?DateTime $resolvedAt;
 
     public function __construct(
@@ -67,7 +79,7 @@ final class Litige
         $this->mediation = $mediation;
         $this->arbitration = $arbitration;
         $this->resolution = $resolution;
-        $this->createdAt = $createdAt ?? new DateTime();
+        $this->createdAt = $createdAt ?? new DateTime;
         $this->resolvedAt = $resolvedAt;
     }
 
@@ -100,7 +112,7 @@ final class Litige
             $missionId,
             $reporterId,
             $type,
-            new DateTime()
+            new DateTime
         ));
 
         return $litige;
@@ -113,7 +125,7 @@ final class Litige
      */
     public function startMediation(UserId $mediatorId): void
     {
-        if (!$this->status->isOpen()) {
+        if (! $this->status->isOpen()) {
             throw new InvalidArgumentException('Cannot start mediation: dispute is not open');
         }
 
@@ -132,7 +144,7 @@ final class Litige
      */
     public function escalateToArbitration(UserId $arbitratorId): void
     {
-        if (!$this->status->isInMediation()) {
+        if (! $this->status->isInMediation()) {
             throw new InvalidArgumentException('Cannot escalate to arbitration: dispute is not in mediation');
         }
 
@@ -155,7 +167,7 @@ final class Litige
      */
     public function renderArbitrationDecision(Arbitration $arbitration): void
     {
-        if (!$this->status->isInArbitration()) {
+        if (! $this->status->isInArbitration()) {
             throw new InvalidArgumentException('Cannot render decision: dispute is not in arbitration');
         }
 
@@ -165,7 +177,7 @@ final class Litige
             $arbitration->getJustification()
         );
         $this->status = DisputeStatus::resolved();
-        $this->resolvedAt = new DateTime();
+        $this->resolvedAt = new DateTime;
     }
 
     /**
@@ -173,13 +185,13 @@ final class Litige
      */
     public function resolveFromMediation(Resolution $resolution): void
     {
-        if (!$this->status->isInMediation()) {
+        if (! $this->status->isInMediation()) {
             throw new InvalidArgumentException('Cannot resolve: dispute is not in mediation');
         }
 
         $this->resolution = $resolution;
         $this->status = DisputeStatus::resolved();
-        $this->resolvedAt = new DateTime();
+        $this->resolvedAt = new DateTime;
 
         // End mediation
         if ($this->mediation && $this->mediation->isActive()) {
@@ -192,7 +204,7 @@ final class Litige
      */
     public function close(): void
     {
-        if (!$this->status->isResolved()) {
+        if (! $this->status->isResolved()) {
             throw new InvalidArgumentException('Cannot close: dispute is not resolved');
         }
 
@@ -208,7 +220,7 @@ final class Litige
             throw new InvalidArgumentException('Cannot add evidence: dispute is resolved or closed');
         }
 
-        if (!filter_var($evidenceUrl, FILTER_VALIDATE_URL)) {
+        if (! filter_var($evidenceUrl, FILTER_VALIDATE_URL)) {
             throw new InvalidArgumentException('Invalid evidence URL');
         }
 

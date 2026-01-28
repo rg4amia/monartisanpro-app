@@ -59,7 +59,7 @@ final class DefaultLocationPrivacyService implements LocationPrivacyService
         }
 
         // Verify the artisan is the one who submitted the accepted quote
-        if (!$acceptedQuote->getArtisanId()->equals($artisanId)) {
+        if (! $acceptedQuote->getArtisanId()->equals($artisanId)) {
             throw new InvalidArgumentException(
                 "Artisan {$artisanId->getValue()} is not authorized to view exact location for mission {$missionId->getValue()}"
             );

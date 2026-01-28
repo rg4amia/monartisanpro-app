@@ -12,17 +12,17 @@ use Illuminate\Support\Facades\Log;
  */
 class LogSMSService implements SMSService
 {
- /**
-  * {@inheritDoc}
-  */
- public function send(PhoneNumber $phone, string $message): bool
- {
-  Log::info('SMS sent', [
-   'phone' => $phone->getValue(),
-   'message' => $message,
-   'timestamp' => now()->toIso8601String(),
-  ]);
+    /**
+     * {@inheritDoc}
+     */
+    public function send(PhoneNumber $phone, string $message): bool
+    {
+        Log::info('SMS sent', [
+            'phone' => $phone->getValue(),
+            'message' => $message,
+            'timestamp' => now()->toIso8601String(),
+        ]);
 
-  return true;
- }
+        return true;
+    }
 }

@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers\Backoffice;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
-use App\Models\User;
-use App\Domain\Identity\Models\ValueObjects\UserType;
 use App\Domain\Identity\Models\ValueObjects\AccountStatus;
+use App\Domain\Identity\Models\ValueObjects\UserType;
+use App\Http\Controllers\Controller;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
 
 class UserController extends Controller
 {
@@ -23,7 +23,7 @@ class UserController extends Controller
                 'fournisseur_profiles.business_name',
                 'kyc_verifications.verification_status',
                 'kyc_verifications.id_type',
-                'kyc_verifications.verified_at'
+                'kyc_verifications.verified_at',
             ])
             ->leftJoin('artisan_profiles', 'users.id', '=', 'artisan_profiles.user_id')
             ->leftJoin('fournisseur_profiles', 'users.id', '=', 'fournisseur_profiles.user_id')
@@ -74,7 +74,7 @@ class UserController extends Controller
         $user->load([
             'artisanProfile',
             'fournisseurProfile',
-            'kycVerification'
+            'kycVerification',
         ]);
 
         // Get user activity stats

@@ -14,12 +14,12 @@ use DateTime;
  */
 final class MissionCreated
 {
- public function __construct(
-  public readonly MissionId $missionId,
-  public readonly UserId $clientId,
-  public readonly GPS_Coordinates $location,
-  public readonly TradeCategory $category,
-  public readonly string $description,
-  public readonly DateTime $occurredAt
- ) {}
+    public function __construct(
+        public readonly MissionId $missionId,
+        public readonly UserId $clientId,
+        public readonly GPS_Coordinates $location,
+        public readonly TradeCategory $category,
+        public readonly string $description,
+        public readonly DateTime $occurredAt
+    ) {}
 }

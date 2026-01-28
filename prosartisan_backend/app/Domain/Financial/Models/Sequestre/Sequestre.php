@@ -21,18 +21,29 @@ use InvalidArgumentException;
 final class Sequestre
 {
     private SequestreId $id;
+
     private MissionId $missionId;
+
     private UserId $clientId;
+
     private UserId $artisanId;
+
     private MoneyAmount $totalAmount;
+
     private MoneyAmount $materialsAmount;
+
     private MoneyAmount $laborAmount;
+
     private MoneyAmount $materialsReleased;
+
     private MoneyAmount $laborReleased;
+
     private SequestreStatus $status;
+
     private DateTime $createdAt;
 
     private const MATERIALS_PERCENTAGE = 65;
+
     private const LABOR_PERCENTAGE = 35;
 
     public function __construct(
@@ -58,7 +69,7 @@ final class Sequestre
         $this->materialsReleased = $materialsReleased ?? MoneyAmount::fromCentimes(0);
         $this->laborReleased = $laborReleased ?? MoneyAmount::fromCentimes(0);
         $this->status = $status ?? SequestreStatus::blocked();
-        $this->createdAt = $createdAt ?? new DateTime();
+        $this->createdAt = $createdAt ?? new DateTime;
 
         // Calculate fragmentation if not provided
         if ($materialsAmount === null || $laborAmount === null) {

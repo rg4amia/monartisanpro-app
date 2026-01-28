@@ -12,88 +12,93 @@ use DateTime;
  */
 final class MobileMoneyTransactionStatus
 {
- private string $status; // PENDING, COMPLETED, FAILED, CANCELLED
- private ?string $providerTransactionId;
- private ?string $providerReference;
- private ?string $errorMessage;
- private ?DateTime $completedAt;
- private array $metadata;
+    private string $status; // PENDING, COMPLETED, FAILED, CANCELLED
 
- public function __construct(
-  string $status,
-  ?string $providerTransactionId = null,
-  ?string $providerReference = null,
-  ?string $errorMessage = null,
-  ?DateTime $completedAt = null,
-  array $metadata = []
- ) {
-  $this->status = $status;
-  $this->providerTransactionId = $providerTransactionId;
-  $this->providerReference = $providerReference;
-  $this->errorMessage = $errorMessage;
-  $this->completedAt = $completedAt;
-  $this->metadata = $metadata;
- }
+    private ?string $providerTransactionId;
 
- public function getStatus(): string
- {
-  return $this->status;
- }
+    private ?string $providerReference;
 
- public function getProviderTransactionId(): ?string
- {
-  return $this->providerTransactionId;
- }
+    private ?string $errorMessage;
 
- public function getProviderReference(): ?string
- {
-  return $this->providerReference;
- }
+    private ?DateTime $completedAt;
 
- public function getErrorMessage(): ?string
- {
-  return $this->errorMessage;
- }
+    private array $metadata;
 
- public function getCompletedAt(): ?DateTime
- {
-  return $this->completedAt;
- }
+    public function __construct(
+        string $status,
+        ?string $providerTransactionId = null,
+        ?string $providerReference = null,
+        ?string $errorMessage = null,
+        ?DateTime $completedAt = null,
+        array $metadata = []
+    ) {
+        $this->status = $status;
+        $this->providerTransactionId = $providerTransactionId;
+        $this->providerReference = $providerReference;
+        $this->errorMessage = $errorMessage;
+        $this->completedAt = $completedAt;
+        $this->metadata = $metadata;
+    }
 
- public function getMetadata(): array
- {
-  return $this->metadata;
- }
+    public function getStatus(): string
+    {
+        return $this->status;
+    }
 
- public function isPending(): bool
- {
-  return $this->status === 'PENDING';
- }
+    public function getProviderTransactionId(): ?string
+    {
+        return $this->providerTransactionId;
+    }
 
- public function isCompleted(): bool
- {
-  return $this->status === 'COMPLETED';
- }
+    public function getProviderReference(): ?string
+    {
+        return $this->providerReference;
+    }
 
- public function isFailed(): bool
- {
-  return $this->status === 'FAILED';
- }
+    public function getErrorMessage(): ?string
+    {
+        return $this->errorMessage;
+    }
 
- public function isCancelled(): bool
- {
-  return $this->status === 'CANCELLED';
- }
+    public function getCompletedAt(): ?DateTime
+    {
+        return $this->completedAt;
+    }
 
- public function toArray(): array
- {
-  return [
-   'status' => $this->status,
-   'provider_transaction_id' => $this->providerTransactionId,
-   'provider_reference' => $this->providerReference,
-   'error_message' => $this->errorMessage,
-   'completed_at' => $this->completedAt?->format('Y-m-d H:i:s'),
-   'metadata' => $this->metadata,
-  ];
- }
+    public function getMetadata(): array
+    {
+        return $this->metadata;
+    }
+
+    public function isPending(): bool
+    {
+        return $this->status === 'PENDING';
+    }
+
+    public function isCompleted(): bool
+    {
+        return $this->status === 'COMPLETED';
+    }
+
+    public function isFailed(): bool
+    {
+        return $this->status === 'FAILED';
+    }
+
+    public function isCancelled(): bool
+    {
+        return $this->status === 'CANCELLED';
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'status' => $this->status,
+            'provider_transaction_id' => $this->providerTransactionId,
+            'provider_reference' => $this->providerReference,
+            'error_message' => $this->errorMessage,
+            'completed_at' => $this->completedAt?->format('Y-m-d H:i:s'),
+            'metadata' => $this->metadata,
+        ];
+    }
 }

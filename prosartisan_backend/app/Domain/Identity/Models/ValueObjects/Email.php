@@ -15,7 +15,7 @@ final class Email
     {
         $value = trim(strtolower($value));
 
-        if (!filter_var($value, FILTER_VALIDATE_EMAIL)) {
+        if (! filter_var($value, FILTER_VALIDATE_EMAIL)) {
             throw new InvalidArgumentException("Invalid email address: {$value}");
         }
 
@@ -35,12 +35,14 @@ final class Email
     public function getDomain(): string
     {
         $parts = explode('@', $this->value);
+
         return $parts[1] ?? '';
     }
 
     public function getLocalPart(): string
     {
         $parts = explode('@', $this->value);
+
         return $parts[0] ?? '';
     }
 

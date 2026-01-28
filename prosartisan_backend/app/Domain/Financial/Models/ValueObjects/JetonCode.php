@@ -12,7 +12,9 @@ use InvalidArgumentException;
 final class JetonCode
 {
     private const PREFIX = 'PA-';
+
     private const CODE_LENGTH = 4;
+
     private const PATTERN = '/^PA-[0-9]{4}$/';
 
     private string $value;
@@ -28,7 +30,7 @@ final class JetonCode
      */
     public static function generate(): self
     {
-        $code = self::PREFIX . str_pad(
+        $code = self::PREFIX.str_pad(
             (string) random_int(0, 9999),
             self::CODE_LENGTH,
             '0',
@@ -60,7 +62,7 @@ final class JetonCode
 
     private function validateFormat(string $value): void
     {
-        if (!preg_match(self::PATTERN, $value)) {
+        if (! preg_match(self::PATTERN, $value)) {
             throw new InvalidArgumentException(
                 "Invalid jeton code format: {$value}. Expected format: PA-XXXX"
             );

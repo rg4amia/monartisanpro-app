@@ -12,38 +12,38 @@ use App\Domain\Reputation\Models\ValueObjects\RatingId;
  */
 interface RatingRepository
 {
- /**
-  * Save a rating
-  */
- public function save(Rating $rating): void;
+    /**
+     * Save a rating
+     */
+    public function save(Rating $rating): void;
 
- /**
-  * Find rating by ID
-  */
- public function findById(RatingId $id): ?Rating;
+    /**
+     * Find rating by ID
+     */
+    public function findById(RatingId $id): ?Rating;
 
- /**
-  * Find rating by mission ID
-  */
- public function findByMissionId(MissionId $missionId): ?Rating;
+    /**
+     * Find rating by mission ID
+     */
+    public function findByMissionId(MissionId $missionId): ?Rating;
 
- /**
-  * Find all ratings for an artisan
-  */
- public function findByArtisanId(UserId $artisanId): array;
+    /**
+     * Find all ratings for an artisan
+     */
+    public function findByArtisanId(UserId $artisanId): array;
 
- /**
-  * Find all ratings by a client
-  */
- public function findByClientId(UserId $clientId): array;
+    /**
+     * Find all ratings by a client
+     */
+    public function findByClientId(UserId $clientId): array;
 
- /**
-  * Calculate average rating for an artisan
-  */
- public function getAverageRatingForArtisan(UserId $artisanId): float;
+    /**
+     * Calculate average rating for an artisan
+     */
+    public function getAverageRatingForArtisan(UserId $artisanId): float;
 
- /**
-  * Count total ratings for an artisan
-  */
- public function countRatingsForArtisan(UserId $artisanId): int;
+    /**
+     * Count total ratings for an artisan
+     */
+    public function countRatingsForArtisan(UserId $artisanId): int;
 }

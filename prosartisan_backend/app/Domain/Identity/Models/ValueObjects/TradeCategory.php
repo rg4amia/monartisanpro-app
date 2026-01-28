@@ -10,7 +10,9 @@ use InvalidArgumentException;
 final class TradeCategory
 {
     private const PLUMBER = 'PLUMBER';
+
     private const ELECTRICIAN = 'ELECTRICIAN';
+
     private const MASON = 'MASON';
 
     private const VALID_CATEGORIES = [
@@ -31,7 +33,7 @@ final class TradeCategory
     {
         $value = strtoupper($value);
 
-        if (!in_array($value, self::VALID_CATEGORIES, true)) {
+        if (! in_array($value, self::VALID_CATEGORIES, true)) {
             throw new InvalidArgumentException("Invalid trade category: {$value}");
         }
 

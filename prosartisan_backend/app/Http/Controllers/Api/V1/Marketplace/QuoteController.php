@@ -13,8 +13,8 @@ use App\Domain\Marketplace\Repositories\DevisRepository;
 use App\Domain\Marketplace\Repositories\MissionRepository;
 use App\Domain\Shared\ValueObjects\MoneyAmount;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Marketplace\CreateQuoteRequest;
 use App\Http\Requests\Marketplace\AcceptQuoteRequest;
+use App\Http\Requests\Marketplace\CreateQuoteRequest;
 use App\Http\Resources\Marketplace\DevisResource;
 use DateTime;
 use Illuminate\Http\JsonResponse;
@@ -49,24 +49,24 @@ class QuoteController extends Controller
         if ($user->user_type !== 'ARTISAN') {
             return response()->json([
                 'error' => 'UNAUTHORIZED',
-                'message' => 'Seuls les artisans peuvent soumettre des devis'
+                'message' => 'Seuls les artisans peuvent soumettre des devis',
             ], Response::HTTP_FORBIDDEN);
         }
 
         // Find the mission
         $mission = $this->missionRepository->findById(MissionId::fromString($missionId));
-        if (!$mission) {
+        if (! $mission) {
             return response()->json([
                 'error' => 'MISSION_NOT_FOUND',
-                'message' => 'Mission non trouvée'
+                'message' => 'Mission non trouvée',
             ], Response::HTTP_NOT_FOUND);
         }
 
         // Check if mission can receive more quotes
-        if (!$mission->canReceiveMoreQuotes()) {
+        if (! $mission->canReceiveMoreQuotes()) {
             return response()->json([
                 'error' => 'MAXIMUM_QUOTES_EXCEEDED',
-                'message' => 'Cette mission a déjà reçu le nombre maximum de devis (3)'
+                'message' => 'Cette mission a déjà reçu le nombre maximum de devis (3)',
             ], Response::HTTP_CONFLICT);
         }
 
@@ -102,17 +102,17 @@ class QuoteController extends Controller
 
             return response()->json([
                 'message' => 'Devis soumis avec succès',
-                'data' => new DevisResource($devis)
+                'data' => new DevisResource($devis),
             ], Response::HTTP_CREATED);
         } catch (MaximumQuotesExceededException $e) {
             return response()->json([
                 'error' => 'MAXIMUM_QUOTES_EXCEEDED',
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], Response::HTTP_CONFLICT);
         } catch (InvalidArgumentException $e) {
             return response()->json([
                 'error' => 'VALIDATION_ERROR',
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], Response::HTTP_BAD_REQUEST);
         }
     }
@@ -131,25 +131,25 @@ class QuoteController extends Controller
         if ($user->user_type !== 'CLIENT') {
             return response()->json([
                 'error' => 'UNAUTHORIZED',
-                'message' => 'Seuls les clients peuvent accepter des devis'
+                'message' => 'Seuls les clients peuvent accepter des devis',
             ], Response::HTTP_FORBIDDEN);
         }
 
         // Find the devis
         $devis = $this->devisRepository->findById(DevisId::fromString($id));
-        if (!$devis) {
+        if (! $devis) {
             return response()->json([
                 'error' => 'QUOTE_NOT_FOUND',
-                'message' => 'Devis non trouvé'
+                'message' => 'Devis non trouvé',
             ], Response::HTTP_NOT_FOUND);
         }
 
         // Find the mission
         $mission = $this->missionRepository->findById($devis->getMissionId());
-        if (!$mission) {
+        if (! $mission) {
             return response()->json([
                 'error' => 'MISSION_NOT_FOUND',
-                'message' => 'Mission associée non trouvée'
+                'message' => 'Mission associée non trouvée',
             ], Response::HTTP_NOT_FOUND);
         }
 
@@ -157,7 +157,7 @@ class QuoteController extends Controller
         if ($mission->getClientId()->getValue() !== $user->id) {
             return response()->json([
                 'error' => 'UNAUTHORIZED',
-                'message' => 'Vous ne pouvez accepter que vos propres devis'
+                'message' => 'Vous ne pouvez accepter que vos propres devis',
             ], Response::HTTP_FORBIDDEN);
         }
 
@@ -179,12 +179,12 @@ class QuoteController extends Controller
 
             return response()->json([
                 'message' => 'Devis accepté avec succès',
-                'data' => new DevisResource($devis)
+                'data' => new DevisResource($devis),
             ]);
         } catch (InvalidArgumentException $e) {
             return response()->json([
                 'error' => 'VALIDATION_ERROR',
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], Response::HTTP_BAD_REQUEST);
         }
     }
@@ -197,17 +197,17 @@ class QuoteController extends Controller
     public function index(string $missionId): JsonResponse
     {
         $mission = $this->missionRepository->findById(MissionId::fromString($missionId));
-        if (!$mission) {
+        if (! $mission) {
             return response()->json([
                 'error' => 'MISSION_NOT_FOUND',
-                'message' => 'Mission non trouvée'
+                'message' => 'Mission non trouvée',
             ], Response::HTTP_NOT_FOUND);
         }
 
         $quotes = $this->devisRepository->findByMissionId(MissionId::fromString($missionId));
 
         return response()->json([
-            'data' => array_map(fn($quote) => new DevisResource($quote), $quotes)
+            'data' => array_map(fn ($quote) => new DevisResource($quote), $quotes),
         ]);
     }
 }

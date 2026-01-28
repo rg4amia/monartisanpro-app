@@ -19,6 +19,7 @@ use DateTime;
 final class ReferentZone extends User
 {
     private GPS_Coordinates $coverageArea;
+
     private string $zone;
 
     public function __construct(
@@ -76,7 +77,7 @@ final class ReferentZone extends User
      */
     public function canMediateDisputes(): bool
     {
-        return $this->isActive() && !$this->isLocked();
+        return $this->isActive() && ! $this->isLocked();
     }
 
     /**
@@ -85,7 +86,7 @@ final class ReferentZone extends User
     public function updateCoverageArea(GPS_Coordinates $newCoverageArea): void
     {
         $this->coverageArea = $newCoverageArea;
-        $this->updatedAt = new DateTime();
+        $this->updatedAt = new DateTime;
     }
 
     /**
@@ -98,7 +99,7 @@ final class ReferentZone extends User
         }
 
         $this->zone = $newZone;
-        $this->updatedAt = new DateTime();
+        $this->updatedAt = new DateTime;
     }
 
     /**
@@ -107,7 +108,7 @@ final class ReferentZone extends User
     public function updatePhoneNumber(PhoneNumber $newPhoneNumber): void
     {
         $this->phoneNumber = $newPhoneNumber;
-        $this->updatedAt = new DateTime();
+        $this->updatedAt = new DateTime;
     }
 
     // Getters
@@ -118,6 +119,7 @@ final class ReferentZone extends User
         if ($this->phoneNumber === null) {
             throw new \LogicException('ReferentZone must have a phone number');
         }
+
         return $this->phoneNumber;
     }
 

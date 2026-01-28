@@ -10,7 +10,9 @@ use DateTime;
 final class KYCVerificationResult
 {
     private bool $isVerified;
+
     private array $validationErrors;
+
     private ?DateTime $verifiedAt;
 
     private function __construct(
@@ -28,7 +30,7 @@ final class KYCVerificationResult
         return new self(
             isVerified: true,
             validationErrors: [],
-            verifiedAt: new DateTime()
+            verifiedAt: new DateTime
         );
     }
 
@@ -62,7 +64,7 @@ final class KYCVerificationResult
 
     public function hasErrors(): bool
     {
-        return !empty($this->validationErrors);
+        return ! empty($this->validationErrors);
     }
 
     public function toArray(): array

@@ -10,10 +10,15 @@ use InvalidArgumentException;
 final class TransactionType
 {
     public const ESCROW_BLOCK = 'ESCROW_BLOCK';
+
     public const MATERIAL_RELEASE = 'MATERIAL_RELEASE';
+
     public const LABOR_RELEASE = 'LABOR_RELEASE';
+
     public const REFUND = 'REFUND';
+
     public const JETON_VALIDATION = 'JETON_VALIDATION';
+
     public const SERVICE_FEE = 'SERVICE_FEE';
 
     private const VALID_TYPES = [
@@ -99,9 +104,9 @@ final class TransactionType
 
     private function validateType(string $value): void
     {
-        if (!in_array($value, self::VALID_TYPES, true)) {
+        if (! in_array($value, self::VALID_TYPES, true)) {
             throw new InvalidArgumentException(
-                "Invalid transaction type: {$value}. Valid types are: " . implode(', ', self::VALID_TYPES)
+                "Invalid transaction type: {$value}. Valid types are: ".implode(', ', self::VALID_TYPES)
             );
         }
     }

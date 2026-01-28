@@ -11,8 +11,11 @@ use InvalidArgumentException;
 class OTP
 {
     private string $code;
+
     private PhoneNumber $phoneNumber;
+
     private DateTime $expiresAt;
+
     private DateTime $createdAt;
 
     public function __construct(
@@ -25,14 +28,14 @@ class OTP
             throw new InvalidArgumentException('OTP code cannot be empty');
         }
 
-        if (!preg_match('/^\d{6}$/', $code)) {
+        if (! preg_match('/^\d{6}$/', $code)) {
             throw new InvalidArgumentException('OTP code must be exactly 6 digits');
         }
 
         $this->code = $code;
         $this->phoneNumber = $phoneNumber;
         $this->expiresAt = $expiresAt;
-        $this->createdAt = $createdAt ?? new DateTime();
+        $this->createdAt = $createdAt ?? new DateTime;
     }
 
     /**
@@ -40,7 +43,7 @@ class OTP
      */
     public static function generate(PhoneNumber $phoneNumber): self
     {
-        $code = str_pad((string)random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
         $expiresAt = new DateTime('+5 minutes');
 
         return new self($code, $phoneNumber, $expiresAt);
@@ -68,7 +71,7 @@ class OTP
 
     public function isExpired(): bool
     {
-        return new DateTime() >= $this->expiresAt;
+        return new DateTime >= $this->expiresAt;
     }
 
     public function verify(string $code): bool

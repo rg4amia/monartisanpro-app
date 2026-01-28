@@ -10,8 +10,11 @@ use InvalidArgumentException;
 final class MissionStatus
 {
     public const OPEN = 'OPEN';
+
     public const QUOTED = 'QUOTED';
+
     public const ACCEPTED = 'ACCEPTED';
+
     public const CANCELLED = 'CANCELLED';
 
     private const VALID_STATUSES = [
@@ -109,9 +112,9 @@ final class MissionStatus
 
     private function validateStatus(string $value): void
     {
-        if (!in_array($value, self::VALID_STATUSES, true)) {
+        if (! in_array($value, self::VALID_STATUSES, true)) {
             throw new InvalidArgumentException(
-                "Invalid mission status: {$value}. Valid statuses are: " . implode(', ', self::VALID_STATUSES)
+                "Invalid mission status: {$value}. Valid statuses are: ".implode(', ', self::VALID_STATUSES)
             );
         }
     }

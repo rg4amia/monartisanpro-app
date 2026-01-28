@@ -10,8 +10,11 @@ use InvalidArgumentException;
 final class DisputeType
 {
     public const QUALITY = 'QUALITY';
+
     public const PAYMENT = 'PAYMENT';
+
     public const DELAY = 'DELAY';
+
     public const OTHER = 'OTHER';
 
     private const VALID_TYPES = [
@@ -103,9 +106,9 @@ final class DisputeType
 
     private function validateType(string $value): void
     {
-        if (!in_array($value, self::VALID_TYPES, true)) {
+        if (! in_array($value, self::VALID_TYPES, true)) {
             throw new InvalidArgumentException(
-                "Invalid dispute type: {$value}. Valid types are: " . implode(', ', self::VALID_TYPES)
+                "Invalid dispute type: {$value}. Valid types are: ".implode(', ', self::VALID_TYPES)
             );
         }
     }

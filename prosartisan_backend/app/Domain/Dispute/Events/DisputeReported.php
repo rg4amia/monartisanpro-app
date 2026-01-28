@@ -34,7 +34,7 @@ final class DisputeReported
             $missionId,
             $reporterId,
             $type,
-            new DateTime()
+            new DateTime
         );
     }
 

@@ -18,15 +18,13 @@ use Symfony\Component\HttpFoundation\Response;
 class RateLimitMiddleware
 {
     private const MAX_REQUESTS_PER_MINUTE = 100;
+
     private const RATE_LIMIT_WINDOW_MINUTES = 1;
+
     private const CACHE_PREFIX = 'rate_limit:';
 
     /**
      * Handle an incoming request.
-     *
-     * @param Request $request
-     * @param Closure $next
-     * @return Response
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -34,7 +32,7 @@ class RateLimitMiddleware
         $identifier = $this->getIdentifier($request);
 
         // Create cache key
-        $cacheKey = self::CACHE_PREFIX . $identifier . ':' . now()->format('Y-m-d-H-i');
+        $cacheKey = self::CACHE_PREFIX.$identifier.':'.now()->format('Y-m-d-H-i');
 
         // Get current request count
         $currentCount = Cache::get($cacheKey, 0);
@@ -56,7 +54,7 @@ class RateLimitMiddleware
                 'status_code' => 429,
                 'details' => [
                     'limit' => self::MAX_REQUESTS_PER_MINUTE,
-                    'window' => self::RATE_LIMIT_WINDOW_MINUTES . ' minute',
+                    'window' => self::RATE_LIMIT_WINDOW_MINUTES.' minute',
                     'retry_after' => 60 - now()->second,
                 ],
                 'timestamp' => now()->toISOString(),
@@ -84,19 +82,16 @@ class RateLimitMiddleware
 
     /**
      * Get unique identifier for rate limiting
-     *
-     * @param Request $request
-     * @return string
      */
     private function getIdentifier(Request $request): string
     {
         // Use user ID if authenticated
         $userId = $request->attributes->get('user_id');
         if ($userId !== null) {
-            return 'user:' . $userId;
+            return 'user:'.$userId;
         }
 
         // Fall back to IP address for unauthenticated requests
-        return 'ip:' . $request->ip();
+        return 'ip:'.$request->ip();
     }
 }

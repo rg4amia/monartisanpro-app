@@ -10,96 +10,103 @@ use App\Domain\Reputation\Models\ValueObjects\ReputationMetrics;
  */
 class DefaultScoreCalculationService implements ScoreCalculationService
 {
- // Score component weights
- private const RELIABILITY_WEIGHT = 0.40; // 40%
- private const INTEGRITY_WEIGHT = 0.30;   // 30%
- private const QUALITY_WEIGHT = 0.20;     // 20%
- private const REACTIVITY_WEIGHT = 0.10;  // 10%
+    // Score component weights
+    private const RELIABILITY_WEIGHT = 0.40; // 40%
 
- // Fraud penalty constants
- private const FRAUD_PENALTY_PER_ATTEMPT = 10; // 10 points per fraud attempt
- private const MAX_FRAUD_PENALTY = 50; // Maximum 50 points penalty
+    private const INTEGRITY_WEIGHT = 0.30;   // 30%
 
- // Reactivity constants
- private const OPTIMAL_RESPONSE_TIME_HOURS = 2; // 2 hours is considered optimal
- private const MAX_RESPONSE_TIME_HOURS = 48; // Beyond 48 hours gets 0 points
+    private const QUALITY_WEIGHT = 0.20;     // 20%
 
- public function calculateScore(ReputationMetrics $metrics): NZassaScore
- {
-  $reliabilityScore = $this->calculateReliability(
-   $metrics->getCompletedProjects(),
-   $metrics->getAcceptedProjects()
-  );
+    private const REACTIVITY_WEIGHT = 0.10;  // 10%
 
-  $integrityScore = $this->calculateIntegrity($metrics->getFraudAttempts());
+    // Fraud penalty constants
+    private const FRAUD_PENALTY_PER_ATTEMPT = 10; // 10 points per fraud attempt
 
-  $qualityScore = $this->calculateQuality($metrics->getAverageRating());
+    private const MAX_FRAUD_PENALTY = 50; // Maximum 50 points penalty
 
-  $reactivityScore = $this->calculateReactivity($metrics->getAverageResponseTimeHours());
+    // Reactivity constants
+    private const OPTIMAL_RESPONSE_TIME_HOURS = 2; // 2 hours is considered optimal
 
-  // Calculate weighted score
-  $totalScore = (
-   $reliabilityScore * self::RELIABILITY_WEIGHT +
-   $integrityScore * self::INTEGRITY_WEIGHT +
-   $qualityScore * self::QUALITY_WEIGHT +
-   $reactivityScore * self::REACTIVITY_WEIGHT
-  );
+    private const MAX_RESPONSE_TIME_HOURS = 48; // Beyond 48 hours gets 0 points
 
-  // Ensure score is within bounds
-  $finalScore = max(0, min(100, round($totalScore)));
+    public function calculateScore(ReputationMetrics $metrics): NZassaScore
+    {
+        $reliabilityScore = $this->calculateReliability(
+            $metrics->getCompletedProjects(),
+            $metrics->getAcceptedProjects()
+        );
 
-  return NZassaScore::fromInt((int) $finalScore);
- }
+        $integrityScore = $this->calculateIntegrity($metrics->getFraudAttempts());
 
- public function calculateReliability(int $completed, int $accepted): float
- {
-  if ($accepted === 0) {
-   return 0.0; // No accepted projects means 0 reliability
-  }
+        $qualityScore = $this->calculateQuality($metrics->getAverageRating());
 
-  $reliability = ($completed / $accepted) * 100;
-  return max(0, min(100, $reliability));
- }
+        $reactivityScore = $this->calculateReactivity($metrics->getAverageResponseTimeHours());
 
- public function calculateIntegrity(int $fraudAttempts): float
- {
-  $penalty = min($fraudAttempts * self::FRAUD_PENALTY_PER_ATTEMPT, self::MAX_FRAUD_PENALTY);
-  $integrityScore = 100 - $penalty;
+        // Calculate weighted score
+        $totalScore = (
+            $reliabilityScore * self::RELIABILITY_WEIGHT +
+            $integrityScore * self::INTEGRITY_WEIGHT +
+            $qualityScore * self::QUALITY_WEIGHT +
+            $reactivityScore * self::REACTIVITY_WEIGHT
+        );
 
-  return max(0, min(100, $integrityScore));
- }
+        // Ensure score is within bounds
+        $finalScore = max(0, min(100, round($totalScore)));
 
- public function calculateQuality(float $averageRating): float
- {
-  if ($averageRating <= 0) {
-   return 0.0; // No ratings means 0 quality score
-  }
+        return NZassaScore::fromInt((int) $finalScore);
+    }
 
-  $qualityScore = ($averageRating / 5.0) * 100;
-  return max(0, min(100, $qualityScore));
- }
+    public function calculateReliability(int $completed, int $accepted): float
+    {
+        if ($accepted === 0) {
+            return 0.0; // No accepted projects means 0 reliability
+        }
 
- public function calculateReactivity(float $avgResponseHours): float
- {
-  if ($avgResponseHours <= 0) {
-   return 100.0; // Instant response gets maximum score
-  }
+        $reliability = ($completed / $accepted) * 100;
 
-  if ($avgResponseHours >= self::MAX_RESPONSE_TIME_HOURS) {
-   return 0.0; // Very slow response gets 0 score
-  }
+        return max(0, min(100, $reliability));
+    }
 
-  // Linear decay from optimal time to max time
-  if ($avgResponseHours <= self::OPTIMAL_RESPONSE_TIME_HOURS) {
-   return 100.0; // Optimal or better gets full score
-  }
+    public function calculateIntegrity(int $fraudAttempts): float
+    {
+        $penalty = min($fraudAttempts * self::FRAUD_PENALTY_PER_ATTEMPT, self::MAX_FRAUD_PENALTY);
+        $integrityScore = 100 - $penalty;
 
-  // Calculate score based on how much slower than optimal
-  $excessTime = $avgResponseHours - self::OPTIMAL_RESPONSE_TIME_HOURS;
-  $maxExcessTime = self::MAX_RESPONSE_TIME_HOURS - self::OPTIMAL_RESPONSE_TIME_HOURS;
+        return max(0, min(100, $integrityScore));
+    }
 
-  $reactivityScore = 100 - (($excessTime / $maxExcessTime) * 100);
+    public function calculateQuality(float $averageRating): float
+    {
+        if ($averageRating <= 0) {
+            return 0.0; // No ratings means 0 quality score
+        }
 
-  return max(0, min(100, $reactivityScore));
- }
+        $qualityScore = ($averageRating / 5.0) * 100;
+
+        return max(0, min(100, $qualityScore));
+    }
+
+    public function calculateReactivity(float $avgResponseHours): float
+    {
+        if ($avgResponseHours <= 0) {
+            return 100.0; // Instant response gets maximum score
+        }
+
+        if ($avgResponseHours >= self::MAX_RESPONSE_TIME_HOURS) {
+            return 0.0; // Very slow response gets 0 score
+        }
+
+        // Linear decay from optimal time to max time
+        if ($avgResponseHours <= self::OPTIMAL_RESPONSE_TIME_HOURS) {
+            return 100.0; // Optimal or better gets full score
+        }
+
+        // Calculate score based on how much slower than optimal
+        $excessTime = $avgResponseHours - self::OPTIMAL_RESPONSE_TIME_HOURS;
+        $maxExcessTime = self::MAX_RESPONSE_TIME_HOURS - self::OPTIMAL_RESPONSE_TIME_HOURS;
+
+        $reactivityScore = 100 - (($excessTime / $maxExcessTime) * 100);
+
+        return max(0, min(100, $reactivityScore));
+    }
 }

@@ -11,6 +11,7 @@ use InvalidArgumentException;
 class AuthToken
 {
     private string $token;
+
     private DateTime $expiresAt;
 
     public function __construct(string $token, DateTime $expiresAt)
@@ -35,7 +36,7 @@ class AuthToken
 
     public function isExpired(): bool
     {
-        return new DateTime() >= $this->expiresAt;
+        return new DateTime >= $this->expiresAt;
     }
 
     public function toString(): string

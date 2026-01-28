@@ -11,167 +11,179 @@ use Illuminate\Support\Facades\Log;
 
 class WhatsAppBusinessService implements WhatsAppNotificationService
 {
- private string $accessToken;
- private string $phoneNumberId;
- private string $businessAccountId;
- private UserRepository $userRepository;
+    private string $accessToken;
 
- public function __construct(UserRepository $userRepository)
- {
-  $this->accessToken = config('services.whatsapp.access_token');
-  $this->phoneNumberId = config('services.whatsapp.phone_number_id');
-  $this->businessAccountId = config('services.whatsapp.business_account_id');
-  $this->userRepository = $userRepository;
- }
+    private string $phoneNumberId;
 
- public function send(UserId $userId, string $title, string $message, array $data = []): bool
- {
-  try {
-   $user = $this->userRepository->findById($userId);
-   if (!$user || !$user->getPhoneNumber()) {
-    Log::warning("No phone number found for user {$userId->getValue()}");
-    return false;
-   }
+    private string $businessAccountId;
 
-   $fullMessage = "*{$title}*\n\n{$message}";
-   return $this->sendMessage($user->getPhoneNumber(), $fullMessage);
-  } catch (\Exception $e) {
-   Log::error("Failed to send WhatsApp message to user {$userId->getValue()}: " . $e->getMessage());
-   return false;
-  }
- }
+    private UserRepository $userRepository;
 
- public function sendMessage(PhoneNumber $phoneNumber, string $message): bool
- {
-  try {
-   $formattedNumber = $this->formatPhoneNumber($phoneNumber->getValue());
+    public function __construct(UserRepository $userRepository)
+    {
+        $this->accessToken = config('services.whatsapp.access_token');
+        $this->phoneNumberId = config('services.whatsapp.phone_number_id');
+        $this->businessAccountId = config('services.whatsapp.business_account_id');
+        $this->userRepository = $userRepository;
+    }
 
-   $response = Http::withHeaders([
-    'Authorization' => 'Bearer ' . $this->accessToken,
-    'Content-Type' => 'application/json',
-   ])->post("https://graph.facebook.com/v18.0/{$this->phoneNumberId}/messages", [
-    'messaging_product' => 'whatsapp',
-    'to' => $formattedNumber,
-    'type' => 'text',
-    'text' => [
-     'body' => $message,
-    ],
-   ]);
+    public function send(UserId $userId, string $title, string $message, array $data = []): bool
+    {
+        try {
+            $user = $this->userRepository->findById($userId);
+            if (! $user || ! $user->getPhoneNumber()) {
+                Log::warning("No phone number found for user {$userId->getValue()}");
 
-   if ($response->successful()) {
-    $result = $response->json();
-    return isset($result['messages'][0]['id']);
-   }
+                return false;
+            }
 
-   Log::error('WhatsApp message failed', [
-    'status' => $response->status(),
-    'response' => $response->body(),
-   ]);
+            $fullMessage = "*{$title}*\n\n{$message}";
 
-   return false;
-  } catch (\Exception $e) {
-   Log::error('WhatsApp message exception: ' . $e->getMessage());
-   return false;
-  }
- }
+            return $this->sendMessage($user->getPhoneNumber(), $fullMessage);
+        } catch (\Exception $e) {
+            Log::error("Failed to send WhatsApp message to user {$userId->getValue()}: ".$e->getMessage());
 
- public function sendTemplate(PhoneNumber $phoneNumber, string $templateName, array $parameters = []): bool
- {
-  try {
-   $formattedNumber = $this->formatPhoneNumber($phoneNumber->getValue());
+            return false;
+        }
+    }
 
-   $templateComponents = [];
-   if (!empty($parameters)) {
-    $templateComponents[] = [
-     'type' => 'body',
-     'parameters' => array_map(fn($param) => ['type' => 'text', 'text' => $param], $parameters),
-    ];
-   }
+    public function sendMessage(PhoneNumber $phoneNumber, string $message): bool
+    {
+        try {
+            $formattedNumber = $this->formatPhoneNumber($phoneNumber->getValue());
 
-   $response = Http::withHeaders([
-    'Authorization' => 'Bearer ' . $this->accessToken,
-    'Content-Type' => 'application/json',
-   ])->post("https://graph.facebook.com/v18.0/{$this->phoneNumberId}/messages", [
-    'messaging_product' => 'whatsapp',
-    'to' => $formattedNumber,
-    'type' => 'template',
-    'template' => [
-     'name' => $templateName,
-     'language' => [
-      'code' => 'fr',
-     ],
-     'components' => $templateComponents,
-    ],
-   ]);
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer '.$this->accessToken,
+                'Content-Type' => 'application/json',
+            ])->post("https://graph.facebook.com/v18.0/{$this->phoneNumberId}/messages", [
+                'messaging_product' => 'whatsapp',
+                'to' => $formattedNumber,
+                'type' => 'text',
+                'text' => [
+                    'body' => $message,
+                ],
+            ]);
 
-   if ($response->successful()) {
-    $result = $response->json();
-    return isset($result['messages'][0]['id']);
-   }
+            if ($response->successful()) {
+                $result = $response->json();
 
-   return false;
-  } catch (\Exception $e) {
-   Log::error('WhatsApp template exception: ' . $e->getMessage());
-   return false;
-  }
- }
+                return isset($result['messages'][0]['id']);
+            }
 
- public function sendMedia(PhoneNumber $phoneNumber, string $mediaUrl, string $caption = ''): bool
- {
-  try {
-   $formattedNumber = $this->formatPhoneNumber($phoneNumber->getValue());
+            Log::error('WhatsApp message failed', [
+                'status' => $response->status(),
+                'response' => $response->body(),
+            ]);
 
-   $response = Http::withHeaders([
-    'Authorization' => 'Bearer ' . $this->accessToken,
-    'Content-Type' => 'application/json',
-   ])->post("https://graph.facebook.com/v18.0/{$this->phoneNumberId}/messages", [
-    'messaging_product' => 'whatsapp',
-    'to' => $formattedNumber,
-    'type' => 'image',
-    'image' => [
-     'link' => $mediaUrl,
-     'caption' => $caption,
-    ],
-   ]);
+            return false;
+        } catch (\Exception $e) {
+            Log::error('WhatsApp message exception: '.$e->getMessage());
 
-   if ($response->successful()) {
-    $result = $response->json();
-    return isset($result['messages'][0]['id']);
-   }
+            return false;
+        }
+    }
 
-   return false;
-  } catch (\Exception $e) {
-   Log::error('WhatsApp media exception: ' . $e->getMessage());
-   return false;
-  }
- }
+    public function sendTemplate(PhoneNumber $phoneNumber, string $templateName, array $parameters = []): bool
+    {
+        try {
+            $formattedNumber = $this->formatPhoneNumber($phoneNumber->getValue());
 
- public function getName(): string
- {
-  return 'whatsapp_business';
- }
+            $templateComponents = [];
+            if (! empty($parameters)) {
+                $templateComponents[] = [
+                    'type' => 'body',
+                    'parameters' => array_map(fn ($param) => ['type' => 'text', 'text' => $param], $parameters),
+                ];
+            }
 
- public function isAvailable(): bool
- {
-  return !empty($this->accessToken) && !empty($this->phoneNumberId);
- }
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer '.$this->accessToken,
+                'Content-Type' => 'application/json',
+            ])->post("https://graph.facebook.com/v18.0/{$this->phoneNumberId}/messages", [
+                'messaging_product' => 'whatsapp',
+                'to' => $formattedNumber,
+                'type' => 'template',
+                'template' => [
+                    'name' => $templateName,
+                    'language' => [
+                        'code' => 'fr',
+                    ],
+                    'components' => $templateComponents,
+                ],
+            ]);
 
- private function formatPhoneNumber(string $phoneNumber): string
- {
-  // Remove any non-digit characters
-  $cleaned = preg_replace('/\D/', '', $phoneNumber);
+            if ($response->successful()) {
+                $result = $response->json();
 
-  // If it starts with 225, it's already formatted
-  if (str_starts_with($cleaned, '225')) {
-   return $cleaned;
-  }
+                return isset($result['messages'][0]['id']);
+            }
 
-  // If it starts with 0, replace with 225
-  if (str_starts_with($cleaned, '0')) {
-   return '225' . substr($cleaned, 1);
-  }
+            return false;
+        } catch (\Exception $e) {
+            Log::error('WhatsApp template exception: '.$e->getMessage());
 
-  // Otherwise, assume it's a local number and add 225
-  return '225' . $cleaned;
- }
+            return false;
+        }
+    }
+
+    public function sendMedia(PhoneNumber $phoneNumber, string $mediaUrl, string $caption = ''): bool
+    {
+        try {
+            $formattedNumber = $this->formatPhoneNumber($phoneNumber->getValue());
+
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer '.$this->accessToken,
+                'Content-Type' => 'application/json',
+            ])->post("https://graph.facebook.com/v18.0/{$this->phoneNumberId}/messages", [
+                'messaging_product' => 'whatsapp',
+                'to' => $formattedNumber,
+                'type' => 'image',
+                'image' => [
+                    'link' => $mediaUrl,
+                    'caption' => $caption,
+                ],
+            ]);
+
+            if ($response->successful()) {
+                $result = $response->json();
+
+                return isset($result['messages'][0]['id']);
+            }
+
+            return false;
+        } catch (\Exception $e) {
+            Log::error('WhatsApp media exception: '.$e->getMessage());
+
+            return false;
+        }
+    }
+
+    public function getName(): string
+    {
+        return 'whatsapp_business';
+    }
+
+    public function isAvailable(): bool
+    {
+        return ! empty($this->accessToken) && ! empty($this->phoneNumberId);
+    }
+
+    private function formatPhoneNumber(string $phoneNumber): string
+    {
+        // Remove any non-digit characters
+        $cleaned = preg_replace('/\D/', '', $phoneNumber);
+
+        // If it starts with 225, it's already formatted
+        if (str_starts_with($cleaned, '225')) {
+            return $cleaned;
+        }
+
+        // If it starts with 0, replace with 225
+        if (str_starts_with($cleaned, '0')) {
+            return '225'.substr($cleaned, 1);
+        }
+
+        // Otherwise, assume it's a local number and add 225
+        return '225'.$cleaned;
+    }
 }

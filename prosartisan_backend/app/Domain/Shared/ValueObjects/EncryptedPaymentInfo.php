@@ -14,93 +14,95 @@ use InvalidArgumentException;
  */
 final class EncryptedPaymentInfo
 {
- private string $encryptedData;
- private string $paymentMethod; // Not encrypted - used for routing
- private \DateTime $createdAt;
+    private string $encryptedData;
 
- public function __construct(
-  string $encryptedData,
-  string $paymentMethod,
-  ?\DateTime $createdAt = null
- ) {
-  if (empty($encryptedData)) {
-   throw new InvalidArgumentException('Encrypted data cannot be empty');
-  }
+    private string $paymentMethod; // Not encrypted - used for routing
 
-  if (empty($paymentMethod)) {
-   throw new InvalidArgumentException('Payment method cannot be empty');
-  }
+    private \DateTime $createdAt;
 
-  $this->encryptedData = $encryptedData;
-  $this->paymentMethod = $paymentMethod;
-  $this->createdAt = $createdAt ?? new \DateTime();
- }
+    public function __construct(
+        string $encryptedData,
+        string $paymentMethod,
+        ?\DateTime $createdAt = null
+    ) {
+        if (empty($encryptedData)) {
+            throw new InvalidArgumentException('Encrypted data cannot be empty');
+        }
 
- /**
-  * Create from plain text payment data
-  */
- public static function fromPlainText(
-  array $paymentData,
-  string $paymentMethod,
-  EncryptionService $encryptionService
- ): self {
-  $jsonData = json_encode($paymentData);
-  if ($jsonData === false) {
-   throw new InvalidArgumentException('Invalid payment data');
-  }
+        if (empty($paymentMethod)) {
+            throw new InvalidArgumentException('Payment method cannot be empty');
+        }
 
-  $encryptedData = $encryptionService->encrypt($jsonData);
+        $this->encryptedData = $encryptedData;
+        $this->paymentMethod = $paymentMethod;
+        $this->createdAt = $createdAt ?? new \DateTime;
+    }
 
-  return new self($encryptedData, $paymentMethod);
- }
+    /**
+     * Create from plain text payment data
+     */
+    public static function fromPlainText(
+        array $paymentData,
+        string $paymentMethod,
+        EncryptionService $encryptionService
+    ): self {
+        $jsonData = json_encode($paymentData);
+        if ($jsonData === false) {
+            throw new InvalidArgumentException('Invalid payment data');
+        }
 
- /**
-  * Decrypt and return payment data
-  */
- public function decrypt(EncryptionService $encryptionService): array
- {
-  $decryptedJson = $encryptionService->decrypt($this->encryptedData);
-  $data = json_decode($decryptedJson, true);
+        $encryptedData = $encryptionService->encrypt($jsonData);
 
-  if ($data === null) {
-   throw new \Exception('Failed to decrypt payment data');
-  }
+        return new self($encryptedData, $paymentMethod);
+    }
 
-  return $data;
- }
+    /**
+     * Decrypt and return payment data
+     */
+    public function decrypt(EncryptionService $encryptionService): array
+    {
+        $decryptedJson = $encryptionService->decrypt($this->encryptedData);
+        $data = json_decode($decryptedJson, true);
 
- public function getEncryptedData(): string
- {
-  return $this->encryptedData;
- }
+        if ($data === null) {
+            throw new \Exception('Failed to decrypt payment data');
+        }
 
- public function getPaymentMethod(): string
- {
-  return $this->paymentMethod;
- }
+        return $data;
+    }
 
- public function getCreatedAt(): \DateTime
- {
-  return $this->createdAt;
- }
+    public function getEncryptedData(): string
+    {
+        return $this->encryptedData;
+    }
 
- /**
-  * Check if payment info is expired (older than 1 hour)
-  */
- public function isExpired(): bool
- {
-  $expiryTime = clone $this->createdAt;
-  $expiryTime->add(new \DateInterval('PT1H')); // Add 1 hour
+    public function getPaymentMethod(): string
+    {
+        return $this->paymentMethod;
+    }
 
-  return new \DateTime() > $expiryTime;
- }
+    public function getCreatedAt(): \DateTime
+    {
+        return $this->createdAt;
+    }
 
- public function toArray(): array
- {
-  return [
-   'encrypted_data' => $this->encryptedData,
-   'payment_method' => $this->paymentMethod,
-   'created_at' => $this->createdAt->format('Y-m-d H:i:s'),
-  ];
- }
+    /**
+     * Check if payment info is expired (older than 1 hour)
+     */
+    public function isExpired(): bool
+    {
+        $expiryTime = clone $this->createdAt;
+        $expiryTime->add(new \DateInterval('PT1H')); // Add 1 hour
+
+        return new \DateTime > $expiryTime;
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'encrypted_data' => $this->encryptedData,
+            'payment_method' => $this->paymentMethod,
+            'created_at' => $this->createdAt->format('Y-m-d H:i:s'),
+        ];
+    }
 }

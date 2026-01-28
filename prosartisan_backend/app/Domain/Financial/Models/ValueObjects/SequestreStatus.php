@@ -10,9 +10,13 @@ use InvalidArgumentException;
 final class SequestreStatus
 {
     public const BLOCKED = 'BLOCKED';
+
     public const PARTIAL = 'PARTIAL';
+
     public const RELEASED = 'RELEASED';
+
     public const REFUNDED = 'REFUNDED';
+
     public const FROZEN = 'FROZEN';
 
     private const VALID_STATUSES = [
@@ -116,9 +120,9 @@ final class SequestreStatus
 
     private function validateStatus(string $value): void
     {
-        if (!in_array($value, self::VALID_STATUSES, true)) {
+        if (! in_array($value, self::VALID_STATUSES, true)) {
             throw new InvalidArgumentException(
-                "Invalid sequestre status: {$value}. Valid statuses are: " . implode(', ', self::VALID_STATUSES)
+                "Invalid sequestre status: {$value}. Valid statuses are: ".implode(', ', self::VALID_STATUSES)
             );
         }
     }

@@ -6,15 +6,17 @@ use App\Domain\Identity\Models\ValueObjects\PhoneNumber;
 use App\Domain\Identity\Models\ValueObjects\UserId;
 use App\Domain\Identity\Repositories\UserRepository;
 use App\Domain\Shared\Services\SMSNotificationService;
-use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class LocalSMSService implements SMSNotificationService
 {
     private string $apiUrl;
+
     private string $apiKey;
+
     private string $senderId;
+
     private UserRepository $userRepository;
 
     public function __construct(UserRepository $userRepository)
@@ -29,15 +31,18 @@ class LocalSMSService implements SMSNotificationService
     {
         try {
             $user = $this->userRepository->findById($userId);
-            if (!$user || !$user->getPhoneNumber()) {
+            if (! $user || ! $user->getPhoneNumber()) {
                 Log::warning("No phone number found for user {$userId->getValue()}");
+
                 return false;
             }
 
-            $fullMessage = $title . "\n\n" . $message;
+            $fullMessage = $title."\n\n".$message;
+
             return $this->sendSMS($user->getPhoneNumber(), $fullMessage);
         } catch (\Exception $e) {
-            Log::error("Failed to send SMS to user {$userId->getValue()}: " . $e->getMessage());
+            Log::error("Failed to send SMS to user {$userId->getValue()}: ".$e->getMessage());
+
             return false;
         }
     }
@@ -50,9 +55,9 @@ class LocalSMSService implements SMSNotificationService
 
             /** @var \Illuminate\Http\Client\Response $response */
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->apiKey,
+                'Authorization' => 'Bearer '.$this->apiKey,
                 'Content-Type' => 'application/json',
-            ])->post($this->apiUrl . '/send', [
+            ])->post($this->apiUrl.'/send', [
                 'sender' => $this->senderId,
                 'recipient' => $formattedNumber,
                 'message' => $message,
@@ -61,6 +66,7 @@ class LocalSMSService implements SMSNotificationService
 
             if ($response->successful()) {
                 $result = $response->json();
+
                 return $result['status'] === 'success';
             }
 
@@ -71,7 +77,8 @@ class LocalSMSService implements SMSNotificationService
 
             return false;
         } catch (\Exception $e) {
-            Log::error('Local SMS exception: ' . $e->getMessage());
+            Log::error('Local SMS exception: '.$e->getMessage());
+
             return false;
         }
     }
@@ -79,6 +86,7 @@ class LocalSMSService implements SMSNotificationService
     public function sendOTP(PhoneNumber $phoneNumber, string $code): bool
     {
         $message = "Votre code de vérification ProSartisan est: {$code}. Ce code expire dans 5 minutes.";
+
         return $this->sendSMS($phoneNumber, $message);
     }
 
@@ -89,7 +97,7 @@ class LocalSMSService implements SMSNotificationService
 
     public function isAvailable(): bool
     {
-        return !empty($this->apiUrl) && !empty($this->apiKey);
+        return ! empty($this->apiUrl) && ! empty($this->apiKey);
     }
 
     private function formatPhoneNumber(string $phoneNumber): string
@@ -99,15 +107,15 @@ class LocalSMSService implements SMSNotificationService
 
         // If it starts with 225, it's already formatted
         if (str_starts_with($cleaned, '225')) {
-            return '+' . $cleaned;
+            return '+'.$cleaned;
         }
 
         // If it starts with 0, replace with 225
         if (str_starts_with($cleaned, '0')) {
-            return '+225' . substr($cleaned, 1);
+            return '+225'.substr($cleaned, 1);
         }
 
         // Otherwise, assume it's a local number and add 225
-        return '+225' . $cleaned;
+        return '+225'.$cleaned;
     }
 }

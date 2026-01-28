@@ -73,7 +73,7 @@ final class Client extends User
     public function updatePhoneNumber(PhoneNumber $newPhoneNumber): void
     {
         $this->phoneNumber = $newPhoneNumber;
-        $this->updatedAt = new DateTime();
+        $this->updatedAt = new DateTime;
     }
 
     /**
@@ -82,7 +82,7 @@ final class Client extends User
     public function setPreferredPaymentMethod(string $paymentMethod): void
     {
         $this->preferredPaymentMethod = $paymentMethod;
-        $this->updatedAt = new DateTime();
+        $this->updatedAt = new DateTime;
     }
 
     // Getters
@@ -96,6 +96,7 @@ final class Client extends User
         if ($this->phoneNumber === null) {
             throw new \LogicException('Client must have a phone number');
         }
+
         return $this->phoneNumber;
     }
 

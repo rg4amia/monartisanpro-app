@@ -10,6 +10,7 @@ use InvalidArgumentException;
 final class DevisLineType
 {
     public const MATERIAL = 'MATERIAL';
+
     public const LABOR = 'LABOR';
 
     private const VALID_TYPES = [
@@ -83,9 +84,9 @@ final class DevisLineType
 
     private function validateType(string $value): void
     {
-        if (!in_array($value, self::VALID_TYPES, true)) {
+        if (! in_array($value, self::VALID_TYPES, true)) {
             throw new InvalidArgumentException(
-                "Invalid devis line type: {$value}. Valid types are: " . implode(', ', self::VALID_TYPES)
+                "Invalid devis line type: {$value}. Valid types are: ".implode(', ', self::VALID_TYPES)
             );
         }
     }

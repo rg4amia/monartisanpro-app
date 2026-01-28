@@ -10,9 +10,13 @@ use InvalidArgumentException;
 final class UserType
 {
     private const CLIENT = 'CLIENT';
+
     private const ARTISAN = 'ARTISAN';
+
     private const FOURNISSEUR = 'FOURNISSEUR';
+
     private const REFERENT_ZONE = 'REFERENT_ZONE';
+
     private const ADMIN = 'ADMIN';
 
     private const VALID_TYPES = [
@@ -27,7 +31,7 @@ final class UserType
 
     private function __construct(string $value)
     {
-        if (!in_array($value, self::VALID_TYPES, true)) {
+        if (! in_array($value, self::VALID_TYPES, true)) {
             throw new InvalidArgumentException("Invalid user type: {$value}");
         }
 

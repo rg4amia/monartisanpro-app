@@ -34,23 +34,23 @@ class ReputationController extends Controller
             $userId = UserId::fromString($artisanId);
             $reputation = $this->reputationRepository->findByArtisanId($userId);
 
-            if (!$reputation) {
+            if (! $reputation) {
                 return response()->json([
                     'error' => 'REPUTATION_NOT_FOUND',
                     'message' => 'Profil de réputation non trouvé pour cet artisan.',
-                    'status_code' => 404
+                    'status_code' => 404,
                 ], 404);
             }
 
             return response()->json([
                 'data' => new ReputationResource($reputation),
-                'message' => 'Profil de réputation récupéré avec succès.'
+                'message' => 'Profil de réputation récupéré avec succès.',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'REPUTATION_FETCH_ERROR',
                 'message' => 'Erreur lors de la récupération du profil de réputation.',
-                'status_code' => 500
+                'status_code' => 500,
             ], 500);
         }
     }
@@ -65,11 +65,11 @@ class ReputationController extends Controller
             $userId = UserId::fromString($artisanId);
             $reputation = $this->reputationRepository->findByArtisanId($userId);
 
-            if (!$reputation) {
+            if (! $reputation) {
                 return response()->json([
                     'error' => 'REPUTATION_NOT_FOUND',
                     'message' => 'Profil de réputation non trouvé pour cet artisan.',
-                    'status_code' => 404
+                    'status_code' => 404,
                 ], 404);
             }
 
@@ -77,13 +77,13 @@ class ReputationController extends Controller
 
             return response()->json([
                 'data' => ScoreHistoryResource::collection($scoreHistory),
-                'message' => 'Historique des scores récupéré avec succès.'
+                'message' => 'Historique des scores récupéré avec succès.',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'SCORE_HISTORY_FETCH_ERROR',
                 'message' => 'Erreur lors de la récupération de l\'historique des scores.',
-                'status_code' => 500
+                'status_code' => 500,
             ], 500);
         }
     }
@@ -104,7 +104,7 @@ class ReputationController extends Controller
                 return response()->json([
                     'error' => 'RATING_ALREADY_EXISTS',
                     'message' => 'Une note a déjà été soumise pour cette mission.',
-                    'status_code' => 409
+                    'status_code' => 409,
                 ], 409);
             }
 
@@ -127,13 +127,13 @@ class ReputationController extends Controller
 
             return response()->json([
                 'data' => new RatingResource($rating),
-                'message' => 'Note soumise avec succès.'
+                'message' => 'Note soumise avec succès.',
             ], 201);
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'RATING_SUBMISSION_ERROR',
                 'message' => 'Erreur lors de la soumission de la note.',
-                'status_code' => 500
+                'status_code' => 500,
             ], 500);
         }
     }
@@ -160,7 +160,7 @@ class ReputationController extends Controller
             return response()->json([
                 'error' => 'RATINGS_FETCH_ERROR',
                 'message' => 'Erreur lors de la récupération des notes.',
-                'status_code' => 500
+                'status_code' => 500,
             ], 500);
         }
     }

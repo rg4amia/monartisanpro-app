@@ -5,14 +5,14 @@ namespace App\Infrastructure\Services\MobileMoney;
 use App\Domain\Financial\Services\MobileMoneyGateway;
 use App\Domain\Financial\Services\MobileMoneyTransactionResult;
 use App\Domain\Financial\Services\MobileMoneyTransactionStatus;
-use App\Domain\Identity\Models\ValueObjects\UserId;
 use App\Domain\Identity\Models\ValueObjects\PhoneNumber;
+use App\Domain\Identity\Models\ValueObjects\UserId;
 use App\Domain\Shared\ValueObjects\MoneyAmount;
+use DateTime;
+use Exception;
 use Illuminate\Http\Client\Factory as HttpClient;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use Exception;
-use DateTime;
 
 /**
  * MTN Mobile Money Gateway Implementation
@@ -25,12 +25,19 @@ use DateTime;
 final class MTNMobileMoneyGateway implements MobileMoneyGateway
 {
     private HttpClient $httpClient;
+
     private string $subscriptionKey;
+
     private string $apiUserId;
+
     private string $apiKey;
+
     private string $baseUrl;
+
     private string $webhookSecret;
+
     private ?string $accessToken = null;
+
     private ?DateTime $tokenExpiresAt = null;
 
     public function __construct(
@@ -57,7 +64,7 @@ final class MTNMobileMoneyGateway implements MobileMoneyGateway
     ): MobileMoneyTransactionResult {
         try {
             $accessToken = $this->getAccessToken();
-            if (!$accessToken) {
+            if (! $accessToken) {
                 return MobileMoneyTransactionResult::failure(
                     'Impossible d\'obtenir le token d\'accès MTN',
                     'MTN_AUTH_ERROR'
@@ -75,12 +82,12 @@ final class MTNMobileMoneyGateway implements MobileMoneyGateway
                     'partyId' => $this->formatPhoneNumber($phoneNumber),
                 ],
                 'payerMessage' => 'Blocage de fonds pour séquestre - ProSartisan',
-                'payeeNote' => 'Escrow block for mission #' . $reference,
+                'payeeNote' => 'Escrow block for mission #'.$reference,
             ];
 
             $response = $this->httpClient
                 ->withHeaders([
-                    'Authorization' => 'Bearer ' . $accessToken,
+                    'Authorization' => 'Bearer '.$accessToken,
                     'X-Reference-Id' => $transactionId,
                     'X-Target-Environment' => config('services.mtn.environment', 'sandbox'),
                     'Ocp-Apim-Subscription-Key' => $this->subscriptionKey,
@@ -88,7 +95,7 @@ final class MTNMobileMoneyGateway implements MobileMoneyGateway
                     'Accept' => 'application/json',
                 ])
                 ->timeout(30)
-                ->post($this->baseUrl . '/collection/v1_0/requesttopay', $payload);
+                ->post($this->baseUrl.'/collection/v1_0/requesttopay', $payload);
 
             if ($response->successful() || $response->status() === 202) {
                 return MobileMoneyTransactionResult::success(
@@ -121,7 +128,7 @@ final class MTNMobileMoneyGateway implements MobileMoneyGateway
             ]);
 
             return MobileMoneyTransactionResult::failure(
-                'Erreur de connexion avec MTN: ' . $e->getMessage(),
+                'Erreur de connexion avec MTN: '.$e->getMessage(),
                 'MTN_CONNECTION_ERROR'
             );
         }
@@ -137,7 +144,7 @@ final class MTNMobileMoneyGateway implements MobileMoneyGateway
     ): MobileMoneyTransactionResult {
         try {
             $accessToken = $this->getAccessToken();
-            if (!$accessToken) {
+            if (! $accessToken) {
                 return MobileMoneyTransactionResult::failure(
                     'Impossible d\'obtenir le token d\'accès MTN',
                     'MTN_AUTH_ERROR'
@@ -160,7 +167,7 @@ final class MTNMobileMoneyGateway implements MobileMoneyGateway
 
             $response = $this->httpClient
                 ->withHeaders([
-                    'Authorization' => 'Bearer ' . $accessToken,
+                    'Authorization' => 'Bearer '.$accessToken,
                     'X-Reference-Id' => $transactionId,
                     'X-Target-Environment' => config('services.mtn.environment', 'sandbox'),
                     'Ocp-Apim-Subscription-Key' => $this->subscriptionKey,
@@ -168,7 +175,7 @@ final class MTNMobileMoneyGateway implements MobileMoneyGateway
                     'Accept' => 'application/json',
                 ])
                 ->timeout(30)
-                ->post($this->baseUrl . '/disbursement/v1_0/transfer', $payload);
+                ->post($this->baseUrl.'/disbursement/v1_0/transfer', $payload);
 
             if ($response->successful() || $response->status() === 202) {
                 return MobileMoneyTransactionResult::success(
@@ -201,7 +208,7 @@ final class MTNMobileMoneyGateway implements MobileMoneyGateway
             ]);
 
             return MobileMoneyTransactionResult::failure(
-                'Erreur de connexion avec MTN: ' . $e->getMessage(),
+                'Erreur de connexion avec MTN: '.$e->getMessage(),
                 'MTN_CONNECTION_ERROR'
             );
         }
@@ -228,7 +235,7 @@ final class MTNMobileMoneyGateway implements MobileMoneyGateway
     {
         try {
             $accessToken = $this->getAccessToken();
-            if (!$accessToken) {
+            if (! $accessToken) {
                 return new MobileMoneyTransactionStatus(
                     'FAILED',
                     $providerTransactionId,
@@ -240,25 +247,25 @@ final class MTNMobileMoneyGateway implements MobileMoneyGateway
             // Try collection API first (for payments)
             $response = $this->httpClient
                 ->withHeaders([
-                    'Authorization' => 'Bearer ' . $accessToken,
+                    'Authorization' => 'Bearer '.$accessToken,
                     'X-Target-Environment' => config('services.mtn.environment', 'sandbox'),
                     'Ocp-Apim-Subscription-Key' => $this->subscriptionKey,
                     'Accept' => 'application/json',
                 ])
                 ->timeout(15)
-                ->get($this->baseUrl . '/collection/v1_0/requesttopay/' . $providerTransactionId);
+                ->get($this->baseUrl.'/collection/v1_0/requesttopay/'.$providerTransactionId);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 // Try disbursement API (for transfers)
                 $response = $this->httpClient
                     ->withHeaders([
-                        'Authorization' => 'Bearer ' . $accessToken,
+                        'Authorization' => 'Bearer '.$accessToken,
                         'X-Target-Environment' => config('services.mtn.environment', 'sandbox'),
                         'Ocp-Apim-Subscription-Key' => $this->subscriptionKey,
                         'Accept' => 'application/json',
                     ])
                     ->timeout(15)
-                    ->get($this->baseUrl . '/disbursement/v1_0/transfer/' . $providerTransactionId);
+                    ->get($this->baseUrl.'/disbursement/v1_0/transfer/'.$providerTransactionId);
             }
 
             if ($response->successful()) {
@@ -300,7 +307,7 @@ final class MTNMobileMoneyGateway implements MobileMoneyGateway
                 'FAILED',
                 $providerTransactionId,
                 null,
-                'Erreur de connexion: ' . $e->getMessage()
+                'Erreur de connexion: '.$e->getMessage()
             );
         }
     }
@@ -328,13 +335,14 @@ final class MTNMobileMoneyGateway implements MobileMoneyGateway
     public function verifyWebhookSignature(string $payload, string $signature): bool
     {
         $expectedSignature = hash_hmac('sha256', $payload, $this->webhookSecret);
+
         return hash_equals($expectedSignature, $signature);
     }
 
     private function getAccessToken(): ?string
     {
         // Check if current token is still valid
-        if ($this->accessToken && $this->tokenExpiresAt && $this->tokenExpiresAt > new DateTime()) {
+        if ($this->accessToken && $this->tokenExpiresAt && $this->tokenExpiresAt > new DateTime) {
             return $this->accessToken;
         }
 
@@ -347,7 +355,7 @@ final class MTNMobileMoneyGateway implements MobileMoneyGateway
                 ])
                 ->withBasicAuth($this->apiUserId, $this->apiKey)
                 ->timeout(15)
-                ->post($this->baseUrl . '/collection/token/');
+                ->post($this->baseUrl.'/collection/token/');
 
             if ($response->successful()) {
                 $data = $response->json();
@@ -355,7 +363,7 @@ final class MTNMobileMoneyGateway implements MobileMoneyGateway
 
                 // Set expiration time (subtract 60 seconds for safety)
                 $expiresIn = $data['expires_in'] ?? 3600;
-                $this->tokenExpiresAt = (new DateTime())->modify('+' . ($expiresIn - 60) . ' seconds');
+                $this->tokenExpiresAt = (new DateTime)->modify('+'.($expiresIn - 60).' seconds');
 
                 return $this->accessToken;
             }

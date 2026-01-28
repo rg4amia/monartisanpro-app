@@ -6,7 +6,6 @@ use App\Domain\Identity\Models\Artisan\Artisan;
 use App\Domain\Identity\Models\Client\Client;
 use App\Domain\Identity\Models\Fournisseur\Fournisseur;
 use App\Domain\Identity\Models\ReferentZone\ReferentZone;
-use App\Domain\Identity\Models\ValueObjects\AccountStatus;
 use App\Domain\Identity\Models\ValueObjects\Email;
 use App\Domain\Identity\Models\ValueObjects\HashedPassword;
 use App\Domain\Identity\Models\ValueObjects\KYCDocuments;
@@ -28,7 +27,7 @@ class PostgresUserRepositoryTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->repository = new PostgresUserRepository();
+        $this->repository = new PostgresUserRepository;
     }
 
     /** @test */
@@ -194,7 +193,7 @@ class PostgresUserRepositoryTest extends TestCase
             'CI123456789',
             'https://example.com/id.jpg',
             'https://example.com/selfie.jpg',
-            new DateTime()
+            new DateTime
         );
 
         $artisan = Artisan::createArtisan(

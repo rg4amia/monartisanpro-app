@@ -17,9 +17,10 @@ interface SMSService
     /**
      * Send an SMS message to a phone number
      *
-     * @param PhoneNumber $phone Recipient phone number
-     * @param string $message SMS message content
+     * @param  PhoneNumber  $phone  Recipient phone number
+     * @param  string  $message  SMS message content
      * @return bool True if sent successfully
+     *
      * @throws \Exception If sending fails
      */
     public function send(PhoneNumber $phone, string $message): bool;

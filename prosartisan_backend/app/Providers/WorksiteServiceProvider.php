@@ -17,24 +17,24 @@ use Illuminate\Support\ServiceProvider;
  */
 class WorksiteServiceProvider extends ServiceProvider
 {
- /**
-  * Register services.
-  */
- public function register(): void
- {
-  // Bind repositories
-  $this->app->bind(ChantierRepository::class, PostgresChantierRepository::class);
-  $this->app->bind(JalonRepository::class, PostgresJalonRepository::class);
+    /**
+     * Register services.
+     */
+    public function register(): void
+    {
+        // Bind repositories
+        $this->app->bind(ChantierRepository::class, PostgresChantierRepository::class);
+        $this->app->bind(JalonRepository::class, PostgresJalonRepository::class);
 
-  // Bind services
-  $this->app->bind(AutoValidationService::class, DefaultAutoValidationService::class);
- }
+        // Bind services
+        $this->app->bind(AutoValidationService::class, DefaultAutoValidationService::class);
+    }
 
- /**
-  * Bootstrap services.
-  */
- public function boot(): void
- {
-  //
- }
+    /**
+     * Bootstrap services.
+     */
+    public function boot(): void
+    {
+        //
+    }
 }

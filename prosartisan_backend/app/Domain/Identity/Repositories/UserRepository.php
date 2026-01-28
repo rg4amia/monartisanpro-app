@@ -18,15 +18,14 @@ interface UserRepository
     /**
      * Save a user entity
      *
-     * @param User $user User to save
-     * @return void
+     * @param  User  $user  User to save
      */
     public function save(User $user): void;
 
     /**
      * Find a user by ID
      *
-     * @param UserId $id User ID
+     * @param  UserId  $id  User ID
      * @return User|null User entity or null if not found
      */
     public function findById(UserId $id): ?User;
@@ -34,7 +33,7 @@ interface UserRepository
     /**
      * Find a user by email
      *
-     * @param Email $email User email
+     * @param  Email  $email  User email
      * @return User|null User entity or null if not found
      */
     public function findByEmail(Email $email): ?User;
@@ -42,8 +41,8 @@ interface UserRepository
     /**
      * Find artisans near a location
      *
-     * @param GPS_Coordinates $location Center location
-     * @param float $radiusKm Search radius in kilometers
+     * @param  GPS_Coordinates  $location  Center location
+     * @param  float  $radiusKm  Search radius in kilometers
      * @return array Array of Artisan entities
      */
     public function findArtisansNearLocation(GPS_Coordinates $location, float $radiusKm): array;
@@ -51,8 +50,8 @@ interface UserRepository
     /**
      * Find suppliers near a location
      *
-     * @param GPS_Coordinates $location Center location
-     * @param float $radiusKm Search radius in kilometers
+     * @param  GPS_Coordinates  $location  Center location
+     * @param  float  $radiusKm  Search radius in kilometers
      * @return array Array of Fournisseur entities
      */
     public function findSuppliersNearLocation(GPS_Coordinates $location, float $radiusKm): array;
@@ -60,10 +59,10 @@ interface UserRepository
     /**
      * Find artisans near a location with pagination
      *
-     * @param GPS_Coordinates $location Center location
-     * @param float $radiusKm Search radius in kilometers
-     * @param int $limit Number of items per page
-     * @param int $offset Offset for pagination
+     * @param  GPS_Coordinates  $location  Center location
+     * @param  float  $radiusKm  Search radius in kilometers
+     * @param  int  $limit  Number of items per page
+     * @param  int  $offset  Offset for pagination
      * @return array ['artisans' => array, 'total' => int]
      */
     public function findArtisansNearLocationPaginated(GPS_Coordinates $location, float $radiusKm, int $limit, int $offset): array;
@@ -71,7 +70,7 @@ interface UserRepository
     /**
      * Find users by type
      *
-     * @param UserType $type User type
+     * @param  UserType  $type  User type
      * @return array Array of User entities
      */
     public function findByType(UserType $type): array;
@@ -79,8 +78,7 @@ interface UserRepository
     /**
      * Delete a user
      *
-     * @param UserId $id User ID
-     * @return void
+     * @param  UserId  $id  User ID
      */
     public function delete(UserId $id): void;
 }

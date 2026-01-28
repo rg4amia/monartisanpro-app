@@ -13,17 +13,17 @@ use DateTime;
  */
 interface AutoValidationService
 {
- /**
-  * Schedule auto-validation for a milestone
-  *
-  * Requirement 6.5: Set 48-hour deadline for auto-validation
-  */
- public function scheduleAutoValidation(JalonId $jalonId, DateTime $deadline): void;
+    /**
+     * Schedule auto-validation for a milestone
+     *
+     * Requirement 6.5: Set 48-hour deadline for auto-validation
+     */
+    public function scheduleAutoValidation(JalonId $jalonId, DateTime $deadline): void;
 
- /**
-  * Process all pending auto-validations
-  *
-  * Requirement 6.5: Cron job to auto-validate expired milestones
-  */
- public function processAutoValidations(): void;
+    /**
+     * Process all pending auto-validations
+     *
+     * Requirement 6.5: Cron job to auto-validate expired milestones
+     */
+    public function processAutoValidations(): void;
 }

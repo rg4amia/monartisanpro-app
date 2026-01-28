@@ -13,135 +13,136 @@ use Illuminate\Support\Str;
  */
 class StructuredLogger
 {
- private static ?string $correlationId = null;
+    private static ?string $correlationId = null;
 
- /**
-  * Set correlation ID for current request
-  */
- public static function setCorrelationId(?string $correlationId = null): string
- {
-  self::$correlationId = $correlationId ?? Str::uuid()->toString();
-  return self::$correlationId;
- }
+    /**
+     * Set correlation ID for current request
+     */
+    public static function setCorrelationId(?string $correlationId = null): string
+    {
+        self::$correlationId = $correlationId ?? Str::uuid()->toString();
 
- /**
-  * Get current correlation ID
-  */
- public static function getCorrelationId(): ?string
- {
-  return self::$correlationId;
- }
+        return self::$correlationId;
+    }
 
- /**
-  * Log info message with structured context
-  */
- public static function info(string $message, array $context = [], ?string $component = null): void
- {
-  self::log('info', $message, $context, $component);
- }
+    /**
+     * Get current correlation ID
+     */
+    public static function getCorrelationId(): ?string
+    {
+        return self::$correlationId;
+    }
 
- /**
-  * Log error message with structured context
-  */
- public static function error(string $message, array $context = [], ?string $component = null): void
- {
-  self::log('error', $message, $context, $component);
- }
+    /**
+     * Log info message with structured context
+     */
+    public static function info(string $message, array $context = [], ?string $component = null): void
+    {
+        self::log('info', $message, $context, $component);
+    }
 
- /**
-  * Log warning message with structured context
-  */
- public static function warning(string $message, array $context = [], ?string $component = null): void
- {
-  self::log('warning', $message, $context, $component);
- }
+    /**
+     * Log error message with structured context
+     */
+    public static function error(string $message, array $context = [], ?string $component = null): void
+    {
+        self::log('error', $message, $context, $component);
+    }
 
- /**
-  * Log debug message with structured context
-  */
- public static function debug(string $message, array $context = [], ?string $component = null): void
- {
-  self::log('debug', $message, $context, $component);
- }
+    /**
+     * Log warning message with structured context
+     */
+    public static function warning(string $message, array $context = [], ?string $component = null): void
+    {
+        self::log('warning', $message, $context, $component);
+    }
 
- /**
-  * Log business event with structured context
-  */
- public static function businessEvent(string $eventName, array $context = [], ?string $component = null): void
- {
-  $context['event_type'] = 'business';
-  $context['event_name'] = $eventName;
+    /**
+     * Log debug message with structured context
+     */
+    public static function debug(string $message, array $context = [], ?string $component = null): void
+    {
+        self::log('debug', $message, $context, $component);
+    }
 
-  self::log('info', "Business event: {$eventName}", $context, $component);
- }
+    /**
+     * Log business event with structured context
+     */
+    public static function businessEvent(string $eventName, array $context = [], ?string $component = null): void
+    {
+        $context['event_type'] = 'business';
+        $context['event_name'] = $eventName;
 
- /**
-  * Log performance metrics
-  */
- public static function performance(string $operation, float $durationMs, array $context = []): void
- {
-  $context['operation'] = $operation;
-  $context['duration_ms'] = $durationMs;
-  $context['event_type'] = 'performance';
+        self::log('info', "Business event: {$eventName}", $context, $component);
+    }
 
-  self::log('info', "Performance: {$operation} took {$durationMs}ms", $context, 'performance');
- }
+    /**
+     * Log performance metrics
+     */
+    public static function performance(string $operation, float $durationMs, array $context = []): void
+    {
+        $context['operation'] = $operation;
+        $context['duration_ms'] = $durationMs;
+        $context['event_type'] = 'performance';
 
- /**
-  * Log security event
-  */
- public static function security(string $event, array $context = []): void
- {
-  $context['event_type'] = 'security';
-  $context['security_event'] = $event;
+        self::log('info', "Performance: {$operation} took {$durationMs}ms", $context, 'performance');
+    }
 
-  self::log('warning', "Security event: {$event}", $context, 'security');
- }
+    /**
+     * Log security event
+     */
+    public static function security(string $event, array $context = []): void
+    {
+        $context['event_type'] = 'security';
+        $context['security_event'] = $event;
 
- /**
-  * Core logging method with structured format
-  */
- private static function log(string $level, string $message, array $context = [], ?string $component = null): void
- {
-  $structuredContext = [
-   'correlation_id' => self::$correlationId,
-   'component' => $component,
-   'timestamp' => now()->toISOString(),
-   'environment' => app()->environment(),
-   'user_id' => auth()->id(),
-   'request_id' => request()->header('X-Request-ID'),
-   'ip_address' => request()->ip(),
-   'user_agent' => request()->userAgent(),
-  ];
+        self::log('warning', "Security event: {$event}", $context, 'security');
+    }
 
-  // Merge with provided context
-  $structuredContext = array_merge($structuredContext, $context);
+    /**
+     * Core logging method with structured format
+     */
+    private static function log(string $level, string $message, array $context = [], ?string $component = null): void
+    {
+        $structuredContext = [
+            'correlation_id' => self::$correlationId,
+            'component' => $component,
+            'timestamp' => now()->toISOString(),
+            'environment' => app()->environment(),
+            'user_id' => auth()->id(),
+            'request_id' => request()->header('X-Request-ID'),
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+        ];
 
-  // Remove null values
-  $structuredContext = array_filter($structuredContext, fn($value) => $value !== null);
+        // Merge with provided context
+        $structuredContext = array_merge($structuredContext, $context);
 
-  Log::$level($message, $structuredContext);
- }
+        // Remove null values
+        $structuredContext = array_filter($structuredContext, fn ($value) => $value !== null);
 
- /**
-  * Start timing an operation
-  */
- public static function startTiming(string $operation): array
- {
-  return [
-   'operation' => $operation,
-   'start_time' => microtime(true),
-   'correlation_id' => self::$correlationId,
-  ];
- }
+        Log::$level($message, $structuredContext);
+    }
 
- /**
-  * End timing an operation and log performance
-  */
- public static function endTiming(array $timing, array $additionalContext = []): void
- {
-  $duration = (microtime(true) - $timing['start_time']) * 1000; // Convert to milliseconds
+    /**
+     * Start timing an operation
+     */
+    public static function startTiming(string $operation): array
+    {
+        return [
+            'operation' => $operation,
+            'start_time' => microtime(true),
+            'correlation_id' => self::$correlationId,
+        ];
+    }
 
-  self::performance($timing['operation'], $duration, $additionalContext);
- }
+    /**
+     * End timing an operation and log performance
+     */
+    public static function endTiming(array $timing, array $additionalContext = []): void
+    {
+        $duration = (microtime(true) - $timing['start_time']) * 1000; // Convert to milliseconds
+
+        self::performance($timing['operation'], $duration, $additionalContext);
+    }
 }

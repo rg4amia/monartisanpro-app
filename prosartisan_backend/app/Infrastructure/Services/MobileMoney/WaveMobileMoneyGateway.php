@@ -5,13 +5,13 @@ namespace App\Infrastructure\Services\MobileMoney;
 use App\Domain\Financial\Services\MobileMoneyGateway;
 use App\Domain\Financial\Services\MobileMoneyTransactionResult;
 use App\Domain\Financial\Services\MobileMoneyTransactionStatus;
-use App\Domain\Identity\Models\ValueObjects\UserId;
 use App\Domain\Identity\Models\ValueObjects\PhoneNumber;
+use App\Domain\Identity\Models\ValueObjects\UserId;
 use App\Domain\Shared\ValueObjects\MoneyAmount;
+use DateTime;
+use Exception;
 use Illuminate\Http\Client\Factory as HttpClient;
 use Illuminate\Support\Facades\Log;
-use Exception;
-use DateTime;
 
 /**
  * Wave Mobile Money Gateway Implementation
@@ -24,9 +24,13 @@ use DateTime;
 final class WaveMobileMoneyGateway implements MobileMoneyGateway
 {
     private HttpClient $httpClient;
+
     private string $apiKey;
+
     private string $apiSecret;
+
     private string $baseUrl;
+
     private string $webhookSecret;
 
     public function __construct(
@@ -56,7 +60,7 @@ final class WaveMobileMoneyGateway implements MobileMoneyGateway
                 'phone_number' => $phoneNumber->getValue(),
                 'reference' => $reference,
                 'description' => 'Blocage de fonds pour séquestre - ProSartisan',
-                'callback_url' => config('app.url') . '/api/v1/payments/webhook/wave',
+                'callback_url' => config('app.url').'/api/v1/payments/webhook/wave',
                 'metadata' => [
                     'user_id' => $userId->getValue(),
                     'operation_type' => 'escrow_block',
@@ -66,7 +70,7 @@ final class WaveMobileMoneyGateway implements MobileMoneyGateway
             $response = $this->httpClient
                 ->withHeaders($this->getAuthHeaders())
                 ->timeout(30)
-                ->post($this->baseUrl . '/v1/payments/collect', $payload);
+                ->post($this->baseUrl.'/v1/payments/collect', $payload);
 
             if ($response->successful()) {
                 $data = $response->json();
@@ -101,7 +105,7 @@ final class WaveMobileMoneyGateway implements MobileMoneyGateway
             ]);
 
             return MobileMoneyTransactionResult::failure(
-                'Erreur de connexion avec Wave: ' . $e->getMessage(),
+                'Erreur de connexion avec Wave: '.$e->getMessage(),
                 'WAVE_CONNECTION_ERROR'
             );
         }
@@ -122,7 +126,7 @@ final class WaveMobileMoneyGateway implements MobileMoneyGateway
                 'recipient_phone' => $toPhone->getValue(),
                 'reference' => $reference,
                 'description' => 'Transfert de fonds - ProSartisan',
-                'callback_url' => config('app.url') . '/api/v1/payments/webhook/wave',
+                'callback_url' => config('app.url').'/api/v1/payments/webhook/wave',
                 'metadata' => [
                     'from_user_id' => $fromUserId->getValue(),
                     'to_user_id' => $toUserId->getValue(),
@@ -133,7 +137,7 @@ final class WaveMobileMoneyGateway implements MobileMoneyGateway
             $response = $this->httpClient
                 ->withHeaders($this->getAuthHeaders())
                 ->timeout(30)
-                ->post($this->baseUrl . '/v1/payments/send', $payload);
+                ->post($this->baseUrl.'/v1/payments/send', $payload);
 
             if ($response->successful()) {
                 $data = $response->json();
@@ -168,7 +172,7 @@ final class WaveMobileMoneyGateway implements MobileMoneyGateway
             ]);
 
             return MobileMoneyTransactionResult::failure(
-                'Erreur de connexion avec Wave: ' . $e->getMessage(),
+                'Erreur de connexion avec Wave: '.$e->getMessage(),
                 'WAVE_CONNECTION_ERROR'
             );
         }
@@ -187,7 +191,7 @@ final class WaveMobileMoneyGateway implements MobileMoneyGateway
                 'recipient_phone' => $phoneNumber->getValue(),
                 'reference' => $reference,
                 'description' => 'Remboursement - ProSartisan',
-                'callback_url' => config('app.url') . '/api/v1/payments/webhook/wave',
+                'callback_url' => config('app.url').'/api/v1/payments/webhook/wave',
                 'metadata' => [
                     'user_id' => $userId->getValue(),
                     'operation_type' => 'refund',
@@ -197,7 +201,7 @@ final class WaveMobileMoneyGateway implements MobileMoneyGateway
             $response = $this->httpClient
                 ->withHeaders($this->getAuthHeaders())
                 ->timeout(30)
-                ->post($this->baseUrl . '/v1/payments/send', $payload);
+                ->post($this->baseUrl.'/v1/payments/send', $payload);
 
             if ($response->successful()) {
                 $data = $response->json();
@@ -232,7 +236,7 @@ final class WaveMobileMoneyGateway implements MobileMoneyGateway
             ]);
 
             return MobileMoneyTransactionResult::failure(
-                'Erreur de connexion avec Wave: ' . $e->getMessage(),
+                'Erreur de connexion avec Wave: '.$e->getMessage(),
                 'WAVE_CONNECTION_ERROR'
             );
         }
@@ -244,7 +248,7 @@ final class WaveMobileMoneyGateway implements MobileMoneyGateway
             $response = $this->httpClient
                 ->withHeaders($this->getAuthHeaders())
                 ->timeout(15)
-                ->get($this->baseUrl . '/v1/payments/' . $providerTransactionId);
+                ->get($this->baseUrl.'/v1/payments/'.$providerTransactionId);
 
             if ($response->successful()) {
                 $data = $response->json();
@@ -284,7 +288,7 @@ final class WaveMobileMoneyGateway implements MobileMoneyGateway
                 'FAILED',
                 $providerTransactionId,
                 null,
-                'Erreur de connexion: ' . $e->getMessage()
+                'Erreur de connexion: '.$e->getMessage()
             );
         }
     }
@@ -312,13 +316,14 @@ final class WaveMobileMoneyGateway implements MobileMoneyGateway
     public function verifyWebhookSignature(string $payload, string $signature): bool
     {
         $expectedSignature = hash_hmac('sha256', $payload, $this->webhookSecret);
+
         return hash_equals($expectedSignature, $signature);
     }
 
     private function getAuthHeaders(): array
     {
         return [
-            'Authorization' => 'Bearer ' . $this->apiKey,
+            'Authorization' => 'Bearer '.$this->apiKey,
             'Content-Type' => 'application/json',
             'Accept' => 'application/json',
             'X-API-Secret' => $this->apiSecret,

@@ -10,7 +10,9 @@ use InvalidArgumentException;
 final class AccountStatus
 {
     private const PENDING = 'PENDING';
+
     private const ACTIVE = 'ACTIVE';
+
     private const SUSPENDED = 'SUSPENDED';
 
     private const VALID_STATUSES = [
@@ -23,7 +25,7 @@ final class AccountStatus
 
     private function __construct(string $value)
     {
-        if (!in_array($value, self::VALID_STATUSES, true)) {
+        if (! in_array($value, self::VALID_STATUSES, true)) {
             throw new InvalidArgumentException("Invalid account status: {$value}");
         }
 

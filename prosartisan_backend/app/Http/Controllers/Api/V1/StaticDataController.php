@@ -14,89 +14,81 @@ use Illuminate\Http\JsonResponse;
  */
 class StaticDataController extends Controller
 {
- public function __construct(
-  private StaticDataCacheService $staticDataCacheService
- ) {}
+    public function __construct(
+        private StaticDataCacheService $staticDataCacheService
+    ) {}
 
- /**
-  * Get trade categories
-  *
-  * GET /api/v1/static/trade-categories
-  *
-  * @return JsonResponse
-  */
- public function tradeCategories(): JsonResponse
- {
-  $categories = $this->staticDataCacheService->getTradeCategories();
+    /**
+     * Get trade categories
+     *
+     * GET /api/v1/static/trade-categories
+     */
+    public function tradeCategories(): JsonResponse
+    {
+        $categories = $this->staticDataCacheService->getTradeCategories();
 
-  return response()->json([
-   'data' => $categories,
-   'meta' => [
-    'cached' => true,
-    'ttl_seconds' => 3600
-   ]
-  ]);
- }
+        return response()->json([
+            'data' => $categories,
+            'meta' => [
+                'cached' => true,
+                'ttl_seconds' => 3600,
+            ],
+        ]);
+    }
 
- /**
-  * Get mission statuses
-  *
-  * GET /api/v1/static/mission-statuses
-  *
-  * @return JsonResponse
-  */
- public function missionStatuses(): JsonResponse
- {
-  $statuses = $this->staticDataCacheService->getMissionStatuses();
+    /**
+     * Get mission statuses
+     *
+     * GET /api/v1/static/mission-statuses
+     */
+    public function missionStatuses(): JsonResponse
+    {
+        $statuses = $this->staticDataCacheService->getMissionStatuses();
 
-  return response()->json([
-   'data' => $statuses,
-   'meta' => [
-    'cached' => true,
-    'ttl_seconds' => 3600
-   ]
-  ]);
- }
+        return response()->json([
+            'data' => $statuses,
+            'meta' => [
+                'cached' => true,
+                'ttl_seconds' => 3600,
+            ],
+        ]);
+    }
 
- /**
-  * Get devis statuses
-  *
-  * GET /api/v1/static/devis-statuses
-  *
-  * @return JsonResponse
-  */
- public function devisStatuses(): JsonResponse
- {
-  $statuses = $this->staticDataCacheService->getDevisStatuses();
+    /**
+     * Get devis statuses
+     *
+     * GET /api/v1/static/devis-statuses
+     */
+    public function devisStatuses(): JsonResponse
+    {
+        $statuses = $this->staticDataCacheService->getDevisStatuses();
 
-  return response()->json([
-   'data' => $statuses,
-   'meta' => [
-    'cached' => true,
-    'ttl_seconds' => 3600
-   ]
-  ]);
- }
+        return response()->json([
+            'data' => $statuses,
+            'meta' => [
+                'cached' => true,
+                'ttl_seconds' => 3600,
+            ],
+        ]);
+    }
 
- /**
-  * Get all static data
-  *
-  * GET /api/v1/static/all
-  *
-  * @return JsonResponse
-  */
- public function all(): JsonResponse
- {
-  return response()->json([
-   'data' => [
-    'trade_categories' => $this->staticDataCacheService->getTradeCategories(),
-    'mission_statuses' => $this->staticDataCacheService->getMissionStatuses(),
-    'devis_statuses' => $this->staticDataCacheService->getDevisStatuses(),
-   ],
-   'meta' => [
-    'cached' => true,
-    'ttl_seconds' => 3600
-   ]
-  ]);
- }
+    /**
+     * Get all static data
+     *
+     * GET /api/v1/static/all
+     */
+    public function all(): JsonResponse
+    {
+        return response()->json([
+            'data' => [
+                'trade_categories' => $this->staticDataCacheService->getTradeCategories(),
+                'mission_statuses' => $this->staticDataCacheService->getMissionStatuses(),
+                'devis_statuses' => $this->staticDataCacheService->getDevisStatuses(),
+            ],
+            'meta' => [
+                'cached' => true,
+                'ttl_seconds' => 3600,
+            ],
+        ]);
+    }
 }

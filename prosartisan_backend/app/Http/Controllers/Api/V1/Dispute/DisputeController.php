@@ -10,9 +10,9 @@ use App\Domain\Identity\Models\ValueObjects\UserId;
 use App\Domain\Marketplace\Models\ValueObjects\MissionId;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Dispute\CreateDisputeRequest;
-use App\Http\Requests\Dispute\StartMediationRequest;
-use App\Http\Requests\Dispute\SendMediationMessageRequest;
 use App\Http\Requests\Dispute\RenderArbitrationRequest;
+use App\Http\Requests\Dispute\SendMediationMessageRequest;
+use App\Http\Requests\Dispute\StartMediationRequest;
 use App\Http\Resources\Dispute\DisputeResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -57,7 +57,7 @@ class DisputeController extends Controller
 
         return response()->json([
             'message' => 'Dispute reported successfully',
-            'data' => new DisputeResource($litige)
+            'data' => new DisputeResource($litige),
         ], 201);
     }
 
@@ -72,23 +72,23 @@ class DisputeController extends Controller
         $litigeId = LitigeId::fromString($id);
         $litige = $this->litigeRepository->findById($litigeId);
 
-        if (!$litige) {
+        if (! $litige) {
             return response()->json([
-                'message' => 'Dispute not found'
+                'message' => 'Dispute not found',
             ], 404);
         }
 
         $userId = UserId::fromString(Auth::id());
 
         // Check if user is involved in the dispute or is an admin
-        if (!$litige->involvesUser($userId) && !$this->isAdmin()) {
+        if (! $litige->involvesUser($userId) && ! $this->isAdmin()) {
             return response()->json([
-                'message' => 'Access denied'
+                'message' => 'Access denied',
             ], 403);
         }
 
         return response()->json([
-            'data' => new DisputeResource($litige)
+            'data' => new DisputeResource($litige),
         ]);
     }
 
@@ -103,16 +103,16 @@ class DisputeController extends Controller
         $litigeId = LitigeId::fromString($id);
         $litige = $this->litigeRepository->findById($litigeId);
 
-        if (!$litige) {
+        if (! $litige) {
             return response()->json([
-                'message' => 'Dispute not found'
+                'message' => 'Dispute not found',
             ], 404);
         }
 
         // Only admins can start mediation
-        if (!$this->isAdmin()) {
+        if (! $this->isAdmin()) {
             return response()->json([
-                'message' => 'Access denied'
+                'message' => 'Access denied',
             ], 403);
         }
 
@@ -125,11 +125,11 @@ class DisputeController extends Controller
 
             return response()->json([
                 'message' => 'Mediation started successfully',
-                'data' => new DisputeResource($litige)
+                'data' => new DisputeResource($litige),
             ]);
         } catch (\InvalidArgumentException $e) {
             return response()->json([
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 400);
         }
     }
@@ -145,9 +145,9 @@ class DisputeController extends Controller
         $litigeId = LitigeId::fromString($id);
         $litige = $this->litigeRepository->findById($litigeId);
 
-        if (!$litige) {
+        if (! $litige) {
             return response()->json([
-                'message' => 'Dispute not found'
+                'message' => 'Dispute not found',
             ], 404);
         }
 
@@ -155,18 +155,18 @@ class DisputeController extends Controller
 
         // Check if user is involved in the dispute or is the mediator
         if (
-            !$litige->involvesUser($userId) &&
-            !($litige->getMediation() && $litige->getMediation()->getMediatorId()->equals($userId))
+            ! $litige->involvesUser($userId) &&
+            ! ($litige->getMediation() && $litige->getMediation()->getMediatorId()->equals($userId))
         ) {
             return response()->json([
-                'message' => 'Access denied'
+                'message' => 'Access denied',
             ], 403);
         }
 
         $mediation = $litige->getMediation();
-        if (!$mediation || !$mediation->isActive()) {
+        if (! $mediation || ! $mediation->isActive()) {
             return response()->json([
-                'message' => 'No active mediation for this dispute'
+                'message' => 'No active mediation for this dispute',
             ], 400);
         }
 
@@ -178,11 +178,11 @@ class DisputeController extends Controller
 
             return response()->json([
                 'message' => 'Message sent successfully',
-                'data' => new DisputeResource($litige)
+                'data' => new DisputeResource($litige),
             ]);
         } catch (\InvalidArgumentException $e) {
             return response()->json([
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 400);
         }
     }
@@ -198,16 +198,16 @@ class DisputeController extends Controller
         $litigeId = LitigeId::fromString($id);
         $litige = $this->litigeRepository->findById($litigeId);
 
-        if (!$litige) {
+        if (! $litige) {
             return response()->json([
-                'message' => 'Dispute not found'
+                'message' => 'Dispute not found',
             ], 404);
         }
 
         // Only admins can render arbitration decisions
-        if (!$this->isAdmin()) {
+        if (! $this->isAdmin()) {
             return response()->json([
-                'message' => 'Access denied'
+                'message' => 'Access denied',
             ], 403);
         }
 
@@ -233,11 +233,11 @@ class DisputeController extends Controller
 
             return response()->json([
                 'message' => 'Arbitration decision rendered successfully',
-                'data' => new DisputeResource($litige)
+                'data' => new DisputeResource($litige),
             ]);
         } catch (\InvalidArgumentException $e) {
             return response()->json([
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 400);
         }
     }
@@ -251,7 +251,7 @@ class DisputeController extends Controller
         $disputes = $this->litigeRepository->findByUser($userId);
 
         return response()->json([
-            'data' => DisputeResource::collection($disputes)
+            'data' => DisputeResource::collection($disputes),
         ]);
     }
 
@@ -260,9 +260,9 @@ class DisputeController extends Controller
      */
     public function adminIndex(Request $request): JsonResponse
     {
-        if (!$this->isAdmin()) {
+        if (! $this->isAdmin()) {
             return response()->json([
-                'message' => 'Access denied'
+                'message' => 'Access denied',
             ], 403);
         }
 
@@ -275,7 +275,7 @@ class DisputeController extends Controller
         }
 
         return response()->json([
-            'data' => DisputeResource::collection($disputes)
+            'data' => DisputeResource::collection($disputes),
         ]);
     }
 

@@ -3,8 +3,8 @@
 namespace App\Domain\Financial\Models\Transaction;
 
 use App\Domain\Financial\Models\ValueObjects\TransactionId;
-use App\Domain\Financial\Models\ValueObjects\TransactionType;
 use App\Domain\Financial\Models\ValueObjects\TransactionStatus;
+use App\Domain\Financial\Models\ValueObjects\TransactionType;
 use App\Domain\Identity\Models\ValueObjects\UserId;
 use App\Domain\Shared\ValueObjects\MoneyAmount;
 use DateTime;
@@ -21,17 +21,29 @@ use InvalidArgumentException;
 final class Transaction
 {
     private TransactionId $id;
+
     private ?UserId $fromUserId;
+
     private ?UserId $toUserId;
+
     private MoneyAmount $amount;
+
     private TransactionType $type;
+
     private TransactionStatus $status;
+
     private ?string $mobileMoneyReference;
+
     private ?string $description;
+
     private array $metadata; // Additional context data
+
     private DateTime $createdAt;
+
     private ?DateTime $completedAt;
+
     private ?DateTime $failedAt;
+
     private ?string $failureReason;
 
     public function __construct(
@@ -61,7 +73,7 @@ final class Transaction
         $this->metadata = $metadata;
         $this->status = $status ?? TransactionStatus::pending();
         $this->mobileMoneyReference = $mobileMoneyReference;
-        $this->createdAt = $createdAt ?? new DateTime();
+        $this->createdAt = $createdAt ?? new DateTime;
         $this->completedAt = $completedAt;
         $this->failedAt = $failedAt;
         $this->failureReason = $failureReason;
@@ -96,12 +108,12 @@ final class Transaction
      */
     public function complete(?string $mobileMoneyReference = null): void
     {
-        if (!$this->status->isPending()) {
+        if (! $this->status->isPending()) {
             throw new InvalidArgumentException('Only pending transactions can be completed');
         }
 
         $this->status = TransactionStatus::completed();
-        $this->completedAt = new DateTime();
+        $this->completedAt = new DateTime;
 
         if ($mobileMoneyReference !== null) {
             $this->mobileMoneyReference = $mobileMoneyReference;
@@ -113,12 +125,12 @@ final class Transaction
      */
     public function fail(string $reason): void
     {
-        if (!$this->status->isPending()) {
+        if (! $this->status->isPending()) {
             throw new InvalidArgumentException('Only pending transactions can be failed');
         }
 
         $this->status = TransactionStatus::failed();
-        $this->failedAt = new DateTime();
+        $this->failedAt = new DateTime;
         $this->failureReason = $reason;
     }
 
@@ -127,7 +139,7 @@ final class Transaction
      */
     public function cancel(): void
     {
-        if (!$this->status->isPending()) {
+        if (! $this->status->isPending()) {
             throw new InvalidArgumentException('Only pending transactions can be cancelled');
         }
 

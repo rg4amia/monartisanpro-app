@@ -16,32 +16,35 @@ use Illuminate\Support\Facades\Log;
  */
 class QueryPendingTransactions extends Command
 {
- protected $signature = 'mobile-money:query-pending';
- protected $description = 'Query status of pending mobile money transactions';
+    protected $signature = 'mobile-money:query-pending';
 
- private MobileMoneyWebhookHandler $webhookHandler;
+    protected $description = 'Query status of pending mobile money transactions';
 
- public function __construct(MobileMoneyWebhookHandler $webhookHandler)
- {
-  parent::__construct();
-  $this->webhookHandler = $webhookHandler;
- }
+    private MobileMoneyWebhookHandler $webhookHandler;
 
- public function handle(): int
- {
-  $this->info('Querying pending mobile money transactions...');
+    public function __construct(MobileMoneyWebhookHandler $webhookHandler)
+    {
+        parent::__construct();
+        $this->webhookHandler = $webhookHandler;
+    }
 
-  try {
-   $this->webhookHandler->queryPendingTransactions();
-   $this->info('Successfully queried pending transactions');
-   return 0;
-  } catch (\Exception $e) {
-   $this->error('Error querying pending transactions: ' . $e->getMessage());
-   Log::error('QueryPendingTransactions command failed', [
-    'error' => $e->getMessage(),
-    'trace' => $e->getTraceAsString(),
-   ]);
-   return 1;
-  }
- }
+    public function handle(): int
+    {
+        $this->info('Querying pending mobile money transactions...');
+
+        try {
+            $this->webhookHandler->queryPendingTransactions();
+            $this->info('Successfully queried pending transactions');
+
+            return 0;
+        } catch (\Exception $e) {
+            $this->error('Error querying pending transactions: '.$e->getMessage());
+            Log::error('QueryPendingTransactions command failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return 1;
+        }
+    }
 }

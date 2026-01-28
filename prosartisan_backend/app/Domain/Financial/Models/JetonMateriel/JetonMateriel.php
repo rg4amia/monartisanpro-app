@@ -2,13 +2,13 @@
 
 namespace App\Domain\Financial\Models\JetonMateriel;
 
+use App\Domain\Financial\Models\ValueObjects\JetonCode;
 use App\Domain\Financial\Models\ValueObjects\JetonId;
 use App\Domain\Financial\Models\ValueObjects\JetonStatus;
-use App\Domain\Financial\Models\ValueObjects\JetonCode;
 use App\Domain\Financial\Models\ValueObjects\SequestreId;
 use App\Domain\Identity\Models\ValueObjects\UserId;
-use App\Domain\Shared\ValueObjects\MoneyAmount;
 use App\Domain\Shared\ValueObjects\GPS_Coordinates;
+use App\Domain\Shared\ValueObjects\MoneyAmount;
 use DateTime;
 use InvalidArgumentException;
 
@@ -23,17 +23,27 @@ use InvalidArgumentException;
 final class JetonMateriel
 {
     private JetonId $id;
+
     private SequestreId $sequestreId;
+
     private UserId $artisanId;
+
     private JetonCode $code;
+
     private MoneyAmount $totalAmount;
+
     private MoneyAmount $usedAmount;
+
     private array $authorizedSuppliers; // Array of UserId
+
     private JetonStatus $status;
+
     private DateTime $createdAt;
+
     private DateTime $expiresAt;
 
     private const EXPIRATION_DAYS = 7;
+
     private const MAX_PROXIMITY_METERS = 100;
 
     public function __construct(
@@ -59,7 +69,7 @@ final class JetonMateriel
         $this->usedAmount = $usedAmount ?? MoneyAmount::fromCentimes(0);
         $this->authorizedSuppliers = $authorizedSuppliers;
         $this->status = $status ?? JetonStatus::active();
-        $this->createdAt = $createdAt ?? new DateTime();
+        $this->createdAt = $createdAt ?? new DateTime;
         $this->expiresAt = $expiresAt ?? $this->calculateExpirationDate($this->createdAt);
     }
 
@@ -116,7 +126,7 @@ final class JetonMateriel
      */
     public function isExpired(): bool
     {
-        return new DateTime() > $this->expiresAt;
+        return new DateTime > $this->expiresAt;
     }
 
     /**
@@ -132,9 +142,9 @@ final class JetonMateriel
      */
     public function canBeUsed(): bool
     {
-        return !$this->isExpired()
-            && !$this->status->isFullyUsed()
-            && !$this->status->isExpired()
+        return ! $this->isExpired()
+            && ! $this->status->isFullyUsed()
+            && ! $this->status->isExpired()
             && $this->getRemainingAmount()->toCentimes() > 0;
     }
 
@@ -153,7 +163,7 @@ final class JetonMateriel
      */
     public function addAuthorizedSupplier(UserId $supplierId): void
     {
-        if (!$this->isSupplierAuthorized($supplierId)) {
+        if (! $this->isSupplierAuthorized($supplierId)) {
             $this->authorizedSuppliers[] = $supplierId;
         }
     }
@@ -238,7 +248,7 @@ final class JetonMateriel
             'total_amount' => $this->totalAmount->toArray(),
             'used_amount' => $this->usedAmount->toArray(),
             'remaining_amount' => $this->getRemainingAmount()->toArray(),
-            'authorized_suppliers' => array_map(fn($id) => $id->getValue(), $this->authorizedSuppliers),
+            'authorized_suppliers' => array_map(fn ($id) => $id->getValue(), $this->authorizedSuppliers),
             'status' => $this->status->getValue(),
             'can_be_used' => $this->canBeUsed(),
             'is_expired' => $this->isExpired(),
@@ -257,7 +267,7 @@ final class JetonMateriel
     private function validateAuthorizedSuppliers(array $suppliers): void
     {
         foreach ($suppliers as $supplier) {
-            if (!$supplier instanceof UserId) {
+            if (! $supplier instanceof UserId) {
                 throw new InvalidArgumentException('All authorized suppliers must be UserId instances');
             }
         }
@@ -280,7 +290,7 @@ final class JetonMateriel
 
     private function validateSupplierAuthorization(UserId $fournisseurId): void
     {
-        if (!$this->isSupplierAuthorized($fournisseurId)) {
+        if (! $this->isSupplierAuthorized($fournisseurId)) {
             throw new InvalidArgumentException('Supplier is not authorized for this jeton');
         }
     }
@@ -305,7 +315,7 @@ final class JetonMateriel
 
         if ($distance > self::MAX_PROXIMITY_METERS) {
             throw new InvalidArgumentException(
-                "Artisan and supplier must be within " . self::MAX_PROXIMITY_METERS . "m. Current distance: {$distance}m"
+                'Artisan and supplier must be within '.self::MAX_PROXIMITY_METERS."m. Current distance: {$distance}m"
             );
         }
     }
@@ -321,6 +331,6 @@ final class JetonMateriel
 
     private function calculateExpirationDate(DateTime $createdAt): DateTime
     {
-        return (clone $createdAt)->modify('+' . self::EXPIRATION_DAYS . ' days');
+        return (clone $createdAt)->modify('+'.self::EXPIRATION_DAYS.' days');
     }
 }

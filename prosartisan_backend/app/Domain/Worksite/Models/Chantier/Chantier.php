@@ -4,13 +4,12 @@ namespace App\Domain\Worksite\Models\Chantier;
 
 use App\Domain\Identity\Models\ValueObjects\UserId;
 use App\Domain\Marketplace\Models\ValueObjects\MissionId;
+use App\Domain\Shared\Services\DomainEventDispatcher;
 use App\Domain\Shared\ValueObjects\MoneyAmount;
+use App\Domain\Worksite\Events\ChantierCompleted;
 use App\Domain\Worksite\Models\Jalon\Jalon;
 use App\Domain\Worksite\Models\ValueObjects\ChantierId;
 use App\Domain\Worksite\Models\ValueObjects\ChantierStatus;
-use App\Domain\Worksite\Models\ValueObjects\JalonStatus;
-use App\Domain\Worksite\Events\ChantierCompleted;
-use App\Domain\Shared\Services\DomainEventDispatcher;
 use DateTime;
 use InvalidArgumentException;
 
@@ -22,370 +21,377 @@ use InvalidArgumentException;
  */
 final class Chantier
 {
- private ChantierId $id;
- private MissionId $missionId;
- private UserId $clientId;
- private UserId $artisanId;
- private array $milestones; // Collection of Jalon
- private ChantierStatus $status;
- private DateTime $startedAt;
- private ?DateTime $completedAt;
+    private ChantierId $id;
 
- public function __construct(
-  ChantierId $id,
-  MissionId $missionId,
-  UserId $clientId,
-  UserId $artisanId,
-  array $milestones = [],
-  ?ChantierStatus $status = null,
-  ?DateTime $startedAt = null,
-  ?DateTime $completedAt = null
- ) {
-  $this->validateMilestones($milestones);
+    private MissionId $missionId;
 
-  $this->id = $id;
-  $this->missionId = $missionId;
-  $this->clientId = $clientId;
-  $this->artisanId = $artisanId;
-  $this->milestones = $milestones;
-  $this->status = $status ?? ChantierStatus::inProgress();
-  $this->startedAt = $startedAt ?? new DateTime();
-  $this->completedAt = $completedAt;
- }
+    private UserId $clientId;
 
- /**
-  * Create a new chantier with generated ID
-  *
-  * Requirement 6.1: Start chantier after escrow is established
-  */
- public static function create(
-  MissionId $missionId,
-  UserId $clientId,
-  UserId $artisanId
- ): self {
-  return new self(
-   ChantierId::generate(),
-   $missionId,
-   $clientId,
-   $artisanId
-  );
- }
+    private UserId $artisanId;
 
- /**
-  * Add a milestone to the chantier
-  *
-  * Requirement 6.1: Create milestones based on accepted devis
-  */
- public function addMilestone(Jalon $milestone): void
- {
-  if ($this->status->isCompleted()) {
-   throw new InvalidArgumentException('Cannot add milestone to completed chantier');
-  }
+    private array $milestones; // Collection of Jalon
 
-  // Ensure milestone belongs to this chantier
-  if (!$milestone->getChantierId()->equals($this->id)) {
-   throw new InvalidArgumentException('Milestone does not belong to this chantier');
-  }
+    private ChantierStatus $status;
 
-  // Check for duplicate sequence numbers
-  $sequenceNumber = $milestone->getSequenceNumber();
-  foreach ($this->milestones as $existingMilestone) {
-   if ($existingMilestone->getSequenceNumber() === $sequenceNumber) {
-    throw new InvalidArgumentException(
-     "Milestone with sequence number {$sequenceNumber} already exists"
-    );
-   }
-  }
+    private DateTime $startedAt;
 
-  $this->milestones[] = $milestone;
-  $this->sortMilestonesBySequence();
- }
+    private ?DateTime $completedAt;
 
- /**
-  * Start the chantier
-  *
-  * Requirement 6.1: Mark chantier as started
-  */
- public function start(): void
- {
-  if (!$this->status->isInProgress()) {
-   throw new InvalidArgumentException(
-    "Cannot start chantier in status: {$this->status->getValue()}"
-   );
-  }
+    public function __construct(
+        ChantierId $id,
+        MissionId $missionId,
+        UserId $clientId,
+        UserId $artisanId,
+        array $milestones = [],
+        ?ChantierStatus $status = null,
+        ?DateTime $startedAt = null,
+        ?DateTime $completedAt = null
+    ) {
+        $this->validateMilestones($milestones);
 
-  // Chantier is already started by default, but this method can be used
-  // for explicit starting logic if needed
-  $this->startedAt = new DateTime();
- }
+        $this->id = $id;
+        $this->missionId = $missionId;
+        $this->clientId = $clientId;
+        $this->artisanId = $artisanId;
+        $this->milestones = $milestones;
+        $this->status = $status ?? ChantierStatus::inProgress();
+        $this->startedAt = $startedAt ?? new DateTime;
+        $this->completedAt = $completedAt;
+    }
 
- /**
-  * Complete the chantier
-  *
-  * Requirement 6.7: Mark chantier as completed when all milestones are validated
-  */
- public function complete(): void
- {
-  if ($this->status->isCompleted()) {
-   throw new InvalidArgumentException('Chantier is already completed');
-  }
+    /**
+     * Create a new chantier with generated ID
+     *
+     * Requirement 6.1: Start chantier after escrow is established
+     */
+    public static function create(
+        MissionId $missionId,
+        UserId $clientId,
+        UserId $artisanId
+    ): self {
+        return new self(
+            ChantierId::generate(),
+            $missionId,
+            $clientId,
+            $artisanId
+        );
+    }
 
-  if (!$this->areAllMilestonesCompleted()) {
-   throw new InvalidArgumentException(
-    'Cannot complete chantier: not all milestones are validated'
-   );
-  }
+    /**
+     * Add a milestone to the chantier
+     *
+     * Requirement 6.1: Create milestones based on accepted devis
+     */
+    public function addMilestone(Jalon $milestone): void
+    {
+        if ($this->status->isCompleted()) {
+            throw new InvalidArgumentException('Cannot add milestone to completed chantier');
+        }
 
-  $this->status = ChantierStatus::completed();
-  $this->completedAt = new DateTime();
+        // Ensure milestone belongs to this chantier
+        if (! $milestone->getChantierId()->equals($this->id)) {
+            throw new InvalidArgumentException('Milestone does not belong to this chantier');
+        }
 
-  // Fire ChantierCompleted domain event
-  DomainEventDispatcher::dispatch(new ChantierCompleted(
-   $this->id,
-   $this->missionId,
-   $this->artisanId,
-   $this->clientId,
-   new DateTime()
-  ));
- }
+        // Check for duplicate sequence numbers
+        $sequenceNumber = $milestone->getSequenceNumber();
+        foreach ($this->milestones as $existingMilestone) {
+            if ($existingMilestone->getSequenceNumber() === $sequenceNumber) {
+                throw new InvalidArgumentException(
+                    "Milestone with sequence number {$sequenceNumber} already exists"
+                );
+            }
+        }
 
- /**
-  * Mark chantier as disputed
-  */
- public function markAsDisputed(): void
- {
-  if ($this->status->isCompleted()) {
-   throw new InvalidArgumentException('Cannot dispute completed chantier');
-  }
+        $this->milestones[] = $milestone;
+        $this->sortMilestonesBySequence();
+    }
 
-  $this->status = ChantierStatus::disputed();
- }
+    /**
+     * Start the chantier
+     *
+     * Requirement 6.1: Mark chantier as started
+     */
+    public function start(): void
+    {
+        if (! $this->status->isInProgress()) {
+            throw new InvalidArgumentException(
+                "Cannot start chantier in status: {$this->status->getValue()}"
+            );
+        }
 
- /**
-  * Resume chantier from disputed status
-  */
- public function resumeFromDispute(): void
- {
-  if (!$this->status->isDisputed()) {
-   throw new InvalidArgumentException('Chantier is not in disputed status');
-  }
+        // Chantier is already started by default, but this method can be used
+        // for explicit starting logic if needed
+        $this->startedAt = new DateTime;
+    }
 
-  $this->status = ChantierStatus::inProgress();
- }
+    /**
+     * Complete the chantier
+     *
+     * Requirement 6.7: Mark chantier as completed when all milestones are validated
+     */
+    public function complete(): void
+    {
+        if ($this->status->isCompleted()) {
+            throw new InvalidArgumentException('Chantier is already completed');
+        }
 
- /**
-  * Get all milestones
-  */
- public function getAllMilestones(): array
- {
-  return $this->milestones;
- }
+        if (! $this->areAllMilestonesCompleted()) {
+            throw new InvalidArgumentException(
+                'Cannot complete chantier: not all milestones are validated'
+            );
+        }
 
- /**
-  * Get pending milestones (not yet validated)
-  */
- public function getPendingMilestones(): array
- {
-  return array_filter($this->milestones, function (Jalon $milestone) {
-   return !$milestone->isCompleted();
-  });
- }
+        $this->status = ChantierStatus::completed();
+        $this->completedAt = new DateTime;
 
- /**
-  * Get completed milestones (validated)
-  */
- public function getCompletedMilestones(): array
- {
-  return array_filter($this->milestones, function (Jalon $milestone) {
-   return $milestone->isCompleted();
-  });
- }
+        // Fire ChantierCompleted domain event
+        DomainEventDispatcher::dispatch(new ChantierCompleted(
+            $this->id,
+            $this->missionId,
+            $this->artisanId,
+            $this->clientId,
+            new DateTime
+        ));
+    }
 
- /**
-  * Get milestones that need auto-validation
-  */
- public function getMilestonesNeedingAutoValidation(): array
- {
-  return array_filter($this->milestones, function (Jalon $milestone) {
-   return $milestone->isAutoValidationDue();
-  });
- }
+    /**
+     * Mark chantier as disputed
+     */
+    public function markAsDisputed(): void
+    {
+        if ($this->status->isCompleted()) {
+            throw new InvalidArgumentException('Cannot dispute completed chantier');
+        }
 
- /**
-  * Get next milestone in sequence
-  */
- public function getNextMilestone(): ?Jalon
- {
-  $pendingMilestones = $this->getPendingMilestones();
+        $this->status = ChantierStatus::disputed();
+    }
 
-  if (empty($pendingMilestones)) {
-   return null;
-  }
+    /**
+     * Resume chantier from disputed status
+     */
+    public function resumeFromDispute(): void
+    {
+        if (! $this->status->isDisputed()) {
+            throw new InvalidArgumentException('Chantier is not in disputed status');
+        }
 
-  // Return the milestone with the lowest sequence number
-  usort($pendingMilestones, function (Jalon $a, Jalon $b) {
-   return $a->getSequenceNumber() <=> $b->getSequenceNumber();
-  });
+        $this->status = ChantierStatus::inProgress();
+    }
 
-  return $pendingMilestones[0];
- }
+    /**
+     * Get all milestones
+     */
+    public function getAllMilestones(): array
+    {
+        return $this->milestones;
+    }
 
- /**
-  * Get total labor amount for all milestones
-  */
- public function getTotalLaborAmount(): MoneyAmount
- {
-  $total = MoneyAmount::fromCentimes(0);
+    /**
+     * Get pending milestones (not yet validated)
+     */
+    public function getPendingMilestones(): array
+    {
+        return array_filter($this->milestones, function (Jalon $milestone) {
+            return ! $milestone->isCompleted();
+        });
+    }
 
-  foreach ($this->milestones as $milestone) {
-   $total = $total->add($milestone->getLaborAmount());
-  }
+    /**
+     * Get completed milestones (validated)
+     */
+    public function getCompletedMilestones(): array
+    {
+        return array_filter($this->milestones, function (Jalon $milestone) {
+            return $milestone->isCompleted();
+        });
+    }
 
-  return $total;
- }
+    /**
+     * Get milestones that need auto-validation
+     */
+    public function getMilestonesNeedingAutoValidation(): array
+    {
+        return array_filter($this->milestones, function (Jalon $milestone) {
+            return $milestone->isAutoValidationDue();
+        });
+    }
 
- /**
-  * Get completed labor amount (from validated milestones)
-  */
- public function getCompletedLaborAmount(): MoneyAmount
- {
-  $total = MoneyAmount::fromCentimes(0);
+    /**
+     * Get next milestone in sequence
+     */
+    public function getNextMilestone(): ?Jalon
+    {
+        $pendingMilestones = $this->getPendingMilestones();
 
-  foreach ($this->getCompletedMilestones() as $milestone) {
-   $total = $total->add($milestone->getLaborAmount());
-  }
+        if (empty($pendingMilestones)) {
+            return null;
+        }
 
-  return $total;
- }
+        // Return the milestone with the lowest sequence number
+        usort($pendingMilestones, function (Jalon $a, Jalon $b) {
+            return $a->getSequenceNumber() <=> $b->getSequenceNumber();
+        });
 
- /**
-  * Get progress percentage (0-100)
-  */
- public function getProgressPercentage(): float
- {
-  if (empty($this->milestones)) {
-   return 0.0;
-  }
+        return $pendingMilestones[0];
+    }
 
-  $completedCount = count($this->getCompletedMilestones());
-  $totalCount = count($this->milestones);
+    /**
+     * Get total labor amount for all milestones
+     */
+    public function getTotalLaborAmount(): MoneyAmount
+    {
+        $total = MoneyAmount::fromCentimes(0);
 
-  return ($completedCount / $totalCount) * 100;
- }
+        foreach ($this->milestones as $milestone) {
+            $total = $total->add($milestone->getLaborAmount());
+        }
 
- /**
-  * Check if all milestones are completed
-  *
-  * Requirement 6.7: Determine when chantier can be completed
-  */
- public function areAllMilestonesCompleted(): bool
- {
-  if (empty($this->milestones)) {
-   return false;
-  }
+        return $total;
+    }
 
-  foreach ($this->milestones as $milestone) {
-   if (!$milestone->isCompleted()) {
-    return false;
-   }
-  }
+    /**
+     * Get completed labor amount (from validated milestones)
+     */
+    public function getCompletedLaborAmount(): MoneyAmount
+    {
+        $total = MoneyAmount::fromCentimes(0);
 
-  return true;
- }
+        foreach ($this->getCompletedMilestones() as $milestone) {
+            $total = $total->add($milestone->getLaborAmount());
+        }
 
- /**
-  * Check if chantier can be completed
-  */
- public function canBeCompleted(): bool
- {
-  return $this->status->isInProgress() && $this->areAllMilestonesCompleted();
- }
+        return $total;
+    }
 
- /**
-  * Get milestone by sequence number
-  */
- public function getMilestoneBySequence(int $sequenceNumber): ?Jalon
- {
-  foreach ($this->milestones as $milestone) {
-   if ($milestone->getSequenceNumber() === $sequenceNumber) {
-    return $milestone;
-   }
-  }
+    /**
+     * Get progress percentage (0-100)
+     */
+    public function getProgressPercentage(): float
+    {
+        if (empty($this->milestones)) {
+            return 0.0;
+        }
 
-  return null;
- }
+        $completedCount = count($this->getCompletedMilestones());
+        $totalCount = count($this->milestones);
 
- // Getters
- public function getId(): ChantierId
- {
-  return $this->id;
- }
+        return ($completedCount / $totalCount) * 100;
+    }
 
- public function getMissionId(): MissionId
- {
-  return $this->missionId;
- }
+    /**
+     * Check if all milestones are completed
+     *
+     * Requirement 6.7: Determine when chantier can be completed
+     */
+    public function areAllMilestonesCompleted(): bool
+    {
+        if (empty($this->milestones)) {
+            return false;
+        }
 
- public function getClientId(): UserId
- {
-  return $this->clientId;
- }
+        foreach ($this->milestones as $milestone) {
+            if (! $milestone->isCompleted()) {
+                return false;
+            }
+        }
 
- public function getArtisanId(): UserId
- {
-  return $this->artisanId;
- }
+        return true;
+    }
 
- public function getStatus(): ChantierStatus
- {
-  return $this->status;
- }
+    /**
+     * Check if chantier can be completed
+     */
+    public function canBeCompleted(): bool
+    {
+        return $this->status->isInProgress() && $this->areAllMilestonesCompleted();
+    }
 
- public function getStartedAt(): DateTime
- {
-  return $this->startedAt;
- }
+    /**
+     * Get milestone by sequence number
+     */
+    public function getMilestoneBySequence(int $sequenceNumber): ?Jalon
+    {
+        foreach ($this->milestones as $milestone) {
+            if ($milestone->getSequenceNumber() === $sequenceNumber) {
+                return $milestone;
+            }
+        }
 
- public function getCompletedAt(): ?DateTime
- {
-  return $this->completedAt;
- }
+        return null;
+    }
 
- public function toArray(): array
- {
-  return [
-   'id' => $this->id->getValue(),
-   'mission_id' => $this->missionId->getValue(),
-   'client_id' => $this->clientId->getValue(),
-   'artisan_id' => $this->artisanId->getValue(),
-   'status' => $this->status->getValue(),
-   'status_label' => $this->status->getFrenchLabel(),
-   'started_at' => $this->startedAt->format('Y-m-d H:i:s'),
-   'completed_at' => $this->completedAt?->format('Y-m-d H:i:s'),
-   'milestones_count' => count($this->milestones),
-   'completed_milestones_count' => count($this->getCompletedMilestones()),
-   'pending_milestones_count' => count($this->getPendingMilestones()),
-   'progress_percentage' => $this->getProgressPercentage(),
-   'total_labor_amount' => $this->getTotalLaborAmount()->toArray(),
-   'completed_labor_amount' => $this->getCompletedLaborAmount()->toArray(),
-   'can_be_completed' => $this->canBeCompleted(),
-   'milestones' => array_map(fn(Jalon $milestone) => $milestone->toArray(), $this->milestones),
-  ];
- }
+    // Getters
+    public function getId(): ChantierId
+    {
+        return $this->id;
+    }
 
- private function validateMilestones(array $milestones): void
- {
-  foreach ($milestones as $milestone) {
-   if (!$milestone instanceof Jalon) {
-    throw new InvalidArgumentException('All milestones must be Jalon instances');
-   }
-  }
- }
+    public function getMissionId(): MissionId
+    {
+        return $this->missionId;
+    }
 
- private function sortMilestonesBySequence(): void
- {
-  usort($this->milestones, function (Jalon $a, Jalon $b) {
-   return $a->getSequenceNumber() <=> $b->getSequenceNumber();
-  });
- }
+    public function getClientId(): UserId
+    {
+        return $this->clientId;
+    }
+
+    public function getArtisanId(): UserId
+    {
+        return $this->artisanId;
+    }
+
+    public function getStatus(): ChantierStatus
+    {
+        return $this->status;
+    }
+
+    public function getStartedAt(): DateTime
+    {
+        return $this->startedAt;
+    }
+
+    public function getCompletedAt(): ?DateTime
+    {
+        return $this->completedAt;
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'id' => $this->id->getValue(),
+            'mission_id' => $this->missionId->getValue(),
+            'client_id' => $this->clientId->getValue(),
+            'artisan_id' => $this->artisanId->getValue(),
+            'status' => $this->status->getValue(),
+            'status_label' => $this->status->getFrenchLabel(),
+            'started_at' => $this->startedAt->format('Y-m-d H:i:s'),
+            'completed_at' => $this->completedAt?->format('Y-m-d H:i:s'),
+            'milestones_count' => count($this->milestones),
+            'completed_milestones_count' => count($this->getCompletedMilestones()),
+            'pending_milestones_count' => count($this->getPendingMilestones()),
+            'progress_percentage' => $this->getProgressPercentage(),
+            'total_labor_amount' => $this->getTotalLaborAmount()->toArray(),
+            'completed_labor_amount' => $this->getCompletedLaborAmount()->toArray(),
+            'can_be_completed' => $this->canBeCompleted(),
+            'milestones' => array_map(fn (Jalon $milestone) => $milestone->toArray(), $this->milestones),
+        ];
+    }
+
+    private function validateMilestones(array $milestones): void
+    {
+        foreach ($milestones as $milestone) {
+            if (! $milestone instanceof Jalon) {
+                throw new InvalidArgumentException('All milestones must be Jalon instances');
+            }
+        }
+    }
+
+    private function sortMilestonesBySequence(): void
+    {
+        usort($this->milestones, function (Jalon $a, Jalon $b) {
+            return $a->getSequenceNumber() <=> $b->getSequenceNumber();
+        });
+    }
 }

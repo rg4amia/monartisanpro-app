@@ -2,7 +2,6 @@
 
 namespace App\Http\Middleware\Security;
 
-use App\Domain\Identity\Models\ValueObjects\UserId;
 use App\Domain\Shared\Services\FraudDetectionService;
 use Closure;
 use Illuminate\Http\Request;
@@ -18,114 +17,112 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class FraudDetectionMiddleware
 {
- private const HIGH_RISK_THRESHOLD = 80;
- private const MEDIUM_RISK_THRESHOLD = 60;
+    private const HIGH_RISK_THRESHOLD = 80;
 
- public function __construct(
-  private FraudDetectionService $fraudDetectionService
- ) {}
+    private const MEDIUM_RISK_THRESHOLD = 60;
 
- /**
-  * Handle an incoming request.
-  *
-  * @param Request $request
-  * @param Closure $next
-  * @return Response
-  */
- public function handle(Request $request, Closure $next): Response
- {
-  // Get authenticated user
-  $user = $request->attributes->get('user');
+    public function __construct(
+        private FraudDetectionService $fraudDetectionService
+    ) {}
 
-  if ($user === null) {
-   // No user, skip fraud detection
-   return $next($request);
-  }
+    /**
+     * Handle an incoming request.
+     */
+    public function handle(Request $request, Closure $next): Response
+    {
+        // Get authenticated user
+        $user = $request->attributes->get('user');
 
-  $userId = $user->getId();
+        if ($user === null) {
+            // No user, skip fraud detection
+            return $next($request);
+        }
 
-  // Check if account is already flagged
-  if ($this->fraudDetectionService->isAccountFlagged($userId)) {
-   Log::warning('Blocked request from flagged account', [
-    'user_id' => $userId->getValue(),
-    'endpoint' => $request->getPathInfo(),
-    'method' => $request->getMethod(),
-    'ip' => $request->ip(),
-   ]);
+        $userId = $user->getId();
 
-   return response()->json([
-    'error' => 'ACCOUNT_UNDER_REVIEW',
-    'message' => 'Votre compte fait l\'objet d\'un examen de sécurité. Contactez le support.',
-    'status_code' => 403,
-    'details' => [
-     'reason' => 'Account flagged for suspicious activity',
-     'contact_support' => true,
-    ],
-    'timestamp' => now()->toISOString(),
-    'request_id' => $request->header('X-Request-ID', uniqid()),
-   ], 403);
-  }
+        // Check if account is already flagged
+        if ($this->fraudDetectionService->isAccountFlagged($userId)) {
+            Log::warning('Blocked request from flagged account', [
+                'user_id' => $userId->getValue(),
+                'endpoint' => $request->getPathInfo(),
+                'method' => $request->getMethod(),
+                'ip' => $request->ip(),
+            ]);
 
-  // Analyze current activity
-  $activityResult = $this->fraudDetectionService->detectSuspiciousActivity($userId);
+            return response()->json([
+                'error' => 'ACCOUNT_UNDER_REVIEW',
+                'message' => 'Votre compte fait l\'objet d\'un examen de sécurité. Contactez le support.',
+                'status_code' => 403,
+                'details' => [
+                    'reason' => 'Account flagged for suspicious activity',
+                    'contact_support' => true,
+                ],
+                'timestamp' => now()->toISOString(),
+                'request_id' => $request->header('X-Request-ID', uniqid()),
+            ], 403);
+        }
 
-  if ($activityResult->isSuspicious()) {
-   $riskScore = $activityResult->getRiskScore();
+        // Analyze current activity
+        $activityResult = $this->fraudDetectionService->detectSuspiciousActivity($userId);
 
-   // Block high-risk requests
-   if ($riskScore >= self::HIGH_RISK_THRESHOLD) {
-    Log::warning('Blocked high-risk request', [
-     'user_id' => $userId->getValue(),
-     'risk_score' => $riskScore,
-     'flags' => $activityResult->getFlags(),
-     'endpoint' => $request->getPathInfo(),
-     'method' => $request->getMethod(),
-     'ip' => $request->ip(),
-    ]);
+        if ($activityResult->isSuspicious()) {
+            $riskScore = $activityResult->getRiskScore();
 
-    // Flag account for review
-    $this->fraudDetectionService->flagAccountForReview(
-     $userId,
-     'High-risk activity detected',
-     [
-      'risk_score' => $riskScore,
-      'flags' => $activityResult->getFlags(),
-      'endpoint' => $request->getPathInfo(),
-      'ip' => $request->ip(),
-     ]
-    );
+            // Block high-risk requests
+            if ($riskScore >= self::HIGH_RISK_THRESHOLD) {
+                Log::warning('Blocked high-risk request', [
+                    'user_id' => $userId->getValue(),
+                    'risk_score' => $riskScore,
+                    'flags' => $activityResult->getFlags(),
+                    'endpoint' => $request->getPathInfo(),
+                    'method' => $request->getMethod(),
+                    'ip' => $request->ip(),
+                ]);
 
-    return response()->json([
-     'error' => 'HIGH_RISK_ACTIVITY',
-     'message' => 'Activité suspecte détectée. Votre compte a été temporairement restreint.',
-     'status_code' => 403,
-     'details' => [
-      'risk_score' => $riskScore,
-      'contact_support' => true,
-     ],
-     'timestamp' => now()->toISOString(),
-     'request_id' => $request->header('X-Request-ID', uniqid()),
-    ], 403);
-   }
+                // Flag account for review
+                $this->fraudDetectionService->flagAccountForReview(
+                    $userId,
+                    'High-risk activity detected',
+                    [
+                        'risk_score' => $riskScore,
+                        'flags' => $activityResult->getFlags(),
+                        'endpoint' => $request->getPathInfo(),
+                        'ip' => $request->ip(),
+                    ]
+                );
 
-   // Log medium-risk activity but allow request
-   if ($riskScore >= self::MEDIUM_RISK_THRESHOLD) {
-    Log::info('Medium-risk activitydetected', [
-     'user_id' => $userId->getValue(),
-     'risk_score' => $riskScore,
-     'flags' => $activityResult->getFlags(),
-     'endpoint' => $request->getPathInfo(),
-     'method' => $request->getMethod(),
-     'ip' => $request->ip(),
-    ]);
+                return response()->json([
+                    'error' => 'HIGH_RISK_ACTIVITY',
+                    'message' => 'Activité suspecte détectée. Votre compte a été temporairement restreint.',
+                    'status_code' => 403,
+                    'details' => [
+                        'risk_score' => $riskScore,
+                        'contact_support' => true,
+                    ],
+                    'timestamp' => now()->toISOString(),
+                    'request_id' => $request->header('X-Request-ID', uniqid()),
+                ], 403);
+            }
 
-    // Add warning header
-    $response = $next($request);
-    $response->headers->set('X-Security-Warning', 'Medium risk activity detected');
-    return $response;
-   }
-  }
+            // Log medium-risk activity but allow request
+            if ($riskScore >= self::MEDIUM_RISK_THRESHOLD) {
+                Log::info('Medium-risk activitydetected', [
+                    'user_id' => $userId->getValue(),
+                    'risk_score' => $riskScore,
+                    'flags' => $activityResult->getFlags(),
+                    'endpoint' => $request->getPathInfo(),
+                    'method' => $request->getMethod(),
+                    'ip' => $request->ip(),
+                ]);
 
-  return $next($request);
- }
+                // Add warning header
+                $response = $next($request);
+                $response->headers->set('X-Security-Warning', 'Medium risk activity detected');
+
+                return $response;
+            }
+        }
+
+        return $next($request);
+    }
 }

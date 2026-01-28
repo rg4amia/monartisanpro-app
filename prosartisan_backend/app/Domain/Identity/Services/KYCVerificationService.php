@@ -25,7 +25,7 @@ interface KYCVerificationService
      * - Selfie URL is accessible
      * - All required fields are present
      *
-     * @param KYCDocuments $documents The KYC documents to verify
+     * @param  KYCDocuments  $documents  The KYC documents to verify
      * @return KYCVerificationResult The verification result with success/failure status
      */
     public function verifyDocuments(KYCDocuments $documents): KYCVerificationResult;

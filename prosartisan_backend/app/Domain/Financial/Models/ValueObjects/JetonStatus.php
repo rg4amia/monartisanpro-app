@@ -10,8 +10,11 @@ use InvalidArgumentException;
 final class JetonStatus
 {
     public const ACTIVE = 'ACTIVE';
+
     public const PARTIALLY_USED = 'PARTIALLY_USED';
+
     public const FULLY_USED = 'FULLY_USED';
+
     public const EXPIRED = 'EXPIRED';
 
     private const VALID_STATUSES = [
@@ -103,9 +106,9 @@ final class JetonStatus
 
     private function validateStatus(string $value): void
     {
-        if (!in_array($value, self::VALID_STATUSES, true)) {
+        if (! in_array($value, self::VALID_STATUSES, true)) {
             throw new InvalidArgumentException(
-                "Invalid jeton status: {$value}. Valid statuses are: " . implode(', ', self::VALID_STATUSES)
+                "Invalid jeton status: {$value}. Valid statuses are: ".implode(', ', self::VALID_STATUSES)
             );
         }
     }

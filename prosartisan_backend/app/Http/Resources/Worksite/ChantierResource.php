@@ -43,12 +43,12 @@ class ChantierResource extends JsonResource
             'total_labor_amount' => [
                 'centimes' => $chantier->getTotalLaborAmount()->toCentimes(),
                 'formatted' => $chantier->getTotalLaborAmount()->format(),
-                'currency' => 'XOF'
+                'currency' => 'XOF',
             ],
             'completed_labor_amount' => [
                 'centimes' => $chantier->getCompletedLaborAmount()->toCentimes(),
                 'formatted' => $chantier->getCompletedLaborAmount()->format(),
-                'currency' => 'XOF'
+                'currency' => 'XOF',
             ],
 
             // Next milestone

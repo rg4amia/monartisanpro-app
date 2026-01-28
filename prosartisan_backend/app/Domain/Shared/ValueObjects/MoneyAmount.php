@@ -11,6 +11,7 @@ use InvalidArgumentException;
 final class MoneyAmount
 {
     private int $amountInCentimes;
+
     private Currency $currency;
 
     public function __construct(int $amountInCentimes, ?Currency $currency = null)
@@ -36,6 +37,7 @@ final class MoneyAmount
     public function add(MoneyAmount $other): self
     {
         $this->assertSameCurrency($other);
+
         return new self($this->amountInCentimes + $other->amountInCentimes, $this->currency);
     }
 
@@ -71,12 +73,14 @@ final class MoneyAmount
     public function isGreaterThan(MoneyAmount $other): bool
     {
         $this->assertSameCurrency($other);
+
         return $this->amountInCentimes > $other->amountInCentimes;
     }
 
     public function isLessThan(MoneyAmount $other): bool
     {
         $this->assertSameCurrency($other);
+
         return $this->amountInCentimes < $other->amountInCentimes;
     }
 
@@ -104,7 +108,8 @@ final class MoneyAmount
     {
         $francs = $this->toFloat();
         $formatted = number_format($francs, 0, ',', ' ');
-        return $formatted . ' ' . $this->currency->getSymbol();
+
+        return $formatted.' '.$this->currency->getSymbol();
     }
 
     public function getCurrency(): Currency
@@ -114,7 +119,7 @@ final class MoneyAmount
 
     private function assertSameCurrency(MoneyAmount $other): void
     {
-        if (!$this->currency->equals($other->currency)) {
+        if (! $this->currency->equals($other->currency)) {
             throw new InvalidArgumentException('Cannot operate on different currencies');
         }
     }

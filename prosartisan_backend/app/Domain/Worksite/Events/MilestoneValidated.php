@@ -2,10 +2,10 @@
 
 namespace App\Domain\Worksite\Events;
 
-use App\Domain\Worksite\Models\ValueObjects\JalonId;
-use App\Domain\Worksite\Models\ValueObjects\ChantierId;
 use App\Domain\Identity\Models\ValueObjects\UserId;
 use App\Domain\Shared\ValueObjects\MoneyAmount;
+use App\Domain\Worksite\Models\ValueObjects\ChantierId;
+use App\Domain\Worksite\Models\ValueObjects\JalonId;
 use DateTime;
 
 /**
@@ -15,13 +15,13 @@ use DateTime;
  */
 final class MilestoneValidated
 {
- public function __construct(
-  public readonly JalonId $jalonId,
-  public readonly ChantierId $chantierId,
-  public readonly UserId $clientId,
-  public readonly UserId $artisanId,
-  public readonly MoneyAmount $laborAmountToRelease,
-  public readonly bool $wasAutoValidated,
-  public readonly DateTime $occurredAt
- ) {}
+    public function __construct(
+        public readonly JalonId $jalonId,
+        public readonly ChantierId $chantierId,
+        public readonly UserId $clientId,
+        public readonly UserId $artisanId,
+        public readonly MoneyAmount $laborAmountToRelease,
+        public readonly bool $wasAutoValidated,
+        public readonly DateTime $occurredAt
+    ) {}
 }

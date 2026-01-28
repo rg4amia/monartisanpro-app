@@ -1,7 +1,7 @@
 <?php
 
 return [
- /*
+    /*
     |--------------------------------------------------------------------------
     | Default Notification Channels
     |--------------------------------------------------------------------------
@@ -11,14 +11,14 @@ return [
     |
     */
 
- 'default_channels' => [
-  'push',
-  'sms',
-  'whatsapp',
-  'email'
- ],
+    'default_channels' => [
+        'push',
+        'sms',
+        'whatsapp',
+        'email',
+    ],
 
- /*
+    /*
     |--------------------------------------------------------------------------
     | Channel Settings
     |--------------------------------------------------------------------------
@@ -27,33 +27,33 @@ return [
     |
     */
 
- 'channels' => [
-  'push' => [
-   'enabled' => env('PUSH_NOTIFICATIONS_ENABLED', true),
-   'retry_attempts' => 3,
-   'retry_delay' => 5, // seconds
-  ],
+    'channels' => [
+        'push' => [
+            'enabled' => env('PUSH_NOTIFICATIONS_ENABLED', true),
+            'retry_attempts' => 3,
+            'retry_delay' => 5, // seconds
+        ],
 
-  'sms' => [
-   'enabled' => env('SMS_NOTIFICATIONS_ENABLED', true),
-   'retry_attempts' => 2,
-   'retry_delay' => 10, // seconds
-  ],
+        'sms' => [
+            'enabled' => env('SMS_NOTIFICATIONS_ENABLED', true),
+            'retry_attempts' => 2,
+            'retry_delay' => 10, // seconds
+        ],
 
-  'whatsapp' => [
-   'enabled' => env('WHATSAPP_NOTIFICATIONS_ENABLED', true),
-   'retry_attempts' => 2,
-   'retry_delay' => 15, // seconds
-  ],
+        'whatsapp' => [
+            'enabled' => env('WHATSAPP_NOTIFICATIONS_ENABLED', true),
+            'retry_attempts' => 2,
+            'retry_delay' => 15, // seconds
+        ],
 
-  'email' => [
-   'enabled' => env('EMAIL_NOTIFICATIONS_ENABLED', true),
-   'retry_attempts' => 1,
-   'retry_delay' => 30, // seconds
-  ],
- ],
+        'email' => [
+            'enabled' => env('EMAIL_NOTIFICATIONS_ENABLED', true),
+            'retry_attempts' => 1,
+            'retry_delay' => 30, // seconds
+        ],
+    ],
 
- /*
+    /*
     |--------------------------------------------------------------------------
     | Topic Subscriptions
     |--------------------------------------------------------------------------
@@ -62,24 +62,24 @@ return [
     |
     */
 
- 'topics' => [
-  'artisan_missions' => [
-   'description' => 'New missions for artisans',
-   'auto_subscribe' => ['artisan'],
-  ],
+    'topics' => [
+        'artisan_missions' => [
+            'description' => 'New missions for artisans',
+            'auto_subscribe' => ['artisan'],
+        ],
 
-  'client_updates' => [
-   'description' => 'Updates for clients',
-   'auto_subscribe' => ['client'],
-  ],
+        'client_updates' => [
+            'description' => 'Updates for clients',
+            'auto_subscribe' => ['client'],
+        ],
 
-  'supplier_notifications' => [
-   'description' => 'Notifications for suppliers',
-   'auto_subscribe' => ['fournisseur'],
-  ],
- ],
+        'supplier_notifications' => [
+            'description' => 'Notifications for suppliers',
+            'auto_subscribe' => ['fournisseur'],
+        ],
+    ],
 
- /*
+    /*
     |--------------------------------------------------------------------------
     | Rate Limiting
     |--------------------------------------------------------------------------
@@ -88,9 +88,9 @@ return [
     |
     */
 
- 'rate_limiting' => [
-  'enabled' => env('NOTIFICATION_RATE_LIMITING_ENABLED', true),
-  'max_per_user_per_hour' => 50,
-  'max_per_user_per_day' => 200,
- ],
+    'rate_limiting' => [
+        'enabled' => env('NOTIFICATION_RATE_LIMITING_ENABLED', true),
+        'max_per_user_per_hour' => 50,
+        'max_per_user_per_day' => 200,
+    ],
 ];

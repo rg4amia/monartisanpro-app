@@ -12,53 +12,53 @@ use Illuminate\Console\Command;
  */
 class WarmUpCaches extends Command
 {
- /**
-  * The name and signature of the console command.
-  *
-  * @var string
-  */
- protected $signature = 'cache:warm-up {--clear : Clear existing caches before warming up}';
+    /**
+     * The name and signature of the console command.
+     *
+     * @var string
+     */
+    protected $signature = 'cache:warm-up {--clear : Clear existing caches before warming up}';
 
- /**
-  * The console command description.
-  *
-  * @var string
-  */
- protected $description = 'Warm up application caches for better performance';
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
+    protected $description = 'Warm up application caches for better performance';
 
- public function __construct(
-  private StaticDataCacheService $staticDataCacheService
- ) {
-  parent::__construct();
- }
+    public function __construct(
+        private StaticDataCacheService $staticDataCacheService
+    ) {
+        parent::__construct();
+    }
 
- /**
-  * Execute the console command.
-  */
- public function handle(): int
- {
-  $this->info('Warming up application caches...');
+    /**
+     * Execute the console command.
+     */
+    public function handle(): int
+    {
+        $this->info('Warming up application caches...');
 
-  if ($this->option('clear')) {
-   $this->info('Clearing existing caches...');
-   $this->staticDataCacheService->clearCaches();
-  }
+        if ($this->option('clear')) {
+            $this->info('Clearing existing caches...');
+            $this->staticDataCacheService->clearCaches();
+        }
 
-  // Warm up static data caches
-  $this->info('Warming up static data caches...');
-  $this->staticDataCacheService->warmUpCaches();
+        // Warm up static data caches
+        $this->info('Warming up static data caches...');
+        $this->staticDataCacheService->warmUpCaches();
 
-  $this->info('✅ Cache warm-up completed successfully!');
-  $this->table(
-   ['Cache Type', 'TTL', 'Status'],
-   [
-    ['Trade Categories', '1 hour', '✅ Cached'],
-    ['Mission Statuses', '1 hour', '✅ Cached'],
-    ['Devis Statuses', '1 hour', '✅ Cached'],
-    ['Artisan Profiles', '5 minutes', '⏳ On-demand'],
-   ]
-  );
+        $this->info('✅ Cache warm-up completed successfully!');
+        $this->table(
+            ['Cache Type', 'TTL', 'Status'],
+            [
+                ['Trade Categories', '1 hour', '✅ Cached'],
+                ['Mission Statuses', '1 hour', '✅ Cached'],
+                ['Devis Statuses', '1 hour', '✅ Cached'],
+                ['Artisan Profiles', '5 minutes', '⏳ On-demand'],
+            ]
+        );
 
-  return Command::SUCCESS;
- }
+        return Command::SUCCESS;
+    }
 }

@@ -26,7 +26,7 @@ final class MediationStarted
         return new self(
             $litigeId,
             $mediatorId,
-            new DateTime()
+            new DateTime
         );
     }
 

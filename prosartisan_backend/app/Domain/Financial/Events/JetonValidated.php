@@ -4,8 +4,8 @@ namespace App\Domain\Financial\Events;
 
 use App\Domain\Financial\Models\ValueObjects\JetonId;
 use App\Domain\Identity\Models\ValueObjects\UserId;
-use App\Domain\Shared\ValueObjects\MoneyAmount;
 use App\Domain\Shared\ValueObjects\GPS_Coordinates;
+use App\Domain\Shared\ValueObjects\MoneyAmount;
 use DateTime;
 
 /**
@@ -16,9 +16,13 @@ use DateTime;
 final class JetonValidated
 {
     public JetonId $jetonId;
+
     public UserId $fournisseurId;
+
     public MoneyAmount $amountUsed;
+
     public GPS_Coordinates $validationLocation;
+
     public DateTime $occurredAt;
 
     public function __construct(
@@ -32,7 +36,7 @@ final class JetonValidated
         $this->fournisseurId = $fournisseurId;
         $this->amountUsed = $amountUsed;
         $this->validationLocation = $validationLocation;
-        $this->occurredAt = $occurredAt ?? new DateTime();
+        $this->occurredAt = $occurredAt ?? new DateTime;
     }
 
     public function toArray(): array

@@ -15,10 +15,15 @@ use DateTime;
 final class JetonGenerated
 {
     public JetonId $jetonId;
+
     public UserId $artisanId;
+
     public string $code;
+
     public MoneyAmount $amount;
+
     public DateTime $expiresAt;
+
     public DateTime $occurredAt;
 
     public function __construct(
@@ -34,7 +39,7 @@ final class JetonGenerated
         $this->code = $code;
         $this->amount = $amount;
         $this->expiresAt = $expiresAt;
-        $this->occurredAt = $occurredAt ?? new DateTime();
+        $this->occurredAt = $occurredAt ?? new DateTime;
     }
 
     public function toArray(): array

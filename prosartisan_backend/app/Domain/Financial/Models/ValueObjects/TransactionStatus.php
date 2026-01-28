@@ -10,8 +10,11 @@ use InvalidArgumentException;
 final class TransactionStatus
 {
     public const PENDING = 'PENDING';
+
     public const COMPLETED = 'COMPLETED';
+
     public const FAILED = 'FAILED';
+
     public const CANCELLED = 'CANCELLED';
 
     private const VALID_STATUSES = [
@@ -103,9 +106,9 @@ final class TransactionStatus
 
     private function validateStatus(string $value): void
     {
-        if (!in_array($value, self::VALID_STATUSES, true)) {
+        if (! in_array($value, self::VALID_STATUSES, true)) {
             throw new InvalidArgumentException(
-                "Invalid transaction status: {$value}. Valid statuses are: " . implode(', ', self::VALID_STATUSES)
+                "Invalid transaction status: {$value}. Valid statuses are: ".implode(', ', self::VALID_STATUSES)
             );
         }
     }

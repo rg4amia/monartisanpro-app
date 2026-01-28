@@ -14,8 +14,11 @@ use DateTime;
 final class EscrowFragmented
 {
     public SequestreId $sequestreId;
+
     public MoneyAmount $materialsAmount;
+
     public MoneyAmount $laborAmount;
+
     public DateTime $occurredAt;
 
     public function __construct(
@@ -27,7 +30,7 @@ final class EscrowFragmented
         $this->sequestreId = $sequestreId;
         $this->materialsAmount = $materialsAmount;
         $this->laborAmount = $laborAmount;
-        $this->occurredAt = $occurredAt ?? new DateTime();
+        $this->occurredAt = $occurredAt ?? new DateTime;
     }
 
     public function toArray(): array

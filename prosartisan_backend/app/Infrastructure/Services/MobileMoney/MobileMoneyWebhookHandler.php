@@ -2,14 +2,14 @@
 
 namespace App\Infrastructure\Services\MobileMoney;
 
-use App\Domain\Financial\Services\MobileMoneyService;
-use App\Domain\Financial\Services\MobileMoneyGateway;
-use App\Domain\Financial\Repositories\TransactionRepository;
 use App\Domain\Financial\Repositories\SequestreRepository;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Http\Request;
-use Exception;
+use App\Domain\Financial\Repositories\TransactionRepository;
+use App\Domain\Financial\Services\MobileMoneyGateway;
+use App\Domain\Financial\Services\MobileMoneyService;
 use DateTime;
+use Exception;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Mobile Money Webhook Handler
@@ -22,8 +22,11 @@ use DateTime;
 final class MobileMoneyWebhookHandler
 {
     private array $gateways;
+
     private TransactionRepository $transactionRepository;
+
     private SequestreRepository $sequestreRepository;
+
     private MobileMoneyService $mobileMoneyService;
 
     public function __construct(
@@ -51,17 +54,19 @@ final class MobileMoneyWebhookHandler
 
             // Verify webhook signature
             $waveGateway = $this->getGatewayByName('Wave');
-            if (!$waveGateway || !$waveGateway->verifyWebhookSignature($payload, $signature)) {
+            if (! $waveGateway || ! $waveGateway->verifyWebhookSignature($payload, $signature)) {
                 Log::warning('Invalid Wave webhook signature', [
                     'signature' => $signature,
                     'payload_length' => strlen($payload),
                 ]);
+
                 return ['status' => 'error', 'message' => 'Invalid signature'];
             }
 
             $data = json_decode($payload, true);
-            if (!$data) {
+            if (! $data) {
                 Log::error('Invalid Wave webhook payload', ['payload' => $payload]);
+
                 return ['status' => 'error', 'message' => 'Invalid payload'];
             }
 
@@ -71,6 +76,7 @@ final class MobileMoneyWebhookHandler
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
+
             return ['status' => 'error', 'message' => 'Processing error'];
         }
     }
@@ -86,17 +92,19 @@ final class MobileMoneyWebhookHandler
 
             // Verify webhook signature
             $orangeGateway = $this->getGatewayByName('Orange Money');
-            if (!$orangeGateway || !$orangeGateway->verifyWebhookSignature($payload, $signature)) {
+            if (! $orangeGateway || ! $orangeGateway->verifyWebhookSignature($payload, $signature)) {
                 Log::warning('Invalid Orange Money webhook signature', [
                     'signature' => $signature,
                     'payload_length' => strlen($payload),
                 ]);
+
                 return ['status' => 'error', 'message' => 'Invalid signature'];
             }
 
             $data = json_decode($payload, true);
-            if (!$data) {
+            if (! $data) {
                 Log::error('Invalid Orange Money webhook payload', ['payload' => $payload]);
+
                 return ['status' => 'error', 'message' => 'Invalid payload'];
             }
 
@@ -106,6 +114,7 @@ final class MobileMoneyWebhookHandler
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
+
             return ['status' => 'error', 'message' => 'Processing error'];
         }
     }
@@ -121,17 +130,19 @@ final class MobileMoneyWebhookHandler
 
             // Verify webhook signature
             $mtnGateway = $this->getGatewayByName('MTN Mobile Money');
-            if (!$mtnGateway || !$mtnGateway->verifyWebhookSignature($payload, $signature)) {
+            if (! $mtnGateway || ! $mtnGateway->verifyWebhookSignature($payload, $signature)) {
                 Log::warning('Invalid MTN webhook signature', [
                     'signature' => $signature,
                     'payload_length' => strlen($payload),
                 ]);
+
                 return ['status' => 'error', 'message' => 'Invalid signature'];
             }
 
             $data = json_decode($payload, true);
-            if (!$data) {
+            if (! $data) {
                 Log::error('Invalid MTN webhook payload', ['payload' => $payload]);
+
                 return ['status' => 'error', 'message' => 'Invalid payload'];
             }
 
@@ -141,6 +152,7 @@ final class MobileMoneyWebhookHandler
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
+
             return ['status' => 'error', 'message' => 'Processing error'];
         }
     }
@@ -154,7 +166,7 @@ final class MobileMoneyWebhookHandler
     {
         try {
             // Find transactions that are pending for more than 5 minutes
-            $cutoffTime = (new DateTime())->modify('-5 minutes');
+            $cutoffTime = (new DateTime)->modify('-5 minutes');
             $pendingTransactions = $this->transactionRepository->findPendingOlderThan($cutoffTime);
 
             foreach ($pendingTransactions as $transaction) {
@@ -162,7 +174,7 @@ final class MobileMoneyWebhookHandler
                 $providerName = $metadata['provider'] ?? null;
                 $providerTransactionId = $transaction->getMobileMoneyReference();
 
-                if (!$providerTransactionId || !$providerName) {
+                if (! $providerTransactionId || ! $providerName) {
                     continue;
                 }
 
@@ -212,22 +224,24 @@ final class MobileMoneyWebhookHandler
         $status = $this->extractStatus($data, $providerName);
         $reference = $this->extractReference($data, $providerName);
 
-        if (!$transactionId) {
+        if (! $transactionId) {
             Log::error('Missing transaction ID in webhook', [
                 'provider' => $providerName,
                 'data' => $data,
             ]);
+
             return ['status' => 'error', 'message' => 'Missing transaction ID'];
         }
 
         // Find the transaction by mobile money reference or metadata
         $transaction = $this->findTransactionByReference($transactionId, $reference);
-        if (!$transaction) {
+        if (! $transaction) {
             Log::warning('Transaction not found for webhook', [
                 'provider' => $providerName,
                 'transaction_id' => $transactionId,
                 'reference' => $reference,
             ]);
+
             return ['status' => 'error', 'message' => 'Transaction not found'];
         }
 
@@ -376,6 +390,7 @@ final class MobileMoneyWebhookHandler
                 return $gateway;
             }
         }
+
         return null;
     }
 }

@@ -26,9 +26,10 @@ interface AuthenticationService
      * Returns an AuthToken containing a JWT token with 24-hour expiration
      * Throws exception if credentials are invalid or account is locked
      *
-     * @param Email $email User's email address
-     * @param string $password Plain text password
+     * @param  Email  $email  User's email address
+     * @param  string  $password  Plain text password
      * @return AuthToken JWT authentication token
+     *
      * @throws \App\Domain\Identity\Exceptions\InvalidCredentialsException
      * @throws \App\Domain\Identity\Exceptions\AccountLockedException
      * @throws \App\Domain\Identity\Exceptions\AccountSuspendedException
@@ -41,8 +42,9 @@ interface AuthenticationService
      * Creates a 6-digit OTP code with 5-minute expiration
      * Sends the OTP via SMS to the phone number
      *
-     * @param PhoneNumber $phone Phone number to send OTP to
+     * @param  PhoneNumber  $phone  Phone number to send OTP to
      * @return OTP Generated OTP object
+     *
      * @throws \App\Domain\Identity\Exceptions\OTPGenerationException
      */
     public function generateOTP(PhoneNumber $phone): OTP;
@@ -53,8 +55,8 @@ interface AuthenticationService
      * Checks if the provided code matches the stored OTP
      * Returns false if OTP is expired or doesn't match
      *
-     * @param PhoneNumber $phone Phone number to verify
-     * @param string $code 6-digit OTP code
+     * @param  PhoneNumber  $phone  Phone number to verify
+     * @param  string  $code  6-digit OTP code
      * @return bool True if OTP is valid, false otherwise
      */
     public function verifyOTP(PhoneNumber $phone, string $code): bool;
@@ -65,7 +67,7 @@ interface AuthenticationService
      * Creates a JWT token with 24-hour expiration
      * Token includes user ID, email, and user type in payload
      *
-     * @param User $user User to generate token for
+     * @param  User  $user  User to generate token for
      * @return AuthToken JWT authentication token
      */
     public function generateToken(User $user): AuthToken;
@@ -76,8 +78,9 @@ interface AuthenticationService
      * Validates the token signature and expiration
      * Returns the user ID from the token payload
      *
-     * @param string $token JWT token string
+     * @param  string  $token  JWT token string
      * @return string User ID from token
+     *
      * @throws \App\Domain\Identity\Exceptions\InvalidTokenException
      */
     public function verifyToken(string $token): string;
@@ -87,8 +90,9 @@ interface AuthenticationService
      *
      * Generates a new token with extended expiration
      *
-     * @param string $token Current JWT token
+     * @param  string  $token  Current JWT token
      * @return AuthToken New JWT authentication token
+     *
      * @throws \App\Domain\Identity\Exceptions\InvalidTokenException
      */
     public function refreshToken(string $token): AuthToken;

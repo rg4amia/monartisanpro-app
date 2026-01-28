@@ -17,18 +17,22 @@ class DefaultKYCVerificationService implements KYCVerificationService
 {
     // CNI format: Alphanumeric, typically 8-12 characters for Côte d'Ivoire
     private const CNI_MIN_LENGTH = 8;
+
     private const CNI_MAX_LENGTH = 12;
+
     private const CNI_PATTERN = '/^[A-Z0-9]+$/';
 
     // Passport format: Alphanumeric, typically 6-9 characters
     private const PASSPORT_MIN_LENGTH = 6;
+
     private const PASSPORT_MAX_LENGTH = 9;
+
     private const PASSPORT_PATTERN = '/^[A-Z0-9]+$/';
 
     /**
      * Verify KYC documents for authenticity and completeness
      *
-     * @param KYCDocuments $documents The KYC documents to verify
+     * @param  KYCDocuments  $documents  The KYC documents to verify
      * @return KYCVerificationResult The verification result
      */
     public function verifyDocuments(KYCDocuments $documents): KYCVerificationResult
@@ -67,7 +71,7 @@ class DefaultKYCVerificationService implements KYCVerificationService
     /**
      * Validate CNI (Carte Nationale d'Identité) number format
      *
-     * @param string $idNumber The CNI number to validate
+     * @param  string  $idNumber  The CNI number to validate
      * @return array Array of validation errors (empty if valid)
      */
     private function validateCNINumber(string $idNumber): array
@@ -94,7 +98,7 @@ class DefaultKYCVerificationService implements KYCVerificationService
         }
 
         // Check format (alphanumeric only)
-        if (!preg_match(self::CNI_PATTERN, $idNumber)) {
+        if (! preg_match(self::CNI_PATTERN, $idNumber)) {
             $errors[] = 'CNI number must contain only uppercase letters and numbers';
         }
 
@@ -104,7 +108,7 @@ class DefaultKYCVerificationService implements KYCVerificationService
     /**
      * Validate PASSPORT number format
      *
-     * @param string $idNumber The passport number to validate
+     * @param  string  $idNumber  The passport number to validate
      * @return array Array of validation errors (empty if valid)
      */
     private function validatePassportNumber(string $idNumber): array
@@ -131,7 +135,7 @@ class DefaultKYCVerificationService implements KYCVerificationService
         }
 
         // Check format (alphanumeric only)
-        if (!preg_match(self::PASSPORT_PATTERN, $idNumber)) {
+        if (! preg_match(self::PASSPORT_PATTERN, $idNumber)) {
             $errors[] = 'Passport number must contain only uppercase letters and numbers';
         }
 
@@ -144,8 +148,8 @@ class DefaultKYCVerificationService implements KYCVerificationService
      * This performs basic URL validation. In production, this could be enhanced
      * to check if the file exists in storage, validate file type, etc.
      *
-     * @param string $url The document URL to validate
-     * @param string $documentType The type of document (for error messages)
+     * @param  string  $url  The document URL to validate
+     * @param  string  $documentType  The type of document (for error messages)
      * @return array Array of validation errors (empty if valid)
      */
     private function validateDocumentUrl(string $url, string $documentType): array
@@ -155,6 +159,7 @@ class DefaultKYCVerificationService implements KYCVerificationService
         // Check URL is not empty
         if (empty(trim($url))) {
             $errors[] = "{$documentType} URL cannot be empty";
+
             return $errors;
         }
 
@@ -162,7 +167,7 @@ class DefaultKYCVerificationService implements KYCVerificationService
         $isValidUrl = filter_var($url, FILTER_VALIDATE_URL) !== false;
         $isValidPath = str_starts_with($url, '/');
 
-        if (!$isValidUrl && !$isValidPath) {
+        if (! $isValidUrl && ! $isValidPath) {
             $errors[] = "{$documentType} URL must be a valid URL or file path";
         }
 
@@ -170,7 +175,7 @@ class DefaultKYCVerificationService implements KYCVerificationService
         $validExtensions = ['jpg', 'jpeg', 'png', 'pdf'];
         $extension = strtolower(pathinfo($url, PATHINFO_EXTENSION));
 
-        if (!empty($extension) && !in_array($extension, $validExtensions, true)) {
+        if (! empty($extension) && ! in_array($extension, $validExtensions, true)) {
             $errors[] = sprintf(
                 '%s must be a valid image or PDF file (got .%s)',
                 $documentType,
@@ -184,13 +189,13 @@ class DefaultKYCVerificationService implements KYCVerificationService
     /**
      * Validate submission timestamp is not in the future
      *
-     * @param \DateTime $submittedAt The submission timestamp
+     * @param  \DateTime  $submittedAt  The submission timestamp
      * @return array Array of validation errors (empty if valid)
      */
     private function validateSubmissionTimestamp(\DateTime $submittedAt): array
     {
         $errors = [];
-        $now = new \DateTime();
+        $now = new \DateTime;
 
         if ($submittedAt > $now) {
             $errors[] = sprintf(

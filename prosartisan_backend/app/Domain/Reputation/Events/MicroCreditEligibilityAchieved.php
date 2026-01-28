@@ -11,14 +11,16 @@ use DateTime;
  */
 class MicroCreditEligibilityAchieved
 {
- public UserId $artisanId;
- public NZassaScore $score;
- public DateTime $occurredAt;
+    public UserId $artisanId;
 
- public function __construct(UserId $artisanId, NZassaScore $score)
- {
-  $this->artisanId = $artisanId;
-  $this->score = $score;
-  $this->occurredAt = new DateTime();
- }
+    public NZassaScore $score;
+
+    public DateTime $occurredAt;
+
+    public function __construct(UserId $artisanId, NZassaScore $score)
+    {
+        $this->artisanId = $artisanId;
+        $this->score = $score;
+        $this->occurredAt = new DateTime;
+    }
 }

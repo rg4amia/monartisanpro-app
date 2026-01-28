@@ -36,7 +36,7 @@ class JalonResource extends JsonResource
             'labor_amount' => [
                 'centimes' => $jalon->getLaborAmount()->toCentimes(),
                 'formatted' => $jalon->getLaborAmount()->format(),
-                'currency' => 'XOF'
+                'currency' => 'XOF',
             ],
 
             // Proof of delivery

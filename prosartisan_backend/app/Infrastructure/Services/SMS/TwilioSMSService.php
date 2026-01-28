@@ -6,15 +6,17 @@ use App\Domain\Identity\Models\ValueObjects\PhoneNumber;
 use App\Domain\Identity\Models\ValueObjects\UserId;
 use App\Domain\Identity\Repositories\UserRepository;
 use App\Domain\Shared\Services\SMSNotificationService;
-use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class TwilioSMSService implements SMSNotificationService
 {
     private string $accountSid;
+
     private string $authToken;
+
     private string $fromNumber;
+
     private UserRepository $userRepository;
 
     public function __construct(UserRepository $userRepository)
@@ -29,15 +31,18 @@ class TwilioSMSService implements SMSNotificationService
     {
         try {
             $user = $this->userRepository->findById($userId);
-            if (!$user || !$user->getPhoneNumber()) {
+            if (! $user || ! $user->getPhoneNumber()) {
                 Log::warning("No phone number found for user {$userId->getValue()}");
+
                 return false;
             }
 
-            $fullMessage = $title . "\n\n" . $message;
+            $fullMessage = $title."\n\n".$message;
+
             return $this->sendSMS($user->getPhoneNumber(), $fullMessage);
         } catch (\Exception $e) {
-            Log::error("Failed to send SMS to user {$userId->getValue()}: " . $e->getMessage());
+            Log::error("Failed to send SMS to user {$userId->getValue()}: ".$e->getMessage());
+
             return false;
         }
     }
@@ -56,6 +61,7 @@ class TwilioSMSService implements SMSNotificationService
 
             if ($response->successful()) {
                 $result = $response->json();
+
                 return isset($result['sid']);
             }
 
@@ -66,7 +72,8 @@ class TwilioSMSService implements SMSNotificationService
 
             return false;
         } catch (\Exception $e) {
-            Log::error('Twilio SMS exception: ' . $e->getMessage());
+            Log::error('Twilio SMS exception: '.$e->getMessage());
+
             return false;
         }
     }
@@ -74,6 +81,7 @@ class TwilioSMSService implements SMSNotificationService
     public function sendOTP(PhoneNumber $phoneNumber, string $code): bool
     {
         $message = "Votre code de vérification ProSartisan est: {$code}. Ce code expire dans 5 minutes.";
+
         return $this->sendSMS($phoneNumber, $message);
     }
 
@@ -84,6 +92,6 @@ class TwilioSMSService implements SMSNotificationService
 
     public function isAvailable(): bool
     {
-        return !empty($this->accountSid) && !empty($this->authToken) && !empty($this->fromNumber);
+        return ! empty($this->accountSid) && ! empty($this->authToken) && ! empty($this->fromNumber);
     }
 }

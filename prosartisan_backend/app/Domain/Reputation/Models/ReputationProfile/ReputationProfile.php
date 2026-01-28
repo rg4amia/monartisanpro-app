@@ -3,8 +3,8 @@
 namespace App\Domain\Reputation\Models\ReputationProfile;
 
 use App\Domain\Identity\Models\ValueObjects\UserId;
-use App\Domain\Reputation\Models\ValueObjects\ProfileId;
 use App\Domain\Reputation\Models\ValueObjects\NZassaScore;
+use App\Domain\Reputation\Models\ValueObjects\ProfileId;
 use App\Domain\Reputation\Models\ValueObjects\ReputationMetrics;
 use App\Domain\Reputation\Models\ValueObjects\ScoreSnapshot;
 use DateTime;
@@ -15,12 +15,19 @@ use DateTime;
 class ReputationProfile
 {
     private ProfileId $id;
+
     private UserId $artisanId;
+
     private NZassaScore $currentScore;
+
     private array $scoreHistory; // Collection of ScoreSnapshot
+
     private ReputationMetrics $metrics;
+
     private DateTime $lastCalculatedAt;
+
     private DateTime $createdAt;
+
     private DateTime $updatedAt;
 
     public function __construct(
@@ -38,9 +45,9 @@ class ReputationProfile
         $this->currentScore = $currentScore;
         $this->metrics = $metrics;
         $this->scoreHistory = $scoreHistory;
-        $this->lastCalculatedAt = $lastCalculatedAt ?? new DateTime();
-        $this->createdAt = $createdAt ?? new DateTime();
-        $this->updatedAt = $updatedAt ?? new DateTime();
+        $this->lastCalculatedAt = $lastCalculatedAt ?? new DateTime;
+        $this->createdAt = $createdAt ?? new DateTime;
+        $this->updatedAt = $updatedAt ?? new DateTime;
     }
 
     public static function create(UserId $artisanId): self
@@ -63,8 +70,8 @@ class ReputationProfile
         // Update current values
         $this->currentScore = $newScore;
         $this->metrics = $newMetrics;
-        $this->lastCalculatedAt = new DateTime();
-        $this->updatedAt = new DateTime();
+        $this->lastCalculatedAt = new DateTime;
+        $this->updatedAt = new DateTime;
 
         // Add new score to history
         $this->scoreHistory[] = ScoreSnapshot::create($newScore, $reason);
@@ -118,6 +125,6 @@ class ReputationProfile
     public function addScoreSnapshot(string $reason): void
     {
         $this->scoreHistory[] = ScoreSnapshot::create($this->currentScore, $reason);
-        $this->updatedAt = new DateTime();
+        $this->updatedAt = new DateTime;
     }
 }

@@ -9,21 +9,21 @@ use Illuminate\Support\Facades\Event;
  */
 class DomainEventDispatcher
 {
- /**
-  * Dispatch a domain event
-  */
- public static function dispatch(object $event): void
- {
-  Event::dispatch($event);
- }
+    /**
+     * Dispatch a domain event
+     */
+    public static function dispatch(object $event): void
+    {
+        Event::dispatch($event);
+    }
 
- /**
-  * Dispatch multiple domain events
-  */
- public static function dispatchMultiple(array $events): void
- {
-  foreach ($events as $event) {
-   self::dispatch($event);
-  }
- }
+    /**
+     * Dispatch multiple domain events
+     */
+    public static function dispatchMultiple(array $events): void
+    {
+        foreach ($events as $event) {
+            self::dispatch($event);
+        }
+    }
 }

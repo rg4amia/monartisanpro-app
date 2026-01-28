@@ -7,58 +7,60 @@ namespace App\Domain\Worksite\Services\DTOs;
  */
 final class ValidationResult
 {
- private bool $isValid;
- private array $errors;
- private array $warnings;
+    private bool $isValid;
 
- public function __construct(bool $isValid, array $errors = [], array $warnings = [])
- {
-  $this->isValid = $isValid;
-  $this->errors = $errors;
-  $this->warnings = $warnings;
- }
+    private array $errors;
 
- public static function valid(array $warnings = []): self
- {
-  return new self(true, [], $warnings);
- }
+    private array $warnings;
 
- public static function invalid(array $errors, array $warnings = []): self
- {
-  return new self(false, $errors, $warnings);
- }
+    public function __construct(bool $isValid, array $errors = [], array $warnings = [])
+    {
+        $this->isValid = $isValid;
+        $this->errors = $errors;
+        $this->warnings = $warnings;
+    }
 
- public function isValid(): bool
- {
-  return $this->isValid;
- }
+    public static function valid(array $warnings = []): self
+    {
+        return new self(true, [], $warnings);
+    }
 
- public function getErrors(): array
- {
-  return $this->errors;
- }
+    public static function invalid(array $errors, array $warnings = []): self
+    {
+        return new self(false, $errors, $warnings);
+    }
 
- public function getWarnings(): array
- {
-  return $this->warnings;
- }
+    public function isValid(): bool
+    {
+        return $this->isValid;
+    }
 
- public function hasErrors(): bool
- {
-  return !empty($this->errors);
- }
+    public function getErrors(): array
+    {
+        return $this->errors;
+    }
 
- public function hasWarnings(): bool
- {
-  return !empty($this->warnings);
- }
+    public function getWarnings(): array
+    {
+        return $this->warnings;
+    }
 
- public function toArray(): array
- {
-  return [
-   'is_valid' => $this->isValid,
-   'errors' => $this->errors,
-   'warnings' => $this->warnings,
-  ];
- }
+    public function hasErrors(): bool
+    {
+        return ! empty($this->errors);
+    }
+
+    public function hasWarnings(): bool
+    {
+        return ! empty($this->warnings);
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'is_valid' => $this->isValid,
+            'errors' => $this->errors,
+            'warnings' => $this->warnings,
+        ];
+    }
 }
