@@ -26,6 +26,7 @@ return new class extends Migration
             $table->index(['phone_number', 'user_type'], 'idx_users_phone_type');
         });
 
+        
         // Add composite indexes for artisan_profiles table
         Schema::table('artisan_profiles', function (Blueprint $table) {
             // Composite index for KYC verified artisans by category
