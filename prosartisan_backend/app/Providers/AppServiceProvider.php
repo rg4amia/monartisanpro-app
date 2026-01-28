@@ -89,6 +89,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Load migrations from subdirectories
+        $this->loadMigrationsFrom([
+            database_path('migrations'),
+            database_path('migrations/dispute'),
+            database_path('migrations/financial'),
+            database_path('migrations/identity'),
+            database_path('migrations/marketplace'),
+            database_path('migrations/reputation'),
+            database_path('migrations/worksite'),
+        ]);
     }
 }
