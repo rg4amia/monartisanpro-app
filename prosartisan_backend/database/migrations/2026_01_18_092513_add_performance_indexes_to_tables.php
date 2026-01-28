@@ -56,34 +56,29 @@ return new class extends Migration
 
         // Add composite indexes for sequestres table
         Schema::table('sequestres', function (Blueprint $table) {
-            // Index for status-based queries
-            $table->index('status');
             // Composite index for mission escrow status
             $table->index(['mission_id', 'status'], 'idx_sequestres_mission_status');
             // Index for amount-based queries
             $table->index('total_amount_centimes');
+            // Note: status index already exists from create_sequestres_table migration
         });
 
         // Add composite indexes for jetons_materiel table
         Schema::table('jetons_materiel', function (Blueprint $table) {
-            // Index for jeton code lookups (unique but add explicit index)
-            $table->index('code');
             // Composite index for artisan active jetons
             $table->index(['artisan_id', 'status'], 'idx_jetons_artisan_status');
-            // Index for expiration-based queries
-            $table->index('expires_at');
             // Composite index for expired jetons cleanup
             $table->index(['status', 'expires_at'], 'idx_jetons_status_expires');
+            // Note: code, expires_at indexes already exist from create_jetons_materiel_table migration
         });
 
         // Add indexes for KYC verifications table
         Schema::table('kyc_verifications', function (Blueprint $table) {
             // Composite index for user verification status
             $table->index(['user_id', 'verification_status'], 'idx_kyc_user_status');
-            // Index for verification status queries
-            $table->index('verification_status');
             // Index for verified date queries
             $table->index('verified_at');
+            // Note: verification_status index already exists from create_kyc_verifications_table migration
         });
 
         // Add indexes for reputation-related tables if they exist
@@ -155,24 +150,23 @@ return new class extends Migration
 
         // Drop composite indexes for sequestres table
         Schema::table('sequestres', function (Blueprint $table) {
-            $table->dropIndex(['status']);
             $table->dropIndex('idx_sequestres_mission_status');
             $table->dropIndex(['total_amount_centimes']);
+            // Note: status index is owned by create_sequestres_table migration
         });
 
         // Drop composite indexes for jetons_materiel table
         Schema::table('jetons_materiel', function (Blueprint $table) {
-            $table->dropIndex(['code']);
             $table->dropIndex('idx_jetons_artisan_status');
-            $table->dropIndex(['expires_at']);
             $table->dropIndex('idx_jetons_status_expires');
+            // Note: code, expires_at indexes are owned by create_jetons_materiel_table migration
         });
 
         // Drop indexes for KYC verifications table
         Schema::table('kyc_verifications', function (Blueprint $table) {
             $table->dropIndex('idx_kyc_user_status');
-            $table->dropIndex(['verification_status']);
             $table->dropIndex(['verified_at']);
+            // Note: verification_status index is owned by create_kyc_verifications_table migration
         });
 
         // Drop indexes for reputation-related tables if they exist

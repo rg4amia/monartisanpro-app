@@ -35,8 +35,8 @@ return new class extends Migration
             // Index on user_id for fast lookups
             $table->index('user_id');
 
-            // Spatial index for location-based queries
-            $table->index(['shop_latitude', 'shop_longitude']);
+            // Spatial index for location-based queries (with shorter name)
+            $table->index(['shop_latitude', 'shop_longitude'], 'idx_fournisseur_location');
         });
     }
 

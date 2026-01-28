@@ -36,8 +36,8 @@ return new class extends Migration
             $table->index('user_id');
             $table->index('zone');
 
-            // Spatial index for location-based queries
-            $table->index(['coverage_latitude', 'coverage_longitude']);
+            // Spatial index for location-based queries (with shorter name)
+            $table->index(['coverage_latitude', 'coverage_longitude'], 'idx_referent_coverage');
         });
     }
 

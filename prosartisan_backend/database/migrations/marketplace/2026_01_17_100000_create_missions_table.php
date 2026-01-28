@@ -42,8 +42,8 @@ return new class extends Migration
    $table->index('trade_category');
    $table->index('created_at');
 
-   // Spatial index for location-based queries
-   $table->index(['latitude', 'longitude']);
+   // Spatial index for location-based queries (with shorter name)
+   $table->index(['latitude', 'longitude'], 'idx_mission_location');
   });
  }
 

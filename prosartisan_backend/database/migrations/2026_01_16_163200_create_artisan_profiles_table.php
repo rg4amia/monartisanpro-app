@@ -39,8 +39,8 @@ return new class extends Migration
             $table->index('trade_category');
             $table->index('is_kyc_verified');
 
-            // Spatial index for location-based queries
-            $table->index(['latitude', 'longitude']);
+            // Spatial index for location-based queries (with shorter name)
+            $table->index(['latitude', 'longitude'], 'idx_artisan_location');
         });
     }
 
