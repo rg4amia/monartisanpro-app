@@ -12,6 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('reputation_profiles', function (Blueprint $table) {
+            
             $table->uuid('id')->primary();
             $table->uuid('artisan_id');
             $table->integer('current_score')->default(0); // 0-100
