@@ -36,6 +36,10 @@ use App\Infrastructure\Repositories\PostgresUserRepository;
 use App\Infrastructure\Services\Cache\CacheService;
 use App\Infrastructure\Services\Cache\StaticDataCacheService;
 use Illuminate\Support\ServiceProvider;
+use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Date;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rules\Password;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -88,15 +92,26 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Load migrations from subdirectories
-        $this->loadMigrationsFrom([
-            database_path('migrations'),
-            database_path('migrations/dispute'),
-            database_path('migrations/financial'),
-            database_path('migrations/identity'),
-            database_path('migrations/marketplace'),
-            database_path('migrations/reputation'),
-            database_path('migrations/worksite'),
-        ]);
+        $this->configureDefaults();
+    }
+
+    protected function configureDefaults(): void
+    {
+        Date::use(CarbonImmutable::class);
+
+        DB::prohibitDestructiveCommands(
+            app()->isProduction(),
+        );
+
+        Password::defaults(
+            fn(): ?Password => app()->isProduction()
+                ? Password::min(12)
+                ->mixedCase()
+                ->letters()
+                ->numbers()
+                ->symbols()
+                ->uncompromised()
+                : null
+        );
     }
 }
