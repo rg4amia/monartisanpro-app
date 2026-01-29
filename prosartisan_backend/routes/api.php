@@ -74,6 +74,12 @@ Route::prefix('v1')->group(function () {
         Route::post('/login', [AuthController::class, 'login']);
         Route::post('/otp/generate', [AuthController::class, 'generateOTP']);
         Route::post('/otp/verify', [AuthController::class, 'verifyOTP']);
+
+        // Protected auth routes
+        Route::middleware(['auth:api'])->group(function () {
+            Route::post('/logout', [AuthController::class, 'logout']);
+            Route::post('/refresh', [AuthController::class, 'refresh']);
+        });
     });
 
     // Protected routes (require authentication)
