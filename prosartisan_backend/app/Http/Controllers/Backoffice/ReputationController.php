@@ -82,8 +82,10 @@ class ReputationController extends Controller
 
         // Get score history
         $scoreHistory = DB::table('score_history')
-            ->where('artisan_id', $id)
-            ->orderBy('recorded_at', 'desc')
+            ->join('reputation_profiles', 'score_history.reputation_profile_id', '=', 'reputation_profiles.id')
+            ->where('reputation_profiles.artisan_id', $id)
+            ->select('score_history.*')
+            ->orderBy('score_history.created_at', 'desc')
             ->limit(20)
             ->get();
 
@@ -142,14 +144,22 @@ class ReputationController extends Controller
                 ]);
 
             // Record in score history
-            DB::table('score_history')->insert([
-                'id' => \Illuminate\Support\Str::uuid(),
-                'artisan_id' => $id,
-                'old_score' => $oldScore,
-                'new_score' => $request->new_score,
-                'reason' => 'Manual adjustment by admin: '.$request->justification,
-                'recorded_at' => now(),
-            ]);
+            $reputationProfile = DB::table('reputation_profiles')->where('artisan_id', $id)->first();
+            if ($reputationProfile) {
+                DB::table('score_history')->insert([
+                    'id' => \Illuminate\Support\Str::uuid(),
+                    'reputation_profile_id' => $reputationProfile->id,
+                    'score' => $request->new_score,
+                    'change_reason' => 'Manual adjustment by admin: ' . $request->justification,
+                    'metrics_snapshot' => json_encode([
+                        'old_score' => $oldScore,
+                        'new_score' => $request->new_score,
+                        'admin_id' => Auth::id(),
+                    ]),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
 
             // Log the adjustment
             DB::table('user_activity_logs')->insert([
@@ -171,7 +181,7 @@ class ReputationController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
 
-            return back()->withErrors(['error' => 'Erreur lors de l\'ajustement du score: '.$e->getMessage()]);
+            return back()->withErrors(['error' => 'Erreur lors de l\'ajustement du score: ' . $e->getMessage()]);
         }
     }
 
@@ -199,7 +209,7 @@ class ReputationController extends Controller
         $transactions = $query->orderBy('transactions.created_at', 'desc')->get();
 
         // Generate CSV
-        $filename = 'transactions_'.now()->format('Y-m-d_H-i-s').'.csv';
+        $filename = 'transactions_' . now()->format('Y-m-d_H-i-s') . '.csv';
         $headers = [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => "attachment; filename=\"$filename\"",

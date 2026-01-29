@@ -9,7 +9,10 @@ import {
  CogIcon,
  Bars3Icon,
  XMarkIcon,
- StarIcon
+ StarIcon,
+ DocumentTextIcon,
+ TicketIcon,
+ LockClosedIcon
 } from '@heroicons/react/24/outline';
 
 export default function BackofficeLayout({ children }) {
@@ -19,10 +22,30 @@ export default function BackofficeLayout({ children }) {
  const navigation = [
   { name: 'Dashboard', href: '/backoffice/dashboard', icon: HomeIcon },
   { name: 'Utilisateurs', href: '/backoffice/users', icon: UserGroupIcon },
-  { name: 'Transactions', href: '/backoffice/transactions', icon: CurrencyDollarIcon },
+  {
+   name: 'Transactions',
+   href: '/backoffice/transactions',
+   icon: CurrencyDollarIcon,
+   submenu: [
+    { name: 'Toutes les transactions', href: '/backoffice/transactions' },
+    { name: 'Jetons Matériel', href: '/backoffice/transactions/jetons/index' },
+    { name: 'Séquestres', href: '/backoffice/transactions/sequestres/index' },
+   ]
+  },
+  { name: 'KYC', href: '/backoffice/kyc', icon: DocumentTextIcon },
   { name: 'Litiges', href: '/backoffice/disputes', icon: ExclamationTriangleIcon },
   { name: 'Réputation', href: '/backoffice/reputation', icon: StarIcon },
-  { name: 'Analytics', href: '/backoffice/analytics', icon: ChartBarIcon },
+  {
+   name: 'Analytics',
+   href: '/backoffice/analytics',
+   icon: ChartBarIcon,
+   submenu: [
+    { name: 'Vue d\'ensemble', href: '/backoffice/analytics' },
+    { name: 'Revenus', href: '/backoffice/analytics/revenue' },
+    { name: 'Utilisateurs', href: '/backoffice/analytics/users' },
+    { name: 'Performance', href: '/backoffice/analytics/performance' },
+   ]
+  },
   { name: 'Paramètres', href: '/backoffice/settings', icon: CogIcon },
  ];
 
@@ -40,14 +63,28 @@ export default function BackofficeLayout({ children }) {
      </div>
      <nav className="flex-1 space-y-1 px-2 py-4">
       {navigation.map((item) => (
-       <Link
-        key={item.name}
-        href={item.href}
-        className="group flex items-center px-2 py-2 text-sm font-medium rounded-md hover:bg-gray-100 transition-colors"
-       >
-        <item.icon className="mr-3 h-6 w-6" />
-        {item.name}
-       </Link>
+       <div key={item.name}>
+        <Link
+         href={item.href}
+         className="group flex items-center px-2 py-2 text-sm font-medium rounded-md hover:bg-gray-100 transition-colors"
+        >
+         <item.icon className="mr-3 h-6 w-6" />
+         {item.name}
+        </Link>
+        {item.submenu && (
+         <div className="ml-6 space-y-1">
+          {item.submenu.map((subitem) => (
+           <Link
+            key={subitem.name}
+            href={subitem.href}
+            className="group flex items-center px-2 py-1 text-xs text-gray-600 rounded-md hover:bg-gray-50 transition-colors"
+           >
+            {subitem.name}
+           </Link>
+          ))}
+         </div>
+        )}
+       </div>
       ))}
      </nav>
     </div>
@@ -61,14 +98,28 @@ export default function BackofficeLayout({ children }) {
      </div>
      <nav className="flex-1 space-y-1 px-2 py-4">
       {navigation.map((item) => (
-       <Link
-        key={item.name}
-        href={item.href}
-        className="group flex items-center px-2 py-2 text-sm font-medium rounded-md hover:bg-gray-100 transition-colors"
-       >
-        <item.icon className="mr-3 h-6 w-6 text-gray-500" />
-        {item.name}
-       </Link>
+       <div key={item.name}>
+        <Link
+         href={item.href}
+         className="group flex items-center px-2 py-2 text-sm font-medium rounded-md hover:bg-gray-100 transition-colors"
+        >
+         <item.icon className="mr-3 h-6 w-6 text-gray-500" />
+         {item.name}
+        </Link>
+        {item.submenu && (
+         <div className="ml-6 space-y-1">
+          {item.submenu.map((subitem) => (
+           <Link
+            key={subitem.name}
+            href={subitem.href}
+            className="group flex items-center px-2 py-1 text-xs text-gray-600 rounded-md hover:bg-gray-50 transition-colors"
+           >
+            {subitem.name}
+           </Link>
+          ))}
+         </div>
+        )}
+       </div>
       ))}
      </nav>
     </div>

@@ -41,6 +41,30 @@ Route::prefix('backoffice')->group(function () {
         Route::post('/reputation/{artisan}/adjust-score', [App\Http\Controllers\Backoffice\ReputationController::class, 'adjustScore'])->name('backoffice.reputation.adjust-score');
         Route::get('/reputation/export-transactions', [App\Http\Controllers\Backoffice\ReputationController::class, 'exportTransactions'])->name('backoffice.reputation.export-transactions');
 
+        // Transaction management routes
+        Route::get('/transactions', [App\Http\Controllers\Backoffice\TransactionController::class, 'index'])->name('backoffice.transactions.index');
+        Route::get('/transactions/{transaction}', [App\Http\Controllers\Backoffice\TransactionController::class, 'show'])->name('backoffice.transactions.show');
+        Route::get('/transactions/jetons/index', [App\Http\Controllers\Backoffice\TransactionController::class, 'jetons'])->name('backoffice.transactions.jetons');
+        Route::get('/transactions/sequestres/index', [App\Http\Controllers\Backoffice\TransactionController::class, 'sequestres'])->name('backoffice.transactions.sequestres');
+        Route::get('/transactions/export', [App\Http\Controllers\Backoffice\TransactionController::class, 'export'])->name('backoffice.transactions.export');
+
+        // Analytics routes
+        Route::get('/analytics', [App\Http\Controllers\Backoffice\AnalyticsController::class, 'index'])->name('backoffice.analytics.index');
+        Route::get('/analytics/revenue', [App\Http\Controllers\Backoffice\AnalyticsController::class, 'revenue'])->name('backoffice.analytics.revenue');
+        Route::get('/analytics/users', [App\Http\Controllers\Backoffice\AnalyticsController::class, 'users'])->name('backoffice.analytics.users');
+        Route::get('/analytics/performance', [App\Http\Controllers\Backoffice\AnalyticsController::class, 'performance'])->name('backoffice.analytics.performance');
+
+        // KYC management routes
+        Route::get('/kyc', [App\Http\Controllers\Backoffice\KYCController::class, 'index'])->name('backoffice.kyc.index');
+        Route::get('/kyc/pending', [App\Http\Controllers\Backoffice\KYCController::class, 'pending'])->name('backoffice.kyc.pending');
+        Route::get('/kyc/approved', [App\Http\Controllers\Backoffice\KYCController::class, 'approved'])->name('backoffice.kyc.approved');
+        Route::get('/kyc/rejected', [App\Http\Controllers\Backoffice\KYCController::class, 'rejected'])->name('backoffice.kyc.rejected');
+        Route::get('/kyc/{verification}', [App\Http\Controllers\Backoffice\KYCController::class, 'show'])->name('backoffice.kyc.show');
+        Route::post('/kyc/{verification}/approve', [App\Http\Controllers\Backoffice\KYCController::class, 'approve'])->name('backoffice.kyc.approve');
+        Route::post('/kyc/{verification}/reject', [App\Http\Controllers\Backoffice\KYCController::class, 'reject'])->name('backoffice.kyc.reject');
+        Route::post('/kyc/bulk-approve', [App\Http\Controllers\Backoffice\KYCController::class, 'bulkApprove'])->name('backoffice.kyc.bulk-approve');
+        Route::get('/kyc/export', [App\Http\Controllers\Backoffice\KYCController::class, 'export'])->name('backoffice.kyc.export');
+
         // Redirect root backoffice to dashboard
         Route::get('/', function () {
             return redirect()->route('backoffice.dashboard');

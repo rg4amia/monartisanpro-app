@@ -79,7 +79,7 @@ class PostgresReputationRepository implements ReputationRepository
             ->limit($limit)
             ->get();
 
-        return $results->map(fn ($data) => $this->mapToReputationProfile($data))->toArray();
+        return $results->map(fn($data) => $this->mapToReputationProfile($data))->toArray();
     }
 
     public function findEligibleForMicroCredit(): array
@@ -89,7 +89,7 @@ class PostgresReputationRepository implements ReputationRepository
             ->orderBy('current_score', 'desc')
             ->get();
 
-        return $results->map(fn ($data) => $this->mapToReputationProfile($data))->toArray();
+        return $results->map(fn($data) => $this->mapToReputationProfile($data))->toArray();
     }
 
     private function mapToReputationProfile($data): ReputationProfile
@@ -123,8 +123,8 @@ class PostgresReputationRepository implements ReputationRepository
     private function loadScoreHistory(ProfileId $profileId): array
     {
         $historyData = DB::table('score_history')
-            ->where('profile_id', $profileId->getValue())
-            ->orderBy('recorded_at', 'asc')
+            ->where('reputation_profile_id', $profileId->getValue())
+            ->orderBy('created_at', 'asc')
             ->get();
 
         return $historyData->map(function ($data) {
@@ -140,18 +140,18 @@ class PostgresReputationRepository implements ReputationRepository
     {
         // Delete existing history
         DB::table('score_history')
-            ->where('profile_id', $profileId->getValue())
+            ->where('reputation_profile_id', $profileId->getValue())
             ->delete();
 
         // Insert new history
         foreach ($scoreHistory as $snapshot) {
             DB::table('score_history')->insert([
                 'id' => \Illuminate\Support\Str::uuid(),
-                'profile_id' => $profileId->getValue(),
+                'reputation_profile_id' => $profileId->getValue(),
                 'score' => $snapshot->getScore()->getValue(),
-                'reason' => $snapshot->getReason(),
-                'recorded_at' => $snapshot->getRecordedAt()->format('Y-m-d H:i:s'),
-                'created_at' => now(),
+                'change_reason' => $snapshot->getReason(),
+                'metrics_snapshot' => json_encode([]),
+                'created_at' => $snapshot->getRecordedAt()->format('Y-m-d H:i:s'),
                 'updated_at' => now(),
             ]);
         }
