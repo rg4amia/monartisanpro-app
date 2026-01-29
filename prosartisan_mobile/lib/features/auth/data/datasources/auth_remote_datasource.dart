@@ -90,7 +90,17 @@ class AuthRemoteDataSource {
       // Validate required fields
       if (!responseData.containsKey('token') ||
           !responseData.containsKey('user')) {
-        throw Exception('Invalid response: missing token or user data');
+        // Extract the 'data' field if it exists (Laravel API format)
+        final authData = responseData.containsKey('data')
+            ? responseData['data'] as Map<String, dynamic>
+            : responseData;
+
+        // Validate required fields in extracted data
+        if (!authData.containsKey('token') || !authData.containsKey('user')) {
+          throw Exception('Invalid response: missing token or user data');
+        }
+
+        return AuthResultModel.fromJson(authData);
       }
 
       return AuthResultModel.fromJson(responseData);

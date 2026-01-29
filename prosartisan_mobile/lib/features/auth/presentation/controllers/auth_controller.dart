@@ -286,10 +286,7 @@ class AuthController extends GetxController {
       final user = currentUser.value;
       if (user == null) return false;
 
-      final response = await _apiService.put(
-        '/api/v1/users/${user.id}',
-        profileData,
-      );
+      await _apiService.put('/api/v1/users/${user.id}', profileData);
 
       // Update current user with new data
       // This would need to be implemented based on the actual response structure

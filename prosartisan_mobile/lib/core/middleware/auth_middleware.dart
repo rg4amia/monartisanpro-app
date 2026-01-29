@@ -13,6 +13,11 @@ class AuthMiddleware extends GetMiddleware {
     try {
       final authController = Get.find<AuthController>();
 
+      // Prevent redirect loops - don't redirect if already on login
+      if (route == AppRoutes.login) {
+        return null;
+      }
+
       // If user is not authenticated, redirect to login
       if (!authController.isAuthenticated.value) {
         return const RouteSettings(name: AppRoutes.login);
@@ -50,6 +55,11 @@ class GuestMiddleware extends GetMiddleware {
   RouteSettings? redirect(String? route) {
     try {
       final authController = Get.find<AuthController>();
+
+      // Prevent redirect loops - don't redirect if already on home
+      if (route == AppRoutes.home) {
+        return null;
+      }
 
       // If user is authenticated, redirect to home
       if (authController.isAuthenticated.value) {
