@@ -64,6 +64,10 @@ Route::prefix('v1')->group(function () {
         Route::get('/trades', [\App\Http\Controllers\Api\V1\ReferenceDataController::class, 'index']);
     });
 
+    // Parameters API routes
+    Route::get('/parameters/public', [App\Http\Controllers\Api\ParametersController::class, 'public']);
+    Route::get('/parameters/category/{category}', [App\Http\Controllers\Api\ParametersController::class, 'byCategory']);
+
     // Authentication routes (public)
     Route::prefix('auth')->group(function () {
         Route::post('/register', [AuthController::class, 'register']);
