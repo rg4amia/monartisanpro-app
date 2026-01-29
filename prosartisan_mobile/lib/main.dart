@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'core/routes/app_pages.dart';
 import 'core/routes/app_routes.dart';
 import 'core/constants/app_strings.dart';
@@ -10,15 +11,22 @@ import 'core/services/api/api_client.dart';
 import 'core/services/api/api_service.dart';
 import 'core/services/sync/sync_service.dart';
 import 'core/services/storage/offline_repository.dart';
+import 'core/services/monitoring/sentry_service.dart';
 import 'shared/data/repositories/reference_data_repository.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/bindings/auth_binding.dart';
 import 'generated/l10n/app_localizations.dart';
 
-void main() {
-  // Initialize core services first
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Sentry
+  await SentryService.initialize();
+
+  // Initialize core services
   _initializeCoreServices();
 
+  // Run app with Sentry error handling
   runApp(const ProSartisanApp());
 }
 

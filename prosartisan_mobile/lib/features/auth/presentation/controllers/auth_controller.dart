@@ -6,6 +6,7 @@ import '../../domain/usecases/login_usecase.dart';
 import '../../domain/usecases/register_usecase.dart';
 import '../../../../core/services/api/api_service.dart';
 import '../../../../core/services/storage/offline_storage_service.dart';
+import '../../../../core/services/monitoring/sentry_service.dart';
 import '../../../../core/constants/api_constants.dart';
 
 /// Controller for authentication state management
@@ -52,14 +53,32 @@ class AuthController extends GetxController {
         // Save user offline for offline access
         if (currentUser.value != null) {
           await _offlineStorage.saveUser(currentUser.value!);
+
+          // Set user context in Sentry
+          await SentryService.setUser(
+            id: currentUser.value!.id,
+            email: currentUser.value!.email,
+            username: currentUser.value!.userType,
+            extra: {
+              'user_type': currentUser.value!.userType,
+              'account_status': currentUser.value!.accountStatus,
+            },
+          );
         }
 
         // Setup token refresh
         _setupTokenRefresh();
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       isAuthenticated.value = false;
       currentUser.value = null;
+
+      // Log error to Sentry
+      await SentryService.captureException(
+        e,
+        stackTrace: stackTrace,
+        hint: 'Error checking auth status',
+      );
     }
   }
 
@@ -96,6 +115,13 @@ class AuthController extends GetxController {
       isLoading.value = true;
       errorMessage.value = '';
 
+      // Add breadcrumb for tracking
+      SentryService.addBreadcrumb(
+        message: 'User attempting login',
+        category: 'auth',
+        data: {'email': email},
+      );
+
       final result = await _loginUseCase(email: email, password: password);
 
       currentUser.value = result.user;
@@ -104,12 +130,37 @@ class AuthController extends GetxController {
       // Save user offline
       await _offlineStorage.saveUser(result.user);
 
+      // Set user context in Sentry
+      await SentryService.setUser(
+        id: result.user.id,
+        email: result.user.email,
+        username: result.user.userType,
+        extra: {
+          'user_type': result.user.userType,
+          'account_status': result.user.accountStatus,
+        },
+      );
+
       // Setup token refresh
       _setupTokenRefresh();
 
+      SentryService.addBreadcrumb(
+        message: 'User logged in successfully',
+        category: 'auth',
+      );
+
       return true;
-    } catch (e) {
+    } catch (e, stackTrace) {
       errorMessage.value = e.toString().replaceAll('Exception: ', '');
+
+      // Log error to Sentry
+      await SentryService.captureException(
+        e,
+        stackTrace: stackTrace,
+        hint: 'Login failed',
+        extra: {'email': email},
+      );
+
       return false;
     } finally {
       isLoading.value = false;
