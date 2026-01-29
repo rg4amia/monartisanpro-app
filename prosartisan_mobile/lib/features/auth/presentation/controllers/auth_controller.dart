@@ -213,6 +213,12 @@ class AuthController extends GetxController {
       // Cancel token refresh timer
       _tokenRefreshTimer?.cancel();
 
+      // Add breadcrumb
+      SentryService.addBreadcrumb(
+        message: 'User logging out',
+        category: 'auth',
+      );
+
       // Clear server session
       try {
         await _apiService.post(ApiConstants.logout, {});
@@ -227,11 +233,21 @@ class AuthController extends GetxController {
       // Clear offline data
       await _offlineStorage.clearAllData();
 
+      // Clear Sentry user context
+      await SentryService.clearUser();
+
       // Reset state
       currentUser.value = null;
       isAuthenticated.value = false;
-    } catch (e) {
+    } catch (e, stackTrace) {
       errorMessage.value = e.toString().replaceAll('Exception: ', '');
+
+      // Log error to Sentry
+      await SentryService.captureException(
+        e,
+        stackTrace: stackTrace,
+        hint: 'Logout failed',
+      );
     }
   }
 
