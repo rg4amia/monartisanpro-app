@@ -7,12 +7,12 @@ import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
 
-import 'core/config/app_config.dart';
-import 'core/routes/app_routes.dart';
-import 'core/routes/app_pages.dart';
-import 'core/services/storage/hive_service.dart';
-import 'core/services/notification/notification_service.dart';
-import 'shared/bindings/initial_binding.dart';
+import '../core/config/app_config.dart';
+import '../core/routes/app_routes.dart';
+import '../core/routes/app_pages.dart';
+import '../core/services/storage/hive_service.dart';
+import '../core/services/notification/notification_service.dart';
+import '../shared/bindings/initial_binding.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -158,10 +158,10 @@ class AppRoutes {
 // ============================================================================
 
 import 'package:get/get.dart';
-import '../../features/auth/presentation/pages/splash_page.dart';
-import '../../features/auth/presentation/pages/login_page.dart';
-import '../../features/marketplace/presentation/pages/marketplace_page.dart';
-import '../routes/app_routes.dart';
+import '../../../features/auth/presentation/pages/splash_page.dart';
+import '../../../features/auth/presentation/pages/login_page.dart';
+import '../../../features/marketplace/presentation/pages/marketplace_page.dart';
+import '../../routes/app_routes.dart';
 
 class AppPages {
   static final pages = [
@@ -186,10 +186,10 @@ class AppPages {
 // ============================================================================
 
 import 'package:get/get.dart';
-import '../../core/services/api/api_service.dart';
-import '../../core/services/storage/storage_service.dart';
-import '../../core/services/location/location_service.dart';
-import '../../features/auth/presentation/controllers/auth_controller.dart';
+import '../../../core/services/api/api_service.dart';
+import '../../../core/services/storage/storage_service.dart';
+import '../../../core/services/location/location_service.dart';
+import '../../../features/auth/presentation/controllers/auth_controller.dart';
 
 class InitialBinding extends Bindings {
   @override
@@ -238,8 +238,8 @@ class HiveService {
 import 'package:dio/dio.dart';
 import 'package:get/get.dart' as getx;
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
-import '../../config/app_config.dart';
-import '../storage/storage_service.dart';
+import '../../../config/app_config.dart';
+import '../../storage/storage_service.dart';
 
 class ApiService extends getx.GetxService {
   late Dio _dio;
