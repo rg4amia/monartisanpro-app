@@ -6,8 +6,8 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../shared/widgets/buttons/primary_button.dart';
-import '../controllers/auth_controller.dart';
-import 'kyc_upload_page.dart';
+import '../../../../shared/controllers/trade_controller.dart';
+import '../controllers/auth_controller.
 
 /// Registration page for new users
 class RegisterPage extends StatefulWidget {

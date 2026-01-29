@@ -1,39 +1,36 @@
-import 'package:json_annotation/json_annotation.dart';
-
-part 'trade.g.dart';
-
-@JsonSerializable()
+/// Trade model representing a professional trade/métier
 class Trade {
   final int id;
   final String code;
   final String name;
-  @JsonKey(name: 'sector_id')
   final int sectorId;
-  @JsonKey(name: 'created_at')
-  final DateTime? createdAt;
-  @JsonKey(name: 'updated_at')
-  final DateTime? updatedAt;
+  final String? sectorName;
 
-  const Trade({
+  Trade({
     required this.id,
     required this.code,
     required this.name,
     required this.sectorId,
-    this.createdAt,
-    this.updatedAt,
+    this.sectorName,
   });
 
-  factory Trade.fromJson(Map<String, dynamic> json) => _$TradeFromJson(json);
-  Map<String, dynamic> toJson() => _$TradeToJson(this);
+  factory Trade.fromJson(Map<String, dynamic> json) {
+    return Trade(
+      id: json['id'] as int,
+      code: json['code'] as String,
+      name: json['name'] as String,
+      sectorId: json['sector_id'] as int,
+      sectorName: json['sector_name'] as String?,
+    );
+  }
 
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is Trade && runtimeType == other.runtimeType && id == other.id;
-
-  @override
-  int get hashCode => id.hashCode;
-
-  @override
-  String toString() => 'Trade(id: $id, code: $code, name: $name)';
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'code': code,
+      'name': name,
+      'sector_id': sectorId,
+      'sector_name': sectorName,
+    };
+  }
 }
