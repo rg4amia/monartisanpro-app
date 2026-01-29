@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:qr_code_scanner/qr_code_scanner.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -24,15 +24,20 @@ class JetonValidationPage extends StatefulWidget {
 }
 
 class _JetonValidationPageState extends State<JetonValidationPage> {
-  final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
-  QRViewController? qrController;
+  MobileScannerController? scannerController;
   final JetonValidationController controller = Get.put(
     JetonValidationController(),
   );
 
   @override
+  void initState() {
+    super.initState();
+    scannerController = MobileScannerController();
+  }
+
+  @override
   void dispose() {
-    qrController?.dispose();
+    scannerController?.dispose();
     super.dispose();
   }
 
@@ -148,16 +153,18 @@ class _JetonValidationPageState extends State<JetonValidationPage> {
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(AppRadius.md),
-                child: QRView(
-                  key: qrKey,
-                  onQRViewCreated: _onQRViewCreated,
-                  overlay: QrScannerOverlayShape(
-                    borderColor: AppColors.accentPrimary,
-                    borderRadius: 10,
-                    borderLength: 30,
-                    borderWidth: 10,
-                    cutOutSize: 250,
-                  ),
+                child: MobileScanner(
+                  controller: scannerController,
+                  onDetect: (BarcodeCapture capture) {
+                    final List<Barcode> barcodes = capture.barcodes;
+                    for (final barcode in barcodes) {
+                      if (barcode.rawValue != null) {
+                        controller.setScannedCode(barcode.rawValue!);
+                        scannerController?.stop();
+                        break;
+                      }
+                    }
+                  },
                 ),
               ),
             ),
@@ -261,16 +268,6 @@ class _JetonValidationPageState extends State<JetonValidationPage> {
         ],
       ),
     );
-  }
-
-  void _onQRViewCreated(QRViewController controller) {
-    qrController = controller;
-    controller.scannedDataStream.listen((scanData) {
-      if (scanData.code != null) {
-        this.controller.setScannedCode(scanData.code!);
-        qrController?.pauseCamera();
-      }
-    });
   }
 
   void _validateJeton() async {
