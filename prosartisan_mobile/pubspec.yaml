@@ -74,7 +74,7 @@ dependencies:
   uuid: ^4.5.1
   connectivity_plus: ^6.1.0
   qr_flutter: ^4.1.0
-  qr_code_scanner: ^1.0.1
+  mobile_scanner: ^5.2.3
   equatable: ^2.0.5
   json_annotation: ^4.9.0
 
