@@ -6,7 +6,7 @@ use App\Http\Controllers\Backoffice\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('backoffice.login');
 });
 
 // Backoffice Routes
