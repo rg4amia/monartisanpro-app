@@ -312,4 +312,89 @@ class AuthController extends Controller
             shopLocation: $shopLocation
         );
     }
+
+    /**
+     * Logout user
+     *
+     * POST /api/v1/auth/logout
+     *
+     * Invalidates the current authentication token
+     */
+    public function logout(): JsonResponse
+    {
+        try {
+            $user = request()->user();
+
+            if ($user) {
+                // Revoke the current token
+                $user->currentAccessToken()->delete();
+
+                Log::info('User logged out', ['user_id' => $user->id]);
+            }
+
+            return response()->json([
+                'message' => 'Déconnexion réussie',
+                'status_code' => 200,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Logout error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'error' => 'LOGOUT_FAILED',
+                'message' => 'Erreur lors de la déconnexion',
+                'status_code' => 500,
+            ], 500);
+        }
+    }
+
+    /**
+     * Refresh authentication token
+     *
+     * POST /api/v1/auth/refresh
+     *
+     * Issues a new authentication token
+     */
+    public function refresh(): JsonResponse
+    {
+        try {
+            $user = request()->user();
+
+            if (!$user) {
+                return response()->json([
+                    'error' => 'UNAUTHENTICATED',
+                    'message' => 'Token invalide',
+                    'status_code' => 401,
+                ], 401);
+            }
+
+            // Revoke the current token
+            $user->currentAccessToken()->delete();
+
+            // Create a new token
+            $token = $user->createToken('auth_token')->plainTextToken;
+
+            Log::info('Token refreshed', ['user_id' => $user->id]);
+
+            return response()->json([
+                'token' => $token,
+                'user' => new AuthResource($user),
+                'message' => 'Token actualisé avec succès',
+                'status_code' => 200,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Token refresh error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'error' => 'REFRESH_FAILED',
+                'message' => 'Erreur lors de l\'actualisation du token',
+                'status_code' => 500,
+            ], 500);
+        }
+    }
 }
