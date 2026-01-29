@@ -121,15 +121,15 @@ class _LoginPageState extends State<LoginPage> {
                       color: AppColors.textSecondary,
                     ),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
                       borderSide: BorderSide(color: AppColors.overlayMedium),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
                       borderSide: BorderSide(color: AppColors.overlayMedium),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
                       borderSide: BorderSide(
                         color: AppColors.accentPrimary,
                         width: 2,

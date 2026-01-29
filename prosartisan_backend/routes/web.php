@@ -82,3 +82,6 @@ Route::prefix('backoffice')->group(function () {
         });
     });
 });
+
+//import api.php
+Route::prefix('api')->group(__DIR__.'/api.php');
