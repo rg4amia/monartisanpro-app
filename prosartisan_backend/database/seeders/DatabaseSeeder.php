@@ -15,7 +15,10 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Seed sectors and trades first
+        // Seed admin account first
+        $this->call(AdminSeeder::class);
+
+        // Seed sectors and trades
         $this->call(TradeSeeder::class);
 
         // Seed complete platform data for simulation
