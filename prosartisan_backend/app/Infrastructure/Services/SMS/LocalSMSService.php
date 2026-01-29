@@ -11,9 +11,9 @@ use Illuminate\Support\Facades\Log;
 
 class LocalSMSService implements SMSNotificationService
 {
-    private string $apiUrl;
+    private ?string $apiUrl;
 
-    private string $apiKey;
+    private ?string $apiKey;
 
     private string $senderId;
 
@@ -37,11 +37,11 @@ class LocalSMSService implements SMSNotificationService
                 return false;
             }
 
-            $fullMessage = $title."\n\n".$message;
+            $fullMessage = $title . "\n\n" . $message;
 
             return $this->sendSMS($user->getPhoneNumber(), $fullMessage);
         } catch (\Exception $e) {
-            Log::error("Failed to send SMS to user {$userId->getValue()}: ".$e->getMessage());
+            Log::error("Failed to send SMS to user {$userId->getValue()}: " . $e->getMessage());
 
             return false;
         }
@@ -49,15 +49,24 @@ class LocalSMSService implements SMSNotificationService
 
     public function sendSMS(PhoneNumber $phoneNumber, string $message): bool
     {
+        // Check if service is properly configured
+        if (!$this->isAvailable()) {
+            Log::warning('Local SMS service not configured. Skipping SMS send.', [
+                'phone' => $phoneNumber->getValue(),
+                'message_preview' => substr($message, 0, 50),
+            ]);
+            return false;
+        }
+
         try {
             // Format phone number for Côte d'Ivoire (+225)
             $formattedNumber = $this->formatPhoneNumber($phoneNumber->getValue());
 
             /** @var \Illuminate\Http\Client\Response $response */
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer '.$this->apiKey,
+                'Authorization' => 'Bearer ' . $this->apiKey,
                 'Content-Type' => 'application/json',
-            ])->post($this->apiUrl.'/send', [
+            ])->post($this->apiUrl . '/send', [
                 'sender' => $this->senderId,
                 'recipient' => $formattedNumber,
                 'message' => $message,
@@ -77,7 +86,7 @@ class LocalSMSService implements SMSNotificationService
 
             return false;
         } catch (\Exception $e) {
-            Log::error('Local SMS exception: '.$e->getMessage());
+            Log::error('Local SMS exception: ' . $e->getMessage());
 
             return false;
         }
@@ -107,15 +116,15 @@ class LocalSMSService implements SMSNotificationService
 
         // If it starts with 225, it's already formatted
         if (str_starts_with($cleaned, '225')) {
-            return '+'.$cleaned;
+            return '+' . $cleaned;
         }
 
         // If it starts with 0, replace with 225
         if (str_starts_with($cleaned, '0')) {
-            return '+225'.substr($cleaned, 1);
+            return '+225' . substr($cleaned, 1);
         }
 
         // Otherwise, assume it's a local number and add 225
-        return '+225'.$cleaned;
+        return '+225' . $cleaned;
     }
 }
