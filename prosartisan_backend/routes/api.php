@@ -76,14 +76,14 @@ Route::middleware(['api'])->prefix('v1')->group(function () {
         Route::post('/otp/verify', [AuthController::class, 'verifyOTP']);
 
         // Protected auth routes
-        Route::middleware(['auth:api'])->group(function () {
+        Route::middleware(['auth:sanctum'])->group(function () {
             Route::post('/logout', [AuthController::class, 'logout']);
             Route::post('/refresh', [AuthController::class, 'refresh']);
         });
     });
 
     // Protected routes (require authentication)
-    Route::middleware(['auth:api'])->group(function () {
+    Route::middleware(['auth:sanctum'])->group(function () {
 
         // KYC document upload
         Route::post('/users/{id}/kyc', [KYCController::class, 'uploadKYC']);
