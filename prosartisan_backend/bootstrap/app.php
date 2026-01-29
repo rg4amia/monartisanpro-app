@@ -22,9 +22,8 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         // Configure API middleware to exclude CSRF
-        $middleware->api(prepend: [
-            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
-        ]);
+        // Remove stateful middleware from API routes
+        $middleware->api();
 
         // Replace default CSRF middleware with our custom one
         $middleware->web(replace: [
