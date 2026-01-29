@@ -185,42 +185,46 @@ class _JetonValidationPageState extends State<JetonValidationPage> {
             textAlign: TextAlign.center,
           ),
           SizedBox(height: AppSpacing.lg),
-          TextField(
-            controller: controller.manualCodeController,
-            style: AppTypography.body.copyWith(color: AppColors.textPrimary),
-            decoration: InputDecoration(
-              labelText: 'Code du jeton (PA-XXXX)',
-              labelStyle: AppTypography.body.copyWith(
-                color: AppColors.textSecondary,
-              ),
-              hintText: 'PA-1234',
-              hintStyle: AppTypography.body.copyWith(
-                color: AppColors.textSecondary,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.md),
-                borderSide: BorderSide(color: AppColors.overlayMedium),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.md),
-                borderSide: BorderSide(color: AppColors.overlayMedium),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.md),
-                borderSide: BorderSide(
-                  color: AppColors.accentPrimary,
-                  width: 2,
+          SizedBox(
+            height: AppSpacing.inputHeight,
+            child: TextField(
+              controller: controller.manualCodeController,
+              style: AppTypography.body.copyWith(color: AppColors.textPrimary),
+              decoration: InputDecoration(
+                labelText: 'Code du jeton (PA-XXXX)',
+                labelStyle: AppTypography.body.copyWith(
+                  color: AppColors.textSecondary,
                 ),
+                hintText: 'PA-1234',
+                hintStyle: AppTypography.body.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  borderSide: BorderSide(color: AppColors.overlayMedium),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  borderSide: BorderSide(color: AppColors.overlayMedium),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  borderSide: BorderSide(
+                    color: AppColors.accentPrimary,
+                    width: 2,
+                  ),
+                ),
+                prefixIcon: Icon(
+                  Icons.confirmation_number,
+                  color: AppColors.textSecondary,
+                ),
+                filled: true,
+                fillColor: AppColors.cardBg,
+                contentPadding: AppSpacing.inputPaddingDefault,
               ),
-              prefixIcon: Icon(
-                Icons.confirmation_number,
-                color: AppColors.textSecondary,
-              ),
-              filled: true,
-              fillColor: AppColors.cardBg,
+              textCapitalization: TextCapitalization.characters,
+              onChanged: (value) => controller.setScannedCode(value),
             ),
-            textCapitalization: TextCapitalization.characters,
-            onChanged: (value) => controller.setScannedCode(value),
           ),
         ],
       ),

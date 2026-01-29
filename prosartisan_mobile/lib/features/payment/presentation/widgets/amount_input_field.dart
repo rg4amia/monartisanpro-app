@@ -25,50 +25,58 @@ class AmountInputField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        TextField(
-          controller: controller,
-          keyboardType: TextInputType.number,
-          inputFormatters: [
-            FilteringTextInputFormatter.digitsOnly,
-            _AmountInputFormatter(),
-          ],
-          style: AppTypography.body.copyWith(color: AppColors.textPrimary),
-          decoration: InputDecoration(
-            labelText: labelText,
-            labelStyle: AppTypography.bodySmall.copyWith(
-              color: AppColors.textSecondary,
+        SizedBox(
+          height: AppSpacing.inputHeight,
+          child: TextField(
+            controller: controller,
+            keyboardType: TextInputType.number,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              _AmountInputFormatter(),
+            ],
+            style: AppTypography.body.copyWith(color: AppColors.textPrimary),
+            decoration: InputDecoration(
+              labelText: labelText,
+              labelStyle: AppTypography.bodySmall.copyWith(
+                color: AppColors.textSecondary,
+              ),
+              hintText: '0',
+              hintStyle: AppTypography.body.copyWith(
+                color: AppColors.textMuted,
+              ),
+              filled: true,
+              fillColor: AppColors.cardBg,
+              border: OutlineInputBorder(
+                borderRadius: AppRadius.inputRadius,
+                borderSide: BorderSide(color: AppColors.overlayMedium),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: AppRadius.inputRadius,
+                borderSide: BorderSide(color: AppColors.overlayMedium),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: AppRadius.inputRadius,
+                borderSide: BorderSide(
+                  color: AppColors.accentPrimary,
+                  width: 2,
+                ),
+              ),
+              prefixIcon: Icon(
+                Icons.attach_money,
+                color: AppColors.textSecondary,
+              ),
+              suffixText: 'FCFA',
+              suffixStyle: AppTypography.bodySmall.copyWith(
+                color: AppColors.textSecondary,
+              ),
+              helperText: 'Maximum: ${_formatAmount(maxAmount)} FCFA',
+              helperStyle: AppTypography.caption.copyWith(
+                color: AppColors.textTertiary,
+              ),
+              contentPadding: AppSpacing.inputPaddingDefault,
             ),
-            hintText: '0',
-            hintStyle: AppTypography.body.copyWith(color: AppColors.textMuted),
-            filled: true,
-            fillColor: AppColors.cardBg,
-            border: OutlineInputBorder(
-              borderRadius: AppRadius.inputRadius,
-              borderSide: BorderSide(color: AppColors.overlayMedium),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: AppRadius.inputRadius,
-              borderSide: BorderSide(color: AppColors.overlayMedium),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: AppRadius.inputRadius,
-              borderSide: BorderSide(color: AppColors.accentPrimary, width: 2),
-            ),
-            prefixIcon: Icon(
-              Icons.attach_money,
-              color: AppColors.textSecondary,
-            ),
-            suffixText: 'FCFA',
-            suffixStyle: AppTypography.bodySmall.copyWith(
-              color: AppColors.textSecondary,
-            ),
-            helperText: 'Maximum: ${_formatAmount(maxAmount)} FCFA',
-            helperStyle: AppTypography.caption.copyWith(
-              color: AppColors.textTertiary,
-            ),
-            contentPadding: AppSpacing.inputPaddingDefault,
+            onChanged: onChanged,
           ),
-          onChanged: onChanged,
         ),
       ],
     );

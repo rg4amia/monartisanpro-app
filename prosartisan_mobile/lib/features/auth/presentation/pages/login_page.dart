@@ -105,105 +105,113 @@ class _LoginPageState extends State<LoginPage> {
                 SizedBox(height: AppSpacing.xl * 2),
 
                 // Email field
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  style: AppTypography.body.copyWith(
-                    color: AppColors.textPrimary,
-                  ),
-                  decoration: InputDecoration(
-                    labelText: AppStrings.email,
-                    labelStyle: AppTypography.body.copyWith(
-                      color: AppColors.textSecondary,
+                SizedBox(
+                  height: AppSpacing.inputHeight,
+                  child: TextFormField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    style: AppTypography.body.copyWith(
+                      color: AppColors.textPrimary,
                     ),
-                    prefixIcon: Icon(
-                      Icons.email,
-                      color: AppColors.textSecondary,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.lg),
-                      borderSide: BorderSide(color: AppColors.overlayMedium),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.lg),
-                      borderSide: BorderSide(color: AppColors.overlayMedium),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.lg),
-                      borderSide: BorderSide(
-                        color: AppColors.accentPrimary,
-                        width: 2,
+                    decoration: InputDecoration(
+                      labelText: AppStrings.email,
+                      labelStyle: AppTypography.body.copyWith(
+                        color: AppColors.textSecondary,
                       ),
+                      prefixIcon: Icon(
+                        Icons.email,
+                        color: AppColors.textSecondary,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                        borderSide: BorderSide(color: AppColors.overlayMedium),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                        borderSide: BorderSide(color: AppColors.overlayMedium),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                        borderSide: BorderSide(
+                          color: AppColors.accentPrimary,
+                          width: 2,
+                        ),
+                      ),
+                      filled: true,
+                      fillColor: AppColors.cardBg,
+                      contentPadding: AppSpacing.inputPaddingDefault,
                     ),
-                    filled: true,
-                    fillColor: AppColors.cardBg,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return AppStrings.emailRequired;
+                      }
+                      if (!GetUtils.isEmail(value)) {
+                        return AppStrings.emailInvalid;
+                      }
+                      return null;
+                    },
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return AppStrings.emailRequired;
-                    }
-                    if (!GetUtils.isEmail(value)) {
-                      return AppStrings.emailInvalid;
-                    }
-                    return null;
-                  },
                 ),
 
                 SizedBox(height: AppSpacing.md),
 
                 // Password field
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: _obscurePassword,
-                  style: AppTypography.body.copyWith(
-                    color: AppColors.textPrimary,
-                  ),
-                  decoration: InputDecoration(
-                    labelText: AppStrings.password,
-                    labelStyle: AppTypography.body.copyWith(
-                      color: AppColors.textSecondary,
+                SizedBox(
+                  height: AppSpacing.inputHeight,
+                  child: TextFormField(
+                    controller: _passwordController,
+                    obscureText: _obscurePassword,
+                    style: AppTypography.body.copyWith(
+                      color: AppColors.textPrimary,
                     ),
-                    prefixIcon: Icon(
-                      Icons.lock,
-                      color: AppColors.textSecondary,
-                    ),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility
-                            : Icons.visibility_off,
+                    decoration: InputDecoration(
+                      labelText: AppStrings.password,
+                      labelStyle: AppTypography.body.copyWith(
                         color: AppColors.textSecondary,
                       ),
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      },
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                      borderSide: BorderSide(color: AppColors.overlayMedium),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                      borderSide: BorderSide(color: AppColors.overlayMedium),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                      borderSide: BorderSide(
-                        color: AppColors.accentPrimary,
-                        width: 2,
+                      prefixIcon: Icon(
+                        Icons.lock,
+                        color: AppColors.textSecondary,
                       ),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                          color: AppColors.textSecondary,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        borderSide: BorderSide(color: AppColors.overlayMedium),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        borderSide: BorderSide(color: AppColors.overlayMedium),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        borderSide: BorderSide(
+                          color: AppColors.accentPrimary,
+                          width: 2,
+                        ),
+                      ),
+                      filled: true,
+                      fillColor: AppColors.cardBg,
+                      contentPadding: AppSpacing.inputPaddingDefault,
                     ),
-                    filled: true,
-                    fillColor: AppColors.cardBg,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return AppStrings.passwordRequired;
+                      }
+                      return null;
+                    },
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return AppStrings.passwordRequired;
-                    }
-                    return null;
-                  },
                 ),
 
                 SizedBox(height: AppSpacing.lg),

@@ -76,51 +76,57 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
               ),
               boxShadow: _isFocused ? AppShadows.inputFocused : null,
             ),
-            child: TextField(
-              controller: _controller,
-              enabled: widget.enabled,
-              onChanged: widget.onChanged,
-              onSubmitted: widget.onSubmitted,
-              style: AppTypography.body.copyWith(color: AppColors.textPrimary),
-              decoration: InputDecoration(
-                hintText: widget.hintText ?? 'Rechercher tous les services...',
-                hintStyle: AppTypography.placeholder.copyWith(
-                  color: AppColors.textMuted,
+            child: SizedBox(
+              height: AppSpacing.inputHeight,
+              child: TextField(
+                controller: _controller,
+                enabled: widget.enabled,
+                onChanged: widget.onChanged,
+                onSubmitted: widget.onSubmitted,
+                style: AppTypography.body.copyWith(
+                  color: AppColors.textPrimary,
                 ),
-                prefixIcon:
-                    widget.prefixIcon ??
-                    const Icon(Icons.search, color: AppColors.textMuted),
-                suffixIcon:
-                    widget.suffixIcon ??
-                    (_controller.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(
-                              Icons.clear,
-                              color: AppColors.textMuted,
-                            ),
-                            onPressed: () {
-                              _controller.clear();
-                              widget.onChanged?.call('');
-                            },
-                          )
-                        : null),
-                border: InputBorder.none,
-                contentPadding: AppSpacing.symmetric(
-                  horizontal: AppSpacing.searchBarHorizontalPadding,
-                  vertical: AppSpacing.searchBarVerticalPadding,
+                decoration: InputDecoration(
+                  hintText:
+                      widget.hintText ?? 'Rechercher tous les services...',
+                  hintStyle: AppTypography.placeholder.copyWith(
+                    color: AppColors.textMuted,
+                  ),
+                  prefixIcon:
+                      widget.prefixIcon ??
+                      const Icon(Icons.search, color: AppColors.textMuted),
+                  suffixIcon:
+                      widget.suffixIcon ??
+                      (_controller.text.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(
+                                Icons.clear,
+                                color: AppColors.textMuted,
+                              ),
+                              onPressed: () {
+                                _controller.clear();
+                                widget.onChanged?.call('');
+                              },
+                            )
+                          : null),
+                  border: InputBorder.none,
+                  contentPadding: AppSpacing.symmetric(
+                    horizontal: AppSpacing.searchBarHorizontalPadding,
+                    vertical: AppSpacing.searchBarVerticalPadding,
+                  ),
                 ),
+                onTap: () {
+                  setState(() {
+                    _isFocused = true;
+                  });
+                },
+                onTapOutside: (event) {
+                  setState(() {
+                    _isFocused = false;
+                  });
+                  FocusScope.of(context).unfocus();
+                },
               ),
-              onTap: () {
-                setState(() {
-                  _isFocused = true;
-                });
-              },
-              onTapOutside: (event) {
-                setState(() {
-                  _isFocused = false;
-                });
-                FocusScope.of(context).unfocus();
-              },
             ),
           ),
         ),

@@ -96,20 +96,26 @@ class _TradeSelectorWidgetState extends State<TradeSelectorWidget> {
         // Barre de recherche
         Text('Rechercher un métier', style: AppTypography.body),
         const SizedBox(height: AppSpacing.sm),
-        TextField(
-          controller: _searchController,
-          decoration: InputDecoration(
-            hintText: widget.hintText ?? 'Tapez le nom du métier...',
-            prefixIcon: const Icon(Icons.search),
-            suffixIcon: _searchController.text.isNotEmpty
-                ? IconButton(
-                    icon: const Icon(Icons.clear),
-                    onPressed: () {
-                      _searchController.clear();
-                    },
-                  )
-                : null,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        SizedBox(
+          height: AppSpacing.inputHeight,
+          child: TextField(
+            controller: _searchController,
+            decoration: InputDecoration(
+              hintText: widget.hintText ?? 'Tapez le nom du métier...',
+              prefixIcon: const Icon(Icons.search),
+              suffixIcon: _searchController.text.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        _searchController.clear();
+                      },
+                    )
+                  : null,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              contentPadding: AppSpacing.inputPaddingDefault,
+            ),
           ),
         ),
         const SizedBox(height: AppSpacing.base),
