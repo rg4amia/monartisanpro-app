@@ -21,6 +21,9 @@ class DatabaseSeeder extends Seeder
         // Seed sectors and trades
         $this->call(TradeSeeder::class);
 
+        // Seed system parameters
+        $this->call(SystemParameterSeeder::class);
+
         // Seed complete platform data for simulation
         $this->call(CompletePlatformSeeder::class);
     }

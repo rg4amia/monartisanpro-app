@@ -6,6 +6,7 @@ export default function Button({
  size = 'md',
  className = '',
  disabled = false,
+ icon: Icon,
  ...props
 }) {
  const baseClasses = 'inline-flex items-center justify-center font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2';
@@ -27,6 +28,14 @@ export default function Button({
   xl: 'px-6 py-3 text-base',
  };
 
+ const iconSizes = {
+  xs: 'h-3 w-3',
+  sm: 'h-4 w-4',
+  md: 'h-4 w-4',
+  lg: 'h-5 w-5',
+  xl: 'h-5 w-5',
+ };
+
  const disabledClasses = disabled ? 'cursor-not-allowed opacity-50' : '';
 
  return (
@@ -35,6 +44,9 @@ export default function Button({
    disabled={disabled}
    {...props}
   >
+   {Icon && (
+    <Icon className={`${iconSizes[size]} ${children ? 'mr-2' : ''}`} />
+   )}
    {children}
   </button>
  );

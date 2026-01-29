@@ -69,6 +69,13 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(ReputationRepository::class, PostgresReputationRepository::class);
         $this->app->bind(RatingRepository::class, PostgresRatingRepository::class);
 
+        // Register System Parameter services
+        $this->app->bind(
+            \App\Domain\Shared\Repositories\SystemParameterRepository::class,
+            \App\Infrastructure\Repositories\PostgresSystemParameterRepository::class
+        );
+        $this->app->singleton(\App\Domain\Shared\Services\SystemParameterService::class);
+
         // Register domain services
         $this->app->bind(AuthenticationService::class, LaravelAuthenticationService::class);
         $this->app->bind(KYCVerificationService::class, DefaultKYCVerificationService::class);

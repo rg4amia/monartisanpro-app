@@ -65,6 +65,17 @@ Route::prefix('backoffice')->group(function () {
         Route::post('/kyc/bulk-approve', [App\Http\Controllers\Backoffice\KYCController::class, 'bulkApprove'])->name('backoffice.kyc.bulk-approve');
         Route::get('/kyc/export', [App\Http\Controllers\Backoffice\KYCController::class, 'export'])->name('backoffice.kyc.export');
 
+        // Parameters management routes
+        Route::get('/parameters', [App\Http\Controllers\Backoffice\ParametersController::class, 'index'])->name('backoffice.parameters.index');
+        Route::get('/parameters/categories', [App\Http\Controllers\Backoffice\ParametersController::class, 'categories'])->name('backoffice.parameters.categories');
+        Route::get('/parameters/export', [App\Http\Controllers\Backoffice\ParametersController::class, 'export'])->name('backoffice.parameters.export');
+        Route::post('/parameters', [App\Http\Controllers\Backoffice\ParametersController::class, 'store'])->name('backoffice.parameters.store');
+        Route::get('/parameters/{parameter}', [App\Http\Controllers\Backoffice\ParametersController::class, 'show'])->name('backoffice.parameters.show');
+        Route::put('/parameters/{parameter}', [App\Http\Controllers\Backoffice\ParametersController::class, 'update'])->name('backoffice.parameters.update');
+        Route::patch('/parameters/{parameter}/value', [App\Http\Controllers\Backoffice\ParametersController::class, 'updateValue'])->name('backoffice.parameters.update-value');
+        Route::post('/parameters/bulk-update', [App\Http\Controllers\Backoffice\ParametersController::class, 'bulkUpdate'])->name('backoffice.parameters.bulk-update');
+        Route::delete('/parameters/{parameter}', [App\Http\Controllers\Backoffice\ParametersController::class, 'destroy'])->name('backoffice.parameters.destroy');
+
         // Redirect root backoffice to dashboard
         Route::get('/', function () {
             return redirect()->route('backoffice.dashboard');

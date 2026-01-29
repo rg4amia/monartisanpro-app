@@ -46,7 +46,7 @@ export default function BackofficeLayout({ children }) {
     { name: 'Performance', href: '/backoffice/analytics/performance' },
    ]
   },
-  { name: 'Paramètres', href: '/backoffice/settings', icon: CogIcon },
+  { name: 'Paramètres', href: '/backoffice/parameters', icon: CogIcon },
  ];
 
  return (

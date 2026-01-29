@@ -3,7 +3,7 @@ import { Dialog, Transition } from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 
 export default function Modal({
- isOpen,
+ show,
  onClose,
  title,
  children,
@@ -11,7 +11,7 @@ export default function Modal({
  showCloseButton = true
 }) {
  return (
-  <Transition appear show={isOpen} as={Fragment}>
+  <Transition appear show={show} as={Fragment}>
    <Dialog as="div" className="relative z-50" onClose={onClose}>
     <Transition.Child
      as={Fragment}
