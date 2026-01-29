@@ -59,7 +59,7 @@ class ProSartisanApp extends StatelessWidget {
           GlobalCupertinoLocalizations.delegate,
         ],
 
-        theme: AppThbeme.darkTheme, // Utilise le thème sombre par défaut
+        theme: AppTheme.darkTheme, // Use dark theme by default
         darkTheme: AppTheme.darkTheme,
         themeMode: ThemeMode.dark, // Force le thème sombre
         initialBinding: AuthBinding(),

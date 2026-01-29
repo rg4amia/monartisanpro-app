@@ -231,13 +231,16 @@ class _LoginPageState extends State<LoginPage> {
                         color: AppColors.textSecondary,
                       ),
                     ),
-                    SecondaryButton(
-                      onPressed: () {
-                        Get.to(() => const RegisterPage());
-                      },
-                      text: AppStrings.signUp,
-                    ),
                   ],
+                ),
+
+              SizedBox(height: AppSpacing.md),
+              
+              SecondaryButton(
+                  onPressed: () {
+                    Get.to(() => const RegisterPage());
+                  },
+                  text: AppStrings.signUp,
                 ),
               ],
             ),

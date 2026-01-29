@@ -24,6 +24,16 @@ class ApiClient {
       ),
     );
 
+    // Add logging interceptor for debugging
+    _dio.interceptors.add(
+      LogInterceptor(
+        requestBody: true,
+        responseBody: true,
+        requestHeader: true,
+        responseHeader: true,
+      ),
+    );
+
     // Add interceptor for authentication and CSRF
     _dio.interceptors.add(
       InterceptorsWrapper(
