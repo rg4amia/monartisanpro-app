@@ -35,7 +35,6 @@ Route::get('/secure-file', [SecureFileController::class, 'serve'])->name('secure
 
 // API Version 1 - All routes use 'api' middleware to bypass CSRF
 Route::middleware(['api'])->prefix('v1')->group(function () {
-
     // Health check routes (public)
     Route::prefix('health')->group(function () {
         Route::get('/', [HealthController::class, 'health']);
