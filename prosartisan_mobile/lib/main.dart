@@ -27,7 +27,12 @@ void main() async {
   _initializeCoreServices();
 
   // Run app with Sentry error handling
-  runApp(const ProSartisanApp());
+  runApp(
+    DefaultAssetBundle(
+      bundle: SentryAssetBundle(),
+      child: const ProSartisanApp(),
+    ),
+  );
 }
 
 void _initializeCoreServices() {
@@ -56,6 +61,9 @@ class ProSartisanApp extends StatelessWidget {
         title: AppStrings.appName,
         debugShowCheckedModeBanner: false,
 
+        // Sentry navigation observer
+        navigatorObservers: [SentryNavigatorObserver()],
+
         // Localization configuration
         locale: languageController.currentLocale,
         fallbackLocale: LocalizationService.fallbackLocale,
@@ -73,6 +81,53 @@ class ProSartisanApp extends StatelessWidget {
         initialBinding: AuthBinding(),
         initialRoute: AppRoutes.splash,
         getPages: AppPages.routes,
+
+        // Error builder for widget errors
+        builder: (context, widget) {
+          // Wrap with error boundary
+          ErrorWidget.builder = (FlutterErrorDetails details) {
+            // Log to Sentry
+            SentryService.captureException(
+              details.exception,
+              stackTrace: details.stack,
+              hint: 'Widget error',
+            );
+
+            // Return a custom error widget
+            return Material(
+              color: AppTheme.darkTheme.scaffoldBackgroundColor,
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.error_outline,
+                        color: Colors.red,
+                        size: 48,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Une erreur est survenue',
+                        style: AppTheme.darkTheme.textTheme.titleLarge,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Veuillez redémarrer l\'application',
+                        style: AppTheme.darkTheme.textTheme.bodyMedium,
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          };
+
+          return widget ?? const SizedBox.shrink();
+        },
       ),
     );
   }

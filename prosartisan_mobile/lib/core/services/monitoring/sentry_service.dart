@@ -14,10 +14,14 @@ class SentryService {
     defaultValue: kDebugMode ? 'development' : 'production',
   );
 
-  static const double _tracesSampleRate = double.fromEnvironment(
-    'SENTRY_TRACES_SAMPLE_RATE',
-    defaultValue: 1.0,
-  );
+  static final double _tracesSampleRate =
+      double.tryParse(
+        const String.fromEnvironment(
+          'SENTRY_TRACES_SAMPLE_RATE',
+          defaultValue: '1.0',
+        ),
+      ) ??
+      1.0;
 
   static const bool _enabled = bool.fromEnvironment(
     'SENTRY_ENABLE',
@@ -36,9 +40,8 @@ class SentryService {
       options.environment = _environment;
       options.tracesSampleRate = _tracesSampleRate;
 
-      // Enable automatic breadcrumbs
+      // Enable automatic breadcrumbs and session tracking
       options.enableAutoSessionTracking = true;
-      options.sessionTrackingIntervalMillis = 30000;
 
       // Capture failed HTTP requests
       options.captureFailedRequests = true;
