@@ -6,15 +6,34 @@ import 'core/routes/app_routes.dart';
 import 'core/constants/app_strings.dart';
 import 'core/controllers/language_controller.dart';
 import 'core/services/localization_service.dart';
+import 'core/services/api/api_client.dart';
+import 'core/services/api/api_service.dart';
+import 'core/services/sync/sync_service.dart';
+import 'core/services/storage/offline_repository.dart';
+import 'shared/data/repositories/reference_data_repository.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/bindings/auth_binding.dart';
 import 'generated/l10n/app_localizations.dart';
 
 void main() {
+  // Initialize core services first
+  _initializeCoreServices();
+
+  runApp(const ProSartisanApp());
+}
+
+void _initializeCoreServices() {
   // Initialize language controller
   Get.put(LanguageController());
 
-  runApp(const ProSartisanApp());
+  // Initialize core API services
+  Get.put<ApiClient>(ApiClient(), permanent: true);
+  Get.put<ApiService>(ApiService(Get.find<ApiClient>()), permanent: true);
+
+  // Initialize other core services that are used across the app
+  Get.put<SyncService>(SyncService(), permanent: true);
+  Get.put<OfflineRepository>(OfflineRepository(), permanent: true);
+  Get.put<ReferenceDataRepository>(ReferenceDataRepository(), permanent: true);
 }
 
 class ProSartisanApp extends StatelessWidget {

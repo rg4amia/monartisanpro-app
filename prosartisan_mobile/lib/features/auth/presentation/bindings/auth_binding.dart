@@ -15,10 +15,7 @@ import '../controllers/otp_controller.dart';
 class AuthBinding extends Bindings {
   @override
   void dependencies() {
-    // Core services
-    Get.lazyPut<ApiClient>(() => ApiClient(), fenix: true);
-
-    // Data sources
+    // Data sources (ApiClient and ApiService are already registered globally)
     Get.lazyPut<AuthRemoteDataSource>(
       () => AuthRemoteDataSource(Get.find<ApiClient>()),
     );

@@ -14,7 +14,7 @@
         "intervention/image": "*",
         "laravel/cashier": "*",
         "laravel/framework": "^12.0",
-        "laravel/sanctum": "*",
+        "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.10.1",
         "laravel/wayfinder": "^0.1.11",
         "predis/predis": "*",
