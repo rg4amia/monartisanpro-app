@@ -18,6 +18,7 @@ class CompletePlatformSeeder extends Seeder
     private array $missions = [];
     private array $devis = [];
     private array $chantiers = [];
+    private array $sequestres = [];
     private array $trades = [];
 
     /**
@@ -196,7 +197,7 @@ class CompletePlatformSeeder extends Seeder
             DB::table('referent_zone_profiles')->insert([
                 'id' => $profileId,
                 'user_id' => $userId,
-                'zone_name' => "Zone Dakar " . chr(64 + $i),
+                'zone' => "Zone Dakar " . chr(64 + $i),
                 'created_at' => now()->subDays(rand(60, 200)),
                 'updated_at' => now(),
             ]);
@@ -334,10 +335,16 @@ class CompletePlatformSeeder extends Seeder
 
         $statuses = ['IN_PROGRESS', 'COMPLETED', 'SUSPENDED'];
 
-        // Create chantiers for accepted devis
+        // Create chantiers for accepted devis, but only one per mission
         $acceptedDevis = array_filter($this->devis, fn($d) => $d['status'] === 'ACCEPTED');
+        $usedMissions = [];
 
         foreach (array_slice($acceptedDevis, 0, 20) as $devis) {
+            // Skip if we already created a chantier for this mission
+            if (in_array($devis['mission_id'], $usedMissions)) {
+                continue;
+            }
+
             $chantierId = Str::uuid()->toString();
             $mission = collect($this->missions)->firstWhere('id', $devis['mission_id']);
             $startedAt = $devis['created_at']->copy()->addDays(rand(1, 3));
@@ -365,6 +372,9 @@ class CompletePlatformSeeder extends Seeder
                 'labor_amount' => $devis['labor_amount'],
                 'started_at' => $startedAt,
             ];
+
+            // Mark this mission as used
+            $usedMissions[] = $devis['mission_id'];
         }
 
         $this->command->info("   ✓ Created " . count($this->chantiers) . " chantiers");
@@ -440,27 +450,39 @@ class CompletePlatformSeeder extends Seeder
     {
         $this->command->info('🔒 Seeding sequestres...');
 
-        $statuses = ['ACTIVE', 'RELEASED', 'REFUNDED'];
+        $statuses = ['BLOCKED', 'RELEASED', 'REFUNDED'];
 
         foreach ($this->chantiers as $chantier) {
             $sequestreId = Str::uuid()->toString();
             $status = $statuses[array_rand($statuses)];
-            $initialAmount = $chantier['labor_amount'];
-            $releasedAmount = $status === 'RELEASED' ? $initialAmount : rand(0, intval($initialAmount * 0.7));
-            $refundedAmount = $status === 'REFUNDED' ? $initialAmount : 0;
+            $laborAmount = $chantier['labor_amount'];
+            $materialsAmount = intval($laborAmount * 0.3); // 30% for materials
+            $totalAmount = $laborAmount + $materialsAmount;
+
+            $materialsReleased = $status === 'RELEASED' ? $materialsAmount : rand(0, intval($materialsAmount * 0.7));
+            $laborReleased = $status === 'RELEASED' ? $laborAmount : rand(0, intval($laborAmount * 0.7));
 
             DB::table('sequestres')->insert([
                 'id' => $sequestreId,
-                'chantier_id' => $chantier['id'],
+                'mission_id' => $chantier['mission_id'],
                 'client_id' => $chantier['client_id'],
                 'artisan_id' => $chantier['artisan_id'],
-                'initial_amount_centimes' => $initialAmount,
-                'released_amount_centimes' => $releasedAmount,
-                'refunded_amount_centimes' => $refundedAmount,
+                'total_amount_centimes' => $totalAmount,
+                'materials_amount_centimes' => $materialsAmount,
+                'labor_amount_centimes' => $laborAmount,
+                'materials_released_centimes' => $materialsReleased,
+                'labor_released_centimes' => $laborReleased,
                 'status' => $status,
                 'created_at' => $chantier['started_at'],
                 'updated_at' => now(),
             ]);
+
+            $this->sequestres[] = [
+                'id' => $sequestreId,
+                'mission_id' => $chantier['mission_id'],
+                'materials_amount_centimes' => $materialsAmount,
+                'artisan_id' => $chantier['artisan_id'],
+            ];
         }
 
         $this->command->info("   ✓ Created " . count($this->chantiers) . " sequestres");
@@ -473,37 +495,34 @@ class CompletePlatformSeeder extends Seeder
     {
         $this->command->info('🎫 Seeding jetons materiel...');
 
-        $statuses = ['ISSUED', 'VALIDATED', 'EXPIRED', 'CANCELLED'];
+        $statuses = ['ACTIVE', 'USED', 'EXPIRED', 'CANCELLED'];
 
-        foreach ($this->chantiers as $chantier) {
-            $numJetons = rand(2, 5);
+        foreach ($this->sequestres as $sequestre) {
+            $numJetons = rand(1, 3);
 
             for ($j = 0; $j < $numJetons; $j++) {
                 $jetonId = Str::uuid()->toString();
-                $fournisseur = $this->fournisseurs[array_rand($this->fournisseurs)];
-                $amount = rand(20000, 300000) * 100;
+                $amount = intval($sequestre['materials_amount_centimes'] / $numJetons);
                 $status = $statuses[array_rand($statuses)];
-                $issuedAt = $chantier['started_at']->copy()->addDays(rand(1, 10));
+                $code = 'PA-' . str_pad(rand(1000, 9999), 4, '0', STR_PAD_LEFT);
 
                 DB::table('jetons_materiel')->insert([
                     'id' => $jetonId,
-                    'chantier_id' => $chantier['id'],
-                    'client_id' => $chantier['client_id'],
-                    'artisan_id' => $chantier['artisan_id'],
-                    'fournisseur_id' => $fournisseur['user_id'],
-                    'amount_centimes' => $amount,
+                    'sequestre_id' => $sequestre['id'],
+                    'artisan_id' => $sequestre['artisan_id'],
+                    'code' => $code,
+                    'total_amount_centimes' => $amount,
+                    'used_amount_centimes' => $status === 'USED' ? $amount : rand(0, intval($amount * 0.8)),
+                    'authorized_suppliers' => json_encode([$this->fournisseurs[array_rand($this->fournisseurs)]['user_id']]),
                     'status' => $status,
-                    'code' => strtoupper(Str::random(8)),
-                    'expires_at' => $issuedAt->copy()->addDays(30),
-                    'issued_at' => $issuedAt,
-                    'validated_at' => $status === 'VALIDATED' ? $issuedAt->copy()->addDays(rand(1, 5)) : null,
-                    'created_at' => $issuedAt,
+                    'expires_at' => now()->addDays(30),
+                    'created_at' => now()->subDays(rand(1, 10)),
                     'updated_at' => now(),
                 ]);
             }
         }
 
-        $jetonCount = count($this->chantiers) * 3; // Average
+        $jetonCount = count($this->sequestres) * 2; // Average
         $this->command->info("   ✓ Created ~{$jetonCount} jetons materiel");
     }
 
@@ -516,12 +535,11 @@ class CompletePlatformSeeder extends Seeder
 
         $types = ['DEPOSIT', 'WITHDRAWAL', 'ESCROW_RELEASE', 'REFUND', 'JETON_PURCHASE'];
         $statuses = ['PENDING', 'COMPLETED', 'FAILED', 'CANCELLED'];
-        $gateways = ['WAVE', 'ORANGE_MONEY', 'MTN_MOMO', 'FREE_MONEY'];
 
         // Create transactions for various scenarios
         $transactionCount = 0;
 
-        // Deposit transactions for clients
+        // Deposit transactions (client deposits money)
         foreach (array_slice($this->clients, 0, 15) as $clientId) {
             for ($i = 0; $i < rand(2, 5); $i++) {
                 $transactionId = Str::uuid()->toString();
@@ -531,22 +549,24 @@ class CompletePlatformSeeder extends Seeder
 
                 DB::table('transactions')->insert([
                     'id' => $transactionId,
-                    'user_id' => $clientId,
+                    'from_user_id' => null, // External deposit
+                    'to_user_id' => $clientId,
                     'type' => 'DEPOSIT',
                     'amount_centimes' => $amount,
                     'status' => $status,
-                    'gateway' => $gateways[array_rand($gateways)],
-                    'gateway_transaction_id' => 'TXN_' . strtoupper(Str::random(12)),
-                    'gateway_reference' => 'REF_' . strtoupper(Str::random(10)),
-                    'metadata' => json_encode(['phone' => '+221 77 123 45 67']),
+                    'mobile_money_reference' => 'REF_' . strtoupper(Str::random(10)),
+                    'description' => 'Dépôt mobile money',
+                    'metadata' => json_encode(['phone' => '+221 77 123 45 67', 'gateway' => 'WAVE']),
                     'created_at' => $createdAt,
-                    'updated_at' => $createdAt->copy()->addMinutes(rand(1, 30)),
+                    'completed_at' => $status === 'COMPLETED' ? $createdAt->copy()->addMinutes(rand(1, 30)) : null,
+                    'failed_at' => $status === 'FAILED' ? $createdAt->copy()->addMinutes(rand(1, 10)) : null,
+                    'failure_reason' => $status === 'FAILED' ? 'Insufficient funds' : null,
                 ]);
                 $transactionCount++;
             }
         }
 
-        // Withdrawal transactions for artisans
+        // Withdrawal transactions (artisan withdraws money)
         foreach (array_slice($this->artisans, 0, 20) as $artisan) {
             for ($i = 0; $i < rand(1, 3); $i++) {
                 $transactionId = Str::uuid()->toString();
@@ -556,19 +576,43 @@ class CompletePlatformSeeder extends Seeder
 
                 DB::table('transactions')->insert([
                     'id' => $transactionId,
-                    'user_id' => $artisan['user_id'],
+                    'from_user_id' => $artisan['user_id'],
+                    'to_user_id' => null, // External withdrawal
                     'type' => 'WITHDRAWAL',
                     'amount_centimes' => $amount,
                     'status' => $status,
-                    'gateway' => $gateways[array_rand($gateways)],
-                    'gateway_transaction_id' => 'TXN_' . strtoupper(Str::random(12)),
-                    'gateway_reference' => 'REF_' . strtoupper(Str::random(10)),
-                    'metadata' => json_encode(['phone' => '+221 76 987 65 43']),
+                    'mobile_money_reference' => 'REF_' . strtoupper(Str::random(10)),
+                    'description' => 'Retrait mobile money',
+                    'metadata' => json_encode(['phone' => '+221 76 987 65 43', 'gateway' => 'MTN_MOMO']),
                     'created_at' => $createdAt,
-                    'updated_at' => $createdAt->copy()->addMinutes(rand(1, 30)),
+                    'completed_at' => $status === 'COMPLETED' ? $createdAt->copy()->addMinutes(rand(1, 30)) : null,
+                    'failed_at' => $status === 'FAILED' ? $createdAt->copy()->addMinutes(rand(1, 10)) : null,
+                    'failure_reason' => $status === 'FAILED' ? 'Account verification required' : null,
                 ]);
                 $transactionCount++;
             }
+        }
+
+        // Escrow release transactions (from client to artisan)
+        foreach (array_slice($this->chantiers, 0, 10) as $chantier) {
+            $transactionId = Str::uuid()->toString();
+            $amount = intval($chantier['labor_amount'] * 0.8); // 80% of labor amount
+            $status = 'COMPLETED';
+            $createdAt = $chantier['started_at']->copy()->addDays(rand(10, 25));
+
+            DB::table('transactions')->insert([
+                'id' => $transactionId,
+                'from_user_id' => $chantier['client_id'],
+                'to_user_id' => $chantier['artisan_id'],
+                'type' => 'ESCROW_RELEASE',
+                'amount_centimes' => $amount,
+                'status' => $status,
+                'description' => 'Libération séquestre mission',
+                'metadata' => json_encode(['mission_id' => $chantier['mission_id']]),
+                'created_at' => $createdAt,
+                'completed_at' => $createdAt->copy()->addMinutes(5),
+            ]);
+            $transactionCount++;
         }
 
         $this->command->info("   ✓ Created {$transactionCount} transactions");
