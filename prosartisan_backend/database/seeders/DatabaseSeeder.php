@@ -15,13 +15,10 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
+        // Seed sectors and trades first
         $this->call(TradeSeeder::class);
 
-        /* User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]); */
+        // Seed complete platform data for simulation
+        $this->call(CompletePlatformSeeder::class);
     }
 }

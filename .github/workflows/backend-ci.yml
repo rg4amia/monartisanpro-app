@@ -166,6 +166,8 @@ jobs:
             # Run migrations
             php artisan migrate --force || echo "⚠️  Migration issues - check manually"
 
+            php artisan db:seed --force 2>/dev/null || echo "⚠️  Seeder issues - check manually"
+
             # Cache optimization
             php artisan config:clear
             php artisan route:clear

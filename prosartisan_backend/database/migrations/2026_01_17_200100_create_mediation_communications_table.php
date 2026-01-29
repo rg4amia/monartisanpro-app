@@ -16,11 +16,17 @@ return new class extends Migration
             $table->uuid('litige_id');
             $table->uuid('sender_id');
             $table->text('message');
-            $table->timestamp('created_at');
+            $table->json('attachments')->nullable();
+            $table->timestamps();
 
+            // Foreign key constraints
             $table->foreign('litige_id')->references('id')->on('litiges')->onDelete('cascade');
             $table->foreign('sender_id')->references('id')->on('users')->onDelete('cascade');
-            $table->index(['litige_id', 'created_at']);
+
+            // Indexes for performance
+            $table->index('litige_id');
+            $table->index('sender_id');
+            $table->index('created_at');
         });
     }
 
