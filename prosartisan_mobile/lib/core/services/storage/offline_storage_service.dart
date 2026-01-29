@@ -20,7 +20,9 @@ class OfflineStorageService {
       'phone_number': user.phoneNumber,
       'account_status': user.accountStatus,
       'trade_category': user.tradeCategory,
-      'is_kyc_verified': user.isKycVerified == true ? 1 : 0,
+      'is_kyc_verified': user.isKycVerified != null
+          ? (user.isKycVerified! ? 1 : 0)
+          : null,
       'business_name': user.businessName,
       'created_at': user.createdAt.toIso8601String(),
       'synced': 1,
@@ -39,15 +41,17 @@ class OfflineStorageService {
 
     final map = maps.first;
     return User(
-      id: map['id'],
-      email: map['email'],
-      userType: map['user_type'],
-      phoneNumber: map['phone_number'],
-      accountStatus: map['account_status'],
-      tradeCategory: map['trade_category'],
-      isKycVerified: map['is_kyc_verified'] == 1,
-      businessName: map['business_name'],
-      createdAt: DateTime.parse(map['created_at']),
+      id: map['id'] as String,
+      email: map['email'] as String,
+      userType: map['user_type'] as String,
+      phoneNumber: map['phone_number'] as String?,
+      accountStatus: map['account_status'] as String,
+      tradeCategory: map['trade_category'] as String?,
+      isKycVerified: map['is_kyc_verified'] != null
+          ? (map['is_kyc_verified'] as int) == 1
+          : null,
+      businessName: map['business_name'] as String?,
+      createdAt: DateTime.parse(map['created_at'] as String),
     );
   }
 
