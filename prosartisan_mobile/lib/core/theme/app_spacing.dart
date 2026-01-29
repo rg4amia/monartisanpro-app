@@ -66,10 +66,10 @@ class AppSpacing {
   static const double appBarHeight = 56.0;
 
   /// Hauteur des boutons principaux
-  static const double buttonHeight = 48.0;
+  static const double buttonHeight = 50.0;
 
   /// Hauteur des champs de saisie
-  static const double inputHeight = 48.0;
+  static const double inputHeight = 50.0;
 
   /// Taille minimale des zones tactiles
   static const double minTouchTarget = 44.0;

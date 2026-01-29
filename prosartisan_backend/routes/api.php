@@ -33,8 +33,8 @@ use Illuminate\Support\Facades\Route;
 // Secure file serving (outside versioned API)
 Route::get('/secure-file', [SecureFileController::class, 'serve'])->name('secure-file.serve');
 
-// API Version 1
-Route::prefix('v1')->group(function () {
+// API Version 1 - All routes use 'api' middleware to bypass CSRF
+Route::middleware(['api'])->prefix('v1')->group(function () {
 
     // Health check routes (public)
     Route::prefix('health')->group(function () {

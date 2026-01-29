@@ -234,9 +234,9 @@ class _LoginPageState extends State<LoginPage> {
                   ],
                 ),
 
-              SizedBox(height: AppSpacing.md),
-              
-              SecondaryButton(
+                SizedBox(height: AppSpacing.md),
+
+                SecondaryButton(
                   onPressed: () {
                     Get.to(() => const RegisterPage());
                   },
