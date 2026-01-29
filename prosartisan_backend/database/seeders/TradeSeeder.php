@@ -17,7 +17,7 @@ class TradeSeeder extends Seeder
      */
     public function run(): void
     {
-        $csvPath = base_path('../base_secteur_activite_metier.csv');
+        $csvPath = public_path('base_secteur_activite_metier.csv');
         if (! file_exists($csvPath)) {
             $this->command->error("CSV file not found at: $csvPath");
             return;
