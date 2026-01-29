@@ -114,6 +114,28 @@ class _DesignSystemDemoPageState extends State<DesignSystemDemoPage> {
     );
   }
 
+  Widget _buildTradesApiDemo() {
+    return Column(
+      children: [
+        PrimaryButton(
+          text: 'Tester la récupération des métiers',
+          icon: Icons.work,
+          onPressed: () {
+            Get.toNamed(AppRoutes.tradeSelectionDemo);
+          },
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Text(
+          'Teste la récupération des secteurs et métiers depuis l\'API backend',
+          style: AppTypography.bodySmall.copyWith(
+            color: AppColors.textSecondary,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+
   Widget _buildTypographyDemo() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

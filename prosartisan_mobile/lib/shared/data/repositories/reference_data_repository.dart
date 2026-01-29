@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 import '../../models/sector.dart';
+import '../../models/trade.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/services/api/api_service.dart';
 

@@ -5,6 +5,8 @@ import '../../../../shared/widgets/trade_selector_widget.dart';
 import '../../../../shared/controllers/reference_data_controller.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_typography.dart';
 
 class TradeSelectionDemoPage extends StatefulWidget {
   const TradeSelectionDemoPage({Key? key}) : super(key: key);
@@ -24,8 +26,8 @@ class _TradeSelectionDemoPageState extends State<TradeSelectionDemoPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Sélection de Métier'),
-        backgroundColor: AppTheme.colorScheme.primary,
-        foregroundColor: AppTheme.colorScheme.onPrimary,
+        backgroundColor: AppColors.accentPrimary,
+        foregroundColor: Colors.white,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -35,7 +37,7 @@ class _TradeSelectionDemoPageState extends State<TradeSelectionDemoPage> {
             // Métier sélectionné
             if (_selectedTrade != null) ...[
               Card(
-                color: AppTheme.colorScheme.primaryContainer,
+                color: AppColors.accentPrimary.withOpacity(0.1),
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
@@ -43,22 +45,22 @@ class _TradeSelectionDemoPageState extends State<TradeSelectionDemoPage> {
                     children: [
                       Text(
                         'Métier sélectionné',
-                        style: AppTheme.textTheme.titleMedium?.copyWith(
-                          color: AppTheme.colorScheme.onPrimaryContainer,
+                        style: AppTypography.body.copyWith(
+                          color: AppColors.textPrimary,
                         ),
                       ),
-                      AppSpacing.verticalSpaceSmall,
+                      const SizedBox(height: AppSpacing.sm),
                       Text(
                         _selectedTrade!.name,
-                        style: AppTheme.textTheme.titleLarge?.copyWith(
-                          color: AppTheme.colorScheme.onPrimaryContainer,
+                        style: AppTypography.h4.copyWith(
+                          color: AppColors.textPrimary,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       Text(
                         'Code: ${_selectedTrade!.code}',
-                        style: AppTheme.textTheme.bodyMedium?.copyWith(
-                          color: AppTheme.colorScheme.onPrimaryContainer,
+                        style: AppTypography.bodySmall.copyWith(
+                          color: AppColors.textSecondary,
                         ),
                       ),
                       Obx(() {
@@ -67,8 +69,8 @@ class _TradeSelectionDemoPageState extends State<TradeSelectionDemoPage> {
                         );
                         return Text(
                           'Secteur: ${sector?.name ?? 'Inconnu'}',
-                          style: AppTheme.textTheme.bodyMedium?.copyWith(
-                            color: AppTheme.colorScheme.onPrimaryContainer,
+                          style: AppTypography.bodySmall.copyWith(
+                            color: AppColors.textSecondary,
                           ),
                         );
                       }),
@@ -76,7 +78,7 @@ class _TradeSelectionDemoPageState extends State<TradeSelectionDemoPage> {
                   ),
                 ),
               ),
-              AppSpacing.verticalSpaceMedium,
+              const SizedBox(height: AppSpacing.base),
             ],
 
             // Sélecteur de métier
@@ -90,8 +92,8 @@ class _TradeSelectionDemoPageState extends State<TradeSelectionDemoPage> {
                     'Métier sélectionné',
                     trade.name,
                     snackPosition: SnackPosition.BOTTOM,
-                    backgroundColor: AppTheme.colorScheme.primary,
-                    colorText: AppTheme.colorScheme.onPrimary,
+                    backgroundColor: AppColors.accentPrimary,
+                    colorText: Colors.white,
                   );
                 },
                 selectedTrade: _selectedTrade,
@@ -101,7 +103,7 @@ class _TradeSelectionDemoPageState extends State<TradeSelectionDemoPage> {
 
             // Boutons d'action
             if (_selectedTrade != null) ...[
-              AppSpacing.verticalSpaceMedium,
+              const SizedBox(height: AppSpacing.base),
               Row(
                 children: [
                   Expanded(
@@ -127,7 +129,7 @@ class _TradeSelectionDemoPageState extends State<TradeSelectionDemoPage> {
                                     'Succès',
                                     'Métier "${_selectedTrade!.name}" confirmé !',
                                     snackPosition: SnackPosition.BOTTOM,
-                                    backgroundColor: Colors.green,
+                                    backgroundColor: AppColors.accentSuccess,
                                     colorText: Colors.white,
                                   );
                                 },
@@ -140,7 +142,7 @@ class _TradeSelectionDemoPageState extends State<TradeSelectionDemoPage> {
                       child: const Text('Confirmer la sélection'),
                     ),
                   ),
-                  AppSpacing.horizontalSpaceSmall,
+                  const SizedBox(width: AppSpacing.sm),
                   OutlinedButton(
                     onPressed: () {
                       setState(() {

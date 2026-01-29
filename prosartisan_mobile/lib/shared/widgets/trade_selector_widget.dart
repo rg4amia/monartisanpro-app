@@ -5,6 +5,8 @@ import '../models/sector.dart';
 import '../controllers/reference_data_controller.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_spacing.dart';
+import '../../core/theme/app_typography.dart';
+import '../../core/theme/app_colors.dart';
 
 class TradeSelectorWidget extends StatefulWidget {
   final Function(Trade) onTradeSelected;
@@ -62,8 +64,8 @@ class _TradeSelectorWidgetState extends State<TradeSelectorWidget> {
       children: [
         // Filtre par secteur
         if (widget.showSectorFilter) ...[
-          Text('Secteur d\'activité', style: AppTheme.textTheme.titleMedium),
-          AppSpacing.verticalSpaceSmall,
+          Text('Secteur d\'activité', style: AppTypography.body),
+          const SizedBox(height: AppSpacing.sm),
           Obx(
             () => DropdownButtonFormField<Sector>(
               value: _selectedSector,
@@ -88,12 +90,12 @@ class _TradeSelectorWidgetState extends State<TradeSelectorWidget> {
               onChanged: _onSectorChanged,
             ),
           ),
-          AppSpacing.verticalSpaceMedium,
+          const SizedBox(height: AppSpacing.base),
         ],
 
         // Barre de recherche
-        Text('Rechercher un métier', style: AppTheme.textTheme.titleMedium),
-        AppSpacing.verticalSpaceSmall,
+        Text('Rechercher un métier', style: AppTypography.body),
+        const SizedBox(height: AppSpacing.sm),
         TextField(
           controller: _searchController,
           decoration: InputDecoration(
@@ -110,11 +112,11 @@ class _TradeSelectorWidgetState extends State<TradeSelectorWidget> {
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
           ),
         ),
-        AppSpacing.verticalSpaceMedium,
+        const SizedBox(height: AppSpacing.base),
 
         // Liste des métiers
-        Text('Métiers disponibles', style: AppTheme.textTheme.titleMedium),
-        AppSpacing.verticalSpaceSmall,
+        Text('Métiers disponibles', style: AppTypography.body),
+        const SizedBox(height: AppSpacing.sm),
         Expanded(
           child: Obx(() {
             if (_controller.isLoadingSectors || _controller.isLoadingTrades) {
@@ -129,20 +131,17 @@ class _TradeSelectorWidgetState extends State<TradeSelectorWidget> {
                     Icon(
                       Icons.error_outline,
                       size: 64,
-                      color: AppTheme.colorScheme.error,
+                      color: AppColors.accentDanger,
                     ),
-                    AppSpacing.verticalSpaceMedium,
-                    Text(
-                      'Erreur de chargement',
-                      style: AppTheme.textTheme.titleLarge,
-                    ),
-                    AppSpacing.verticalSpaceSmall,
+                    const SizedBox(height: AppSpacing.base),
+                    Text('Erreur de chargement', style: AppTypography.h4),
+                    const SizedBox(height: AppSpacing.sm),
                     Text(
                       _controller.errorMessage,
                       textAlign: TextAlign.center,
-                      style: AppTheme.textTheme.bodyMedium,
+                      style: AppTypography.bodySmall,
                     ),
-                    AppSpacing.verticalSpaceMedium,
+                    const SizedBox(height: AppSpacing.base),
                     ElevatedButton(
                       onPressed: _controller.refresh,
                       child: const Text('Réessayer'),
@@ -160,18 +159,15 @@ class _TradeSelectorWidgetState extends State<TradeSelectorWidget> {
                     Icon(
                       Icons.search_off,
                       size: 64,
-                      color: AppTheme.colorScheme.onSurfaceVariant,
+                      color: AppColors.textMuted,
                     ),
-                    AppSpacing.verticalSpaceMedium,
-                    Text(
-                      'Aucun métier trouvé',
-                      style: AppTheme.textTheme.titleLarge,
-                    ),
-                    AppSpacing.verticalSpaceSmall,
+                    const SizedBox(height: AppSpacing.base),
+                    Text('Aucun métier trouvé', style: AppTypography.h4),
+                    const SizedBox(height: AppSpacing.sm),
                     Text(
                       'Essayez de modifier votre recherche ou votre filtre',
                       textAlign: TextAlign.center,
-                      style: AppTheme.textTheme.bodyMedium,
+                      style: AppTypography.bodySmall,
                     ),
                   ],
                 ),
@@ -190,7 +186,7 @@ class _TradeSelectorWidgetState extends State<TradeSelectorWidget> {
                   child: ListTile(
                     title: Text(
                       trade.name,
-                      style: AppTheme.textTheme.titleMedium?.copyWith(
+                      style: AppTypography.body.copyWith(
                         fontWeight: isSelected
                             ? FontWeight.bold
                             : FontWeight.normal,
@@ -206,7 +202,7 @@ class _TradeSelectorWidgetState extends State<TradeSelectorWidget> {
                     trailing: isSelected
                         ? Icon(
                             Icons.check_circle,
-                            color: AppTheme.colorScheme.primary,
+                            color: AppColors.accentPrimary,
                           )
                         : const Icon(Icons.arrow_forward_ios),
                     selected: isSelected,
