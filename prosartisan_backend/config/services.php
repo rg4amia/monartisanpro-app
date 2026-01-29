@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'local_sms' => [
+        'api_url' => env('LOCAL_SMS_API_URL'),
+        'api_key' => env('LOCAL_SMS_API_KEY'),
+        'sender_id' => env('LOCAL_SMS_SENDER_ID', 'ProSartisan'),
+    ],
+
 ];

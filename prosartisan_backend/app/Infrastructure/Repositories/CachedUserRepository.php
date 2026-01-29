@@ -79,6 +79,15 @@ class CachedUserRepository implements UserRepository
     /**
      * {@inheritDoc}
      */
+    public function findSuppliersNearLocation(GPS_Coordinates $location, float $radiusKm): array
+    {
+        // Location-based searches are not cached due to dynamic nature
+        return $this->repository->findSuppliersNearLocation($location, $radiusKm);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function findArtisansNearLocationPaginated(GPS_Coordinates $location, float $radiusKm, int $limit, int $offset): array
     {
         // Location-based searches are not cached due to dynamic nature
