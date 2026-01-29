@@ -21,7 +21,7 @@ class BackofficeAuth
         $user = Auth::user();
 
         // Check if user is admin
-        if ($user->user_type !== UserType::ADMIN->value) {
+        if ($user->user_type !== UserType::ADMIN()->getValue()) {
             Auth::logout();
 
             return redirect('/backoffice/login')->withErrors([
