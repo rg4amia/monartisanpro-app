@@ -167,12 +167,15 @@ jobs:
             php artisan migrate --force || echo "⚠️  Migration issues - check manually"
 
             # Cache optimization
+            php artisan config:clear
+            php artisan route:clear
+            php artisan view:clear
+            php artisan cache:clear
+
+            # Rebuild caches
             php artisan config:cache
             php artisan route:cache
             php artisan view:cache
-
-            # Clear old caches
-            php artisan cache:clear 2>/dev/null || true
 
             # Configure root .htaccess to redirect to Laravel public folder
             echo "🔧 Configuring root .htaccess..."
