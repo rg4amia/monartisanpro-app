@@ -11,15 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        
+
         Schema::create('sectors', function (Blueprint $table) {
             $table->id();
+            $table->string('code', 10)->nullable()->index();
             $table->string('name')->unique();
             $table->timestamps();
         });
 
         Schema::create('trades', function (Blueprint $table) {
             $table->id();
+            $table->string('code', 20)->nullable()->index();
             $table->string('name');
             $table->foreignId('sector_id')->constrained()->onDelete('cascade');
             $table->timestamps();

@@ -18,6 +18,7 @@ class CompletePlatformSeeder extends Seeder
     private array $missions = [];
     private array $devis = [];
     private array $chantiers = [];
+    private array $trades = [];
 
     /**
      * Run the database seeds for complete platform simulation
@@ -29,6 +30,7 @@ class CompletePlatformSeeder extends Seeder
         try {
             $this->command->info('🚀 Starting complete platform seeding...');
 
+            $this->loadTrades();
             $this->seedUsers();
             $this->seedMissions();
             $this->seedDevis();
@@ -51,6 +53,25 @@ class CompletePlatformSeeder extends Seeder
     }
 
     /**
+     * Load trades from database
+     */
+    private function loadTrades(): void
+    {
+        $this->command->info('📚 Loading trades from database...');
+
+        $this->trades = DB::table('trades')
+            ->select('id', 'name', 'sector_id')
+            ->get()
+            ->toArray();
+
+        if (empty($this->trades)) {
+            throw new \Exception('No trades found in database. Please run TradeSeeder first.');
+        }
+
+        $this->command->info("   ✓ Loaded " . count($this->trades) . " trades");
+    }
+
+    /**
      * Seed users with different roles
      */
     private function seedUsers(): void
@@ -69,12 +90,13 @@ class CompletePlatformSeeder extends Seeder
             ['lat' => 14.7500, 'lng' => -17.3333], // Guediawaye
         ];
 
-        $trades = ['PLUMBER', 'ELECTRICIAN', 'MASON', 'CARPENTER', 'PAINTER', 'WELDER'];
-
-        // Create 30 Artisans
+        // Create 30 Artisans with real trades from database
         for ($i = 1; $i <= 30; $i++) {
             $userId = Str::uuid()->toString();
             $location = $dakarLocations[array_rand($dakarLocations)];
+
+            // Select a random trade from database
+            $trade = $this->trades[array_rand($this->trades)];
 
             DB::table('users')->insert([
                 'id' => $userId,
@@ -92,7 +114,7 @@ class CompletePlatformSeeder extends Seeder
             DB::table('artisan_profiles')->insert([
                 'id' => $profileId,
                 'user_id' => $userId,
-                'trade_category' => $trades[array_rand($trades)],
+                'trade_category' => $trade->name, // Use real trade name from database
                 'is_kyc_verified' => rand(0, 10) > 2, // 80% verified
                 'latitude' => $location['lat'] + (rand(-100, 100) / 10000),
                 'longitude' => $location['lng'] + (rand(-100, 100) / 10000),
@@ -100,7 +122,12 @@ class CompletePlatformSeeder extends Seeder
                 'updated_at' => now(),
             ]);
 
-            $this->artisans[] = ['user_id' => $userId, 'profile_id' => $profileId];
+            $this->artisans[] = [
+                'user_id' => $userId,
+                'profile_id' => $profileId,
+                'trade_id' => $trade->id,
+                'trade_name' => $trade->name
+            ];
         }
 
         // Create 20 Clients
@@ -194,7 +221,6 @@ class CompletePlatformSeeder extends Seeder
     {
         $this->command->info('📋 Seeding missions...');
 
-        $trades = ['PLUMBER', 'ELECTRICIAN', 'MASON', 'CARPENTER', 'PAINTER', 'WELDER'];
         $statuses = ['OPEN', 'QUOTED', 'ACCEPTED', 'CANCELLED'];
         $dakarLocations = [
             ['lat' => 14.6937, 'lng' => -17.4441],
@@ -216,18 +242,21 @@ class CompletePlatformSeeder extends Seeder
             'Plomberie sanitaire complète',
         ];
 
-        // Create 50 missions
+        // Create 50 missions with real trades from database
         for ($i = 1; $i <= 50; $i++) {
             $missionId = Str::uuid()->toString();
             $clientId = $this->clients[array_rand($this->clients)];
             $location = $dakarLocations[array_rand($dakarLocations)];
             $createdAt = now()->subDays(rand(1, 60));
 
+            // Select a random trade from database
+            $trade = $this->trades[array_rand($this->trades)];
+
             DB::table('missions')->insert([
                 'id' => $missionId,
                 'client_id' => $clientId,
                 'description' => $descriptions[array_rand($descriptions)],
-                'trade_category' => $trades[array_rand($trades)],
+                'trade_category' => $trade->name, // Use real trade name from database
                 'budget_min_centimes' => rand(50000, 200000) * 100, // 50k-200k XOF
                 'budget_max_centimes' => rand(200000, 1000000) * 100, // 200k-1M XOF
                 'status' => $statuses[array_rand($statuses)],
@@ -240,6 +269,8 @@ class CompletePlatformSeeder extends Seeder
             $this->missions[] = [
                 'id' => $missionId,
                 'client_id' => $clientId,
+                'trade_id' => $trade->id,
+                'trade_name' => $trade->name,
                 'created_at' => $createdAt,
             ];
         }

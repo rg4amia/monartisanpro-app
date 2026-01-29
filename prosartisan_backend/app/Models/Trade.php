@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Trade extends Model
 {
-    protected $fillable = ['name', 'sector_id'];
+    protected $fillable = ['code', 'name', 'sector_id'];
 
     public function sector()
     {
