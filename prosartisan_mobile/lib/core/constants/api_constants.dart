@@ -10,6 +10,9 @@ class ApiConstants {
   static const String otpVerify = '/auth/otp/verify';
   static const String kycUpload = '/users/{id}/kyc';
 
+  // Reference Data Endpoints
+  static const String trades = '/reference/trades';
+
   // Headers
   static const String contentType = 'application/json';
   static const String accept = 'application/json';

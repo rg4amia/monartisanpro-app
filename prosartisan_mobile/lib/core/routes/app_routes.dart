@@ -22,4 +22,5 @@ class AppRoutes {
 
   // Demo route
   static const String demo = '/demo';
+  static const String tradeSelectionDemo = '/trade-selection-demo';
 }

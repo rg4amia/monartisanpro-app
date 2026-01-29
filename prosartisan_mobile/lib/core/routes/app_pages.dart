@@ -14,6 +14,8 @@ import '../../features/categories/presentation/pages/categories_page.dart';
 import '../../features/chat/presentation/pages/chat_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/demo/presentation/pages/design_system_demo_page.dart';
+import '../../features/demo/presentation/pages/trade_selection_demo_page.dart';
+import '../../shared/bindings/reference_data_binding.dart';
 import '../middleware/auth_middleware.dart';
 import 'app_routes.dart';
 
@@ -88,5 +90,12 @@ class AppPages {
 
     // Demo page (for development)
     GetPage(name: AppRoutes.demo, page: () => const DesignSystemDemoPage()),
+
+    // Trade selection demo
+    GetPage(
+      name: AppRoutes.tradeSelectionDemo,
+      page: () => const TradeSelectionDemoPage(),
+      binding: ReferenceDataBinding(),
+    ),
   ];
 }

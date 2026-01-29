@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/routes/app_routes.dart';
 import '../../../../shared/widgets/cards/promotional_card.dart';
 import '../../../../shared/widgets/cards/category_card.dart';
 import '../../../../shared/widgets/cards/service_card.dart';
@@ -41,6 +43,12 @@ class _DesignSystemDemoPageState extends State<DesignSystemDemoPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Bouton pour tester la récupération des trades
+            _buildSection(
+              title: 'API Demo - Trades',
+              child: _buildTradesApiDemo(),
+            ),
+
             // Section Typographie
             _buildSection(title: 'Typographie', child: _buildTypographyDemo()),
 
