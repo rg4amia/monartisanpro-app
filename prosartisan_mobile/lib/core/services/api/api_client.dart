@@ -8,6 +8,7 @@ class ApiClient {
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   static const String _tokenKey = 'auth_token';
+  static const String _csrfTokenKey = 'csrf_token';
 
   ApiClient() {
     _dio = Dio(
@@ -18,11 +19,12 @@ class ApiClient {
         headers: {
           'Content-Type': ApiConstants.contentType,
           'Accept': ApiConstants.accept,
+          'X-Requested-With': 'XMLHttpRequest', // Important for Laravel API
         },
       ),
     );
 
-    // Add interceptor for authentication
+    // Add interceptor for authentication and CSRF
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
@@ -31,6 +33,16 @@ class ApiClient {
           if (token != null) {
             options.headers[ApiConstants.authorization] = 'Bearer $token';
           }
+
+          // For API routes, we don't need CSRF tokens
+          // But if you need to call web routes, uncomment the following:
+          /*
+          final csrfToken = await getCsrfToken();
+          if (csrfToken != null) {
+            options.headers['X-CSRF-TOKEN'] = csrfToken;
+          }
+          */
+
           return handler.next(options);
         },
         onError: (error, handler) async {
@@ -57,6 +69,21 @@ class ApiClient {
   /// Clear authentication token
   Future<void> clearToken() async {
     await _storage.delete(key: _tokenKey);
+  }
+
+  /// Save CSRF token (if needed for web routes)
+  Future<void> saveCsrfToken(String token) async {
+    await _storage.write(key: _csrfTokenKey, value: token);
+  }
+
+  /// Get CSRF token
+  Future<String?> getCsrfToken() async {
+    return await _storage.read(key: _csrfTokenKey);
+  }
+
+  /// Clear CSRF token
+  Future<void> clearCsrfToken() async {
+    await _storage.delete(key: _csrfTokenKey);
   }
 
   /// Check if user is authenticated

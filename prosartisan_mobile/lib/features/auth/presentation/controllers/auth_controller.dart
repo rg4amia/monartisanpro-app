@@ -6,6 +6,7 @@ import '../../domain/usecases/login_usecase.dart';
 import '../../domain/usecases/register_usecase.dart';
 import '../../../../core/services/api/api_service.dart';
 import '../../../../core/services/storage/offline_storage_service.dart';
+import '../../../../core/constants/api_constants.dart';
 
 /// Controller for authentication state management
 class AuthController extends GetxController {
@@ -77,7 +78,7 @@ class AuthController extends GetxController {
     try {
       if (!await _apiService.isAuthenticated()) return;
 
-      final response = await _apiService.post('/api/v1/auth/refresh', {});
+      final response = await _apiService.post(ApiConstants.refresh, {});
       final newToken = response.data['token'];
 
       if (newToken != null) {
@@ -163,7 +164,7 @@ class AuthController extends GetxController {
 
       // Clear server session
       try {
-        await _apiService.post('/api/v1/auth/logout', {});
+        await _apiService.post(ApiConstants.logout, {});
       } catch (e) {
         // Ignore logout API errors
       }
