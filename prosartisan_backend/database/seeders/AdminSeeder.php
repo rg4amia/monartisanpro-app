@@ -32,12 +32,11 @@ class AdminSeeder extends Seeder
 
         DB::table('users')->insert([
             'id' => $adminId,
-            'name' => 'Administrateur ProsArtisan',
             'email' => 'admin@prosartisan.sn',
-            'phone' => '+221 77 000 00 00',
-            'password' => Hash::make('Admin@2026'),
-            'role' => 'ADMIN',
-            'email_verified_at' => now(),
+            'password_hash' => Hash::make('Admin@2026'),
+            'user_type' => 'ADMIN',
+            'account_status' => 'ACTIVE',
+            'phone_number' => '+221 77 000 00 00',
             'created_at' => now(),
             'updated_at' => now(),
         ]);

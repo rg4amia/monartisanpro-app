@@ -18,7 +18,6 @@ class CreateAdminCommand extends Command
  protected $signature = 'admin:create
                             {--email= : Admin email address}
                             {--password= : Admin password}
-                            {--name= : Admin name}
                             {--phone= : Admin phone number}';
 
  /**
@@ -60,7 +59,8 @@ class CreateAdminCommand extends Command
     DB::table('users')
      ->where('email', $email)
      ->update([
-      'role' => 'ADMIN',
+      'user_type' => 'ADMIN',
+      'account_status' => 'ACTIVE',
       'updated_at' => now(),
      ]);
 
@@ -70,9 +70,6 @@ class CreateAdminCommand extends Command
 
    return 1;
   }
-
-  // Get or ask for name
-  $name = $this->option('name') ?: $this->ask('Admin name', 'Administrateur ProsArtisan');
 
   // Get or ask for phone
   $phone = $this->option('phone') ?: $this->ask('Admin phone number', '+221 77 000 00 00');
@@ -101,12 +98,11 @@ class CreateAdminCommand extends Command
 
    DB::table('users')->insert([
     'id' => $adminId,
-    'name' => $name,
     'email' => $email,
-    'phone' => $phone,
-    'password' => Hash::make($password),
-    'role' => 'ADMIN',
-    'email_verified_at' => now(),
+    'password_hash' => Hash::make($password),
+    'user_type' => 'ADMIN',
+    'account_status' => 'ACTIVE',
+    'phone_number' => $phone,
     'created_at' => now(),
     'updated_at' => now(),
    ]);
@@ -117,7 +113,6 @@ class CreateAdminCommand extends Command
    $this->info('╔════════════════════════════════════════════╗');
    $this->info('║           ADMIN CREDENTIALS                ║');
    $this->info('╠════════════════════════════════════════════╣');
-   $this->info("║ Name:     {$name}");
    $this->info("║ Email:    {$email}");
    $this->info("║ Phone:    {$phone}");
    $this->info("║ Password: " . str_repeat('*', strlen($password)));

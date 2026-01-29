@@ -100,12 +100,11 @@ class CompletePlatformSeeder extends Seeder
 
             DB::table('users')->insert([
                 'id' => $userId,
-                'name' => "Artisan {$i}",
                 'email' => "artisan{$i}@prosartisan.sn",
-                'phone' => "+221 77 " . str_pad($i, 7, '0', STR_PAD_LEFT),
-                'password' => Hash::make('password'),
-                'role' => 'ARTISAN',
-                'email_verified_at' => now(),
+                'password_hash' => Hash::make('password'),
+                'user_type' => 'ARTISAN',
+                'account_status' => 'ACTIVE',
+                'phone_number' => "+221 77 " . str_pad($i, 7, '0', STR_PAD_LEFT),
                 'created_at' => now()->subDays(rand(30, 180)),
                 'updated_at' => now(),
             ]);
@@ -136,12 +135,11 @@ class CompletePlatformSeeder extends Seeder
 
             DB::table('users')->insert([
                 'id' => $userId,
-                'name' => "Client {$i}",
                 'email' => "client{$i}@prosartisan.sn",
-                'phone' => "+221 76 " . str_pad($i, 7, '0', STR_PAD_LEFT),
-                'password' => Hash::make('password'),
-                'role' => 'CLIENT',
-                'email_verified_at' => now(),
+                'password_hash' => Hash::make('password'),
+                'user_type' => 'CLIENT',
+                'account_status' => 'ACTIVE',
+                'phone_number' => "+221 76 " . str_pad($i, 7, '0', STR_PAD_LEFT),
                 'created_at' => now()->subDays(rand(10, 150)),
                 'updated_at' => now(),
             ]);
@@ -156,12 +154,11 @@ class CompletePlatformSeeder extends Seeder
 
             DB::table('users')->insert([
                 'id' => $userId,
-                'name' => "Fournisseur {$i}",
                 'email' => "fournisseur{$i}@prosartisan.sn",
-                'phone' => "+221 78 " . str_pad($i, 7, '0', STR_PAD_LEFT),
-                'password' => Hash::make('password'),
-                'role' => 'FOURNISSEUR',
-                'email_verified_at' => now(),
+                'password_hash' => Hash::make('password'),
+                'user_type' => 'FOURNISSEUR',
+                'account_status' => 'ACTIVE',
+                'phone_number' => "+221 78 " . str_pad($i, 7, '0', STR_PAD_LEFT),
                 'created_at' => now()->subDays(rand(20, 160)),
                 'updated_at' => now(),
             ]);
@@ -186,12 +183,11 @@ class CompletePlatformSeeder extends Seeder
 
             DB::table('users')->insert([
                 'id' => $userId,
-                'name' => "Referent Zone {$i}",
                 'email' => "referent{$i}@prosartisan.sn",
-                'phone' => "+221 70 " . str_pad($i, 7, '0', STR_PAD_LEFT),
-                'password' => Hash::make('password'),
-                'role' => 'REFERENT_ZONE',
-                'email_verified_at' => now(),
+                'password_hash' => Hash::make('password'),
+                'user_type' => 'REFERENT_ZONE',
+                'account_status' => 'ACTIVE',
+                'phone_number' => "+221 70 " . str_pad($i, 7, '0', STR_PAD_LEFT),
                 'created_at' => now()->subDays(rand(60, 200)),
                 'updated_at' => now(),
             ]);
