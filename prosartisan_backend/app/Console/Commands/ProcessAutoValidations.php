@@ -23,14 +23,6 @@ class ProcessAutoValidations extends Command
      */
     protected $description = 'Process auto-validations for milestones that have exceeded their 48-hour deadline';
 
-    private AutoValidationService $autoValidationService;
-
-    public function __construct(AutoValidationService $autoValidationService)
-    {
-        parent::__construct();
-        $this->autoValidationService = $autoValidationService;
-    }
-
     /**
      * Execute the console command.
      */
@@ -39,12 +31,13 @@ class ProcessAutoValidations extends Command
         $this->info('Starting auto-validation process...');
 
         try {
-            $this->autoValidationService->processAutoValidations();
+            $autoValidationService = app(AutoValidationService::class);
+            $autoValidationService->processAutoValidations();
             $this->info('Auto-validation process completed successfully.');
 
             return Command::SUCCESS;
         } catch (\Exception $e) {
-            $this->error('Auto-validation process failed: '.$e->getMessage());
+            $this->error('Auto-validation process failed: ' . $e->getMessage());
 
             return Command::FAILURE;
         }

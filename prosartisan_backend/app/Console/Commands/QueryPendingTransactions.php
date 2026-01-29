@@ -20,25 +20,18 @@ class QueryPendingTransactions extends Command
 
     protected $description = 'Query status of pending mobile money transactions';
 
-    private MobileMoneyWebhookHandler $webhookHandler;
-
-    public function __construct(MobileMoneyWebhookHandler $webhookHandler)
-    {
-        parent::__construct();
-        $this->webhookHandler = $webhookHandler;
-    }
-
     public function handle(): int
     {
         $this->info('Querying pending mobile money transactions...');
 
         try {
-            $this->webhookHandler->queryPendingTransactions();
+            $webhookHandler = app(MobileMoneyWebhookHandler::class);
+            $webhookHandler->queryPendingTransactions();
             $this->info('Successfully queried pending transactions');
 
             return 0;
         } catch (\Exception $e) {
-            $this->error('Error querying pending transactions: '.$e->getMessage());
+            $this->error('Error querying pending transactions: ' . $e->getMessage());
             Log::error('QueryPendingTransactions command failed', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),

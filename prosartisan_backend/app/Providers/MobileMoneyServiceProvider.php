@@ -67,8 +67,8 @@ class MobileMoneyServiceProvider extends ServiceProvider
             );
         });
 
-        // Register webhook handler
-        $this->app->singleton(MobileMoneyWebhookHandler::class, function ($app) {
+        // Register webhook handler (deferred binding)
+        $this->app->bind(MobileMoneyWebhookHandler::class, function ($app) {
             $gateways = [
                 $app->make('mobile_money.wave'),
                 $app->make('mobile_money.orange'),
@@ -88,7 +88,7 @@ class MobileMoneyServiceProvider extends ServiceProvider
     {
         // Publish configuration files
         $this->publishes([
-            __DIR__.'/../../config/mobile_money.php' => config_path('mobile_money.php'),
+            __DIR__ . '/../../config/mobile_money.php' => config_path('mobile_money.php'),
         ], 'mobile-money-config');
     }
 }
