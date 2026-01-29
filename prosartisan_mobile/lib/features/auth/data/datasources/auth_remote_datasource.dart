@@ -22,9 +22,35 @@ class AuthRemoteDataSource {
         data: {'email': email, 'password': password},
       );
 
-      return AuthResultModel.fromJson(response.data as Map<String, dynamic>);
+      // Check if response data is null
+      if (response.data == null) {
+        throw Exception('Server returned empty response');
+      }
+
+      // Check if response data is a Map
+      if (response.data is! Map<String, dynamic>) {
+        throw Exception('Invalid response format from server');
+      }
+
+      final responseData = response.data as Map<String, dynamic>;
+
+      // Extract the 'data' field if it exists (Laravel API format)
+      final data = responseData.containsKey('data')
+          ? responseData['data'] as Map<String, dynamic>
+          : responseData;
+
+      // Validate required fields
+      if (!data.containsKey('token') || !data.containsKey('user')) {
+        throw Exception('Invalid response: missing token or user data');
+      }
+
+      return AuthResultModel.fromJson(data);
     } on DioException catch (e) {
       throw _handleError(e);
+    } catch (e) {
+      // Catch any other errors (like type cast errors)
+      if (e is Exception) rethrow;
+      throw Exception('Login failed: ${e.toString()}');
     }
   }
 
@@ -49,9 +75,31 @@ class AuthRemoteDataSource {
 
       final response = await _apiClient.post(ApiConstants.register, data: data);
 
-      return AuthResultModel.fromJson(response.data as Map<String, dynamic>);
+      // Check if response data is null
+      if (response.data == null) {
+        throw Exception('Server returned empty response');
+      }
+
+      // Check if response data is a Map
+      if (response.data is! Map<String, dynamic>) {
+        throw Exception('Invalid response format from server');
+      }
+
+      final responseData = response.data as Map<String, dynamic>;
+
+      // Validate required fields
+      if (!responseData.containsKey('token') ||
+          !responseData.containsKey('user')) {
+        throw Exception('Invalid response: missing token or user data');
+      }
+
+      return AuthResultModel.fromJson(responseData);
     } on DioException catch (e) {
       throw _handleError(e);
+    } catch (e) {
+      // Catch any other errors (like type cast errors)
+      if (e is Exception) rethrow;
+      throw Exception('Registration failed: ${e.toString()}');
     }
   }
 
@@ -150,10 +198,24 @@ class AuthRemoteDataSource {
 
       if (statusCode == 422) {
         // Validation error
-        if (data is Map<String, dynamic> && data.containsKey('message')) {
-          return Exception(data['message']);
+        if (data is Map<String, dynamic>) {
+          if (data.containsKey('message')) {
+            return Exception(data['message']);
+          }
+          if (data.containsKey('errors')) {
+            // Laravel validation errors format
+            final errors = data['errors'] as Map<String, dynamic>;
+            final firstError = errors.values.first;
+            if (firstError is List && firstError.isNotEmpty) {
+              return Exception(firstError.first.toString());
+            }
+          }
         }
         return Exception('Validation error');
+      }
+
+      if (statusCode == 500) {
+        return Exception('Server error. Please try again later.');
       }
 
       if (data is Map<String, dynamic> && data.containsKey('message')) {
@@ -163,6 +225,6 @@ class AuthRemoteDataSource {
       return Exception('Server error: $statusCode');
     }
 
-    return Exception('Unknown error occurred');
+    return Exception('Unknown error occurred. Please try again.');
   }
 }
