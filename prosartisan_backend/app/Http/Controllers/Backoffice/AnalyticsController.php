@@ -96,7 +96,7 @@ class AnalyticsController extends Controller
       'totalUsers' => DB::table('users')->count(),
       'newUsers' => DB::table('users')->where('created_at', '>=', $startDate)->count(),
       'totalTransactions' => DB::table('transactions')->where('status', 'COMPLETED')->count(),
-      'totalVolume' => DB::table('transactions')->where('status', 'COMPLETED')->sum('amount_centimes'),
+      'totalVolume' => DB::table('transactions')->where('status', 'COMPLETED')->sum('amount_centimes') ?: 0,
       'activeMissions' => DB::table('missions')->whereIn('status', ['OPEN', 'QUOTED', 'ACCEPTED'])->count(),
       'completedMissions' => DB::table('missions')->where('status', 'COMPLETED')->count(),
       'averageRating' => DB::table('ratings')->avg('score') ?: 0,
@@ -401,9 +401,9 @@ class AnalyticsController extends Controller
   private function getAverageValues($startDate)
   {
     return [
-      'averageMissionValue' => DB::table('devis')->where('status', 'ACCEPTED')->avg('total_amount_centimes'),
-      'averageTransactionValue' => DB::table('transactions')->where('status', 'COMPLETED')->avg('amount_centimes'),
-      'averageRating' => DB::table('ratings')->avg('score'),
+      'averageMissionValue' => DB::table('devis')->where('status', 'ACCEPTED')->avg('total_amount_centimes') ?: 0,
+      'averageTransactionValue' => DB::table('transactions')->where('status', 'COMPLETED')->avg('amount_centimes') ?: 0,
+      'averageRating' => DB::table('ratings')->avg('score') ?: 0,
     ];
   }
 

@@ -174,7 +174,7 @@ export default function AnalyticsIndex({ analytics, period }) {
                                     </dt>
                                     <dd className="flex items-baseline">
                                         <div className="text-2xl font-semibold text-gray-900">
-                                            {analytics.overview.averageRating ? analytics.overview.averageRating.toFixed(1) : 'N/A'}
+                                            {analytics.overview.averageRating && typeof analytics.overview.averageRating === 'number' ? analytics.overview.averageRating.toFixed(1) : 'N/A'}
                                         </div>
                                         <div className="ml-2 text-sm text-gray-500">
                                             / 5.0
