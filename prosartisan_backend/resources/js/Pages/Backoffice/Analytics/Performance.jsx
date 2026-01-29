@@ -196,7 +196,7 @@ export default function AnalyticsPerformance({ performanceData, period }) {
       <div className="flex items-center justify-between">
        <span className="text-sm text-gray-600">Note moyenne</span>
        <span className="text-sm font-medium text-gray-900">
-        {performanceData.averageValues.averageRating ? performanceData.averageValues.averageRating.toFixed(1) : 'N/A'} / 5.0
+        {performanceData.averageValues.averageRating && typeof performanceData.averageValues.averageRating === 'number' ? performanceData.averageValues.averageRating.toFixed(1) : 'N/A'} / 5.0
        </span>
       </div>
      </div>
