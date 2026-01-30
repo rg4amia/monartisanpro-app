@@ -1,14 +1,14 @@
 import 'package:dio/dio.dart';
+import '../../../../core/services/api/api_client.dart';
+import '../../../../core/constants/api_constants.dart';
 import '../../domain/models/reputation_profile.dart';
 import '../../domain/models/score_snapshot.dart';
 import '../../domain/models/rating.dart';
-import '../../../../core/constants/api_constants.dart';
 
 class ReputationApiService {
-  final Dio _dio;
-  final String _baseUrl = ApiConstants.baseUrl;
+  final ApiClient _apiClient;
 
-  ReputationApiService({Dio? dio}) : _dio = dio ?? Dio();
+  ReputationApiService(this._apiClient);
 
   /// Get artisan reputation profile
   Future<ReputationProfile> getArtisanReputation(
@@ -16,24 +16,23 @@ class ReputationApiService {
     String token,
   ) async {
     try {
-      final response = await _dio.get(
-        '$_baseUrl/v1/artisans/$artisanId/reputation',
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $token',
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-        ),
-      );
+      final path = ApiConstants.artisanReputation.replaceAll('{id}', artisanId);
+      final response = await _apiClient.get(path);
 
-      if (response.statusCode == 200) {
-        return ReputationProfile.fromJson(response.data['data']);
-      } else {
-        throw Exception(
-          'Erreur lors de la récupération du profil de réputation',
-        );
+      if (response.data == null) {
+        throw Exception('Server returned empty response');
       }
+
+      if (response.data is! Map<String, dynamic>) {
+        throw Exception('Invalid response format from server');
+      }
+
+      final responseData = response.data as Map<String, dynamic>;
+      final data = responseData.containsKey('data')
+          ? responseData['data'] as Map<String, dynamic>
+          : responseData;
+
+      return ReputationProfile.fromJson(data);
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) {
         throw Exception('Profil de réputation non trouvé');
@@ -42,6 +41,11 @@ class ReputationApiService {
           'Erreur lors de la récupération du profil de réputation',
         );
       }
+    } catch (e) {
+      if (e is Exception) rethrow;
+      throw Exception(
+        'Erreur lors de la récupération du profil de réputation: ${e.toString()}',
+      );
     }
   }
 
@@ -51,25 +55,28 @@ class ReputationApiService {
     String token,
   ) async {
     try {
-      final response = await _dio.get(
-        '$_baseUrl/v1/artisans/$artisanId/score-history',
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $token',
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-        ),
-      );
+      final path = ApiConstants.artisanScoreHistory.replaceAll('{id}', artisanId);
+      final response = await _apiClient.get(path);
 
-      if (response.statusCode == 200) {
-        final List<dynamic> historyData = response.data['data'];
-        return historyData.map((item) => ScoreSnapshot.fromJson(item)).toList();
-      } else {
-        throw Exception(
-          'Erreur lors de la récupération de l\'historique des scores',
-        );
+      if (response.data == null) {
+        throw Exception('Server returned empty response');
       }
+
+      if (response.data is! Map<String, dynamic>) {
+        throw Exception('Invalid response format from server');
+      }
+
+      final responseData = response.data as Map<String, dynamic>;
+      final data = responseData.containsKey('data')
+          ? responseData['data']
+          : responseData;
+
+      if (data is! List) {
+        throw Exception('Invalid score history format');
+      }
+
+      final List<dynamic> historyData = data;
+      return historyData.map((item) => ScoreSnapshot.fromJson(item)).toList();
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) {
         throw Exception('Historique des scores non trouvé');
@@ -78,6 +85,11 @@ class ReputationApiService {
           'Erreur lors de la récupération de l\'historique des scores',
         );
       }
+    } catch (e) {
+      if (e is Exception) rethrow;
+      throw Exception(
+        'Erreur lors de la récupération de l\'historique des scores: ${e.toString()}',
+      );
     }
   }
 
@@ -90,29 +102,41 @@ class ReputationApiService {
     required String token,
   }) async {
     try {
-      final response = await _dio.post(
-        '$_baseUrl/v1/missions/$missionId/rate',
-        data: {'artisan_id': artisanId, 'rating': rating, 'comment': comment},
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $token',
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-        ),
+      final path = ApiConstants.missionRate.replaceAll('{id}', missionId);
+      final response = await _apiClient.post(
+        path,
+        data: {
+          'artisan_id': artisanId,
+          'rating': rating,
+          if (comment != null) 'comment': comment,
+        },
       );
 
-      if (response.statusCode == 201) {
-        return Rating.fromJson(response.data['data']);
-      } else {
-        throw Exception('Erreur lors de la soumission de la note');
+      if (response.data == null) {
+        throw Exception('Server returned empty response');
       }
+
+      if (response.data is! Map<String, dynamic>) {
+        throw Exception('Invalid response format from server');
+      }
+
+      final responseData = response.data as Map<String, dynamic>;
+      final data = responseData.containsKey('data')
+          ? responseData['data'] as Map<String, dynamic>
+          : responseData;
+
+      return Rating.fromJson(data);
     } on DioException catch (e) {
       if (e.response?.statusCode == 409) {
         throw Exception('Une note a déjà été soumise pour cette mission');
+      } else if (e.response?.statusCode == 403) {
+        throw Exception('Vous n\'avez pas la permission de noter cette mission');
       } else {
         throw Exception('Erreur lors de la soumission de la note');
       }
+    } catch (e) {
+      if (e is Exception) rethrow;
+      throw Exception('Erreur lors de la soumission de la note: ${e.toString()}');
     }
   }
 
@@ -124,27 +148,41 @@ class ReputationApiService {
     int perPage = 20,
   }) async {
     try {
-      final response = await _dio.get(
-        '$_baseUrl/v1/artisans/$artisanId/ratings',
+      final path = ApiConstants.artisanRatings.replaceAll('{id}', artisanId);
+      final response = await _apiClient.get(
+        path,
         queryParameters: {'page': page, 'per_page': perPage},
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $token',
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-        ),
       );
 
-      if (response.statusCode == 200) {
-        final List<dynamic> ratingsData =
-            response.data['data'] ?? response.data;
-        return ratingsData.map((item) => Rating.fromJson(item)).toList();
-      } else {
-        throw Exception('Erreur lors de la récupération des notes');
+      if (response.data == null) {
+        throw Exception('Server returned empty response');
       }
+
+      if (response.data is! Map<String, dynamic>) {
+        throw Exception('Invalid response format from server');
+      }
+
+      final responseData = response.data as Map<String, dynamic>;
+      final data = responseData.containsKey('data')
+          ? responseData['data']
+          : responseData;
+
+      // Handle both array and paginated responses
+      final List<dynamic> ratingsData;
+      if (data is List) {
+        ratingsData = data;
+      } else if (data is Map<String, dynamic> && data.containsKey('data')) {
+        ratingsData = data['data'] as List<dynamic>;
+      } else {
+        throw Exception('Invalid ratings data format');
+      }
+
+      return ratingsData.map((item) => Rating.fromJson(item)).toList();
     } on DioException {
       throw Exception('Erreur lors de la récupération des notes');
+    } catch (e) {
+      if (e is Exception) rethrow;
+      throw Exception('Erreur lors de la récupération des notes: ${e.toString()}');
     }
   }
 }
