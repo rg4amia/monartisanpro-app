@@ -9,6 +9,9 @@ class User {
 
   // Artisan-specific fields
   final String? tradeCategory;
+  final String? tradeName; // Human-readable trade name
+  final int? sectorId; // Sector ID for the trade
+  final String? sectorName; // Human-readable sector name
   final bool? isKycVerified;
 
   // Fournisseur-specific fields
@@ -22,6 +25,9 @@ class User {
     required this.accountStatus,
     required this.createdAt,
     this.tradeCategory,
+    this.tradeName,
+    this.sectorId,
+    this.sectorName,
     this.isKycVerified,
     this.businessName,
   });
@@ -53,6 +59,9 @@ class User {
     String? accountStatus,
     DateTime? createdAt,
     String? tradeCategory,
+    String? tradeName,
+    int? sectorId,
+    String? sectorName,
     bool? isKycVerified,
     String? businessName,
   }) {
@@ -64,6 +73,9 @@ class User {
       accountStatus: accountStatus ?? this.accountStatus,
       createdAt: createdAt ?? this.createdAt,
       tradeCategory: tradeCategory ?? this.tradeCategory,
+      tradeName: tradeName ?? this.tradeName,
+      sectorId: sectorId ?? this.sectorId,
+      sectorName: sectorName ?? this.sectorName,
       isKycVerified: isKycVerified ?? this.isKycVerified,
       businessName: businessName ?? this.businessName,
     );

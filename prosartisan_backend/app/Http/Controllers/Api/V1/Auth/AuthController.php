@@ -257,7 +257,7 @@ class AuthController extends Controller
      */
     private function createClient(Email $email, HashedPassword $password, PhoneNumber $phoneNumber): Client
     {
-        return Client::create(
+        return Client::createClient(
             email: $email,
             password: $password,
             phoneNumber: $phoneNumber
@@ -288,11 +288,11 @@ class AuthController extends Controller
                 accuracy: 1000.0 // Large accuracy to indicate it's not precise
             );
 
-        return Artisan::create(
+        return Artisan::createArtisan(
             email: $email,
             password: $password,
             phoneNumber: $phoneNumber,
-            tradeCategory: $tradeCategory,
+            category: $tradeCategory,
             location: $location
         );
     }
@@ -319,7 +319,7 @@ class AuthController extends Controller
                 accuracy: 1000.0 // Large accuracy to indicate it's not precise
             );
 
-        return Fournisseur::create(
+        return Fournisseur::createFournisseur(
             email: $email,
             password: $password,
             phoneNumber: $phoneNumber,
@@ -395,7 +395,7 @@ class AuthController extends Controller
 
             return response()->json([
                 'token' => $token,
-                'user' => new AuthResource($user),
+                'user' => new AuthResource($user, $token),
                 'message' => 'Token actualisé avec succès',
                 'status_code' => 200,
             ]);

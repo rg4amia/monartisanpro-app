@@ -10,6 +10,9 @@ class UserModel extends User {
     required super.accountStatus,
     required super.createdAt,
     super.tradeCategory,
+    super.tradeName,
+    super.sectorId,
+    super.sectorName,
     super.isKycVerified,
     super.businessName,
   });
@@ -24,6 +27,9 @@ class UserModel extends User {
       accountStatus: json['account_status'] as String,
       createdAt: DateTime.parse(json['created_at'] as String),
       tradeCategory: json['trade_category'] as String?,
+      tradeName: json['trade_name'] as String?,
+      sectorId: json['sector_id'] as int?,
+      sectorName: json['sector_name'] as String?,
       isKycVerified: json['is_kyc_verified'] as bool?,
       businessName: json['business_name'] as String?,
     );
@@ -39,6 +45,9 @@ class UserModel extends User {
       'account_status': accountStatus,
       'created_at': createdAt.toIso8601String(),
       'trade_category': tradeCategory,
+      'trade_name': tradeName,
+      'sector_id': sectorId,
+      'sector_name': sectorName,
       'is_kyc_verified': isKycVerified,
       'business_name': businessName,
     };
@@ -54,6 +63,9 @@ class UserModel extends User {
       accountStatus: accountStatus,
       createdAt: createdAt,
       tradeCategory: tradeCategory,
+      tradeName: tradeName,
+      sectorId: sectorId,
+      sectorName: sectorName,
       isKycVerified: isKycVerified,
       businessName: businessName,
     );
