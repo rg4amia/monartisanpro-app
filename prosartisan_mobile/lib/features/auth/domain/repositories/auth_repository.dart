@@ -15,6 +15,9 @@ abstract class AuthRepository {
     String? phoneNumber,
     String? tradeCategory,
     String? businessName,
+    String? tradeName,
+    int? sectorId,
+    String? sectorName,
   });
 
   /// Generate OTP for phone verification

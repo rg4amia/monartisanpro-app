@@ -62,11 +62,15 @@ class AuthRemoteDataSource {
     String? phoneNumber,
     String? tradeCategory,
     String? businessName,
+    String? tradeName,
+    int? sectorId,
+    String? sectorName,
   }) async {
     try {
       final data = {
         'email': email,
         'password': password,
+        'password_confirmation': password,
         'user_type': userType,
         if (phoneNumber != null) 'phone_number': phoneNumber,
         if (tradeCategory != null) 'trade_category': tradeCategory,

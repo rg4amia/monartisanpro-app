@@ -175,6 +175,9 @@ class AuthController extends GetxController {
     String? phoneNumber,
     String? tradeCategory,
     String? businessName,
+    String? tradeName,
+    int? sectorId,
+    String? sectorName,
   }) async {
     try {
       isLoading.value = true;
@@ -187,6 +190,9 @@ class AuthController extends GetxController {
         phoneNumber: phoneNumber,
         tradeCategory: tradeCategory,
         businessName: businessName,
+        tradeName: tradeName,
+        sectorId: sectorId,
+        sectorName: sectorName,
       );
 
       currentUser.value = result.user;

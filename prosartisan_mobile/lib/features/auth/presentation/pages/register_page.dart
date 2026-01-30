@@ -36,6 +36,13 @@ class _RegisterPageState extends State<RegisterPage> {
   void initState() {
     super.initState();
     // TradeController is now initialized globally in main.dart
+    // Load sectors when the page initializes for artisan registration
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final tradeController = Get.find<TradeController>();
+      if (tradeController.sectors.isEmpty) {
+        tradeController.loadSectors();
+      }
+    });
   }
 
   @override
@@ -54,6 +61,24 @@ class _RegisterPageState extends State<RegisterPage> {
     }
 
     final authController = Get.find<AuthController>();
+    final tradeController = Get.find<TradeController>();
+
+    // Get selected trade and sector information for artisans
+    String? selectedTradeName;
+    String? selectedSectorName;
+
+    if (_selectedUserType == 'ARTISAN' && _selectedTradeCategory != null) {
+      // Find the selected trade to get its name
+      final selectedTrade = tradeController.tradesForSelectedSector
+          .firstWhereOrNull((trade) => trade.code == _selectedTradeCategory);
+      selectedTradeName = selectedTrade?.name;
+
+      // Find the selected sector to get its name
+      final selectedSector = tradeController.sectors.firstWhereOrNull(
+        (sector) => sector.id == _selectedSectorId,
+      );
+      selectedSectorName = selectedSector?.name;
+    }
 
     final success = await authController.register(
       email: _emailController.text.trim(),
@@ -66,6 +91,10 @@ class _RegisterPageState extends State<RegisterPage> {
       businessName: _businessNameController.text.trim().isNotEmpty
           ? _businessNameController.text.trim()
           : null,
+      // Additional data for artisans
+      tradeName: selectedTradeName,
+      sectorId: _selectedSectorId,
+      sectorName: selectedSectorName,
     );
 
     if (success) {

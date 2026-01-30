@@ -1,9 +1,16 @@
 name: Deploy to Production (Hostinger Optimized)
 
 on:
-  push:
-    branches: [master, master]
-  workflow_dispatch:
+ push:
+  branches: [master, develop]
+  paths:
+   - "prosartisan_backend/**"
+   - ".github/workflows/backend-ci.yml"
+ pull_request:
+  branches: [master, develop]
+  paths:
+   - "prosartisan_backend/**"
+   - ".github/workflows/backend-ci.yml"
 
 jobs:
   deploy:

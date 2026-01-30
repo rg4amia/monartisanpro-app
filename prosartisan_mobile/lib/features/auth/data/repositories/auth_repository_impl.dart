@@ -36,6 +36,9 @@ class AuthRepositoryImpl implements AuthRepository {
     String? phoneNumber,
     String? tradeCategory,
     String? businessName,
+    String? tradeName,
+    int? sectorId,
+    String? sectorName,
   }) async {
     final result = await _remoteDataSource.register(
       email: email,
@@ -44,6 +47,9 @@ class AuthRepositoryImpl implements AuthRepository {
       phoneNumber: phoneNumber,
       tradeCategory: tradeCategory,
       businessName: businessName,
+      tradeName: tradeName,
+      sectorId: sectorId,
+      sectorName: sectorName,
     );
 
     // Save token

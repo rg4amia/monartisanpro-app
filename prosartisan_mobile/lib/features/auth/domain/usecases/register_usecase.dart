@@ -14,6 +14,9 @@ class RegisterUseCase {
     String? phoneNumber,
     String? tradeCategory,
     String? businessName,
+    String? tradeName,
+    int? sectorId,
+    String? sectorName,
   }) async {
     return await _repository.register(
       email: email,
@@ -22,6 +25,9 @@ class RegisterUseCase {
       phoneNumber: phoneNumber,
       tradeCategory: tradeCategory,
       businessName: businessName,
+      tradeName: tradeName,
+      sectorId: sectorId,
+      sectorName: sectorName,
     );
   }
 }
