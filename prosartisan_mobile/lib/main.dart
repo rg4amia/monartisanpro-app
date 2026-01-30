@@ -13,6 +13,7 @@ import 'core/services/sync/sync_service.dart';
 import 'core/services/storage/offline_repository.dart';
 import 'core/services/monitoring/sentry_service.dart';
 import 'shared/data/repositories/reference_data_repository.dart';
+import 'shared/controllers/trade_controller.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/bindings/auth_binding.dart';
 import 'generated/l10n/app_localizations.dart';
@@ -42,6 +43,9 @@ void _initializeCoreServices() {
   Get.put<SyncService>(SyncService(), permanent: true);
   Get.put<OfflineRepository>(OfflineRepository(), permanent: true);
   Get.put<ReferenceDataRepository>(ReferenceDataRepository(), permanent: true);
+
+  // Initialize trade controller for reference data
+  Get.put<TradeController>(TradeController(), permanent: true);
 }
 
 class ProSartisanApp extends StatelessWidget {

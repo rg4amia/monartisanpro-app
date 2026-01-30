@@ -41,19 +41,19 @@ class RegisterRequest extends FormRequest
 
         // Additional validation for artisans
         if ($this->input('user_type') === 'ARTISAN') {
-            $rules['trade_category'] = ['required', 'string', Rule::in(['PLUMBER', 'ELECTRICIAN', 'MASON'])];
-            $rules['location'] = ['required', 'array'];
-            $rules['location.latitude'] = ['required', 'numeric', 'between:-90,90'];
-            $rules['location.longitude'] = ['required', 'numeric', 'between:-180,180'];
+            $rules['trade_category'] = ['required', 'string', 'exists:trades,code'];
+            $rules['location'] = ['nullable', 'array'];
+            $rules['location.latitude'] = ['required_with:location', 'numeric', 'between:-90,90'];
+            $rules['location.longitude'] = ['required_with:location', 'numeric', 'between:-180,180'];
             $rules['location.accuracy'] = ['nullable', 'numeric', 'min:0'];
         }
 
         // Additional validation for fournisseurs
         if ($this->input('user_type') === 'FOURNISSEUR') {
             $rules['business_name'] = ['required', 'string', 'max:255'];
-            $rules['shop_location'] = ['required', 'array'];
-            $rules['shop_location.latitude'] = ['required', 'numeric', 'between:-90,90'];
-            $rules['shop_location.longitude'] = ['required', 'numeric', 'between:-180,180'];
+            $rules['shop_location'] = ['nullable', 'array'];
+            $rules['shop_location.latitude'] = ['required_with:shop_location', 'numeric', 'between:-90,90'];
+            $rules['shop_location.longitude'] = ['required_with:shop_location', 'numeric', 'between:-180,180'];
             $rules['shop_location.accuracy'] = ['nullable', 'numeric', 'min:0'];
         }
 
@@ -79,7 +79,7 @@ class RegisterRequest extends FormRequest
             'phone_number.required' => 'Le numéro de téléphone est requis.',
             'phone_number.regex' => 'Le numéro de téléphone doit être au format +225XXXXXXXXXX.',
             'trade_category.required' => 'La catégorie de métier est requise pour les artisans.',
-            'trade_category.in' => 'La catégorie de métier doit être PLUMBER, ELECTRICIAN ou MASON.',
+            'trade_category.exists' => 'Le métier sélectionné n\'existe pas.',
             'location.required' => 'La localisation est requise pour les artisans.',
             'business_name.required' => 'Le nom de l\'entreprise est requis pour les fournisseurs.',
             'shop_location.required' => 'La localisation du magasin est requise pour les fournisseurs.',

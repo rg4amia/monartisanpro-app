@@ -61,6 +61,9 @@ Route::middleware(['api'])->prefix('v1')->group(function () {
     // Reference data routes (public)
     Route::prefix('reference')->group(function () {
         Route::get('/trades', [\App\Http\Controllers\Api\V1\ReferenceDataController::class, 'index']);
+        Route::get('/sectors', [\App\Http\Controllers\Api\V1\ReferenceDataController::class, 'sectors']);
+        Route::get('/sectors/{sectorId}/trades', [\App\Http\Controllers\Api\V1\ReferenceDataController::class, 'tradesBySector']);
+        Route::get('/trades/all', [\App\Http\Controllers\Api\V1\ReferenceDataController::class, 'trades']);
     });
 
     // Parameters API routes

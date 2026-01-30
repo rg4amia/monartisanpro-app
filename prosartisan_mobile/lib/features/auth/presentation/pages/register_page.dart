@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:prosartisan_mobile/features/auth/presentation/pages/kyc_upload_page.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -7,7 +8,7 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../shared/widgets/buttons/primary_button.dart';
 import '../../../../shared/controllers/trade_controller.dart';
-import '../controllers/auth_controller.
+import '../controllers/auth_controller.dart';
 
 /// Registration page for new users
 class RegisterPage extends StatefulWidget {
@@ -26,9 +27,16 @@ class _RegisterPageState extends State<RegisterPage> {
   final _businessNameController = TextEditingController();
 
   String _selectedUserType = 'CLIENT';
+  int? _selectedSectorId;
   String? _selectedTradeCategory;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // TradeController is now initialized globally in main.dart
+  }
 
   @override
   void dispose() {
@@ -241,83 +249,306 @@ class _RegisterPageState extends State<RegisterPage> {
 
                 SizedBox(height: AppSpacing.base),
 
-                // Trade category for artisans
+                // Sector and Trade selection for artisans
                 if (_selectedUserType == 'ARTISAN') ...[
-                  DropdownButtonFormField<String>(
-                    initialValue: _selectedTradeCategory,
-                    style: AppTypography.body.copyWith(
-                      color: AppColors.textPrimary,
-                    ),
-                    dropdownColor: AppColors.cardBg,
-                    decoration: InputDecoration(
-                      labelText: AppStrings.tradeCategory,
-                      labelStyle: AppTypography.body.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                      prefixIcon: Icon(
-                        Icons.work,
-                        color: AppColors.textSecondary,
-                      ),
-                      filled: true,
-                      fillColor: AppColors.cardBg,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                        borderSide: BorderSide(color: AppColors.overlayMedium),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                        borderSide: BorderSide(color: AppColors.overlayMedium),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                        borderSide: BorderSide(
-                          color: AppColors.accentPrimary,
-                          width: 2,
-                        ),
-                      ),
-                    ),
-                    items: [
-                      DropdownMenuItem(
-                        value: 'PLUMBER',
-                        child: Text(
-                          AppStrings.plumber,
-                          style: AppTypography.body.copyWith(
-                            color: AppColors.textPrimary,
+                  // Sector selection
+                  GetBuilder<TradeController>(
+                    builder: (tradeController) {
+                      if (tradeController.isLoadingSectors.value) {
+                        return Container(
+                          padding: EdgeInsets.all(AppSpacing.base),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            border: Border.all(color: AppColors.overlayMedium),
+                            color: AppColors.cardBg,
                           ),
-                        ),
-                      ),
-                      DropdownMenuItem(
-                        value: 'ELECTRICIAN',
-                        child: Text(
-                          AppStrings.electrician,
-                          style: AppTypography.body.copyWith(
-                            color: AppColors.textPrimary,
+                          child: Row(
+                            children: [
+                              SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    AppColors.accentPrimary,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: AppSpacing.base),
+                              Text(
+                                'Chargement des secteurs...',
+                                style: AppTypography.body.copyWith(
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ),
-                      DropdownMenuItem(
-                        value: 'MASON',
-                        child: Text(
-                          AppStrings.mason,
-                          style: AppTypography.body.copyWith(
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                      ),
-                    ],
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedTradeCategory = value;
-                      });
-                    },
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return AppStrings.tradeCategoryRequired;
+                        );
                       }
-                      return null;
+
+                      if (tradeController.errorMessage.value.isNotEmpty) {
+                        return Container(
+                          padding: EdgeInsets.all(AppSpacing.base),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            border: Border.all(color: AppColors.accentDanger),
+                            color: AppColors.cardBg,
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.error_outline,
+                                color: AppColors.accentDanger,
+                                size: 20,
+                              ),
+                              SizedBox(width: AppSpacing.base),
+                              Expanded(
+                                child: Text(
+                                  'Erreur: ${tradeController.errorMessage.value}',
+                                  style: AppTypography.bodySmall.copyWith(
+                                    color: AppColors.accentDanger,
+                                  ),
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: () => tradeController.refreshSectors(),
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: AppSpacing.sm,
+                                    vertical: AppSpacing.xs,
+                                  ),
+                                  child: Text(
+                                    'Réessayer',
+                                    style: AppTypography.bodySmall.copyWith(
+                                      color: AppColors.accentPrimary,
+                                      decoration: TextDecoration.underline,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      return DropdownButtonFormField<int>(
+                        value: _selectedSectorId,
+                        style: AppTypography.body.copyWith(
+                          color: AppColors.textPrimary,
+                        ),
+                        dropdownColor: AppColors.cardBg,
+                        decoration: InputDecoration(
+                          labelText: 'Secteur d\'activité',
+                          labelStyle: AppTypography.body.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                          prefixIcon: Icon(
+                            Icons.business_center,
+                            color: AppColors.textSecondary,
+                          ),
+                          filled: true,
+                          fillColor: AppColors.cardBg,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            borderSide: BorderSide(
+                              color: AppColors.overlayMedium,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            borderSide: BorderSide(
+                              color: AppColors.overlayMedium,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            borderSide: BorderSide(
+                              color: AppColors.accentPrimary,
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                        items: tradeController.sectors.map((sector) {
+                          return DropdownMenuItem<int>(
+                            value: sector.id,
+                            child: Text(
+                              sector.name,
+                              style: AppTypography.body.copyWith(
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedSectorId = value;
+                            _selectedTradeCategory =
+                                null; // Reset trade selection
+                          });
+                          if (value != null) {
+                            tradeController.loadTradesBySector(value);
+                          }
+                        },
+                        validator: (value) {
+                          if (value == null) {
+                            return 'Veuillez sélectionner un secteur';
+                          }
+                          return null;
+                        },
+                      );
                     },
                   ),
                   SizedBox(height: AppSpacing.base),
+
+                  // Trade selection (only show if sector is selected)
+                  if (_selectedSectorId != null) ...[
+                    GetBuilder<TradeController>(
+                      builder: (tradeController) {
+                        if (tradeController.isLoadingTrades.value) {
+                          return Container(
+                            padding: EdgeInsets.all(AppSpacing.base),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                              border: Border.all(
+                                color: AppColors.overlayMedium,
+                              ),
+                              color: AppColors.cardBg,
+                            ),
+                            child: Row(
+                              children: [
+                                SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      AppColors.accentPrimary,
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: AppSpacing.base),
+                                Text(
+                                  'Chargement des métiers...',
+                                  style: AppTypography.body.copyWith(
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+
+                        if (tradeController.errorMessage.value.isNotEmpty) {
+                          return Container(
+                            padding: EdgeInsets.all(AppSpacing.base),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                              border: Border.all(color: AppColors.accentDanger),
+                              color: AppColors.cardBg,
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.error_outline,
+                                  color: AppColors.accentDanger,
+                                  size: 20,
+                                ),
+                                SizedBox(width: AppSpacing.base),
+                                Expanded(
+                                  child: Text(
+                                    'Erreur: ${tradeController.errorMessage.value}',
+                                    style: AppTypography.bodySmall.copyWith(
+                                      color: AppColors.accentDanger,
+                                    ),
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: () => tradeController.refreshTrades(),
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: AppSpacing.sm,
+                                      vertical: AppSpacing.xs,
+                                    ),
+                                    child: Text(
+                                      'Réessayer',
+                                      style: AppTypography.bodySmall.copyWith(
+                                        color: AppColors.accentPrimary,
+                                        decoration: TextDecoration.underline,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+
+                        return DropdownButtonFormField<String>(
+                          value: _selectedTradeCategory,
+                          style: AppTypography.body.copyWith(
+                            color: AppColors.textPrimary,
+                          ),
+                          dropdownColor: AppColors.cardBg,
+                          decoration: InputDecoration(
+                            labelText: AppStrings.tradeCategory,
+                            labelStyle: AppTypography.body.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                            prefixIcon: Icon(
+                              Icons.work,
+                              color: AppColors.textSecondary,
+                            ),
+                            filled: true,
+                            fillColor: AppColors.cardBg,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                              borderSide: BorderSide(
+                                color: AppColors.overlayMedium,
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                              borderSide: BorderSide(
+                                color: AppColors.overlayMedium,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                              borderSide: BorderSide(
+                                color: AppColors.accentPrimary,
+                                width: 2,
+                              ),
+                            ),
+                          ),
+                          items: tradeController.tradesForSelectedSector.map((
+                            trade,
+                          ) {
+                            return DropdownMenuItem<String>(
+                              value: trade.code,
+                              child: Text(
+                                trade.name,
+                                style: AppTypography.body.copyWith(
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedTradeCategory = value;
+                            });
+                          },
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return AppStrings.tradeCategoryRequired;
+                            }
+                            return null;
+                          },
+                        );
+                      },
+                    ),
+                    SizedBox(height: AppSpacing.base),
+                  ],
                 ],
 
                 // Business name for fournisseurs
@@ -551,7 +782,11 @@ class _RegisterPageState extends State<RegisterPage> {
         setState(() {
           _selectedUserType = value;
           if (value != 'ARTISAN') {
+            _selectedSectorId = null;
             _selectedTradeCategory = null;
+            // Clear trade controller selection
+            final tradeController = Get.find<TradeController>();
+            tradeController.clearSelection();
           }
         });
       },

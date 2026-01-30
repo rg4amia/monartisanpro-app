@@ -15,6 +15,9 @@ class ApiConstants {
 
   // Reference Data Endpoints
   static const String trades = '/reference/trades';
+  static const String sectors = '/reference/sectors';
+  static const String tradesBySector = '/reference/sectors/{sectorId}/trades';
+  static const String allTrades = '/reference/trades/all';
 
   // Headers
   static const String contentType = 'application/json';

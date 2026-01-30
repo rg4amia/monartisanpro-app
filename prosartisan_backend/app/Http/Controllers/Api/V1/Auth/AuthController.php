@@ -274,11 +274,19 @@ class AuthController extends Controller
         array $data
     ): Artisan {
         $tradeCategory = TradeCategory::fromString($data['trade_category']);
-        $location = new GPS_Coordinates(
-            latitude: $data['location']['latitude'],
-            longitude: $data['location']['longitude'],
-            accuracy: $data['location']['accuracy'] ?? 10.0
-        );
+
+        // Default location if not provided (can be updated later)
+        $location = isset($data['location'])
+            ? new GPS_Coordinates(
+                latitude: $data['location']['latitude'],
+                longitude: $data['location']['longitude'],
+                accuracy: $data['location']['accuracy'] ?? 10.0
+            )
+            : new GPS_Coordinates(
+                latitude: 5.3600, // Default to Abidjan coordinates
+                longitude: -4.0083,
+                accuracy: 1000.0 // Large accuracy to indicate it's not precise
+            );
 
         return Artisan::create(
             email: $email,
@@ -298,11 +306,18 @@ class AuthController extends Controller
         PhoneNumber $phoneNumber,
         array $data
     ): Fournisseur {
-        $shopLocation = new GPS_Coordinates(
-            latitude: $data['shop_location']['latitude'],
-            longitude: $data['shop_location']['longitude'],
-            accuracy: $data['shop_location']['accuracy'] ?? 10.0
-        );
+        // Default shop location if not provided (can be updated later)
+        $shopLocation = isset($data['shop_location'])
+            ? new GPS_Coordinates(
+                latitude: $data['shop_location']['latitude'],
+                longitude: $data['shop_location']['longitude'],
+                accuracy: $data['shop_location']['accuracy'] ?? 10.0
+            )
+            : new GPS_Coordinates(
+                latitude: 5.3600, // Default to Abidjan coordinates
+                longitude: -4.0083,
+                accuracy: 1000.0 // Large accuracy to indicate it's not precise
+            );
 
         return Fournisseur::create(
             email: $email,
