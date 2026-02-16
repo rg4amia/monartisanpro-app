@@ -4,6 +4,8 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/spacing.dart';
 import '../../../../shared/controllers/auth_controller.dart';
 import '../../../../shared/controllers/search_controller.dart' as artisan_search;
+import '../../../search/presentation/screens/map_search_screen.dart';
+import '../../../search/presentation/screens/search_filter_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -290,7 +292,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildCategoryCard(sector) {
+  Widget _buildCategoryCard(dynamic sector) {
     final iconData = _getSectorIcon(sector.code);
     final gradient = _getSectorGradient(sector.code);
 

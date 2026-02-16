@@ -62,7 +62,7 @@
 **Backend**
 - Models : Project, Quote (lignes matériel/main-d'œuvre), EscrowWallet, MaterialToken
 - Workflow projet : création → devis → acceptation → paiement → séquestre → fragmentation automatique (ratio configurable)
-- Intégration paiement Mobile Money (via agrégateur CinetPay/Flutterwave → webhook confirmation)
+- Intégration paiement Mobile Money (via agrégateur SycaPay/Flutterwave → webhook confirmation)
 - Génération Jeton Matériel (QR code avec laravel-snappy ou QR package)
 
 **Frontend**
