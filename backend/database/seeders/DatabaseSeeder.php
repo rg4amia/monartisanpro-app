@@ -15,11 +15,16 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        // Seed sectors and trades from CSV
+        $this->call([
+            SectorsTradesSeeder::class,
         ]);
+
+        // User::factory(10)->create();
+        // Note: Test user creation requires role field now
+        // User::factory()->create([
+        //     'name' => 'Test User',
+        //     'email' => 'test@example.com',
+        // ]);
     }
 }
