@@ -4,12 +4,12 @@ on:
  push:
   branches: [master, develop]
   paths:
-   - "prosartisan_mobile/**"
+   - "frontend/**"
    - ".github/workflows/mobile-ci.yml"
  pull_request:
   branches: [master, develop]
   paths:
-   - "prosartisan_mobile/**"
+   - "frontend/**"
    - ".github/workflows/mobile-ci.yml"
 
 jobs:
@@ -26,29 +26,29 @@ jobs:
       channel: "stable"
 
    - name: Get dependencies
-     working-directory: prosartisan_mobile
+     working-directory: frontend
      run: flutter pub get
 
    - name: Verify formatting
-     working-directory: prosartisan_mobile
+     working-directory: frontend
      run: dart format --output=none --set-exit-if-changed .
 
    - name: Analyze project source
-     working-directory: prosartisan_mobile
+     working-directory: frontend
      run: flutter analyze
 
    - name: Run unit tests
-     working-directory: prosartisan_mobile
+     working-directory: frontend
      run: flutter test test/unit --coverage
 
    - name: Run widget tests
-     working-directory: prosartisan_mobile
+     working-directory: frontend
      run: flutter test test/widget
 
    - name: Upload Coverage Reports
      uses: codecov/codecov-action@v4
      with:
-      files: ./prosartisan_mobile/coverage/lcov.info
+      files: ./frontend/coverage/lcov.info
       flags: mobile
       name: mobile-coverage
 
@@ -72,18 +72,18 @@ jobs:
       java-version: "17"
 
    - name: Get dependencies
-     working-directory: prosartisan_mobile
+     working-directory: frontend
      run: flutter pub get
 
    - name: Build APK
-     working-directory: prosartisan_mobile
+     working-directory: frontend
      run: flutter build apk --release
 
    - name: Upload APK
      uses: actions/upload-artifact@v4
      with:
       name: app-release
-      path: prosartisan_mobile/build/app/outputs/flutter-apk/app-release.apk
+      path: frontend/build/app/outputs/flutter-apk/app-release.apk
 
  build-ios:
   runs-on: macos-latest
@@ -99,9 +99,9 @@ jobs:
       channel: "stable"
 
    - name: Get dependencies
-     working-directory: prosartisan_mobile
+     working-directory: frontend
      run: flutter pub get
 
    - name: Build iOS (no codesign)
-     working-directory: prosartisan_mobile
+     working-directory: frontend
      run: flutter build ios --release --no-codesign
