@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import '../../shared/models/auth_response.dart';
+import '../../shared/models/escrow_model.dart';
 import 'dio_client.dart';
 
 class PaymentService {
@@ -129,58 +130,4 @@ class PaymentStatus {
   bool get isCompleted => status == 'completed';
   bool get isFailed => status == 'failed';
   bool get isCancelled => status == 'cancelled';
-}
-
-class Transaction {
-  final int id;
-  final int? projectId;
-  final String transactionRef;
-  final String type; // deposit, token_redemption, labor_release, refund, commission
-  final double amount;
-  final String? paymentMethod;
-  final String status; // pending, completed, failed, cancelled
-  final DateTime createdAt;
-
-  Transaction({
-    required this.id,
-    this.projectId,
-    required this.transactionRef,
-    required this.type,
-    required this.amount,
-    this.paymentMethod,
-    required this.status,
-    required this.createdAt,
-  });
-
-  factory Transaction.fromJson(Map<String, dynamic> json) {
-    return Transaction(
-      id: json['id'] as int,
-      projectId: json['project_id'] as int?,
-      transactionRef: json['transaction_ref'] as String,
-      type: json['type'] as String,
-      amount: (json['amount'] as num).toDouble(),
-      paymentMethod: json['payment_method'] as String?,
-      status: json['status'] as String,
-      createdAt: DateTime.parse(json['created_at'] as String),
-    );
-  }
-
-  String get formattedAmount => '${amount.toStringAsFixed(0)} FCFA';
-
-  String get typeLabel {
-    switch (type) {
-      case 'deposit':
-        return 'Dépôt';
-      case 'token_redemption':
-        return 'Utilisation jeton';
-      case 'labor_release':
-        return 'Paiement main d\'œuvre';
-      case 'refund':
-        return 'Remboursement';
-      case 'commission':
-        return 'Commission';
-      default:
-        return type;
-    }
-  }
 }

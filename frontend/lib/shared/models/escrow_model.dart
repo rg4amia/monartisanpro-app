@@ -183,6 +183,76 @@ class TokenRedemption {
 }
 
 @JsonSerializable()
+class Transaction {
+  final int id;
+  @JsonKey(name: 'project_id')
+  final int projectId;
+  @JsonKey(name: 'escrow_wallet_id')
+  final int? escrowWalletId;
+  @JsonKey(name: 'transaction_id')
+  final String transactionId;
+  final String type; // payment, token_redemption, labor_release, refund
+  final double amount;
+  final String description;
+  final String status; // pending, completed, failed, cancelled
+  @JsonKey(name: 'payment_method')
+  final String? paymentMethod; // mobile_money, card, bank_transfer
+  @JsonKey(name: 'provider_reference')
+  final String? providerReference;
+  @JsonKey(name: 'created_at')
+  final DateTime createdAt;
+  @JsonKey(name: 'updated_at')
+  final DateTime updatedAt;
+
+  Transaction({
+    required this.id,
+    required this.projectId,
+    this.escrowWalletId,
+    required this.transactionId,
+    required this.type,
+    required this.amount,
+    required this.description,
+    required this.status,
+    this.paymentMethod,
+    this.providerReference,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+
+  factory Transaction.fromJson(Map<String, dynamic> json) =>
+      _$TransactionFromJson(json);
+  Map<String, dynamic> toJson() => _$TransactionToJson(this);
+
+  // Helper getters
+  bool get isPending => status == 'pending';
+  bool get isCompleted => status == 'completed';
+  bool get isFailed => status == 'failed';
+  bool get isCancelled => status == 'cancelled';
+
+  bool get isPayment => type == 'payment';
+  bool get isTokenRedemption => type == 'token_redemption';
+  bool get isLaborRelease => type == 'labor_release';
+  bool get isRefund => type == 'refund';
+
+  String get statusLabel {
+    switch (status) {
+      case 'pending':
+        return 'En attente';
+      case 'completed':
+        return 'Complété';
+      case 'failed':
+        return 'Échoué';
+      case 'cancelled':
+        return 'Annulé';
+      default:
+        return status;
+    }
+  }
+
+  String get formattedAmount => '${amount.toStringAsFixed(0)} FCFA';
+}
+
+@JsonSerializable()
 class RedeemTokenRequest {
   @JsonKey(name: 'token_code')
   final String tokenCode;

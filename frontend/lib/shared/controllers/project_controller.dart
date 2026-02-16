@@ -19,6 +19,7 @@ class ProjectController extends GetxController {
   // Escrow & Token
   final Rx<EscrowWallet?> escrowWallet = Rx<EscrowWallet?>(null);
   final Rx<MaterialToken?> materialToken = Rx<MaterialToken?>(null);
+  final RxList<Transaction> projectTransactions = <Transaction>[].obs;
 
   // Loading states
   final RxBool isLoading = false.obs;
@@ -192,6 +193,20 @@ class ProjectController extends GetxController {
       }
     } catch (e) {
       // Silent fail - token may not exist yet
+    }
+  }
+
+  /// Fetch project transactions
+  Future<void> fetchProjectTransactions(int projectId) async {
+    try {
+      final response = await _paymentService.getProjectTransactions(projectId);
+
+      if (response.success && response.data != null) {
+        projectTransactions.value = response.data!;
+      }
+    } catch (e) {
+      // Silent fail - transactions may not exist yet
+      projectTransactions.value = [];
     }
   }
 

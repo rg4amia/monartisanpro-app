@@ -105,6 +105,37 @@ Map<String, dynamic> _$TokenRedemptionToJson(TokenRedemption instance) =>
       'updated_at': instance.updatedAt?.toIso8601String(),
     };
 
+Transaction _$TransactionFromJson(Map<String, dynamic> json) => Transaction(
+      id: (json['id'] as num).toInt(),
+      projectId: (json['project_id'] as num).toInt(),
+      escrowWalletId: (json['escrow_wallet_id'] as num?)?.toInt(),
+      transactionId: json['transaction_id'] as String,
+      type: json['type'] as String,
+      amount: (json['amount'] as num).toDouble(),
+      description: json['description'] as String,
+      status: json['status'] as String,
+      paymentMethod: json['payment_method'] as String?,
+      providerReference: json['provider_reference'] as String?,
+      createdAt: DateTime.parse(json['created_at'] as String),
+      updatedAt: DateTime.parse(json['updated_at'] as String),
+    );
+
+Map<String, dynamic> _$TransactionToJson(Transaction instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'project_id': instance.projectId,
+      'escrow_wallet_id': instance.escrowWalletId,
+      'transaction_id': instance.transactionId,
+      'type': instance.type,
+      'amount': instance.amount,
+      'description': instance.description,
+      'status': instance.status,
+      'payment_method': instance.paymentMethod,
+      'provider_reference': instance.providerReference,
+      'created_at': instance.createdAt.toIso8601String(),
+      'updated_at': instance.updatedAt.toIso8601String(),
+    };
+
 RedeemTokenRequest _$RedeemTokenRequestFromJson(Map<String, dynamic> json) =>
     RedeemTokenRequest(
       tokenCode: json['token_code'] as String,
