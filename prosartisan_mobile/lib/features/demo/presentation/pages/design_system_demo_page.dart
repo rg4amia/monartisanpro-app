@@ -4,6 +4,8 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/routes/app_routes.dart';
+import '../../../../shared/models/category_model.dart';
+import '../../../../shared/models/provider_model.dart';
 import '../../../../shared/widgets/cards/promotional_card.dart';
 import '../../../../shared/widgets/cards/category_card.dart';
 import '../../../../shared/widgets/cards/service_card.dart';
@@ -13,6 +15,7 @@ import '../../../../shared/widgets/buttons/primary_button.dart';
 import '../../../../shared/widgets/buttons/icon_button.dart';
 import '../../../../shared/widgets/common/search_bar.dart';
 import '../../../../shared/widgets/common/provider_info.dart';
+import '../../../home/data/models/service_model.dart';
 
 /// Page de démonstration du design system
 /// Montre tous les composants implémentés avec leurs variantes

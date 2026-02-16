@@ -3,20 +3,23 @@ import 'package:get/get.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../shared/widgets/cards/category_card.dart';
-import '../../../../shared/widgets/cards/service_card.dart';
+import '../../../../shared/models/category_model.dart';
+import '../../data/models/service_model.dart';
+import '../../data/repositories/home_repository.dart';
 import '../pages/home_page.dart';
 
 /// Contrôleur pour la page d'accueil
 /// Gère l'état et la logique métier de l'écran d'accueil
 class HomeController extends GetxController {
+  final HomeRepository _homeRepository = Get.find<HomeRepository>();
+
   // ==================== OBSERVABLES ====================
 
   /// Nom de l'utilisateur connecté
-  final userName = 'Amadou Diallo'.obs;
+  final userName = 'Utilisateur'.obs;
 
   /// Nombre de notifications non lues
-  final notificationCount = 3.obs;
+  final notificationCount = 0.obs;
 
   /// Route actuelle pour la navigation
   final currentRoute = 'home'.obs;
@@ -36,8 +39,17 @@ class HomeController extends GetxController {
   /// État de chargement des services
   final isLoadingServices = false.obs;
 
+  /// État de chargement des catégories
+  final isLoadingCategories = false.obs;
+
+  /// État de chargement du profil utilisateur
+  final isLoadingProfile = false.obs;
+
   /// Terme de recherche actuel
   final searchQuery = ''.obs;
+
+  /// Message d'erreur
+  final errorMessage = ''.obs;
 
   // ==================== LIFECYCLE ====================
 
@@ -50,30 +62,99 @@ class HomeController extends GetxController {
   @override
   void onReady() {
     super.onReady();
-    _loadPopularServices();
+    _loadAllData();
   }
 
   // ==================== PRIVATE METHODS ====================
 
   /// Initialise les données de base
   void _initializeData() {
-    categories.assignAll(HomePageTestData.mockCategories);
+    // Load cached data or set defaults
+    _loadUserProfile();
+    _loadNotificationsCount();
   }
 
-  /// Charge les services populaires
+  /// Charge toutes les données nécessaires
+  Future<void> _loadAllData() async {
+    await Future.wait([_loadCategories(), _loadPopularServices()]);
+  }
+
+  /// Charge le profil utilisateur
+  Future<void> _loadUserProfile() async {
+    try {
+      isLoadingProfile.value = true;
+      final profile = await _homeRepository.getUserProfile();
+
+      if (profile.isNotEmpty) {
+        userName.value = profile['name'] ?? 'Utilisateur';
+      }
+    } catch (e) {
+      // Keep default name if profile loading fails
+      print('Failed to load user profile: $e');
+    } finally {
+      isLoadingProfile.value = false;
+    }
+  }
+
+  /// Charge le nombre de notifications
+  Future<void> _loadNotificationsCount() async {
+    try {
+      final count = await _homeRepository.getNotificationsCount();
+      notificationCount.value = count;
+    } catch (e) {
+      // Keep default count if notifications loading fails
+      print('Failed to load notifications count: $e');
+    }
+  }
+
+  /// Charge les catégories depuis l'API
+  Future<void> _loadCategories() async {
+    try {
+      isLoadingCategories.value = true;
+      errorMessage.value = '';
+
+      final apiCategories = await _homeRepository.getCategories();
+      categories.assignAll(apiCategories);
+    } catch (e) {
+      errorMessage.value = 'Impossible de charger les catégories';
+      // Fallback to mock data
+      categories.assignAll(HomePageTestData.mockCategories);
+
+      Get.snackbar(
+        'Erreur',
+        'Impossible de charger les catégories',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColors.accentDanger,
+        colorText: Colors.white,
+      );
+    } finally {
+      isLoadingCategories.value = false;
+    }
+  }
+
+  /// Charge les services populaires depuis l'API
   Future<void> _loadPopularServices() async {
     try {
       isLoadingServices.value = true;
+      errorMessage.value = '';
 
-      // Simulation d'un appel API
-      await Future.delayed(const Duration(seconds: 1));
+      final services = await _homeRepository.getPopularServices(
+        limit: 10,
+        category: selectedCategoryId.value,
+      );
 
-      popularServices.assignAll(HomePageTestData.mockServices);
+      popularServices.assignAll(services);
     } catch (e) {
+      errorMessage.value = 'Impossible de charger les services';
+      // Fallback to mock data
+      popularServices.assignAll(HomePageTestData.mockServices);
+
       Get.snackbar(
         'Erreur',
         'Impossible de charger les services',
         snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColors.accentDanger,
+        colorText: Colors.white,
       );
     } finally {
       isLoadingServices.value = false;
@@ -95,7 +176,7 @@ class HomeController extends GetxController {
   /// Gère les changements dans la barre de recherche
   void onSearchChanged(String query) {
     searchQuery.value = query;
-    _filterServices(query);
+    _searchServices(query);
   }
 
   /// Gère la soumission de la recherche
@@ -119,7 +200,7 @@ class HomeController extends GetxController {
     } else {
       selectedCategoryId.value = category.id;
     }
-    _filterServicesByCategory();
+    _loadPopularServices(); // Reload services with new category filter
   }
 
   /// Gère le tap sur "Voir toutes les catégories"
@@ -141,21 +222,11 @@ class HomeController extends GetxController {
   void onServiceFavoriteToggled(ServiceModel service) {
     final index = popularServices.indexWhere((s) => s.id == service.id);
     if (index != -1) {
-      final updatedService = ServiceModel(
-        id: service.id,
-        title: service.title,
-        description: service.description,
-        price: service.price,
-        currency: service.currency,
-        imageUrl: service.imageUrl,
-        rating: service.rating,
-        reviewCount: service.reviewCount,
-        provider: service.provider,
-        status: service.status,
-        isFavorite: !service.isFavorite,
-        tags: service.tags,
-      );
+      final updatedService = service.copyWith(isFavorite: !service.isFavorite);
       popularServices[index] = updatedService;
+
+      // TODO: Call API to update favorite status
+      _updateFavoriteStatus(service.id, !service.isFavorite);
     }
   }
 
@@ -184,30 +255,48 @@ class HomeController extends GetxController {
 
   // ==================== HELPER METHODS ====================
 
-  /// Filtre les services par terme de recherche
-  void _filterServices(String query) {
+  /// Recherche des services
+  Future<void> _searchServices(String query) async {
     if (query.isEmpty) {
-      popularServices.assignAll(HomePageTestData.mockServices);
-    } else {
-      final filtered = HomePageTestData.mockServices
-          .where(
-            (service) =>
-                service.title.toLowerCase().contains(query.toLowerCase()) ||
-                service.description.toLowerCase().contains(query.toLowerCase()),
-          )
-          .toList();
-      popularServices.assignAll(filtered);
+      await _loadPopularServices();
+      return;
+    }
+
+    try {
+      isLoadingServices.value = true;
+
+      final services = await _homeRepository.getAllServices(
+        search: query,
+        category: selectedCategoryId.value,
+      );
+
+      popularServices.assignAll(services);
+    } catch (e) {
+      Get.snackbar(
+        'Erreur',
+        'Impossible de rechercher les services',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColors.accentDanger,
+        colorText: Colors.white,
+      );
+    } finally {
+      isLoadingServices.value = false;
     }
   }
 
-  /// Filtre les services par catégorie
-  void _filterServicesByCategory() {
-    if (selectedCategoryId.value == null) {
-      popularServices.assignAll(HomePageTestData.mockServices);
-    } else {
-      // Ici vous pourriez filtrer par catégorie
-      // Pour l'exemple, on garde tous les services
-      popularServices.assignAll(HomePageTestData.mockServices);
+  /// Met à jour le statut favori d'un service
+  Future<void> _updateFavoriteStatus(String serviceId, bool isFavorite) async {
+    try {
+      // TODO: Implement API call to update favorite status
+      // await _homeRepository.updateFavoriteStatus(serviceId, isFavorite);
+    } catch (e) {
+      Get.snackbar(
+        'Erreur',
+        'Impossible de mettre à jour les favoris',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColors.accentDanger,
+        colorText: Colors.white,
+      );
     }
   }
 
@@ -264,39 +353,41 @@ class HomeController extends GetxController {
                   const SizedBox(height: 16),
 
                   // Liste des catégories
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    children: categories.map((category) {
-                      final isSelected =
-                          selectedCategoryId.value == category.id;
-                      return GestureDetector(
-                        onTap: () => onCategorySelected(category),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? AppColors.accentPrimary
-                                : AppColors.overlayLight,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            category.name,
-                            style: TextStyle(
+                  Obx(
+                    () => Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: categories.map((category) {
+                        final isSelected =
+                            selectedCategoryId.value == category.id;
+                        return GestureDetector(
+                          onTap: () => onCategorySelected(category),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
                               color: isSelected
-                                  ? Colors.white
-                                  : AppColors.textPrimary,
-                              fontWeight: isSelected
-                                  ? FontWeight.w600
-                                  : FontWeight.normal,
+                                  ? AppColors.accentPrimary
+                                  : AppColors.overlayLight,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              category.name,
+                              style: TextStyle(
+                                color: isSelected
+                                    ? Colors.white
+                                    : AppColors.textPrimary,
+                                fontWeight: isSelected
+                                    ? FontWeight.w600
+                                    : FontWeight.normal,
+                              ),
                             ),
                           ),
-                        ),
-                      );
-                    }).toList(),
+                        );
+                      }).toList(),
+                    ),
                   ),
 
                   const Spacer(),
@@ -308,7 +399,7 @@ class HomeController extends GetxController {
                         child: OutlinedButton(
                           onPressed: () {
                             selectedCategoryId.value = null;
-                            _filterServicesByCategory();
+                            _loadPopularServices();
                           },
                           child: const Text('Réinitialiser'),
                         ),
@@ -318,7 +409,7 @@ class HomeController extends GetxController {
                         child: ElevatedButton(
                           onPressed: () {
                             Get.back();
-                            _filterServicesByCategory();
+                            _loadPopularServices();
                           },
                           child: const Text('Appliquer'),
                         ),
@@ -340,7 +431,7 @@ class HomeController extends GetxController {
 
   /// Rafraîchit les données
   Future<void> refreshData() async {
-    await _loadPopularServices();
+    await _loadAllData();
   }
 
   /// Met à jour le nom d'utilisateur

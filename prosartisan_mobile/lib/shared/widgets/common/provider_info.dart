@@ -4,6 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_radius.dart';
+import '../../models/provider_model.dart';
 import '../badges/rating_badge.dart';
 import '../cards/service_card.dart'; // Pour ProviderModel
 

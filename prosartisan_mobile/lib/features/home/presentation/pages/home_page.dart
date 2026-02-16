@@ -10,6 +10,9 @@ import '../../../../shared/widgets/cards/service_card.dart';
 import '../../../../shared/widgets/common/search_bar.dart';
 import '../../../../shared/widgets/navigation/bottom_nav_bar.dart';
 import '../../../../shared/widgets/buttons/icon_button.dart';
+import '../../../../shared/models/category_model.dart';
+import '../../../../shared/models/provider_model.dart';
+import '../../data/models/service_model.dart';
 import '../controllers/home_controller.dart';
 
 /// Page d'accueil principale de l'application ProSartisan
@@ -39,27 +42,27 @@ class HomePage extends GetView<HomeController> {
                   children: [
                     // Header avec salutation et notifications
                     _buildHeader(),
-                    
+
                     const SizedBox(height: AppSpacing.xl),
-                    
+
                     // Carte promotionnelle
                     _buildPromotionalSection(),
-                    
+
                     const SizedBox(height: AppSpacing.xl),
-                    
+
                     // Barre de recherche
                     _buildSearchSection(),
-                    
+
                     const SizedBox(height: AppSpacing.xl),
-                    
+
                     // Section Catégories
                     _buildCategoriesSection(),
-                    
+
                     const SizedBox(height: AppSpacing.xl),
-                    
+
                     // Section Services Populaires
                     _buildPopularServicesSection(),
-                    
+
                     // Espacement pour la navigation inférieure
                     const SizedBox(height: AppSpacing.bottomNavHeight),
                   ],
@@ -69,66 +72,72 @@ class HomePage extends GetView<HomeController> {
           ],
         ),
       ),
-      
+
       // Navigation inférieure
-      bottomNavigationBar: Obx(() => CustomBottomNavBar(
-        items: DefaultBottomNavItems.items,
-        currentRoute: controller.currentRoute.value,
-        onItemTapped: controller.onNavItemTapped,
-      )),
+      bottomNavigationBar: Obx(
+        () => CustomBottomNavBar(
+          items: DefaultBottomNavItems.items,
+          currentRoute: controller.currentRoute.value,
+          onItemTapped: controller.onNavItemTapped,
+        ),
+      ),
     );
   }
 
   /// Header avec salutation et bouton notifications
   Widget _buildHeader() {
-    return Obx(() => Row(
-      children: [
-        // Salutation
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Bonjour 👋',
-                style: AppTypography.body.copyWith(
-                  color: AppColors.textSecondary,
+    return Obx(
+      () => Row(
+        children: [
+          // Salutation
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Bonjour 👋',
+                  style: AppTypography.body.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
                 ),
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                controller.userName.value,
-                style: AppTypography.h3.copyWith(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.bold,
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  controller.userName.value,
+                  style: AppTypography.h3.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        
-        // Bouton notifications
-        CustomIconButton(
-          icon: Icons.notifications_outlined,
-          onPressed: controller.onNotificationPressed,
-          backgroundColor: AppColors.overlayLight,
-          iconColor: AppColors.textPrimary,
-          badgeCount: controller.notificationCount.value,
-          hasShadow: true,
-        ),
-      ],
-    ));
+
+          // Bouton notifications
+          CustomIconButton(
+            icon: Icons.notifications_outlined,
+            onPressed: controller.onNotificationPressed,
+            backgroundColor: AppColors.overlayLight,
+            iconColor: AppColors.textPrimary,
+            badgeCount: controller.notificationCount.value,
+            hasShadow: true,
+          ),
+        ],
+      ),
+    );
   }
 
   /// Section carte promotionnelle
   Widget _buildPromotionalSection() {
-    return Obx(() => PromotionalCard(
-      discount: controller.currentPromotion.value.discount,
-      title: controller.currentPromotion.value.title,
-      subtitle: controller.currentPromotion.value.subtitle,
-      imagePath: controller.currentPromotion.value.imagePath,
-      onTap: controller.onPromotionTapped,
-      gradientColors: AppColors.promotionalGradient,
-    ));
+    return Obx(
+      () => PromotionalCard(
+        discount: controller.currentPromotion.value.discount,
+        title: controller.currentPromotion.value.title,
+        subtitle: controller.currentPromotion.value.subtitle,
+        imagePath: controller.currentPromotion.value.imagePath,
+        onTap: controller.onPromotionTapped,
+        gradientColors: AppColors.promotionalGradient,
+      ),
+    );
   }
 
   /// Section barre de recherche
@@ -152,17 +161,19 @@ class HomePage extends GetView<HomeController> {
           title: 'Catégories',
           onSeeAllPressed: controller.onSeeAllCategoriesPressed,
         ),
-        
+
         const SizedBox(height: AppSpacing.base),
-        
+
         // Grille de catégories
-        Obx(() => CategoryGrid(
-          categories: controller.categories,
-          activeCategory: controller.selectedCategoryId.value,
-          onCategorySelected: controller.onCategorySelected,
-          crossAxisCount: 3,
-          childAspectRatio: 1.0,
-        )),
+        Obx(
+          () => CategoryGrid(
+            categories: controller.categories.toList(),
+            activeCategory: controller.selectedCategoryId.value,
+            onCategorySelected: controller.onCategorySelected,
+            crossAxisCount: 3,
+            childAspectRatio: 1.0,
+          ),
+        ),
       ],
     );
   }
@@ -177,21 +188,21 @@ class HomePage extends GetView<HomeController> {
           title: 'Services Populaires',
           onSeeAllPressed: controller.onSeeAllServicesPressed,
         ),
-        
+
         const SizedBox(height: AppSpacing.base),
-        
+
         // Liste des services
         Obx(() {
           if (controller.isLoadingServices.value) {
             return _buildServicesLoading();
           }
-          
+
           if (controller.popularServices.isEmpty) {
             return _buildEmptyServices();
           }
-          
+
           return ServiceCardList(
-            services: controller.popularServices,
+            services: controller.popularServices.toList(),
             onServiceTap: controller.onServiceTapped,
             onFavoriteTap: controller.onServiceFavoriteToggled,
             horizontal: false,
@@ -235,19 +246,20 @@ class HomePage extends GetView<HomeController> {
   /// Widget de chargement pour les services
   Widget _buildServicesLoading() {
     return Column(
-      children: List.generate(3, (index) => Container(
-        height: AppSpacing.serviceCardHeight,
-        margin: const EdgeInsets.only(bottom: AppSpacing.md),
-        decoration: BoxDecoration(
-          color: AppColors.overlayLight,
-          borderRadius: AppRadius.cardRadius,
-        ),
-        child: const Center(
-          child: CircularProgressIndicator(
-            color: AppColors.accentPrimary,
+      children: List.generate(
+        3,
+        (index) => Container(
+          height: AppSpacing.serviceCardHeight,
+          margin: const EdgeInsets.only(bottom: AppSpacing.md),
+          decoration: BoxDecoration(
+            color: AppColors.overlayLight,
+            borderRadius: AppRadius.cardRadius,
+          ),
+          child: const Center(
+            child: CircularProgressIndicator(color: AppColors.accentPrimary),
           ),
         ),
-      )),
+      ),
     );
   }
 
@@ -263,11 +275,7 @@ class HomePage extends GetView<HomeController> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.search_off,
-              size: 48,
-              color: AppColors.textMuted,
-            ),
+            Icon(Icons.search_off, size: 48, color: AppColors.textMuted),
             const SizedBox(height: AppSpacing.md),
             Text(
               'Aucun service trouvé',
@@ -352,7 +360,8 @@ extension HomePageTestData on HomePage {
     ServiceModel(
       id: '1',
       title: 'Réparation de plomberie',
-      description: 'Service de réparation rapide pour tous vos problèmes de plomberie',
+      description:
+          'Service de réparation rapide pour tous vos problèmes de plomberie',
       price: 25000,
       currency: 'FCFA',
       imageUrl: 'https://example.com/plumbing.jpg',
@@ -410,6 +419,6 @@ extension HomePageTestData on HomePage {
     discount: '20%',
     title: 'Offre Spéciale!',
     subtitle: 'Réduction sur tous les services aujourd\'hui',
-    imagePath: 'assets/images/worker_illustration.png',
+    imagePath: 'assets/images/logos/logo.png', // Use existing logo instead
   );
 }

@@ -19,6 +19,17 @@ class ApiConstants {
   static const String tradesBySector = '/reference/sectors/{sectorId}/trades';
   static const String allTrades = '/reference/trades/all';
 
+  // Home/Marketplace Endpoints
+  static const String missions = '/missions';
+  static const String popularServices = '/missions?popular=true';
+  static const String searchArtisans = '/artisans/search';
+  static const String categories =
+      '/reference/sectors'; // Using sectors as categories
+
+  // User Profile Endpoints
+  static const String userProfile = '/users/profile';
+  static const String notifications = '/notifications';
+
   // Headers
   static const String contentType = 'application/json';
   static const String accept = 'application/json';

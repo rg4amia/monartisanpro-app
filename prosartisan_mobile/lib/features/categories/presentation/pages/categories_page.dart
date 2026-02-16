@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../shared/models/category_model.dart';
 import '../../../../shared/widgets/cards/category_card.dart';
 import '../../../../shared/widgets/navigation/bottom_nav_bar.dart';
 import '../../../../shared/widgets/common/search_bar.dart';

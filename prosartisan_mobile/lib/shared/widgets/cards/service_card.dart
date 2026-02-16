@@ -8,56 +8,7 @@ import '../../../core/theme/app_shadows.dart';
 import '../badges/rating_badge.dart';
 import '../badges/status_badge.dart';
 import '../common/provider_info.dart';
-
-/// Modèle pour un service
-class ServiceModel {
-  final String id;
-  final String title;
-  final String description;
-  final double price;
-  final String currency;
-  final String? imageUrl;
-  final double rating;
-  final int reviewCount;
-  final ProviderModel provider;
-  final String? status;
-  final bool isFavorite;
-  final List<String>? tags;
-
-  const ServiceModel({
-    required this.id,
-    required this.title,
-    required this.description,
-    required this.price,
-    this.currency = 'FCFA',
-    this.imageUrl,
-    required this.rating,
-    required this.reviewCount,
-    required this.provider,
-    this.status,
-    this.isFavorite = false,
-    this.tags,
-  });
-}
-
-/// Modèle pour un prestataire
-class ProviderModel {
-  final String id;
-  final String name;
-  final String role;
-  final String? avatarUrl;
-  final double? rating;
-  final bool isVerified;
-
-  const ProviderModel({
-    required this.id,
-    required this.name,
-    required this.role,
-    this.avatarUrl,
-    this.rating,
-    this.isVerified = false,
-  });
-}
+import '../../../features/home/data/models/service_model.dart';
 
 /// Carte de service principale
 /// Structure verticale avec image, titre, prix, rating et info prestataire

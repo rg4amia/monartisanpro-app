@@ -3,24 +3,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_radius.dart';
+import '../../models/category_model.dart';
 import '../../../core/theme/app_shadows.dart';
-
-/// Modèle pour une catégorie
-class CategoryModel {
-  final String id;
-  final String name;
-  final IconData icon;
-  final Color? iconColor;
-  final String? imagePath;
-
-  const CategoryModel({
-    required this.id,
-    required this.name,
-    required this.icon,
-    this.iconColor,
-    this.imagePath,
-  });
-}
 
 /// Carte de catégorie utilisée dans les grilles
 /// Affiche une icône et un label avec état actif/inactif
@@ -110,9 +94,7 @@ class CategoryCard extends StatelessWidget {
       child: Icon(
         category.icon,
         size: AppSpacing.iconSizeLarge,
-        color: isActive
-            ? Colors.white
-            : (category.iconColor ?? AppColors.accentPrimary),
+        color: isActive ? Colors.white : category.iconColor,
       ),
     );
   }
@@ -198,9 +180,7 @@ class HorizontalCategoryCard extends StatelessWidget {
             Icon(
               category.icon,
               size: AppSpacing.iconSize,
-              color: isActive
-                  ? Colors.white
-                  : (category.iconColor ?? AppColors.accentPrimary),
+              color: isActive ? Colors.white : (category.iconColor),
             ),
             const SizedBox(width: AppSpacing.sm),
             Text(
@@ -305,9 +285,7 @@ class CategoryCardWithCount extends StatelessWidget {
               child: Icon(
                 category.icon,
                 size: AppSpacing.iconSizeLarge,
-                color: isActive
-                    ? Colors.white
-                    : (category.iconColor ?? AppColors.accentPrimary),
+                color: isActive ? Colors.white : category.iconColor,
               ),
             ),
 
