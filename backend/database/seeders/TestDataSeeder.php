@@ -274,7 +274,7 @@ class TestDataSeeder extends Seeder
 
         QuoteItem::create([
             'quote_id' => $quote1->id,
-            'item_type' => 'material',
+            'type' => 'material',
             'description' => 'Câbles électriques (100m)',
             'quantity' => 100,
             'unit' => 'm',
@@ -284,7 +284,7 @@ class TestDataSeeder extends Seeder
 
         QuoteItem::create([
             'quote_id' => $quote1->id,
-            'item_type' => 'material',
+            'type' => 'material',
             'description' => 'Disjoncteurs et tableaux',
             'quantity' => 1,
             'unit' => 'lot',
@@ -294,7 +294,7 @@ class TestDataSeeder extends Seeder
 
         QuoteItem::create([
             'quote_id' => $quote1->id,
-            'item_type' => 'material',
+            'type' => 'material',
             'description' => 'Prises et interrupteurs',
             'quantity' => 30,
             'unit' => 'unité',
@@ -304,7 +304,7 @@ class TestDataSeeder extends Seeder
 
         QuoteItem::create([
             'quote_id' => $quote1->id,
-            'item_type' => 'labor',
+            'type' => 'labor',
             'description' => 'Installation électrique complète',
             'quantity' => 1,
             'unit' => 'forfait',
@@ -327,7 +327,7 @@ class TestDataSeeder extends Seeder
 
         QuoteItem::create([
             'quote_id' => $quote2->id,
-            'item_type' => 'material',
+            'type' => 'material',
             'description' => 'Tuyaux PVC (10m)',
             'quantity' => 10,
             'unit' => 'm',
@@ -337,7 +337,7 @@ class TestDataSeeder extends Seeder
 
         QuoteItem::create([
             'quote_id' => $quote2->id,
-            'item_type' => 'material',
+            'type' => 'material',
             'description' => 'Raccords et joints',
             'quantity' => 1,
             'unit' => 'lot',
@@ -347,7 +347,7 @@ class TestDataSeeder extends Seeder
 
         QuoteItem::create([
             'quote_id' => $quote2->id,
-            'item_type' => 'labor',
+            'type' => 'labor',
             'description' => 'Réparation fuite + remplacement',
             'quantity' => 1,
             'unit' => 'forfait',
@@ -370,7 +370,7 @@ class TestDataSeeder extends Seeder
 
         QuoteItem::create([
             'quote_id' => $quote3->id,
-            'item_type' => 'material',
+            'type' => 'material',
             'description' => 'Bois massif (Teck)',
             'quantity' => 5,
             'unit' => 'm²',
@@ -380,7 +380,7 @@ class TestDataSeeder extends Seeder
 
         QuoteItem::create([
             'quote_id' => $quote3->id,
-            'item_type' => 'material',
+            'type' => 'material',
             'description' => 'Quincaillerie et finitions',
             'quantity' => 1,
             'unit' => 'lot',
@@ -390,7 +390,7 @@ class TestDataSeeder extends Seeder
 
         QuoteItem::create([
             'quote_id' => $quote3->id,
-            'item_type' => 'labor',
+            'type' => 'labor',
             'description' => 'Fabrication bibliothèque + bureau',
             'quantity' => 1,
             'unit' => 'forfait',
@@ -437,7 +437,6 @@ class TestDataSeeder extends Seeder
         ]);
 
         $project->update([
-            'accepted_quote_id' => $quote->id,
             'final_amount' => 1200000,
         ]);
 
@@ -498,7 +497,7 @@ class TestDataSeeder extends Seeder
             'amount' => 210000,
             'status' => 'completed',
             'scheduled_at' => now()->subDays(7),
-            'paid_at' => now()->subDays(7),
+            'processed_at' => now()->subDays(7),
         ]);
 
         $milestone2 = Milestone::create([
@@ -521,7 +520,7 @@ class TestDataSeeder extends Seeder
             'amount' => 280000,
             'status' => 'completed',
             'scheduled_at' => now()->subDays(4),
-            'paid_at' => now()->subDays(4),
+            'processed_at' => now()->subDays(4),
         ]);
 
         $milestone3 = Milestone::create([
@@ -544,7 +543,7 @@ class TestDataSeeder extends Seeder
             'amount' => 210000,
             'status' => 'completed',
             'scheduled_at' => now()->subDays(1),
-            'paid_at' => now()->subDays(1),
+            'processed_at' => now()->subDays(1),
         ]);
 
         // Create review
@@ -594,7 +593,6 @@ class TestDataSeeder extends Seeder
         ]);
 
         $project2->update([
-            'accepted_quote_id' => $quote2->id,
             'final_amount' => 1800000,
         ]);
 
@@ -651,7 +649,7 @@ class TestDataSeeder extends Seeder
             'amount' => 600000,
             'status' => 'completed',
             'scheduled_at' => now()->subDays(2),
-            'paid_at' => now()->subDays(2),
+            'processed_at' => now()->subDays(2),
         ]);
 
         Review::create([

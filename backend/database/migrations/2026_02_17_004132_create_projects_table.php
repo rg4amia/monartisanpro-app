@@ -40,6 +40,7 @@ return new class extends Migration
             $table->timestamp('cancelled_at')->nullable();
             $table->text('cancellation_reason')->nullable();
             $table->timestamps();
+            $table->softDeletes();
 
             $table->spatialIndex('location');
             $table->index(['client_id', 'status']);
