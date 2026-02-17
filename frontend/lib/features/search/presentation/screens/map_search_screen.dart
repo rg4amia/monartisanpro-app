@@ -2,26 +2,26 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:google_maps_cluster_manager/google_maps_cluster_manager.dart';
+import 'package:google_maps_cluster_manager/google_maps_cluster_manager.dart'
+    as cluster_manager;
 import 'package:get_storage/get_storage.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/spacing.dart';
 import '../../../../core/constants/app_constants.dart';
-import '../../../../shared/controllers/search_controller.dart' as artisan_search;
-import '../../../../shared/models/artisan_profile_model.dart';
+import '../../../../shared/controllers/search_controller.dart'
+    as artisan_search;
+import '../../../../shared/models/artisan_search_model.dart';
 import 'artisan_profile_screen.dart';
 import 'search_filter_screen.dart';
 
-class ArtisanClusterItem with ClusterItem {
-  final ArtisanProfileModel artisan;
+class ArtisanClusterItem with cluster_manager.ClusterItem {
+  final ArtisanSearchResult artisan;
 
   ArtisanClusterItem(this.artisan);
 
   @override
-  LatLng get location => LatLng(
-        artisan.fuzzyLocation!.latitude,
-        artisan.fuzzyLocation!.longitude,
-      );
+  LatLng get location =>
+      LatLng(artisan.fuzzyLocation!.latitude, artisan.fuzzyLocation!.longitude);
 
   @override
   String get geohash => '';
@@ -38,7 +38,7 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
   final _searchController = Get.find<artisan_search.ArtisanSearchController>();
   final _storage = GetStorage();
   GoogleMapController? _mapController;
-  ClusterManager? _clusterManager;
+  cluster_manager.ClusterManager? _clusterManager;
   Set<Marker> _markers = {};
   bool _showListView = false;
   Timer? _debounceTimer;
@@ -56,11 +56,11 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
   }
 
   void _initializeClusterManager() {
-    _clusterManager = ClusterManager<ArtisanClusterItem>(
+    _clusterManager = cluster_manager.ClusterManager<ArtisanClusterItem>(
       [],
       _updateMarkers,
       markerBuilder: _markerBuilder,
-      levels: [1, 3, 5, 8, 11, 14, 16, 18, 20], // Optimized zoom levels
+      levels: const [1, 3, 5, 8, 11, 14, 16, 18, 20], // Optimized zoom levels
       extraPercent: 0.3, // Larger cluster tolerance for better grouping
       stopClusteringZoom: 17.0, // Stop clustering at street level
     );
@@ -110,47 +110,42 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
     });
   }
 
-  Future<Marker> Function(Cluster<ArtisanClusterItem>) get _markerBuilder =>
-      (cluster) async {
-        if (cluster.isMultiple) {
-          // Cluster marker
-          return Marker(
-            markerId: MarkerId(cluster.getId()),
-            position: cluster.location,
-            icon: await _getClusterBitmap(
-              cluster.count,
-              _getClusterColor(cluster.count),
-            ),
-            onTap: () {
-              // Zoom in to expand cluster
-              _mapController?.animateCamera(
-                CameraUpdate.newLatLngZoom(
-                  cluster.location,
-                  _currentZoom + 2,
-                ),
-              );
-            },
+  Future<Marker> _markerBuilder(dynamic cluster) async {
+    final typedCluster = cluster as cluster_manager.Cluster<ArtisanClusterItem>;
+    if (typedCluster.isMultiple) {
+      // Cluster marker
+      return Marker(
+        markerId: MarkerId(typedCluster.getId()),
+        position: typedCluster.location,
+        icon: await _getClusterBitmap(
+          typedCluster.count,
+          _getClusterColor(typedCluster.count),
+        ),
+        onTap: () {
+          // Zoom in to expand cluster
+          _mapController?.animateCamera(
+            CameraUpdate.newLatLngZoom(typedCluster.location, _currentZoom + 2),
           );
-        } else {
-          // Single artisan marker (lazy load details on tap)
-          final artisan = cluster.items.first.artisan;
-          return Marker(
-            markerId: MarkerId(artisan.id.toString()),
-            position: cluster.location,
-            icon: artisan.isNearby
-                ? BitmapDescriptor.defaultMarkerWithHue(
-                    BitmapDescriptor.hueYellow)
-                : BitmapDescriptor.defaultMarkerWithHue(
-                    BitmapDescriptor.hueBlue),
-            onTap: () => _showArtisanBottomSheet(artisan),
-          );
-        }
-      };
+        },
+      );
+    } else {
+      // Single artisan marker (lazy load details on tap)
+      final artisan = typedCluster.items.first.artisan;
+      return Marker(
+        markerId: MarkerId(artisan.id.toString()),
+        position: typedCluster.location,
+        icon: artisan.isNearby
+            ? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueYellow)
+            : BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
+        onTap: () => _showArtisanBottomSheet(artisan),
+      );
+    }
+  }
 
   Color _getClusterColor(int count) {
     if (count > 50) return Colors.red;
     if (count > 20) return Colors.orange;
-    if (count > 10) return AppColors.primary;
+    if (count > 10) return AppColors.lightAccentPrimary;
     return Colors.blue;
   }
 
@@ -160,8 +155,8 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
     final hue = color == Colors.red
         ? BitmapDescriptor.hueRed
         : color == Colors.orange
-            ? BitmapDescriptor.hueOrange
-            : BitmapDescriptor.hueAzure;
+        ? BitmapDescriptor.hueOrange
+        : BitmapDescriptor.hueAzure;
 
     return BitmapDescriptor.defaultMarkerWithHue(hue);
   }
@@ -188,7 +183,7 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
     _clusterManager!.updateMap();
   }
 
-  void _showArtisanBottomSheet(ArtisanProfileModel artisan) {
+  void _showArtisanBottomSheet(ArtisanSearchResult artisan) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -222,9 +217,12 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
               children: [
                 CircleAvatar(
                   radius: 30,
-                  backgroundImage:
-                      artisan.avatar != null ? NetworkImage(artisan.avatar!) : null,
-                  child: artisan.avatar == null ? const Icon(Icons.person) : null,
+                  backgroundImage: artisan.avatar != null
+                      ? NetworkImage(artisan.avatar!)
+                      : null,
+                  child: artisan.avatar == null
+                      ? const Icon(Icons.person)
+                      : null,
                 ),
                 const SizedBox(width: Spacing.md),
                 Expanded(
@@ -392,7 +390,8 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                         mini: true,
                         backgroundColor: Colors.white,
                         onPressed: () async {
-                          final position = _searchController.currentPosition.value;
+                          final position =
+                              _searchController.currentPosition.value;
                           if (position != null && _mapController != null) {
                             _mapController!.animateCamera(
                               CameraUpdate.newLatLng(
@@ -440,15 +439,22 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                                   color: Theme.of(context).colorScheme.primary,
                                 ),
                                 const SizedBox(width: Spacing.sm),
-                                Obx(() => Text(
-                                      _showListView
-                                          ? 'Vue Carte'
-                                          : '${_searchController.searchResults.length} artisans',
-                                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                            color: Theme.of(context).colorScheme.primary,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                    )),
+                                Obx(
+                                  () => Text(
+                                    _showListView
+                                        ? 'Vue Carte'
+                                        : '${_searchController.searchResults.length} artisans',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -503,7 +509,8 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                           itemCount: _searchController.searchResults.length,
                           separatorBuilder: (context, index) => const Divider(),
                           itemBuilder: (context, index) {
-                            final artisan = _searchController.searchResults[index];
+                            final artisan =
+                                _searchController.searchResults[index];
                             return ListTile(
                               leading: CircleAvatar(
                                 backgroundImage: artisan.avatar != null
@@ -529,9 +536,11 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                               ),
                               trailing: const Icon(Icons.chevron_right),
                               onTap: () {
-                                Get.to(() => ArtisanProfileScreen(
-                                      artisanId: artisan.id,
-                                    ));
+                                Get.to(
+                                  () => ArtisanProfileScreen(
+                                    artisanId: artisan.id,
+                                  ),
+                                );
                               },
                             );
                           },

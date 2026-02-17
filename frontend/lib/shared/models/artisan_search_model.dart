@@ -49,6 +49,16 @@ class ArtisanSearchResult {
   bool get isAvailable => artisanProfile?.available ?? false;
   String? get zoneName => artisanProfile?.zoneName;
 
+  String? get badgeLevel {
+    if (nzassaScore == null) return null;
+    if (nzassaScore! >= 80) return 'gold';
+    if (nzassaScore! >= 60) return 'silver';
+    if (nzassaScore! >= 40) return 'bronze';
+    return 'none';
+  }
+
+  int get totalReviews => reviewsCount;
+
   String get distanceText {
     if (distance == null) return '';
     if (distance! < 1000) {
