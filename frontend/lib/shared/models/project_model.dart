@@ -15,7 +15,8 @@ class Project {
   final String description;
   final Location location;
   final String address;
-  final String status; // pending, quoted, accepted, funded, in_progress, completed, cancelled, disputed
+  final String
+  status; // pending, quoted, accepted, funded, in_progress, completed, cancelled, disputed
   final User? client;
   final User? artisan;
   final List<Quote>? quotes;
@@ -253,6 +254,8 @@ class QuoteItemRequest {
     required this.unitPrice,
   });
 
+  factory QuoteItemRequest.fromJson(Map<String, dynamic> json) =>
+      _$QuoteItemRequestFromJson(json);
   Map<String, dynamic> toJson() => _$QuoteItemRequestToJson(this);
 
   double get total => quantity * unitPrice;

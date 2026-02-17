@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
         // Seed sectors and trades from CSV
         $this->call([
             SectorsTradesSeeder::class,
+            TestDataSeeder::class,
         ]);
 
         // User::factory(10)->create();
