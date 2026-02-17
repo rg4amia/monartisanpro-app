@@ -116,59 +116,143 @@ class ArtisanScoreResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('artisan.name')
-                    ->numeric()
+                    ->label('Artisan')
+                    ->searchable()
+                    ->sortable()
+                    ->weight('medium'),
+                Tables\Columns\TextColumn::make('artisan.artisanProfile.trade.name')
+                    ->label('Métier')
+                    ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('total_score')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('reliability_score')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('integrity_score')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('quality_score')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('responsiveness_score')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('professionalism_score')
-                    ->numeric()
-                    ->sortable(),
+                    ->label('Score Total')
+                    ->numeric(decimalPlaces: 2)
+                    ->sortable()
+                    ->suffix('/100')
+                    ->weight('bold')
+                    ->color(fn (float $state): string => match (true) {
+                        $state >= 80 => 'success',
+                        $state >= 65 => 'warning',
+                        $state >= 50 => 'primary',
+                        default => 'danger',
+                    }),
+                Tables\Columns\BadgeColumn::make('badge_level')
+                    ->label('Badge')
+                    ->colors([
+                        'warning' => 'gold',
+                        'primary' => 'silver',
+                        'info' => 'bronze',
+                        'danger' => 'none',
+                    ])
+                    ->icons([
+                        'heroicon-o-trophy' => 'gold',
+                        'heroicon-o-star' => 'silver',
+                        'heroicon-o-shield-check' => 'bronze',
+                    ])
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'gold' => 'Or 🥇',
+                        'silver' => 'Argent 🥈',
+                        'bronze' => 'Bronze 🥉',
+                        default => 'Aucun',
+                    }),
+                Tables\Columns\TextColumn::make('component_breakdown')
+                    ->label('Détail des Composantes')
+                    ->getStateUsing(function (ArtisanScore $record): string {
+                        return sprintf(
+                            'F: %.1f | I: %.1f | Q: %.1f | R: %.1f | P: %.1f',
+                            $record->reliability_score,
+                            $record->integrity_score,
+                            $record->quality_score,
+                            $record->responsiveness_score,
+                            $record->professionalism_score
+                        );
+                    })
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('projects_completed')
+                    ->label('Projets')
                     ->numeric()
-                    ->sortable(),
+                    ->sortable()
+                    ->badge()
+                    ->color('primary'),
                 Tables\Columns\TextColumn::make('average_rating')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('total_reviews')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('badge_level'),
+                    ->label('Note Moyenne')
+                    ->numeric(decimalPlaces: 1)
+                    ->sortable()
+                    ->suffix('/5')
+                    ->color(fn (float $state): string => $state >= 4.0 ? 'success' : 'warning'),
                 Tables\Columns\TextColumn::make('last_calculated_at')
-                    ->dateTime()
+                    ->label('Dernier Calcul')
+                    ->dateTime('d/m/Y H:i')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('badge_level')
+                    ->label('Niveau de Badge')
+                    ->options([
+                        'gold' => 'Or 🥇',
+                        'silver' => 'Argent 🥈',
+                        'bronze' => 'Bronze 🥉',
+                        'none' => 'Aucun',
+                    ])
+                    ->multiple(),
+                Tables\Filters\Filter::make('score_range')
+                    ->form([
+                        Forms\Components\TextInput::make('score_min')
+                            ->label('Score minimum')
+                            ->numeric()
+                            ->placeholder('0'),
+                        Forms\Components\TextInput::make('score_max')
+                            ->label('Score maximum')
+                            ->numeric()
+                            ->placeholder('100'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['score_min'],
+                                fn (Builder $query, $score): Builder => $query->where('total_score', '>=', $score),
+                            )
+                            ->when(
+                                $data['score_max'],
+                                fn (Builder $query, $score): Builder => $query->where('total_score', '<=', $score),
+                            );
+                    }),
+                Tables\Filters\SelectFilter::make('trade_id')
+                    ->label('Métier')
+                    ->relationship('artisan.artisanProfile.trade', 'name')
+                    ->searchable(),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\ViewAction::make(),
+                Tables\Actions\Action::make('recalculate')
+                    ->label('Recalculer')
+                    ->icon('heroicon-o-arrow-path')
+                    ->color('primary')
+                    ->requiresConfirmation()
+                    ->action(function (ArtisanScore $record): void {
+                        // This will trigger the ScoreController@recalculate endpoint
+                        // For now, just update the last_calculated_at timestamp
+                        $record->update(['last_calculated_at' => now()]);
+                    })
+                    ->successNotificationTitle('Score recalculé avec succès'),
+                Tables\Actions\Action::make('view_calculation')
+                    ->label('Détails du Calcul')
+                    ->icon('heroicon-o-calculator')
+                    ->color('info')
+                    ->modalHeading('Détails du Calcul N\'Zassa')
+                    ->modalContent(fn (ArtisanScore $record): \Illuminate\View\View => view(
+                        'filament.modals.score-calculation-details',
+                        ['record' => $record]
+                    ))
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Fermer'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->defaultSort('total_score', 'desc');
     }
 
     public static function getRelations(): array

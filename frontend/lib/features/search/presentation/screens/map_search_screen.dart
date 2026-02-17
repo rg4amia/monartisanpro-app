@@ -1,12 +1,31 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:google_maps_cluster_manager/google_maps_cluster_manager.dart';
+import 'package:get_storage/get_storage.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/spacing.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../shared/controllers/search_controller.dart' as artisan_search;
+import '../../../../shared/models/artisan_profile_model.dart';
 import 'artisan_profile_screen.dart';
 import 'search_filter_screen.dart';
+
+class ArtisanClusterItem with ClusterItem {
+  final ArtisanProfileModel artisan;
+
+  ArtisanClusterItem(this.artisan);
+
+  @override
+  LatLng get location => LatLng(
+        artisan.fuzzyLocation!.latitude,
+        artisan.fuzzyLocation!.longitude,
+      );
+
+  @override
+  String get geohash => '';
+}
 
 class MapSearchScreen extends StatefulWidget {
   const MapSearchScreen({super.key});
@@ -17,47 +36,250 @@ class MapSearchScreen extends StatefulWidget {
 
 class _MapSearchScreenState extends State<MapSearchScreen> {
   final _searchController = Get.find<artisan_search.ArtisanSearchController>();
+  final _storage = GetStorage();
   GoogleMapController? _mapController;
-  final Set<Marker> _markers = {};
+  ClusterManager? _clusterManager;
+  Set<Marker> _markers = {};
   bool _showListView = false;
+  Timer? _debounceTimer;
+  double _currentZoom = AppConstants.defaultMapZoom;
+
+  // Cache settings
+  static const String _cacheKey = 'map_search_cache';
+  static const Duration _cacheDuration = Duration(minutes: 5);
 
   @override
   void initState() {
     super.initState();
+    _initializeClusterManager();
     _loadArtisans();
   }
 
-  Future<void> _loadArtisans() async {
-    await _searchController.searchArtisans();
-    _updateMarkers();
+  void _initializeClusterManager() {
+    _clusterManager = ClusterManager<ArtisanClusterItem>(
+      [],
+      _updateMarkers,
+      markerBuilder: _markerBuilder,
+      levels: [1, 3, 5, 8, 11, 14, 16, 18, 20], // Optimized zoom levels
+      extraPercent: 0.3, // Larger cluster tolerance for better grouping
+      stopClusteringZoom: 17.0, // Stop clustering at street level
+    );
   }
 
-  void _updateMarkers() {
-    _markers.clear();
-    for (var artisan in _searchController.searchResults) {
-      if (artisan.fuzzyLocation != null) {
-        _markers.add(
-          Marker(
-            markerId: MarkerId(artisan.id.toString()),
-            position: LatLng(
-              artisan.fuzzyLocation!.latitude,
-              artisan.fuzzyLocation!.longitude,
-            ),
-            icon: artisan.isNearby
-                ? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueYellow)
-                : BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
-            infoWindow: InfoWindow(
-              title: artisan.name,
-              snippet: '${artisan.tradeName} - ${artisan.distanceText}',
-              onTap: () {
-                Get.to(() => ArtisanProfileScreen(artisanId: artisan.id));
-              },
-            ),
-          ),
-        );
-      }
+  Future<void> _loadArtisans() async {
+    // Check cache first
+    final cached = _getCachedResults();
+    if (cached != null) {
+      _clusterManager!.setItems(cached);
+      return;
     }
-    setState(() {});
+
+    // Load from API
+    await _searchController.searchArtisans();
+
+    final items = _searchController.searchResults
+        .where((a) => a.fuzzyLocation != null)
+        .map((a) => ArtisanClusterItem(a))
+        .toList();
+
+    _clusterManager!.setItems(items);
+    _cacheResults(items);
+  }
+
+  List<ArtisanClusterItem>? _getCachedResults() {
+    final cacheData = _storage.read(_cacheKey);
+    if (cacheData == null) return null;
+
+    final timestamp = DateTime.parse(cacheData['timestamp'] as String);
+    if (DateTime.now().difference(timestamp) > _cacheDuration) {
+      _storage.remove(_cacheKey);
+      return null;
+    }
+
+    // Return cached items (simplified - in production, deserialize properly)
+    return _searchController.searchResults
+        .where((a) => a.fuzzyLocation != null)
+        .map((a) => ArtisanClusterItem(a))
+        .toList();
+  }
+
+  void _cacheResults(List<ArtisanClusterItem> items) {
+    _storage.write(_cacheKey, {
+      'timestamp': DateTime.now().toIso8601String(),
+      'count': items.length,
+    });
+  }
+
+  Future<Marker> Function(Cluster<ArtisanClusterItem>) get _markerBuilder =>
+      (cluster) async {
+        if (cluster.isMultiple) {
+          // Cluster marker
+          return Marker(
+            markerId: MarkerId(cluster.getId()),
+            position: cluster.location,
+            icon: await _getClusterBitmap(
+              cluster.count,
+              _getClusterColor(cluster.count),
+            ),
+            onTap: () {
+              // Zoom in to expand cluster
+              _mapController?.animateCamera(
+                CameraUpdate.newLatLngZoom(
+                  cluster.location,
+                  _currentZoom + 2,
+                ),
+              );
+            },
+          );
+        } else {
+          // Single artisan marker (lazy load details on tap)
+          final artisan = cluster.items.first.artisan;
+          return Marker(
+            markerId: MarkerId(artisan.id.toString()),
+            position: cluster.location,
+            icon: artisan.isNearby
+                ? BitmapDescriptor.defaultMarkerWithHue(
+                    BitmapDescriptor.hueYellow)
+                : BitmapDescriptor.defaultMarkerWithHue(
+                    BitmapDescriptor.hueBlue),
+            onTap: () => _showArtisanBottomSheet(artisan),
+          );
+        }
+      };
+
+  Color _getClusterColor(int count) {
+    if (count > 50) return Colors.red;
+    if (count > 20) return Colors.orange;
+    if (count > 10) return AppColors.primary;
+    return Colors.blue;
+  }
+
+  Future<BitmapDescriptor> _getClusterBitmap(int count, Color color) async {
+    // In production, use custom cluster icons with count text
+    // For now, use default with different hues
+    final hue = color == Colors.red
+        ? BitmapDescriptor.hueRed
+        : color == Colors.orange
+            ? BitmapDescriptor.hueOrange
+            : BitmapDescriptor.hueAzure;
+
+    return BitmapDescriptor.defaultMarkerWithHue(hue);
+  }
+
+  void _updateMarkers(Set<Marker> markers) {
+    setState(() {
+      _markers = markers;
+    });
+  }
+
+  void _onCameraMove(CameraPosition position) {
+    _currentZoom = position.zoom;
+
+    // Debounce camera movement to avoid excessive API calls
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+      _clusterManager!.onCameraMove(position);
+      // Optionally trigger new search based on visible bounds
+      // _searchInVisibleRegion(position);
+    });
+  }
+
+  void _onCameraIdle() {
+    _clusterManager!.updateMap();
+  }
+
+  void _showArtisanBottomSheet(ArtisanProfileModel artisan) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(Spacing.radiusLg),
+          ),
+        ),
+        padding: const EdgeInsets.all(Spacing.lg),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Handle
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.lightTextTertiary,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: Spacing.md),
+
+            // Artisan Info
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 30,
+                  backgroundImage:
+                      artisan.avatar != null ? NetworkImage(artisan.avatar!) : null,
+                  child: artisan.avatar == null ? const Icon(Icons.person) : null,
+                ),
+                const SizedBox(width: Spacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              artisan.name,
+                              style: Theme.of(context).textTheme.titleLarge,
+                            ),
+                          ),
+                          if (artisan.isNearby)
+                            Icon(
+                              Icons.location_on,
+                              color: AppColors.goldenMarker,
+                              size: 20,
+                            ),
+                        ],
+                      ),
+                      Text(
+                        artisan.tradeName,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      Row(
+                        children: [
+                          const Icon(Icons.location_on, size: 14),
+                          const SizedBox(width: 4),
+                          Text(artisan.distanceText),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: Spacing.lg),
+
+            // View Profile Button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Get.back();
+                  Get.to(() => ArtisanProfileScreen(artisanId: artisan.id));
+                },
+                child: const Text('Voir le profil'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -93,10 +315,10 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
               mapToolbarEnabled: false,
               onMapCreated: (controller) {
                 _mapController = controller;
+                _clusterManager?.setMapId(controller.mapId);
               },
-              onCameraMove: (position) {
-                // TODO: Update search based on visible map region
-              },
+              onCameraMove: _onCameraMove,
+              onCameraIdle: _onCameraIdle,
             );
           }),
 
@@ -327,6 +549,7 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _mapController?.dispose();
     super.dispose();
   }

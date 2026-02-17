@@ -35,4 +35,30 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | ProsArtisan Third-Party Services
+    |--------------------------------------------------------------------------
+    */
+
+    'cinetpay' => [
+        'api_key' => env('CINETPAY_API_KEY'),
+        'site_id' => env('CINETPAY_SITE_ID'),
+        'secret_key' => env('CINETPAY_SECRET_KEY'),
+        'mode' => env('CINETPAY_MODE', 'sandbox'), // sandbox or production
+        'return_url' => env('CINETPAY_RETURN_URL', env('APP_URL') . '/payment/callback'),
+        'notify_url' => env('CINETPAY_NOTIFY_URL', env('APP_URL') . '/api/v1/payments/webhook'),
+    ],
+
+    'africastalking' => [
+        'username' => env('AFRICASTALKING_USERNAME'),
+        'api_key' => env('AFRICASTALKING_API_KEY'),
+        'shortcode' => env('AFRICASTALKING_SHORTCODE', '40520'),
+    ],
+
+    'firebase' => [
+        'credentials' => env('FIREBASE_CREDENTIALS', base_path('firebase-credentials.json')),
+        'database_url' => env('FIREBASE_DATABASE_URL'),
+    ],
+
 ];
