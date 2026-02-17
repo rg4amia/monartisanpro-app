@@ -13,7 +13,16 @@ return new class extends Migration
     {
         Schema::create('escrow_wallets', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('project_id')->constrained()->onDelete('cascade');
+            $table->decimal('total_amount', 12, 2);
+            $table->decimal('material_wallet', 12, 2);
+            $table->decimal('labor_wallet', 12, 2);
+            $table->decimal('material_spent', 12, 2)->default(0);
+            $table->decimal('labor_released', 12, 2)->default(0);
+            $table->enum('status', ['active', 'completed', 'refunded'])->default('active');
             $table->timestamps();
+
+            $table->index('project_id');
         });
     }
 
