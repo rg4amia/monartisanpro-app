@@ -4,6 +4,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/spacing.dart';
 import '../../../../shared/controllers/project_controller.dart';
+import 'redemption_history_screen.dart';
 
 class MaterialTokenScreen extends StatefulWidget {
   final int projectId;
@@ -363,6 +364,22 @@ class _MaterialTokenScreenState extends State<MaterialTokenScreen> {
                 Icons.security_outlined,
                 'Sécurisé',
                 'Chaque utilisation est tracée et validée par GPS',
+              ),
+              const SizedBox(height: Spacing.xl),
+
+              // View History Button
+              OutlinedButton.icon(
+                onPressed: () {
+                  Get.to(() => RedemptionHistoryScreen(
+                        tokenId: token.id,
+                        token: token,
+                      ));
+                },
+                icon: const Icon(Icons.history),
+                label: const Text('Voir l\'historique des utilisations'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: Spacing.md),
+                ),
               ),
             ],
           ),
