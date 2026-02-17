@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/spacing.dart';
 import '../../../../shared/controllers/auth_controller.dart';
+import '../../../../shared/widgets/widgets.dart';
 import 'role_selection_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -92,15 +93,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: Spacing.xxxl),
 
                 // Email Field
-                TextFormField(
+                CustomTextField(
+                  label: 'Email',
+                  hint: 'exemple@email.com',
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  textInputAction: TextInputAction.next,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    hintText: 'exemple@email.com',
-                    prefixIcon: Icon(Icons.email_outlined),
-                  ),
+                  prefixIcon: const Icon(Icons.email_outlined),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Veuillez entrer votre email';
@@ -114,27 +112,23 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: Spacing.lg),
 
                 // Password Field
-                TextFormField(
+                CustomTextField(
+                  label: 'Mot de passe',
+                  hint: '••••••••',
                   controller: _passwordController,
                   obscureText: _obscurePassword,
-                  textInputAction: TextInputAction.done,
-                  onFieldSubmitted: (_) => _handleLogin(),
-                  decoration: InputDecoration(
-                    labelText: 'Mot de passe',
-                    hintText: '••••••••',
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      },
+                  prefixIcon: const Icon(Icons.lock_outline),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
                     ),
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword;
+                      });
+                    },
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -161,21 +155,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: Spacing.xl),
 
                 // Login Button
-                Obx(() => ElevatedButton(
-                      onPressed: _authController.isLoading.value
-                          ? null
-                          : _handleLogin,
-                      child: _authController.isLoading.value
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor:
-                                    AlwaysStoppedAnimation<Color>(Colors.white),
-                              ),
-                            )
-                          : const Text('Se connecter'),
+                Obx(() => CustomButton(
+                      text: 'Se connecter',
+                      onPressed: _handleLogin,
+                      isLoading: _authController.isLoading.value,
+                      type: ButtonType.primary,
                     )),
                 const SizedBox(height: Spacing.xl),
 
@@ -198,11 +182,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: Spacing.xl),
 
                 // Register Button
-                OutlinedButton(
-                  onPressed: () {
-                    Get.to(() => const RoleSelectionScreen());
-                  },
-                  child: const Text('Créer un compte'),
+                CustomButton(
+                  text: 'Créer un compte',
+                  onPressed: () => Get.to(() => const RoleSelectionScreen()),
+                  type: ButtonType.outline,
                 ),
               ],
             ),

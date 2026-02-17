@@ -4,6 +4,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/spacing.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../shared/controllers/auth_controller.dart';
+import '../../../../shared/widgets/widgets.dart';
 import 'otp_verification_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -82,8 +83,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Créer un compte'),
+      appBar: const CustomAppBar(
+        title: 'Créer un compte',
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -127,15 +128,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: Spacing.xl),
 
                 // Name Field
-                TextFormField(
+                CustomTextField(
+                  label: 'Nom complet',
+                  hint: 'Jean Kouassi',
                   controller: _nameController,
-                  textInputAction: TextInputAction.next,
-                  textCapitalization: TextCapitalization.words,
-                  decoration: const InputDecoration(
-                    labelText: 'Nom complet',
-                    hintText: 'Jean Kouassi',
-                    prefixIcon: Icon(Icons.person_outline),
-                  ),
+                  prefixIcon: const Icon(Icons.person_outline),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Veuillez entrer votre nom';
@@ -149,16 +146,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: Spacing.lg),
 
                 // Phone Field
-                TextFormField(
+                CustomTextField(
+                  label: 'Téléphone ${AppConstants.countryCode}',
+                  hint: '0102030405',
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
-                  textInputAction: TextInputAction.next,
-                  decoration: InputDecoration(
-                    labelText: 'Téléphone',
-                    hintText: '0102030405',
-                    prefixIcon: const Icon(Icons.phone_outlined),
-                    prefixText: '${AppConstants.countryCode} ',
-                  ),
+                  prefixIcon: const Icon(Icons.phone_outlined),
+                  maxLength: AppConstants.phoneLength,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Veuillez entrer votre numéro';
@@ -172,15 +166,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: Spacing.lg),
 
                 // Email Field
-                TextFormField(
+                CustomTextField(
+                  label: 'Email',
+                  hint: 'exemple@email.com',
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  textInputAction: TextInputAction.next,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    hintText: 'exemple@email.com',
-                    prefixIcon: Icon(Icons.email_outlined),
-                  ),
+                  prefixIcon: const Icon(Icons.email_outlined),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Veuillez entrer votre email';
@@ -194,24 +185,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: Spacing.lg),
 
                 // Password Field
-                TextFormField(
+                CustomTextField(
+                  label: 'Mot de passe',
+                  hint: '••••••••',
                   controller: _passwordController,
                   obscureText: _obscurePassword,
-                  textInputAction: TextInputAction.next,
-                  decoration: InputDecoration(
-                    labelText: 'Mot de passe',
-                    hintText: '••••••••',
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined,
-                      ),
-                      onPressed: () {
-                        setState(() => _obscurePassword = !_obscurePassword);
-                      },
+                  prefixIcon: const Icon(Icons.lock_outline),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
                     ),
+                    onPressed: () {
+                      setState(() => _obscurePassword = !_obscurePassword);
+                    },
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -226,26 +214,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: Spacing.lg),
 
                 // Confirm Password Field
-                TextFormField(
+                CustomTextField(
+                  label: 'Confirmer le mot de passe',
+                  hint: '••••••••',
                   controller: _passwordConfirmController,
                   obscureText: _obscureConfirmPassword,
-                  textInputAction: TextInputAction.done,
-                  onFieldSubmitted: (_) => _handleRegister(),
-                  decoration: InputDecoration(
-                    labelText: 'Confirmer le mot de passe',
-                    hintText: '••••••••',
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscureConfirmPassword
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined,
-                      ),
-                      onPressed: () {
-                        setState(() =>
-                            _obscureConfirmPassword = !_obscureConfirmPassword);
-                      },
+                  prefixIcon: const Icon(Icons.lock_outline),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscureConfirmPassword
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
                     ),
+                    onPressed: () {
+                      setState(() =>
+                          _obscureConfirmPassword = !_obscureConfirmPassword);
+                    },
                   ),
                   validator: (value) {
                     if (value != _passwordController.text) {
@@ -257,21 +241,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: Spacing.xxxl),
 
                 // Register Button
-                Obx(() => ElevatedButton(
-                      onPressed: _authController.isLoading.value
-                          ? null
-                          : _handleRegister,
-                      child: _authController.isLoading.value
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor:
-                                    AlwaysStoppedAnimation<Color>(Colors.white),
-                              ),
-                            )
-                          : const Text('Créer mon compte'),
+                Obx(() => CustomButton(
+                      text: 'Créer mon compte',
+                      onPressed: _handleRegister,
+                      isLoading: _authController.isLoading.value,
+                      type: ButtonType.primary,
                     )),
                 const SizedBox(height: Spacing.lg),
 
@@ -305,61 +279,57 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }) {
     final isSelected = _selectedRole == role;
 
-    return GestureDetector(
+    return CustomCard(
       onTap: () => setState(() => _selectedRole = role),
-      child: Card(
-        color: isSelected
-            ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
-            : null,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(Spacing.radiusMd),
-          side: BorderSide(
-            color: isSelected
-                ? Theme.of(context).colorScheme.primary
-                : Colors.transparent,
-            width: 2,
+      backgroundColor: isSelected
+          ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
+          : null,
+      padding: const EdgeInsets.all(Spacing.base),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.2)
+                  : AppColors.lightBackground,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              icon,
+              size: 28,
+              color: isSelected
+                  ? Theme.of(context).colorScheme.primary
+                  : AppColors.lightTextSecondary,
+            ),
           ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(Spacing.base),
-          child: Row(
-            children: [
-              Icon(
-                icon,
-                size: 32,
-                color: isSelected
-                    ? Theme.of(context).colorScheme.primary
-                    : AppColors.lightTextSecondary,
-              ),
-              const SizedBox(width: Spacing.base),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: isSelected
-                                ? Theme.of(context).colorScheme.primary
-                                : null,
-                            fontWeight: FontWeight.w600,
-                          ),
-                    ),
-                    Text(
-                      description,
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ],
+          const SizedBox(width: Spacing.base),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: isSelected
+                            ? Theme.of(context).colorScheme.primary
+                            : null,
+                        fontWeight: FontWeight.w600,
+                      ),
                 ),
-              ),
-              if (isSelected)
-                Icon(
-                  Icons.check_circle,
-                  color: Theme.of(context).colorScheme.primary,
+                Text(
+                  description,
+                  style: Theme.of(context).textTheme.bodySmall,
                 ),
-            ],
+              ],
+            ),
           ),
-        ),
+          if (isSelected)
+            Icon(
+              Icons.check_circle,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+        ],
       ),
     );
   }
