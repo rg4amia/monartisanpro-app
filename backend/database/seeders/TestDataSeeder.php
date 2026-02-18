@@ -82,17 +82,19 @@ class TestDataSeeder extends Seeder
         ];
 
         foreach ($clientNames as [$firstName, $lastName, $email, $phone]) {
-            $users['clients'][] = User::create([
-                'name' => "$firstName $lastName",
-                'email' => $email,
-                'phone' => $phone,
-                'password' => Hash::make('password123'),
-                'role' => 'client',
-                'kyc_status' => 'approved',
-                'status' => 'active',
-                'phone_verified_at' => now(),
-                'email_verified_at' => now(),
-            ]);
+            $users['clients'][] = User::firstOrCreate(
+                ['email' => $email],
+                [
+                    'name' => "$firstName $lastName",
+                    'phone' => $phone,
+                    'password' => Hash::make('password123'),
+                    'role' => 'client',
+                    'kyc_status' => 'approved',
+                    'status' => 'active',
+                    'phone_verified_at' => now(),
+                    'email_verified_at' => now(),
+                ]
+            );
         }
 
         // Artisans (10) - various trades
@@ -110,17 +112,19 @@ class TestDataSeeder extends Seeder
         ];
 
         foreach ($artisanData as [$firstName, $lastName, $email, $phone, $tradeName, $coords, $zone, $experience]) {
-            $user = User::create([
-                'name' => "$firstName $lastName",
-                'email' => $email,
-                'phone' => $phone,
-                'password' => Hash::make('password123'),
-                'role' => 'artisan',
-                'kyc_status' => 'approved',
-                'status' => 'active',
-                'phone_verified_at' => now(),
-                'email_verified_at' => now(),
-            ]);
+            $user = User::firstOrCreate(
+                ['email' => $email],
+                [
+                    'name' => "$firstName $lastName",
+                    'phone' => $phone,
+                    'password' => Hash::make('password123'),
+                    'role' => 'artisan',
+                    'kyc_status' => 'approved',
+                    'status' => 'active',
+                    'phone_verified_at' => now(),
+                    'email_verified_at' => now(),
+                ]
+            );
 
             // Find trade
             $trade = Trade::whereHas('sector', function ($q) {
@@ -132,15 +136,18 @@ class TestDataSeeder extends Seeder
                 $trade = $sectors->first()->trades->first();
             }
 
-            ArtisanProfile::create([
-                'user_id' => $user->id,
-                'trade_id' => $trade->id,
-                'location' => new Point($coords[0], $coords[1]),
-                'zone_name' => $zone,
-                'bio' => "Artisan professionnel avec $experience ans d'expérience. Travail soigné et respect des délais.",
-                'experience_years' => $experience,
-                'available' => true,
-            ]);
+            // Only create profile if it doesn't exist
+            if (!$user->artisanProfile) {
+                ArtisanProfile::create([
+                    'user_id' => $user->id,
+                    'trade_id' => $trade->id,
+                    'location' => new Point($coords[0], $coords[1]),
+                    'zone_name' => $zone,
+                    'bio' => "Artisan professionnel avec $experience ans d'expérience. Travail soigné et respect des délais.",
+                    'experience_years' => $experience,
+                    'available' => true,
+                ]);
+            }
 
             $users['artisans'][] = $user;
         }
@@ -153,17 +160,19 @@ class TestDataSeeder extends Seeder
         ];
 
         foreach ($vendorData as [$name, $email, $phone, $coords]) {
-            $user = User::create([
-                'name' => $name,
-                'email' => $email,
-                'phone' => $phone,
-                'password' => Hash::make('password123'),
-                'role' => 'fournisseur',
-                'kyc_status' => 'approved',
-                'status' => 'active',
-                'phone_verified_at' => now(),
-                'email_verified_at' => now(),
-            ]);
+            $user = User::firstOrCreate(
+                ['email' => $email],
+                [
+                    'name' => $name,
+                    'phone' => $phone,
+                    'password' => Hash::make('password123'),
+                    'role' => 'fournisseur',
+                    'kyc_status' => 'approved',
+                    'status' => 'active',
+                    'phone_verified_at' => now(),
+                    'email_verified_at' => now(),
+                ]
+            );
 
             $users['vendors'][] = $user;
         }
@@ -453,7 +462,7 @@ class TestDataSeeder extends Seeder
 
         // Create material token (fully used)
         $token = MaterialToken::create([
-            'code' => 'PA-' . strtoupper(substr(md5('test1'), 0, 6)),
+            'code' => 'PA-' . strtoupper(substr(md5(uniqid('test1', true)), 0, 6)),
             'project_id' => $project->id,
             'escrow_wallet_id' => $escrow->id,
             'vendor_id' => $vendor->id,
@@ -607,7 +616,7 @@ class TestDataSeeder extends Seeder
         ]);
 
         $token2 = MaterialToken::create([
-            'code' => 'PA-' . strtoupper(substr(md5('test2'), 0, 6)),
+            'code' => 'PA-' . strtoupper(substr(md5(uniqid('test2', true)), 0, 6)),
             'project_id' => $project2->id,
             'escrow_wallet_id' => $escrow2->id,
             'vendor_id' => $vendor2->id,

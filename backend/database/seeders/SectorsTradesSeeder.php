@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Sector;
+use App\Models\Trade;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class SectorsTradesSeeder extends Seeder
 {
@@ -25,9 +25,8 @@ class SectorsTradesSeeder extends Seeder
         // Skip header row
         fgetcsv($file, 0, ';');
 
-        $sectors = [];
-        $trades = [];
-        $currentSectorId = null;
+        $sectorsData = [];
+        $tradesData = [];
 
         while (($row = fgetcsv($file, 0, ';')) !== false) {
             // Clean BOM and whitespace
@@ -36,48 +35,47 @@ class SectorsTradesSeeder extends Seeder
             $tradeCode = trim($row[2]);
             $tradeName = trim($row[3]);
 
-            // Create sector if not already exists
-            if (!isset($sectors[$sectorCode])) {
-                $sectors[$sectorCode] = [
+            // Store unique sectors
+            if (!isset($sectorsData[$sectorCode])) {
+                $sectorsData[$sectorCode] = [
                     'code' => $sectorCode,
                     'name' => $sectorName,
-                    'created_at' => now(),
-                    'updated_at' => now(),
                 ];
             }
 
-            // Store trade data (will insert after sectors)
-            $trades[] = [
+            // Store trade data
+            $tradesData[] = [
                 'sector_code' => $sectorCode,
                 'code' => $tradeCode,
                 'name' => $tradeName,
-                'created_at' => now(),
-                'updated_at' => now(),
             ];
         }
 
         fclose($file);
 
-        // Insert sectors first
-        DB::table('sectors')->insert(array_values($sectors));
+        // Create or update sectors
+        foreach ($sectorsData as $sectorData) {
+            Sector::updateOrCreate(
+                ['code' => $sectorData['code']],
+                ['name' => $sectorData['name']]
+            );
+        }
 
-        // Get sector IDs mapping
-        $sectorMapping = DB::table('sectors')
-            ->select('id', 'code')
-            ->get()
-            ->keyBy('code');
+        // Create or update trades
+        foreach ($tradesData as $tradeData) {
+            $sector = Sector::where('code', $tradeData['sector_code'])->first();
 
-        // Map trades to sector IDs
-        $tradesWithSectorIds = array_map(function ($trade) use ($sectorMapping) {
-            $sectorId = $sectorMapping[$trade['sector_code']]->id;
-            unset($trade['sector_code']);
-            $trade['sector_id'] = $sectorId;
-            return $trade;
-        }, $trades);
+            if ($sector) {
+                Trade::updateOrCreate(
+                    ['code' => $tradeData['code']],
+                    [
+                        'sector_id' => $sector->id,
+                        'name' => $tradeData['name'],
+                    ]
+                );
+            }
+        }
 
-        // Insert trades
-        DB::table('trades')->insert($tradesWithSectorIds);
-
-        $this->command->info('Successfully seeded ' . count($sectors) . ' sectors and ' . count($trades) . ' trades.');
+        $this->command->info('Successfully seeded ' . count($sectorsData) . ' sectors and ' . count($tradesData) . ' trades.');
     }
 }
