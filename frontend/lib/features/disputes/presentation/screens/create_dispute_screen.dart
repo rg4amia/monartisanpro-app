@@ -41,9 +41,7 @@ class _CreateDisputeScreenState extends State<CreateDisputeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Créer un Litige'),
-      ),
+      appBar: AppBar(title: const Text('Créer un Litige')),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -95,10 +93,7 @@ class _CreateDisputeScreenState extends State<CreateDisputeScreen> {
       children: [
         const Text(
           'Type de litige *',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 12),
         Wrap(
@@ -122,11 +117,7 @@ class _CreateDisputeScreenState extends State<CreateDisputeScreen> {
       selected: isSelected,
       label: Row(
         mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 18),
-          const SizedBox(width: 6),
-          Text(label),
-        ],
+        children: [Icon(icon, size: 18), const SizedBox(width: 6), Text(label)],
       ),
       onSelected: (selected) {
         setState(() => _selectedType = value);
@@ -142,17 +133,16 @@ class _CreateDisputeScreenState extends State<CreateDisputeScreen> {
       children: [
         const Text(
           'Priorité *',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 12),
         Row(
           children: [
             Expanded(child: _buildPriorityCard('low', 'Basse', Colors.green)),
             const SizedBox(width: 8),
-            Expanded(child: _buildPriorityCard('medium', 'Moyenne', Colors.orange)),
+            Expanded(
+              child: _buildPriorityCard('medium', 'Moyenne', Colors.orange),
+            ),
             const SizedBox(width: 8),
             Expanded(child: _buildPriorityCard('high', 'Haute', Colors.red)),
           ],
@@ -242,10 +232,7 @@ class _CreateDisputeScreenState extends State<CreateDisputeScreen> {
       children: [
         const Text(
           'Preuves (Photos)',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
         Text(
@@ -253,9 +240,11 @@ class _CreateDisputeScreenState extends State<CreateDisputeScreen> {
           style: TextStyle(color: Colors.grey[600], fontSize: 14),
         ),
         const SizedBox(height: 12),
-        Obx(() => _evidenceFiles.isEmpty
-            ? _buildAddEvidenceButton()
-            : _buildEvidenceGrid()),
+        Obx(
+          () => _evidenceFiles.isEmpty
+              ? _buildAddEvidenceButton()
+              : _buildEvidenceGrid(),
+        ),
       ],
     );
   }
@@ -332,26 +321,30 @@ class _CreateDisputeScreenState extends State<CreateDisputeScreen> {
   }
 
   Widget _buildSubmitButton() {
-    return Obx(() => ElevatedButton(
-          onPressed: disputeController.isLoading.value ? null : _submitDispute,
-          style: ElevatedButton.styleFrom(
-            minimumSize: const Size(double.infinity, 50),
-            backgroundColor: Colors.red,
-          ),
-          child: disputeController.isLoading.value
-              ? const SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  ),
-                )
-              : const Text(
-                  'Soumettre le Litige',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+    return Obx(
+      () => ElevatedButton(
+        onPressed: disputeController.isCreatingDispute.value
+            ? null
+            : _submitDispute,
+        style: ElevatedButton.styleFrom(
+          minimumSize: const Size(double.infinity, 50),
+          backgroundColor: Colors.red,
+        ),
+        child: disputeController.isCreatingDispute.value
+            ? const SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                 ),
-        ));
+              )
+            : const Text(
+                'Soumettre le Litige',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+      ),
+    );
   }
 
   Future<void> _addEvidence() async {

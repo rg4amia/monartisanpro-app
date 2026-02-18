@@ -12,7 +12,8 @@ class QuoteManagementScreen extends StatefulWidget {
   State<QuoteManagementScreen> createState() => _QuoteManagementScreenState();
 }
 
-class _QuoteManagementScreenState extends State<QuoteManagementScreen> with SingleTickerProviderStateMixin {
+class _QuoteManagementScreenState extends State<QuoteManagementScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final List<Quote> _quotes = [];
   bool _isLoading = true;
@@ -118,9 +119,19 @@ class _QuoteManagementScreenState extends State<QuoteManagementScreen> with Sing
           children: [
             Icon(Icons.description_outlined, size: 80, color: Colors.grey[400]),
             const SizedBox(height: Spacing.lg),
-            Text(message, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.grey[600])),
+            Text(
+              message,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey[600],
+              ),
+            ),
             const SizedBox(height: Spacing.sm),
-            Text('Vos devis apparaîtront ici', style: TextStyle(fontSize: 14, color: Colors.grey[500])),
+            Text(
+              'Vos devis apparaîtront ici',
+              style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+            ),
           ],
         ),
       ),
@@ -148,7 +159,10 @@ class _QuoteCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     'Projet #${quote.projectId}',
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 _StatusBadge(status: quote.status),
@@ -161,17 +175,32 @@ class _QuoteCard extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Montant total', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                    const Text(
+                      'Montant total',
+                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
                     const SizedBox(height: Spacing.xs),
-                    Text('${quote.totalAmount.toStringAsFixed(0)} FCFA', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    Text(
+                      '${quote.totalAmount.toStringAsFixed(0)} FCFA',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ],
                 ),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    const Text('Validité', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                    const Text(
+                      'Validité',
+                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
                     const SizedBox(height: Spacing.xs),
-                    Text('${quote.validDays} jours', style: const TextStyle(fontSize: 14)),
+                    Text(
+                      DateFormat('dd/MM/yyyy').format(quote.validUntil),
+                      style: const TextStyle(fontSize: 14),
+                    ),
                   ],
                 ),
               ],
@@ -189,7 +218,13 @@ class _QuoteCard extends StatelessWidget {
             ),
             if (quote.notes != null && quote.notes!.isNotEmpty) ...[
               const SizedBox(height: Spacing.sm),
-              Text(quote.notes!, style: const TextStyle(fontSize: 14, fontStyle: FontStyle.italic)),
+              Text(
+                quote.notes!,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
             ],
           ],
         ),
@@ -227,9 +262,22 @@ class _StatusBadge extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: Spacing.sm, vertical: Spacing.xs),
-      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-      child: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: color)),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sm,
+        vertical: Spacing.xs,
+      ),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
+      ),
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../core/network/dispute_service.dart';
 import '../models/dispute_model.dart';
 
@@ -15,6 +16,7 @@ class DisputeController extends GetxController {
   final RxList<DisputeMessage> messages = <DisputeMessage>[].obs;
   final RxBool isLoadingMessages = false.obs;
   final RxBool isSendingMessage = false.obs;
+  final RxBool isCreatingDispute = false.obs;
 
   // Error handling
   final RxString errorMessage = ''.obs;
@@ -88,18 +90,15 @@ class DisputeController extends GetxController {
   }
 
   /// Create dispute
-  Future<bool> createDispute({
-    required int projectId,
-    required String subject,
-    required String description,
-  }) async {
+  Future<bool> createDispute(CreateDisputeRequest request) async {
     try {
+      isCreatingDispute.value = true;
       errorMessage.value = '';
 
       final response = await _disputeService.createDispute(
-        projectId: projectId,
-        subject: subject,
-        description: description,
+        projectId: request.projectId,
+        subject: request.reason,
+        description: request.description,
       );
 
       if (response.success) {
@@ -113,6 +112,8 @@ class DisputeController extends GetxController {
     } catch (e) {
       errorMessage.value = 'Erreur: ${e.toString()}';
       return false;
+    } finally {
+      isCreatingDispute.value = false;
     }
   }
 
@@ -133,5 +134,17 @@ class DisputeController extends GetxController {
     await loadDisputes(
       status: disputesFilter.value == 'all' ? null : disputesFilter.value,
     );
+  }
+
+  /// Pick images for evidence
+  Future<List<XFile>> pickImages() async {
+    final ImagePicker picker = ImagePicker();
+    try {
+      final List<XFile> images = await picker.pickMultiImage();
+      return images;
+    } catch (e) {
+      errorMessage.value = 'Erreur lors de la sélection des images';
+      return [];
+    }
   }
 }

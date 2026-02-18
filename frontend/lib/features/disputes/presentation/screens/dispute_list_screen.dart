@@ -24,7 +24,7 @@ class DisputeListScreen extends StatelessWidget {
         ],
       ),
       body: Obx(() {
-        if (disputeController.isLoading.value) {
+        if (disputeController.isLoadingDisputes.value) {
           return const Center(child: CircularProgressIndicator());
         }
 
@@ -33,7 +33,7 @@ class DisputeListScreen extends StatelessWidget {
         }
 
         return RefreshIndicator(
-          onRefresh: () => disputeController.fetchDisputes(),
+          onRefresh: () => disputeController.refreshDisputes(),
           child: ListView.separated(
             padding: const EdgeInsets.all(16),
             itemCount: disputeController.disputes.length,
@@ -97,33 +97,33 @@ class DisputeListScreen extends StatelessWidget {
             const SizedBox(height: 16),
             _FilterChip(
               label: 'Tous',
-              isSelected: controller.filterStatus.value == null,
+              isSelected: controller.disputesFilter.value == 'all',
               onTap: () {
-                controller.filterByStatus(null);
+                controller.filterDisputes('all');
                 Get.back();
               },
             ),
             _FilterChip(
               label: 'Ouvert',
-              isSelected: controller.filterStatus.value == 'open',
+              isSelected: controller.disputesFilter.value == 'open',
               onTap: () {
-                controller.filterByStatus('open');
+                controller.filterDisputes('open');
                 Get.back();
               },
             ),
             _FilterChip(
               label: 'En investigation',
-              isSelected: controller.filterStatus.value == 'investigating',
+              isSelected: controller.disputesFilter.value == 'investigating',
               onTap: () {
-                controller.filterByStatus('investigating');
+                controller.filterDisputes('investigating');
                 Get.back();
               },
             ),
             _FilterChip(
               label: 'Résolu',
-              isSelected: controller.filterStatus.value == 'resolved',
+              isSelected: controller.disputesFilter.value == 'resolved',
               onTap: () {
-                controller.filterByStatus('resolved');
+                controller.filterDisputes('resolved');
                 Get.back();
               },
             ),
@@ -145,7 +145,7 @@ class _DisputeCard extends StatelessWidget {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
-        onTap: () => Get.to(() => DisputeDetailsScreen(dispute: dispute)),
+        onTap: () => Get.to(() => DisputeDetailsScreen(disputeId: dispute.id)),
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16),

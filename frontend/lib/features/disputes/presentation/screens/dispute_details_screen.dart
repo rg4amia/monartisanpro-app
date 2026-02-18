@@ -81,7 +81,7 @@ class _DisputeDetailsScreenState extends State<DisputeDetailsScreen> {
                   children: [
                     Expanded(
                       child: Text(
-                        _dispute!.subject,
+                        _dispute!.reason,
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,

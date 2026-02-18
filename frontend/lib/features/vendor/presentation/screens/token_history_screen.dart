@@ -43,21 +43,27 @@ class _TokenHistoryScreenState extends State<TokenHistoryScreen> {
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _redemptions.isEmpty
-          ? _buildEmptyState()
-          : RefreshIndicator(
-              onRefresh: _loadHistory,
-              child: ListView.builder(
-                padding: const EdgeInsets.all(Spacing.md),
-                itemCount: _filteredRedemptions.length,
-                itemBuilder: (context, index) {
-                  final redemption = _filteredRedemptions[index];
-                  return _RedemptionCard(redemption: redemption);
-                },
-              ),
-            ),
+      body: Obx(() {
+        if (_vendorController.isLoadingRedemptions.value) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (_filteredRedemptions.isEmpty) {
+          return _buildEmptyState();
+        }
+
+        return RefreshIndicator(
+          onRefresh: _loadHistory,
+          child: ListView.builder(
+            padding: const EdgeInsets.all(Spacing.md),
+            itemCount: _filteredRedemptions.length,
+            itemBuilder: (context, index) {
+              final redemption = _filteredRedemptions[index];
+              return _RedemptionCard(redemption: redemption);
+            },
+          ),
+        );
+      }),
     );
   }
 

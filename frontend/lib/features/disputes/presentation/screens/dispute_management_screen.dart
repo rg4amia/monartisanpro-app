@@ -179,7 +179,7 @@ class _DisputeCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      dispute.subject,
+                      dispute.reason,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
