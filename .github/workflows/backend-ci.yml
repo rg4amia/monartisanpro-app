@@ -100,6 +100,22 @@ jobs:
             .
           echo "✅ Archive created ($(du -h ../deploy.tar.gz | cut -f1))"
 
+      - name: Test SSH Connection
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          port: ${{ secrets.PORT }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          command_timeout: 2m
+          timeout: 60s
+          script: |
+            echo "✅ SSH connection successful!"
+            echo "Server: $(hostname)"
+            echo "User: $(whoami)"
+            echo "Home: $HOME"
+            echo "PHP: $(php -v | head -n 1)"
+
       - name: Deploy to Hostinger
         uses: appleboy/ssh-action@master
         with:
@@ -107,6 +123,8 @@ jobs:
           port: ${{ secrets.PORT }}
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.SERVER_PASSWORD }}
+          command_timeout: 30m
+          timeout: 60s
           script: |
             echo "🚀 Starting deployment on server..."
 
@@ -139,6 +157,8 @@ jobs:
           password: ${{ secrets.SERVER_PASSWORD }}
           source: "deploy.tar.gz"
           target: "/home/${{ secrets.USERNAME }}/"
+          command_timeout: 30m
+          timeout: 60s
 
       - name: Extract and configure Laravel
         uses: appleboy/ssh-action@master
@@ -147,6 +167,8 @@ jobs:
           port: ${{ secrets.PORT }}
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.SERVER_PASSWORD }}
+          command_timeout: 30m
+          timeout: 60s
           script: |
             echo "🔧 Configuring Laravel application..."
 
