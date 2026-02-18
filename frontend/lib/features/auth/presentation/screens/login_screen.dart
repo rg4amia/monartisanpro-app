@@ -4,6 +4,9 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/spacing.dart';
 import '../../../../shared/controllers/auth_controller.dart';
 import '../../../../shared/widgets/widgets.dart';
+import '../../../home/presentation/screens/home_screen.dart';
+import '../../../artisan/presentation/screens/artisan_dashboard_screen.dart';
+import '../../../vendor/presentation/screens/vendor_dashboard_screen.dart';
 import 'role_selection_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -42,7 +45,12 @@ class _LoginScreenState extends State<LoginScreen> {
           colorText: Colors.white,
           snackPosition: SnackPosition.TOP,
         );
-        // TODO: Navigate to home screen
+
+        // Navigate based on user role
+        final user = _authController.currentUser.value;
+        if (user != null) {
+          _navigateToHome(user.role);
+        }
       } else {
         Get.snackbar(
           'Error',
@@ -55,12 +63,30 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  void _navigateToHome(String role) {
+    switch (role.toLowerCase()) {
+      case 'client':
+        Get.offAll(() => const HomeScreen());
+        break;
+      case 'artisan':
+        Get.offAll(() => const ArtisanDashboardScreen());
+        break;
+      case 'fournisseur':
+        Get.offAll(() => const VendorDashboardScreen());
+        break;
+      default:
+        Get.offAll(() => const HomeScreen());
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Scaffold(
-      backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightBackground,
+      backgroundColor: isDark
+          ? AppColors.darkBackground
+          : AppColors.lightBackground,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(Spacing.screenPadding),
@@ -78,17 +104,23 @@ class _LoginScreenState extends State<LoginScreen> {
                     height: 80,
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: isDark 
-                          ? [AppColors.darkAccentPrimary, AppColors.darkAccentSecondary]
-                          : AppColors.primaryGradient,
+                        colors: isDark
+                            ? [
+                                AppColors.darkAccentPrimary,
+                                AppColors.darkAccentSecondary,
+                              ]
+                            : AppColors.primaryGradient,
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: (isDark ? AppColors.darkAccentPrimary : AppColors.lightAccentPrimary)
-                              .withValues(alpha: 0.3),
+                          color:
+                              (isDark
+                                      ? AppColors.darkAccentPrimary
+                                      : AppColors.lightAccentPrimary)
+                                  .withValues(alpha: 0.3),
                           blurRadius: 20,
                           spreadRadius: 0,
                           offset: const Offset(0, 8),
@@ -109,7 +141,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                     fontSize: 28,
                     fontWeight: FontWeight.w700,
-                    color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                    color: isDark
+                        ? AppColors.darkTextPrimary
+                        : AppColors.lightTextPrimary,
                     height: 1.2,
                   ),
                   textAlign: TextAlign.center,
@@ -120,7 +154,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   'Connectez-vous à votre compte',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     fontSize: 16,
-                    color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                    color: isDark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.lightTextSecondary,
                     height: 1.5,
                   ),
                   textAlign: TextAlign.center,
@@ -195,7 +231,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: isDark ? AppColors.darkAccentPrimary : AppColors.lightAccentPrimary,
+                        color: isDark
+                            ? AppColors.darkAccentPrimary
+                            : AppColors.lightAccentPrimary,
                       ),
                     ),
                   ),
@@ -203,12 +241,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: Spacing.xl),
 
                 // Login Button
-                Obx(() => CustomButton(
-                      text: 'Se connecter',
-                      onPressed: _handleLogin,
-                      isLoading: _authController.isLoading.value,
-                      type: ButtonType.primary,
-                    )),
+                Obx(
+                  () => CustomButton(
+                    text: 'Se connecter',
+                    onPressed: _handleLogin,
+                    isLoading: _authController.isLoading.value,
+                    type: ButtonType.primary,
+                  ),
+                ),
                 const SizedBox(height: Spacing.xl),
 
                 // Divider
@@ -216,7 +256,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     Expanded(
                       child: Divider(
-                        color: isDark ? AppColors.darkTextMuted : AppColors.lightTextTertiary,
+                        color: isDark
+                            ? AppColors.darkTextMuted
+                            : AppColors.lightTextTertiary,
                         thickness: 1,
                       ),
                     ),
@@ -229,13 +271,17 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
-                          color: isDark ? AppColors.darkTextTertiary : AppColors.lightTextTertiary,
+                          color: isDark
+                              ? AppColors.darkTextTertiary
+                              : AppColors.lightTextTertiary,
                         ),
                       ),
                     ),
                     Expanded(
                       child: Divider(
-                        color: isDark ? AppColors.darkTextMuted : AppColors.lightTextTertiary,
+                        color: isDark
+                            ? AppColors.darkTextMuted
+                            : AppColors.lightTextTertiary,
                         thickness: 1,
                       ),
                     ),

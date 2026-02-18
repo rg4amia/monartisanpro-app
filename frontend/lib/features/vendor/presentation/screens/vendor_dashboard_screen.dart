@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/spacing.dart';
 import '../../../../shared/controllers/auth_controller.dart';
-import '../../../../shared/controllers/token_controller.dart';
+import '../../../../shared/controllers/vendor_controller.dart';
 import 'scan_token_screen.dart';
 import 'token_history_screen.dart';
 import 'vendor_payment_history_screen.dart';
@@ -18,7 +18,7 @@ class VendorDashboardScreen extends StatefulWidget {
 
 class _VendorDashboardScreenState extends State<VendorDashboardScreen> {
   final _authController = Get.find<AuthController>();
-  final _tokenController = Get.put(TokenController());
+  final _vendorController = Get.put(VendorController());
 
   @override
   void initState() {
@@ -27,8 +27,7 @@ class _VendorDashboardScreenState extends State<VendorDashboardScreen> {
   }
 
   Future<void> _loadDashboardData() async {
-    // Load vendor statistics
-    // TODO: Implement vendor stats API
+    await _vendorController.loadStats();
   }
 
   @override
@@ -116,7 +115,8 @@ class _VendorDashboardScreenState extends State<VendorDashboardScreen> {
                             icon: Icons.history,
                             label: 'Historique',
                             color: AppColors.warning,
-                            onTap: () => Get.to(() => const TokenHistoryScreen()),
+                            onTap: () =>
+                                Get.to(() => const TokenHistoryScreen()),
                           ),
                         ),
                       ],
@@ -129,7 +129,9 @@ class _VendorDashboardScreenState extends State<VendorDashboardScreen> {
                             icon: Icons.payments,
                             label: 'Paiements',
                             color: AppColors.success,
-                            onTap: () => Get.to(() => const VendorPaymentHistoryScreen()),
+                            onTap: () => Get.to(
+                              () => const VendorPaymentHistoryScreen(),
+                            ),
                           ),
                         ),
                         const SizedBox(width: Spacing.md),
@@ -138,7 +140,8 @@ class _VendorDashboardScreenState extends State<VendorDashboardScreen> {
                             icon: Icons.analytics,
                             label: 'Statistiques',
                             color: AppColors.darkAccentPrimary,
-                            onTap: () => Get.to(() => const VendorAnalyticsScreen()),
+                            onTap: () =>
+                                Get.to(() => const VendorAnalyticsScreen()),
                           ),
                         ),
                       ],
@@ -163,29 +166,38 @@ class _VendorDashboardScreenState extends State<VendorDashboardScreen> {
                       ),
                     ),
                     const SizedBox(height: Spacing.md),
-                    _StatCard(
-                      title: 'Jetons validés',
-                      value: '0',
-                      subtitle: 'Ce mois',
-                      icon: Icons.check_circle,
-                      color: AppColors.success,
-                    ),
-                    const SizedBox(height: Spacing.md),
-                    _StatCard(
-                      title: 'Montant total',
-                      value: '0 FCFA',
-                      subtitle: 'Validations ce mois',
-                      icon: Icons.attach_money,
-                      color: AppColors.info,
-                    ),
-                    const SizedBox(height: Spacing.md),
-                    _StatCard(
-                      title: 'Paiements en attente',
-                      value: '0 FCFA',
-                      subtitle: 'À recevoir sous 24h',
-                      icon: Icons.pending_actions,
-                      color: AppColors.warning,
-                    ),
+                    Obx(() {
+                      final stats = _vendorController.stats.value;
+                      return Column(
+                        children: [
+                          _StatCard(
+                            title: 'Jetons validés',
+                            value: '${stats?.tokensValidated ?? 0}',
+                            subtitle: 'Ce mois',
+                            icon: Icons.check_circle,
+                            color: AppColors.success,
+                          ),
+                          const SizedBox(height: Spacing.md),
+                          _StatCard(
+                            title: 'Montant total',
+                            value:
+                                '${stats?.totalAmount.toStringAsFixed(0) ?? 0} FCFA',
+                            subtitle: 'Validations ce mois',
+                            icon: Icons.attach_money,
+                            color: AppColors.info,
+                          ),
+                          const SizedBox(height: Spacing.md),
+                          _StatCard(
+                            title: 'Paiements en attente',
+                            value:
+                                '${stats?.pendingAmount.toStringAsFixed(0) ?? 0} FCFA',
+                            subtitle: 'À recevoir sous 24h',
+                            icon: Icons.pending_actions,
+                            color: AppColors.warning,
+                          ),
+                        ],
+                      );
+                    }),
                   ],
                 ),
               ),
@@ -209,7 +221,8 @@ class _VendorDashboardScreenState extends State<VendorDashboardScreen> {
                           ),
                         ),
                         TextButton(
-                          onPressed: () => Get.to(() => const TokenHistoryScreen()),
+                          onPressed: () =>
+                              Get.to(() => const TokenHistoryScreen()),
                           child: const Text('Voir tout'),
                         ),
                       ],
@@ -292,11 +305,7 @@ class _QuickActionCard extends StatelessWidget {
                   color: color.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
-                  icon,
-                  size: 32,
-                  color: color,
-                ),
+                child: Icon(icon, size: 32, color: color),
               ),
               const SizedBox(height: Spacing.sm),
               Text(
@@ -344,11 +353,7 @@ class _StatCard extends StatelessWidget {
                 color: color.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(
-                icon,
-                size: 32,
-                color: color,
-              ),
+              child: Icon(icon, size: 32, color: color),
             ),
             const SizedBox(width: Spacing.md),
             Expanded(
@@ -357,10 +362,7 @@ class _StatCard extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey,
-                    ),
+                    style: const TextStyle(fontSize: 14, color: Colors.grey),
                   ),
                   const SizedBox(height: Spacing.xs),
                   Text(
@@ -373,10 +375,7 @@ class _StatCard extends StatelessWidget {
                   const SizedBox(height: Spacing.xs),
                   Text(
                     subtitle,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey,
-                    ),
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
                   ),
                 ],
               ),
