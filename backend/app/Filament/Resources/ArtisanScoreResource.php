@@ -21,6 +21,10 @@ class ArtisanScoreResource extends Resource
 
     protected static ?string $navigationLabel = 'Scores N\'Zassa';
 
+    protected static ?string $navigationGroup = 'Scoring & Performance';
+
+    protected static ?int $navigationSort = 1;
+
     protected static ?string $modelLabel = 'score';
 
     protected static ?string $pluralModelLabel = 'scores';
@@ -246,6 +250,76 @@ class ArtisanScoreResource extends Resource
                     ))
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Fermer'),
+                Tables\Actions\Action::make('admin_override')
+                    ->label('Ajustement Admin')
+                    ->icon('heroicon-o-adjustments-horizontal')
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->modalHeading('Ajustement Administrateur du Score')
+                    ->modalDescription('Attention : Cette action modifie manuellement le score de l\'artisan. Un historique sera créé.')
+                    ->form([
+                        Forms\Components\TextInput::make('new_total_score')
+                            ->label('Nouveau Score Total')
+                            ->required()
+                            ->numeric()
+                            ->minValue(0)
+                            ->maxValue(100)
+                            ->suffix('/100')
+                            ->default(fn (ArtisanScore $record): float => $record->total_score),
+                        Forms\Components\Textarea::make('override_reason')
+                            ->label('Raison de l\'ajustement')
+                            ->required()
+                            ->rows(4)
+                            ->placeholder('Expliquez pourquoi ce score est ajusté manuellement'),
+                        Forms\Components\Toggle::make('send_notification')
+                            ->label('Notifier l\'artisan')
+                            ->default(true),
+                    ])
+                    ->action(function (ArtisanScore $record, array $data): void {
+                        // Store old score for history
+                        $oldScore = $record->total_score;
+
+                        // Update the score
+                        $record->update([
+                            'total_score' => $data['new_total_score'],
+                            'last_calculated_at' => now(),
+                        ]);
+
+                        // Recalculate badge level based on new score
+                        $badgeLevel = 'none';
+                        $weights = config('scoring.badge_thresholds');
+
+                        if ($data['new_total_score'] >= $weights['gold']['score'] &&
+                            $record->projects_completed >= $weights['gold']['projects']) {
+                            $badgeLevel = 'gold';
+                        } elseif ($data['new_total_score'] >= $weights['silver']['score'] &&
+                                  $record->projects_completed >= $weights['silver']['projects']) {
+                            $badgeLevel = 'silver';
+                        } elseif ($data['new_total_score'] >= $weights['bronze']['score'] &&
+                                  $record->projects_completed >= $weights['bronze']['projects']) {
+                            $badgeLevel = 'bronze';
+                        }
+
+                        $record->update(['badge_level' => $badgeLevel]);
+
+                        // Create history record
+                        \App\Models\ScoreHistory::create([
+                            'artisan_id' => $record->artisan_id,
+                            'total_score' => $data['new_total_score'],
+                            'reliability_score' => $record->reliability_score,
+                            'integrity_score' => $record->integrity_score,
+                            'quality_score' => $record->quality_score,
+                            'responsiveness_score' => $record->responsiveness_score,
+                            'professionalism_score' => $record->professionalism_score,
+                            'event_type' => 'bonus',
+                            'event_description' => 'Ajustement administrateur: ' . $data['override_reason'],
+                            'score_change' => $data['new_total_score'] - $oldScore,
+                            'triggered_by' => auth()->id(),
+                        ]);
+
+                        // TODO: Send notification if requested
+                    })
+                    ->successNotificationTitle('Score ajusté avec succès'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

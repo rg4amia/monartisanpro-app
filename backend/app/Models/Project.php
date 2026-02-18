@@ -84,4 +84,9 @@ class Project extends Model
     {
         return $this->hasOne(Review::class);
     }
+
+    public function dispute(): HasOne
+    {
+        return $this->hasOne(Dispute::class);
+    }
 }

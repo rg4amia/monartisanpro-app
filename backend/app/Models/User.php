@@ -30,6 +30,10 @@ class User extends Authenticatable
         'kyc_status',
         'phone_verified_at',
         'status',
+        'suspended_at',
+        'suspended_reason',
+        'banned_at',
+        'ban_reason',
     ];
 
     /**
@@ -52,6 +56,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'phone_verified_at' => 'datetime',
+            'suspended_at' => 'datetime',
+            'banned_at' => 'datetime',
             'password' => 'hashed',
         ];
     }
