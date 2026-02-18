@@ -103,6 +103,22 @@ Route::prefix('v1')->group(function () {
         Route::post('/projects/{projectId}/messages', [MessageController::class, 'sendMessage']);
         Route::post('/messages/{messageId}/read', [MessageController::class, 'markAsRead']);
 
+        // Vendor endpoints
+        Route::prefix('vendors')->group(function () {
+            Route::get('/stats', [\App\Http\Controllers\Api\V1\VendorController::class, 'stats']);
+            Route::get('/redemptions', [\App\Http\Controllers\Api\V1\VendorController::class, 'redemptions']);
+            Route::get('/transactions', [\App\Http\Controllers\Api\V1\VendorController::class, 'transactions']);
+            Route::get('/analytics', [\App\Http\Controllers\Api\V1\VendorController::class, 'analytics']);
+        });
+
+        // Artisan endpoints
+        Route::prefix('artisans')->group(function () {
+            Route::get('/stats', [\App\Http\Controllers\Api\V1\ArtisanController::class, 'stats']);
+            Route::get('/quotes', [\App\Http\Controllers\Api\V1\ArtisanController::class, 'quotes']);
+            Route::get('/transactions', [\App\Http\Controllers\Api\V1\ArtisanController::class, 'transactions']);
+            Route::get('/score', [\App\Http\Controllers\Api\V1\ArtisanController::class, 'score']);
+        });
+
         // Legacy route for backward compatibility
         Route::get('/user', function (Request $request) {
             return $request->user();

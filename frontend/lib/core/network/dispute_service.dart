@@ -1,121 +1,125 @@
 import 'package:dio/dio.dart';
-import 'package:get/get.dart' as getx;
+import '../../shared/models/auth_response.dart';
 import '../../shared/models/dispute_model.dart';
 import 'dio_client.dart';
 
 class DisputeService {
-  final DioClient _dioClient = getx.Get.find();
+  final Dio _dio = DioClient().dio;
 
-  Future<List<Dispute>> getDisputes({String? status}) async {
+  /// Get disputes
+  Future<ApiResponse<List<Dispute>>> getDisputes({
+    String? status,
+    int page = 1,
+  }) async {
     try {
-      final queryParams = status != null ? {'status': status} : null;
-      final response = await _dioClient.dio.get(
+      final queryParams = <String, dynamic>{'page': page};
+
+      if (status != null) {
+        queryParams['status'] = status;
+      }
+
+      final response = await _dio.get(
         '/disputes',
         queryParameters: queryParams,
       );
 
-      if (response.statusCode == 200) {
-        final List<dynamic> data = response.data['data'] ?? response.data;
-        return data.map((json) => Dispute.fromJson(json)).toList();
-      }
-
-      throw Exception('Failed to load disputes');
+      return ApiResponse<List<Dispute>>.fromJson(response.data, (json) {
+        if (json is List) {
+          return json
+              .map((item) => Dispute.fromJson(item as Map<String, dynamic>))
+              .toList();
+        }
+        final data = json as Map<String, dynamic>;
+        final items = data['data'] as List;
+        return items
+            .map((item) => Dispute.fromJson(item as Map<String, dynamic>))
+            .toList();
+      });
     } on DioException catch (e) {
-      throw Exception(e.response?.data['message'] ?? 'Failed to load disputes');
+      if (e.response != null) {
+        return ApiResponse<List<Dispute>>.fromJson(
+          e.response!.data,
+          (json) => [],
+        );
+      }
+      rethrow;
     }
   }
 
-  Future<Dispute> getDisputeById(int id) async {
+  /// Get dispute details
+  Future<ApiResponse<Dispute>> getDisputeDetails(int disputeId) async {
     try {
-      final response = await _dioClient.dio.get('/disputes/$id');
+      final response = await _dio.get('/disputes/$disputeId');
 
-      if (response.statusCode == 200) {
-        return Dispute.fromJson(response.data['data'] ?? response.data);
-      }
-
-      throw Exception('Failed to load dispute details');
+      return ApiResponse<Dispute>.fromJson(
+        response.data,
+        (json) => Dispute.fromJson(json as Map<String, dynamic>),
+      );
     } on DioException catch (e) {
-      throw Exception(e.response?.data['message'] ?? 'Failed to load dispute details');
+      if (e.response != null) {
+        return ApiResponse<Dispute>.fromJson(
+          e.response!.data,
+          (json) => Dispute.fromJson(json as Map<String, dynamic>),
+        );
+      }
+      rethrow;
     }
   }
 
-  Future<Dispute> createDispute(CreateDisputeRequest request) async {
+  /// Send message
+  Future<ApiResponse<DisputeMessage>> sendMessage(
+    int disputeId,
+    String message,
+  ) async {
     try {
-      final response = await _dioClient.dio.post(
-        '/disputes',
-        data: request.toJson(),
+      final response = await _dio.post(
+        '/disputes/$disputeId/messages',
+        data: {'message': message},
       );
 
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        return Dispute.fromJson(response.data['data'] ?? response.data);
-      }
-
-      throw Exception('Failed to create dispute');
+      return ApiResponse<DisputeMessage>.fromJson(
+        response.data,
+        (json) => DisputeMessage.fromJson(json as Map<String, dynamic>),
+      );
     } on DioException catch (e) {
-      throw Exception(e.response?.data['message'] ?? 'Failed to create dispute');
+      if (e.response != null) {
+        return ApiResponse<DisputeMessage>.fromJson(
+          e.response!.data,
+          (json) => DisputeMessage.fromJson(json as Map<String, dynamic>),
+        );
+      }
+      rethrow;
     }
   }
 
-  Future<DisputeMessage> sendMessage(
-    int disputeId,
-    String message, {
-    List<String>? attachments,
+  /// Create dispute
+  Future<ApiResponse<Dispute>> createDispute({
+    required int projectId,
+    required String subject,
+    required String description,
   }) async {
     try {
-      final response = await _dioClient.dio.post(
-        '/disputes/$disputeId/messages',
+      final response = await _dio.post(
+        '/disputes',
         data: {
-          'message': message,
-          if (attachments != null) 'attachments': attachments,
+          'project_id': projectId,
+          'subject': subject,
+          'description': description,
         },
       );
 
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        return DisputeMessage.fromJson(response.data['data'] ?? response.data);
-      }
-
-      throw Exception('Failed to send message');
-    } on DioException catch (e) {
-      throw Exception(e.response?.data['message'] ?? 'Failed to send message');
-    }
-  }
-
-  Future<List<DisputeMessage>> getMessages(int disputeId) async {
-    try {
-      final response = await _dioClient.dio.get('/disputes/$disputeId/messages');
-
-      if (response.statusCode == 200) {
-        final List<dynamic> data = response.data['data'] ?? response.data;
-        return data.map((json) => DisputeMessage.fromJson(json)).toList();
-      }
-
-      throw Exception('Failed to load messages');
-    } on DioException catch (e) {
-      throw Exception(e.response?.data['message'] ?? 'Failed to load messages');
-    }
-  }
-
-  Future<void> uploadEvidence(int disputeId, List<String> filePaths) async {
-    try {
-      final formData = FormData();
-
-      for (var i = 0; i < filePaths.length; i++) {
-        formData.files.add(MapEntry(
-          'evidence[$i]',
-          await MultipartFile.fromFile(filePaths[i]),
-        ));
-      }
-
-      final response = await _dioClient.dio.post(
-        '/disputes/$disputeId/evidence',
-        data: formData,
+      return ApiResponse<Dispute>.fromJson(
+        response.data,
+        (json) => Dispute.fromJson(json as Map<String, dynamic>),
       );
-
-      if (response.statusCode != 200 && response.statusCode != 201) {
-        throw Exception('Failed to upload evidence');
-      }
     } on DioException catch (e) {
-      throw Exception(e.response?.data['message'] ?? 'Failed to upload evidence');
+      if (e.response != null) {
+        return ApiResponse<Dispute>.fromJson(
+          e.response!.data,
+          (json) => Dispute.fromJson(json as Map<String, dynamic>),
+        );
+      }
+      rethrow;
     }
   }
 }

@@ -9,7 +9,10 @@ class RoleSelectionScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightBackground,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(Spacing.screenPadding),
@@ -19,10 +22,35 @@ class RoleSelectionScreen extends StatelessWidget {
               const SizedBox(height: Spacing.xxxl),
 
               // Logo/Icon
-              Icon(
-                Icons.build_circle,
-                size: 100,
-                color: Theme.of(context).colorScheme.primary,
+              Center(
+                child: Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: isDark 
+                        ? [AppColors.darkAccentPrimary, AppColors.darkAccentSecondary]
+                        : AppColors.primaryGradient,
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: (isDark ? AppColors.darkAccentPrimary : AppColors.lightAccentPrimary)
+                            .withValues(alpha: 0.3),
+                        blurRadius: 20,
+                        spreadRadius: 0,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.build_circle,
+                    size: 56,
+                    color: Colors.white,
+                  ),
+                ),
               ),
               const SizedBox(height: Spacing.xl),
 
@@ -30,8 +58,11 @@ class RoleSelectionScreen extends StatelessWidget {
               Text(
                 'Bienvenue sur ProsArtisan',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                  height: 1.2,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: Spacing.md),
@@ -40,8 +71,10 @@ class RoleSelectionScreen extends StatelessWidget {
               Text(
                 'La plateforme qui connecte artisans et clients en toute confiance',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: AppColors.lightTextSecondary,
-                    ),
+                  fontSize: 16,
+                  color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                  height: 1.5,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: Spacing.xxxl),
@@ -50,8 +83,10 @@ class RoleSelectionScreen extends StatelessWidget {
               Text(
                 'Choisissez votre profil',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                ),
               ),
               const SizedBox(height: Spacing.lg),
 
@@ -112,11 +147,25 @@ class RoleSelectionScreen extends StatelessWidget {
                 children: [
                   Text(
                     'Vous avez déjà un compte? ',
-                    style: Theme.of(context).textTheme.bodyMedium,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontSize: 14,
+                    ),
                   ),
                   TextButton(
                     onPressed: () => Get.back(),
-                    child: const Text('Se connecter'),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: Spacing.sm,
+                        vertical: Spacing.xs,
+                      ),
+                    ),
+                    child: const Text(
+                      'Se connecter',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -149,9 +198,10 @@ class RoleSelectionScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(Spacing.radiusLg),
           boxShadow: [
             BoxShadow(
-              color: gradient[0].withValues(alpha: 0.3),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+              color: gradient[0].withValues(alpha: 0.4),
+              blurRadius: 15,
+              spreadRadius: 0,
+              offset: const Offset(0, 6),
             ),
           ],
         ),
@@ -180,9 +230,10 @@ class RoleSelectionScreen extends StatelessWidget {
                     child: Text(
                       title,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontSize: 20,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                   const Icon(
@@ -198,8 +249,10 @@ class RoleSelectionScreen extends StatelessWidget {
               Text(
                 description,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.white.withValues(alpha: 0.9),
-                    ),
+                  fontSize: 14,
+                  color: Colors.white.withValues(alpha: 0.9),
+                  height: 1.5,
+                ),
               ),
               const SizedBox(height: Spacing.md),
 
@@ -213,14 +266,15 @@ class RoleSelectionScreen extends StatelessWidget {
                           color: Colors.white,
                           size: 16,
                         ),
-                        const SizedBox(width: Spacing.xs),
+                        const SizedBox(width: Spacing.sm),
                         Expanded(
                           child: Text(
                             feature,
-                            style:
-                                Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: Colors.white.withValues(alpha: 0.85),
-                                    ),
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              fontSize: 12,
+                              color: Colors.white.withValues(alpha: 0.85),
+                              height: 1.5,
+                            ),
                           ),
                         ),
                       ],

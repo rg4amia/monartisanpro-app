@@ -1,7 +1,7 @@
 /// API configuration constants for ProsArtisan backend
 class ApiConstants {
   // Base URLs
-  static const String baseUrl = 'http://localhost:8000/api/v1';
+  static const String baseUrl = 'https://prosartisan.net/api/v1';
   static const String socketUrl = 'ws://localhost:6001';
 
   // API Endpoints - Auth
@@ -29,11 +29,13 @@ class ApiConstants {
   // API Endpoints - Disputes
   static const String disputes = '/disputes';
   static String getDispute(int id) => '/disputes/$id';
-  static String sendDisputeMessage(int disputeId) => '/disputes/$disputeId/messages';
+  static String sendDisputeMessage(int disputeId) =>
+      '/disputes/$disputeId/messages';
 
   // API Endpoints - Messages / Chat
   static const String getConversations = '/messages/conversations';
-  static String getProjectMessages(int projectId) => '/projects/$projectId/messages';
+  static String getProjectMessages(int projectId) =>
+      '/projects/$projectId/messages';
   static String sendMessage(int projectId) => '/projects/$projectId/messages';
   static String markMessageAsRead(int messageId) => '/messages/$messageId/read';
 

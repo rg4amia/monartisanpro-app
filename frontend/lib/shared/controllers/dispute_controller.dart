@@ -1,151 +1,137 @@
 import 'package:get/get.dart';
-import 'package:image_picker/image_picker.dart';
-import '../models/dispute_model.dart';
 import '../../core/network/dispute_service.dart';
+import '../models/dispute_model.dart';
 
 class DisputeController extends GetxController {
-  final DisputeService _disputeService = Get.find();
-  final ImagePicker _picker = ImagePicker();
+  final DisputeService _disputeService = DisputeService();
 
-  final disputes = <Dispute>[].obs;
-  final isLoading = false.obs;
-  final filterStatus = Rxn<String>();
+  // Disputes
+  final RxList<Dispute> disputes = <Dispute>[].obs;
+  final RxBool isLoadingDisputes = false.obs;
+  final RxString disputesFilter = 'all'.obs;
 
-  @override
-  void onInit() {
-    super.onInit();
-    fetchDisputes();
-  }
+  // Current dispute
+  final Rx<Dispute?> currentDispute = Rx<Dispute?>(null);
+  final RxList<DisputeMessage> messages = <DisputeMessage>[].obs;
+  final RxBool isLoadingMessages = false.obs;
+  final RxBool isSendingMessage = false.obs;
 
-  Future<void> fetchDisputes({String? status}) async {
+  // Error handling
+  final RxString errorMessage = ''.obs;
+
+  /// Load disputes
+  Future<void> loadDisputes({String? status}) async {
     try {
-      isLoading.value = true;
-      final result = await _disputeService.getDisputes(status: status);
-      disputes.value = result;
-    } catch (e) {
-      Get.snackbar(
-        'Erreur',
-        'Impossible de charger les litiges: ${e.toString()}',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-    } finally {
-      isLoading.value = false;
-    }
-  }
+      isLoadingDisputes.value = true;
+      errorMessage.value = '';
 
-  Future<void> filterByStatus(String? status) async {
-    filterStatus.value = status;
-    await fetchDisputes(status: status);
-  }
+      final response = await _disputeService.getDisputes(status: status);
 
-  Future<Dispute?> getDisputeDetails(int id) async {
-    try {
-      return await _disputeService.getDisputeById(id);
-    } catch (e) {
-      Get.snackbar(
-        'Erreur',
-        'Impossible de charger les détails: ${e.toString()}',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      return null;
-    }
-  }
-
-  Future<bool> createDispute(CreateDisputeRequest request) async {
-    try {
-      isLoading.value = true;
-      final dispute = await _disputeService.createDispute(request);
-      disputes.insert(0, dispute);
-
-      Get.snackbar(
-        'Succès',
-        'Litige créé avec succès',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-
-      return true;
-    } catch (e) {
-      Get.snackbar(
-        'Erreur',
-        'Impossible de créer le litige: ${e.toString()}',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      return false;
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  Future<bool> sendMessage(int disputeId, String message, {List<XFile>? attachments}) async {
-    try {
-      // Upload attachments if any
-      List<String>? attachmentUrls;
-      if (attachments != null && attachments.isNotEmpty) {
-        attachmentUrls = await _uploadAttachments(attachments);
+      if (response.success && response.data != null) {
+        disputes.value = response.data!;
+      } else {
+        errorMessage.value = response.message ?? 'Erreur de chargement';
+        disputes.value = [];
       }
-
-      await _disputeService.sendMessage(
-        disputeId,
-        message,
-        attachments: attachmentUrls,
-      );
-
-      return true;
     } catch (e) {
-      Get.snackbar(
-        'Erreur',
-        'Impossible d\'envoyer le message: ${e.toString()}',
-        snackPosition: SnackPosition.BOTTOM,
+      errorMessage.value = 'Erreur: ${e.toString()}';
+      disputes.value = [];
+    } finally {
+      isLoadingDisputes.value = false;
+    }
+  }
+
+  /// Load dispute details
+  Future<void> loadDisputeDetails(int disputeId) async {
+    try {
+      isLoadingMessages.value = true;
+      errorMessage.value = '';
+
+      final response = await _disputeService.getDisputeDetails(disputeId);
+
+      if (response.success && response.data != null) {
+        currentDispute.value = response.data;
+        // TODO: Load messages separately when endpoint is available
+        messages.value = [];
+      } else {
+        errorMessage.value = response.message ?? 'Erreur de chargement';
+      }
+    } catch (e) {
+      errorMessage.value = 'Erreur: ${e.toString()}';
+    } finally {
+      isLoadingMessages.value = false;
+    }
+  }
+
+  /// Send message
+  Future<bool> sendMessage(int disputeId, String message) async {
+    try {
+      isSendingMessage.value = true;
+      errorMessage.value = '';
+
+      final response = await _disputeService.sendMessage(disputeId, message);
+
+      if (response.success) {
+        // Reload messages
+        await loadDisputeDetails(disputeId);
+        return true;
+      } else {
+        errorMessage.value = response.message ?? 'Erreur d\'envoi';
+        return false;
+      }
+    } catch (e) {
+      errorMessage.value = 'Erreur: ${e.toString()}';
+      return false;
+    } finally {
+      isSendingMessage.value = false;
+    }
+  }
+
+  /// Create dispute
+  Future<bool> createDispute({
+    required int projectId,
+    required String subject,
+    required String description,
+  }) async {
+    try {
+      errorMessage.value = '';
+
+      final response = await _disputeService.createDispute(
+        projectId: projectId,
+        subject: subject,
+        description: description,
       );
+
+      if (response.success) {
+        // Reload disputes
+        await loadDisputes();
+        return true;
+      } else {
+        errorMessage.value = response.message ?? 'Erreur de création';
+        return false;
+      }
+    } catch (e) {
+      errorMessage.value = 'Erreur: ${e.toString()}';
       return false;
     }
   }
 
-  Future<List<String>> _uploadAttachments(List<XFile> files) async {
-    // TODO: Implement file upload to server
-    // For now, return empty list
-    return [];
+  /// Filter disputes by status
+  void filterDisputes(String status) {
+    disputesFilter.value = status;
+    loadDisputes(status: status == 'all' ? null : status);
   }
 
-  Future<List<XFile>> pickImages() async {
-    try {
-      final images = await _picker.pickMultiImage();
-      return images;
-    } catch (e) {
-      Get.snackbar(
-        'Erreur',
-        'Impossible de sélectionner les images',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      return [];
-    }
+  /// Get filtered disputes
+  List<Dispute> getFilteredDisputes(String status) {
+    if (status == 'all') return disputes;
+    return disputes.where((d) => d.status == status).toList();
   }
 
-  Future<XFile?> pickImage() async {
-    try {
-      final image = await _picker.pickImage(source: ImageSource.gallery);
-      return image;
-    } catch (e) {
-      Get.snackbar(
-        'Erreur',
-        'Impossible de sélectionner l\'image',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      return null;
-    }
-  }
-
-  Future<XFile?> takePhoto() async {
-    try {
-      final image = await _picker.pickImage(source: ImageSource.camera);
-      return image;
-    } catch (e) {
-      Get.snackbar(
-        'Erreur',
-        'Impossible de prendre la photo',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      return null;
-    }
+  /// Refresh disputes
+  Future<void> refreshDisputes() async {
+    await loadDisputes(
+      status: disputesFilter.value == 'all' ? null : disputesFilter.value,
+    );
   }
 }

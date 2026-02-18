@@ -57,7 +57,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightBackground,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(Spacing.screenPadding),
@@ -69,16 +72,46 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: Spacing.xxxl),
 
                 // Logo and Title
-                Icon(
-                  Icons.build_circle,
-                  size: 80,
-                  color: Theme.of(context).colorScheme.primary,
+                Center(
+                  child: Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: isDark 
+                          ? [AppColors.darkAccentPrimary, AppColors.darkAccentSecondary]
+                          : AppColors.primaryGradient,
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: (isDark ? AppColors.darkAccentPrimary : AppColors.lightAccentPrimary)
+                              .withValues(alpha: 0.3),
+                          blurRadius: 20,
+                          spreadRadius: 0,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.build_circle,
+                      size: 48,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
-                const SizedBox(height: Spacing.lg),
+                const SizedBox(height: Spacing.xl),
 
                 Text(
                   'Bienvenue',
-                  style: Theme.of(context).textTheme.headlineLarge,
+                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                    height: 1.2,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: Spacing.sm),
@@ -86,8 +119,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 Text(
                   'Connectez-vous à votre compte',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.lightTextSecondary,
-                      ),
+                    fontSize: 16,
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                    height: 1.5,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: Spacing.xxxl),
@@ -149,7 +184,20 @@ class _LoginScreenState extends State<LoginScreen> {
                     onPressed: () {
                       // TODO: Navigate to forgot password
                     },
-                    child: const Text('Mot de passe oublié?'),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: Spacing.base,
+                        vertical: Spacing.sm,
+                      ),
+                    ),
+                    child: Text(
+                      'Mot de passe oublié?',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? AppColors.darkAccentPrimary : AppColors.lightAccentPrimary,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(height: Spacing.xl),
@@ -166,17 +214,31 @@ class _LoginScreenState extends State<LoginScreen> {
                 // Divider
                 Row(
                   children: [
-                    const Expanded(child: Divider()),
+                    Expanded(
+                      child: Divider(
+                        color: isDark ? AppColors.darkTextMuted : AppColors.lightTextTertiary,
+                        thickness: 1,
+                      ),
+                    ),
                     Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: Spacing.base,
                       ),
                       child: Text(
                         'OU',
-                        style: Theme.of(context).textTheme.bodySmall,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: isDark ? AppColors.darkTextTertiary : AppColors.lightTextTertiary,
+                        ),
                       ),
                     ),
-                    const Expanded(child: Divider()),
+                    Expanded(
+                      child: Divider(
+                        color: isDark ? AppColors.darkTextMuted : AppColors.lightTextTertiary,
+                        thickness: 1,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: Spacing.xl),
