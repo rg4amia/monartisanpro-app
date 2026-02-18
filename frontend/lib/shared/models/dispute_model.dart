@@ -129,27 +129,16 @@ class CreateDisputeRequest {
   Map<String, dynamic> toJson() => _$CreateDisputeRequestToJson(this);
 }
 
-// Placeholder classes for navigation properties
-class Project {
+// Simple project model for dispute navigation
+@JsonSerializable()
+class DisputeProject {
   final int id;
   final String title;
 
-  Project({required this.id, required this.title});
+  DisputeProject({required this.id, required this.title});
 
-  factory Project.fromJson(Map<String, dynamic> json) =>
-      Project(id: json['id'] as int, title: json['title'] as String);
-}
+  factory DisputeProject.fromJson(Map<String, dynamic> json) =>
+      _$DisputeProjectFromJson(json);
 
-class User {
-  final int id;
-  final String name;
-  final String? avatar;
-
-  User({required this.id, required this.name, this.avatar});
-
-  factory User.fromJson(Map<String, dynamic> json) => User(
-    id: json['id'] as int,
-    name: json['name'] as String,
-    avatar: json['avatar'] as String?,
-  );
+  Map<String, dynamic> toJson() => _$DisputeProjectToJson(this);
 }
