@@ -89,4 +89,9 @@ class Project extends Model
     {
         return $this->hasOne(Dispute::class);
     }
+
+    public function messages(): HasMany
+    {
+        return $this->hasMany(ProjectMessage::class)->orderBy('created_at');
+    }
 }

@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\DisputeController;
 use App\Http\Controllers\Api\V1\KycController;
+use App\Http\Controllers\Api\V1\MessageController;
 use App\Http\Controllers\Api\V1\MilestoneController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\ProjectController;
@@ -88,6 +90,18 @@ Route::prefix('v1')->group(function () {
         Route::get('/reviews/{id}', [ReviewController::class, 'show']);
         Route::post('/reviews/{id}/respond', [ReviewController::class, 'respond']);
         Route::post('/reviews/upload-photos', [ReviewController::class, 'uploadPhotos']);
+
+        // Disputes (Phase 6)
+        Route::get('/disputes', [DisputeController::class, 'index']);
+        Route::get('/disputes/{id}', [DisputeController::class, 'show']);
+        Route::post('/disputes', [DisputeController::class, 'store']);
+        Route::post('/disputes/{disputeId}/messages', [DisputeController::class, 'sendMessage']);
+
+        // Messages / Chat (Phase 6)
+        Route::get('/messages/conversations', [MessageController::class, 'getConversations']);
+        Route::get('/projects/{projectId}/messages', [MessageController::class, 'getProjectMessages']);
+        Route::post('/projects/{projectId}/messages', [MessageController::class, 'sendMessage']);
+        Route::post('/messages/{messageId}/read', [MessageController::class, 'markAsRead']);
 
         // Legacy route for backward compatibility
         Route::get('/user', function (Request $request) {

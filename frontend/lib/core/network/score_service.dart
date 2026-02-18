@@ -9,7 +9,7 @@ class ScoreService {
   /// Get artisan's current score
   Future<ApiResponse<ArtisanScore>> getArtisanScore(int artisanId) async {
     try {
-      final response = await _dio.get('/artisans/$artisanId/score');
+      final response = await _dio.get('/scores/$artisanId');
 
       return ApiResponse<ArtisanScore>.fromJson(
         response.data,
@@ -33,7 +33,7 @@ class ScoreService {
   }) async {
     try {
       final response = await _dio.get(
-        '/artisans/$artisanId/score/history',
+        '/scores/$artisanId/history',
         queryParameters: limit != null ? {'limit': limit} : null,
       );
 
@@ -66,7 +66,7 @@ class ScoreService {
       if (offset != null) queryParams['offset'] = offset;
 
       final response = await _dio.get(
-        '/artisans/$artisanId/reviews',
+        '/reviews',
         queryParameters: queryParams.isNotEmpty ? queryParams : null,
       );
 
@@ -90,7 +90,8 @@ class ScoreService {
   /// Get review statistics for an artisan
   Future<ApiResponse<ReviewStats>> getReviewStats(int artisanId) async {
     try {
-      final response = await _dio.get('/artisans/$artisanId/reviews/stats');
+      // TODO: Backend doesn't have this endpoint yet - create it
+      final response = await _dio.get('/reviews?artisan_id=$artisanId');
 
       return ApiResponse<ReviewStats>.fromJson(
         response.data,

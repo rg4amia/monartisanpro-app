@@ -3,7 +3,7 @@ import '../../core/network/score_service.dart';
 import '../models/scoring_model.dart';
 
 class ScoreController extends GetxController {
-  final ScoreService _scoreService = ScoreService();
+  final ScoreService _scoreService = Get.find<ScoreService>();
 
   // Score state
   final Rx<ArtisanScore?> artisanScore = Rx<ArtisanScore?>(null);

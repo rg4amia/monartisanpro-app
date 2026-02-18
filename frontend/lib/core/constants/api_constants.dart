@@ -26,6 +26,17 @@ class ApiConstants {
   static const String sectors = '/sectors';
   static const String trades = '/trades';
 
+  // API Endpoints - Disputes
+  static const String disputes = '/disputes';
+  static String getDispute(int id) => '/disputes/$id';
+  static String sendDisputeMessage(int disputeId) => '/disputes/$disputeId/messages';
+
+  // API Endpoints - Messages / Chat
+  static const String getConversations = '/messages/conversations';
+  static String getProjectMessages(int projectId) => '/projects/$projectId/messages';
+  static String sendMessage(int projectId) => '/projects/$projectId/messages';
+  static String markMessageAsRead(int messageId) => '/messages/$messageId/read';
+
   // Connection timeouts
   static const Duration connectTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);
