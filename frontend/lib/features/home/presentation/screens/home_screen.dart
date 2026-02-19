@@ -58,6 +58,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF0A0A2A),
       body: RefreshIndicator(
         onRefresh: _refreshData,
         child: SafeArea(
@@ -66,16 +67,22 @@ class _HomeScreenState extends State<HomeScreen> {
               // App Bar
               SliverAppBar(
                 floating: true,
-                backgroundColor: Theme.of(context).colorScheme.primary,
+                backgroundColor: const Color(0xFF0A0A2A),
+                elevation: 0,
                 title: Row(
                   children: [
-                    Icon(Icons.build_circle, color: Colors.white),
+                    Icon(
+                      Icons.build_circle,
+                      color: const Color(0xFFFFD700),
+                      size: 28,
+                    ),
                     const SizedBox(width: Spacing.sm),
                     Text(
                       'ProsArtisan',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      style: TextStyle(
                         color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 20,
                       ),
                     ),
                   ],
@@ -85,6 +92,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     icon: const Icon(
                       Icons.notifications_outlined,
                       color: Colors.white,
+                      size: 24,
                     ),
                     onPressed: () {
                       // TODO: Navigate to notifications
@@ -98,10 +106,11 @@ class _HomeScreenState extends State<HomeScreen> {
                             radius: 16,
                           )
                         : CircleAvatar(
-                            backgroundColor: Colors.white,
+                            backgroundColor: const Color(0xFF1A1A3E),
                             child: Icon(
                               Icons.person,
-                              color: Theme.of(context).colorScheme.primary,
+                              color: Colors.white,
+                              size: 20,
                             ),
                           );
                   }),
@@ -112,14 +121,8 @@ class _HomeScreenState extends State<HomeScreen> {
               // Welcome Section
               SliverToBoxAdapter(
                 child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: AppColors.primaryGradient,
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                    ),
-                  ),
-                  padding: const EdgeInsets.all(Spacing.screenPadding),
+                  decoration: const BoxDecoration(color: Color(0xFF0A0A2A)),
+                  padding: const EdgeInsets.all(24),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -127,39 +130,38 @@ class _HomeScreenState extends State<HomeScreen> {
                         final user = _authController.currentUser.value;
                         return Text(
                           'Bonjour ${user?.name.split(' ').first ?? 'Invité'}!',
-                          style: Theme.of(context).textTheme.headlineSmall
-                              ?.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 24,
+                            height: 1.2,
+                          ),
                         );
                       }),
-                      const SizedBox(height: Spacing.xs),
+                      const SizedBox(height: 8),
                       Text(
                         'Quel artisan cherchez-vous aujourd\'hui?',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.white.withValues(alpha: 0.9),
+                        style: TextStyle(
+                          color: const Color(0xFFB0B0B0),
+                          fontSize: 14,
+                          height: 1.5,
                         ),
                       ),
-                      const SizedBox(height: Spacing.lg),
+                      const SizedBox(height: 24),
 
                       // Search Bar
                       GestureDetector(
                         onTap: () => Get.to(() => const SearchFilterScreen()),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: Spacing.base,
-                            vertical: Spacing.md,
-                          ),
+                          height: 48,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
                           decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(
-                              Spacing.radiusLg,
-                            ),
+                            color: const Color(0xFF1A1A3E),
+                            borderRadius: BorderRadius.circular(24),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withValues(alpha: 0.1),
-                                blurRadius: 10,
+                                blurRadius: 4,
                                 offset: const Offset(0, 2),
                               ),
                             ],
@@ -168,37 +170,36 @@ class _HomeScreenState extends State<HomeScreen> {
                             children: [
                               Icon(
                                 Icons.search,
-                                color: AppColors.lightTextSecondary,
+                                color: const Color(0xFFB0B0B0),
+                                size: 24,
                               ),
-                              const SizedBox(width: Spacing.md),
+                              const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
                                   'Rechercher un artisan...',
-                                  style: Theme.of(context).textTheme.bodyMedium
-                                      ?.copyWith(
-                                        color: AppColors.lightTextSecondary,
-                                      ),
+                                  style: TextStyle(
+                                    color: const Color(0xFFB0B0B0),
+                                    fontSize: 14,
+                                  ),
                                 ),
                               ),
                               Container(
-                                padding: const EdgeInsets.all(Spacing.sm),
+                                padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  color: AppColors.lightBackground,
-                                  borderRadius: BorderRadius.circular(
-                                    Spacing.radiusMd,
-                                  ),
+                                  color: const Color(0xFF007BFF),
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Icon(
                                   Icons.tune,
                                   size: 20,
-                                  color: Theme.of(context).colorScheme.primary,
+                                  color: Colors.white,
                                 ),
                               ),
                             ],
                           ),
                         ),
                       ),
-                      const SizedBox(height: Spacing.lg),
+                      const SizedBox(height: 16),
 
                       // Map View Button
                       SizedBox(
@@ -206,16 +207,26 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: OutlinedButton.icon(
                           onPressed: () =>
                               Get.to(() => const MapSearchScreen()),
-                          icon: const Icon(Icons.map_outlined),
-                          label: const Text('Voir sur la carte'),
+                          icon: const Icon(Icons.map_outlined, size: 20),
+                          label: const Text(
+                            'Voir sur la carte',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: Colors.white,
                             side: const BorderSide(
-                              color: Colors.white,
-                              width: 2,
+                              color: Color(0xFF007BFF),
+                              width: 1,
                             ),
-                            padding: const EdgeInsets.symmetric(
-                              vertical: Spacing.md,
+                            backgroundColor: const Color(
+                              0xFF007BFF,
+                            ).withValues(alpha: 0.1),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
                             ),
                           ),
                         ),
@@ -230,44 +241,47 @@ class _HomeScreenState extends State<HomeScreen> {
                 if (_searchController.nearbyArtisansCount > 0) {
                   return SliverToBoxAdapter(
                     child: Container(
-                      margin: const EdgeInsets.all(Spacing.screenPadding),
-                      padding: const EdgeInsets.all(Spacing.base),
+                      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: AppColors.warningGradient,
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(Spacing.radiusMd),
+                        color: const Color(0xFF007BFF),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.1),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: Row(
                         children: [
                           Icon(
                             Icons.location_on,
-                            color: AppColors.goldenMarker,
+                            color: const Color(0xFFFFD700),
                             size: 32,
                           ),
-                          const SizedBox(width: Spacing.md),
+                          const SizedBox(width: 12),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   '${_searchController.nearbyArtisansCount} artisans à proximité',
-                                  style: Theme.of(context).textTheme.titleMedium
-                                      ?.copyWith(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 16,
+                                    height: 1.5,
+                                  ),
                                 ),
                                 Text(
                                   'À moins de 2km de vous',
-                                  style: Theme.of(context).textTheme.bodySmall
-                                      ?.copyWith(
-                                        color: Colors.white.withValues(
-                                          alpha: 0.9,
-                                        ),
-                                      ),
+                                  style: TextStyle(
+                                    color: Colors.white.withValues(alpha: 0.9),
+                                    fontSize: 12,
+                                    height: 1.5,
+                                  ),
                                 ),
                               ],
                             ),
@@ -275,7 +289,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           Icon(
                             Icons.arrow_forward_ios,
                             color: Colors.white,
-                            size: 20,
+                            size: 16,
                           ),
                         ],
                       ),
@@ -288,15 +302,15 @@ class _HomeScreenState extends State<HomeScreen> {
               // Categories Section Header
               const SliverToBoxAdapter(
                 child: Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    Spacing.screenPadding,
-                    Spacing.lg,
-                    Spacing.screenPadding,
-                    Spacing.md,
-                  ),
+                  padding: EdgeInsets.fromLTRB(16, 24, 16, 16),
                   child: Text(
                     'Catégories de métiers',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                      height: 1.2,
+                    ),
                   ),
                 ),
               ),
@@ -316,16 +330,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 }
 
                 return SliverPadding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: Spacing.screenPadding,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   sliver: SliverGrid(
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 3,
-                          childAspectRatio: 0.85,
-                          crossAxisSpacing: Spacing.md,
-                          mainAxisSpacing: Spacing.md,
+                          childAspectRatio: 0.9,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
                         ),
                     delegate: SliverChildBuilderDelegate((context, index) {
                       final sector = _searchController.sectors[index];
@@ -335,7 +347,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 );
               }),
 
-              const SliverToBoxAdapter(child: SizedBox(height: Spacing.xxxl)),
+              const SliverToBoxAdapter(child: SizedBox(height: 48)),
             ],
           ),
         ),
@@ -345,7 +357,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildCategoryCard(dynamic sector) {
     final iconData = _getSectorIcon(sector.code);
-    final gradient = _getSectorGradient(sector.code);
+    final cardColor = _getSectorColor(sector.code);
 
     return GestureDetector(
       onTap: () {
@@ -354,15 +366,11 @@ class _HomeScreenState extends State<HomeScreen> {
       },
       child: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: gradient,
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(Spacing.radiusMd),
+          color: cardColor,
+          borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: gradient[0].withValues(alpha: 0.3),
+              color: Colors.black.withValues(alpha: 0.2),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
@@ -371,15 +379,17 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(iconData, size: 40, color: Colors.white),
-            const SizedBox(height: Spacing.sm),
+            Icon(iconData, size: 48, color: Colors.white),
+            const SizedBox(height: 8),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: Spacing.xs),
+              padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Text(
                 sector.name,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                style: const TextStyle(
                   color: Colors.white,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
+                  height: 1.5,
                 ),
                 textAlign: TextAlign.center,
                 maxLines: 2,
@@ -410,21 +420,21 @@ class _HomeScreenState extends State<HomeScreen> {
     return icons[code] ?? Icons.build;
   }
 
-  List<Color> _getSectorGradient(String code) {
-    final gradients = {
-      'BAT': [const Color(0xFF4F46E5), const Color(0xFF7C3AED)],
-      'ELEC': [const Color(0xFFF59E0B), const Color(0xFFD97706)],
-      'PLOMB': [const Color(0xFF3B82F6), const Color(0xFF2563EB)],
-      'MENU': [const Color(0xFF8B4513), const Color(0xFF654321)],
-      'PEIN': [const Color(0xFF10B981), const Color(0xFF059669)],
-      'JAR': [const Color(0xFF22C55E), const Color(0xFF16A34A)],
-      'AUTO': [const Color(0xFF6366F1), const Color(0xFF4F46E5)],
-      'TECH': [const Color(0xFF8B5CF6), const Color(0xFF7C3AED)],
-      'AMEN': [const Color(0xFFEC4899), const Color(0xFFDB2777)],
-      'CLEAN': [const Color(0xFF14B8A6), const Color(0xFF0D9488)],
-      'SECU': [const Color(0xFFEF4444), const Color(0xFFDC2626)],
-      'ART': [const Color(0xFFF97316), const Color(0xFFEA580C)],
+  Color _getSectorColor(String code) {
+    final colors = {
+      'BAT': const Color(0xFF007BFF),
+      'ELEC': const Color(0xFFF59E0B),
+      'PLOMB': const Color(0xFF3B82F6),
+      'MENU': const Color(0xFF8B4513),
+      'PEIN': const Color(0xFF28A745),
+      'JAR': const Color(0xFF22C55E),
+      'AUTO': const Color(0xFF6366F1),
+      'TECH': const Color(0xFF8B5CF6),
+      'AMEN': const Color(0xFFEC4899),
+      'CLEAN': const Color(0xFF14B8A6),
+      'SECU': const Color(0xFFEF4444),
+      'ART': const Color(0xFFFF4500),
     };
-    return gradients[code] ?? AppColors.primaryGradient;
+    return colors[code] ?? const Color(0xFF1A1A3E);
   }
 }

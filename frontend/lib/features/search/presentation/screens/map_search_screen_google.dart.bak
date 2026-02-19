@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:yandex_mapkit/yandex_mapkit.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:get_storage/get_storage.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/spacing.dart';
 import '../../../../core/constants/app_constants.dart';
@@ -20,9 +21,16 @@ class MapSearchScreen extends StatefulWidget {
 
 class _MapSearchScreenState extends State<MapSearchScreen> {
   final _searchController = Get.find<artisan_search.ArtisanSearchController>();
-  YandexMapController? _mapController;
-  final List<PlacemarkMapObject> _placemarks = [];
+  final _storage = GetStorage();
+  GoogleMapController? _mapController;
+  Set<Marker> _markers = {};
   bool _showListView = false;
+  Timer? _debounceTimer;
+  double _currentZoom = AppConstants.defaultMapZoom;
+
+  // Cache settings
+  static const String _cacheKey = 'map_search_cache';
+  static const Duration _cacheDuration = Duration(minutes: 5);
 
   @override
   void initState() {
@@ -32,30 +40,45 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
 
   Future<void> _loadArtisans() async {
     await _searchController.searchArtisans();
-    _updatePlacemarks();
+    _updateMarkers();
   }
 
-  void _updatePlacemarks() {
-    _placemarks.clear();
+  void _updateMarkers() {
+    final markers = <Marker>{};
 
     for (final artisan in _searchController.searchResults) {
       if (artisan.fuzzyLocation != null) {
-        _placemarks.add(
-          PlacemarkMapObject(
-            mapId: MapObjectId('artisan_${artisan.id}'),
-            point: Point(
-              latitude: artisan.fuzzyLocation!.latitude,
-              longitude: artisan.fuzzyLocation!.longitude,
+        markers.add(
+          Marker(
+            markerId: MarkerId(artisan.id.toString()),
+            position: LatLng(
+              artisan.fuzzyLocation!.latitude,
+              artisan.fuzzyLocation!.longitude,
             ),
-            // Using default Yandex marker (will be customized later with PNG assets)
-            opacity: 1.0,
-            onTap: (placemark, point) => _showArtisanBottomSheet(artisan),
+            icon: artisan.isNearby
+                ? BitmapDescriptor.defaultMarkerWithHue(
+                    BitmapDescriptor.hueYellow,
+                  )
+                : BitmapDescriptor.defaultMarkerWithHue(
+                    BitmapDescriptor.hueBlue,
+                  ),
+            onTap: () => _showArtisanBottomSheet(artisan),
           ),
         );
       }
     }
 
-    setState(() {});
+    setState(() {
+      _markers = markers;
+    });
+  }
+
+  void _onCameraMove(CameraPosition position) {
+    _currentZoom = position.zoom;
+  }
+
+  void _onCameraIdle() {
+    // Optional: reload markers based on visible region
   }
 
   void _showArtisanBottomSheet(ArtisanSearchResult artisan) {
@@ -160,7 +183,7 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // Yandex Map
+          // Google Map
           Obx(() {
             final position = _searchController.currentPosition.value;
             if (position == null) {
@@ -176,27 +199,21 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
               );
             }
 
-            return YandexMap(
-              mapObjects: _placemarks,
+            return GoogleMap(
+              initialCameraPosition: CameraPosition(
+                target: LatLng(position.latitude, position.longitude),
+                zoom: AppConstants.defaultMapZoom,
+              ),
+              markers: _markers,
+              myLocationEnabled: true,
+              myLocationButtonEnabled: false,
+              zoomControlsEnabled: false,
+              mapToolbarEnabled: false,
               onMapCreated: (controller) {
                 _mapController = controller;
-
-                // Move camera to user location
-                _mapController!.moveCamera(
-                  CameraUpdate.newCameraPosition(
-                    CameraPosition(
-                      target: Point(
-                        latitude: position.latitude,
-                        longitude: position.longitude,
-                      ),
-                      zoom: AppConstants.defaultMapZoom,
-                    ),
-                  ),
-                );
               },
-              onCameraPositionChanged: (cameraPosition, reason, finished) {
-                // Optional: reload markers based on visible region
-              },
+              onCameraMove: _onCameraMove,
+              onCameraIdle: _onCameraIdle,
             );
           }),
 
@@ -273,19 +290,9 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                           final position =
                               _searchController.currentPosition.value;
                           if (position != null && _mapController != null) {
-                            _mapController!.moveCamera(
-                              CameraUpdate.newCameraPosition(
-                                CameraPosition(
-                                  target: Point(
-                                    latitude: position.latitude,
-                                    longitude: position.longitude,
-                                  ),
-                                  zoom: AppConstants.defaultMapZoom,
-                                ),
-                              ),
-                              animation: const MapAnimation(
-                                type: MapAnimationType.smooth,
-                                duration: 1.0,
+                            _mapController!.animateCamera(
+                              CameraUpdate.newLatLng(
+                                LatLng(position.latitude, position.longitude),
                               ),
                             );
                           }
@@ -448,6 +455,8 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
+    _mapController?.dispose();
     super.dispose();
   }
 }
