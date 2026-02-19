@@ -3,9 +3,12 @@ import 'package:get/get.dart';
 import 'core/theme/app_theme.dart';
 import 'core/constants/app_constants.dart';
 import 'core/init/app_bindings.dart';
-import 'features/auth/presentation/screens/onboarding_screen.dart';
+import 'features/auth/presentation/screens/splash_screen.dart';
 
-void main() {
+void main() async {
+  // Ensure Flutter is initialized
+  WidgetsFlutterBinding.ensureInitialized();
+
   // Initialize dependency injection
   AppBindings().dependencies();
 
@@ -24,7 +27,7 @@ class ProsArtisanApp extends StatelessWidget {
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
       initialBinding: AppBindings(),
-      home: const OnboardingScreen(),
+      home: const SplashScreen(), // Changed from OnboardingScreen
       defaultTransition: Transition.cupertino,
       transitionDuration: const Duration(milliseconds: 300),
     );

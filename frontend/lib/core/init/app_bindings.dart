@@ -11,6 +11,7 @@ import '../network/score_service.dart';
 import '../network/milestone_service.dart';
 import '../network/dispute_service.dart';
 import '../network/message_service.dart';
+import '../../shared/controllers/auth_controller.dart';
 
 /// Global dependency injection setup
 /// Registers all services and controllers needed by the app
@@ -32,6 +33,13 @@ class AppBindings extends Bindings {
     Get.lazyPut<ScoreService>(() => ScoreService(), fenix: true);
     Get.lazyPut<MilestoneService>(() => MilestoneService(), fenix: true);
     Get.lazyPut<DisputeService>(() => DisputeService(), fenix: true);
-    Get.lazyPut<MessageService>(() => MessageService(Get.find<DioClient>()), fenix: true);
+    Get.lazyPut<MessageService>(
+      () => MessageService(Get.find<DioClient>()),
+      fenix: true,
+    );
+
+    // Register AuthController as permanent singleton
+    // This ensures it's available throughout the app lifecycle
+    Get.put(AuthController(), permanent: true);
   }
 }

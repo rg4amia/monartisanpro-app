@@ -26,14 +26,16 @@ class DioClient {
 
     // Add interceptors
     dio.interceptors.add(_AuthInterceptor(_storage));
-    dio.interceptors.add(PrettyDioLogger(
-      requestHeader: true,
-      requestBody: true,
-      responseBody: true,
-      responseHeader: false,
-      error: true,
-      compact: true,
-    ));
+    dio.interceptors.add(
+      PrettyDioLogger(
+        requestHeader: true,
+        requestBody: true,
+        responseBody: true,
+        responseHeader: false,
+        error: true,
+        compact: true,
+      ),
+    );
   }
 
   Future<void> setAuthToken(String token) async {
@@ -68,9 +70,16 @@ class _AuthInterceptor extends Interceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
-    // Handle 401 Unauthorized - token expired
+    // Handle 401 Unauthorized - token expired or invalid
     if (err.response?.statusCode == 401) {
-      // TODO: Trigger logout or token refresh
+      print('Token expired or invalid (401), clearing session...');
+
+      // Clear token and trigger logout
+      _storage.delete(key: ApiConstants.authTokenKey);
+      _storage.delete(key: ApiConstants.userDataKey);
+
+      // Note: The actual navigation to login will be handled by the app
+      // when it detects isAuthenticated = false
     }
     handler.next(err);
   }

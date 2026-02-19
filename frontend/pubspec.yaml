@@ -52,7 +52,6 @@ dependencies:
 
   # Maps & Location
   google_maps_flutter: ^2.6.0
-  google_maps_cluster_manager: ^3.0.0
   geolocator: ^11.0.0
   geocoding: ^2.1.1
 

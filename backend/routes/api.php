@@ -33,6 +33,14 @@ Route::prefix('v1')->group(function () {
     Route::post('/auth/send-otp', [AuthController::class, 'sendPhoneOtp']);
     Route::post('/auth/verify-otp', [AuthController::class, 'verifyPhoneOtp']);
 
+    // Public routes - Sectors and Trades
+    Route::get('/sectors', [\App\Http\Controllers\Api\V1\TradeController::class, 'getSectors']);
+    Route::get('/sectors/{sectorId}/trades', [\App\Http\Controllers\Api\V1\TradeController::class, 'getTradesBySector']);
+    Route::get('/trades', [\App\Http\Controllers\Api\V1\TradeController::class, 'getAllTrades']);
+
+    // Public artisan search
+    Route::post('/artisans/search', [\App\Http\Controllers\Api\V1\TradeController::class, 'searchArtisans']);
+
     // Public payment webhook (CinetPay callback)
     Route::post('/payments/webhook', [PaymentController::class, 'webhook']);
 

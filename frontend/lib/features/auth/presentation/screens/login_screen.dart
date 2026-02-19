@@ -38,18 +38,34 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (success) {
-        Get.snackbar(
-          'Success',
-          'Welcome back!',
-          backgroundColor: AppColors.success,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.TOP,
-        );
-
         // Navigate based on user role
         final user = _authController.currentUser.value;
+
         if (user != null) {
-          _navigateToHome(user.role);
+          print('User logged in: ${user.name}, Role: ${user.role}');
+
+          Get.snackbar(
+            'Succès',
+            'Bienvenue ${user.name}!',
+            backgroundColor: AppColors.success,
+            colorText: Colors.white,
+            snackPosition: SnackPosition.TOP,
+            duration: const Duration(seconds: 2),
+          );
+
+          // Small delay to show snackbar before navigation
+          Future.delayed(const Duration(milliseconds: 500), () {
+            _navigateToHome(user.role);
+          });
+        } else {
+          print('ERROR: Login success but user is null');
+          Get.snackbar(
+            'Erreur',
+            'Erreur de connexion, veuillez réessayer',
+            backgroundColor: AppColors.error,
+            colorText: Colors.white,
+            snackPosition: SnackPosition.TOP,
+          );
         }
       } else {
         Get.snackbar(
@@ -64,17 +80,26 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _navigateToHome(String role) {
-    switch (role.toLowerCase()) {
+    print('Navigating to home for role: $role');
+
+    final roleKey = role.toLowerCase().trim();
+    print('Role key after processing: $roleKey');
+
+    switch (roleKey) {
       case 'client':
+        print('Navigating to HomeScreen');
         Get.offAll(() => const HomeScreen());
         break;
       case 'artisan':
+        print('Navigating to ArtisanDashboardScreen');
         Get.offAll(() => const ArtisanDashboardScreen());
         break;
       case 'fournisseur':
+        print('Navigating to VendorDashboardScreen');
         Get.offAll(() => const VendorDashboardScreen());
         break;
       default:
+        print('Role not matched, using default HomeScreen. Role was: $roleKey');
         Get.offAll(() => const HomeScreen());
     }
   }

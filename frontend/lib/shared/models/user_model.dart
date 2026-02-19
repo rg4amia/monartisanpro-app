@@ -45,6 +45,11 @@ class User {
   bool get isFournisseur => role == 'fournisseur';
   bool get isKycApproved => kycStatus == 'approved';
   bool get isPhoneVerified => phoneVerifiedAt != null;
+
+  @override
+  String toString() {
+    return 'User(id: $id, name: $name, email: $email, role: $role, kycStatus: $kycStatus)';
+  }
 }
 
 @JsonSerializable()
@@ -111,11 +116,7 @@ class Sector {
   final String code;
   final String name;
 
-  Sector({
-    required this.id,
-    required this.code,
-    required this.name,
-  });
+  Sector({required this.id, required this.code, required this.name});
 
   factory Sector.fromJson(Map<String, dynamic> json) => _$SectorFromJson(json);
   Map<String, dynamic> toJson() => _$SectorToJson(this);

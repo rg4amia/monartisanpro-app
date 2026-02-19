@@ -2,8 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:google_maps_cluster_manager/google_maps_cluster_manager.dart'
-    as cluster_manager;
 import 'package:get_storage/get_storage.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/spacing.dart';
@@ -13,19 +11,6 @@ import '../../../../shared/controllers/search_controller.dart'
 import '../../../../shared/models/artisan_search_model.dart';
 import 'artisan_profile_screen.dart';
 import 'search_filter_screen.dart';
-
-class ArtisanClusterItem with cluster_manager.ClusterItem {
-  final ArtisanSearchResult artisan;
-
-  ArtisanClusterItem(this.artisan);
-
-  @override
-  LatLng get location =>
-      LatLng(artisan.fuzzyLocation!.latitude, artisan.fuzzyLocation!.longitude);
-
-  @override
-  String get geohash => '';
-}
 
 class MapSearchScreen extends StatefulWidget {
   const MapSearchScreen({super.key});
@@ -38,7 +23,6 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
   final _searchController = Get.find<artisan_search.ArtisanSearchController>();
   final _storage = GetStorage();
   GoogleMapController? _mapController;
-  cluster_manager.ClusterManager? _clusterManager;
   Set<Marker> _markers = {};
   bool _showListView = false;
   Timer? _debounceTimer;
@@ -51,117 +35,39 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
   @override
   void initState() {
     super.initState();
-    _initializeClusterManager();
     _loadArtisans();
   }
 
-  void _initializeClusterManager() {
-    _clusterManager = cluster_manager.ClusterManager<ArtisanClusterItem>(
-      [],
-      _updateMarkers,
-      markerBuilder: _markerBuilder,
-      levels: const [1, 3, 5, 8, 11, 14, 16, 18, 20], // Optimized zoom levels
-      extraPercent: 0.3, // Larger cluster tolerance for better grouping
-      stopClusteringZoom: 17.0, // Stop clustering at street level
-    );
-  }
-
   Future<void> _loadArtisans() async {
-    // Check cache first
-    final cached = _getCachedResults();
-    if (cached != null) {
-      _clusterManager!.setItems(cached);
-      return;
-    }
-
-    // Load from API
     await _searchController.searchArtisans();
-
-    final items = _searchController.searchResults
-        .where((a) => a.fuzzyLocation != null)
-        .map((a) => ArtisanClusterItem(a))
-        .toList();
-
-    _clusterManager!.setItems(items);
-    _cacheResults(items);
+    _updateMarkers();
   }
 
-  List<ArtisanClusterItem>? _getCachedResults() {
-    final cacheData = _storage.read(_cacheKey);
-    if (cacheData == null) return null;
+  void _updateMarkers() {
+    final markers = <Marker>{};
 
-    final timestamp = DateTime.parse(cacheData['timestamp'] as String);
-    if (DateTime.now().difference(timestamp) > _cacheDuration) {
-      _storage.remove(_cacheKey);
-      return null;
+    for (final artisan in _searchController.searchResults) {
+      if (artisan.fuzzyLocation != null) {
+        markers.add(
+          Marker(
+            markerId: MarkerId(artisan.id.toString()),
+            position: LatLng(
+              artisan.fuzzyLocation!.latitude,
+              artisan.fuzzyLocation!.longitude,
+            ),
+            icon: artisan.isNearby
+                ? BitmapDescriptor.defaultMarkerWithHue(
+                    BitmapDescriptor.hueYellow,
+                  )
+                : BitmapDescriptor.defaultMarkerWithHue(
+                    BitmapDescriptor.hueBlue,
+                  ),
+            onTap: () => _showArtisanBottomSheet(artisan),
+          ),
+        );
+      }
     }
 
-    // Return cached items (simplified - in production, deserialize properly)
-    return _searchController.searchResults
-        .where((a) => a.fuzzyLocation != null)
-        .map((a) => ArtisanClusterItem(a))
-        .toList();
-  }
-
-  void _cacheResults(List<ArtisanClusterItem> items) {
-    _storage.write(_cacheKey, {
-      'timestamp': DateTime.now().toIso8601String(),
-      'count': items.length,
-    });
-  }
-
-  Future<Marker> _markerBuilder(dynamic cluster) async {
-    final typedCluster = cluster as cluster_manager.Cluster<ArtisanClusterItem>;
-    if (typedCluster.isMultiple) {
-      // Cluster marker
-      return Marker(
-        markerId: MarkerId(typedCluster.getId()),
-        position: typedCluster.location,
-        icon: await _getClusterBitmap(
-          typedCluster.count,
-          _getClusterColor(typedCluster.count),
-        ),
-        onTap: () {
-          // Zoom in to expand cluster
-          _mapController?.animateCamera(
-            CameraUpdate.newLatLngZoom(typedCluster.location, _currentZoom + 2),
-          );
-        },
-      );
-    } else {
-      // Single artisan marker (lazy load details on tap)
-      final artisan = typedCluster.items.first.artisan;
-      return Marker(
-        markerId: MarkerId(artisan.id.toString()),
-        position: typedCluster.location,
-        icon: artisan.isNearby
-            ? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueYellow)
-            : BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
-        onTap: () => _showArtisanBottomSheet(artisan),
-      );
-    }
-  }
-
-  Color _getClusterColor(int count) {
-    if (count > 50) return Colors.red;
-    if (count > 20) return Colors.orange;
-    if (count > 10) return AppColors.lightAccentPrimary;
-    return Colors.blue;
-  }
-
-  Future<BitmapDescriptor> _getClusterBitmap(int count, Color color) async {
-    // In production, use custom cluster icons with count text
-    // For now, use default with different hues
-    final hue = color == Colors.red
-        ? BitmapDescriptor.hueRed
-        : color == Colors.orange
-        ? BitmapDescriptor.hueOrange
-        : BitmapDescriptor.hueAzure;
-
-    return BitmapDescriptor.defaultMarkerWithHue(hue);
-  }
-
-  void _updateMarkers(Set<Marker> markers) {
     setState(() {
       _markers = markers;
     });
@@ -169,18 +75,10 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
 
   void _onCameraMove(CameraPosition position) {
     _currentZoom = position.zoom;
-
-    // Debounce camera movement to avoid excessive API calls
-    _debounceTimer?.cancel();
-    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
-      _clusterManager!.onCameraMove(position);
-      // Optionally trigger new search based on visible bounds
-      // _searchInVisibleRegion(position);
-    });
   }
 
   void _onCameraIdle() {
-    _clusterManager!.updateMap();
+    // Optional: reload markers based on visible region
   }
 
   void _showArtisanBottomSheet(ArtisanSearchResult artisan) {
@@ -313,7 +211,6 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
               mapToolbarEnabled: false,
               onMapCreated: (controller) {
                 _mapController = controller;
-                _clusterManager?.setMapId(controller.mapId);
               },
               onCameraMove: _onCameraMove,
               onCameraIdle: _onCameraIdle,

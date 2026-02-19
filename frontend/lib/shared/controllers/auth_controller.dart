@@ -4,7 +4,6 @@ import '../../core/network/auth_service.dart';
 import '../../core/network/dio_client.dart';
 import '../../core/constants/api_constants.dart';
 import '../models/user_model.dart';
-import '../models/auth_response.dart';
 
 class AuthController extends GetxController {
   final AuthService _authService = AuthService();
@@ -25,23 +24,61 @@ class AuthController extends GetxController {
 
   /// Check if user is already authenticated
   Future<void> checkAuthStatus() async {
-    final token = await _dioClient.getAuthToken();
-    if (token != null) {
-      await fetchCurrentUser();
+    try {
+      final token = await _dioClient.getAuthToken();
+
+      if (token != null && token.isNotEmpty) {
+        print('Token found, fetching user data...');
+
+        // Try to fetch current user with the stored token
+        await fetchCurrentUser();
+
+        if (currentUser.value != null) {
+          print('User authenticated: ${currentUser.value!.name}');
+          isAuthenticated.value = true;
+        } else {
+          print('Token invalid, clearing session...');
+          await _clearSession();
+        }
+      } else {
+        print('No token found, user not authenticated');
+        isAuthenticated.value = false;
+      }
+    } catch (e) {
+      print('Error checking auth status: $e');
+      await _clearSession();
     }
+  }
+
+  /// Clear session data
+  Future<void> _clearSession() async {
+    currentUser.value = null;
+    isAuthenticated.value = false;
+    await _dioClient.clearAuthToken();
+    await _storage.delete(key: ApiConstants.userDataKey);
   }
 
   /// Fetch current user
   Future<void> fetchCurrentUser() async {
     try {
       final response = await _authService.getCurrentUser();
+
       if (response.success && response.data != null) {
         currentUser.value = response.data;
         isAuthenticated.value = true;
+
+        // Update stored user data
+        await _storage.write(
+          key: ApiConstants.userDataKey,
+          value: response.data!.toJson().toString(),
+        );
+      } else {
+        print('Failed to fetch user: ${response.message}');
+        await _clearSession();
       }
     } catch (e) {
       print('Error fetching user: $e');
-      await logout();
+      await _clearSession();
     }
   }
 
@@ -101,10 +138,7 @@ class AuthController extends GetxController {
   }
 
   /// Login user
-  Future<bool> login({
-    required String email,
-    required String password,
-  }) async {
+  Future<bool> login({required String email, required String password}) async {
     try {
       isLoading.value = true;
       errorMessage.value = '';
@@ -141,14 +175,16 @@ class AuthController extends GetxController {
   /// Logout user
   Future<void> logout() async {
     try {
+      isLoading.value = true;
+
+      // Call backend logout endpoint
       await _authService.logout();
     } catch (e) {
       print('Logout error: $e');
     } finally {
-      currentUser.value = null;
-      isAuthenticated.value = false;
-      await _dioClient.clearAuthToken();
-      await _storage.delete(key: ApiConstants.userDataKey);
+      // Clear local session regardless of backend response
+      await _clearSession();
+      isLoading.value = false;
     }
   }
 
@@ -175,18 +211,12 @@ class AuthController extends GetxController {
   }
 
   /// Verify OTP
-  Future<bool> verifyOtp({
-    required String phone,
-    required String otp,
-  }) async {
+  Future<bool> verifyOtp({required String phone, required String otp}) async {
     try {
       isLoading.value = true;
       errorMessage.value = '';
 
-      final response = await _authService.verifyOtp(
-        phone: phone,
-        otp: otp,
-      );
+      final response = await _authService.verifyOtp(phone: phone, otp: otp);
 
       if (response.success) {
         // Refresh user data

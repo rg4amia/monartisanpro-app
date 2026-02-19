@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/spacing.dart';
+import '../../../../core/storage/preferences_manager.dart';
 import 'login_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -80,6 +81,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   void _completeOnboarding() {
+    // Mark onboarding as seen
+    PreferencesManager().setOnboardingSeen();
+
     // Navigate to login screen
     Get.offAll(() => const LoginScreen());
   }
@@ -134,9 +138,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 child: ElevatedButton(
                   onPressed: _nextPage,
                   child: Text(
-                    _currentPage == _pages.length - 1
-                        ? 'Commencer'
-                        : 'Suivant',
+                    _currentPage == _pages.length - 1 ? 'Commencer' : 'Suivant',
                   ),
                 ),
               ),
@@ -165,20 +167,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              page.icon,
-              size: 64,
-              color: Colors.white,
-            ),
+            child: Icon(page.icon, size: 64, color: Colors.white),
           ),
           const SizedBox(height: Spacing.xxxl),
 
           // Title
           Text(
             page.title,
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: Spacing.lg),
@@ -187,8 +185,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           Text(
             page.description,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: AppColors.lightTextSecondary,
-                ),
+              color: AppColors.lightTextSecondary,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: Spacing.xl),
@@ -202,36 +200,34 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
             child: Column(
               children: page.features
-                  .map((feature) => Padding(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: Spacing.sm,
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(Spacing.xs),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: page.gradient,
-                                ),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.check,
-                                color: Colors.white,
-                                size: 16,
-                              ),
+                  .map(
+                    (feature) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: Spacing.sm),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(Spacing.xs),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(colors: page.gradient),
+                              shape: BoxShape.circle,
                             ),
-                            const SizedBox(width: Spacing.md),
-                            Expanded(
-                              child: Text(
-                                feature,
-                                style: Theme.of(context).textTheme.bodyMedium,
-                              ),
+                            child: const Icon(
+                              Icons.check,
+                              color: Colors.white,
+                              size: 16,
                             ),
-                          ],
-                        ),
-                      ))
+                          ),
+                          const SizedBox(width: Spacing.md),
+                          Expanded(
+                            child: Text(
+                              feature,
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
                   .toList(),
             ),
           ),

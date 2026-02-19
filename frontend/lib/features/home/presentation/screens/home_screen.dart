@@ -3,7 +3,8 @@ import 'package:get/get.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/spacing.dart';
 import '../../../../shared/controllers/auth_controller.dart';
-import '../../../../shared/controllers/search_controller.dart' as artisan_search;
+import '../../../../shared/controllers/search_controller.dart'
+    as artisan_search;
 import '../../../search/presentation/screens/map_search_screen.dart';
 import '../../../search/presentation/screens/search_filter_screen.dart';
 
@@ -16,277 +17,327 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final _authController = Get.find<AuthController>();
-  final _searchController = Get.put(artisan_search.ArtisanSearchController());
+  late final artisan_search.ArtisanSearchController _searchController;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize search controller with error handling
+    try {
+      _searchController = Get.put(artisan_search.ArtisanSearchController());
+      // Load sectors when screen initializes
+      _loadInitialData();
+    } catch (e) {
+      print('Error initializing search controller: $e');
+      // Try to find existing instance or create new one
+      if (Get.isRegistered<artisan_search.ArtisanSearchController>()) {
+        _searchController = Get.find<artisan_search.ArtisanSearchController>();
+      } else {
+        _searchController = Get.put(artisan_search.ArtisanSearchController());
+      }
+    }
+  }
+
+  Future<void> _loadInitialData() async {
+    // Load sectors and get current location
+    await Future.wait([
+      _searchController.fetchSectors(),
+      _searchController.getCurrentLocation(),
+    ]);
+
+    // Search for nearby artisans
+    if (_searchController.currentPosition.value != null) {
+      await _searchController.getNearbyArtisans();
+    }
+  }
+
+  Future<void> _refreshData() async {
+    await _loadInitialData();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            // App Bar
-            SliverAppBar(
-              floating: true,
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              title: Row(
-                children: [
-                  Icon(
-                    Icons.build_circle,
-                    color: Colors.white,
-                  ),
-                  const SizedBox(width: Spacing.sm),
-                  Text(
-                    'ProsArtisan',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
-                ],
-              ),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-                  onPressed: () {
-                    // TODO: Navigate to notifications
-                  },
-                ),
-                Obx(() {
-                  final user = _authController.currentUser.value;
-                  return user?.avatar != null
-                      ? CircleAvatar(
-                          backgroundImage: NetworkImage(user!.avatar!),
-                          radius: 16,
-                        )
-                      : CircleAvatar(
-                          backgroundColor: Colors.white,
-                          child: Icon(
-                            Icons.person,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                        );
-                }),
-                const SizedBox(width: Spacing.md),
-              ],
-            ),
-
-            // Welcome Section
-            SliverToBoxAdapter(
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: AppColors.primaryGradient,
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  ),
-                ),
-                padding: const EdgeInsets.all(Spacing.screenPadding),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+      body: RefreshIndicator(
+        onRefresh: _refreshData,
+        child: SafeArea(
+          child: CustomScrollView(
+            slivers: [
+              // App Bar
+              SliverAppBar(
+                floating: true,
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                title: Row(
                   children: [
-                    Obx(() {
-                      final user = _authController.currentUser.value;
-                      return Text(
-                        'Bonjour ${user?.name.split(' ').first ?? 'Invité'}!',
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                      );
-                    }),
-                    const SizedBox(height: Spacing.xs),
+                    Icon(Icons.build_circle, color: Colors.white),
+                    const SizedBox(width: Spacing.sm),
                     Text(
-                      'Quel artisan cherchez-vous aujourd\'hui?',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.white.withValues(alpha: 0.9),
-                          ),
-                    ),
-                    const SizedBox(height: Spacing.lg),
-
-                    // Search Bar
-                    GestureDetector(
-                      onTap: () => Get.to(() => const SearchFilterScreen()),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: Spacing.base,
-                          vertical: Spacing.md,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(Spacing.radiusLg),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.1),
-                              blurRadius: 10,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.search,
-                              color: AppColors.lightTextSecondary,
-                            ),
-                            const SizedBox(width: Spacing.md),
-                            Expanded(
-                              child: Text(
-                                'Rechercher un artisan...',
-                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                      color: AppColors.lightTextSecondary,
-                                    ),
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.all(Spacing.sm),
-                              decoration: BoxDecoration(
-                                color: AppColors.lightBackground,
-                                borderRadius: BorderRadius.circular(Spacing.radiusMd),
-                              ),
-                              child: Icon(
-                                Icons.tune,
-                                size: 20,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: Spacing.lg),
-
-                    // Map View Button
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: () => Get.to(() => const MapSearchScreen()),
-                        icon: const Icon(Icons.map_outlined),
-                        label: const Text('Voir sur la carte'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          side: const BorderSide(color: Colors.white, width: 2),
-                          padding: const EdgeInsets.symmetric(vertical: Spacing.md),
-                        ),
+                      'ProsArtisan',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ],
                 ),
-              ),
-            ),
-
-            // Nearby Artisans Section
-            Obx(() {
-              if (_searchController.nearbyArtisansCount > 0) {
-                return SliverToBoxAdapter(
-                  child: Container(
-                    margin: const EdgeInsets.all(Spacing.screenPadding),
-                    padding: const EdgeInsets.all(Spacing.base),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: AppColors.warningGradient,
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(Spacing.radiusMd),
+                actions: [
+                  IconButton(
+                    icon: const Icon(
+                      Icons.notifications_outlined,
+                      color: Colors.white,
                     ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.location_on,
-                          color: AppColors.goldenMarker,
-                          size: 32,
-                        ),
-                        const SizedBox(width: Spacing.md),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '${_searchController.nearbyArtisansCount} artisans à proximité',
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                    onPressed: () {
+                      // TODO: Navigate to notifications
+                    },
+                  ),
+                  Obx(() {
+                    final user = _authController.currentUser.value;
+                    return user?.avatar != null
+                        ? CircleAvatar(
+                            backgroundImage: NetworkImage(user!.avatar!),
+                            radius: 16,
+                          )
+                        : CircleAvatar(
+                            backgroundColor: Colors.white,
+                            child: Icon(
+                              Icons.person,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                          );
+                  }),
+                  const SizedBox(width: Spacing.md),
+                ],
+              ),
+
+              // Welcome Section
+              SliverToBoxAdapter(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: AppColors.primaryGradient,
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                  ),
+                  padding: const EdgeInsets.all(Spacing.screenPadding),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Obx(() {
+                        final user = _authController.currentUser.value;
+                        return Text(
+                          'Bonjour ${user?.name.split(' ').first ?? 'Invité'}!',
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
                               ),
-                              Text(
-                                'À moins de 2km de vous',
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: Colors.white.withValues(alpha: 0.9),
-                                    ),
+                        );
+                      }),
+                      const SizedBox(height: Spacing.xs),
+                      Text(
+                        'Quel artisan cherchez-vous aujourd\'hui?',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.white.withValues(alpha: 0.9),
+                        ),
+                      ),
+                      const SizedBox(height: Spacing.lg),
+
+                      // Search Bar
+                      GestureDetector(
+                        onTap: () => Get.to(() => const SearchFilterScreen()),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: Spacing.base,
+                            vertical: Spacing.md,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(
+                              Spacing.radiusLg,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.1),
+                                blurRadius: 10,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.search,
+                                color: AppColors.lightTextSecondary,
+                              ),
+                              const SizedBox(width: Spacing.md),
+                              Expanded(
+                                child: Text(
+                                  'Rechercher un artisan...',
+                                  style: Theme.of(context).textTheme.bodyMedium
+                                      ?.copyWith(
+                                        color: AppColors.lightTextSecondary,
+                                      ),
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.all(Spacing.sm),
+                                decoration: BoxDecoration(
+                                  color: AppColors.lightBackground,
+                                  borderRadius: BorderRadius.circular(
+                                    Spacing.radiusMd,
+                                  ),
+                                ),
+                                child: Icon(
+                                  Icons.tune,
+                                  size: 20,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
                               ),
                             ],
                           ),
                         ),
-                        Icon(
-                          Icons.arrow_forward_ios,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }
-              return const SliverToBoxAdapter(child: SizedBox.shrink());
-            }),
+                      ),
+                      const SizedBox(height: Spacing.lg),
 
-            // Categories Section Header
-            const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                  Spacing.screenPadding,
-                  Spacing.lg,
-                  Spacing.screenPadding,
-                  Spacing.md,
-                ),
-                child: Text(
-                  'Catégories de métiers',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+                      // Map View Button
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () =>
+                              Get.to(() => const MapSearchScreen()),
+                          icon: const Icon(Icons.map_outlined),
+                          label: const Text('Voir sur la carte'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            side: const BorderSide(
+                              color: Colors.white,
+                              width: 2,
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              vertical: Spacing.md,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ),
 
-            // Categories Grid
-            Obx(() {
-              if (_searchController.isLoadingSectors.value) {
-                return const SliverFillRemaining(
-                  child: Center(child: CircularProgressIndicator()),
-                );
-              }
+              // Nearby Artisans Section
+              Obx(() {
+                if (_searchController.nearbyArtisansCount > 0) {
+                  return SliverToBoxAdapter(
+                    child: Container(
+                      margin: const EdgeInsets.all(Spacing.screenPadding),
+                      padding: const EdgeInsets.all(Spacing.base),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: AppColors.warningGradient,
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(Spacing.radiusMd),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.location_on,
+                            color: AppColors.goldenMarker,
+                            size: 32,
+                          ),
+                          const SizedBox(width: Spacing.md),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '${_searchController.nearbyArtisansCount} artisans à proximité',
+                                  style: Theme.of(context).textTheme.titleMedium
+                                      ?.copyWith(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                ),
+                                Text(
+                                  'À moins de 2km de vous',
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.9,
+                                        ),
+                                      ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Icon(
+                            Icons.arrow_forward_ios,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+                return const SliverToBoxAdapter(child: SizedBox.shrink());
+              }),
 
-              if (_searchController.sectors.isEmpty) {
-                return const SliverFillRemaining(
-                  child: Center(child: Text('Aucune catégorie disponible')),
-                );
-              }
-
-              return SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: Spacing.screenPadding),
-                sliver: SliverGrid(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    childAspectRatio: 0.85,
-                    crossAxisSpacing: Spacing.md,
-                    mainAxisSpacing: Spacing.md,
+              // Categories Section Header
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    Spacing.screenPadding,
+                    Spacing.lg,
+                    Spacing.screenPadding,
+                    Spacing.md,
                   ),
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final sector = _searchController.sectors[index];
-                      return _buildCategoryCard(sector);
-                    },
-                    childCount: _searchController.sectors.length,
+                  child: Text(
+                    'Catégories de métiers',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                 ),
-              );
-            }),
+              ),
 
-            const SliverToBoxAdapter(
-              child: SizedBox(height: Spacing.xxxl),
-            ),
-          ],
+              // Categories Grid
+              Obx(() {
+                if (_searchController.isLoadingSectors.value) {
+                  return const SliverFillRemaining(
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
+
+                if (_searchController.sectors.isEmpty) {
+                  return const SliverFillRemaining(
+                    child: Center(child: Text('Aucune catégorie disponible')),
+                  );
+                }
+
+                return SliverPadding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: Spacing.screenPadding,
+                  ),
+                  sliver: SliverGrid(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          childAspectRatio: 0.85,
+                          crossAxisSpacing: Spacing.md,
+                          mainAxisSpacing: Spacing.md,
+                        ),
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final sector = _searchController.sectors[index];
+                      return _buildCategoryCard(sector);
+                    }, childCount: _searchController.sectors.length),
+                  ),
+                );
+              }),
+
+              const SliverToBoxAdapter(child: SizedBox(height: Spacing.xxxl)),
+            ],
+          ),
         ),
       ),
     );
@@ -320,20 +371,16 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              iconData,
-              size: 40,
-              color: Colors.white,
-            ),
+            Icon(iconData, size: 40, color: Colors.white),
             const SizedBox(height: Spacing.sm),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: Spacing.xs),
               child: Text(
                 sector.name,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
