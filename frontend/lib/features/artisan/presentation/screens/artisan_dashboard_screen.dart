@@ -5,7 +5,7 @@ import '../../../../core/constants/spacing.dart';
 import '../../../../shared/controllers/auth_controller.dart';
 import '../../../../shared/controllers/project_controller.dart';
 import '../../../projects/presentation/screens/project_list_screen.dart';
-import '../../../search/presentation/screens/map_search_screen_google.dart.bak';
+import '../../../search/presentation/screens/map_search_screen.dart';
 import 'score_dashboard_screen.dart';
 import 'quote_management_screen.dart';
 import 'artisan_payment_history_screen.dart';
@@ -117,7 +117,7 @@ class _ArtisanDashboardScreenState extends State<ArtisanDashboardScreen> {
                             icon: Icons.search,
                             label: 'Chercher projets',
                             color: AppColors.info,
-                            onTap: () => Get.to(() => const MapSearchScreen()),
+                            onTap: () => Get.to(() => MapSearchScreen()),
                           ),
                         ),
                         const SizedBox(width: Spacing.md),
@@ -282,7 +282,7 @@ class _ArtisanDashboardScreenState extends State<ArtisanDashboardScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Get.to(() => const MapSearchScreen()),
+        onPressed: () => Get.to(() => MapSearchScreen()),
         icon: const Icon(Icons.search),
         label: const Text('Chercher projets'),
         backgroundColor: AppColors.darkAccentPrimary,

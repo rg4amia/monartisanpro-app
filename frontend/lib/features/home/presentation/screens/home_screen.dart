@@ -28,7 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
       // Load sectors when screen initializes
       _loadInitialData();
     } catch (e) {
-      print('Error initializing search controller: $e');
+      debugPrint('Error initializing search controller: $e');
       // Try to find existing instance or create new one
       if (Get.isRegistered<artisan_search.ArtisanSearchController>()) {
         _searchController = Get.find<artisan_search.ArtisanSearchController>();
@@ -58,296 +58,32 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A2A),
+      backgroundColor: AppColors.darkBackground,
       body: RefreshIndicator(
+        color: AppColors.darkAccentPrimary,
+        backgroundColor: AppColors.darkCard,
         onRefresh: _refreshData,
         child: SafeArea(
           child: CustomScrollView(
             slivers: [
-              // App Bar
-              SliverAppBar(
-                floating: true,
-                backgroundColor: const Color(0xFF0A0A2A),
-                elevation: 0,
-                title: Row(
-                  children: [
-                    Icon(
-                      Icons.build_circle,
-                      color: const Color(0xFFFFD700),
-                      size: 28,
-                    ),
-                    const SizedBox(width: Spacing.sm),
-                    Text(
-                      'ProsArtisan',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 20,
-                      ),
-                    ),
-                  ],
-                ),
-                actions: [
-                  IconButton(
-                    icon: const Icon(
-                      Icons.notifications_outlined,
-                      color: Colors.white,
-                      size: 24,
-                    ),
-                    onPressed: () {
-                      // TODO: Navigate to notifications
-                    },
-                  ),
-                  Obx(() {
-                    final user = _authController.currentUser.value;
-                    return user?.avatar != null
-                        ? CircleAvatar(
-                            backgroundImage: NetworkImage(user!.avatar!),
-                            radius: 16,
-                          )
-                        : CircleAvatar(
-                            backgroundColor: const Color(0xFF1A1A3E),
-                            child: Icon(
-                              Icons.person,
-                              color: Colors.white,
-                              size: 20,
-                            ),
-                          );
-                  }),
-                  const SizedBox(width: Spacing.md),
-                ],
-              ),
+              // Top Bar - Design System: 56-64px height
+              _buildTopBar(),
 
-              // Welcome Section
-              SliverToBoxAdapter(
-                child: Container(
-                  decoration: const BoxDecoration(color: Color(0xFF0A0A2A)),
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Obx(() {
-                        final user = _authController.currentUser.value;
-                        return Text(
-                          'Bonjour ${user?.name.split(' ').first ?? 'Invité'}!',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 24,
-                            height: 1.2,
-                          ),
-                        );
-                      }),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Quel artisan cherchez-vous aujourd\'hui?',
-                        style: TextStyle(
-                          color: const Color(0xFFB0B0B0),
-                          fontSize: 14,
-                          height: 1.5,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
+              // Welcome Section with Search
+              _buildWelcomeSection(),
 
-                      // Search Bar
-                      GestureDetector(
-                        onTap: () => Get.to(() => const SearchFilterScreen()),
-                        child: Container(
-                          height: 48,
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF1A1A3E),
-                            borderRadius: BorderRadius.circular(24),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.1),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.search,
-                                color: const Color(0xFFB0B0B0),
-                                size: 24,
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  'Rechercher un artisan...',
-                                  style: TextStyle(
-                                    color: const Color(0xFFB0B0B0),
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF007BFF),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Icon(
-                                  Icons.tune,
-                                  size: 20,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Map View Button
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton.icon(
-                          onPressed: () =>
-                              Get.to(() => const MapSearchScreen()),
-                          icon: const Icon(Icons.map_outlined, size: 20),
-                          label: const Text(
-                            'Voir sur la carte',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.white,
-                            side: const BorderSide(
-                              color: Color(0xFF007BFF),
-                              width: 1,
-                            ),
-                            backgroundColor: const Color(
-                              0xFF007BFF,
-                            ).withValues(alpha: 0.1),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Nearby Artisans Section
-              Obx(() {
-                if (_searchController.nearbyArtisansCount > 0) {
-                  return SliverToBoxAdapter(
-                    child: Container(
-                      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF007BFF),
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.location_on,
-                            color: const Color(0xFFFFD700),
-                            size: 32,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '${_searchController.nearbyArtisansCount} artisans à proximité',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 16,
-                                    height: 1.5,
-                                  ),
-                                ),
-                                Text(
-                                  'À moins de 2km de vous',
-                                  style: TextStyle(
-                                    color: Colors.white.withValues(alpha: 0.9),
-                                    fontSize: 12,
-                                    height: 1.5,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Icon(
-                            Icons.arrow_forward_ios,
-                            color: Colors.white,
-                            size: 16,
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-                return const SliverToBoxAdapter(child: SizedBox.shrink());
-              }),
+              // Promotional Card (Nearby Artisans)
+              _buildPromotionalCard(),
 
               // Categories Section Header
+              _buildSectionHeader(),
+
+              // Categories Grid - Design System: 3 columns, 12px gap
+              _buildCategoriesGrid(),
+
               const SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(16, 24, 16, 16),
-                  child: Text(
-                    'Catégories de métiers',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                      height: 1.2,
-                    ),
-                  ),
-                ),
+                child: SizedBox(height: Spacing.xxxxl),
               ),
-
-              // Categories Grid
-              Obx(() {
-                if (_searchController.isLoadingSectors.value) {
-                  return const SliverFillRemaining(
-                    child: Center(child: CircularProgressIndicator()),
-                  );
-                }
-
-                if (_searchController.sectors.isEmpty) {
-                  return const SliverFillRemaining(
-                    child: Center(child: Text('Aucune catégorie disponible')),
-                  );
-                }
-
-                return SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  sliver: SliverGrid(
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          childAspectRatio: 0.9,
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
-                        ),
-                    delegate: SliverChildBuilderDelegate((context, index) {
-                      final sector = _searchController.sectors[index];
-                      return _buildCategoryCard(sector);
-                    }, childCount: _searchController.sectors.length),
-                  ),
-                );
-              }),
-
-              const SliverToBoxAdapter(child: SizedBox(height: 48)),
             ],
           ),
         ),
@@ -367,26 +103,26 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Container(
         decoration: BoxDecoration(
           color: cardColor,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
+          borderRadius: BorderRadius.circular(Spacing.radiusLg),
+          boxShadow: const [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.2),
+              color: Color(0x4D000000), // rgba(0, 0, 0, 0.3)
               blurRadius: 8,
-              offset: const Offset(0, 4),
+              offset: Offset(0, 4),
             ),
           ],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(iconData, size: 48, color: Colors.white),
-            const SizedBox(height: 8),
+            Icon(iconData, size: 48, color: AppColors.darkTextPrimary),
+            const SizedBox(height: Spacing.sm),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
+              padding: const EdgeInsets.symmetric(horizontal: Spacing.sm),
               child: Text(
                 sector.name,
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: AppColors.darkTextPrimary,
                   fontWeight: FontWeight.w500,
                   fontSize: 14,
                   height: 1.5,
@@ -400,6 +136,338 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+
+  // Top Bar Component - Design System Pattern
+  Widget _buildTopBar() {
+    return SliverAppBar(
+      floating: true,
+      backgroundColor: AppColors.darkBackground,
+      elevation: 0,
+      toolbarHeight: 64,
+      title: Row(
+        children: [
+          Icon(Icons.build_circle, color: AppColors.darkAccentHighlight, size: 28),
+          const SizedBox(width: Spacing.sm),
+          const Text(
+            'ProsArtisan',
+            style: TextStyle(
+              color: AppColors.darkTextPrimary,
+              fontWeight: FontWeight.w700,
+              fontSize: 20,
+              height: 1.2,
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        // Notification Icon Button - Design System: 44x44 touch target
+        Container(
+          width: 44,
+          height: 44,
+          alignment: Alignment.center,
+          child: IconButton(
+            icon: const Icon(
+              Icons.notifications_outlined,
+              color: AppColors.darkTextPrimary,
+              size: 24,
+            ),
+            onPressed: () {
+              // Navigate to notifications
+              Get.snackbar(
+                'Notifications',
+                'Fonctionnalité à venir',
+                backgroundColor: AppColors.darkCard,
+                colorText: AppColors.darkTextPrimary,
+              );
+            },
+          ),
+        ),
+        const SizedBox(width: Spacing.sm),
+        // User Avatar - Design System: 40-48px
+        Obx(() {
+          final user = _authController.currentUser.value;
+          return Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.overlayMedium, width: 2),
+            ),
+            child: user?.avatar != null
+                ? CircleAvatar(
+                    backgroundImage: NetworkImage(user!.avatar!),
+                    radius: 18,
+                  )
+                : CircleAvatar(
+                    backgroundColor: AppColors.darkCard,
+                    child: Icon(
+                      Icons.person,
+                      color: AppColors.darkTextSecondary,
+                      size: 20,
+                    ),
+                  ),
+          );
+        }),
+        const SizedBox(width: Spacing.lg),
+      ],
+    );
+  }
+
+  // Welcome Section - Design System Pattern
+  Widget _buildWelcomeSection() {
+    return SliverToBoxAdapter(
+      child: Container(
+        padding: const EdgeInsets.all(Spacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Welcome Header - Design System: h2 (24px) for greeting
+            Obx(() {
+              final user = _authController.currentUser.value;
+              final firstName = user?.name.split(' ').first ?? 'Invité';
+              return Text(
+                'Bonjour $firstName! 👋',
+                style: const TextStyle(
+                  color: AppColors.darkTextPrimary,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 24,
+                  height: 1.2,
+                ),
+              );
+            }),
+            const SizedBox(height: Spacing.sm),
+            const Text(
+              'Quel artisan cherchez-vous aujourd\'hui?',
+              style: TextStyle(
+                color: AppColors.darkTextSecondary,
+                fontSize: 14,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: Spacing.xl),
+
+            // Search Bar - Design System: 12px border radius, card background
+            GestureDetector(
+              onTap: () => Get.to(() => const SearchFilterScreen()),
+              child: Container(
+                height: 48,
+                padding: const EdgeInsets.symmetric(horizontal: Spacing.base),
+                decoration: BoxDecoration(
+                  color: AppColors.darkCard,
+                  borderRadius: BorderRadius.circular(Spacing.radiusMd),
+                  border: Border.all(color: AppColors.overlayLight, width: 1),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x4D000000), // rgba(0, 0, 0, 0.3)
+                      blurRadius: 6,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.search, color: AppColors.darkTextTertiary, size: 24),
+                    const SizedBox(width: Spacing.md),
+                    const Expanded(
+                      child: Text(
+                        'Rechercher un artisan...',
+                        style: TextStyle(
+                          color: AppColors.darkTextTertiary,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                    // Filter Button - Design System: Icon button with accent background
+                    Container(
+                      padding: const EdgeInsets.all(Spacing.sm),
+                      decoration: BoxDecoration(
+                        color: AppColors.darkAccentPrimary,
+                        borderRadius: BorderRadius.circular(Spacing.radiusSm),
+                      ),
+                      child: const Icon(
+                        Icons.tune,
+                        size: 20,
+                        color: AppColors.darkTextPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: Spacing.base),
+
+            // Map View Button - Design System: Secondary button
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => Get.to(() => const MapSearchScreen()),
+                icon: const Icon(Icons.map_outlined, size: 20),
+                label: const Text(
+                  'Voir sur la carte',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.darkTextPrimary,
+                  side: const BorderSide(
+                    color: AppColors.darkAccentPrimary,
+                    width: 1,
+                  ),
+                  backgroundColor: AppColors.overlayLight,
+                  padding: const EdgeInsets.symmetric(vertical: Spacing.md),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(Spacing.radiusMd),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Promotional Card - Design System Pattern
+  Widget _buildPromotionalCard() {
+    return Obx(() {
+      if (_searchController.nearbyArtisansCount > 0) {
+        return SliverToBoxAdapter(
+          child: Container(
+            margin: const EdgeInsets.symmetric(
+              horizontal: Spacing.base,
+              vertical: Spacing.base,
+            ),
+            padding: const EdgeInsets.all(Spacing.lg),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [AppColors.darkAccentPrimary, Color(0xFF4A5FD9)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(Spacing.radiusLg),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x4D5B7FFF), // Glow effect
+                  blurRadius: 20,
+                  offset: Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(Spacing.md),
+                  decoration: BoxDecoration(
+                    color: AppColors.overlayMedium,
+                    borderRadius: BorderRadius.circular(Spacing.radiusMd),
+                  ),
+                  child: const Icon(
+                    Icons.location_on,
+                    color: AppColors.darkAccentHighlight,
+                    size: 32,
+                  ),
+                ),
+                const SizedBox(width: Spacing.base),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${_searchController.nearbyArtisansCount} artisans à proximité',
+                        style: const TextStyle(
+                          color: AppColors.darkTextPrimary,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                          height: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'À moins de 2km de vous',
+                        style: TextStyle(
+                          color: AppColors.darkTextPrimary.withValues(alpha: 0.9),
+                          fontSize: 12,
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  Icons.arrow_forward_ios,
+                  color: AppColors.darkTextPrimary,
+                  size: 16,
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+      return const SliverToBoxAdapter(child: SizedBox.shrink());
+    });
+  }
+
+  // Section Header - Design System Pattern
+  Widget _buildSectionHeader() {
+    return const SliverToBoxAdapter(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          Spacing.lg,
+          Spacing.xl,
+          Spacing.lg,
+          Spacing.base,
+        ),
+        child: Text(
+          'Catégories de métiers',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: AppColors.darkTextPrimary,
+            height: 1.2,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Categories Grid - Design System: 3 columns, 12px gap
+  Widget _buildCategoriesGrid() {
+    return Obx(() {
+      if (_searchController.isLoadingSectors.value) {
+        return SliverFillRemaining(
+          child: Center(
+            child: CircularProgressIndicator(color: AppColors.darkAccentPrimary),
+          ),
+        );
+      }
+
+      if (_searchController.sectors.isEmpty) {
+        return const SliverFillRemaining(
+          child: Center(
+            child: Text(
+              'Aucune catégorie disponible',
+              style: TextStyle(color: AppColors.darkTextSecondary, fontSize: 14),
+            ),
+          ),
+        );
+      }
+
+      return SliverPadding(
+        padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
+        sliver: SliverGrid(
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            childAspectRatio: 1.0,
+            crossAxisSpacing: Spacing.md,
+            mainAxisSpacing: Spacing.md,
+          ),
+          delegate: SliverChildBuilderDelegate((context, index) {
+            final sector = _searchController.sectors[index];
+            return _buildCategoryCard(sector);
+          }, childCount: _searchController.sectors.length),
+        ),
+      );
+    });
   }
 
   IconData _getSectorIcon(String code) {
@@ -420,21 +488,22 @@ class _HomeScreenState extends State<HomeScreen> {
     return icons[code] ?? Icons.build;
   }
 
+  // Design System Colors for Categories
   Color _getSectorColor(String code) {
     final colors = {
-      'BAT': const Color(0xFF007BFF),
-      'ELEC': const Color(0xFFF59E0B),
-      'PLOMB': const Color(0xFF3B82F6),
-      'MENU': const Color(0xFF8B4513),
-      'PEIN': const Color(0xFF28A745),
-      'JAR': const Color(0xFF22C55E),
-      'AUTO': const Color(0xFF6366F1),
-      'TECH': const Color(0xFF8B5CF6),
-      'AMEN': const Color(0xFFEC4899),
-      'CLEAN': const Color(0xFF14B8A6),
-      'SECU': const Color(0xFFEF4444),
-      'ART': const Color(0xFFFF4500),
+      'BAT': AppColors.darkAccentPrimary, // Blue
+      'ELEC': const Color(0xFFF59E0B), // Orange/Yellow
+      'PLOMB': const Color(0xFF3B82F6), // Light Blue
+      'MENU': const Color(0xFF8B4513), // Brown
+      'PEIN': AppColors.darkAccentSecondary, // Green
+      'JAR': const Color(0xFF22C55E), // Bright Green
+      'AUTO': const Color(0xFF6366F1), // Indigo
+      'TECH': const Color(0xFF8B5CF6), // Purple
+      'AMEN': const Color(0xFFEC4899), // Pink
+      'CLEAN': const Color(0xFF14B8A6), // Teal
+      'SECU': AppColors.darkAccentDanger, // Red
+      'ART': const Color(0xFFFF4500), // Orange Red
     };
-    return colors[code] ?? const Color(0xFF1A1A3E);
+    return colors[code] ?? AppColors.darkCard;
   }
 }
