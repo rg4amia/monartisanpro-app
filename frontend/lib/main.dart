@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:yandex_mapkit/yandex_mapkit.dart';
 import 'core/theme/app_theme.dart';
 import 'core/constants/app_constants.dart';
 import 'core/init/app_bindings.dart';
@@ -8,6 +9,9 @@ import 'features/auth/presentation/screens/splash_screen.dart';
 void main() async {
   // Ensure Flutter is initialized
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Yandex MapKit
+  AndroidYandexMap.useAndroidViewSurface = false;
 
   // Initialize dependency injection
   AppBindings().dependencies();
