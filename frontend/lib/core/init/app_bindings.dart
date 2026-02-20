@@ -12,6 +12,7 @@ import '../network/milestone_service.dart';
 import '../network/dispute_service.dart';
 import '../network/message_service.dart';
 import '../../shared/controllers/auth_controller.dart';
+import '../../shared/controllers/project_controller.dart';
 
 /// Global dependency injection setup
 /// Registers all services and controllers needed by the app
@@ -38,8 +39,9 @@ class AppBindings extends Bindings {
       fenix: true,
     );
 
-    // Register AuthController as permanent singleton
-    // This ensures it's available throughout the app lifecycle
+    // Register controllers as permanent singletons
+    // This ensures they're available throughout the app lifecycle
     Get.put(AuthController(), permanent: true);
+    Get.lazyPut(() => ProjectController(), fenix: true);
   }
 }
