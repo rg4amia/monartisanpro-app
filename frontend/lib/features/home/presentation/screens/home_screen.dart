@@ -81,9 +81,7 @@ class _HomeScreenState extends State<HomeScreen> {
               // Categories Grid - Design System: 3 columns, 12px gap
               _buildCategoriesGrid(),
 
-              const SliverToBoxAdapter(
-                child: SizedBox(height: Spacing.xxxxl),
-              ),
+              const SliverToBoxAdapter(child: SizedBox(height: Spacing.xxxxl)),
             ],
           ),
         ),
@@ -147,7 +145,11 @@ class _HomeScreenState extends State<HomeScreen> {
       toolbarHeight: 64,
       title: Row(
         children: [
-          Icon(Icons.build_circle, color: AppColors.darkAccentHighlight, size: 28),
+          Icon(
+            Icons.build_circle,
+            color: AppColors.darkAccentHighlight,
+            size: 28,
+          ),
           const SizedBox(width: Spacing.sm),
           const Text(
             'ProsArtisan',
@@ -267,7 +269,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.search, color: AppColors.darkTextTertiary, size: 24),
+                    Icon(
+                      Icons.search,
+                      color: AppColors.darkTextTertiary,
+                      size: 24,
+                    ),
                     const SizedBox(width: Spacing.md),
                     const Expanded(
                       child: Text(
@@ -385,7 +391,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       Text(
                         'À moins de 2km de vous',
                         style: TextStyle(
-                          color: AppColors.darkTextPrimary.withValues(alpha: 0.9),
+                          color: AppColors.darkTextPrimary.withValues(
+                            alpha: 0.9,
+                          ),
                           fontSize: 12,
                           height: 1.5,
                         ),
@@ -436,7 +444,9 @@ class _HomeScreenState extends State<HomeScreen> {
       if (_searchController.isLoadingSectors.value) {
         return SliverFillRemaining(
           child: Center(
-            child: CircularProgressIndicator(color: AppColors.darkAccentPrimary),
+            child: CircularProgressIndicator(
+              color: AppColors.darkAccentPrimary,
+            ),
           ),
         );
       }
@@ -446,7 +456,10 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Center(
             child: Text(
               'Aucune catégorie disponible',
-              style: TextStyle(color: AppColors.darkTextSecondary, fontSize: 14),
+              style: TextStyle(
+                color: AppColors.darkTextSecondary,
+                fontSize: 14,
+              ),
             ),
           ),
         );
@@ -471,38 +484,40 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   IconData _getSectorIcon(String code) {
+    // Map sector codes from database to icons
     final icons = {
-      'BAT': Icons.construction,
-      'ELEC': Icons.electrical_services,
-      'PLOMB': Icons.plumbing,
-      'MENU': Icons.carpenter,
-      'PEIN': Icons.format_paint,
-      'JAR': Icons.yard,
-      'AUTO': Icons.directions_car,
-      'TECH': Icons.devices,
-      'AMEN': Icons.weekend,
-      'CLEAN': Icons.cleaning_services,
-      'SECU': Icons.security,
-      'ART': Icons.palette,
+      '1': Icons.directions_car, // MÉCANIQUE & AUTOMOBILE
+      '2': Icons.electrical_services, // ÉLECTRICITÉ & ÉNERGIE
+      '3': Icons.plumbing, // PLOMBERIE & FLUIDES
+      '4': Icons.construction, // BÂTIMENT & TRAVAUX PUBLICS (BTP)
+      '5': Icons.carpenter, // MENUISERIE & BOIS
+      '6': Icons.build, // MÉTALLURGIE & SOUDURE
+      '7': Icons.palette, // ARTISANAT & MÉTIERS CRÉATIFS
+      '8': Icons.devices, // NUMÉRIQUE & TECHNIQUE
+      '9': Icons.ac_unit, // FROID, CLIMATISATION & ÉQUIPEMENTS
+      '10': Icons.cleaning_services, // SERVICES & MÉTIERS DE PROXIMITÉ
+      '11': Icons.security, // SÉCURITÉ & INSTALLATION
+      '12': Icons.water_drop, // ASSAINISSEMENT & EAU
     };
     return icons[code] ?? Icons.build;
   }
 
   // Design System Colors for Categories
   Color _getSectorColor(String code) {
+    // Map sector codes from database to colors
     final colors = {
-      'BAT': AppColors.darkAccentPrimary, // Blue
-      'ELEC': const Color(0xFFF59E0B), // Orange/Yellow
-      'PLOMB': const Color(0xFF3B82F6), // Light Blue
-      'MENU': const Color(0xFF8B4513), // Brown
-      'PEIN': AppColors.darkAccentSecondary, // Green
-      'JAR': const Color(0xFF22C55E), // Bright Green
-      'AUTO': const Color(0xFF6366F1), // Indigo
-      'TECH': const Color(0xFF8B5CF6), // Purple
-      'AMEN': const Color(0xFFEC4899), // Pink
-      'CLEAN': const Color(0xFF14B8A6), // Teal
-      'SECU': AppColors.darkAccentDanger, // Red
-      'ART': const Color(0xFFFF4500), // Orange Red
+      '1': const Color(0xFF6366F1), // MÉCANIQUE & AUTOMOBILE - Indigo
+      '2': const Color(0xFFF59E0B), // ÉLECTRICITÉ & ÉNERGIE - Orange/Yellow
+      '3': const Color(0xFF3B82F6), // PLOMBERIE & FLUIDES - Light Blue
+      '4': AppColors.darkAccentPrimary, // BÂTIMENT & TRAVAUX PUBLICS - Blue
+      '5': const Color(0xFF8B4513), // MENUISERIE & BOIS - Brown
+      '6': const Color(0xFF78716C), // MÉTALLURGIE & SOUDURE - Gray
+      '7': const Color(0xFFEC4899), // ARTISANAT & MÉTIERS CRÉATIFS - Pink
+      '8': const Color(0xFF8B5CF6), // NUMÉRIQUE & TECHNIQUE - Purple
+      '9': const Color(0xFF06B6D4), // FROID, CLIMATISATION - Cyan
+      '10': AppColors.darkAccentSecondary, // SERVICES & MÉTIERS - Green
+      '11': AppColors.darkAccentDanger, // SÉCURITÉ & INSTALLATION - Red
+      '12': const Color(0xFF14B8A6), // ASSAINISSEMENT & EAU - Teal
     };
     return colors[code] ?? AppColors.darkCard;
   }
