@@ -9,35 +9,52 @@ part of 'artisan_search_model.dart';
 ArtisanSearchResult _$ArtisanSearchResultFromJson(Map<String, dynamic> json) =>
     ArtisanSearchResult(
       id: (json['id'] as num).toInt(),
-      user: User.fromJson(json['user'] as Map<String, dynamic>),
-      artisanProfile: json['artisan_profile'] == null
-          ? null
-          : ArtisanProfileDetailed.fromJson(
-              json['artisan_profile'] as Map<String, dynamic>),
+      name: json['name'] as String,
+      email: json['email'] as String,
+      phone: json['phone'] as String?,
+      avatar: json['avatar'] as String?,
+      tradeId: (json['trade_id'] as num?)?.toInt(),
+      tradeName: json['trade_name'] as String?,
+      sectorName: json['sector_name'] as String?,
+      zoneName: json['zone_name'] as String?,
+      bio: json['bio'] as String?,
+      experienceYears: (json['experience_years'] as num).toInt(),
+      available: json['available'] as bool,
       distance: (json['distance'] as num?)?.toDouble(),
+      distanceText: json['distance_text'] as String?,
       isNearby: json['is_nearby'] as bool,
-      fuzzyLocation: json['fuzzy_location'] == null
-          ? null
-          : Location.fromJson(json['fuzzy_location'] as Map<String, dynamic>),
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
+      nzassaScore: (json['nzassa_score'] as num?)?.toInt(),
       averageRating: (json['average_rating'] as num?)?.toDouble(),
       reviewsCount: (json['reviews_count'] as num).toInt(),
       projectsCompleted: (json['projects_completed'] as num).toInt(),
-      nzassaScore: (json['nzassa_score'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$ArtisanSearchResultToJson(
         ArtisanSearchResult instance) =>
     <String, dynamic>{
       'id': instance.id,
-      'user': instance.user,
-      'artisan_profile': instance.artisanProfile,
+      'name': instance.name,
+      'email': instance.email,
+      'phone': instance.phone,
+      'avatar': instance.avatar,
+      'trade_id': instance.tradeId,
+      'trade_name': instance.tradeName,
+      'sector_name': instance.sectorName,
+      'zone_name': instance.zoneName,
+      'bio': instance.bio,
+      'experience_years': instance.experienceYears,
+      'available': instance.available,
       'distance': instance.distance,
+      'distance_text': instance.distanceText,
       'is_nearby': instance.isNearby,
-      'fuzzy_location': instance.fuzzyLocation,
+      'latitude': instance.latitude,
+      'longitude': instance.longitude,
+      'nzassa_score': instance.nzassaScore,
       'average_rating': instance.averageRating,
       'reviews_count': instance.reviewsCount,
       'projects_completed': instance.projectsCompleted,
-      'nzassa_score': instance.nzassaScore,
     };
 
 ClusterMarker _$ClusterMarkerFromJson(Map<String, dynamic> json) =>

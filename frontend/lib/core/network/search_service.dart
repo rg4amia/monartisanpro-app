@@ -16,20 +16,25 @@ class SearchService {
     String? sortBy, // distance, rating, experience
   }) async {
     try {
-      final response = await _dio.get('/search/artisans', queryParameters: {
-        'lat': latitude,
-        'lng': longitude,
-        if (tradeId != null) 'trade_id': tradeId,
-        if (radius != null) 'radius': radius,
-        if (minScore != null) 'min_score': minScore,
-        if (sortBy != null) 'sort_by': sortBy,
-      });
+      final response = await _dio.post(
+        '/artisans/search',
+        data: {
+          'latitude': latitude,
+          'longitude': longitude,
+          if (tradeId != null) 'trade_id': tradeId,
+          if (radius != null) 'radius': radius,
+          if (minScore != null) 'min_score': minScore,
+          if (sortBy != null) 'sort_by': sortBy,
+        },
+      );
 
       return ApiResponse<List<ArtisanSearchResult>>.fromJson(
         response.data,
         (json) => (json as List)
-            .map((artisan) =>
-                ArtisanSearchResult.fromJson(artisan as Map<String, dynamic>))
+            .map(
+              (artisan) =>
+                  ArtisanSearchResult.fromJson(artisan as Map<String, dynamic>),
+            )
             .toList(),
       );
     } on DioException catch (e) {
@@ -50,17 +55,24 @@ class SearchService {
     int? tradeId,
   }) async {
     try {
-      final response = await _dio.get('/search/nearby', queryParameters: {
-        'lat': latitude,
-        'lng': longitude,
-        if (tradeId != null) 'trade_id': tradeId,
-      });
+      // Use the same search endpoint with 2km radius for nearby artisans
+      final response = await _dio.post(
+        '/artisans/search',
+        data: {
+          'latitude': latitude,
+          'longitude': longitude,
+          'radius': 2000, // 2km in meters
+          if (tradeId != null) 'trade_id': tradeId,
+        },
+      );
 
       return ApiResponse<List<ArtisanSearchResult>>.fromJson(
         response.data,
         (json) => (json as List)
-            .map((artisan) =>
-                ArtisanSearchResult.fromJson(artisan as Map<String, dynamic>))
+            .map(
+              (artisan) =>
+                  ArtisanSearchResult.fromJson(artisan as Map<String, dynamic>),
+            )
             .toList(),
       );
     } on DioException catch (e) {
@@ -103,19 +115,24 @@ class SearchService {
     int? tradeId,
   }) async {
     try {
-      final response = await _dio.get('/search/clusters', queryParameters: {
-        'lat': latitude,
-        'lng': longitude,
-        'radius': radius,
-        'zoom': zoomLevel,
-        if (tradeId != null) 'trade_id': tradeId,
-      });
+      final response = await _dio.get(
+        '/search/clusters',
+        queryParameters: {
+          'lat': latitude,
+          'lng': longitude,
+          'radius': radius,
+          'zoom': zoomLevel,
+          if (tradeId != null) 'trade_id': tradeId,
+        },
+      );
 
       return ApiResponse<List<ClusterMarker>>.fromJson(
         response.data,
         (json) => (json as List)
-            .map((cluster) =>
-                ClusterMarker.fromJson(cluster as Map<String, dynamic>))
+            .map(
+              (cluster) =>
+                  ClusterMarker.fromJson(cluster as Map<String, dynamic>),
+            )
             .toList(),
       );
     } on DioException catch (e) {

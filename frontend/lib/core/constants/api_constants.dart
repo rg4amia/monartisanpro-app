@@ -18,9 +18,11 @@ class ApiConstants {
   static const String kycStatus = '/kyc/status';
 
   // API Endpoints - Search
-  static const String searchArtisans = '/search/artisans';
-  static const String artisanProfile = '/search/artisan';
-  static const String nearbyArtisans = '/search/nearby';
+  static const String searchArtisans = '/artisans/search';
+  static const String artisanProfile =
+      '/artisans'; // Will be used as /artisans/{id}
+  static const String nearbyArtisans =
+      '/artisans/search'; // Same endpoint with radius: 2000
 
   // API Endpoints - Trades & Sectors
   static const String sectors = '/sectors';

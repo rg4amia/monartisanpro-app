@@ -1,40 +1,64 @@
 import 'package:json_annotation/json_annotation.dart';
-import 'user_model.dart';
-import 'trade_model.dart';
 
 part 'artisan_search_model.g.dart';
 
 @JsonSerializable()
 class ArtisanSearchResult {
   final int id;
-  final User user;
-  @JsonKey(name: 'artisan_profile')
-  final ArtisanProfileDetailed? artisanProfile;
+  final String name;
+  final String email;
+  final String? phone;
+  final String? avatar;
+  @JsonKey(name: 'trade_id')
+  final int? tradeId;
+  @JsonKey(name: 'trade_name')
+  final String? tradeName;
+  @JsonKey(name: 'sector_name')
+  final String? sectorName;
+  @JsonKey(name: 'zone_name')
+  final String? zoneName;
+  final String? bio;
+  @JsonKey(name: 'experience_years')
+  final int experienceYears;
+  final bool available;
   final double? distance; // in meters
+  @JsonKey(name: 'distance_text')
+  final String? distanceText;
   @JsonKey(name: 'is_nearby')
   final bool isNearby; // <2km
-  @JsonKey(name: 'fuzzy_location')
-  final Location? fuzzyLocation; // ±50m offset for privacy
+  final double? latitude;
+  final double? longitude;
+  @JsonKey(name: 'nzassa_score')
+  final int? nzassaScore;
   @JsonKey(name: 'average_rating')
   final double? averageRating;
   @JsonKey(name: 'reviews_count')
   final int reviewsCount;
   @JsonKey(name: 'projects_completed')
   final int projectsCompleted;
-  @JsonKey(name: 'nzassa_score')
-  final int? nzassaScore;
 
   ArtisanSearchResult({
     required this.id,
-    required this.user,
-    this.artisanProfile,
+    required this.name,
+    required this.email,
+    this.phone,
+    this.avatar,
+    this.tradeId,
+    this.tradeName,
+    this.sectorName,
+    this.zoneName,
+    this.bio,
+    required this.experienceYears,
+    required this.available,
     this.distance,
+    this.distanceText,
     required this.isNearby,
-    this.fuzzyLocation,
+    this.latitude,
+    this.longitude,
+    this.nzassaScore,
     this.averageRating,
     required this.reviewsCount,
     required this.projectsCompleted,
-    this.nzassaScore,
   });
 
   factory ArtisanSearchResult.fromJson(Map<String, dynamic> json) =>
@@ -42,13 +66,6 @@ class ArtisanSearchResult {
   Map<String, dynamic> toJson() => _$ArtisanSearchResultToJson(this);
 
   // Helper getters
-  String get name => user.name;
-  String? get avatar => user.avatar;
-  String get tradeName => artisanProfile?.trade?.name ?? 'Artisan';
-  int get experienceYears => artisanProfile?.experienceYears ?? 0;
-  bool get isAvailable => artisanProfile?.available ?? false;
-  String? get zoneName => artisanProfile?.zoneName;
-
   String? get badgeLevel {
     if (nzassaScore == null) return null;
     if (nzassaScore! >= 80) return 'gold';
@@ -59,7 +76,8 @@ class ArtisanSearchResult {
 
   int get totalReviews => reviewsCount;
 
-  String get distanceText {
+  String get formattedDistance {
+    if (distanceText != null) return distanceText!;
     if (distance == null) return '';
     if (distance! < 1000) {
       return '${distance!.round()}m';

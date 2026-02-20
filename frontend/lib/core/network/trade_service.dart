@@ -9,7 +9,7 @@ class TradeService {
   /// Get all sectors
   Future<ApiResponse<List<Sector>>> getSectors() async {
     try {
-      final response = await _dio.get('/trades/sectors');
+      final response = await _dio.get('/sectors');
 
       return ApiResponse<List<Sector>>.fromJson(
         response.data,
@@ -53,7 +53,7 @@ class TradeService {
   /// Get trades by sector
   Future<ApiResponse<List<Trade>>> getTradesBySector(int sectorId) async {
     try {
-      final response = await _dio.get('/trades/sector/$sectorId');
+      final response = await _dio.get('/sectors/$sectorId/trades');
 
       return ApiResponse<List<Trade>>.fromJson(
         response.data,
