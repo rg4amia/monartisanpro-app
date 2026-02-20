@@ -39,13 +39,14 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
     _placemarks.clear();
 
     for (final artisan in _searchController.searchResults) {
-      if (artisan.fuzzyLocation != null) {
+      // Use actual coordinates if available
+      if (artisan.latitude != null && artisan.longitude != null) {
         _placemarks.add(
           PlacemarkMapObject(
             mapId: MapObjectId('artisan_${artisan.id}'),
             point: Point(
-              latitude: artisan.fuzzyLocation!.latitude,
-              longitude: artisan.fuzzyLocation!.longitude,
+              latitude: artisan.latitude!,
+              longitude: artisan.longitude!,
             ),
             // Using default Yandex marker (will be customized later with PNG assets)
             opacity: 1.0,
@@ -121,14 +122,14 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                         ],
                       ),
                       Text(
-                        artisan.tradeName,
+                        artisan.tradeName ?? 'Artisan',
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       Row(
                         children: [
                           const Icon(Icons.location_on, size: 14),
                           const SizedBox(width: 4),
-                          Text(artisan.distanceText),
+                          Text(artisan.formattedDistance),
                         ],
                       ),
                     ],
@@ -422,7 +423,7 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                                 ],
                               ),
                               subtitle: Text(
-                                '${artisan.tradeName} - ${artisan.distanceText}',
+                                '${artisan.tradeName ?? 'Artisan'} - ${artisan.formattedDistance}',
                               ),
                               trailing: const Icon(Icons.chevron_right),
                               onTap: () {
