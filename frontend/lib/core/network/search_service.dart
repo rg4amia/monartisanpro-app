@@ -11,6 +11,7 @@ class SearchService {
     required double latitude,
     required double longitude,
     int? tradeId,
+    int? sectorId,
     double? radius, // in meters
     int? minScore,
     String? sortBy, // distance, rating, experience
@@ -22,6 +23,7 @@ class SearchService {
           'latitude': latitude,
           'longitude': longitude,
           if (tradeId != null) 'trade_id': tradeId,
+          if (sectorId != null) 'sector_id': sectorId,
           if (radius != null) 'radius': radius,
           if (minScore != null) 'min_score': minScore,
           if (sortBy != null) 'sort_by': sortBy,
