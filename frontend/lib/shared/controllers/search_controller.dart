@@ -116,9 +116,10 @@ class ArtisanSearchController extends GetxController {
       final response = await _searchService.searchArtisans(
         latitude: currentPosition.value!.latitude,
         longitude: currentPosition.value!.longitude,
-        tradeId: selectedTradeId?.value,
+        tradeId: selectedTradeId.value,
+        sectorId: selectedSectorId.value,
         radius: searchRadius.value,
-        minScore: minScore?.value,
+        minScore: minScore.value,
         sortBy: sortBy.value,
       );
 
@@ -177,7 +178,11 @@ class ArtisanSearchController extends GetxController {
 
   /// Set sector filter
   void setSectorFilter(int? sectorId) {
-    selectedSectorId?.value = sectorId;
+    selectedSectorId.value = sectorId;
+    // Reset trade filter when sector changes
+    selectedTradeId.value = null;
+    trades.clear();
+
     if (sectorId != null) {
       fetchTradesBySector(sectorId);
     }
@@ -201,11 +206,13 @@ class ArtisanSearchController extends GetxController {
 
   /// Clear filters
   void clearFilters() {
-    selectedTradeId?.value = null;
-    selectedSectorId?.value = null;
-    minScore?.value = null;
+    selectedTradeId.value = null;
+    selectedSectorId.value = null;
+    minScore.value = null;
     searchRadius.value = 10000.0;
     sortBy.value = 'distance';
+    trades.clear();
+    searchResults.clear();
   }
 
   /// Get nearby artisans count
