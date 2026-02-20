@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/spacing.dart';
+import '../../../../core/navigation/main_navigation_screen.dart';
 import '../../../../shared/controllers/auth_controller.dart';
 import '../../../../shared/widgets/widgets.dart';
-import '../../../home/presentation/screens/home_screen.dart';
 import '../../../artisan/presentation/screens/artisan_dashboard_screen.dart';
 import '../../../vendor/presentation/screens/vendor_dashboard_screen.dart';
 import 'role_selection_screen.dart';
@@ -83,24 +83,27 @@ class _LoginScreenState extends State<LoginScreen> {
     print('Navigating to home for role: $role');
 
     final roleKey = role.toLowerCase().trim();
-    print('Role key after processing: $roleKey');
+    debugPrint('Role key after processing: $roleKey');
 
     switch (roleKey) {
       case 'client':
-        print('Navigating to HomeScreen');
-        Get.offAll(() => const HomeScreen());
+        debugPrint('Navigating to MainNavigationScreen');
+        Get.offAll(() => const MainNavigationScreen());
         break;
       case 'artisan':
-        print('Navigating to ArtisanDashboardScreen');
+        debugPrint('Navigating to ArtisanDashboardScreen');
         Get.offAll(() => const ArtisanDashboardScreen());
         break;
       case 'fournisseur':
-        print('Navigating to VendorDashboardScreen');
+      case 'vendor':
+        debugPrint('Navigating to VendorDashboardScreen');
         Get.offAll(() => const VendorDashboardScreen());
         break;
       default:
-        print('Role not matched, using default HomeScreen. Role was: $roleKey');
-        Get.offAll(() => const HomeScreen());
+        debugPrint(
+          'Role not matched, using default MainNavigationScreen. Role was: $roleKey',
+        );
+        Get.offAll(() => const MainNavigationScreen());
     }
   }
 

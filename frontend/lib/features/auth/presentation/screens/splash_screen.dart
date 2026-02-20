@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/storage/preferences_manager.dart';
+import '../../../../core/navigation/main_navigation_screen.dart';
 import '../../../../shared/controllers/auth_controller.dart';
-import '../../../home/presentation/screens/home_screen.dart';
 import '../../../artisan/presentation/screens/artisan_dashboard_screen.dart';
 import '../../../vendor/presentation/screens/vendor_dashboard_screen.dart';
 import 'onboarding_screen.dart';
@@ -93,16 +93,17 @@ class _SplashScreenState extends State<SplashScreen>
 
     switch (roleKey) {
       case 'client':
-        Get.offAll(() => const HomeScreen());
+        Get.offAll(() => const MainNavigationScreen());
         break;
       case 'artisan':
         Get.offAll(() => const ArtisanDashboardScreen());
         break;
       case 'fournisseur':
+      case 'vendor':
         Get.offAll(() => const VendorDashboardScreen());
         break;
       default:
-        Get.offAll(() => const HomeScreen());
+        Get.offAll(() => const MainNavigationScreen());
     }
   }
 
