@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/spacing.dart';
-import '../../../../shared/controllers/search_controller.dart' as artisan_search;
 import '../../../../core/network/search_service.dart';
 import '../../../../shared/models/artisan_search_model.dart';
 
@@ -91,22 +90,26 @@ class _ArtisanProfileScreenState extends State<ArtisanProfileScreen> {
                           ? NetworkImage(_artisan!.avatar!)
                           : null,
                       child: _artisan!.avatar == null
-                          ? Icon(Icons.person, size: 50, color: AppColors.lightAccentPrimary)
+                          ? Icon(
+                              Icons.person,
+                              size: 50,
+                              color: AppColors.lightAccentPrimary,
+                            )
                           : null,
                     ),
                     const SizedBox(height: Spacing.md),
                     Text(
                       _artisan!.name,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     Text(
-                      _artisan!.tradeName,
+                      _artisan!.tradeName ?? 'Artisan',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.white.withValues(alpha: 0.9),
-                          ),
+                        color: Colors.white.withValues(alpha: 0.9),
+                      ),
                     ),
                   ],
                 ),
@@ -127,7 +130,9 @@ class _ArtisanProfileScreenState extends State<ArtisanProfileScreen> {
                       Expanded(
                         child: _buildStatCard(
                           icon: Icons.star,
-                          value: _artisan!.averageRating?.toStringAsFixed(1) ?? 'N/A',
+                          value:
+                              _artisan!.averageRating?.toStringAsFixed(1) ??
+                              'N/A',
                           label: 'Note',
                           color: AppColors.starRating,
                         ),
@@ -173,9 +178,8 @@ class _ArtisanProfileScreenState extends State<ArtisanProfileScreen> {
                           const SizedBox(width: Spacing.md),
                           Text(
                             '${_artisan!.experienceYears} ans d\'expérience',
-                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                ),
+                            style: Theme.of(context).textTheme.bodyLarge
+                                ?.copyWith(fontWeight: FontWeight.w600),
                           ),
                         ],
                       ),
@@ -184,11 +188,11 @@ class _ArtisanProfileScreenState extends State<ArtisanProfileScreen> {
                   ],
 
                   // Bio
-                  if (_artisan!.artisanProfile?.bio != null) ...[
+                  if (_artisan!.bio != null && _artisan!.bio!.isNotEmpty) ...[
                     _buildSectionHeader('À propos'),
                     const SizedBox(height: Spacing.md),
                     Text(
-                      _artisan!.artisanProfile!.bio!,
+                      _artisan!.bio!,
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                     const SizedBox(height: Spacing.xl),
@@ -219,14 +223,14 @@ class _ArtisanProfileScreenState extends State<ArtisanProfileScreen> {
                               children: [
                                 Text(
                                   _artisan!.zoneName!,
-                                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                        fontWeight: FontWeight.w600,
-                                      ),
+                                  style: Theme.of(context).textTheme.bodyLarge
+                                      ?.copyWith(fontWeight: FontWeight.w600),
                                 ),
                                 if (_artisan!.distance != null)
                                   Text(
-                                    'À ${_artisan!.distanceText} de vous',
-                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    'À ${_artisan!.formattedDistance} de vous',
+                                    style: Theme.of(context).textTheme.bodySmall
+                                        ?.copyWith(
                                           color: AppColors.lightTextSecondary,
                                         ),
                                   ),
@@ -240,8 +244,12 @@ class _ArtisanProfileScreenState extends State<ArtisanProfileScreen> {
                                 vertical: Spacing.xs,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.goldenMarker.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(Spacing.radiusSm),
+                                color: AppColors.goldenMarker.withValues(
+                                  alpha: 0.2,
+                                ),
+                                borderRadius: BorderRadius.circular(
+                                  Spacing.radiusSm,
+                                ),
                               ),
                               child: Text(
                                 'Proche',
@@ -262,12 +270,12 @@ class _ArtisanProfileScreenState extends State<ArtisanProfileScreen> {
                   Container(
                     padding: const EdgeInsets.all(Spacing.base),
                     decoration: BoxDecoration(
-                      color: _artisan!.isAvailable
+                      color: _artisan!.available
                           ? AppColors.success.withValues(alpha: 0.1)
                           : AppColors.warning.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(Spacing.radiusMd),
                       border: Border.all(
-                        color: _artisan!.isAvailable
+                        color: _artisan!.available
                             ? AppColors.success
                             : AppColors.warning,
                       ),
@@ -275,21 +283,22 @@ class _ArtisanProfileScreenState extends State<ArtisanProfileScreen> {
                     child: Row(
                       children: [
                         Icon(
-                          _artisan!.isAvailable
+                          _artisan!.available
                               ? Icons.check_circle
                               : Icons.access_time,
-                          color: _artisan!.isAvailable
+                          color: _artisan!.available
                               ? AppColors.success
                               : AppColors.warning,
                         ),
                         const SizedBox(width: Spacing.md),
                         Text(
-                          _artisan!.isAvailable
+                          _artisan!.available
                               ? 'Disponible pour de nouveaux projets'
                               : 'Non disponible actuellement',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
                                 fontWeight: FontWeight.w600,
-                                color: _artisan!.isAvailable
+                                color: _artisan!.available
                                     ? AppColors.success
                                     : AppColors.warning,
                               ),
@@ -302,7 +311,6 @@ class _ArtisanProfileScreenState extends State<ArtisanProfileScreen> {
                   // Action Buttons
                   ElevatedButton.icon(
                     onPressed: () {
-                      // TODO: Navigate to create project with selected artisan
                       Get.snackbar(
                         'Demander un devis',
                         'Fonctionnalité disponible prochainement',
@@ -318,7 +326,6 @@ class _ArtisanProfileScreenState extends State<ArtisanProfileScreen> {
 
                   OutlinedButton.icon(
                     onPressed: () {
-                      // TODO: Open chat with artisan
                       Get.snackbar(
                         'Contacter',
                         'Messagerie disponible prochainement',
@@ -342,9 +349,9 @@ class _ArtisanProfileScreenState extends State<ArtisanProfileScreen> {
   Widget _buildSectionHeader(String title) {
     return Text(
       title,
-      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+      style: Theme.of(
+        context,
+      ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
     );
   }
 
@@ -367,15 +374,15 @@ class _ArtisanProfileScreenState extends State<ArtisanProfileScreen> {
           Text(
             value,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
           ),
           Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.lightTextSecondary,
-                ),
+              color: AppColors.lightTextSecondary,
+            ),
           ),
         ],
       ),

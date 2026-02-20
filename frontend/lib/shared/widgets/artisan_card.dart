@@ -34,10 +34,7 @@ class ArtisanCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: artisan.isNearby
-                      ? Border.all(
-                          color: AppColors.goldenMarker,
-                          width: 3,
-                        )
+                      ? Border.all(color: AppColors.goldenMarker, width: 3)
                       : null,
                 ),
                 child: CircleAvatar(
@@ -100,7 +97,7 @@ class ArtisanCard extends StatelessWidget {
 
                 // Trade
                 Text(
-                  artisan.tradeName,
+                  artisan.tradeName ?? 'Artisan',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: AppColors.lightTextSecondary,
                   ),
@@ -110,13 +107,10 @@ class ArtisanCard extends StatelessWidget {
                 // Rating & Reviews
                 Row(
                   children: [
-                    RatingStars(
-                      rating: artisan.averageRating ?? 0,
-                      size: 16,
-                    ),
+                    RatingStars(rating: artisan.averageRating ?? 0, size: 16),
                     const SizedBox(width: 4),
                     Text(
-                      '(${artisan.totalReviews ?? 0})',
+                      '(${artisan.totalReviews})',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: AppColors.lightTextSecondary,
                       ),
@@ -125,7 +119,7 @@ class ArtisanCard extends StatelessWidget {
                 ),
 
                 // Distance
-                if (showDistance && artisan.distanceText.isNotEmpty) ...[
+                if (showDistance && artisan.formattedDistance.isNotEmpty) ...[
                   const SizedBox(height: 4),
                   Row(
                     children: [
@@ -136,7 +130,7 @@ class ArtisanCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        artisan.distanceText,
+                        artisan.formattedDistance,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: AppColors.lightTextSecondary,
                         ),
@@ -149,10 +143,7 @@ class ArtisanCard extends StatelessWidget {
           ),
 
           // Chevron
-          const Icon(
-            Icons.chevron_right,
-            color: AppColors.lightTextTertiary,
-          ),
+          const Icon(Icons.chevron_right, color: AppColors.lightTextTertiary),
         ],
       ),
     );
