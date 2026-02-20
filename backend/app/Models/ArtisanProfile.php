@@ -55,4 +55,20 @@ class ArtisanProfile extends Model
     {
         return $this->belongsTo(Trade::class);
     }
+
+    /**
+     * Get the latitude from the location point.
+     */
+    public function getLatitudeAttribute(): ?float
+    {
+        return $this->location?->latitude;
+    }
+
+    /**
+     * Get the longitude from the location point.
+     */
+    public function getLongitudeAttribute(): ?float
+    {
+        return $this->location?->longitude;
+    }
 }

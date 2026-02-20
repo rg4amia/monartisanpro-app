@@ -145,6 +145,13 @@ class TradeController extends Controller
         ->where('role', 'artisan')
         ->where('status', 'active')
         ->with(['artisanProfile.trade.sector', 'artisanScore'])
+        ->withCount([
+          'reviews',
+          'artisanProjects as completed_projects_count' => function ($q) {
+            $q->where('status', 'completed');
+          },
+        ])
+        ->withAvg('reviews', 'rating')
         ->whereHas('artisanProfile', function ($q) use ($validated) {
           if (isset($validated['trade_id'])) {
             $q->where('trade_id', $validated['trade_id']);

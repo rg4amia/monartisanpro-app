@@ -79,6 +79,38 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the artisan score for the user.
+     */
+    public function artisanScore(): HasOne
+    {
+        return $this->hasOne(ArtisanScore::class, 'artisan_id');
+    }
+
+    /**
+     * Get all reviews for the artisan.
+     */
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class, 'artisan_id');
+    }
+
+    /**
+     * Get all projects where user is the artisan.
+     */
+    public function artisanProjects(): HasMany
+    {
+        return $this->hasMany(Project::class, 'artisan_id');
+    }
+
+    /**
+     * Get all projects where user is the client.
+     */
+    public function clientProjects(): HasMany
+    {
+        return $this->hasMany(Project::class, 'client_id');
+    }
+
+    /**
      * Check if user is an artisan.
      */
     public function isArtisan(): bool
