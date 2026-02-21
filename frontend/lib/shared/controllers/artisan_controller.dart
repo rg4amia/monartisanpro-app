@@ -1,7 +1,7 @@
 import 'package:get/get.dart';
 import '../../core/network/artisan_service.dart';
 import '../models/escrow_model.dart';
-import '../models/project_model.dart';
+import '../models/quote_model.dart';
 
 class ArtisanController extends GetxController {
   final ArtisanService _artisanService = ArtisanService();

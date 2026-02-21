@@ -64,7 +64,7 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
     if (userPosition != null) {
       try {
         // Load user marker from SVG
-        final userIconBytes = await SvgMarkerHelper.getUserMarker(size: 48);
+        final userIconBytes = await SvgMarkerHelper.getUserMarker(size: 150);
 
         _placemarkCollection!.addPlacemark()
           ..geometry = MapKitHelper.createPoint(
@@ -104,7 +104,7 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
           // Load artisan marker from SVG
           final artisanIconBytes = await SvgMarkerHelper.getArtisanMarker(
             isNearby: isNearby,
-            size: 48,
+            size: 150,
           );
 
           final artisanPlacemark = _placemarkCollection!.addPlacemark()

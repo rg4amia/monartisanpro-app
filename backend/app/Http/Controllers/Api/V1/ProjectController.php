@@ -66,31 +66,58 @@ class ProjectController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'artisan_id' => 'nullable|exists:users,id',
             'trade_id' => 'required|exists:trades,id',
             'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'latitude' => 'required|numeric',
-            'longitude' => 'required|numeric',
-            'address' => 'nullable|string',
+            'description' => 'required|string|max:2000',
+            'latitude' => 'required|numeric|between:-90,90',
+            'longitude' => 'required|numeric|between:-180,180',
+            'address' => 'required|string|max:500',
             'expected_completion_date' => 'nullable|date|after:today',
             'budget_min' => 'nullable|numeric|min:0',
             'budget_max' => 'nullable|numeric|min:0',
         ]);
 
+        // If artisan_id is provided, verify artisan is active
+        if (isset($validated['artisan_id'])) {
+            $artisan = \App\Models\User::where('id', $validated['artisan_id'])
+                ->where('role', 'artisan')
+                ->where('is_suspended', false)
+                ->where('is_banned', false)
+                ->first();
+
+            if (!$artisan) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Artisan non disponible',
+                ], 404);
+            }
+        }
+
         $project = Project::create([
             'client_id' => $request->user()->id,
+            'artisan_id' => $validated['artisan_id'] ?? null,
             'trade_id' => $validated['trade_id'],
             'title' => $validated['title'],
             'description' => $validated['description'],
             'location' => new Point($validated['latitude'], $validated['longitude']),
-            'address' => $validated['address'] ?? null,
+            'address' => $validated['address'],
             'expected_completion_date' => $validated['expected_completion_date'] ?? null,
             'budget_min' => $validated['budget_min'] ?? null,
             'budget_max' => $validated['budget_max'] ?? null,
-            'status' => 'pending',
+            'status' => isset($validated['artisan_id']) ? 'pending' : 'awaiting_quotes',
         ]);
 
-        return response()->json($project->load(['client', 'trade']), 201);
+        // TODO: Send notification to artisan if specified
+        // if ($project->artisan_id) {
+        //     $this->notifyArtisan($project);
+        // }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Demande de devis créée avec succès',
+            'data' => $project->load(['client', 'artisan.artisanProfile.trade', 'trade']),
+        ], 201);
     }
 
     /**

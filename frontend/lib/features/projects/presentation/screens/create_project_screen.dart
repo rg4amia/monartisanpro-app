@@ -6,7 +6,6 @@ import '../../../../core/constants/spacing.dart';
 import '../../../../shared/controllers/project_controller.dart';
 import '../../../../shared/controllers/search_controller.dart'
     as artisan_search;
-import '../../../../shared/models/project_model.dart';
 
 class CreateProjectScreen extends StatefulWidget {
   const CreateProjectScreen({super.key});
@@ -92,19 +91,18 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
       return;
     }
 
-    final request = CreateProjectRequest(
+    final success = await _projectController.createProject(
+      artisanId: null, // Projet ouvert à tous les artisans
+      tradeId: _selectedTradeId!,
       title: _titleController.text.trim(),
       description: _descriptionController.text.trim(),
       latitude: _selectedLocation!.latitude,
       longitude: _selectedLocation!.longitude,
       address: _addressController.text.trim(),
-      tradeId: _selectedTradeId!,
       expectedCompletionDate: _selectedCompletionDate != null
           ? '${_selectedCompletionDate!.year}-${_selectedCompletionDate!.month.toString().padLeft(2, '0')}-${_selectedCompletionDate!.day.toString().padLeft(2, '0')}'
           : null,
     );
-
-    final success = await _projectController.createProject(request);
 
     if (success) {
       Get.snackbar(

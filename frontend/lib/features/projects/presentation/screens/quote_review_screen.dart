@@ -4,7 +4,7 @@ import 'package:fl_chart/fl_chart.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/spacing.dart';
 import '../../../../shared/controllers/project_controller.dart';
-import '../../../../shared/models/project_model.dart';
+import '../../../../shared/models/quote_model.dart';
 import 'payment_screen.dart';
 
 class QuoteReviewScreen extends StatefulWidget {
@@ -55,11 +55,13 @@ class _QuoteReviewScreenState extends State<QuoteReviewScreen> {
       final success = await _projectController.acceptQuote(widget.quote.id);
       if (success) {
         // Navigate to payment screen
-        final paymentResult = await Get.to(() => PaymentScreen(
-              projectId: widget.projectId,
-              quoteId: widget.quote.id,
-              amount: widget.quote.totalAmount,
-            ));
+        final paymentResult = await Get.to(
+          () => PaymentScreen(
+            projectId: widget.projectId,
+            quoteId: widget.quote.id,
+            amount: widget.quote.totalAmount,
+          ),
+        );
 
         if (paymentResult == true) {
           // Payment successful
@@ -102,10 +104,7 @@ class _QuoteReviewScreenState extends State<QuoteReviewScreen> {
           ],
         ),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Annuler'),
-          ),
+          TextButton(onPressed: () => Get.back(), child: const Text('Annuler')),
           ElevatedButton(
             onPressed: () async {
               Get.back();
@@ -119,9 +118,7 @@ class _QuoteReviewScreenState extends State<QuoteReviewScreen> {
                 Get.back(result: true);
               }
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.error,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
             child: const Text('Rejeter'),
           ),
         ],
@@ -131,7 +128,10 @@ class _QuoteReviewScreenState extends State<QuoteReviewScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final daysUntilExpiry = widget.quote.validUntil.difference(DateTime.now()).inDays;
+    final validUntil = widget.quote.validUntil != null
+        ? DateTime.parse(widget.quote.validUntil!)
+        : null;
+    final daysUntilExpiry = validUntil?.difference(DateTime.now()).inDays ?? -1;
     final isExpired = daysUntilExpiry < 0;
 
     return Scaffold(
@@ -145,12 +145,7 @@ class _QuoteReviewScreenState extends State<QuoteReviewScreen> {
               title: const Text(
                 'Détails du devis',
                 style: TextStyle(
-                  shadows: [
-                    Shadow(
-                      color: Colors.black45,
-                      blurRadius: 10,
-                    ),
-                  ],
+                  shadows: [Shadow(color: Colors.black45, blurRadius: 10)],
                 ),
               ),
               background: Container(
@@ -179,7 +174,9 @@ class _QuoteReviewScreenState extends State<QuoteReviewScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Artisan Info
+                  // Artisan Info (TODO: Add artisan relation to Quote model)
+                  // Temporarily commented out until artisan relation is added to Quote
+                  /*
                   if (widget.quote.artisan != null) ...[
                     Card(
                       child: Padding(
@@ -188,7 +185,8 @@ class _QuoteReviewScreenState extends State<QuoteReviewScreen> {
                           children: [
                             CircleAvatar(
                               radius: 24,
-                              backgroundImage: widget.quote.artisan!.avatar != null
+                              backgroundImage:
+                                  widget.quote.artisan!.avatar != null
                                   ? NetworkImage(widget.quote.artisan!.avatar!)
                                   : null,
                               child: widget.quote.artisan!.avatar == null
@@ -202,14 +200,18 @@ class _QuoteReviewScreenState extends State<QuoteReviewScreen> {
                                 children: [
                                   Text(
                                     widget.quote.artisan!.name,
-                                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                          fontWeight: FontWeight.w600,
-                                        ),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleSmall
+                                        ?.copyWith(fontWeight: FontWeight.w600),
                                   ),
                                   if (widget.quote.artisan!.phone != null)
                                     Text(
                                       widget.quote.artisan!.phone!,
-                                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
                                             color: AppColors.lightTextSecondary,
                                           ),
                                     ),
@@ -222,6 +224,7 @@ class _QuoteReviewScreenState extends State<QuoteReviewScreen> {
                     ),
                     const SizedBox(height: Spacing.xl),
                   ],
+                  */
 
                   // Total Amount Card
                   Container(
@@ -238,14 +241,16 @@ class _QuoteReviewScreenState extends State<QuoteReviewScreen> {
                       children: [
                         Text(
                           'Montant total',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
                                 color: Colors.white.withValues(alpha: 0.9),
                               ),
                         ),
                         const SizedBox(height: Spacing.sm),
                         Text(
                           widget.quote.formattedTotal,
-                          style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                          style: Theme.of(context).textTheme.displaySmall
+                              ?.copyWith(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -259,8 +264,8 @@ class _QuoteReviewScreenState extends State<QuoteReviewScreen> {
                   Text(
                     'Répartition',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: Spacing.md),
                   SizedBox(
@@ -273,7 +278,8 @@ class _QuoteReviewScreenState extends State<QuoteReviewScreen> {
                               sections: [
                                 PieChartSectionData(
                                   value: widget.quote.materialPercentage,
-                                  title: '${widget.quote.materialPercentage.toStringAsFixed(0)}%',
+                                  title:
+                                      '${widget.quote.materialPercentage.toStringAsFixed(0)}%',
                                   color: AppColors.warning,
                                   radius: 80,
                                   titleStyle: const TextStyle(
@@ -284,7 +290,8 @@ class _QuoteReviewScreenState extends State<QuoteReviewScreen> {
                                 ),
                                 PieChartSectionData(
                                   value: widget.quote.laborPercentage,
-                                  title: '${widget.quote.laborPercentage.toStringAsFixed(0)}%',
+                                  title:
+                                      '${widget.quote.laborPercentage.toStringAsFixed(0)}%',
                                   color: AppColors.info,
                                   radius: 80,
                                   titleStyle: const TextStyle(
@@ -327,7 +334,11 @@ class _QuoteReviewScreenState extends State<QuoteReviewScreen> {
                   // Material Items
                   if (widget.quote.items != null &&
                       widget.quote.items!.any((item) => item.isMaterial)) ...[
-                    _buildSectionHeader(context, 'Matériaux', Icons.inventory_2_outlined),
+                    _buildSectionHeader(
+                      context,
+                      'Matériaux',
+                      Icons.inventory_2_outlined,
+                    ),
                     const SizedBox(height: Spacing.md),
                     ...widget.quote.items!
                         .where((item) => item.isMaterial)
@@ -338,7 +349,11 @@ class _QuoteReviewScreenState extends State<QuoteReviewScreen> {
                   // Labor Items
                   if (widget.quote.items != null &&
                       widget.quote.items!.any((item) => item.isLabor)) ...[
-                    _buildSectionHeader(context, 'Main d\'œuvre', Icons.construction_outlined),
+                    _buildSectionHeader(
+                      context,
+                      'Main d\'œuvre',
+                      Icons.construction_outlined,
+                    ),
                     const SizedBox(height: Spacing.md),
                     ...widget.quote.items!
                         .where((item) => item.isLabor)
@@ -347,57 +362,60 @@ class _QuoteReviewScreenState extends State<QuoteReviewScreen> {
                   ],
 
                   // Validity Info
-                  Container(
-                    padding: const EdgeInsets.all(Spacing.base),
-                    decoration: BoxDecoration(
-                      color: isExpired
-                          ? AppColors.error.withValues(alpha: 0.1)
-                          : daysUntilExpiry <= 3
-                              ? AppColors.warning.withValues(alpha: 0.1)
-                              : AppColors.lightBackground,
-                      borderRadius: BorderRadius.circular(Spacing.radiusMd),
-                      border: Border.all(
+                  if (validUntil != null)
+                    Container(
+                      padding: const EdgeInsets.all(Spacing.base),
+                      decoration: BoxDecoration(
                         color: isExpired
-                            ? AppColors.error
+                            ? AppColors.error.withValues(alpha: 0.1)
                             : daysUntilExpiry <= 3
-                                ? AppColors.warning
-                                : AppColors.lightTextTertiary,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          isExpired ? Icons.error_outline : Icons.access_time,
+                            ? AppColors.warning.withValues(alpha: 0.1)
+                            : AppColors.lightBackground,
+                        borderRadius: BorderRadius.circular(Spacing.radiusMd),
+                        border: Border.all(
                           color: isExpired
                               ? AppColors.error
                               : daysUntilExpiry <= 3
-                                  ? AppColors.warning
-                                  : AppColors.lightTextSecondary,
+                              ? AppColors.warning
+                              : AppColors.lightTextTertiary,
                         ),
-                        const SizedBox(width: Spacing.md),
-                        Expanded(
-                          child: Text(
-                            isExpired
-                                ? 'Ce devis a expiré le ${_formatDate(widget.quote.validUntil)}'
-                                : daysUntilExpiry == 0
-                                    ? 'Ce devis expire aujourd\'hui'
-                                    : 'Valide encore $daysUntilExpiry jour${daysUntilExpiry > 1 ? 's' : ''}',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: isExpired
-                                      ? AppColors.error
-                                      : daysUntilExpiry <= 3
-                                          ? AppColors.warning
-                                          : AppColors.lightTextPrimary,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            isExpired ? Icons.error_outline : Icons.access_time,
+                            color: isExpired
+                                ? AppColors.error
+                                : daysUntilExpiry <= 3
+                                ? AppColors.warning
+                                : AppColors.lightTextSecondary,
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: Spacing.md),
+                          Expanded(
+                            child: Text(
+                              isExpired
+                                  ? 'Ce devis a expiré le ${_formatDate(validUntil)}'
+                                  : daysUntilExpiry == 0
+                                  ? 'Ce devis expire aujourd\'hui'
+                                  : 'Valide encore $daysUntilExpiry jour${daysUntilExpiry > 1 ? 's' : ''}',
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    color: isExpired
+                                        ? AppColors.error
+                                        : daysUntilExpiry <= 3
+                                        ? AppColors.warning
+                                        : AppColors.lightTextPrimary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
 
                   // Notes
-                  if (widget.quote.notes != null && widget.quote.notes!.isNotEmpty) ...[
+                  if (widget.quote.notes != null &&
+                      widget.quote.notes!.isNotEmpty) ...[
                     const SizedBox(height: Spacing.xl),
                     _buildSectionHeader(context, 'Notes', Icons.notes),
                     const SizedBox(height: Spacing.md),
@@ -424,7 +442,9 @@ class _QuoteReviewScreenState extends State<QuoteReviewScreen> {
                       label: const Text('Accepter le devis'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.success,
-                        padding: const EdgeInsets.symmetric(vertical: Spacing.md),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: Spacing.md,
+                        ),
                       ),
                     ),
                     const SizedBox(height: Spacing.md),
@@ -435,7 +455,9 @@ class _QuoteReviewScreenState extends State<QuoteReviewScreen> {
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.error,
                         side: BorderSide(color: AppColors.error),
-                        padding: const EdgeInsets.symmetric(vertical: Spacing.md),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: Spacing.md,
+                        ),
                       ),
                     ),
                   ],
@@ -450,8 +472,8 @@ class _QuoteReviewScreenState extends State<QuoteReviewScreen> {
                       child: Text(
                         'Ce devis a expiré. Contactez l\'artisan pour un nouveau devis.',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AppColors.error,
-                            ),
+                          color: AppColors.error,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                     ),
@@ -464,16 +486,20 @@ class _QuoteReviewScreenState extends State<QuoteReviewScreen> {
     );
   }
 
-  Widget _buildSectionHeader(BuildContext context, String title, IconData icon) {
+  Widget _buildSectionHeader(
+    BuildContext context,
+    String title,
+    IconData icon,
+  ) {
     return Row(
       children: [
         Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
         const SizedBox(width: Spacing.sm),
         Text(
           title,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
       ],
     );
@@ -490,10 +516,7 @@ class _QuoteReviewScreenState extends State<QuoteReviewScreen> {
         Container(
           width: 16,
           height: 16,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: Spacing.sm),
         Column(
@@ -502,14 +525,14 @@ class _QuoteReviewScreenState extends State<QuoteReviewScreen> {
             Text(
               label,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.lightTextSecondary,
-                  ),
+                color: AppColors.lightTextSecondary,
+              ),
             ),
             Text(
               value,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
             ),
           ],
         ),
@@ -532,15 +555,15 @@ class _QuoteReviewScreenState extends State<QuoteReviewScreen> {
                   Text(
                     item.description,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   const SizedBox(height: Spacing.xs),
                   Text(
-                    '${item.quantity} ${item.unit ?? 'unité${item.quantity > 1 ? 's' : ''}'} × ${item.unitPrice.toStringAsFixed(0)} FCFA',
+                    '${item.quantity} ${item.unit} × ${item.unitPrice.toStringAsFixed(0)} FCFA',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.lightTextSecondary,
-                        ),
+                      color: AppColors.lightTextSecondary,
+                    ),
                   ),
                 ],
               ),
@@ -548,9 +571,9 @@ class _QuoteReviewScreenState extends State<QuoteReviewScreen> {
             Text(
               '${item.total.toStringAsFixed(0)} FCFA',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.primary,
+              ),
             ),
           ],
         ),
@@ -560,8 +583,18 @@ class _QuoteReviewScreenState extends State<QuoteReviewScreen> {
 
   String _formatDate(DateTime date) {
     final months = [
-      'jan', 'fév', 'mar', 'avr', 'mai', 'juin',
-      'juil', 'aoû', 'sep', 'oct', 'nov', 'déc'
+      'jan',
+      'fév',
+      'mar',
+      'avr',
+      'mai',
+      'juin',
+      'juil',
+      'aoû',
+      'sep',
+      'oct',
+      'nov',
+      'déc',
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
