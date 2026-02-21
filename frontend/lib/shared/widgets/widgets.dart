@@ -6,15 +6,19 @@ library;
 
 // Buttons
 export 'custom_button.dart';
+export 'app_primary_button.dart';
+export 'app_social_button.dart';
 
 // Form Components
 export 'custom_text_field.dart';
+export 'app_text_field.dart';
 
 // Layout Components
 export 'custom_card.dart';
 export 'custom_app_bar.dart';
 export 'empty_state.dart';
 export 'loading_overlay.dart';
+export 'app_divider_with_label.dart';
 
 // Status & Indicators
 export 'status_badge.dart';

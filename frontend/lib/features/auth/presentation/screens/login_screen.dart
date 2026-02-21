@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/constants/spacing.dart';
+import '../../../../core/theme/design_tokens.dart';
 import '../../../../core/navigation/main_navigation_screen.dart';
 import '../../../../shared/controllers/auth_controller.dart';
 import '../../../../shared/widgets/widgets.dart';
@@ -9,8 +8,8 @@ import '../../../artisan/presentation/screens/artisan_dashboard_screen.dart';
 import '../../../vendor/presentation/screens/vendor_dashboard_screen.dart';
 import 'role_selection_screen.dart';
 
-/// Login Screen with background image
-/// Figma reference: node-id=3112:6602
+/// Login Screen following MinimalAuthMobile design system
+/// Based on design_login.json specifications
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -39,14 +38,14 @@ class _LoginScreenState extends State<LoginScreen> {
         password: _passwordController.text,
       );
 
-      if (success) {
+      if (success && mounted) {
         final user = _authController.currentUser.value;
 
         if (user != null) {
           Get.snackbar(
             'Succès',
             'Bienvenue ${user.name}!',
-            backgroundColor: AppColors.success,
+            backgroundColor: DesignTokens.success,
             colorText: Colors.white,
             snackPosition: SnackPosition.TOP,
             duration: const Duration(seconds: 2),
@@ -55,20 +54,12 @@ class _LoginScreenState extends State<LoginScreen> {
           Future.delayed(const Duration(milliseconds: 500), () {
             _navigateToHome(user.role);
           });
-        } else {
-          Get.snackbar(
-            'Erreur',
-            'Erreur de connexion, veuillez réessayer',
-            backgroundColor: AppColors.error,
-            colorText: Colors.white,
-            snackPosition: SnackPosition.TOP,
-          );
         }
-      } else {
+      } else if (mounted) {
         Get.snackbar(
-          'Error',
+          'Erreur',
           _authController.errorMessage.value,
-          backgroundColor: AppColors.error,
+          backgroundColor: DesignTokens.error,
           colorText: Colors.white,
           snackPosition: SnackPosition.TOP,
         );
@@ -98,281 +89,227 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          // Background Image
-          Positioned.fill(
-            child: Image.asset(
-              'assets/images/login_background.png',
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                // Fallback to gradient if image not found
-                return Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: AppColors.primaryGradient,
+      backgroundColor: DesignTokens.backgroundScreen,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(
+            horizontal: DesignTokens.horizontalPadding,
+          ),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: DesignTokens.spacing32),
+
+                // Logo
+                Center(
+                  child: Container(
+                    width: DesignTokens.logoSize,
+                    height: DesignTokens.logoSize,
+                    decoration: const BoxDecoration(
+                      color: DesignTokens.primaryBase,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.build_circle,
+                      size: 36,
+                      color: DesignTokens.textOnPrimary,
                     ),
                   ),
-                );
-              },
-            ),
-          ),
-
-          // Gradient Overlay for better readability
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.black.withOpacity(0.3),
-                    Colors.black.withOpacity(0.6),
-                  ],
                 ),
-              ),
-            ),
-          ),
+                const SizedBox(height: DesignTokens.spacing24),
 
-          // Content
-          SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(Spacing.screenPadding),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                // Title
+                Text(
+                  'Bienvenue',
+                  style: DesignTokens.headingStyle(),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: DesignTokens.spacing8),
+
+                // Subtitle
+                Text(
+                  'Connectez-vous à votre compte',
+                  style: DesignTokens.subheadingStyle(
+                    color: DesignTokens.neutral500,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: DesignTokens.spacing32),
+
+                // Social Login Buttons
+                AppSocialButton(
+                  text: 'Continuer avec Google',
+                  icon: Image.asset(
+                    'assets/icons/google.png',
+                    width: 24,
+                    height: 24,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Icon(
+                        Icons.g_mobiledata,
+                        color: DesignTokens.error,
+                      );
+                    },
+                  ),
+                  onPressed: () {
+                    Get.snackbar(
+                      'Info',
+                      'Google Sign In à venir',
+                      backgroundColor: DesignTokens.info,
+                      colorText: Colors.white,
+                    );
+                  },
+                ),
+                const SizedBox(height: DesignTokens.spacing16),
+
+                AppSocialButton(
+                  text: 'Continuer avec Apple',
+                  icon: const Icon(Icons.apple, color: Colors.black),
+                  onPressed: () {
+                    Get.snackbar(
+                      'Info',
+                      'Apple Sign In à venir',
+                      backgroundColor: DesignTokens.info,
+                      colorText: Colors.white,
+                    );
+                  },
+                ),
+                const SizedBox(height: DesignTokens.spacing24),
+
+                // Divider
+                const AppDividerWithLabel(label: 'OU'),
+                const SizedBox(height: DesignTokens.spacing24),
+
+                // Email Input
+                AppTextField(
+                  controller: _emailController,
+                  hintText: 'exemple@email.com',
+                  labelText: 'Email',
+                  keyboardType: TextInputType.emailAddress,
+                  prefixIcon: const Icon(Icons.email_outlined),
+                  textInputAction: TextInputAction.next,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Veuillez entrer votre email';
+                    }
+                    if (!GetUtils.isEmail(value)) {
+                      return 'Email invalide';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: DesignTokens.spacing16),
+
+                // Password Input
+                AppTextField(
+                  controller: _passwordController,
+                  hintText: '••••••••',
+                  labelText: 'Mot de passe',
+                  obscureText: _obscurePassword,
+                  prefixIcon: const Icon(Icons.lock_outline),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword;
+                      });
+                    },
+                  ),
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) => _handleLogin(),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Veuillez entrer votre mot de passe';
+                    }
+                    if (value.length < 8) {
+                      return 'Le mot de passe doit contenir au moins 8 caractères';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: DesignTokens.spacing12),
+
+                // Forgot Password Link
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () {
+                      Get.snackbar(
+                        'Info',
+                        'Réinitialisation du mot de passe à venir',
+                        backgroundColor: DesignTokens.info,
+                        colorText: Colors.white,
+                      );
+                    },
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: DesignTokens.spacing8,
+                        vertical: DesignTokens.spacing4,
+                      ),
+                      minimumSize: const Size(
+                        DesignTokens.minimumTouchTarget,
+                        DesignTokens.minimumTouchTarget,
+                      ),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: Text(
+                      'Mot de passe oublié?',
+                      style: DesignTokens.linkStyle(),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: DesignTokens.spacing24),
+
+                // Login Button
+                Obx(
+                  () => AppPrimaryButton(
+                    text: 'Se connecter',
+                    onPressed: _handleLogin,
+                    isLoading: _authController.isLoading.value,
+                  ),
+                ),
+                const SizedBox(height: DesignTokens.spacing24),
+
+                // Sign Up Link
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const SizedBox(height: Spacing.xxxl),
-
-                    // Logo
-                    Center(
-                      child: Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
-                              blurRadius: 20,
-                              spreadRadius: 0,
-                              offset: const Offset(0, 8),
-                            ),
-                          ],
-                        ),
-                        child: Icon(
-                          Icons.build_circle,
-                          size: 48,
-                          color: AppColors.lightAccentPrimary,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: Spacing.xl),
-
-                    // Title
                     Text(
-                      'Bienvenue',
-                      style: Theme.of(context).textTheme.headlineLarge
-                          ?.copyWith(
-                            fontSize: 32,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                            height: 1.2,
-                          ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: Spacing.sm),
-
-                    // Subtitle
-                    Text(
-                      'Connectez-vous à votre compte',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontSize: 16,
-                        color: Colors.white.withOpacity(0.9),
-                        height: 1.5,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: Spacing.xxxl),
-
-                    // Login Form Card
-                    Container(
-                      padding: const EdgeInsets.all(Spacing.xl),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(Spacing.radiusXl),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 20,
-                            spreadRadius: 0,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          // Email Field
-                          CustomTextField(
-                            label: 'Email',
-                            hint: 'exemple@email.com',
-                            controller: _emailController,
-                            keyboardType: TextInputType.emailAddress,
-                            prefixIcon: const Icon(Icons.email_outlined),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Veuillez entrer votre email';
-                              }
-                              if (!GetUtils.isEmail(value)) {
-                                return 'Email invalide';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: Spacing.lg),
-
-                          // Password Field
-                          CustomTextField(
-                            label: 'Mot de passe',
-                            hint: '••••••••',
-                            controller: _passwordController,
-                            obscureText: _obscurePassword,
-                            prefixIcon: const Icon(Icons.lock_outline),
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                _obscurePassword
-                                    ? Icons.visibility_outlined
-                                    : Icons.visibility_off_outlined,
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  _obscurePassword = !_obscurePassword;
-                                });
-                              },
-                            ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Veuillez entrer votre mot de passe';
-                              }
-                              if (value.length < 8) {
-                                return 'Le mot de passe doit contenir au moins 8 caractères';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: Spacing.md),
-
-                          // Forgot Password
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton(
-                              onPressed: () {
-                                // TODO: Navigate to forgot password
-                              },
-                              style: TextButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: Spacing.base,
-                                  vertical: Spacing.sm,
-                                ),
-                              ),
-                              child: Text(
-                                'Mot de passe oublié?',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.lightAccentPrimary,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: Spacing.lg),
-
-                          // Login Button
-                          Obx(
-                            () => CustomButton(
-                              text: 'Se connecter',
-                              onPressed: _handleLogin,
-                              isLoading: _authController.isLoading.value,
-                              type: ButtonType.primary,
-                            ),
-                          ),
-                        ],
+                      'Pas encore de compte? ',
+                      style: DesignTokens.bodyStyle(
+                        color: DesignTokens.neutral700,
                       ),
                     ),
-                    const SizedBox(height: Spacing.xl),
-
-                    // Divider
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Divider(
-                            color: Colors.white.withOpacity(0.5),
-                            thickness: 1,
-                          ),
+                    TextButton(
+                      onPressed: () =>
+                          Get.to(() => const RoleSelectionScreen()),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: DesignTokens.spacing4,
                         ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: Spacing.base,
-                          ),
-                          child: Text(
-                            'OU',
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.white.withOpacity(0.8),
-                                ),
-                          ),
+                        minimumSize: const Size(
+                          0,
+                          DesignTokens.minimumTouchTarget,
                         ),
-                        Expanded(
-                          child: Divider(
-                            color: Colors.white.withOpacity(0.5),
-                            thickness: 1,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: Spacing.xl),
-
-                    // Register Button
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(Spacing.radiusMd),
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.5),
-                          width: 2,
-                        ),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
-                      child: TextButton(
-                        onPressed: () =>
-                            Get.to(() => const RoleSelectionScreen()),
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: Spacing.base,
-                          ),
-                        ),
-                        child: const Text(
-                          'Créer un compte',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
+                      child: Text(
+                        'Créer un compte',
+                        style: DesignTokens.linkStyle(),
                       ),
                     ),
                   ],
                 ),
-              ),
+                const SizedBox(height: DesignTokens.spacing32),
+              ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }

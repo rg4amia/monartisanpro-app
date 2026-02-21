@@ -107,7 +107,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           color: AppColors.darkCard,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
+              color: Colors.black.withValues(alpha: 0.2),
               blurRadius: 20,
               offset: const Offset(0, -4),
             ),
@@ -115,10 +115,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         ),
         child: SafeArea(
           child: Container(
-            height: 65,
+            height: 60,
             padding: const EdgeInsets.symmetric(
               horizontal: Spacing.lg,
-              vertical: Spacing.sm,
+              vertical: 4,
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -146,16 +146,17 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         },
         behavior: HitTestBehavior.opaque,
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
+          padding: const EdgeInsets.symmetric(vertical: 2),
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.all(Spacing.xs),
+                padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? AppColors.darkAccentPrimary.withOpacity(0.15)
+                      ? AppColors.darkAccentPrimary.withValues(alpha: 0.15)
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(Spacing.radiusMd),
                 ),
@@ -166,19 +167,23 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                   color: isSelected
                       ? AppColors.darkAccentPrimary
                       : AppColors.darkTextTertiary,
-                  size: 24,
+                  size: 22,
                 ),
               ),
-              const SizedBox(height: 4),
-              Text(
-                item.label ?? '',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                  color: isSelected
-                      ? AppColors.darkAccentPrimary
-                      : AppColors.darkTextTertiary,
-                  height: 1.2,
+              const SizedBox(height: 2),
+              Flexible(
+                child: Text(
+                  item.label ?? '',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                    color: isSelected
+                        ? AppColors.darkAccentPrimary
+                        : AppColors.darkTextTertiary,
+                    height: 1.1,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],

@@ -14,6 +14,9 @@ Project _$ProjectFromJson(Map<String, dynamic> json) => Project(
       description: json['description'] as String,
       location: Location.fromJson(json['location'] as Map<String, dynamic>),
       address: json['address'] as String,
+      expectedCompletionDate: json['expected_completion_date'] == null
+          ? null
+          : DateTime.parse(json['expected_completion_date'] as String),
       status: json['status'] as String,
       client: json['client'] == null
           ? null
@@ -36,6 +39,8 @@ Map<String, dynamic> _$ProjectToJson(Project instance) => <String, dynamic>{
       'description': instance.description,
       'location': instance.location,
       'address': instance.address,
+      'expected_completion_date':
+          instance.expectedCompletionDate?.toIso8601String(),
       'status': instance.status,
       'client': instance.client,
       'artisan': instance.artisan,
@@ -122,7 +127,8 @@ CreateProjectRequest _$CreateProjectRequestFromJson(
       latitude: (json['latitude'] as num).toDouble(),
       longitude: (json['longitude'] as num).toDouble(),
       address: json['address'] as String,
-      tradeId: (json['trade_id'] as num?)?.toInt(),
+      tradeId: (json['trade_id'] as num).toInt(),
+      expectedCompletionDate: json['expected_completion_date'] as String?,
     );
 
 Map<String, dynamic> _$CreateProjectRequestToJson(
@@ -134,6 +140,7 @@ Map<String, dynamic> _$CreateProjectRequestToJson(
       'longitude': instance.longitude,
       'address': instance.address,
       'trade_id': instance.tradeId,
+      'expected_completion_date': instance.expectedCompletionDate,
     };
 
 CreateQuoteRequest _$CreateQuoteRequestFromJson(Map<String, dynamic> json) =>

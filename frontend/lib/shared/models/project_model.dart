@@ -15,6 +15,8 @@ class Project {
   final String description;
   final Location location;
   final String address;
+  @JsonKey(name: 'expected_completion_date')
+  final DateTime? expectedCompletionDate;
   final String
   status; // pending, quoted, accepted, funded, in_progress, completed, cancelled, disputed
   final User? client;
@@ -33,6 +35,7 @@ class Project {
     required this.description,
     required this.location,
     required this.address,
+    this.expectedCompletionDate,
     required this.status,
     this.client,
     this.artisan,
@@ -204,7 +207,9 @@ class CreateProjectRequest {
   final double longitude;
   final String address;
   @JsonKey(name: 'trade_id')
-  final int? tradeId;
+  final int tradeId;
+  @JsonKey(name: 'expected_completion_date')
+  final String? expectedCompletionDate;
 
   CreateProjectRequest({
     required this.title,
@@ -212,7 +217,8 @@ class CreateProjectRequest {
     required this.latitude,
     required this.longitude,
     required this.address,
-    this.tradeId,
+    required this.tradeId,
+    this.expectedCompletionDate,
   });
 
   Map<String, dynamic> toJson() => _$CreateProjectRequestToJson(this);

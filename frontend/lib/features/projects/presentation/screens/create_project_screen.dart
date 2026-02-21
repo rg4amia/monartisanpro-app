@@ -4,7 +4,8 @@ import 'package:geolocator/geolocator.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/spacing.dart';
 import '../../../../shared/controllers/project_controller.dart';
-import '../../../../shared/controllers/search_controller.dart' as artisan_search;
+import '../../../../shared/controllers/search_controller.dart'
+    as artisan_search;
 import '../../../../shared/models/project_model.dart';
 
 class CreateProjectScreen extends StatefulWidget {
@@ -25,11 +26,20 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
 
   Position? _selectedLocation;
   int? _selectedTradeId;
+  DateTime? _selectedCompletionDate;
 
   @override
   void initState() {
     super.initState();
     _getCurrentLocation();
+    _loadTradesIfNeeded();
+  }
+
+  Future<void> _loadTradesIfNeeded() async {
+    // Load trades if not already loaded
+    if (_searchController.trades.isEmpty) {
+      await _searchController.fetchAllTrades();
+    }
   }
 
   @override
@@ -71,13 +81,27 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
       return;
     }
 
+    if (_selectedTradeId == null) {
+      Get.snackbar(
+        'Erreur',
+        'Veuillez sélectionner un type de métier',
+        backgroundColor: AppColors.error,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+      );
+      return;
+    }
+
     final request = CreateProjectRequest(
       title: _titleController.text.trim(),
       description: _descriptionController.text.trim(),
       latitude: _selectedLocation!.latitude,
       longitude: _selectedLocation!.longitude,
       address: _addressController.text.trim(),
-      tradeId: _selectedTradeId,
+      tradeId: _selectedTradeId!,
+      expectedCompletionDate: _selectedCompletionDate != null
+          ? '${_selectedCompletionDate!.year}-${_selectedCompletionDate!.month.toString().padLeft(2, '0')}-${_selectedCompletionDate!.day.toString().padLeft(2, '0')}'
+          : null,
     );
 
     final success = await _projectController.createProject(request);
@@ -105,9 +129,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Nouveau projet'),
-      ),
+      appBar: AppBar(title: const Text('Nouveau projet')),
       body: SafeArea(
         child: Column(
           children: [
@@ -171,29 +193,31 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                       const SizedBox(height: Spacing.lg),
 
                       // Category/Trade
-                      Obx(() => DropdownButtonFormField<int>(
-                            value: _selectedTradeId,
-                            decoration: const InputDecoration(
-                              labelText: 'Type de métier (optionnel)',
-                              hintText: 'Sélectionner un métier',
-                              prefixIcon: Icon(Icons.work_outline),
-                            ),
-                            items: [
-                              const DropdownMenuItem<int>(
-                                value: null,
-                                child: Text('Pas de préférence'),
-                              ),
-                              ..._searchController.trades.map((trade) {
-                                return DropdownMenuItem<int>(
-                                  value: trade.id,
-                                  child: Text(trade.name),
-                                );
-                              }),
-                            ],
-                            onChanged: (value) {
-                              setState(() => _selectedTradeId = value);
-                            },
-                          )),
+                      Obx(
+                        () => DropdownButtonFormField<int>(
+                          value: _selectedTradeId,
+                          decoration: const InputDecoration(
+                            labelText: 'Type de métier *',
+                            hintText: 'Sélectionner un métier',
+                            prefixIcon: Icon(Icons.work_outline),
+                          ),
+                          items: _searchController.trades.map((trade) {
+                            return DropdownMenuItem<int>(
+                              value: trade.id,
+                              child: Text(trade.name),
+                            );
+                          }).toList(),
+                          onChanged: (value) {
+                            setState(() => _selectedTradeId = value);
+                          },
+                          validator: (value) {
+                            if (value == null) {
+                              return 'Veuillez sélectionner un type de métier';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
                       const SizedBox(height: Spacing.lg),
 
                       // Description
@@ -226,10 +250,28 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                           labelText: 'Adresse du projet',
                           hintText: 'Cocody, Angré...',
                           prefixIcon: const Icon(Icons.location_on_outlined),
-                          suffixIcon: IconButton(
-                            icon: const Icon(Icons.my_location),
-                            onPressed: _getCurrentLocation,
-                            tooltip: 'Utiliser ma position',
+                          suffixIcon: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.map_outlined),
+                                onPressed: () {
+                                  // TODO: Ouvrir Yandex Maps pour sélectionner l'adresse
+                                  Get.snackbar(
+                                    'Info',
+                                    'Sélection sur carte à venir',
+                                    backgroundColor: AppColors.info,
+                                    colorText: Colors.white,
+                                  );
+                                },
+                                tooltip: 'Sélectionner sur la carte',
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.my_location),
+                                onPressed: _getCurrentLocation,
+                                tooltip: 'Utiliser ma position',
+                              ),
+                            ],
                           ),
                         ),
                         validator: (value) {
@@ -247,7 +289,9 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                           padding: const EdgeInsets.all(Spacing.sm),
                           decoration: BoxDecoration(
                             color: AppColors.success.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(Spacing.radiusSm),
+                            borderRadius: BorderRadius.circular(
+                              Spacing.radiusSm,
+                            ),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -260,7 +304,8 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                               const SizedBox(width: Spacing.xs),
                               Text(
                                 'Position enregistrée',
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
                                       color: AppColors.success,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -268,15 +313,73 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                             ],
                           ),
                         ),
+                      const SizedBox(height: Spacing.lg),
+
+                      // Expected Completion Date
+                      InkWell(
+                        onTap: () async {
+                          final DateTime? picked = await showDatePicker(
+                            context: context,
+                            initialDate:
+                                _selectedCompletionDate ??
+                                DateTime.now().add(const Duration(days: 7)),
+                            firstDate: DateTime.now(),
+                            lastDate: DateTime.now().add(
+                              const Duration(days: 365),
+                            ),
+                            helpText: 'Date de réalisation souhaitée',
+                            cancelText: 'Annuler',
+                            confirmText: 'Confirmer',
+                          );
+                          if (picked != null) {
+                            setState(() {
+                              _selectedCompletionDate = picked;
+                            });
+                          }
+                        },
+                        child: InputDecorator(
+                          decoration: InputDecoration(
+                            labelText:
+                                'Date de réalisation souhaitée (optionnel)',
+                            hintText: 'Sélectionner une date',
+                            prefixIcon: const Icon(
+                              Icons.calendar_today_outlined,
+                            ),
+                            suffixIcon: _selectedCompletionDate != null
+                                ? IconButton(
+                                    icon: const Icon(Icons.clear),
+                                    onPressed: () {
+                                      setState(() {
+                                        _selectedCompletionDate = null;
+                                      });
+                                    },
+                                  )
+                                : null,
+                          ),
+                          child: Text(
+                            _selectedCompletionDate != null
+                                ? '${_selectedCompletionDate!.day.toString().padLeft(2, '0')}/${_selectedCompletionDate!.month.toString().padLeft(2, '0')}/${_selectedCompletionDate!.year}'
+                                : 'Aucune date sélectionnée',
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: _selectedCompletionDate != null
+                                      ? Theme.of(
+                                          context,
+                                        ).textTheme.bodyMedium?.color
+                                      : Theme.of(context).hintColor,
+                                ),
+                          ),
+                        ),
+                      ),
                       const SizedBox(height: Spacing.xxxl),
 
                       // Info text
                       Text(
                         'Après la création, les artisans pourront vous envoyer des devis.',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppColors.lightTextSecondary,
-                              fontStyle: FontStyle.italic,
-                            ),
+                          color: AppColors.lightTextSecondary,
+                          fontStyle: FontStyle.italic,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -298,21 +401,25 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                   ),
                 ],
               ),
-              child: Obx(() => ElevatedButton(
-                    onPressed: _projectController.isCreatingProject.value
-                        ? null
-                        : _handleCreateProject,
-                    child: _projectController.isCreatingProject.value
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              child: Obx(
+                () => ElevatedButton(
+                  onPressed: _projectController.isCreatingProject.value
+                      ? null
+                      : _handleCreateProject,
+                  child: _projectController.isCreatingProject.value
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
                             ),
-                          )
-                        : const Text('Créer le projet'),
-                  )),
+                          ),
+                        )
+                      : const Text('Créer le projet'),
+                ),
+              ),
             ),
           ],
         ),

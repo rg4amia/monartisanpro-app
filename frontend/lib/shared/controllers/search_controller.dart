@@ -31,6 +31,7 @@ class ArtisanSearchController extends GetxController {
   void onInit() {
     super.onInit();
     fetchSectors();
+    fetchAllTrades();
     getCurrentLocation();
   }
 
@@ -79,6 +80,26 @@ class ArtisanSearchController extends GetxController {
       errorMessage.value = 'Network error: ${e.toString()}';
     } finally {
       isLoadingSectors.value = false;
+    }
+  }
+
+  /// Fetch all trades
+  Future<void> fetchAllTrades() async {
+    try {
+      isLoading.value = true;
+      errorMessage.value = '';
+
+      final response = await _tradeService.getAllTrades();
+
+      if (response.success && response.data != null) {
+        trades.value = response.data!;
+      } else {
+        errorMessage.value = response.message ?? 'Failed to fetch trades';
+      }
+    } catch (e) {
+      errorMessage.value = 'Network error: ${e.toString()}';
+    } finally {
+      isLoading.value = false;
     }
   }
 
@@ -151,7 +172,7 @@ class ArtisanSearchController extends GetxController {
       final response = await _searchService.getNearbyArtisans(
         latitude: currentPosition.value!.latitude,
         longitude: currentPosition.value!.longitude,
-        tradeId: selectedTradeId?.value,
+        tradeId: selectedTradeId.value,
       );
 
       if (response.success && response.data != null) {
@@ -170,7 +191,7 @@ class ArtisanSearchController extends GetxController {
 
   /// Set trade filter
   void setTradeFilter(int? tradeId) {
-    selectedTradeId?.value = tradeId;
+    selectedTradeId.value = tradeId;
     if (tradeId != null) {
       searchArtisans();
     }
@@ -195,7 +216,7 @@ class ArtisanSearchController extends GetxController {
 
   /// Set minimum score filter
   void setMinScore(int? score) {
-    minScore?.value = score;
+    minScore.value = score;
   }
 
   /// Set sort order
