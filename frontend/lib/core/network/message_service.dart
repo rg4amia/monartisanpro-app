@@ -1,102 +1,100 @@
 import 'package:dio/dio.dart';
+import '../../shared/models/auth_response.dart';
 import '../../shared/models/message_model.dart';
-import '../constants/api_constants.dart';
 import 'dio_client.dart';
 
 class MessageService {
-  final DioClient _dioClient;
+  final Dio _dio = DioClient().dio;
 
-  MessageService(this._dioClient);
-
-  /// Get all conversations for the authenticated user
-  Future<List<Conversation>> getConversations() async {
+  /// Get all conversations for the current user
+  Future<ApiResponse<List<Conversation>>> getConversations() async {
     try {
-      final response = await _dioClient.dio.get(ApiConstants.getConversations);
+      final response = await _dio.get('/projects/messages');
 
-      if (response.statusCode == 200 && response.data['success'] == true) {
-        final List<dynamic> data = response.data['data'];
-        return data.map((json) => Conversation.fromJson(json)).toList();
+      return ApiResponse<List<Conversation>>.fromJson(
+        response.data,
+        (json) => (json as List)
+            .map((conv) => Conversation.fromJson(conv as Map<String, dynamic>))
+            .toList(),
+      );
+    } on DioException catch (e) {
+      if (e.response != null) {
+        return ApiResponse<List<Conversation>>.fromJson(
+          e.response!.data,
+          (json) => [],
+        );
       }
-
-      throw Exception('Failed to load conversations');
-    } catch (e) {
-      print('Error fetching conversations: $e');
       rethrow;
     }
   }
 
-  /// Get all messages for a specific project
-  Future<List<ProjectMessage>> getProjectMessages(int projectId) async {
+  /// Get messages for a specific project
+  Future<ApiResponse<List<ProjectMessage>>> getProjectMessages(
+    int projectId,
+  ) async {
     try {
-      final response = await _dioClient.dio.get(
-        ApiConstants.getProjectMessages(projectId),
+      final response = await _dio.get('/projects/$projectId/messages');
+
+      return ApiResponse<List<ProjectMessage>>.fromJson(
+        response.data,
+        (json) => (json as List)
+            .map((msg) =>
+                ProjectMessage.fromJson(msg as Map<String, dynamic>))
+            .toList(),
       );
-
-      if (response.statusCode == 200 && response.data['success'] == true) {
-        final List<dynamic> data = response.data['data'];
-        return data.map((json) => ProjectMessage.fromJson(json)).toList();
+    } on DioException catch (e) {
+      if (e.response != null) {
+        return ApiResponse<List<ProjectMessage>>.fromJson(
+          e.response!.data,
+          (json) => [],
+        );
       }
-
-      throw Exception('Failed to load messages');
-    } catch (e) {
-      print('Error fetching messages: $e');
       rethrow;
     }
   }
 
   /// Send a message to a project
-  Future<ProjectMessage> sendMessage(
-    int projectId,
-    String message, {
-    List<String>? attachmentPaths,
+  Future<ApiResponse<ProjectMessage>> sendMessage({
+    required int projectId,
+    required String message,
+    List<String>? attachments,
   }) async {
     try {
-      FormData formData = FormData.fromMap({
-        'message': message,
-      });
-
-      // Add attachments if provided
-      if (attachmentPaths != null && attachmentPaths.isNotEmpty) {
-        for (int i = 0; i < attachmentPaths.length; i++) {
-          formData.files.add(MapEntry(
-            'attachments[$i]',
-            await MultipartFile.fromFile(
-              attachmentPaths[i],
-              filename: attachmentPaths[i].split('/').last,
-            ),
-          ));
-        }
-      }
-
-      final response = await _dioClient.dio.post(
-        ApiConstants.sendMessage(projectId),
-        data: formData,
+      final response = await _dio.post(
+        '/projects/$projectId/messages',
+        data: {
+          'message': message,
+          if (attachments != null && attachments.isNotEmpty)
+            'attachments': attachments,
+        },
       );
 
-      if (response.statusCode == 201 && response.data['success'] == true) {
-        return ProjectMessage.fromJson(response.data['data']);
+      return ApiResponse<ProjectMessage>.fromJson(
+        response.data,
+        (json) => ProjectMessage.fromJson(json as Map<String, dynamic>),
+      );
+    } on DioException catch (e) {
+      if (e.response != null) {
+        return ApiResponse<ProjectMessage>.fromJson(
+          e.response!.data,
+          (json) => ProjectMessage.fromJson(json as Map<String, dynamic>),
+        );
       }
-
-      throw Exception(response.data['message'] ?? 'Failed to send message');
-    } catch (e) {
-      print('Error sending message: $e');
       rethrow;
     }
   }
 
-  /// Mark a message as read
-  Future<void> markAsRead(int messageId) async {
+  /// Mark messages as read
+  Future<ApiResponse<void>> markAsRead(int projectId) async {
     try {
-      final response = await _dioClient.dio.post(
-        ApiConstants.markMessageAsRead(messageId),
-      );
+      final response = await _dio.post('/projects/$projectId/messages/read');
 
-      if (response.statusCode != 200 || response.data['success'] != true) {
-        throw Exception('Failed to mark message as read');
+      return ApiResponse<void>.fromJson(response.data, (json) {});
+    } on DioException catch (e) {
+      if (e.response != null) {
+        return ApiResponse<void>.fromJson(e.response!.data, (json) {});
       }
-    } catch (e) {
-      print('Error marking message as read: $e');
-      // Don't rethrow - this is a non-critical operation
+      rethrow;
     }
   }
 }

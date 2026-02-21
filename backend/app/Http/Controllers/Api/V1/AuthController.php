@@ -288,7 +288,7 @@ class AuthController extends Controller
 
             // TODO: Send SMS via Africa's Talking or Twilio
             // For now, we'll log it (remove in production)
-            \Log::info("OTP for {$request->phone}: {$otp}");
+            logger()->info("OTP for {$request->phone}: {$otp}");
 
             return response()->json([
                 'success' => true,
