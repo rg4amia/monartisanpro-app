@@ -47,6 +47,7 @@ class AuthService {
   Future<AuthResponse> login({
     required String email,
     required String password,
+    String? role,
   }) async {
     try {
       final response = await _dio.post(
@@ -54,6 +55,7 @@ class AuthService {
         data: {
           'email': email,
           'password': password,
+          if (role != null) 'role': role,
         },
       );
 

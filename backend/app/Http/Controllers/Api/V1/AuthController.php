@@ -92,6 +92,7 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), [
             'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
+            'role' => ['nullable', Rule::in(['client', 'artisan', 'fournisseur'])],
         ]);
 
         if ($validator->fails()) {
@@ -106,8 +107,16 @@ class AuthController extends Controller
         if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Invalid credentials'
+                'message' => 'Identifiants invalides'
             ], 401);
+        }
+
+        // Check role mismatch when role is provided
+        if ($request->filled('role') && $user->role !== $request->role) {
+            return response()->json([
+                'success' => false,
+                'message' => "Ce compte n'est pas un compte {$request->role}.",
+            ], 422);
         }
 
         // Check if user is banned
