@@ -14,6 +14,7 @@ export 'custom_text_field.dart';
 export 'app_text_field.dart';
 
 // Layout Components
+export 'role_selector_widget.dart';
 export 'custom_card.dart';
 export 'custom_app_bar.dart';
 export 'empty_state.dart';

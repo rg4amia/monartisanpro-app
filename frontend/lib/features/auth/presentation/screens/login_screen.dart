@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/theme/design_tokens.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/navigation/main_navigation_screen.dart';
 import '../../../../shared/controllers/auth_controller.dart';
 import '../../../../shared/widgets/widgets.dart';
@@ -23,6 +24,13 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   final _authController = Get.put(AuthController());
   bool _obscurePassword = true;
+  String _selectedRole = 'client';
+
+  Color get _roleColor => switch (_selectedRole) {
+        'artisan' => AppColors.lightAccentSecondary,
+        'fournisseur' => AppColors.lightAccentHighlight,
+        _ => AppColors.lightAccentPrimary,
+      };
 
   @override
   void dispose() {
@@ -36,6 +44,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final success = await _authController.login(
         email: _emailController.text.trim(),
         password: _passwordController.text,
+        role: _selectedRole,
       );
 
       if (success && mounted) {
@@ -135,6 +144,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     color: DesignTokens.neutral500,
                   ),
                   textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: DesignTokens.spacing24),
+
+                // Role Selector
+                RoleSelectorWidget(
+                  selectedRole: _selectedRole,
+                  onRoleChanged: (role) => setState(() => _selectedRole = role),
                 ),
                 const SizedBox(height: DesignTokens.spacing32),
 
@@ -271,6 +287,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     text: 'Se connecter',
                     onPressed: _handleLogin,
                     isLoading: _authController.isLoading.value,
+                    color: _roleColor,
                   ),
                 ),
                 const SizedBox(height: DesignTokens.spacing24),

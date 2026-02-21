@@ -8,6 +8,7 @@ class AppPrimaryButton extends StatefulWidget {
   final bool isLoading;
   final bool enabled;
   final Widget? icon;
+  final Color? color;
 
   const AppPrimaryButton({
     super.key,
@@ -16,6 +17,7 @@ class AppPrimaryButton extends StatefulWidget {
     this.isLoading = false,
     this.enabled = true,
     this.icon,
+    this.color,
   });
 
   @override
@@ -80,7 +82,9 @@ class _AppPrimaryButtonState extends State<AppPrimaryButton>
           child: InkWell(
             onTap: _isInteractive ? widget.onPressed : null,
             borderRadius: BorderRadius.circular(DesignTokens.radiusButton),
-            child: Container(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeInOut,
               height: DesignTokens.primaryButtonHeight,
               decoration: BoxDecoration(
                 color: _getBackgroundColor(),
@@ -133,7 +137,7 @@ class _AppPrimaryButtonState extends State<AppPrimaryButton>
     if (!widget.enabled || widget.isLoading) {
       return DesignTokens.neutral300;
     }
-    return DesignTokens.primaryBase;
+    return widget.color ?? DesignTokens.primaryBase;
   }
 
   Color _getTextColor() {

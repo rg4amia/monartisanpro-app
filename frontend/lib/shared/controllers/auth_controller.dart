@@ -138,7 +138,11 @@ class AuthController extends GetxController {
   }
 
   /// Login user
-  Future<bool> login({required String email, required String password}) async {
+  Future<bool> login({
+    required String email,
+    required String password,
+    String? role,
+  }) async {
     try {
       isLoading.value = true;
       errorMessage.value = '';
@@ -146,6 +150,7 @@ class AuthController extends GetxController {
       final response = await _authService.login(
         email: email,
         password: password,
+        role: role,
       );
 
       if (response.success && response.data != null) {
