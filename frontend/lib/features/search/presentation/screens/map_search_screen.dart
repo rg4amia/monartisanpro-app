@@ -23,11 +23,22 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
   YandexMapController? _mapController;
   final List<PlacemarkMapObject> _placemarks = [];
   bool _showListView = false;
+  bool _mapReady = false;
+  bool _mapCreated = false;
 
   @override
   void initState() {
     super.initState();
-    _loadArtisans();
+    _initializeMap();
+  }
+
+  Future<void> _initializeMap() async {
+    // Wait a bit for the map to be ready
+    await Future.delayed(const Duration(milliseconds: 500));
+    await _loadArtisans();
+    if (mounted) {
+      setState(() => _mapReady = true);
+    }
   }
 
   Future<void> _loadArtisans() async {
@@ -161,43 +172,123 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
     return Scaffold(
       body: Obx(() {
         final position = _searchController.currentPosition.value;
-        
+        final errorMessage = _searchController.errorMessage.value;
+
+        // Debug print
+        print('MapSearchScreen - Position: $position');
+        print('MapSearchScreen - Error: $errorMessage');
+        print('MapSearchScreen - Map Ready: $_mapReady');
+
         return Stack(
           children: [
             // Yandex Map
             if (position == null)
-              const Center(
+              Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    CircularProgressIndicator(),
-                    SizedBox(height: Spacing.lg),
-                    Text('Chargement de la carte...'),
+                    if (errorMessage.isEmpty) ...[
+                      const CircularProgressIndicator(),
+                      const SizedBox(height: Spacing.lg),
+                      const Text('Chargement de la carte...'),
+                      const SizedBox(height: Spacing.md),
+                      const Text(
+                        'Obtention de votre position...',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                    ] else ...[
+                      const Icon(
+                        Icons.location_off,
+                        size: 64,
+                        color: Colors.grey,
+                      ),
+                      const SizedBox(height: Spacing.lg),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 32),
+                        child: Text(
+                          errorMessage,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Colors.grey),
+                        ),
+                      ),
+                      const SizedBox(height: Spacing.lg),
+                      ElevatedButton.icon(
+                        onPressed: () => _searchController.getCurrentLocation(),
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Réessayer'),
+                      ),
+                    ],
                   ],
                 ),
               )
             else
-              YandexMap(
-                mapObjects: _placemarks,
-                onMapCreated: (controller) {
-                  _mapController = controller;
+              Container(
+                color: Colors.grey[200],
+                child: Stack(
+                  children: [
+                    YandexMap(
+                      mapObjects: _placemarks,
+                      onMapCreated: (controller) async {
+                        print('MapSearchScreen - Map Created!');
+                        setState(() => _mapCreated = true);
+                        _mapController = controller;
 
-                  // Move camera to user location
-                  _mapController!.moveCamera(
-                    CameraUpdate.newCameraPosition(
-                      CameraPosition(
-                        target: Point(
-                          latitude: position.latitude,
-                          longitude: position.longitude,
+                        // Move camera to user location
+                        try {
+                          await _mapController!.moveCamera(
+                            CameraUpdate.newCameraPosition(
+                              CameraPosition(
+                                target: Point(
+                                  latitude: position.latitude,
+                                  longitude: position.longitude,
+                                ),
+                                zoom: AppConstants.defaultMapZoom,
+                              ),
+                            ),
+                          );
+                          print('MapSearchScreen - Camera moved to position');
+                        } catch (e) {
+                          print('MapSearchScreen - Error moving camera: $e');
+                        }
+                      },
+                      onCameraPositionChanged: (cameraPosition, reason, finished) {
+                        if (finished) {
+                          print(
+                            'MapSearchScreen - Camera position: ${cameraPosition.target.latitude}, ${cameraPosition.target.longitude}',
+                          );
+                        }
+                      },
+                    ),
+                    // Debug overlay
+                    Positioned(
+                      top: 100,
+                      left: 16,
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        color: Colors.white.withOpacity(0.8),
+                        child: Text(
+                          'Lat: ${position.latitude.toStringAsFixed(4)}\n'
+                          'Lng: ${position.longitude.toStringAsFixed(4)}\n'
+                          'Map Ready: $_mapReady\n'
+                          'Map Created: $_mapCreated',
+                          style: const TextStyle(fontSize: 10),
                         ),
-                        zoom: AppConstants.defaultMapZoom,
                       ),
                     ),
-                  );
-                },
-                onCameraPositionChanged: (cameraPosition, reason, finished) {
-                  // Optional: reload markers based on visible region
-                },
+                    // Loading indicator if map not created
+                    if (!_mapCreated)
+                      const Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            CircularProgressIndicator(),
+                            SizedBox(height: 16),
+                            Text('Initialisation de la carte...'),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
               ),
 
             // Top Search Bar
@@ -226,19 +317,17 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                         onPressed: () => Get.back(),
                       ),
                       Expanded(
-                        child: Builder(
-                          builder: (context) {
-                            final tradeId = _searchController.selectedTradeId.value;
-                            final trade = _searchController.trades.firstWhereOrNull(
-                              (t) => t.id == tradeId,
-                            );
-                            return Text(
-                              trade?.name ?? 'Tous les artisans',
-                              style: Theme.of(context).textTheme.titleMedium,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            );
-                          },
+                        child: Text(
+                          () {
+                            final tradeId =
+                                _searchController.selectedTradeId.value;
+                            final trade = _searchController.trades
+                                .firstWhereOrNull((t) => t.id == tradeId);
+                            return trade?.name ?? 'Tous les artisans';
+                          }(),
+                          style: Theme.of(context).textTheme.titleMedium,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       IconButton(
@@ -317,7 +406,9 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                         child: Material(
                           color: Colors.transparent,
                           child: InkWell(
-                            borderRadius: BorderRadius.circular(Spacing.radiusLg),
+                            borderRadius: BorderRadius.circular(
+                              Spacing.radiusLg,
+                            ),
                             onTap: () {
                               setState(() => _showListView = !_showListView);
                             },
@@ -328,27 +419,24 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                                 children: [
                                   Icon(
                                     _showListView ? Icons.map : Icons.list,
-                                    color: Theme.of(context).colorScheme.primary,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
                                   ),
                                   const SizedBox(width: Spacing.sm),
-                                  Builder(
-                                    builder: (context) {
-                                      final resultsCount = _searchController.searchResults.length;
-                                      return Text(
-                                        _showListView
-                                            ? 'Vue Carte'
-                                            : '$resultsCount artisans',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .titleMedium
-                                            ?.copyWith(
-                                              color: Theme.of(
-                                                context,
-                                              ).colorScheme.primary,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                      );
-                                    },
+                                  Text(
+                                    _showListView
+                                        ? 'Vue Carte'
+                                        : '${_searchController.searchResults.length} artisans',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
+                                          fontWeight: FontWeight.w600,
+                                        ),
                                   ),
                                 ],
                               ),
@@ -381,7 +469,9 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                     children: [
                       // Handle
                       Container(
-                        margin: const EdgeInsets.symmetric(vertical: Spacing.md),
+                        margin: const EdgeInsets.symmetric(
+                          vertical: Spacing.md,
+                        ),
                         width: 40,
                         height: 4,
                         decoration: BoxDecoration(
@@ -392,57 +482,56 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
 
                       // List
                       Expanded(
-                        child: Builder(
-                          builder: (context) {
-                            final results = _searchController.searchResults;
-                            if (results.isEmpty) {
-                              return const Center(
-                                child: Text('Aucun artisan dans cette zone'),
-                              );
-                            }
-
-                            return ListView.separated(
-                              padding: const EdgeInsets.all(Spacing.base),
-                              itemCount: results.length,
-                              separatorBuilder: (context, index) => const Divider(),
-                              itemBuilder: (context, index) {
-                                final artisan = results[index];
-                                return ListTile(
-                                  leading: CircleAvatar(
-                                    backgroundImage: artisan.avatar != null
-                                        ? NetworkImage(artisan.avatar!)
-                                        : null,
-                                    child: artisan.avatar == null
-                                        ? const Icon(Icons.person)
-                                        : null,
-                                  ),
-                                  title: Row(
-                                    children: [
-                                      Expanded(child: Text(artisan.name)),
-                                      if (artisan.isNearby)
-                                        Icon(
-                                          Icons.location_on,
-                                          size: 16,
-                                          color: AppColors.goldenMarker,
-                                        ),
-                                    ],
-                                  ),
-                                  subtitle: Text(
-                                    '${artisan.tradeName ?? 'Artisan'} - ${artisan.formattedDistance}',
-                                  ),
-                                  trailing: const Icon(Icons.chevron_right),
-                                  onTap: () {
-                                    Get.to(
-                                      () => ArtisanProfileScreen(
-                                        artisanId: artisan.id,
-                                      ),
-                                    );
-                                  },
-                                );
-                              },
+                        child: () {
+                          final results = _searchController.searchResults;
+                          if (results.isEmpty) {
+                            return const Center(
+                              child: Text('Aucun artisan dans cette zone'),
                             );
-                          },
-                        ),
+                          }
+
+                          return ListView.separated(
+                            padding: const EdgeInsets.all(Spacing.base),
+                            itemCount: results.length,
+                            separatorBuilder: (context, index) =>
+                                const Divider(),
+                            itemBuilder: (context, index) {
+                              final artisan = results[index];
+                              return ListTile(
+                                leading: CircleAvatar(
+                                  backgroundImage: artisan.avatar != null
+                                      ? NetworkImage(artisan.avatar!)
+                                      : null,
+                                  child: artisan.avatar == null
+                                      ? const Icon(Icons.person)
+                                      : null,
+                                ),
+                                title: Row(
+                                  children: [
+                                    Expanded(child: Text(artisan.name)),
+                                    if (artisan.isNearby)
+                                      Icon(
+                                        Icons.location_on,
+                                        size: 16,
+                                        color: AppColors.goldenMarker,
+                                      ),
+                                  ],
+                                ),
+                                subtitle: Text(
+                                  '${artisan.tradeName ?? 'Artisan'} - ${artisan.formattedDistance}',
+                                ),
+                                trailing: const Icon(Icons.chevron_right),
+                                onTap: () {
+                                  Get.to(
+                                    () => ArtisanProfileScreen(
+                                      artisanId: artisan.id,
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          );
+                        }(),
                       ),
                     ],
                   ),
