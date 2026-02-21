@@ -70,53 +70,59 @@ class _ProjectListScreenState extends State<ProjectListScreen>
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mes projets'),
-        bottom: Obx(() {
-          final all = _projectController.myProjects.toList();
-          return TabBar(
-            controller: _tabController,
-            isScrollable: false,
-            labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-            unselectedLabelStyle: const TextStyle(fontSize: 12),
-            tabs: List.generate(4, (i) {
-              final count = _countForTab(i, all);
-              final badgeColor = switch (i) {
-                1 => AppColors.warning,
-                2 => AppColors.lightAccentSecondary,
-                3 => AppColors.lightTextSecondary,
-                _ => Theme.of(context).colorScheme.primary,
-              };
-              return Tab(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(_tabLabels[i]),
-                    if (count > 0 && i > 0) ...[
-                      const SizedBox(width: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 5,
-                          vertical: 1,
-                        ),
-                        decoration: BoxDecoration(
-                          color: badgeColor,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          '$count',
-                          style: const TextStyle(
-                            fontSize: 10,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(48),
+          child: Obx(() {
+            final all = _projectController.myProjects.toList();
+            return TabBar(
+              controller: _tabController,
+              isScrollable: false,
+              labelStyle: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+              unselectedLabelStyle: const TextStyle(fontSize: 12),
+              tabs: List.generate(4, (i) {
+                final count = _countForTab(i, all);
+                final badgeColor = switch (i) {
+                  1 => AppColors.warning,
+                  2 => AppColors.lightAccentSecondary,
+                  3 => AppColors.lightTextSecondary,
+                  _ => Theme.of(context).colorScheme.primary,
+                };
+                return Tab(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(_tabLabels[i]),
+                      if (count > 0 && i > 0) ...[
+                        const SizedBox(width: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 5,
+                            vertical: 1,
+                          ),
+                          decoration: BoxDecoration(
+                            color: badgeColor,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            '$count',
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ],
-                  ],
-                ),
-              );
-            }),
-          );
-        }),
+                  ),
+                );
+              }),
+            );
+          }),
+        ),
       ),
       body: Obx(() {
         if (_projectController.isLoading.value) {
@@ -151,8 +157,8 @@ class _ProjectListScreenState extends State<ProjectListScreen>
           ),
         );
       }),
-      floatingActionButton: isClient &&
-              (_tabController.index == 0 || _tabController.index == 1)
+      floatingActionButton:
+          isClient && (_tabController.index == 0 || _tabController.index == 1)
           ? FloatingActionButton.extended(
               onPressed: () async {
                 final result = await Get.to(() => const CreateProjectScreen());
@@ -179,8 +185,9 @@ class _ProjectListScreenState extends State<ProjectListScreen>
         break;
       case 2:
         icon = Icons.work_outline;
-        message =
-            isClient ? 'Aucun projet en cours.' : 'Aucun chantier en cours.';
+        message = isClient
+            ? 'Aucun projet en cours.'
+            : 'Aucun chantier en cours.';
         break;
       case 3:
         icon = Icons.check_circle_outline;
@@ -204,16 +211,17 @@ class _ProjectListScreenState extends State<ProjectListScreen>
             Text(
               message,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: AppColors.lightTextSecondary,
-                  ),
+                color: AppColors.lightTextSecondary,
+              ),
               textAlign: TextAlign.center,
             ),
             if (isClient && tabIndex == 0) ...[
               const SizedBox(height: Spacing.xl),
               ElevatedButton.icon(
                 onPressed: () async {
-                  final result =
-                      await Get.to(() => const CreateProjectScreen());
+                  final result = await Get.to(
+                    () => const CreateProjectScreen(),
+                  );
                   if (result == true) _loadProjects();
                 },
                 icon: const Icon(Icons.add),
@@ -238,13 +246,13 @@ class _ProjectCard extends StatelessWidget {
   const _ProjectCard({required this.project, required this.onTap});
 
   Color _statusColor(String status) => switch (status) {
-        'pending' || 'awaiting_quotes' => AppColors.warning,
-        'quoted' || 'payment_pending' => AppColors.info,
-        'in_progress' => AppColors.lightAccentSecondary,
-        'completed' => AppColors.success,
-        'cancelled' => AppColors.error,
-        _ => AppColors.lightTextSecondary,
-      };
+    'pending' || 'awaiting_quotes' => AppColors.warning,
+    'quoted' || 'payment_pending' => AppColors.info,
+    'in_progress' => AppColors.lightAccentSecondary,
+    'completed' => AppColors.success,
+    'cancelled' => AppColors.error,
+    _ => AppColors.lightTextSecondary,
+  };
 
   String _formatDate(String dateString) {
     try {
@@ -292,10 +300,9 @@ class _ProjectCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       project.title,
-                      style:
-                          Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -335,7 +342,9 @@ class _ProjectCard extends StatelessWidget {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.lightAccentPrimary.withValues(alpha: 0.08),
+                      color: AppColors.lightAccentPrimary.withValues(
+                        alpha: 0.08,
+                      ),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
@@ -355,8 +364,8 @@ class _ProjectCard extends StatelessWidget {
               Text(
                 project.description,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.lightTextSecondary,
-                    ),
+                  color: AppColors.lightTextSecondary,
+                ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -374,9 +383,9 @@ class _ProjectCard extends StatelessWidget {
                   Text(
                     _formatBudget(),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.lightTextSecondary,
-                          fontWeight: FontWeight.w500,
-                        ),
+                      color: AppColors.lightTextSecondary,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ],
               ),
@@ -399,9 +408,7 @@ class _ProjectCard extends StatelessWidget {
                               Flexible(
                                 child: Text(
                                   project.artisan!.name,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall
+                                  style: Theme.of(context).textTheme.bodySmall
                                       ?.copyWith(
                                         color: AppColors.lightAccentSecondary,
                                         fontWeight: FontWeight.w600,
@@ -426,14 +433,12 @@ class _ProjectCard extends StatelessWidget {
                                 project.quoteCount > 0
                                     ? '${project.quoteCount} devis reçu(s)'
                                     : 'Aucun devis',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
+                                style: Theme.of(context).textTheme.bodySmall
                                     ?.copyWith(
                                       color: project.quoteCount > 0
-                                          ? Theme.of(context)
-                                              .colorScheme
-                                              .primary
+                                          ? Theme.of(
+                                              context,
+                                            ).colorScheme.primary
                                           : AppColors.lightTextTertiary,
                                       fontWeight: project.quoteCount > 0
                                           ? FontWeight.w600
@@ -455,8 +460,8 @@ class _ProjectCard extends StatelessWidget {
                     child: Text(
                       project.address,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.lightTextTertiary,
-                          ),
+                        color: AppColors.lightTextTertiary,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -467,8 +472,8 @@ class _ProjectCard extends StatelessWidget {
                   Text(
                     _formatDate(project.createdAt),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.lightTextTertiary,
-                        ),
+                      color: AppColors.lightTextTertiary,
+                    ),
                   ),
                 ],
               ),
