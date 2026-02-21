@@ -9,16 +9,17 @@ import '../../../artisan/presentation/screens/artisan_dashboard_screen.dart';
 import '../../../vendor/presentation/screens/vendor_dashboard_screen.dart';
 import 'role_selection_screen.dart';
 
-/// Login Screen with background image
+/// Login screen with background image
 /// Figma reference: node-id=3112:6602
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class LoginScreenWithBackground extends StatefulWidget {
+  const LoginScreenWithBackground({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<LoginScreenWithBackground> createState() =>
+      _LoginScreenWithBackgroundState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenWithBackgroundState extends State<LoginScreenWithBackground> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();

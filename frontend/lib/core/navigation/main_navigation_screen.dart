@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/search/presentation/screens/search_filter_screen.dart';
 import '../../features/projects/presentation/screens/project_list_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../theme/app_colors.dart';
 import '../constants/spacing.dart';
-import '../../shared/controllers/auth_controller.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   final int initialIndex;
@@ -19,7 +17,6 @@ class MainNavigationScreen extends StatefulWidget {
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   late int _currentIndex;
-  final _authController = Get.find<AuthController>();
 
   @override
   void initState() {
@@ -107,41 +104,84 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       body: IndexedStack(index: _currentIndex, children: _screens),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
+          color: AppColors.darkCard,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 20,
+              offset: const Offset(0, -4),
             ),
           ],
         ),
-        child: ClipRRect(
-          borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(Spacing.radiusLg),
+        child: SafeArea(
+          child: Container(
+            height: 65,
+            padding: const EdgeInsets.symmetric(
+              horizontal: Spacing.lg,
+              vertical: Spacing.sm,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: List.generate(
+                _navItems.length,
+                (index) => _buildNavItem(index),
+              ),
+            ),
           ),
-          child: BottomNavigationBar(
-            currentIndex: _currentIndex,
-            onTap: (index) {
-              setState(() {
-                _currentIndex = index;
-              });
-            },
-            type: BottomNavigationBarType.fixed,
-            backgroundColor: AppColors.darkCard,
-            selectedItemColor: AppColors.darkAccentPrimary,
-            unselectedItemColor: AppColors.darkTextTertiary,
-            selectedFontSize: 12,
-            unselectedFontSize: 12,
-            selectedLabelStyle: const TextStyle(
-              fontWeight: FontWeight.w600,
-              height: 1.5,
-            ),
-            unselectedLabelStyle: const TextStyle(
-              fontWeight: FontWeight.w500,
-              height: 1.5,
-            ),
-            elevation: 0,
-            items: _navItems,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem(int index) {
+    final item = _navItems[index];
+    final isSelected = _currentIndex == index;
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.all(Spacing.xs),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? AppColors.darkAccentPrimary.withOpacity(0.15)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(Spacing.radiusMd),
+                ),
+                child: Icon(
+                  isSelected
+                      ? (item.activeIcon as Icon).icon
+                      : (item.icon as Icon).icon,
+                  color: isSelected
+                      ? AppColors.darkAccentPrimary
+                      : AppColors.darkTextTertiary,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                item.label ?? '',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  color: isSelected
+                      ? AppColors.darkAccentPrimary
+                      : AppColors.darkTextTertiary,
+                  height: 1.2,
+                ),
+              ),
+            ],
           ),
         ),
       ),
