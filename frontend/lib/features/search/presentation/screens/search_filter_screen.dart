@@ -168,10 +168,12 @@ class _SearchFilterScreenState extends State<SearchFilterScreen> {
                                     ),
                                   ),
                                   const SizedBox(width: Spacing.md),
-                                  const Text(
-                                    'Chargement des métiers...',
-                                    style: TextStyle(
-                                      color: AppColors.darkTextSecondary,
+                                  const Expanded(
+                                    child: Text(
+                                      'Chargement des métiers...',
+                                      style: TextStyle(
+                                        color: AppColors.darkTextSecondary,
+                                      ),
                                     ),
                                   ),
                                 ],
