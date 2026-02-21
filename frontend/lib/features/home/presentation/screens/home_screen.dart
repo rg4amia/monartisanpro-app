@@ -572,12 +572,15 @@ class _HomeScreenState extends State<HomeScreen> {
                                     ),
                                   ),
                                   const SizedBox(width: 6),
-                                  const Text(
-                                    'À moins de 2km',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500,
+                                  const Flexible(
+                                    child: Text(
+                                      'À moins de 2km',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                   const SizedBox(width: 8),
@@ -590,12 +593,15 @@ class _HomeScreenState extends State<HomeScreen> {
                                     ),
                                   ),
                                   const SizedBox(width: 6),
-                                  const Text(
-                                    'Disponibles maintenant',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500,
+                                  const Flexible(
+                                    child: Text(
+                                      'Disponibles maintenant',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                 ],
