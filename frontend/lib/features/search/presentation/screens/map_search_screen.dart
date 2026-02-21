@@ -1,10 +1,13 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide TextStyle, Icon;
+import 'package:flutter/material.dart' as material show TextStyle, Icon;
 import 'package:get/get.dart';
-import 'package:yandex_mapkit/yandex_mapkit.dart';
+import 'package:yandex_maps_mapkit/mapkit.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/spacing.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/utils/mapkit_helper.dart';
+import '../../../../core/widgets/flutter_map_widget.dart';
 import '../../../../shared/controllers/search_controller.dart'
     as artisan_search;
 import '../../../../shared/models/artisan_search_model.dart';
@@ -20,8 +23,9 @@ class MapSearchScreen extends StatefulWidget {
 
 class _MapSearchScreenState extends State<MapSearchScreen> {
   final _searchController = Get.find<artisan_search.ArtisanSearchController>();
-  YandexMapController? _mapController;
-  final List<PlacemarkMapObject> _placemarks = [];
+  MapWindow? _mapWindow;
+  MapObjectCollection? _placemarkCollection;
+  final _placemarkTapListeners = <MapObjectTapListener>[];
   bool _showListView = false;
   bool _mapReady = false;
   bool _mapCreated = false;
@@ -47,23 +51,29 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
   }
 
   void _updatePlacemarks() {
-    _placemarks.clear();
+    if (_placemarkCollection == null) return;
+
+    // Clear existing placemarks
+    _placemarkCollection!.clear();
+    _placemarkTapListeners.clear();
 
     for (final artisan in _searchController.searchResults) {
       // Use actual coordinates if available
       if (artisan.latitude != null && artisan.longitude != null) {
-        _placemarks.add(
-          PlacemarkMapObject(
-            mapId: MapObjectId('artisan_${artisan.id}'),
-            point: Point(
-              latitude: artisan.latitude!,
-              longitude: artisan.longitude!,
-            ),
-            // Using default Yandex marker (will be customized later with PNG assets)
-            opacity: 1.0,
-            onTap: (placemark, point) => _showArtisanBottomSheet(artisan),
-          ),
+        final placemark = _placemarkCollection!.addPlacemark()
+          ..geometry = MapKitHelper.createPoint(
+            artisan.latitude!,
+            artisan.longitude!,
+          )
+          ..opacity = 1.0;
+
+        // Create tap listener for this placemark
+        final tapListener = _ArtisanPlacemarkTapListener(
+          onTap: () => _showArtisanBottomSheet(artisan),
         );
+
+        placemark.addTapListener(tapListener);
+        _placemarkTapListeners.add(tapListener);
       }
     }
 
@@ -108,7 +118,7 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                       ? NetworkImage(artisan.avatar!)
                       : null,
                   child: artisan.avatar == null
-                      ? const Icon(Icons.person)
+                      ? const material.Icon(Icons.person)
                       : null,
                 ),
                 const SizedBox(width: Spacing.md),
@@ -125,7 +135,7 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                             ),
                           ),
                           if (artisan.isNearby)
-                            Icon(
+                            material.Icon(
                               Icons.location_on,
                               color: AppColors.goldenMarker,
                               size: 20,
@@ -138,7 +148,7 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                       ),
                       Row(
                         children: [
-                          const Icon(Icons.location_on, size: 14),
+                          const material.Icon(Icons.location_on, size: 14),
                           const SizedBox(width: 4),
                           Text(artisan.formattedDistance),
                         ],
@@ -194,10 +204,13 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                       const SizedBox(height: Spacing.md),
                       const Text(
                         'Obtention de votre position...',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                        style: material.TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
                       ),
                     ] else ...[
-                      const Icon(
+                      const material.Icon(
                         Icons.location_off,
                         size: 64,
                         color: Colors.grey,
@@ -208,13 +221,13 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                         child: Text(
                           errorMessage,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.grey),
+                          style: const material.TextStyle(color: Colors.grey),
                         ),
                       ),
                       const SizedBox(height: Spacing.lg),
                       ElevatedButton.icon(
                         onPressed: () => _searchController.getCurrentLocation(),
-                        icon: const Icon(Icons.refresh),
+                        icon: const material.Icon(Icons.refresh),
                         label: const Text('Réessayer'),
                       ),
                     ],
@@ -226,37 +239,37 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                 color: Colors.grey[200],
                 child: Stack(
                   children: [
-                    YandexMap(
-                      mapObjects: _placemarks,
-                      onMapCreated: (controller) async {
+                    FlutterMapWidget(
+                      onMapCreated: (mapWindow) {
                         print('MapSearchScreen - Map Created!');
                         setState(() => _mapCreated = true);
-                        _mapController = controller;
+                        _mapWindow = mapWindow;
+
+                        // Create placemark collection
+                        _placemarkCollection = mapWindow.map.mapObjects
+                            .addCollection();
 
                         // Move camera to user location
                         try {
-                          await _mapController!.moveCamera(
-                            CameraUpdate.newCameraPosition(
-                              CameraPosition(
-                                target: Point(
-                                  latitude: position.latitude,
-                                  longitude: position.longitude,
-                                ),
-                                zoom: AppConstants.defaultMapZoom,
-                              ),
+                          mapWindow.map.move(
+                            MapKitHelper.createCameraPosition(
+                              latitude: position.latitude,
+                              longitude: position.longitude,
+                              zoom: AppConstants.defaultMapZoom,
                             ),
+                            animation: MapKitHelper.createSmoothAnimation(),
                           );
                           print('MapSearchScreen - Camera moved to position');
+
+                          // Load artisans after map is ready
+                          _updatePlacemarks();
                         } catch (e) {
                           print('MapSearchScreen - Error moving camera: $e');
                         }
                       },
-                      onCameraPositionChanged: (cameraPosition, reason, finished) {
-                        if (finished) {
-                          print(
-                            'MapSearchScreen - Camera position: ${cameraPosition.target.latitude}, ${cameraPosition.target.longitude}',
-                          );
-                        }
+                      onMapDispose: () {
+                        _placemarkCollection = null;
+                        _mapWindow = null;
                       },
                     ),
                     // Debug overlay
@@ -271,7 +284,7 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                           'Lng: ${position.longitude.toStringAsFixed(4)}\n'
                           'Map Ready: $_mapReady\n'
                           'Map Created: $_mapCreated',
-                          style: const TextStyle(fontSize: 10),
+                          style: const material.TextStyle(fontSize: 10),
                         ),
                       ),
                     ),
@@ -313,7 +326,7 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                   child: Row(
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.arrow_back),
+                        icon: const material.Icon(Icons.arrow_back),
                         onPressed: () => Get.back(),
                       ),
                       Expanded(
@@ -331,7 +344,7 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.tune),
+                        icon: const material.Icon(Icons.tune),
                         onPressed: () async {
                           await Get.to(() => const SearchFilterScreen());
                           _loadArtisans();
@@ -363,25 +376,18 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                           onPressed: () async {
                             final position =
                                 _searchController.currentPosition.value;
-                            if (position != null && _mapController != null) {
-                              _mapController!.moveCamera(
-                                CameraUpdate.newCameraPosition(
-                                  CameraPosition(
-                                    target: Point(
-                                      latitude: position.latitude,
-                                      longitude: position.longitude,
-                                    ),
-                                    zoom: AppConstants.defaultMapZoom,
-                                  ),
+                            if (position != null && _mapWindow != null) {
+                              _mapWindow!.map.move(
+                                MapKitHelper.createCameraPosition(
+                                  latitude: position.latitude,
+                                  longitude: position.longitude,
+                                  zoom: AppConstants.defaultMapZoom,
                                 ),
-                                animation: const MapAnimation(
-                                  type: MapAnimationType.smooth,
-                                  duration: 1.0,
-                                ),
+                                animation: MapKitHelper.createSmoothAnimation(),
                               );
                             }
                           },
-                          child: Icon(
+                          child: material.Icon(
                             Icons.my_location,
                             color: Theme.of(context).colorScheme.primary,
                           ),
@@ -417,7 +423,7 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(
+                                  material.Icon(
                                     _showListView ? Icons.map : Icons.list,
                                     color: Theme.of(
                                       context,
@@ -503,14 +509,14 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                                       ? NetworkImage(artisan.avatar!)
                                       : null,
                                   child: artisan.avatar == null
-                                      ? const Icon(Icons.person)
+                                      ? const material.Icon(Icons.person)
                                       : null,
                                 ),
                                 title: Row(
                                   children: [
                                     Expanded(child: Text(artisan.name)),
                                     if (artisan.isNearby)
-                                      Icon(
+                                      material.Icon(
                                         Icons.location_on,
                                         size: 16,
                                         color: AppColors.goldenMarker,
@@ -520,7 +526,9 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                                 subtitle: Text(
                                   '${artisan.tradeName ?? 'Artisan'} - ${artisan.formattedDistance}',
                                 ),
-                                trailing: const Icon(Icons.chevron_right),
+                                trailing: const material.Icon(
+                                  Icons.chevron_right,
+                                ),
                                 onTap: () {
                                   Get.to(
                                     () => ArtisanProfileScreen(
@@ -546,5 +554,18 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
   @override
   void dispose() {
     super.dispose();
+  }
+}
+
+/// Custom tap listener for placemark objects
+class _ArtisanPlacemarkTapListener implements MapObjectTapListener {
+  final VoidCallback onTap;
+
+  _ArtisanPlacemarkTapListener({required this.onTap});
+
+  @override
+  bool onMapObjectTap(MapObject mapObject, Point point) {
+    onTap();
+    return true;
   }
 }

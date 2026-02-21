@@ -16,6 +16,7 @@ class AppColors {
   static const Color lightAccentPrimary = Color(0xFF4F46E5);
   static const Color lightAccentSecondary = Color(0xFF10B981);
   static const Color lightAccentHighlight = Color(0xFFF59E0B);
+  static const Color lightAccentDanger = Color(0xFFEF4444);
 
   // Dark theme colors
   static const Color darkBackground = Color(0xFF1A1F3A);
@@ -59,8 +60,12 @@ class AppColors {
   ];
 
   // Overlay colors (dark theme)
-  static const Color overlayLight = Color(0x0DFFFFFF); // rgba(255, 255, 255, 0.05)
-  static const Color overlayMedium = Color(0x1AFFFFFF); // rgba(255, 255, 255, 0.1)
+  static const Color overlayLight = Color(
+    0x0DFFFFFF,
+  ); // rgba(255, 255, 255, 0.05)
+  static const Color overlayMedium = Color(
+    0x1AFFFFFF,
+  ); // rgba(255, 255, 255, 0.1)
   static const Color overlayHeavy = Color(0x4D000000); // rgba(0, 0, 0, 0.3)
 
   // Specific UI colors

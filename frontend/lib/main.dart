@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:yandex_mapkit/yandex_mapkit.dart';
+import 'package:yandex_maps_mapkit/init.dart' as mapkit_init;
 import 'core/theme/app_theme.dart';
 import 'core/constants/app_constants.dart';
 import 'core/init/app_bindings.dart';
@@ -10,10 +10,8 @@ void main() async {
   // Ensure Flutter is initialized
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Yandex MapKit
-  // API key is configured in AndroidManifest.xml
-  // Use Android View Surface for better compatibility
-  AndroidYandexMap.useAndroidViewSurface = true;
+  // Initialize Yandex MapKit with API key
+  await mapkit_init.initMapkit(apiKey: 'REVOKED-YANDEX-KEY');
 
   // Initialize dependency injection
   AppBindings().dependencies();
