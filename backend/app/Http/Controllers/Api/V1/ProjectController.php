@@ -48,6 +48,7 @@ class ProjectController extends Controller
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
             'address' => 'nullable|string',
+            'expected_completion_date' => 'nullable|date|after:today',
             'budget_min' => 'nullable|numeric|min:0',
             'budget_max' => 'nullable|numeric|min:0',
         ]);
@@ -59,6 +60,7 @@ class ProjectController extends Controller
             'description' => $validated['description'],
             'location' => new Point($validated['latitude'], $validated['longitude']),
             'address' => $validated['address'] ?? null,
+            'expected_completion_date' => $validated['expected_completion_date'] ?? null,
             'budget_min' => $validated['budget_min'] ?? null,
             'budget_max' => $validated['budget_max'] ?? null,
             'status' => 'pending',
@@ -100,6 +102,7 @@ class ProjectController extends Controller
         $validated = $request->validate([
             'title' => 'sometimes|string|max:255',
             'description' => 'sometimes|string',
+            'expected_completion_date' => 'sometimes|nullable|date|after:today',
             'status' => 'sometimes|in:pending,awaiting_quotes,cancelled',
         ]);
 
