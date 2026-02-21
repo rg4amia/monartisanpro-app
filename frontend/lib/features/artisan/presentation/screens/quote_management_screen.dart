@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/spacing.dart';
-import '../../../../shared/models/project_model.dart';
+import '../../../../shared/models/quote_model.dart';
 
 class QuoteManagementScreen extends StatefulWidget {
   const QuoteManagementScreen({super.key});
@@ -198,7 +197,11 @@ class _QuoteCard extends StatelessWidget {
                     ),
                     const SizedBox(height: Spacing.xs),
                     Text(
-                      DateFormat('dd/MM/yyyy').format(quote.validUntil),
+                      quote.validUntil != null
+                          ? DateFormat(
+                              'dd/MM/yyyy',
+                            ).format(DateTime.parse(quote.validUntil!))
+                          : 'Non définie',
                       style: const TextStyle(fontSize: 14),
                     ),
                   ],
@@ -211,7 +214,7 @@ class _QuoteCard extends StatelessWidget {
                 Icon(Icons.calendar_today, size: 16, color: Colors.grey[600]),
                 const SizedBox(width: Spacing.xs),
                 Text(
-                  'Créé le ${DateFormat('dd/MM/yyyy').format(quote.createdAt)}',
+                  'Créé le ${DateFormat('dd/MM/yyyy').format(DateTime.parse(quote.createdAt))}',
                   style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                 ),
               ],

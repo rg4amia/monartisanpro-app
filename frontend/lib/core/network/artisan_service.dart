@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import '../../shared/models/auth_response.dart';
 import '../../shared/models/escrow_model.dart';
-import '../../shared/models/project_model.dart';
+import '../../shared/models/quote_model.dart';
 import '../../shared/models/scoring_model.dart';
 import 'dio_client.dart';
 

@@ -24,7 +24,7 @@ class ArtisanSearchResult {
   final double? distance; // in meters
   @JsonKey(name: 'distance_text')
   final String? distanceText;
-  @JsonKey(name: 'is_nearby')
+  @JsonKey(name: 'is_nearby', defaultValue: false)
   final bool isNearby; // <2km
   final double? latitude;
   final double? longitude;
@@ -32,9 +32,9 @@ class ArtisanSearchResult {
   final int? nzassaScore;
   @JsonKey(name: 'average_rating')
   final double? averageRating;
-  @JsonKey(name: 'reviews_count')
+  @JsonKey(name: 'reviews_count', defaultValue: 0)
   final int reviewsCount;
-  @JsonKey(name: 'projects_completed')
+  @JsonKey(name: 'projects_completed', defaultValue: 0)
   final int projectsCompleted;
 
   ArtisanSearchResult({
@@ -52,13 +52,13 @@ class ArtisanSearchResult {
     required this.available,
     this.distance,
     this.distanceText,
-    required this.isNearby,
+    this.isNearby = false,
     this.latitude,
     this.longitude,
     this.nzassaScore,
     this.averageRating,
-    required this.reviewsCount,
-    required this.projectsCompleted,
+    this.reviewsCount = 0,
+    this.projectsCompleted = 0,
   });
 
   factory ArtisanSearchResult.fromJson(Map<String, dynamic> json) =>

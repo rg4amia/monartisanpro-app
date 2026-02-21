@@ -44,8 +44,8 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         }
 
         final user = _authController.currentUser.value;
-        final isClient = user?.id == project.clientId;
-        final isArtisan = user?.id == project.artisanId;
+        final isClient = user?.id == project.client.id;
+        final isArtisan = user?.id == project.artisan?.id;
 
         return CustomScrollView(
           slivers: [
@@ -57,12 +57,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                 title: Text(
                   project.title,
                   style: const TextStyle(
-                    shadows: [
-                      Shadow(
-                        color: Colors.black45,
-                        blurRadius: 10,
-                      ),
-                    ],
+                    shadows: [Shadow(color: Colors.black45, blurRadius: 10)],
                   ),
                 ),
                 background: Container(
@@ -100,7 +95,9 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                           vertical: Spacing.sm,
                         ),
                         decoration: BoxDecoration(
-                          color: _getStatusColor(project.status).withValues(alpha: 0.1),
+                          color: _getStatusColor(
+                            project.status,
+                          ).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(Spacing.radiusMd),
                           border: Border.all(
                             color: _getStatusColor(project.status),
@@ -163,16 +160,14 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                     const SizedBox(height: Spacing.xl),
 
                     // Client/Artisan info
-                    if (project.client != null) ...[
-                      _buildSection(
-                        context,
-                        isClient ? 'Mes informations' : 'Client',
-                        Icons.person_outline,
-                      ),
-                      const SizedBox(height: Spacing.md),
-                      _buildUserCard(project.client!),
-                      const SizedBox(height: Spacing.xl),
-                    ],
+                    _buildSection(
+                      context,
+                      isClient ? 'Mes informations' : 'Client',
+                      Icons.person_outline,
+                    ),
+                    const SizedBox(height: Spacing.md),
+                    _buildUserCard(project.client),
+                    const SizedBox(height: Spacing.xl),
 
                     if (project.artisan != null) ...[
                       _buildSection(
@@ -210,7 +205,8 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                             const SizedBox(height: Spacing.md),
                             Text(
                               'Aucun devis reçu',
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
                                     color: AppColors.lightTextSecondary,
                                   ),
                             ),
@@ -255,7 +251,10 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
 
                           if (confirm == true) {
                             final success = await _projectController
-                                .cancelProject(project.id);
+                                .cancelProject(
+                                  project.id,
+                                  'Annulé par le client',
+                                );
                             if (success) {
                               Get.back(result: true);
                             }
@@ -272,9 +271,9 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                     if (!isClient && !isArtisan && project.isPending) ...[
                       ElevatedButton.icon(
                         onPressed: () async {
-                          final result = await Get.to(() => CreateQuoteScreen(
-                                projectId: project.id,
-                              ));
+                          final result = await Get.to(
+                            () => CreateQuoteScreen(projectId: project.id),
+                          );
                           if (result == true) {
                             _loadProjectDetails();
                           }
@@ -300,9 +299,9 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         const SizedBox(width: Spacing.sm),
         Text(
           title,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
       ],
     );
@@ -319,7 +318,9 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         children: [
           CircleAvatar(
             radius: 24,
-            backgroundImage: user.avatar != null ? NetworkImage(user.avatar!) : null,
+            backgroundImage: user.avatar != null
+                ? NetworkImage(user.avatar!)
+                : null,
             child: user.avatar == null ? const Icon(Icons.person) : null,
           ),
           const SizedBox(width: Spacing.md),
@@ -329,16 +330,16 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
               children: [
                 Text(
                   user.name,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
                 ),
                 if (user.phone != null)
                   Text(
                     user.phone,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.lightTextSecondary,
-                        ),
+                      color: AppColors.lightTextSecondary,
+                    ),
                   ),
               ],
             ),
@@ -361,8 +362,8 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                   child: Text(
                     quote.artisan?.name ?? 'Artisan',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
                 Container(
@@ -371,7 +372,9 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                     vertical: Spacing.xs,
                   ),
                   decoration: BoxDecoration(
-                    color: _getQuoteStatusColor(quote.status).withValues(alpha: 0.1),
+                    color: _getQuoteStatusColor(
+                      quote.status,
+                    ).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(Spacing.radiusSm),
                   ),
                   child: Text(
@@ -395,12 +398,13 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                       Text(
                         'Total',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppColors.lightTextSecondary,
-                            ),
+                          color: AppColors.lightTextSecondary,
+                        ),
                       ),
                       Text(
                         quote.formattedTotal,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: Theme.of(context).colorScheme.primary,
                             ),
@@ -411,10 +415,12 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                 if (isClient && quote.isSent)
                   ElevatedButton(
                     onPressed: () async {
-                      final result = await Get.to(() => QuoteReviewScreen(
-                            quote: quote,
-                            projectId: widget.projectId,
-                          ));
+                      final result = await Get.to(
+                        () => QuoteReviewScreen(
+                          quote: quote,
+                          projectId: widget.projectId,
+                        ),
+                      );
                       if (result == true) {
                         _loadProjectDetails();
                       }

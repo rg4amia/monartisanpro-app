@@ -22,13 +22,13 @@ ArtisanSearchResult _$ArtisanSearchResultFromJson(Map<String, dynamic> json) =>
       available: json['available'] as bool,
       distance: (json['distance'] as num?)?.toDouble(),
       distanceText: json['distance_text'] as String?,
-      isNearby: json['is_nearby'] as bool,
+      isNearby: json['is_nearby'] as bool? ?? false,
       latitude: (json['latitude'] as num?)?.toDouble(),
       longitude: (json['longitude'] as num?)?.toDouble(),
       nzassaScore: (json['nzassa_score'] as num?)?.toInt(),
       averageRating: (json['average_rating'] as num?)?.toDouble(),
-      reviewsCount: (json['reviews_count'] as num).toInt(),
-      projectsCompleted: (json['projects_completed'] as num).toInt(),
+      reviewsCount: (json['reviews_count'] as num?)?.toInt() ?? 0,
+      projectsCompleted: (json['projects_completed'] as num?)?.toInt() ?? 0,
     );
 
 Map<String, dynamic> _$ArtisanSearchResultToJson(

@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/spacing.dart';
 import '../../../../shared/controllers/project_controller.dart';
-import '../../../../shared/models/project_model.dart';
 
 class CreateQuoteScreen extends StatefulWidget {
   final int projectId;
@@ -107,41 +106,60 @@ class _CreateQuoteScreenState extends State<CreateQuoteScreen> {
       return;
     }
 
-    final materials = _materialItems
-        .where((item) => item.description.text.isNotEmpty)
-        .map((item) => QuoteItemRequest(
-              description: item.description.text,
-              quantity: double.tryParse(item.quantity.text) ?? 0,
-              unit: item.unit.text.isNotEmpty ? item.unit.text : null,
-              unitPrice: double.tryParse(item.unitPrice.text) ?? 0,
-            ))
-        .toList();
+    // Prepare items list
+    final List<Map<String, dynamic>> items = [];
 
-    final labor = _laborItems
-        .where((item) => item.description.text.isNotEmpty)
-        .map((item) => QuoteItemRequest(
-              description: item.description.text,
-              quantity: double.tryParse(item.quantity.text) ?? 0,
-              unit: item.unit.text.isNotEmpty ? item.unit.text : null,
-              unitPrice: double.tryParse(item.unitPrice.text) ?? 0,
-            ))
-        .toList();
+    // Add material items
+    for (var item in _materialItems) {
+      if (item.description.text.isNotEmpty) {
+        items.add({
+          'type': 'material',
+          'description': item.description.text,
+          'quantity': double.tryParse(item.quantity.text) ?? 0,
+          'unit': item.unit.text.isNotEmpty ? item.unit.text : 'unité',
+          'unit_price': double.tryParse(item.unitPrice.text) ?? 0,
+          'total': item.total,
+        });
+      }
+    }
 
-    final request = CreateQuoteRequest(
+    // Add labor items
+    for (var item in _laborItems) {
+      if (item.description.text.isNotEmpty) {
+        items.add({
+          'type': 'labor',
+          'description': item.description.text,
+          'quantity': double.tryParse(item.quantity.text) ?? 0,
+          'unit': item.unit.text.isNotEmpty ? item.unit.text : 'unité',
+          'unit_price': double.tryParse(item.unitPrice.text) ?? 0,
+          'total': item.total,
+        });
+      }
+    }
+
+    final success = await _projectController.createQuote(
       projectId: widget.projectId,
-      materials: materials,
-      labor: labor,
-      validDays: _validDays,
+      totalAmount: _grandTotal,
+      materialAmount: _totalMaterial,
+      laborAmount: _totalLabor,
+      items: items,
       notes: _notesController.text.isNotEmpty ? _notesController.text : null,
     );
 
-    final success = await _projectController.createQuote(request);
     if (success) {
       Get.back(result: true);
       Get.snackbar(
         'Succès',
         'Votre devis a été envoyé au client',
         backgroundColor: AppColors.success,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+      );
+    } else {
+      Get.snackbar(
+        'Erreur',
+        _projectController.errorMessage.value,
+        backgroundColor: AppColors.error,
         colorText: Colors.white,
         snackPosition: SnackPosition.TOP,
       );
@@ -236,14 +254,22 @@ class _CreateQuoteScreenState extends State<CreateQuoteScreen> {
                   Text(
                     'Récapitulatif',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: Spacing.md),
-                  _buildSummaryRow('Matériaux', _totalMaterial, _materialPercentage),
+                  _buildSummaryRow(
+                    'Matériaux',
+                    _totalMaterial,
+                    _materialPercentage,
+                  ),
                   const SizedBox(height: Spacing.sm),
-                  _buildSummaryRow('Main d\'œuvre', _totalLabor, _laborPercentage),
+                  _buildSummaryRow(
+                    'Main d\'œuvre',
+                    _totalLabor,
+                    _laborPercentage,
+                  ),
                   const Divider(color: Colors.white54, height: Spacing.lg),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -251,16 +277,16 @@ class _CreateQuoteScreenState extends State<CreateQuoteScreen> {
                       Text(
                         'TOTAL',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       Text(
                         '${_grandTotal.toStringAsFixed(0)} FCFA',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ],
                   ),
@@ -273,9 +299,9 @@ class _CreateQuoteScreenState extends State<CreateQuoteScreen> {
             // Validity Period
             Text(
               'Validité du devis',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: Spacing.md),
             Container(
@@ -313,16 +339,17 @@ class _CreateQuoteScreenState extends State<CreateQuoteScreen> {
             // Notes
             Text(
               'Notes (optionnel)',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: Spacing.md),
             TextFormField(
               controller: _notesController,
               maxLines: 4,
               decoration: InputDecoration(
-                hintText: 'Informations complémentaires, conditions particulières...',
+                hintText:
+                    'Informations complémentaires, conditions particulières...',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(Spacing.radiusMd),
                 ),
@@ -348,9 +375,9 @@ class _CreateQuoteScreenState extends State<CreateQuoteScreen> {
         const SizedBox(width: Spacing.sm),
         Text(
           title,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
         const Spacer(),
         IconButton(
@@ -379,8 +406,8 @@ class _CreateQuoteScreenState extends State<CreateQuoteScreen> {
                 Text(
                   'Article ${index + 1}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.lightTextSecondary,
-                      ),
+                    color: AppColors.lightTextSecondary,
+                  ),
                 ),
                 const Spacer(),
                 if (onRemove != null)
@@ -494,9 +521,9 @@ class _CreateQuoteScreenState extends State<CreateQuoteScreen> {
                     Text(
                       '${item.total.toStringAsFixed(0)} FCFA',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
                     ),
                   ],
                 ),
@@ -514,18 +541,18 @@ class _CreateQuoteScreenState extends State<CreateQuoteScreen> {
       children: [
         Text(
           label,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.white,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: Colors.white),
         ),
         Row(
           children: [
             Text(
               '${amount.toStringAsFixed(0)} FCFA',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(width: Spacing.sm),
             Container(

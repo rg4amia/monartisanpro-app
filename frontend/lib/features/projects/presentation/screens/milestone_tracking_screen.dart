@@ -19,7 +19,8 @@ class MilestoneTrackingScreen extends StatefulWidget {
   });
 
   @override
-  State<MilestoneTrackingScreen> createState() => _MilestoneTrackingScreenState();
+  State<MilestoneTrackingScreen> createState() =>
+      _MilestoneTrackingScreenState();
 }
 
 class _MilestoneTrackingScreenState extends State<MilestoneTrackingScreen> {
@@ -39,8 +40,10 @@ class _MilestoneTrackingScreenState extends State<MilestoneTrackingScreen> {
     setState(() => _isLoading = false);
   }
 
-  bool get _isClient => _authController.currentUser.value?.id == widget.project.clientId;
-  bool get _isArtisan => _authController.currentUser.value?.id == widget.project.artisanId;
+  bool get _isClient =>
+      _authController.currentUser.value?.id == widget.project.client.id;
+  bool get _isArtisan =>
+      _authController.currentUser.value?.id == widget.project.artisan?.id;
 
   @override
   Widget build(BuildContext context) {
@@ -85,7 +88,8 @@ class _MilestoneTrackingScreenState extends State<MilestoneTrackingScreen> {
                       children: [
                         Text(
                           'Progression du projet',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -93,7 +97,8 @@ class _MilestoneTrackingScreenState extends State<MilestoneTrackingScreen> {
                         const SizedBox(height: Spacing.md),
                         Text(
                           progress.formattedCompletion,
-                          style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                          style: Theme.of(context).textTheme.displayMedium
+                              ?.copyWith(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -101,7 +106,8 @@ class _MilestoneTrackingScreenState extends State<MilestoneTrackingScreen> {
                         const SizedBox(height: Spacing.sm),
                         Text(
                           progress.milestonesText,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
                                 color: Colors.white.withValues(alpha: 0.9),
                               ),
                         ),
@@ -110,7 +116,9 @@ class _MilestoneTrackingScreenState extends State<MilestoneTrackingScreen> {
                           borderRadius: BorderRadius.circular(Spacing.radiusSm),
                           child: LinearProgressIndicator(
                             value: progress.completionPercentage / 100,
-                            backgroundColor: Colors.white.withValues(alpha: 0.3),
+                            backgroundColor: Colors.white.withValues(
+                              alpha: 0.3,
+                            ),
                             valueColor: AlwaysStoppedAnimation<Color>(
                               Colors.white.withValues(alpha: 0.9),
                             ),
@@ -123,13 +131,15 @@ class _MilestoneTrackingScreenState extends State<MilestoneTrackingScreen> {
                           children: [
                             Text(
                               'Montant libéré: ${progress.releasedLaborAmount.toStringAsFixed(0)} FCFA',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
                                     color: Colors.white.withValues(alpha: 0.9),
                                   ),
                             ),
                             Text(
                               'En attente: ${progress.pendingLaborAmount.toStringAsFixed(0)} FCFA',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
                                     color: Colors.white.withValues(alpha: 0.9),
                                   ),
                             ),
@@ -155,9 +165,8 @@ class _MilestoneTrackingScreenState extends State<MilestoneTrackingScreen> {
                         const SizedBox(height: Spacing.lg),
                         Text(
                           'Aucune étape définie',
-                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                color: AppColors.lightTextSecondary,
-                              ),
+                          style: Theme.of(context).textTheme.bodyLarge
+                              ?.copyWith(color: AppColors.lightTextSecondary),
                         ),
                         if (_isArtisan) ...[
                           const SizedBox(height: Spacing.md),
@@ -175,13 +184,10 @@ class _MilestoneTrackingScreenState extends State<MilestoneTrackingScreen> {
                 SliverPadding(
                   padding: const EdgeInsets.all(Spacing.screenPadding),
                   sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final milestone = milestones[index];
-                        return _buildMilestoneCard(context, milestone, index);
-                      },
-                      childCount: milestones.length,
-                    ),
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final milestone = milestones[index];
+                      return _buildMilestoneCard(context, milestone, index);
+                    }, childCount: milestones.length),
                   ),
                 ),
             ],
@@ -191,7 +197,11 @@ class _MilestoneTrackingScreenState extends State<MilestoneTrackingScreen> {
     );
   }
 
-  Widget _buildMilestoneCard(BuildContext context, Milestone milestone, int index) {
+  Widget _buildMilestoneCard(
+    BuildContext context,
+    Milestone milestone,
+    int index,
+  ) {
     return Card(
       margin: const EdgeInsets.only(bottom: Spacing.md),
       child: Column(
@@ -200,7 +210,9 @@ class _MilestoneTrackingScreenState extends State<MilestoneTrackingScreen> {
           Container(
             padding: const EdgeInsets.all(Spacing.base),
             decoration: BoxDecoration(
-              color: _getMilestoneColor(milestone.status).withValues(alpha: 0.1),
+              color: _getMilestoneColor(
+                milestone.status,
+              ).withValues(alpha: 0.1),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(Spacing.radiusMd),
                 topRight: Radius.circular(Spacing.radiusMd),
@@ -219,9 +231,9 @@ class _MilestoneTrackingScreenState extends State<MilestoneTrackingScreen> {
                     child: Text(
                       '${index + 1}',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ),
@@ -233,15 +245,15 @@ class _MilestoneTrackingScreenState extends State<MilestoneTrackingScreen> {
                       Text(
                         milestone.title,
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       Text(
                         milestone.formattedAmount,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: _getMilestoneColor(milestone.status),
-                              fontWeight: FontWeight.w600,
-                            ),
+                          color: _getMilestoneColor(milestone.status),
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ],
                   ),
@@ -271,9 +283,13 @@ class _MilestoneTrackingScreenState extends State<MilestoneTrackingScreen> {
                       if (milestone.requiresPhoto)
                         Chip(
                           avatar: Icon(
-                            milestone.photoUrl != null ? Icons.check_circle : Icons.camera_alt,
+                            milestone.photoUrl != null
+                                ? Icons.check_circle
+                                : Icons.camera_alt,
                             size: 16,
-                            color: milestone.photoUrl != null ? AppColors.success : null,
+                            color: milestone.photoUrl != null
+                                ? AppColors.success
+                                : null,
                           ),
                           label: const Text('Photo requise'),
                           labelStyle: const TextStyle(fontSize: 12),
@@ -281,9 +297,13 @@ class _MilestoneTrackingScreenState extends State<MilestoneTrackingScreen> {
                       if (milestone.requiresOtp)
                         Chip(
                           avatar: Icon(
-                            milestone.otpVerifiedAt != null ? Icons.check_circle : Icons.sms,
+                            milestone.otpVerifiedAt != null
+                                ? Icons.check_circle
+                                : Icons.sms,
                             size: 16,
-                            color: milestone.otpVerifiedAt != null ? AppColors.success : null,
+                            color: milestone.otpVerifiedAt != null
+                                ? AppColors.success
+                                : null,
                           ),
                           label: const Text('OTP requis'),
                           labelStyle: const TextStyle(fontSize: 12),
@@ -357,12 +377,17 @@ class _MilestoneTrackingScreenState extends State<MilestoneTrackingScreen> {
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.payments, color: AppColors.success, size: 16),
+                        Icon(
+                          Icons.payments,
+                          color: AppColors.success,
+                          size: 16,
+                        ),
                         const SizedBox(width: Spacing.sm),
                         Expanded(
                           child: Text(
                             'Payé le ${_formatDate(milestone.paidAt!)}',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
                                   color: AppColors.success,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -388,7 +413,9 @@ class _MilestoneTrackingScreenState extends State<MilestoneTrackingScreen> {
       decoration: BoxDecoration(
         color: _getMilestoneColor(status).withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(Spacing.radiusSm),
-        border: Border.all(color: _getMilestoneColor(status).withValues(alpha: 0.3)),
+        border: Border.all(
+          color: _getMilestoneColor(status).withValues(alpha: 0.3),
+        ),
       ),
       child: Text(
         label,
@@ -463,7 +490,8 @@ class _MilestoneTrackingScreenState extends State<MilestoneTrackingScreen> {
                   CheckboxListTile(
                     title: const Text('Photo requise'),
                     value: requiresPhoto,
-                    onChanged: (value) => setState(() => requiresPhoto = value!),
+                    onChanged: (value) =>
+                        setState(() => requiresPhoto = value!),
                   ),
                   CheckboxListTile(
                     title: const Text('OTP requis'),
@@ -484,13 +512,17 @@ class _MilestoneTrackingScreenState extends State<MilestoneTrackingScreen> {
                     projectId: widget.projectId,
                     title: titleController.text,
                     description: descriptionController.text,
-                    laborPercentage: double.tryParse(percentageController.text) ?? 0,
-                    sequenceOrder: _milestoneController.projectMilestones.length + 1,
+                    laborPercentage:
+                        double.tryParse(percentageController.text) ?? 0,
+                    sequenceOrder:
+                        _milestoneController.projectMilestones.length + 1,
                     requiresPhoto: requiresPhoto,
                     requiresOtp: requiresOtp,
                   );
 
-                  final success = await _milestoneController.createMilestone(request);
+                  final success = await _milestoneController.createMilestone(
+                    request,
+                  );
                   Get.back();
 
                   if (success) {

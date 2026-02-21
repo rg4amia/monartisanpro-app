@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/constants/spacing.dart';
 import '../../../../core/network/search_service.dart';
 import '../../../../shared/models/artisan_search_model.dart';
+import '../../../projects/presentation/screens/create_quote_request_screen.dart';
 
 class ArtisanProfileScreen extends StatefulWidget {
   final int artisanId;
@@ -51,67 +51,131 @@ class _ArtisanProfileScreenState extends State<ArtisanProfileScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        appBar: AppBar(),
-        body: const Center(child: CircularProgressIndicator()),
+        backgroundColor: const Color(0xFFF5F6F8),
+        appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0),
+        body: const Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1F6FD6)),
+          ),
+        ),
       );
     }
 
     if (_artisan == null) {
       return Scaffold(
-        appBar: AppBar(),
-        body: const Center(child: Text('Profil non trouvé')),
+        backgroundColor: const Color(0xFFF5F6F8),
+        appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.person_off_outlined,
+                size: 64,
+                color: const Color(0xFF888888),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Profil non trouvé',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: const Color(0xFF444444),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
       );
     }
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF5F6F8),
       body: CustomScrollView(
         slivers: [
           // App Bar with Avatar
           SliverAppBar(
-            expandedHeight: 200,
+            expandedHeight: 240,
             pinned: true,
+            backgroundColor: Colors.white,
+            elevation: 0,
+            leading: Container(
+              margin: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.9),
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back, color: Color(0xFF111111)),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ),
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: AppColors.primaryGradient,
+                    colors: [const Color(0xFF1F6FD6), const Color(0xFF1A5FC0)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                 ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const SizedBox(height: 40),
-                    CircleAvatar(
-                      radius: 50,
-                      backgroundColor: Colors.white,
-                      backgroundImage: _artisan!.avatar != null
-                          ? NetworkImage(_artisan!.avatar!)
-                          : null,
-                      child: _artisan!.avatar == null
-                          ? Icon(
-                              Icons.person,
-                              size: 50,
-                              color: AppColors.lightAccentPrimary,
-                            )
-                          : null,
-                    ),
-                    const SizedBox(height: Spacing.md),
-                    Text(
-                      _artisan!.name,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                child: SafeArea(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const SizedBox(height: 24),
+                      Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 4),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.1),
+                              blurRadius: 16,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: CircleAvatar(
+                          radius: 56,
+                          backgroundColor: Colors.white,
+                          backgroundImage: _artisan!.avatar != null
+                              ? NetworkImage(_artisan!.avatar!)
+                              : null,
+                          child: _artisan!.avatar == null
+                              ? Icon(
+                                  Icons.person,
+                                  size: 56,
+                                  color: const Color(0xFF1F6FD6),
+                                )
+                              : null,
+                        ),
                       ),
-                    ),
-                    Text(
-                      _artisan!.tradeName ?? 'Artisan',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.9),
+                      const SizedBox(height: 16),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: Text(
+                          _artisan!.name,
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            height: 1.3,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 4),
+                      Text(
+                        _artisan!.tradeName ?? 'Artisan',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white.withValues(alpha: 0.9),
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -120,119 +184,254 @@ class _ArtisanProfileScreenState extends State<ArtisanProfileScreen> {
           // Profile Content
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(Spacing.screenPadding),
+              padding: const EdgeInsets.all(24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // Stats Row
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildStatCard(
-                          icon: Icons.star,
-                          value:
-                              _artisan!.averageRating?.toStringAsFixed(1) ??
-                              'N/A',
-                          label: 'Note',
-                          color: AppColors.starRating,
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.04),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
                         ),
-                      ),
-                      const SizedBox(width: Spacing.md),
-                      Expanded(
-                        child: _buildStatCard(
-                          icon: Icons.work,
-                          value: '${_artisan!.projectsCompleted}',
-                          label: 'Projets',
-                          color: AppColors.success,
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _buildStatCard(
+                            icon: Icons.star_rounded,
+                            value:
+                                _artisan!.averageRating?.toStringAsFixed(1) ??
+                                '-',
+                            label: 'Note',
+                            color: const Color(0xFFF5A524),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: Spacing.md),
-                      Expanded(
-                        child: _buildStatCard(
-                          icon: Icons.workspace_premium,
-                          value: _artisan!.nzassaScore?.toString() ?? 'N/A',
-                          label: 'N\'Zassa',
-                          color: AppColors.lightAccentPrimary,
+                        Container(
+                          width: 1,
+                          height: 48,
+                          color: const Color(0xFFEAEAEA),
                         ),
-                      ),
-                    ],
+                        Expanded(
+                          child: _buildStatCard(
+                            icon: Icons.work_outline_rounded,
+                            value: '${_artisan!.projectsCompleted}',
+                            label: 'Projets',
+                            color: const Color(0xFF2FB344),
+                          ),
+                        ),
+                        Container(
+                          width: 1,
+                          height: 48,
+                          color: const Color(0xFFEAEAEA),
+                        ),
+                        Expanded(
+                          child: _buildStatCard(
+                            icon: Icons.workspace_premium_rounded,
+                            value: _artisan!.nzassaScore?.toString() ?? '-',
+                            label: 'N\'Zassa',
+                            color: const Color(0xFF1F6FD6),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: Spacing.xl),
+                  const SizedBox(height: 24),
+
+                  // Availability Status
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: _artisan!.available
+                          ? const Color(0xFF2FB344).withValues(alpha: 0.08)
+                          : const Color(0xFFF5A524).withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: _artisan!.available
+                            ? const Color(0xFF2FB344).withValues(alpha: 0.3)
+                            : const Color(0xFFF5A524).withValues(alpha: 0.3),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: _artisan!.available
+                                ? const Color(0xFF2FB344)
+                                : const Color(0xFFF5A524),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            _artisan!.available
+                                ? Icons.check_rounded
+                                : Icons.schedule_rounded,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            _artisan!.available
+                                ? 'Disponible pour de nouveaux projets'
+                                : 'Non disponible actuellement',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: _artisan!.available
+                                  ? const Color(0xFF2FB344)
+                                  : const Color(0xFFF5A524),
+                              height: 1.5,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
 
                   // Experience
                   if (_artisan!.experienceYears > 0) ...[
-                    _buildSectionHeader('Expérience'),
-                    const SizedBox(height: Spacing.md),
-                    Container(
-                      padding: const EdgeInsets.all(Spacing.base),
-                      decoration: BoxDecoration(
-                        color: AppColors.lightBackground,
-                        borderRadius: BorderRadius.circular(Spacing.radiusMd),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.calendar_today,
-                            color: AppColors.lightAccentPrimary,
-                          ),
-                          const SizedBox(width: Spacing.md),
-                          Text(
-                            '${_artisan!.experienceYears} ans d\'expérience',
-                            style: Theme.of(context).textTheme.bodyLarge
-                                ?.copyWith(fontWeight: FontWeight.w600),
-                          ),
-                        ],
-                      ),
+                    _buildInfoCard(
+                      icon: Icons.calendar_today_rounded,
+                      title: 'Expérience',
+                      value:
+                          '${_artisan!.experienceYears} ans d\'expérience professionnelle',
                     ),
-                    const SizedBox(height: Spacing.xl),
+                    const SizedBox(height: 16),
                   ],
 
                   // Bio
                   if (_artisan!.bio != null && _artisan!.bio!.isNotEmpty) ...[
-                    _buildSectionHeader('À propos'),
-                    const SizedBox(height: Spacing.md),
-                    Text(
-                      _artisan!.bio!,
-                      style: Theme.of(context).textTheme.bodyMedium,
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.04),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: const Color(
+                                    0xFF1F6FD6,
+                                  ).withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(
+                                  Icons.info_outline_rounded,
+                                  color: Color(0xFF1F6FD6),
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              const Text(
+                                'À propos',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF111111),
+                                  height: 1.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            _artisan!.bio!,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w400,
+                              color: Color(0xFF444444),
+                              height: 1.5,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: Spacing.xl),
+                    const SizedBox(height: 16),
                   ],
 
                   // Location
                   if (_artisan!.zoneName != null) ...[
-                    _buildSectionHeader('Zone d\'intervention'),
-                    const SizedBox(height: Spacing.md),
                     Container(
-                      padding: const EdgeInsets.all(Spacing.base),
+                      padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: AppColors.lightBackground,
-                        borderRadius: BorderRadius.circular(Spacing.radiusMd),
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.04),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: Row(
                         children: [
-                          Icon(
-                            Icons.location_on,
-                            color: _artisan!.isNearby
-                                ? AppColors.goldenMarker
-                                : AppColors.lightAccentPrimary,
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: _artisan!.isNearby
+                                  ? const Color(
+                                      0xFFF5A524,
+                                    ).withValues(alpha: 0.1)
+                                  : const Color(
+                                      0xFF1F6FD6,
+                                    ).withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(
+                              Icons.location_on_rounded,
+                              color: _artisan!.isNearby
+                                  ? const Color(0xFFF5A524)
+                                  : const Color(0xFF1F6FD6),
+                              size: 20,
+                            ),
                           ),
-                          const SizedBox(width: Spacing.md),
+                          const SizedBox(width: 12),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   _artisan!.zoneName!,
-                                  style: Theme.of(context).textTheme.bodyLarge
-                                      ?.copyWith(fontWeight: FontWeight.w600),
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF111111),
+                                    height: 1.5,
+                                  ),
                                 ),
                                 if (_artisan!.distance != null)
                                   Text(
                                     'À ${_artisan!.formattedDistance} de vous',
-                                    style: Theme.of(context).textTheme.bodySmall
-                                        ?.copyWith(
-                                          color: AppColors.lightTextSecondary,
-                                        ),
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w400,
+                                      color: Color(0xFF888888),
+                                      height: 1.4,
+                                    ),
                                   ),
                               ],
                             ),
@@ -240,103 +439,136 @@ class _ArtisanProfileScreenState extends State<ArtisanProfileScreen> {
                           if (_artisan!.isNearby)
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: Spacing.sm,
-                                vertical: Spacing.xs,
+                                horizontal: 12,
+                                vertical: 6,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.goldenMarker.withValues(
-                                  alpha: 0.2,
-                                ),
-                                borderRadius: BorderRadius.circular(
-                                  Spacing.radiusSm,
-                                ),
+                                color: const Color(
+                                  0xFFF5A524,
+                                ).withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(999),
                               ),
-                              child: Text(
+                              child: const Text(
                                 'Proche',
                                 style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.goldenMarker,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFFF5A524),
                                 ),
                               ),
                             ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: Spacing.xl),
+                    const SizedBox(height: 24),
                   ],
 
-                  // Availability Status
+                  // Action Buttons
                   Container(
-                    padding: const EdgeInsets.all(Spacing.base),
+                    height: 56,
                     decoration: BoxDecoration(
-                      color: _artisan!.available
-                          ? AppColors.success.withValues(alpha: 0.1)
-                          : AppColors.warning.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(Spacing.radiusMd),
-                      border: Border.all(
-                        color: _artisan!.available
-                            ? AppColors.success
-                            : AppColors.warning,
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF1F6FD6), Color(0xFF1A5FC0)],
                       ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          _artisan!.available
-                              ? Icons.check_circle
-                              : Icons.access_time,
-                          color: _artisan!.available
-                              ? AppColors.success
-                              : AppColors.warning,
-                        ),
-                        const SizedBox(width: Spacing.md),
-                        Text(
-                          _artisan!.available
-                              ? 'Disponible pour de nouveaux projets'
-                              : 'Non disponible actuellement',
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                color: _artisan!.available
-                                    ? AppColors.success
-                                    : AppColors.warning,
-                              ),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF1F6FD6).withValues(alpha: 0.3),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
                         ),
                       ],
                     ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  CreateQuoteRequestScreen(artisan: _artisan!),
+                            ),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: const Center(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.description_outlined,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                'Demander un devis',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                  height: 1.2,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
-                  const SizedBox(height: Spacing.xxxl),
+                  const SizedBox(height: 12),
 
-                  // Action Buttons
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      Get.snackbar(
-                        'Demander un devis',
-                        'Fonctionnalité disponible prochainement',
-                        backgroundColor: AppColors.info,
-                        colorText: Colors.white,
-                        snackPosition: SnackPosition.TOP,
-                      );
-                    },
-                    icon: const Icon(Icons.description_outlined),
-                    label: const Text('Demander un devis'),
+                  Container(
+                    height: 52,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: const Color(0xFFDADADA),
+                        width: 1,
+                      ),
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          Get.snackbar(
+                            'Contacter',
+                            'Messagerie disponible prochainement',
+                            backgroundColor: const Color(0xFF3B82F6),
+                            colorText: Colors.white,
+                            snackPosition: SnackPosition.TOP,
+                            borderRadius: 12,
+                            margin: const EdgeInsets.all(16),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: const Center(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.chat_bubble_outline_rounded,
+                                color: Color(0xFF1F6FD6),
+                                size: 20,
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                'Envoyer un message',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF1F6FD6),
+                                  height: 1.2,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
-                  const SizedBox(height: Spacing.md),
-
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      Get.snackbar(
-                        'Contacter',
-                        'Messagerie disponible prochainement',
-                        backgroundColor: AppColors.info,
-                        colorText: Colors.white,
-                        snackPosition: SnackPosition.TOP,
-                      );
-                    },
-                    icon: const Icon(Icons.chat_outlined),
-                    label: const Text('Envoyer un message'),
-                  ),
+                  const SizedBox(height: 32),
                 ],
               ),
             ),
@@ -346,42 +578,92 @@ class _ArtisanProfileScreenState extends State<ArtisanProfileScreen> {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
-    return Text(
-      title,
-      style: Theme.of(
-        context,
-      ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-    );
-  }
-
   Widget _buildStatCard({
     required IconData icon,
     required String value,
     required String label,
     required Color color,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(Spacing.base),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(Spacing.radiusMd),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: color, size: 28),
-          const SizedBox(height: Spacing.sm),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
+    return Column(
+      children: [
+        Icon(icon, color: color, size: 28),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+            color: color,
+            height: 1.3,
           ),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColors.lightTextSecondary,
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w400,
+            color: Color(0xFF888888),
+            height: 1.4,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInfoCard({
+    required IconData icon,
+    required String title,
+    required String value,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1F6FD6).withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: const Color(0xFF1F6FD6), size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF888888),
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF111111),
+                    height: 1.5,
+                  ),
+                ),
+              ],
             ),
           ),
         ],

@@ -1,12 +1,11 @@
+import 'package:frontend/shared/models/quote_model.dart';
 import 'package:get/get.dart';
 import '../../core/network/project_service.dart';
-import '../../core/network/payment_service.dart';
 import '../models/project_model.dart';
 import '../models/escrow_model.dart';
 
 class ProjectController extends GetxController {
   final ProjectService _projectService = ProjectService();
-  final PaymentService _paymentService = PaymentService();
 
   // Projects
   final RxList<Project> myProjects = <Project>[].obs;
@@ -48,12 +47,34 @@ class ProjectController extends GetxController {
   }
 
   /// Create a new project
-  Future<bool> createProject(CreateProjectRequest request) async {
+  Future<bool> createProject({
+    required int? artisanId,
+    required int tradeId,
+    required String title,
+    required String description,
+    required double latitude,
+    required double longitude,
+    required String address,
+    double? budgetMin,
+    double? budgetMax,
+    String? expectedCompletionDate,
+  }) async {
     try {
       isCreatingProject.value = true;
       errorMessage.value = '';
 
-      final response = await _projectService.createProject(request);
+      final response = await _projectService.createProject(
+        artisanId: artisanId,
+        tradeId: tradeId,
+        title: title,
+        description: description,
+        latitude: latitude,
+        longitude: longitude,
+        address: address,
+        budgetMin: budgetMin,
+        budgetMax: budgetMax,
+        expectedCompletionDate: expectedCompletionDate,
+      );
 
       if (response.success && response.data != null) {
         currentProject.value = response.data;
@@ -81,7 +102,8 @@ class ProjectController extends GetxController {
 
       if (response.success && response.data != null) {
         currentProject.value = response.data;
-        projectQuotes.value = response.data!.quotes ?? [];
+        // TODO: Parse quotes from response when API returns them
+        projectQuotes.clear();
       } else {
         errorMessage.value = response.message ?? 'Failed to fetch project';
       }
@@ -92,22 +114,22 @@ class ProjectController extends GetxController {
     }
   }
 
-  /// Create a quote
-  Future<bool> createQuote(CreateQuoteRequest request) async {
+  /// Create a quote (TODO: Implement when QuoteService is ready)
+  Future<bool> createQuote({
+    required int projectId,
+    required double totalAmount,
+    required double materialAmount,
+    required double laborAmount,
+    required List<Map<String, dynamic>> items,
+    String? notes,
+  }) async {
     try {
       isCreatingQuote.value = true;
       errorMessage.value = '';
 
-      final response = await _projectService.createQuote(request);
-
-      if (response.success && response.data != null) {
-        currentQuote.value = response.data;
-        projectQuotes.add(response.data!);
-        return true;
-      } else {
-        errorMessage.value = response.message ?? 'Failed to create quote';
-        return false;
-      }
+      // TODO: Implement quote creation API call
+      errorMessage.value = 'Quote creation not yet implemented';
+      return false;
     } catch (e) {
       errorMessage.value = 'Network error: ${e.toString()}';
       return false;
@@ -122,19 +144,9 @@ class ProjectController extends GetxController {
       isLoading.value = true;
       errorMessage.value = '';
 
-      final response = await _projectService.acceptQuote(quoteId);
-
-      if (response.success && response.data != null) {
-        currentQuote.value = response.data;
-        // Refresh project to get updated status
-        if (currentProject.value != null) {
-          await fetchProjectDetails(currentProject.value!.id);
-        }
-        return true;
-      } else {
-        errorMessage.value = response.message ?? 'Failed to accept quote';
-        return false;
-      }
+      // TODO: Implement quote acceptance API call
+      errorMessage.value = 'Quote acceptance not yet implemented';
+      return false;
     } catch (e) {
       errorMessage.value = 'Network error: ${e.toString()}';
       return false;
@@ -149,19 +161,9 @@ class ProjectController extends GetxController {
       isLoading.value = true;
       errorMessage.value = '';
 
-      final response = await _projectService.rejectQuote(quoteId, reason);
-
-      if (response.success) {
-        // Remove from quotes list
-        projectQuotes.removeWhere((q) => q.id == quoteId);
-        if (currentQuote.value?.id == quoteId) {
-          currentQuote.value = null;
-        }
-        return true;
-      } else {
-        errorMessage.value = response.message ?? 'Failed to reject quote';
-        return false;
-      }
+      // TODO: Implement quote rejection API call
+      errorMessage.value = 'Quote rejection not yet implemented';
+      return false;
     } catch (e) {
       errorMessage.value = 'Network error: ${e.toString()}';
       return false;
@@ -170,40 +172,33 @@ class ProjectController extends GetxController {
     }
   }
 
-  /// Fetch escrow wallet
+  /// Fetch escrow wallet (TODO: Implement when API is ready)
   Future<void> fetchEscrowWallet(int projectId) async {
     try {
-      final response = await _projectService.getEscrowWallet(projectId);
-
-      if (response.success && response.data != null) {
-        escrowWallet.value = response.data;
-      }
+      // TODO: Implement escrow wallet API call
+      escrowWallet.value = null;
     } catch (e) {
       // Silent fail - escrow may not exist yet
+      escrowWallet.value = null;
     }
   }
 
-  /// Fetch material token
+  /// Fetch material token (TODO: Implement when API is ready)
   Future<void> fetchMaterialToken(int projectId) async {
     try {
-      final response = await _projectService.getMaterialToken(projectId);
-
-      if (response.success && response.data != null) {
-        materialToken.value = response.data;
-      }
+      // TODO: Implement material token API call
+      materialToken.value = null;
     } catch (e) {
       // Silent fail - token may not exist yet
+      materialToken.value = null;
     }
   }
 
-  /// Fetch project transactions
+  /// Fetch project transactions (TODO: Implement when API is ready)
   Future<void> fetchProjectTransactions(int projectId) async {
     try {
-      final response = await _paymentService.getProjectTransactions(projectId);
-
-      if (response.success && response.data != null) {
-        projectTransactions.value = response.data!;
-      }
+      // TODO: Implement project transactions API call
+      projectTransactions.value = [];
     } catch (e) {
       // Silent fail - transactions may not exist yet
       projectTransactions.value = [];
@@ -211,12 +206,12 @@ class ProjectController extends GetxController {
   }
 
   /// Cancel a project
-  Future<bool> cancelProject(int projectId) async {
+  Future<bool> cancelProject(int projectId, String reason) async {
     try {
       isLoading.value = true;
       errorMessage.value = '';
 
-      final response = await _projectService.cancelProject(projectId);
+      final response = await _projectService.cancelProject(projectId, reason);
 
       if (response.success) {
         myProjects.removeWhere((p) => p.id == projectId);
@@ -251,8 +246,7 @@ class ProjectController extends GetxController {
   }
 
   /// Get pending projects count
-  int get pendingProjectsCount =>
-      myProjects.where((p) => p.isPending).length;
+  int get pendingProjectsCount => myProjects.where((p) => p.isPending).length;
 
   /// Get in-progress projects count
   int get inProgressProjectsCount =>
