@@ -35,6 +35,56 @@ class ProjectController extends Controller
 
         return response()->json($projects);
     }
+    /**
+     * Get current user's projects
+     */
+    public function myProjects(Request $request)
+    {
+        $user = $request->user();
+        $query = Project::with(['client', 'artisan', 'trade']);
+
+        // Filter by user role
+        if ($user->role === 'client') {
+            $query->where('client_id', $user->id);
+        } elseif ($user->role === 'artisan') {
+            $query->where('artisan_id', $user->id);
+        }
+
+        // Filter by status if provided
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $projects = $query->orderBy('created_at', 'desc')->get();
+
+        return response()->json($projects);
+    }
+
+    /**
+     * Display a listing of the resource.
+     */
+    public function index(Request $request)
+    {
+        $user = $request->user();
+        $query = Project::with(['client', 'artisan', 'trade']);
+
+        // Filter by user role
+        if ($user->role === 'client') {
+            $query->where('client_id', $user->id);
+        } elseif ($user->role === 'artisan') {
+            $query->where('artisan_id', $user->id)
+                ->orWhere('status', 'awaiting_quotes');
+        }
+
+        // Filter by status
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $projects = $query->orderBy('created_at', 'desc')->paginate(20);
+
+        return response()->json($projects);
+    }
 
     /**
      * Store a newly created resource in storage.

@@ -57,8 +57,9 @@ Route::prefix('v1')->group(function () {
         Route::get('/kyc/documents', [KycController::class, 'getDocuments']);
 
         // Projects (Phase 3)
-        Route::apiResource('projects', ProjectController::class);
+        Route::get('/projects/my', [ProjectController::class, 'myProjects']);
         Route::get('/projects/search/location', [ProjectController::class, 'search']);
+        Route::apiResource('projects', ProjectController::class);
 
         // Quotes (Phase 3)
         Route::apiResource('quotes', QuoteController::class);
