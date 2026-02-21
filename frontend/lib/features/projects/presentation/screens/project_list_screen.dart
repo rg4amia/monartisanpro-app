@@ -106,14 +106,16 @@ class _ProjectListScreenState extends State<ProjectListScreen>
                       ? 'Créez votre premier projet'
                       : 'Aucun projet reçu pour le moment',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.lightTextSecondary,
-                      ),
+                    color: AppColors.lightTextSecondary,
+                  ),
                 ),
                 if (isClient) ...[
                   const SizedBox(height: Spacing.xl),
                   ElevatedButton.icon(
                     onPressed: () async {
-                      final result = await Get.to(() => const CreateProjectScreen());
+                      final result = await Get.to(
+                        () => const CreateProjectScreen(),
+                      );
                       if (result == true) {
                         _loadProjects();
                       }
@@ -132,13 +134,16 @@ class _ProjectListScreenState extends State<ProjectListScreen>
           child: ListView.separated(
             padding: const EdgeInsets.all(Spacing.screenPadding),
             itemCount: filteredProjects.length,
-            separatorBuilder: (context, index) => const SizedBox(height: Spacing.md),
+            separatorBuilder: (context, index) =>
+                const SizedBox(height: Spacing.md),
             itemBuilder: (context, index) {
               final project = filteredProjects[index];
               return _ProjectCard(
                 project: project,
                 onTap: () async {
-                  await Get.to(() => ProjectDetailsScreen(projectId: project.id));
+                  await Get.to(
+                    () => ProjectDetailsScreen(projectId: project.id),
+                  );
                   _loadProjects();
                 },
               );
@@ -186,8 +191,8 @@ class _ProjectCard extends StatelessWidget {
                     child: Text(
                       project.title,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontWeight: FontWeight.bold,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -220,8 +225,8 @@ class _ProjectCard extends StatelessWidget {
                     child: Text(
                       project.address,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.lightTextSecondary,
-                          ),
+                        color: AppColors.lightTextSecondary,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -236,8 +241,8 @@ class _ProjectCard extends StatelessWidget {
                   Text(
                     _formatDate(project.createdAt),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.lightTextSecondary,
-                        ),
+                      color: AppColors.lightTextSecondary,
+                    ),
                   ),
                 ],
               ),
@@ -256,9 +261,9 @@ class _ProjectCard extends StatelessWidget {
                     Text(
                       '${project.quotes.length} devis reçu(s)',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.primary,
-                            fontWeight: FontWeight.w600,
-                          ),
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ],
                 ),
@@ -316,18 +321,23 @@ class _ProjectCard extends StatelessWidget {
     );
   }
 
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final diff = now.difference(date);
+  String _formatDate(String dateString) {
+    try {
+      final date = DateTime.parse(dateString);
+      final now = DateTime.now();
+      final diff = now.difference(date);
 
-    if (diff.inDays == 0) {
-      return 'Aujourd\'hui';
-    } else if (diff.inDays == 1) {
-      return 'Hier';
-    } else if (diff.inDays < 7) {
-      return 'Il y a ${diff.inDays} jours';
-    } else {
-      return '${date.day}/${date.month}/${date.year}';
+      if (diff.inDays == 0) {
+        return 'Aujourd\'hui';
+      } else if (diff.inDays == 1) {
+        return 'Hier';
+      } else if (diff.inDays < 7) {
+        return 'Il y a ${diff.inDays} jours';
+      } else {
+        return '${date.day}/${date.month}/${date.year}';
+      }
+    } catch (e) {
+      return dateString; // Fallback to original string if parsing fails
     }
   }
 }

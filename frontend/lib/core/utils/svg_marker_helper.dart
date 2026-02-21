@@ -10,7 +10,7 @@ class SvgMarkerHelper {
   static final Map<String, Uint8List> _cache = {};
 
   /// Load and convert SVG to PNG bytes for user marker
-  static Future<Uint8List> getUserMarker({double size = 48}) async {
+  static Future<Uint8List> getUserMarker({double size = 72}) async {
     final cacheKey = 'user_$size';
     if (_cache.containsKey(cacheKey)) {
       return _cache[cacheKey]!;
@@ -27,7 +27,7 @@ class SvgMarkerHelper {
   /// Load and convert SVG to PNG bytes for artisan marker
   static Future<Uint8List> getArtisanMarker({
     required bool isNearby,
-    double size = 48,
+    double size = 72,
   }) async {
     final cacheKey = 'artisan_${isNearby ? 'nearby' : 'regular'}_$size';
     if (_cache.containsKey(cacheKey)) {

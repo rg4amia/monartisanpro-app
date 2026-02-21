@@ -1,20 +1,19 @@
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import '../theme/app_colors.dart';
 
 /// Generates custom marker icons from Flutter widgets
 class MarkerIconGenerator {
   /// Creates a user position marker icon
-  static Future<Uint8List> createUserMarker({double size = 48}) async {
+  static Future<Uint8List> createUserMarker({double size = 72}) async {
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
     final paint = Paint()..isAntiAlias = true;
 
     // Draw shadow
     final shadowPaint = Paint()
-      ..color = AppColors.lightAccentPrimary.withOpacity(0.3)
+      ..color = AppColors.lightAccentPrimary.withValues(alpha: 0.3)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
     canvas.drawCircle(Offset(size / 2, size / 2 + 2), size / 2, shadowPaint);
 
@@ -53,7 +52,7 @@ class MarkerIconGenerator {
   /// Creates an artisan marker icon (pin shape)
   static Future<Uint8List> createArtisanMarker({
     required bool isNearby,
-    double size = 40,
+    double size = 60,
   }) async {
     final color = isNearby ? AppColors.goldenMarker : AppColors.blueMarker;
     final height = size + 12; // Extra height for pointer
@@ -64,7 +63,7 @@ class MarkerIconGenerator {
     // Draw shadow
     final shadowPath = _createPinPath(size, height);
     final shadowPaint = Paint()
-      ..color = Colors.black.withOpacity(0.3)
+      ..color = Colors.black.withValues(alpha: 0.3)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
     canvas.save();
     canvas.translate(0, 2);
@@ -121,7 +120,7 @@ class MarkerIconGenerator {
   /// Creates a cluster marker icon
   static Future<Uint8List> createClusterMarker({
     required int count,
-    double size = 48,
+    double size = 72,
   }) async {
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
@@ -129,7 +128,7 @@ class MarkerIconGenerator {
 
     // Draw shadow
     final shadowPaint = Paint()
-      ..color = Colors.black.withOpacity(0.3)
+      ..color = Colors.black.withValues(alpha: 0.3)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
     canvas.drawCircle(Offset(size / 2, size / 2 + 2), size / 2, shadowPaint);
 
@@ -140,7 +139,7 @@ class MarkerIconGenerator {
     // Draw gradient circle
     final gradient = ui.Gradient.linear(Offset(0, 0), Offset(size, size), [
       AppColors.clusterMarker,
-      AppColors.clusterMarker.withOpacity(0.8),
+      AppColors.clusterMarker.withValues(alpha: 0.8),
     ]);
     paint
       ..shader = gradient

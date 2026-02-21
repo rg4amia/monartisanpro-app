@@ -21,7 +21,7 @@ class ProjectService {
   }) async {
     try {
       final response = await _dio.post(
-        '/v1/projects',
+        '/projects',
         data: {
           if (artisanId != null) 'artisan_id': artisanId,
           'trade_id': tradeId,
@@ -56,7 +56,7 @@ class ProjectService {
   Future<ApiResponse<List<Project>>> getMyProjects({String? status}) async {
     try {
       final response = await _dio.get(
-        '/v1/projects/my',
+        '/projects/my',
         queryParameters: {if (status != null) 'status': status},
       );
 
@@ -80,7 +80,7 @@ class ProjectService {
   /// Get project details
   Future<ApiResponse<Project>> getProject(int id) async {
     try {
-      final response = await _dio.get('/v1/projects/$id');
+      final response = await _dio.get('/projects/$id');
 
       return ApiResponse<Project>.fromJson(
         response.data,
@@ -101,7 +101,7 @@ class ProjectService {
   Future<ApiResponse<void>> cancelProject(int id, String reason) async {
     try {
       final response = await _dio.delete(
-        '/v1/projects/$id',
+        '/projects/$id',
         data: {'reason': reason},
       );
 

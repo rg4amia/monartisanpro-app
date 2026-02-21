@@ -23,7 +23,10 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
   @override
   void initState() {
     super.initState();
-    _loadProjectDetails();
+    // Load project details after the first frame is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadProjectDetails();
+    });
   }
 
   Future<void> _loadProjectDetails() async {

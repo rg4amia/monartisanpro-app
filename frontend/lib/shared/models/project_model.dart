@@ -19,7 +19,7 @@ class Project {
   final double? finalAmount;
   @JsonKey(name: 'expected_completion_date')
   final String? expectedCompletionDate;
-  @JsonKey(name: 'quote_count')
+  @JsonKey(name: 'quote_count', defaultValue: 0)
   final int quoteCount;
   @JsonKey(name: 'created_at')
   final String createdAt;
@@ -39,15 +39,37 @@ class Project {
     this.budgetMax,
     this.finalAmount,
     this.expectedCompletionDate,
-    required this.quoteCount,
+    this.quoteCount = 0,
     required this.createdAt,
     required this.client,
     this.artisan,
     required this.trade,
   });
 
-  factory Project.fromJson(Map<String, dynamic> json) =>
-      _$ProjectFromJson(json);
+  factory Project.fromJson(Map<String, dynamic> json) {
+    // Handle location object if present (from API response)
+    double? lat = json['latitude'] as double?;
+    double? lng = json['longitude'] as double?;
+
+    if (json['location'] != null && json['location'] is Map) {
+      final location = json['location'] as Map<String, dynamic>;
+      if (location['coordinates'] != null && location['coordinates'] is List) {
+        final coords = location['coordinates'] as List;
+        if (coords.length >= 2) {
+          lng = (coords[0] as num).toDouble(); // longitude first in GeoJSON
+          lat = (coords[1] as num).toDouble(); // latitude second
+        }
+      }
+    }
+
+    // Create a modified json map with extracted coordinates
+    final modifiedJson = Map<String, dynamic>.from(json);
+    if (lat != null) modifiedJson['latitude'] = lat;
+    if (lng != null) modifiedJson['longitude'] = lng;
+
+    return _$ProjectFromJson(modifiedJson);
+  }
+
   Map<String, dynamic> toJson() => _$ProjectToJson(this);
 
   String get statusLabel {
