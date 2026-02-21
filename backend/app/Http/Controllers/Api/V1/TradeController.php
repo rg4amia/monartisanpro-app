@@ -284,4 +284,202 @@ class TradeController extends Controller
         return $results->sortBy('distance');
     }
   }
+
+  /**
+   * Get artisan profile by ID
+   */
+  public function getArtisanProfile(int $id): JsonResponse
+  {
+    try {
+      $artisan = \App\Models\User::where('id', $id)
+        ->where('role', 'artisan')
+        ->where('status', 'active')
+        ->with(['artisanProfile.trade.sector', 'artisanScore'])
+        ->withCount([
+          'reviews',
+          'artisanProjects as completed_projects_count' => function ($q) {
+            $q->where('status', 'completed');
+          },
+        ])
+        ->withAvg('reviews', 'rating')
+        ->firstOrFail();
+
+      $profile = $artisan->artisanProfile;
+
+      return response()->json([
+        'success' => true,
+        'data' => [
+          'id' => $artisan->id,
+          'name' => $artisan->name,
+          'email' => $artisan->email,
+          'phone' => $artisan->phone,
+          'avatar' => $artisan->avatar,
+          'trade_id' => $profile->trade_id ?? null,
+          'trade_name' => $profile->trade->name ?? null,
+          'sector_name' => $profile->trade->sector->name ?? null,
+          'zone_name' => $profile->zone_name ?? null,
+          'bio' => $profile->bio ?? null,
+          'experience_years' => $profile->experience_years ?? 0,
+          'available' => $profile->available ?? false,
+          'latitude' => $profile->latitude ?? null,
+          'longitude' => $profile->longitude ?? null,
+          'nzassa_score' => $artisan->artisanScore->total_score ?? null,
+          'average_rating' => $artisan->reviews_avg_rating ?? null,
+          'reviews_count' => $artisan->reviews_count ?? 0,
+          'projects_completed' => $artisan->completed_projects_count ?? 0,
+        ],
+      ]);
+    } catch (\Exception $e) {
+      return response()->json([
+        'success' => false,
+        'message' => 'Artisan not found',
+        'error' => $e->getMessage(),
+      ], 404);
+    }
+  }
+
+  /**
+   * Get clustered markers for map view
+   */
+  public function getClusteredMarkers(Request $request): JsonResponse
+  {
+    try {
+      $validated = $request->validate([
+        'lat' => 'required|numeric|between:-90,90',
+        'lng' => 'required|numeric|between:-180,180',
+        'radius' => 'required|numeric|min:1000',
+        'zoom' => 'required|integer|min:1|max:20',
+        'trade_id' => 'nullable|exists:trades,id',
+      ]);
+
+      $latitude = $validated['lat'];
+      $longitude = $validated['lng'];
+      $radius = $validated['radius'];
+      $zoom = $validated['zoom'];
+
+      // Build query
+      $query = \App\Models\User::query()
+        ->where('role', 'artisan')
+        ->where('status', 'active')
+        ->with(['artisanProfile.trade'])
+        ->whereHas('artisanProfile', function ($q) use ($validated) {
+          $q->whereNotNull('latitude')
+            ->whereNotNull('longitude');
+
+          if (isset($validated['trade_id'])) {
+            $q->where('trade_id', $validated['trade_id']);
+          }
+        });
+
+      $artisans = $query->get();
+
+      // Filter by radius and create markers
+      $markers = $artisans->map(function ($artisan) use ($latitude, $longitude, $radius) {
+        $profile = $artisan->artisanProfile;
+
+        if (!$profile || !$profile->latitude || !$profile->longitude) {
+          return null;
+        }
+
+        $distance = $this->calculateDistance(
+          $latitude,
+          $longitude,
+          $profile->latitude,
+          $profile->longitude
+        );
+
+        if ($distance > $radius) {
+          return null;
+        }
+
+        return [
+          'id' => $artisan->id,
+          'latitude' => $profile->latitude,
+          'longitude' => $profile->longitude,
+          'name' => $artisan->name,
+          'trade_name' => $profile->trade->name ?? null,
+          'is_nearby' => $distance <= 2000,
+        ];
+      })->filter()->values();
+
+      // For high zoom levels, return individual markers
+      // For low zoom levels, cluster nearby markers
+      if ($zoom >= 14) {
+        $clusters = $markers->map(function ($marker) {
+          return [
+            'type' => 'single',
+            'latitude' => $marker['latitude'],
+            'longitude' => $marker['longitude'],
+            'artisan_id' => $marker['id'],
+            'name' => $marker['name'],
+            'trade_name' => $marker['trade_name'],
+            'is_nearby' => $marker['is_nearby'],
+            'count' => 1,
+          ];
+        });
+      } else {
+        // Simple clustering by grid
+        $gridSize = max(0.01, 0.1 / $zoom); // Adjust grid size based on zoom
+        $grid = [];
+
+        foreach ($markers as $marker) {
+          $gridLat = floor($marker['latitude'] / $gridSize) * $gridSize;
+          $gridLng = floor($marker['longitude'] / $gridSize) * $gridSize;
+          $key = "{$gridLat},{$gridLng}";
+
+          if (!isset($grid[$key])) {
+            $grid[$key] = [
+              'latitude' => $gridLat + ($gridSize / 2),
+              'longitude' => $gridLng + ($gridSize / 2),
+              'artisans' => [],
+            ];
+          }
+
+          $grid[$key]['artisans'][] = $marker;
+        }
+
+        $clusters = collect($grid)->map(function ($cluster) {
+          $count = count($cluster['artisans']);
+
+          if ($count === 1) {
+            $artisan = $cluster['artisans'][0];
+            return [
+              'type' => 'single',
+              'latitude' => $artisan['latitude'],
+              'longitude' => $artisan['longitude'],
+              'artisan_id' => $artisan['id'],
+              'name' => $artisan['name'],
+              'trade_name' => $artisan['trade_name'],
+              'is_nearby' => $artisan['is_nearby'],
+              'count' => 1,
+            ];
+          }
+
+          return [
+            'type' => 'cluster',
+            'latitude' => $cluster['latitude'],
+            'longitude' => $cluster['longitude'],
+            'count' => $count,
+            'artisan_ids' => collect($cluster['artisans'])->pluck('id')->toArray(),
+          ];
+        })->values();
+      }
+
+      return response()->json([
+        'success' => true,
+        'data' => $clusters,
+        'meta' => [
+          'total_artisans' => $markers->count(),
+          'total_clusters' => $clusters->count(),
+          'zoom_level' => $zoom,
+        ],
+      ]);
+    } catch (\Exception $e) {
+      return response()->json([
+        'success' => false,
+        'message' => 'Failed to get clustered markers',
+        'error' => $e->getMessage(),
+      ], 500);
+    }
+  }
 }

@@ -40,6 +40,8 @@ Route::prefix('v1')->group(function () {
 
     // Public artisan search
     Route::post('/artisans/search', [\App\Http\Controllers\Api\V1\TradeController::class, 'searchArtisans']);
+    Route::get('/search/artisan/{id}', [\App\Http\Controllers\Api\V1\TradeController::class, 'getArtisanProfile']);
+    Route::get('/search/clusters', [\App\Http\Controllers\Api\V1\TradeController::class, 'getClusteredMarkers']);
 
     // Public payment webhook (CinetPay callback)
     Route::post('/payments/webhook', [PaymentController::class, 'webhook']);
