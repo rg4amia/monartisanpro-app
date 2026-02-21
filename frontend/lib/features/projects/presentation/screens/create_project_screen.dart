@@ -196,6 +196,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                       Obx(
                         () => DropdownButtonFormField<int>(
                           value: _selectedTradeId,
+                          isExpanded: true,
                           decoration: const InputDecoration(
                             labelText: 'Type de métier *',
                             hintText: 'Sélectionner un métier',
@@ -204,7 +205,10 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                           items: _searchController.trades.map((trade) {
                             return DropdownMenuItem<int>(
                               value: trade.id,
-                              child: Text(trade.name),
+                              child: Text(
+                                trade.name,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             );
                           }).toList(),
                           onChanged: (value) {
