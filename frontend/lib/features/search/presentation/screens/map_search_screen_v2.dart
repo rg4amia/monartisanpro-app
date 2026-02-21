@@ -8,7 +8,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/spacing.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/utils/mapkit_helper.dart';
-import '../../../../core/utils/svg_marker_helper.dart';
+import '../../../../core/utils/marker_icon_generator.dart';
 import '../../../../core/widgets/flutter_map_widget.dart';
 import '../../../../shared/controllers/search_controller.dart'
     as artisan_search;
@@ -29,8 +29,6 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
   MapObjectCollection? _placemarkCollection;
   final _placemarkTapListeners = <MapObjectTapListener>[];
   bool _showListView = false;
-  bool _mapReady = false;
-  bool _mapCreated = false;
 
   @override
   void initState() {
@@ -42,9 +40,6 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
     // Wait a bit for the map to be ready
     await Future.delayed(const Duration(milliseconds: 500));
     await _loadArtisans();
-    if (mounted) {
-      setState(() => _mapReady = true);
-    }
   }
 
   Future<void> _loadArtisans() async {
@@ -63,8 +58,8 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
     final userPosition = _searchController.currentPosition.value;
     if (userPosition != null) {
       try {
-        // Load user marker from SVG
-        final userIconBytes = await SvgMarkerHelper.getUserMarker(size: 48);
+        // Generate user marker icon
+        final userIconBytes = await MarkerIconGenerator.createUserMarker();
 
         _placemarkCollection!.addPlacemark()
           ..geometry = MapKitHelper.createPoint(
@@ -76,15 +71,12 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
               MemoryImage(userIconBytes),
             ),
           )
-          ..opacity = 1.0
-          ..zIndex = 100; // User marker on top
+          ..opacity = 1.0;
 
-        debugPrint(
-          'User position marker created at ${userPosition.latitude}, ${userPosition.longitude}',
-        );
+        debugPrint('User position marker created');
       } catch (e) {
         debugPrint('Error creating user position marker: $e');
-        // Fallback: create simple marker without custom icon
+        // Fallback: create simple marker
         _placemarkCollection!.addPlacemark()
           ..geometry = MapKitHelper.createPoint(
             userPosition.latitude,
@@ -101,11 +93,9 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
         try {
           final isNearby = artisan.distance != null && artisan.distance! < 2000;
 
-          // Load artisan marker from SVG
-          final artisanIconBytes = await SvgMarkerHelper.getArtisanMarker(
-            isNearby: isNearby,
-            size: 48,
-          );
+          // Generate artisan marker icon
+          final artisanIconBytes =
+              await MarkerIconGenerator.createArtisanMarker(isNearby: isNearby);
 
           final artisanPlacemark = _placemarkCollection!.addPlacemark()
             ..geometry = MapKitHelper.createPoint(
@@ -117,8 +107,7 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                 MemoryImage(artisanIconBytes),
               ),
             )
-            ..opacity = 1.0
-            ..zIndex = isNearby ? 50 : 10; // Nearby artisans above others
+            ..opacity = 1.0;
 
           // Create tap listener for this placemark
           final tapListener = _ArtisanPlacemarkTapListener(
@@ -134,7 +123,7 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
           );
         } catch (e) {
           debugPrint('Error creating artisan marker for ${artisan.name}: $e');
-          // Fallback: create simple marker without custom icon
+          // Fallback: create simple marker
           try {
             final artisanPlacemark = _placemarkCollection!.addPlacemark()
               ..geometry = MapKitHelper.createPoint(
@@ -330,38 +319,6 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
             ),
             const SizedBox(height: Spacing.lg),
 
-            // Stats Row
-            if (artisan.projectsCompleted != null ||
-                artisan.experienceYears != null)
-              Row(
-                children: [
-                  if (artisan.projectsCompleted != null)
-                    Expanded(
-                      child: _buildStatCard(
-                        context,
-                        icon: Icons.check_circle_outline,
-                        label: 'Projets',
-                        value: artisan.projectsCompleted.toString(),
-                      ),
-                    ),
-                  if (artisan.projectsCompleted != null &&
-                      artisan.experienceYears != null)
-                    const SizedBox(width: Spacing.md),
-                  if (artisan.experienceYears != null)
-                    Expanded(
-                      child: _buildStatCard(
-                        context,
-                        icon: Icons.work_outline,
-                        label: 'Expérience',
-                        value: '${artisan.experienceYears} ans',
-                      ),
-                    ),
-                ],
-              ),
-            if (artisan.projectsCompleted != null ||
-                artisan.experienceYears != null)
-              const SizedBox(height: Spacing.lg),
-
             // View Profile Button
             SizedBox(
               width: double.infinity,
@@ -393,53 +350,12 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
     );
   }
 
-  Widget _buildStatCard(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required String value,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(Spacing.md),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(Spacing.radiusMd),
-        border: Border.all(
-          color: AppColors.lightTextTertiary.withValues(alpha: 0.2),
-        ),
-      ),
-      child: Column(
-        children: [
-          material.Icon(icon, size: 24, color: AppColors.lightAccentPrimary),
-          const SizedBox(height: Spacing.sm),
-          Text(
-            value,
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColors.lightTextSecondary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Obx(() {
         final position = _searchController.currentPosition.value;
         final errorMessage = _searchController.errorMessage.value;
-
-        // Debug info
-        debugPrint('MapSearchScreen - Position: $position');
-        debugPrint('MapSearchScreen - Error: $errorMessage');
-        debugPrint('MapSearchScreen - Map Ready: $_mapReady');
 
         return Stack(
           children: [
@@ -453,14 +369,6 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                       const CircularProgressIndicator(),
                       const SizedBox(height: Spacing.lg),
                       const Text('Chargement de la carte...'),
-                      const SizedBox(height: Spacing.md),
-                      const Text(
-                        'Obtention de votre position...',
-                        style: material.TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
-                        ),
-                      ),
                     ] else ...[
                       const material.Icon(
                         Icons.location_off,
@@ -487,77 +395,32 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                 ),
               )
             else
-              Container(
-                color: Colors.grey[200],
-                child: Stack(
-                  children: [
-                    FlutterMapWidget(
-                      onMapCreated: (mapWindow) {
-                        debugPrint('MapSearchScreen - Map Created!');
-                        setState(() => _mapCreated = true);
-                        _mapWindow = mapWindow;
+              FlutterMapWidget(
+                onMapCreated: (mapWindow) {
+                  debugPrint('Map Created!');
+                  _mapWindow = mapWindow;
 
-                        // Create placemark collection
-                        _placemarkCollection = mapWindow.map.mapObjects
-                            .addCollection();
+                  // Create placemark collection
+                  _placemarkCollection = mapWindow.map.mapObjects
+                      .addCollection();
 
-                        // Move camera to user location
-                        try {
-                          mapWindow.map.move(
-                            MapKitHelper.createCameraPosition(
-                              latitude: position.latitude,
-                              longitude: position.longitude,
-                              zoom: AppConstants.defaultMapZoom,
-                            ),
-                            animation: MapKitHelper.createSmoothAnimation(),
-                          );
-                          debugPrint(
-                            'MapSearchScreen - Camera moved to position',
-                          );
-
-                          // Load artisans after map is ready
-                          _updatePlacemarks();
-                        } catch (e) {
-                          debugPrint(
-                            'MapSearchScreen - Error moving camera: $e',
-                          );
-                        }
-                      },
-                      onMapDispose: () {
-                        _placemarkCollection = null;
-                        _mapWindow = null;
-                      },
+                  // Move camera to user location
+                  mapWindow.map.move(
+                    MapKitHelper.createCameraPosition(
+                      latitude: position.latitude,
+                      longitude: position.longitude,
+                      zoom: AppConstants.defaultMapZoom,
                     ),
-                    // Debug overlay
-                    Positioned(
-                      top: 100,
-                      left: 16,
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        color: Colors.white.withValues(alpha: 0.8),
-                        child: Text(
-                          'Lat: ${position.latitude.toStringAsFixed(4)}\n'
-                          'Lng: ${position.longitude.toStringAsFixed(4)}\n'
-                          'Map Ready: $_mapReady\n'
-                          'Map Created: $_mapCreated',
-                          style: const material.TextStyle(fontSize: 10),
-                        ),
-                      ),
-                    ),
-                    // Loading indicator if map not created
-                    if (!_mapCreated)
-                      const Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            CircularProgressIndicator(),
-                            SizedBox(height: 16),
-                            Text('Initialisation de la carte...'),
-                          ],
-                        ),
-                      ),
-                  ],
-                ),
+                    animation: MapKitHelper.createSmoothAnimation(),
+                  );
+
+                  // Load artisans after map is ready
+                  _updatePlacemarks();
+                },
+                onMapDispose: () {
+                  _placemarkCollection = null;
+                  _mapWindow = null;
+                },
               ),
 
             // Top Search Bar
@@ -639,7 +502,7 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
               ),
             ),
 
-            // Bottom Controls
+            // Bottom Controls with Legend
             Positioned(
               bottom: 0,
               left: 0,
@@ -650,6 +513,63 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      // Legend
+                      if (_searchController.searchResults.isNotEmpty)
+                        Container(
+                          margin: const EdgeInsets.only(bottom: Spacing.md),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: Spacing.base,
+                            vertical: Spacing.sm,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Theme.of(
+                              context,
+                            ).cardColor.withOpacity(0.95),
+                            borderRadius: BorderRadius.circular(
+                              Spacing.radiusMd,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.1),
+                                blurRadius: 10,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 12,
+                                height: 12,
+                                decoration: BoxDecoration(
+                                  color: AppColors.goldenMarker,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: Spacing.sm),
+                              Text(
+                                '< 2km',
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                              const SizedBox(width: Spacing.base),
+                              Container(
+                                width: 12,
+                                height: 12,
+                                decoration: BoxDecoration(
+                                  color: AppColors.blueMarker,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: Spacing.sm),
+                              Text(
+                                '> 2km',
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ],
+                          ),
+                        ),
+
                       // My Location Button
                       Align(
                         alignment: Alignment.centerRight,
@@ -671,9 +591,7 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                               color: AppColors.lightAccentPrimary,
                             ),
                             onPressed: () async {
-                              final position =
-                                  _searchController.currentPosition.value;
-                              if (position != null && _mapWindow != null) {
+                              if (_mapWindow != null && position != null) {
                                 _mapWindow!.map.move(
                                   MapKitHelper.createCameraPosition(
                                     latitude: position.latitude,
@@ -756,306 +674,6 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                 ),
               ),
             ),
-
-            // List View Overlay
-            if (_showListView)
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                top: MediaQuery.of(context).size.height * 0.25,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).scaffoldBackgroundColor,
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(Spacing.radiusXl),
-                      topRight: Radius.circular(Spacing.radiusXl),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.2),
-                        blurRadius: 20,
-                        offset: const Offset(0, -4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      // Handle
-                      Container(
-                        margin: const EdgeInsets.symmetric(
-                          vertical: Spacing.md,
-                        ),
-                        width: 40,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: AppColors.lightTextTertiary,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-
-                      // Header
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: Spacing.lg,
-                        ),
-                        child: Row(
-                          children: [
-                            Text(
-                              'Artisans disponibles',
-                              style: Theme.of(context).textTheme.titleLarge
-                                  ?.copyWith(fontWeight: FontWeight.bold),
-                            ),
-                            const Spacer(),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: Spacing.md,
-                                vertical: Spacing.sm,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.lightAccentPrimary.withValues(
-                                  alpha: 0.1,
-                                ),
-                                borderRadius: BorderRadius.circular(
-                                  Spacing.radiusMd,
-                                ),
-                              ),
-                              child: Text(
-                                '${_searchController.searchResults.length}',
-                                style: Theme.of(context).textTheme.titleMedium
-                                    ?.copyWith(
-                                      color: AppColors.lightAccentPrimary,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: Spacing.md),
-
-                      // List
-                      Expanded(
-                        child: () {
-                          final results = _searchController.searchResults;
-                          if (results.isEmpty) {
-                            return Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  material.Icon(
-                                    Icons.search_off,
-                                    size: 64,
-                                    color: AppColors.lightTextTertiary,
-                                  ),
-                                  const SizedBox(height: Spacing.lg),
-                                  Text(
-                                    'Aucun artisan dans cette zone',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleMedium
-                                        ?.copyWith(
-                                          color: AppColors.lightTextSecondary,
-                                        ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }
-
-                          return ListView.separated(
-                            padding: const EdgeInsets.all(Spacing.lg),
-                            itemCount: results.length,
-                            separatorBuilder: (context, index) =>
-                                const SizedBox(height: Spacing.md),
-                            itemBuilder: (context, index) {
-                              final artisan = results[index];
-                              return Container(
-                                decoration: BoxDecoration(
-                                  color: Theme.of(context).cardColor,
-                                  borderRadius: BorderRadius.circular(
-                                    Spacing.radiusMd,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withValues(
-                                        alpha: 0.05,
-                                      ),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    borderRadius: BorderRadius.circular(
-                                      Spacing.radiusMd,
-                                    ),
-                                    onTap: () {
-                                      Get.to(
-                                        () => ArtisanProfileScreen(
-                                          artisanId: artisan.id,
-                                        ),
-                                      );
-                                    },
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(
-                                        Spacing.base,
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          // Avatar with badge
-                                          Stack(
-                                            children: [
-                                              CircleAvatar(
-                                                radius: 28,
-                                                backgroundColor: AppColors
-                                                    .lightAccentPrimary
-                                                    .withValues(alpha: 0.1),
-                                                backgroundImage:
-                                                    artisan.avatar != null
-                                                    ? NetworkImage(
-                                                        artisan.avatar!,
-                                                      )
-                                                    : null,
-                                                child: artisan.avatar == null
-                                                    ? material.Icon(
-                                                        Icons.person,
-                                                        color: AppColors
-                                                            .lightAccentPrimary,
-                                                      )
-                                                    : null,
-                                              ),
-                                              if (artisan.isNearby)
-                                                Positioned(
-                                                  right: 0,
-                                                  bottom: 0,
-                                                  child: Container(
-                                                    padding:
-                                                        const EdgeInsets.all(3),
-                                                    decoration: BoxDecoration(
-                                                      color: AppColors
-                                                          .goldenMarker,
-                                                      shape: BoxShape.circle,
-                                                      border: Border.all(
-                                                        color: Theme.of(
-                                                          context,
-                                                        ).cardColor,
-                                                        width: 2,
-                                                      ),
-                                                    ),
-                                                    child: const material.Icon(
-                                                      Icons.location_on,
-                                                      color: Colors.white,
-                                                      size: 10,
-                                                    ),
-                                                  ),
-                                                ),
-                                            ],
-                                          ),
-                                          const SizedBox(width: Spacing.md),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  artisan.name,
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .titleMedium
-                                                      ?.copyWith(
-                                                        fontWeight:
-                                                            FontWeight.w600,
-                                                      ),
-                                                  maxLines: 1,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                ),
-                                                const SizedBox(height: 4),
-                                                Text(
-                                                  artisan.tradeName ??
-                                                      'Artisan',
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .bodyMedium
-                                                      ?.copyWith(
-                                                        color: AppColors
-                                                            .lightTextSecondary,
-                                                      ),
-                                                ),
-                                                const SizedBox(height: 4),
-                                                Row(
-                                                  children: [
-                                                    material.Icon(
-                                                      Icons.location_on,
-                                                      size: 14,
-                                                      color: artisan.isNearby
-                                                          ? AppColors
-                                                                .goldenMarker
-                                                          : AppColors
-                                                                .lightTextSecondary,
-                                                    ),
-                                                    const SizedBox(width: 4),
-                                                    Text(
-                                                      artisan.formattedDistance,
-                                                      style: Theme.of(context)
-                                                          .textTheme
-                                                          .bodySmall
-                                                          ?.copyWith(
-                                                            color: AppColors
-                                                                .lightTextSecondary,
-                                                          ),
-                                                    ),
-                                                    if (artisan.averageRating !=
-                                                        null) ...[
-                                                      const SizedBox(
-                                                        width: Spacing.md,
-                                                      ),
-                                                      const material.Icon(
-                                                        Icons.star,
-                                                        size: 14,
-                                                        color: AppColors
-                                                            .starRating,
-                                                      ),
-                                                      const SizedBox(width: 4),
-                                                      Text(
-                                                        artisan.averageRating!
-                                                            .toStringAsFixed(1),
-                                                        style: Theme.of(context)
-                                                            .textTheme
-                                                            .bodySmall
-                                                            ?.copyWith(
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w600,
-                                                            ),
-                                                      ),
-                                                    ],
-                                                  ],
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          material.Icon(
-                                            Icons.chevron_right,
-                                            color: AppColors.lightTextTertiary,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          );
-                        }(),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
           ],
         );
       }),
