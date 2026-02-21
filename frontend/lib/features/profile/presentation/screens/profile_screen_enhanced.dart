@@ -5,10 +5,10 @@ import '../../../../core/constants/spacing.dart';
 import '../../../../shared/controllers/auth_controller.dart';
 import '../../../auth/presentation/screens/login_screen.dart';
 
-/// Profile Screen - Enhanced version
-/// For original version, see profile_screen_original.dart
-class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
+/// Enhanced Profile Screen with modern design
+/// Figma reference: node-id=3125:8012
+class ProfileScreenEnhanced extends StatelessWidget {
+  const ProfileScreenEnhanced({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -232,6 +232,10 @@ class ProfileScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Stats Cards (if applicable)
+            if (user.role == 'artisan' || user.role == 'client')
+              _buildStatsSection(user),
+
             // Account Section
             _buildSectionHeader('Mon compte'),
             const SizedBox(height: Spacing.md),
@@ -394,6 +398,79 @@ class ProfileScreen extends StatelessWidget {
             const SizedBox(height: Spacing.xl),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildStatsSection(dynamic user) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _buildStatCard(
+                icon: Icons.work_outline,
+                label: 'Projets',
+                value: '12',
+                color: AppColors.darkAccentPrimary,
+              ),
+            ),
+            const SizedBox(width: Spacing.md),
+            Expanded(
+              child: _buildStatCard(
+                icon: Icons.star_outline,
+                label: 'Avis',
+                value: '4.8',
+                color: Color(0xFFF59E0B),
+              ),
+            ),
+            const SizedBox(width: Spacing.md),
+            Expanded(
+              child: _buildStatCard(
+                icon: Icons.verified_outlined,
+                label: 'Score',
+                value: '95',
+                color: AppColors.darkAccentSecondary,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: Spacing.xl),
+      ],
+    );
+  }
+
+  Widget _buildStatCard({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(Spacing.base),
+      decoration: BoxDecoration(
+        color: AppColors.darkCard,
+        borderRadius: BorderRadius.circular(Spacing.radiusMd),
+        border: Border.all(color: color.withOpacity(0.2), width: 1),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 24),
+          const SizedBox(height: Spacing.xs),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: AppColors.darkTextPrimary,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: TextStyle(fontSize: 11, color: AppColors.darkTextSecondary),
+          ),
+        ],
       ),
     );
   }

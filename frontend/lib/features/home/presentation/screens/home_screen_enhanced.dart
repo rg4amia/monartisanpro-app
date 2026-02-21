@@ -10,14 +10,14 @@ import '../../../search/presentation/screens/search_filter_screen.dart';
 
 /// Enhanced Home Screen with improved visual design
 /// Figma reference: node-id=3118:11495
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+class HomeScreenEnhanced extends StatefulWidget {
+  const HomeScreenEnhanced({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<HomeScreenEnhanced> createState() => _HomeScreenEnhancedState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenEnhancedState extends State<HomeScreenEnhanced> {
   final _authController = Get.find<AuthController>();
   late final artisan_search.ArtisanSearchController _searchController;
 

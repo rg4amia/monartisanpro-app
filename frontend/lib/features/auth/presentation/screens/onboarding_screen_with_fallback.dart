@@ -3,41 +3,26 @@ import 'package:get/get.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/spacing.dart';
 import '../../../../core/storage/preferences_manager.dart';
+import '../widgets/onboarding_placeholder.dart';
 import 'login_screen.dart';
 
-/// Onboarding screen with image-based slides
+/// Onboarding screen with graceful fallback to gradients if images are missing
 /// Figma reference: node-id=2901:7162
-class OnboardingScreen extends StatefulWidget {
-  const OnboardingScreen({super.key});
+class OnboardingScreenWithFallback extends StatefulWidget {
+  const OnboardingScreenWithFallback({super.key});
 
   @override
-  State<OnboardingScreen> createState() => _OnboardingScreenState();
+  State<OnboardingScreenWithFallback> createState() =>
+      _OnboardingScreenWithFallbackState();
 }
 
-class _OnboardingScreenState extends State<OnboardingScreen> {
+class _OnboardingScreenWithFallbackState
+    extends State<OnboardingScreenWithFallback> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
-  final List<OnboardingPage> _pages = [
-    OnboardingPage(
-      image: 'assets/images/onboarding_1.png',
-      title: 'Trouvez l\'artisan idéal',
-      description:
-          'Découvrez des artisans qualifiés et vérifiés près de chez vous. Comparez les profils, lisez les avis et choisissez le meilleur pour votre projet.',
-    ),
-    OnboardingPage(
-      image: 'assets/images/onboarding_2.png',
-      title: 'Paiement sécurisé',
-      description:
-          'Votre argent est protégé grâce au système de séquestre. Les paiements sont libérés par étapes selon l\'avancement des travaux.',
-    ),
-    OnboardingPage(
-      image: 'assets/images/onboarding_3.png',
-      title: 'Confiance et transparence',
-      description:
-          'Un système de notation transparent pour tous. Les artisans construisent leur réputation et accèdent au crédit bancaire.',
-    ),
-  ];
+  final List<OnboardingPageWithFallback> _pages =
+      OnboardingPageWithFallback.defaultPages();
 
   @override
   void dispose() {
@@ -65,10 +50,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   void _completeOnboarding() {
-    // Mark onboarding as seen
     PreferencesManager().setOnboardingSeen();
-
-    // Navigate to login screen
     Get.offAll(() => const LoginScreen());
   }
 
@@ -77,17 +59,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // Page View with images
+          // Page View
           PageView.builder(
             controller: _pageController,
             onPageChanged: _onPageChanged,
             itemCount: _pages.length,
             itemBuilder: (context, index) {
-              return _buildPage(_pages[index]);
+              return _pages[index].buildBackground();
             },
           ),
 
-          // Skip Button (Top Right)
+          // Skip Button
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(Spacing.base),
@@ -108,7 +90,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
           ),
 
-          // Bottom Content (Indicators + Button)
+          // Bottom Content
           Positioned(
             left: 0,
             right: 0,
@@ -127,7 +109,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Title and Description
                       Text(
                         _pages[_currentPage].title,
                         style: Theme.of(context).textTheme.headlineMedium
@@ -147,8 +128,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         maxLines: 3,
                       ),
                       const SizedBox(height: Spacing.xl),
-
-                      // Page Indicators
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: List.generate(
@@ -157,8 +136,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ),
                       ),
                       const SizedBox(height: Spacing.lg),
-
-                      // Next/Get Started Button
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
@@ -192,19 +169,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  Widget _buildPage(OnboardingPage page) {
-    return Container(
-      width: double.infinity,
-      height: double.infinity,
-      decoration: BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage(page.image),
-          fit: BoxFit.cover,
-        ),
-      ),
-    );
-  }
-
   Widget _buildPageIndicator(int index) {
     final isActive = index == _currentPage;
     return AnimatedContainer(
@@ -218,16 +182,4 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       ),
     );
   }
-}
-
-class OnboardingPage {
-  final String image;
-  final String title;
-  final String description;
-
-  OnboardingPage({
-    required this.image,
-    required this.title,
-    required this.description,
-  });
 }
