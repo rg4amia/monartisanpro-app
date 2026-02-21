@@ -2,14 +2,14 @@ name: Mobile CI
 
 on:
  push:
-  branches: [master, develop]
+  branches: [master]
   paths:
-   - "frontend/**"
+   - "frontend-/**"
    - ".github/workflows/mobile-ci.yml"
  pull_request:
-  branches: [master, develop]
+  branches: [master]
   paths:
-   - "frontend/**"
+   - "frontend-/**"
    - ".github/workflows/mobile-ci.yml"
 
 jobs:
