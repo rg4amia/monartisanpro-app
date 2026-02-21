@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'app_colors.dart';
+import 'app_shadows.dart';
 import 'app_typography.dart';
 import '../constants/spacing.dart';
 
@@ -31,6 +32,20 @@ class AppTheme {
       // Scaffold
       scaffoldBackgroundColor: AppColors.lightBackground,
 
+      // Text theme — maps AppTypography onto Material 3 roles
+      textTheme: const TextTheme(
+        displayLarge:  TextStyle(fontSize: AppTypography.h1Size, fontWeight: AppTypography.bold,     height: AppTypography.tightLineHeight),
+        displayMedium: TextStyle(fontSize: AppTypography.h2Size, fontWeight: AppTypography.semibold, height: AppTypography.tightLineHeight),
+        titleLarge:    TextStyle(fontSize: AppTypography.h3Size, fontWeight: AppTypography.semibold, height: AppTypography.normalLineHeight),
+        titleMedium:   TextStyle(fontSize: AppTypography.h4Size, fontWeight: AppTypography.semibold, height: AppTypography.normalLineHeight),
+        bodyLarge:     TextStyle(fontSize: AppTypography.bodySize,      fontWeight: AppTypography.regular, height: AppTypography.normalLineHeight),
+        bodyMedium:    TextStyle(fontSize: AppTypography.bodySmallSize,  fontWeight: AppTypography.regular, height: AppTypography.normalLineHeight),
+        bodySmall:     TextStyle(fontSize: AppTypography.captionSize,   fontWeight: AppTypography.regular, height: AppTypography.normalLineHeight),
+        labelLarge:    TextStyle(fontSize: AppTypography.bodySize,      fontWeight: AppTypography.semibold),
+        labelMedium:   TextStyle(fontSize: AppTypography.bodySmallSize,  fontWeight: AppTypography.medium),
+        labelSmall:    TextStyle(fontSize: AppTypography.tinySize,      fontWeight: AppTypography.medium),
+      ),
+
       // App bar
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
@@ -45,11 +60,11 @@ class AppTheme {
         ),
       ),
 
-      // Card
+      // Card — shadow from AppShadows.lightMd (0 4px 6px rgba(0,0,0,0.07))
       cardTheme: CardThemeData(
         color: AppColors.lightCard,
         elevation: 2,
-        shadowColor: Colors.black.withValues(alpha: 0.07),
+        shadowColor: AppShadows.lightMd.first.color,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(Spacing.cardRadius),
         ),
@@ -138,6 +153,52 @@ class AppTheme {
         foregroundColor: Colors.white,
         elevation: 4,
       ),
+
+      // Tab bar — accent indicator, transparent divider
+      tabBarTheme: const TabBarThemeData(
+        labelColor: AppColors.lightAccentPrimary,
+        unselectedLabelColor: AppColors.lightTextSecondary,
+        indicatorColor: AppColors.lightAccentPrimary,
+        dividerColor: Colors.transparent,
+      ),
+
+      // Chip — pill shape, accent when selected
+      chipTheme: ChipThemeData(
+        backgroundColor: AppColors.lightBackgroundSecondary,
+        selectedColor: AppColors.lightAccentPrimary,
+        labelStyle: const TextStyle(
+          fontSize: AppTypography.bodySmallSize,
+          fontWeight: AppTypography.regular,
+        ),
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.base,
+          vertical: Spacing.xs,
+        ),
+        shape: const StadiumBorder(),
+      ),
+
+      // Snack bar — floating, rounded, dark background
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: AppColors.lightTextPrimary,
+        contentTextStyle: const TextStyle(
+          fontSize: AppTypography.bodySmallSize,
+          fontWeight: AppTypography.regular,
+          color: Colors.white,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(Spacing.radiusMd),
+        ),
+        behavior: SnackBarBehavior.floating,
+      ),
+
+      // Dialog — rounded 20dp corners, no surface tint
+      dialogTheme: DialogThemeData(
+        backgroundColor: AppColors.lightCard,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(Spacing.radiusXl),
+        ),
+      ),
     );
   }
 
@@ -164,6 +225,20 @@ class AppTheme {
       // Scaffold
       scaffoldBackgroundColor: AppColors.darkBackground,
 
+      // Text theme — same scale as light, colors come from colorScheme
+      textTheme: const TextTheme(
+        displayLarge:  TextStyle(fontSize: AppTypography.h1Size, fontWeight: AppTypography.bold,     height: AppTypography.tightLineHeight),
+        displayMedium: TextStyle(fontSize: AppTypography.h2Size, fontWeight: AppTypography.semibold, height: AppTypography.tightLineHeight),
+        titleLarge:    TextStyle(fontSize: AppTypography.h3Size, fontWeight: AppTypography.semibold, height: AppTypography.normalLineHeight),
+        titleMedium:   TextStyle(fontSize: AppTypography.h4Size, fontWeight: AppTypography.semibold, height: AppTypography.normalLineHeight),
+        bodyLarge:     TextStyle(fontSize: AppTypography.bodySize,      fontWeight: AppTypography.regular, height: AppTypography.normalLineHeight),
+        bodyMedium:    TextStyle(fontSize: AppTypography.bodySmallSize,  fontWeight: AppTypography.regular, height: AppTypography.normalLineHeight),
+        bodySmall:     TextStyle(fontSize: AppTypography.captionSize,   fontWeight: AppTypography.regular, height: AppTypography.normalLineHeight),
+        labelLarge:    TextStyle(fontSize: AppTypography.bodySize,      fontWeight: AppTypography.semibold),
+        labelMedium:   TextStyle(fontSize: AppTypography.bodySmallSize,  fontWeight: AppTypography.medium),
+        labelSmall:    TextStyle(fontSize: AppTypography.tinySize,      fontWeight: AppTypography.medium),
+      ),
+
       // App bar
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
@@ -178,11 +253,11 @@ class AppTheme {
         ),
       ),
 
-      // Card
+      // Card — shadow from AppShadows.darkMd (0 4px 6px rgba(0,0,0,0.40))
       cardTheme: CardThemeData(
         color: AppColors.darkCard,
         elevation: 4,
-        shadowColor: Colors.black.withValues(alpha: 0.4),
+        shadowColor: AppShadows.darkMd.first.color,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(Spacing.cardRadius),
         ),
@@ -270,6 +345,52 @@ class AppTheme {
         backgroundColor: AppColors.darkAccentPrimary,
         foregroundColor: Colors.white,
         elevation: 6,
+      ),
+
+      // Tab bar
+      tabBarTheme: const TabBarThemeData(
+        labelColor: AppColors.darkAccentPrimary,
+        unselectedLabelColor: AppColors.darkTextSecondary,
+        indicatorColor: AppColors.darkAccentPrimary,
+        dividerColor: Colors.transparent,
+      ),
+
+      // Chip
+      chipTheme: ChipThemeData(
+        backgroundColor: AppColors.darkElevated,
+        selectedColor: AppColors.darkAccentPrimary,
+        labelStyle: const TextStyle(
+          fontSize: AppTypography.bodySmallSize,
+          fontWeight: AppTypography.regular,
+        ),
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.base,
+          vertical: Spacing.xs,
+        ),
+        shape: const StadiumBorder(),
+      ),
+
+      // Snack bar
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: AppColors.darkElevated,
+        contentTextStyle: const TextStyle(
+          fontSize: AppTypography.bodySmallSize,
+          fontWeight: AppTypography.regular,
+          color: AppColors.darkTextPrimary,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(Spacing.radiusMd),
+        ),
+        behavior: SnackBarBehavior.floating,
+      ),
+
+      // Dialog
+      dialogTheme: DialogThemeData(
+        backgroundColor: AppColors.darkCard,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(Spacing.radiusXl),
+        ),
       ),
     );
   }
