@@ -50,30 +50,59 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
     _updatePlacemarks();
   }
 
-  void _updatePlacemarks() {
+  Future<void> _updatePlacemarks() async {
     if (_placemarkCollection == null) return;
 
     // Clear existing placemarks
     _placemarkCollection!.clear();
     _placemarkTapListeners.clear();
 
-    for (final artisan in _searchController.searchResults) {
-      // Use actual coordinates if available
-      if (artisan.latitude != null && artisan.longitude != null) {
-        final placemark = _placemarkCollection!.addPlacemark()
+    // Add user position marker if available
+    final userPosition = _searchController.currentPosition.value;
+    if (userPosition != null) {
+      try {
+        final userPlacemark = _placemarkCollection!.addPlacemark()
           ..geometry = MapKitHelper.createPoint(
-            artisan.latitude!,
-            artisan.longitude!,
+            userPosition.latitude,
+            userPosition.longitude,
           )
           ..opacity = 1.0;
 
-        // Create tap listener for this placemark
-        final tapListener = _ArtisanPlacemarkTapListener(
-          onTap: () => _showArtisanBottomSheet(artisan),
-        );
+        // Note: Pour ajouter une icône personnalisée, utilisez:
+        // userPlacemark.setIcon(...)
+        // avec l'asset: MapMarkersHelper.getUserPositionMarkerAsset()
+      } catch (e) {
+        debugPrint('Error creating user position marker: $e');
+      }
+    }
 
-        placemark.addTapListener(tapListener);
-        _placemarkTapListeners.add(tapListener);
+    // Add artisan markers
+    for (final artisan in _searchController.searchResults) {
+      if (artisan.latitude != null && artisan.longitude != null) {
+        try {
+          final isNearby = artisan.distance != null && artisan.distance! < 2000;
+
+          final artisanPlacemark = _placemarkCollection!.addPlacemark()
+            ..geometry = MapKitHelper.createPoint(
+              artisan.latitude!,
+              artisan.longitude!,
+            )
+            ..opacity = 1.0;
+
+          // Note: Pour ajouter une icône personnalisée, utilisez:
+          // artisanPlacemark.setIcon(...)
+          // avec l'asset: MapMarkersHelper.getArtisanMarkerAsset(isNearby: isNearby)
+
+          // Create tap listener for this placemark
+          final tapListener = _ArtisanPlacemarkTapListener(
+            onTap: () => _showArtisanBottomSheet(artisan),
+          );
+
+          artisanPlacemark.addTapListener(tapListener);
+          _placemarkTapListeners.add(tapListener);
+        } catch (e) {
+          debugPrint('Error creating artisan marker for ${artisan.name}: $e');
+        }
       }
     }
 
@@ -184,10 +213,10 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
         final position = _searchController.currentPosition.value;
         final errorMessage = _searchController.errorMessage.value;
 
-        // Debug print
-        print('MapSearchScreen - Position: $position');
-        print('MapSearchScreen - Error: $errorMessage');
-        print('MapSearchScreen - Map Ready: $_mapReady');
+        // Debug info
+        debugPrint('MapSearchScreen - Position: $position');
+        debugPrint('MapSearchScreen - Error: $errorMessage');
+        debugPrint('MapSearchScreen - Map Ready: $_mapReady');
 
         return Stack(
           children: [
@@ -241,7 +270,7 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                   children: [
                     FlutterMapWidget(
                       onMapCreated: (mapWindow) {
-                        print('MapSearchScreen - Map Created!');
+                        debugPrint('MapSearchScreen - Map Created!');
                         setState(() => _mapCreated = true);
                         _mapWindow = mapWindow;
 
@@ -259,12 +288,16 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                             ),
                             animation: MapKitHelper.createSmoothAnimation(),
                           );
-                          print('MapSearchScreen - Camera moved to position');
+                          debugPrint(
+                            'MapSearchScreen - Camera moved to position',
+                          );
 
                           // Load artisans after map is ready
                           _updatePlacemarks();
                         } catch (e) {
-                          print('MapSearchScreen - Error moving camera: $e');
+                          debugPrint(
+                            'MapSearchScreen - Error moving camera: $e',
+                          );
                         }
                       },
                       onMapDispose: () {
@@ -278,7 +311,7 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                       left: 16,
                       child: Container(
                         padding: const EdgeInsets.all(8),
-                        color: Colors.white.withOpacity(0.8),
+                        color: Colors.white.withValues(alpha: 0.8),
                         child: Text(
                           'Lat: ${position.latitude.toStringAsFixed(4)}\n'
                           'Lng: ${position.longitude.toStringAsFixed(4)}\n'

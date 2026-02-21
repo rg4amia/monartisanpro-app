@@ -514,40 +514,6 @@ class _SearchFilterScreenState extends State<SearchFilterScreen>
     );
   }
 
-  Widget _buildModernDropdown<T>({
-    required T? value,
-    required String hint,
-    required IconData icon,
-    required List<DropdownMenuItem<T>> items,
-    required void Function(T?) onChanged,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.lightBackground,
-        borderRadius: BorderRadius.circular(Spacing.radiusMd),
-        border: Border.all(
-          color: AppColors.lightTextTertiary.withValues(alpha: 0.2),
-        ),
-      ),
-      child: DropdownButtonFormField<T>(
-        value: value,
-        isExpanded: true,
-        decoration: InputDecoration(
-          hintText: hint,
-          prefixIcon: Icon(icon, color: AppColors.lightTextSecondary),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: Spacing.md,
-            vertical: Spacing.sm,
-          ),
-        ),
-        dropdownColor: Colors.white,
-        items: items,
-        onChanged: onChanged,
-      ),
-    );
-  }
-
   Widget _buildSortOption(
     BuildContext context, {
     required String value,
