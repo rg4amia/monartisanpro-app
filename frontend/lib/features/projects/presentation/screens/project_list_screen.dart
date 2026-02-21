@@ -4,6 +4,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/spacing.dart';
 import '../../../../shared/controllers/project_controller.dart';
 import '../../../../shared/controllers/auth_controller.dart';
+import '../../../../shared/models/project_model.dart';
 import 'create_project_screen.dart';
 import 'project_details_screen.dart';
 
@@ -20,12 +21,22 @@ class _ProjectListScreenState extends State<ProjectListScreen>
   final _authController = Get.find<AuthController>();
 
   late TabController _tabController;
-  String _selectedFilter = 'all';
+
+  // Tab index → list of statuses (empty = tous)
+  static const _tabStatuses = [
+    <String>[],
+    ['pending', 'awaiting_quotes', 'quoted', 'payment_pending'],
+    ['in_progress'],
+    ['completed', 'cancelled'],
+  ];
+
+  static const _tabLabels = ['Tous', 'En attente', 'En cours', 'Terminés'];
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    _tabController.addListener(() => setState(() {}));
     _loadProjects();
   }
 
@@ -39,6 +50,18 @@ class _ProjectListScreenState extends State<ProjectListScreen>
     await _projectController.fetchMyProjects();
   }
 
+  List<Project> _filteredProjects(List<Project> all) {
+    final statuses = _tabStatuses[_tabController.index];
+    if (statuses.isEmpty) return all;
+    return all.where((p) => statuses.contains(p.status)).toList();
+  }
+
+  int _countForTab(int tabIndex, List<Project> all) {
+    final statuses = _tabStatuses[tabIndex];
+    if (statuses.isEmpty) return all.length;
+    return all.where((p) => statuses.contains(p.status)).length;
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = _authController.currentUser.value;
@@ -47,97 +70,74 @@ class _ProjectListScreenState extends State<ProjectListScreen>
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mes projets'),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(text: 'Tous'),
-            Tab(text: 'En attente'),
-            Tab(text: 'En cours'),
-            Tab(text: 'Terminés'),
-          ],
-          onTap: (index) {
-            setState(() {
-              switch (index) {
-                case 0:
-                  _selectedFilter = 'all';
-                  break;
-                case 1:
-                  _selectedFilter = 'pending';
-                  break;
-                case 2:
-                  _selectedFilter = 'in_progress';
-                  break;
-                case 3:
-                  _selectedFilter = 'completed';
-                  break;
-              }
-            });
-          },
-        ),
+        bottom: Obx(() {
+          final all = _projectController.myProjects.toList();
+          return TabBar(
+            controller: _tabController,
+            isScrollable: false,
+            labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+            unselectedLabelStyle: const TextStyle(fontSize: 12),
+            tabs: List.generate(4, (i) {
+              final count = _countForTab(i, all);
+              final badgeColor = switch (i) {
+                1 => AppColors.warning,
+                2 => AppColors.lightAccentSecondary,
+                3 => AppColors.lightTextSecondary,
+                _ => Theme.of(context).colorScheme.primary,
+              };
+              return Tab(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(_tabLabels[i]),
+                    if (count > 0 && i > 0) ...[
+                      const SizedBox(width: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 5,
+                          vertical: 1,
+                        ),
+                        decoration: BoxDecoration(
+                          color: badgeColor,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '$count',
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              );
+            }),
+          );
+        }),
       ),
       body: Obx(() {
         if (_projectController.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        final allProjects = _projectController.myProjects;
-        final filteredProjects = _selectedFilter == 'all'
-            ? allProjects
-            : allProjects.where((p) => p.status == _selectedFilter).toList();
+        final allProjects = _projectController.myProjects.toList();
+        final filtered = _filteredProjects(allProjects);
 
-        if (filteredProjects.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.work_off_outlined,
-                  size: 80,
-                  color: AppColors.lightTextTertiary,
-                ),
-                const SizedBox(height: Spacing.lg),
-                Text(
-                  'Aucun projet',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: Spacing.sm),
-                Text(
-                  isClient
-                      ? 'Créez votre premier projet'
-                      : 'Aucun projet reçu pour le moment',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.lightTextSecondary,
-                  ),
-                ),
-                if (isClient) ...[
-                  const SizedBox(height: Spacing.xl),
-                  ElevatedButton.icon(
-                    onPressed: () async {
-                      final result = await Get.to(
-                        () => const CreateProjectScreen(),
-                      );
-                      if (result == true) {
-                        _loadProjects();
-                      }
-                    },
-                    icon: const Icon(Icons.add),
-                    label: const Text('Créer un projet'),
-                  ),
-                ],
-              ],
-            ),
-          );
+        if (filtered.isEmpty) {
+          return _buildEmptyState(context, isClient);
         }
 
         return RefreshIndicator(
           onRefresh: _loadProjects,
           child: ListView.separated(
             padding: const EdgeInsets.all(Spacing.screenPadding),
-            itemCount: filteredProjects.length,
-            separatorBuilder: (context, index) =>
-                const SizedBox(height: Spacing.md),
+            itemCount: filtered.length,
+            separatorBuilder: (_, __) => const SizedBox(height: Spacing.md),
             itemBuilder: (context, index) {
-              final project = filteredProjects[index];
+              final project = filtered[index];
               return _ProjectCard(
                 project: project,
                 onTap: () async {
@@ -151,13 +151,12 @@ class _ProjectListScreenState extends State<ProjectListScreen>
           ),
         );
       }),
-      floatingActionButton: isClient
+      floatingActionButton: isClient &&
+              (_tabController.index == 0 || _tabController.index == 1)
           ? FloatingActionButton.extended(
               onPressed: () async {
                 final result = await Get.to(() => const CreateProjectScreen());
-                if (result == true) {
-                  _loadProjects();
-                }
+                if (result == true) _loadProjects();
               },
               icon: const Icon(Icons.add),
               label: const Text('Nouveau projet'),
@@ -165,18 +164,120 @@ class _ProjectListScreenState extends State<ProjectListScreen>
           : null,
     );
   }
+
+  Widget _buildEmptyState(BuildContext context, bool isClient) {
+    final tabIndex = _tabController.index;
+    final String message;
+    final IconData icon;
+
+    switch (tabIndex) {
+      case 1:
+        icon = Icons.hourglass_empty_outlined;
+        message = isClient
+            ? 'Aucun projet en attente.\nCréez votre premier projet !'
+            : 'Aucun projet en attente de votre intervention.';
+        break;
+      case 2:
+        icon = Icons.work_outline;
+        message =
+            isClient ? 'Aucun projet en cours.' : 'Aucun chantier en cours.';
+        break;
+      case 3:
+        icon = Icons.check_circle_outline;
+        message = 'Aucun projet terminé pour le moment.';
+        break;
+      default:
+        icon = Icons.work_off_outlined;
+        message = isClient
+            ? 'Vous n\'avez pas encore de projet.'
+            : 'Aucun projet pour le moment.';
+    }
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(Spacing.xxl),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 72, color: AppColors.lightTextTertiary),
+            const SizedBox(height: Spacing.lg),
+            Text(
+              message,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: AppColors.lightTextSecondary,
+                  ),
+              textAlign: TextAlign.center,
+            ),
+            if (isClient && tabIndex == 0) ...[
+              const SizedBox(height: Spacing.xl),
+              ElevatedButton.icon(
+                onPressed: () async {
+                  final result =
+                      await Get.to(() => const CreateProjectScreen());
+                  if (result == true) _loadProjects();
+                },
+                icon: const Icon(Icons.add),
+                label: const Text('Créer un projet'),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
 }
 
+// ---------------------------------------------------------------------------
+// Project Card
+// ---------------------------------------------------------------------------
+
 class _ProjectCard extends StatelessWidget {
-  final dynamic project;
+  final Project project;
   final VoidCallback onTap;
 
   const _ProjectCard({required this.project, required this.onTap});
 
+  Color _statusColor(String status) => switch (status) {
+        'pending' || 'awaiting_quotes' => AppColors.warning,
+        'quoted' || 'payment_pending' => AppColors.info,
+        'in_progress' => AppColors.lightAccentSecondary,
+        'completed' => AppColors.success,
+        'cancelled' => AppColors.error,
+        _ => AppColors.lightTextSecondary,
+      };
+
+  String _formatDate(String dateString) {
+    try {
+      final date = DateTime.parse(dateString);
+      final diff = DateTime.now().difference(date);
+      if (diff.inDays == 0) return "Aujourd'hui";
+      if (diff.inDays == 1) return 'Hier';
+      if (diff.inDays < 7) return 'Il y a ${diff.inDays} jours';
+      return '${date.day}/${date.month}/${date.year}';
+    } catch (_) {
+      return dateString;
+    }
+  }
+
+  String _formatBudget() {
+    final min = project.budgetMin;
+    final max = project.budgetMax;
+    if (min == null && max == null) return 'Budget libre';
+    if (min != null && max != null) {
+      return '${min.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+$)'), (m) => '${m[1]} ')} – ${max.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+$)'), (m) => '${m[1]} ')} FCFA';
+    }
+    if (max != null) return 'Max ${max.toInt()} FCFA';
+    return 'À partir de ${min!.toInt()} FCFA';
+  }
+
   @override
   Widget build(BuildContext context) {
+    final statusColor = _statusColor(project.status);
+    final hasArtisan = project.artisan != null;
+
     return Card(
       clipBehavior: Clip.antiAlias,
+      elevation: 2,
       child: InkWell(
         onTap: onTap,
         child: Padding(
@@ -184,160 +285,197 @@ class _ProjectCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Title and Status
+              // ── Header: titre + statut ──────────────────────────────────
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
                     child: Text(
                       project.title,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style:
+                          Theme.of(context).textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   const SizedBox(width: Spacing.sm),
-                  _buildStatusBadge(context, project.status),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: Spacing.sm,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: statusColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(Spacing.radiusSm),
+                      border: Border.all(
+                        color: statusColor.withValues(alpha: 0.4),
+                      ),
+                    ),
+                    child: Text(
+                      project.statusLabel,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: statusColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: Spacing.xs),
+
+              // ── Métier (chip) ──────────────────────────────────────────
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: Spacing.sm,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.lightAccentPrimary.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      project.trade.name,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: AppColors.lightAccentPrimary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: Spacing.sm),
 
-              // Description
+              // ── Description ─────────────────────────────────────────────
               Text(
                 project.description,
-                style: Theme.of(context).textTheme.bodyMedium,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.lightTextSecondary,
+                    ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: Spacing.md),
+              const SizedBox(height: Spacing.sm),
 
-              // Meta info
+              // ── Budget ──────────────────────────────────────────────────
               Row(
                 children: [
                   Icon(
-                    Icons.location_on_outlined,
-                    size: 16,
+                    Icons.account_balance_wallet_outlined,
+                    size: 14,
                     color: AppColors.lightTextSecondary,
                   ),
-                  const SizedBox(width: Spacing.xs),
+                  const SizedBox(width: 4),
+                  Text(
+                    _formatBudget(),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.lightTextSecondary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: Spacing.md),
+
+              // ── Footer ──────────────────────────────────────────────────
+              Row(
+                children: [
+                  // Artisan ou nb de devis
                   Expanded(
+                    child: hasArtisan
+                        ? Row(
+                            children: [
+                              Icon(
+                                Icons.person_outline,
+                                size: 14,
+                                color: AppColors.lightAccentSecondary,
+                              ),
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  project.artisan!.name,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
+                                        color: AppColors.lightAccentSecondary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          )
+                        : Row(
+                            children: [
+                              Icon(
+                                Icons.description_outlined,
+                                size: 14,
+                                color: project.quoteCount > 0
+                                    ? Theme.of(context).colorScheme.primary
+                                    : AppColors.lightTextTertiary,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                project.quoteCount > 0
+                                    ? '${project.quoteCount} devis reçu(s)'
+                                    : 'Aucun devis',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(
+                                      color: project.quoteCount > 0
+                                          ? Theme.of(context)
+                                              .colorScheme
+                                              .primary
+                                          : AppColors.lightTextTertiary,
+                                      fontWeight: project.quoteCount > 0
+                                          ? FontWeight.w600
+                                          : FontWeight.normal,
+                                    ),
+                              ),
+                            ],
+                          ),
+                  ),
+
+                  // Localisation
+                  Icon(
+                    Icons.location_on_outlined,
+                    size: 13,
+                    color: AppColors.lightTextTertiary,
+                  ),
+                  const SizedBox(width: 2),
+                  Flexible(
                     child: Text(
                       project.address,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.lightTextSecondary,
-                      ),
+                            color: AppColors.lightTextTertiary,
+                          ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const SizedBox(width: Spacing.md),
-                  Icon(
-                    Icons.calendar_today,
-                    size: 14,
-                    color: AppColors.lightTextSecondary,
-                  ),
-                  const SizedBox(width: Spacing.xs),
+                  const SizedBox(width: Spacing.sm),
+
+                  // Date
                   Text(
                     _formatDate(project.createdAt),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.lightTextSecondary,
-                    ),
+                          color: AppColors.lightTextTertiary,
+                        ),
                   ),
                 ],
               ),
-
-              // Quotes info
-              if (project.quotes != null && project.quotes.isNotEmpty) ...[
-                const SizedBox(height: Spacing.sm),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.description_outlined,
-                      size: 16,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                    const SizedBox(width: Spacing.xs),
-                    Text(
-                      '${project.quotes.length} devis reçu(s)',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
             ],
           ),
         ),
       ),
     );
-  }
-
-  Widget _buildStatusBadge(BuildContext context, String status) {
-    Color backgroundColor;
-    Color textColor;
-
-    switch (status) {
-      case 'pending':
-        backgroundColor = AppColors.warning.withValues(alpha: 0.1);
-        textColor = AppColors.warning;
-        break;
-      case 'in_progress':
-        backgroundColor = AppColors.info.withValues(alpha: 0.1);
-        textColor = AppColors.info;
-        break;
-      case 'completed':
-        backgroundColor = AppColors.success.withValues(alpha: 0.1);
-        textColor = AppColors.success;
-        break;
-      case 'cancelled':
-        backgroundColor = AppColors.error.withValues(alpha: 0.1);
-        textColor = AppColors.error;
-        break;
-      default:
-        backgroundColor = AppColors.lightBackground;
-        textColor = AppColors.lightTextSecondary;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: Spacing.sm,
-        vertical: Spacing.xs,
-      ),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(Spacing.radiusSm),
-      ),
-      child: Text(
-        project.statusLabel,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.bold,
-          color: textColor,
-        ),
-      ),
-    );
-  }
-
-  String _formatDate(String dateString) {
-    try {
-      final date = DateTime.parse(dateString);
-      final now = DateTime.now();
-      final diff = now.difference(date);
-
-      if (diff.inDays == 0) {
-        return 'Aujourd\'hui';
-      } else if (diff.inDays == 1) {
-        return 'Hier';
-      } else if (diff.inDays < 7) {
-        return 'Il y a ${diff.inDays} jours';
-      } else {
-        return '${date.day}/${date.month}/${date.year}';
-      }
-    } catch (e) {
-      return dateString; // Fallback to original string if parsing fails
-    }
   }
 }

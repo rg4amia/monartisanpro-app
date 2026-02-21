@@ -41,7 +41,9 @@ class ProjectController extends Controller
     public function myProjects(Request $request)
     {
         $user = $request->user();
-        $query = Project::with(['client', 'artisan', 'trade']);
+
+        $query = Project::with(['client', 'artisan', 'trade'])
+            ->withCount('quotes');
 
         // Filter by user role
         if ($user->role === 'client') {
@@ -50,14 +52,23 @@ class ProjectController extends Controller
             $query->where('artisan_id', $user->id);
         }
 
-        // Filter by status if provided
-        if ($request->has('status')) {
+        // Support ?statuses[]=pending&statuses[]=awaiting_quotes (array)
+        // or ?status=pending (single value — retro-compatible)
+        if ($request->filled('statuses') && is_array($request->statuses)) {
+            $query->whereIn('status', $request->statuses);
+        } elseif ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
         $projects = $query->orderBy('created_at', 'desc')->get();
 
-        return response()->json($projects);
+        // Sync withCount result to the field name expected by the mobile app
+        $projects->each(fn ($p) => $p->quote_count = $p->quotes_count ?? 0);
+
+        return response()->json([
+            'success' => true,
+            'data'    => $projects,
+        ]);
     }
 
     /**
