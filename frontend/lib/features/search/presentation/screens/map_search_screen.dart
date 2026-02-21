@@ -64,7 +64,7 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
     if (userPosition != null) {
       try {
         // Load user marker from SVG
-        final userIconBytes = await SvgMarkerHelper.getUserMarker(size: 150);
+        final userIconBytes = await SvgMarkerHelper.getUserMarker(size: 225);
 
         _placemarkCollection!.addPlacemark()
           ..geometry = MapKitHelper.createPoint(
@@ -104,7 +104,7 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
           // Load artisan marker from SVG
           final artisanIconBytes = await SvgMarkerHelper.getArtisanMarker(
             isNearby: isNearby,
-            size: 150,
+            size: 225,
           );
 
           final artisanPlacemark = _placemarkCollection!.addPlacemark()
@@ -167,6 +167,9 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (context) => Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.75,
+        ),
         decoration: BoxDecoration(
           color: Theme.of(context).scaffoldBackgroundColor,
           borderRadius: const BorderRadius.vertical(
@@ -180,45 +183,32 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
             ),
           ],
         ),
-        padding: const EdgeInsets.all(Spacing.xl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Handle
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.lightTextTertiary,
-                  borderRadius: BorderRadius.circular(2),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(Spacing.xl),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Handle
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.lightTextTertiary,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: Spacing.lg),
+              const SizedBox(height: Spacing.lg),
 
-            // Artisan Info Card
-            Container(
-              padding: const EdgeInsets.all(Spacing.base),
-              decoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
-                borderRadius: BorderRadius.circular(Spacing.radiusMd),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Row(
+              // Header with Avatar and Name
+              Row(
                 children: [
-                  // Avatar with status indicator
                   Stack(
                     children: [
                       CircleAvatar(
-                        radius: 32,
+                        radius: 40,
                         backgroundColor: AppColors.lightAccentPrimary
                             .withValues(alpha: 0.1),
                         backgroundImage: artisan.avatar != null
@@ -227,7 +217,7 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                         child: artisan.avatar == null
                             ? material.Icon(
                                 Icons.person,
-                                size: 32,
+                                size: 40,
                                 color: AppColors.lightAccentPrimary,
                               )
                             : null,
@@ -237,7 +227,7 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                           right: 0,
                           bottom: 0,
                           child: Container(
-                            padding: const EdgeInsets.all(4),
+                            padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
                               color: AppColors.goldenMarker,
                               shape: BoxShape.circle,
@@ -246,7 +236,7 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                             child: const material.Icon(
                               Icons.location_on,
                               color: Colors.white,
-                              size: 12,
+                              size: 14,
                             ),
                           ),
                         ),
@@ -259,80 +249,135 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                       children: [
                         Text(
                           artisan.name,
-                          style: Theme.of(context).textTheme.titleLarge
-                              ?.copyWith(fontWeight: FontWeight.w600),
-                          maxLines: 1,
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.lightAccentSecondary
-                                    .withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                artisan.tradeName ?? 'Artisan',
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(
-                                      color: AppColors.lightAccentSecondary,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                              ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.lightAccentSecondary.withValues(
+                              alpha: 0.15,
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            material.Icon(
-                              Icons.location_on,
-                              size: 16,
-                              color: artisan.isNearby
-                                  ? AppColors.goldenMarker
-                                  : AppColors.lightTextSecondary,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              artisan.formattedDistance,
-                              style: Theme.of(context).textTheme.bodyMedium
-                                  ?.copyWith(
-                                    color: AppColors.lightTextSecondary,
-                                  ),
-                            ),
-                            if (artisan.averageRating != null) ...[
-                              const SizedBox(width: Spacing.md),
-                              const material.Icon(
-                                Icons.star,
-                                size: 16,
-                                color: AppColors.starRating,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                artisan.averageRating!.toStringAsFixed(1),
-                                style: Theme.of(context).textTheme.bodyMedium
-                                    ?.copyWith(fontWeight: FontWeight.w600),
-                              ),
-                            ],
-                          ],
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            artisan.tradeName ?? 'Artisan',
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: AppColors.lightAccentSecondary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                          ),
                         ),
                       ],
                     ),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: Spacing.lg),
+              const SizedBox(height: Spacing.lg),
 
-            // Stats Row
-            if (artisan.projectsCompleted != null ||
-                artisan.experienceYears != null)
+              // Rating and Distance Card
+              Container(
+                padding: const EdgeInsets.all(Spacing.base),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.lightAccentPrimary.withValues(alpha: 0.1),
+                      AppColors.lightAccentSecondary.withValues(alpha: 0.05),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(Spacing.radiusMd),
+                  border: Border.all(
+                    color: AppColors.lightAccentPrimary.withValues(alpha: 0.2),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          material.Icon(
+                            Icons.location_on,
+                            size: 20,
+                            color: artisan.isNearby
+                                ? AppColors.goldenMarker
+                                : AppColors.lightAccentPrimary,
+                          ),
+                          const SizedBox(width: 6),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Distance',
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: AppColors.lightTextSecondary,
+                                    ),
+                              ),
+                              Text(
+                                artisan.formattedDistance,
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (artisan.averageRating != null) ...[
+                      Container(
+                        width: 1,
+                        height: 40,
+                        color: AppColors.lightTextTertiary.withValues(
+                          alpha: 0.3,
+                        ),
+                      ),
+                      Expanded(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const material.Icon(
+                              Icons.star,
+                              size: 20,
+                              color: AppColors.starRating,
+                            ),
+                            const SizedBox(width: 6),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Note',
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: AppColors.lightTextSecondary,
+                                      ),
+                                ),
+                                Text(
+                                  '${artisan.averageRating!.toStringAsFixed(1)}/5',
+                                  style: Theme.of(context).textTheme.titleMedium
+                                      ?.copyWith(fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: Spacing.lg),
+
+              // Stats Grid
               Row(
                 children: [
                   if (artisan.projectsCompleted != null)
@@ -340,8 +385,9 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                       child: _buildStatCard(
                         context,
                         icon: Icons.check_circle_outline,
-                        label: 'Projets',
+                        label: 'Projets complétés',
                         value: artisan.projectsCompleted.toString(),
+                        color: AppColors.success,
                       ),
                     ),
                   if (artisan.projectsCompleted != null &&
@@ -352,42 +398,111 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
                       child: _buildStatCard(
                         context,
                         icon: Icons.work_outline,
-                        label: 'Expérience',
-                        value: '${artisan.experienceYears} ans',
+                        label: 'Années d\'expérience',
+                        value: artisan.experienceYears.toString(),
+                        color: AppColors.lightAccentSecondary,
                       ),
                     ),
                 ],
               ),
-            if (artisan.projectsCompleted != null ||
-                artisan.experienceYears != null)
-              const SizedBox(height: Spacing.lg),
+              if (artisan.reviewsCount != null &&
+                  artisan.reviewsCount! > 0) ...[
+                const SizedBox(height: Spacing.md),
+                _buildStatCard(
+                  context,
+                  icon: Icons.rate_review_outlined,
+                  label: 'Avis clients',
+                  value: artisan.reviewsCount.toString(),
+                  color: AppColors.lightAccentPrimary,
+                  fullWidth: true,
+                ),
+              ],
 
-            // View Profile Button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  Get.back();
-                  Get.to(() => ArtisanProfileScreen(artisanId: artisan.id));
-                },
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: Spacing.base),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(Spacing.radiusMd),
+              // Bio/Description if available
+              if (artisan.bio != null && artisan.bio!.isNotEmpty) ...[
+                const SizedBox(height: Spacing.lg),
+                Text(
+                  'À propos',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
-                    material.Icon(Icons.person_outline),
-                    SizedBox(width: Spacing.sm),
-                    Text('Voir le profil complet'),
-                  ],
+                const SizedBox(height: Spacing.sm),
+                Container(
+                  padding: const EdgeInsets.all(Spacing.base),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).cardColor,
+                    borderRadius: BorderRadius.circular(Spacing.radiusMd),
+                    border: Border.all(
+                      color: AppColors.lightTextTertiary.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  child: Text(
+                    artisan.bio!,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.lightTextSecondary,
+                      height: 1.5,
+                    ),
+                    maxLines: 4,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
+              ],
+
+              const SizedBox(height: Spacing.xl),
+
+              // Action Buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        // TODO: Implement contact action
+                        Get.snackbar(
+                          'Contact',
+                          'Fonctionnalité à venir',
+                          snackPosition: SnackPosition.BOTTOM,
+                        );
+                      },
+                      icon: const material.Icon(Icons.phone_outlined),
+                      label: const Text('Contacter'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: Spacing.base,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(Spacing.radiusMd),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: Spacing.md),
+                  Expanded(
+                    flex: 2,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Get.back();
+                        Get.to(
+                          () => ArtisanProfileScreen(artisanId: artisan.id),
+                        );
+                      },
+                      icon: const material.Icon(Icons.person_outline),
+                      label: const Text('Voir le profil'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: Spacing.base,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(Spacing.radiusMd),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
-            SizedBox(height: MediaQuery.of(context).padding.bottom),
-          ],
+              SizedBox(height: MediaQuery.of(context).padding.bottom),
+            ],
+          ),
         ),
       ),
     );
@@ -398,34 +513,91 @@ class _MapSearchScreenState extends State<MapSearchScreen> {
     required IconData icon,
     required String label,
     required String value,
+    Color? color,
+    bool fullWidth = false,
   }) {
     return Container(
-      padding: const EdgeInsets.all(Spacing.md),
+      width: fullWidth ? double.infinity : null,
+      padding: const EdgeInsets.all(Spacing.base),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(Spacing.radiusMd),
         border: Border.all(
-          color: AppColors.lightTextTertiary.withValues(alpha: 0.2),
+          color: (color ?? AppColors.lightAccentPrimary).withValues(alpha: 0.3),
         ),
       ),
-      child: Column(
-        children: [
-          material.Icon(icon, size: 24, color: AppColors.lightAccentPrimary),
-          const SizedBox(height: Spacing.sm),
-          Text(
-            value,
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColors.lightTextSecondary,
+      child: fullWidth
+          ? Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: (color ?? AppColors.lightAccentPrimary).withValues(
+                      alpha: 0.1,
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: material.Icon(
+                    icon,
+                    size: 24,
+                    color: color ?? AppColors.lightAccentPrimary,
+                  ),
+                ),
+                const SizedBox(width: Spacing.base),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        label,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.lightTextSecondary,
+                        ),
+                      ),
+                      Text(
+                        value,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            )
+          : Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: (color ?? AppColors.lightAccentPrimary).withValues(
+                      alpha: 0.1,
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: material.Icon(
+                    icon,
+                    size: 24,
+                    color: color ?? AppColors.lightAccentPrimary,
+                  ),
+                ),
+                const SizedBox(height: Spacing.sm),
+                Text(
+                  value,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  label,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.lightTextSecondary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ),
-          ),
-        ],
-      ),
     );
   }
 

@@ -18,14 +18,14 @@ Project _$ProjectFromJson(Map<String, dynamic> json) => Project(
       budgetMax: (json['budget_max'] as num?)?.toDouble(),
       finalAmount: (json['final_amount'] as num?)?.toDouble(),
       expectedCompletionDate: json['expected_completion_date'] as String?,
-      quoteCount: (json['quote_count'] as num).toInt(),
+      quoteCount: (json['quote_count'] as num?)?.toInt() ?? 0,
       createdAt: json['created_at'] as String,
       client: ProjectUser.fromJson(json['client'] as Map<String, dynamic>),
       artisan: json['artisan'] == null
           ? null
           : ProjectUser.fromJson(json['artisan'] as Map<String, dynamic>),
       trade: ProjectTrade.fromJson(json['trade'] as Map<String, dynamic>),
-    );
+    )..quotes = json['quotes'] as List<dynamic>?;
 
 Map<String, dynamic> _$ProjectToJson(Project instance) => <String, dynamic>{
       'id': instance.id,
@@ -44,6 +44,7 @@ Map<String, dynamic> _$ProjectToJson(Project instance) => <String, dynamic>{
       'client': instance.client,
       'artisan': instance.artisan,
       'trade': instance.trade,
+      'quotes': instance.quotes,
     };
 
 ProjectUser _$ProjectUserFromJson(Map<String, dynamic> json) => ProjectUser(
