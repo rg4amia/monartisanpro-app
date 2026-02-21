@@ -11,7 +11,9 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize Yandex MapKit
-  AndroidYandexMap.useAndroidViewSurface = false;
+  // API key is configured in AndroidManifest.xml
+  // Use Android View Surface for better compatibility
+  AndroidYandexMap.useAndroidViewSurface = true;
 
   // Initialize dependency injection
   AppBindings().dependencies();
