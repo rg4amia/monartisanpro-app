@@ -82,6 +82,7 @@ class _ProjectListScreenState extends State<ProjectListScreen>
                 fontWeight: FontWeight.w600,
               ),
               unselectedLabelStyle: const TextStyle(fontSize: 12),
+              tabAlignment: TabAlignment.fill,
               tabs: List.generate(4, (i) {
                 final count = _countForTab(i, all);
                 final badgeColor = switch (i) {
@@ -93,8 +94,14 @@ class _ProjectListScreenState extends State<ProjectListScreen>
                 return Tab(
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(_tabLabels[i]),
+                      Flexible(
+                        child: Text(
+                          _tabLabels[i],
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                       if (count > 0 && i > 0) ...[
                         const SizedBox(width: 4),
                         Container(
