@@ -69,36 +69,11 @@ jobs:
           fi
           echo "✅ Assets built successfully"
 
-      - name: Create optimized deployment archive
+      - name: Prepare deployment artifacts
         working-directory: ./backend
         run: |
-          echo "📦 Creating optimized archive..."
-          tar -czf ../deploy.tar.gz \
-            --exclude='node_modules' \
-            --exclude='.git' \
-            --exclude='.github' \
-            --exclude='.vscode' \
-            --exclude='.kiro' \
-            --exclude='tests' \
-            --exclude='.env' \
-            --exclude='.env.example' \
-            --exclude='*.log' \
-            --exclude='*.md' \
-            --exclude='README.md' \
-            --exclude='CINETPAY_SANDBOX_TEST.md' \
-            --exclude='FIREBASE_FCM_TEST.md' \
-            --exclude='SMS_OTP_SANDBOX_TEST.md' \
-            --exclude='package-lock.json' \
-            --exclude='composer.lock' \
-            --exclude='deploy.tar.gz' \
-            --exclude='deploy-temp' \
-            --exclude='storage/logs/*' \
-            --exclude='bootstrap/cache/*' \
-            --exclude='.editorconfig' \
-            --exclude='.gitattributes' \
-            --exclude='.gitignore' \
-            .
-          echo "✅ Archive created ($(du -h ../deploy.tar.gz | cut -f1))"
+          echo "📦 Preparing deployment artifacts..."
+          echo "✅ Build artifacts ready for deployment"
 
       - name: Test SSH Connection
         uses: appleboy/ssh-action@master
@@ -116,7 +91,7 @@ jobs:
             echo "Home: $HOME"
             echo "PHP: $(php -v | head -n 1)"
 
-      - name: Deploy to Hostinger
+      - name: Deploy via Git and configure Laravel
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOST }}
@@ -126,76 +101,68 @@ jobs:
           command_timeout: 30m
           timeout: 60s
           script: |
-            echo "🚀 Starting deployment on server..."
+            echo "� Starting Git-based deployment..."
 
-            DEPLOY_PATH="/home/${{ secrets.USERNAME }}/domains/prosartisan.net/public_html/monartisanpro-app/backend"
+            DEPLOY_PATH="/home/${{ secrets.USERNAME }}/domains/prosartisan.net/public_html/monartisanpro-app"
+            BACKEND_PATH="$DEPLOY_PATH/backend"
             PUBLIC_HTML="/home/${{ secrets.USERNAME }}/domains/prosartisan.net/public_html"
-
-            # Backup existing installation
-            if [ -d "$DEPLOY_PATH" ]; then
-              BACKUP_DIR="/home/${{ secrets.USERNAME }}/backups/backup-$(date +%Y%m%d-%H%M%S)"
-              mkdir -p /home/${{ secrets.USERNAME }}/backups
-              cp -r "$DEPLOY_PATH" "$BACKUP_DIR"
-              echo "✅ Backup created at $BACKUP_DIR"
-            fi
-
-            # Prepare directory
-            mkdir -p "$DEPLOY_PATH"
+            BRANCH="${{ github.ref_name }}"
 
             # Backup current .env
-            if [ -f "$DEPLOY_PATH/.env" ]; then
-              cp "$DEPLOY_PATH/.env" /home/${{ secrets.USERNAME }}/.env.backup
+            if [ -f "$BACKEND_PATH/.env" ]; then
+              cp "$BACKEND_PATH/.env" /home/${{ secrets.USERNAME }}/.env.backup
               echo "✅ .env backed up"
             fi
 
-      - name: Upload archive
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.HOST }}
-          port: ${{ secrets.PORT }}
-          username: ${{ secrets.USERNAME }}
-          password: ${{ secrets.SERVER_PASSWORD }}
-          source: "deploy.tar.gz"
-          target: "/home/${{ secrets.USERNAME }}/"
-          command_timeout: 30m
-          timeout: 60s
+            # Initialize or update Git repository
+            if [ ! -d "$DEPLOY_PATH/.git" ]; then
+              echo "📥 Cloning repository for first time..."
+              mkdir -p "$DEPLOY_PATH"
+              cd "$DEPLOY_PATH"
+              git clone --branch $BRANCH https://github.com/${{ github.repository }}.git .
+            else
+              echo "🔄 Updating existing repository..."
+              cd "$DEPLOY_PATH"
+              
+              # Stash any local changes
+              git stash
+              
+              # Fetch latest changes
+              git fetch origin
+              
+              # Reset to latest commit
+              git reset --hard origin/$BRANCH
+              
+              # Pull latest changes
+              git pull origin $BRANCH
+            fi
 
-      - name: Extract and configure Laravel
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.HOST }}
-          port: ${{ secrets.PORT }}
-          username: ${{ secrets.USERNAME }}
-          password: ${{ secrets.SERVER_PASSWORD }}
-          command_timeout: 30m
-          timeout: 60s
-          script: |
-            echo "🔧 Configuring Laravel application..."
+            echo "✅ Git update completed"
 
-            DEPLOY_PATH="/home/${{ secrets.USERNAME }}/domains/prosartisan.net/public_html/monartisanpro-app/backend"
-            PUBLIC_HTML="/home/${{ secrets.USERNAME }}/domains/prosartisan.net/public_html"
-
-            # Extract archive
-            cd "$DEPLOY_PATH"
-
-            # Remove old files but keep storage and .env
-            find . -mindepth 1 -maxdepth 1 ! -name 'storage' ! -name '.env' -exec rm -rf {} +
-
-            # Extract new files
-            tar -xzf /home/${{ secrets.USERNAME }}/deploy.tar.gz -C "$DEPLOY_PATH"
-            rm /home/${{ secrets.USERNAME }}/deploy.tar.gz
+            # Navigate to backend
+            cd "$BACKEND_PATH"
 
             # Restore .env
             if [ -f "/home/${{ secrets.USERNAME }}/.env.backup" ]; then
-              cp /home/${{ secrets.USERNAME }}/.env.backup "$DEPLOY_PATH/.env"
+              cp /home/${{ secrets.USERNAME }}/.env.backup "$BACKEND_PATH/.env"
               rm /home/${{ secrets.USERNAME }}/.env.backup
               echo "✅ .env restored"
             elif [ -f "/home/${{ secrets.USERNAME }}/.env.prod" ]; then
-              cp /home/${{ secrets.USERNAME }}/.env.prod "$DEPLOY_PATH/.env"
+              cp /home/${{ secrets.USERNAME }}/.env.prod "$BACKEND_PATH/.env"
               echo "✅ Production .env copied"
             else
               echo "⚠️  No .env file found - please configure manually"
             fi
+
+            # Install dependencies
+            echo "📦 Installing Composer dependencies..."
+            composer install --no-dev --optimize-autoloader --no-interaction
+
+            echo "📦 Installing Node dependencies..."
+            npm ci
+
+            echo "🔨 Building assets..."
+            npm run build
 
             # Setup Laravel directories and permissions
             mkdir -p storage/{app/{public,private},framework/{cache/data,sessions,views,testing},logs}
@@ -215,9 +182,6 @@ jobs:
 
             # Run migrations
             php artisan migrate --force || echo "⚠️  Migration issues - check manually"
-
-            # Only seed on first deployment or if explicitly needed
-            # php artisan db:seed --force 2>/dev/null || echo "⚠️  Seeder skipped"
 
             # Cache optimization
             php artisan config:clear
@@ -245,3 +209,5 @@ jobs:
 
             echo "✅ Deployment completed successfully!"
             echo "🌐 Site available at: https://prosartisan.net"
+            echo "📌 Deployed branch: $BRANCH"
+            echo "📌 Commit: ${{ github.sha }}"
