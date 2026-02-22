@@ -23,8 +23,17 @@ class ChatController extends GetxController {
   Future<void> fetchConversations() async {
     try {
       isLoading.value = true;
-      final result = await _messageService.getConversations();
-      conversations.value = result;
+      final response = await _messageService.getConversations();
+
+      if (response.success && response.data != null) {
+        conversations.value = response.data!;
+      } else {
+        Get.snackbar(
+          'Erreur',
+          response.message ?? 'Impossible de charger les conversations',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      }
     } catch (e) {
       Get.snackbar(
         'Erreur',
@@ -41,8 +50,17 @@ class ChatController extends GetxController {
     try {
       isLoading.value = true;
       currentProjectId.value = projectId;
-      final result = await _messageService.getProjectMessages(projectId);
-      currentMessages.value = result;
+      final response = await _messageService.getProjectMessages(projectId);
+
+      if (response.success && response.data != null) {
+        currentMessages.value = response.data!;
+      } else {
+        Get.snackbar(
+          'Erreur',
+          response.message ?? 'Impossible de charger les messages',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      }
     } catch (e) {
       Get.snackbar(
         'Erreur',
@@ -60,20 +78,31 @@ class ChatController extends GetxController {
 
     try {
       isSendingMessage.value = true;
-      final newMessage = await _messageService.sendMessage(
-        projectId,
-        message.trim(),
+      final response = await _messageService.sendMessage(
+        projectId: projectId,
+        message: message.trim(),
       );
 
-      // Add message to current messages if we're viewing this conversation
-      if (currentProjectId.value == projectId) {
-        currentMessages.add(newMessage);
+      if (response.success && response.data != null) {
+        final newMessage = response.data!;
+
+        // Add message to current messages if we're viewing this conversation
+        if (currentProjectId.value == projectId) {
+          currentMessages.add(newMessage);
+        }
+
+        // Update conversation's last message
+        _updateConversationLastMessage(projectId, newMessage);
+
+        return true;
+      } else {
+        Get.snackbar(
+          'Erreur',
+          response.message ?? 'Impossible d\'envoyer le message',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return false;
       }
-
-      // Update conversation's last message
-      _updateConversationLastMessage(projectId, newMessage);
-
-      return true;
     } catch (e) {
       Get.snackbar(
         'Erreur',
@@ -96,21 +125,32 @@ class ChatController extends GetxController {
 
     try {
       isSendingMessage.value = true;
-      final newMessage = await _messageService.sendMessage(
-        projectId,
-        message.trim(),
-        attachmentPaths: attachmentPaths,
+      final response = await _messageService.sendMessage(
+        projectId: projectId,
+        message: message.trim(),
+        attachments: attachmentPaths,
       );
 
-      // Add message to current messages if we're viewing this conversation
-      if (currentProjectId.value == projectId) {
-        currentMessages.add(newMessage);
+      if (response.success && response.data != null) {
+        final newMessage = response.data!;
+
+        // Add message to current messages if we're viewing this conversation
+        if (currentProjectId.value == projectId) {
+          currentMessages.add(newMessage);
+        }
+
+        // Update conversation's last message
+        _updateConversationLastMessage(projectId, newMessage);
+
+        return true;
+      } else {
+        Get.snackbar(
+          'Erreur',
+          response.message ?? 'Impossible d\'envoyer le message',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return false;
       }
-
-      // Update conversation's last message
-      _updateConversationLastMessage(projectId, newMessage);
-
-      return true;
     } catch (e) {
       Get.snackbar(
         'Erreur',

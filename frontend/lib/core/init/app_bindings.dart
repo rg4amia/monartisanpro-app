@@ -34,10 +34,7 @@ class AppBindings extends Bindings {
     Get.lazyPut<ScoreService>(() => ScoreService(), fenix: true);
     Get.lazyPut<MilestoneService>(() => MilestoneService(), fenix: true);
     Get.lazyPut<DisputeService>(() => DisputeService(), fenix: true);
-    Get.lazyPut<MessageService>(
-      () => MessageService(Get.find<DioClient>()),
-      fenix: true,
-    );
+    Get.lazyPut<MessageService>(() => MessageService(), fenix: true);
 
     // Register controllers as permanent singletons
     // This ensures they're available throughout the app lifecycle
