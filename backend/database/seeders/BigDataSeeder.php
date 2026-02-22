@@ -21,9 +21,17 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use MatanYadaev\EloquentSpatial\Objects\Point;
+use Faker\Factory as FakerFactory;
 
 class BigDataSeeder extends Seeder
 {
+    private $faker;
+
+    public function __construct()
+    {
+        $this->faker = FakerFactory::create('fr_FR');
+    }
+
     private array $firstNames = [
         'Kouassi',
         'Koné',
@@ -342,7 +350,7 @@ class BigDataSeeder extends Seeder
                 'artisan_id' => in_array($status, ['payment_pending', 'in_progress']) ? $artisans[array_rand($artisans)]->id : null,
                 'trade_id' => $trade->id,
                 'title' => $title,
-                'description' => "Travaux de {$trade->name} - " . \fake()->sentence(10),
+                'description' => "Travaux de {$trade->name} - " . $this->faker->sentence(10),
                 'location' => new Point($zone[1] + (rand(-100, 100) / 10000), $zone[2] + (rand(-100, 100) / 10000)),
                 'address' => $zone[0] . ', Abidjan',
                 'budget_min' => rand(5, 50) * 10000,
@@ -399,7 +407,7 @@ class BigDataSeeder extends Seeder
                         'labor_percentage' => ($laborAmount / $totalAmount) * 100,
                         'valid_until' => now()->addDays(rand(5, 14)),
                         'status' => ['sent', 'sent', 'sent', 'accepted', 'rejected'][array_rand(['sent', 'sent', 'sent', 'accepted', 'rejected'])],
-                        'notes' => \fake()->sentence(15),
+                        'notes' => $this->faker->sentence(15),
                         'created_at' => $project->created_at->addHours(rand(1, 48)),
                     ]);
 
@@ -414,7 +422,7 @@ class BigDataSeeder extends Seeder
                         QuoteItem::create([
                             'quote_id' => $quote->id,
                             'type' => $type,
-                            'description' => \fake()->words(3, true),
+                            'description' => $this->faker->words(3, true),
                             'quantity' => $quantity,
                             'unit' => ['m', 'm²', 'unité', 'lot', 'forfait'][array_rand(['m', 'm²', 'unité', 'lot', 'forfait'])],
                             'unit_price' => $unitPrice,
@@ -460,7 +468,7 @@ class BigDataSeeder extends Seeder
                 'artisan_id' => $artisan->id,
                 'trade_id' => $trade->id,
                 'title' => $this->projectTitles[array_rand($this->projectTitles)],
-                'description' => "Travaux de {$trade->name} - " . \fake()->sentence(10),
+                'description' => "Travaux de {$trade->name} - " . $this->faker->sentence(10),
                 'location' => new Point($zone[1], $zone[2]),
                 'address' => $zone[0] . ', Abidjan',
                 'status' => 'completed',
@@ -524,7 +532,7 @@ class BigDataSeeder extends Seeder
                 $milestone = Milestone::create([
                     'project_id' => $project->id,
                     'title' => "Étape " . ($m + 1),
-                    'description' => \fake()->sentence(8),
+                    'description' => $this->faker->sentence(8),
                     'labor_percentage' => $percentagePerMilestone,
                     'sequence_order' => $m + 1,
                     'status' => 'validated',
@@ -553,7 +561,7 @@ class BigDataSeeder extends Seeder
                     'artisan_id' => $artisan->id,
                     'client_id' => $client->id,
                     'rating' => $rating,
-                    'comment' => \fake()->sentence(20),
+                    'comment' => $this->faker->sentence(20),
                     'quality_rating' => rand($rating - 1, 5),
                     'communication_rating' => rand($rating - 1, 5),
                     'timeliness_rating' => rand($rating - 1, 5),
@@ -596,7 +604,7 @@ class BigDataSeeder extends Seeder
                     ProjectMessage::create([
                         'project_id' => $project->id,
                         'sender_id' => $senderId,
-                        'message' => \fake()->sentence(rand(5, 20)),
+                        'message' => $this->faker->sentence(rand(5, 20)),
                         'read_at' => rand(0, 1) ? now()->subDays(rand(0, 5)) : null,
                         'created_at' => $project->created_at->addHours(rand(1, 100)),
                     ]);
