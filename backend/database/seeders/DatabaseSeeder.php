@@ -14,7 +14,7 @@ class DatabaseSeeder extends Seeder
     {
 
         User::firstOrCreate(
-            ['email' => 'admin@prosartisan.com'],
+            ['email' => 'admin@prosartisan.net'],
             [
                 'name' => 'Admin',
                 'password' => bcrypt('password'),
