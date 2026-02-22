@@ -25,6 +25,7 @@ use Faker\Factory as Faker;
 
 class BigDataSeeder extends Seeder
 {
+    
     private $faker;
 
     public function __construct()
