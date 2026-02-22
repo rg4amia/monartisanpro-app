@@ -11,7 +11,7 @@ class MessageController extends GetxController {
   final RxBool isLoading = false.obs;
   final RxBool isSending = false.obs;
   final RxString errorMessage = ''.obs;
-  final RxInt? currentProjectId = Rx<int?>(null);
+  final Rxn<int> currentProjectId = Rxn<int>();
 
   /// Get total unread count
   int get totalUnreadCount =>

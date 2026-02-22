@@ -3,19 +3,16 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
     /**
      * Seed the application's database.
      */
     public function run(): void
     {
-        // Create admin user for Filament
+
         User::firstOrCreate(
             ['email' => 'admin@prosartisan.com'],
             [
@@ -28,10 +25,12 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // Seed sectors and trades from CSV
         $this->call([
             SectorsTradesSeeder::class,
-            TestDataSeeder::class,
+            BigDataSeeder::class
+            // Uncomment one of the following:
+            // TestDataSeeder::class,  // Small dataset for testing
+            // BigDataSeeder::class,   // Large dataset for performance testing
         ]);
     }
 }
