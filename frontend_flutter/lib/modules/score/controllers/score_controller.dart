@@ -23,7 +23,8 @@ class ScoreController extends GetxController {
   Future<void> loadScore(int artisanId) async {
     isLoading.value = true;
     try {
-      final data = await _repo.getScore(artisanId);
+      final res = await _repo.getScore(artisanId);
+      final data = (res['data'] as Map<String, dynamic>?) ?? res;
       score.value = (data['scoreNzassa'] as num?)?.toInt() ?? 0;
       fiabilite.value = (data['fiabilite'] as num?)?.toDouble() ?? 0;
       integrite.value = (data['integrite'] as num?)?.toDouble() ?? 0;

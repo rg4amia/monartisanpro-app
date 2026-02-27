@@ -24,6 +24,9 @@ abstract class Routes {
   static const notifications = '/notifications';
   static const settings = '/settings';
 
+  // Map
+  static const artisanMap = '/artisan-map';
+
   // Modals
   static const rating = '/rating';
   static const litige = '/litige';
