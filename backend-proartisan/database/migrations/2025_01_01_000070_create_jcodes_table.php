@@ -20,12 +20,12 @@ return new class extends Migration
             $table->bigInteger('montant');
             $table->enum('statut', ['actif', 'utilise', 'expire'])->default('actif');
             $table->timestamp('scanned_at')->nullable();
-            $table->timestamp('expires_at');
+            $table->dateTime('expires_at'); // dateTime évite les restrictions strict_mode MySQL 5.7
             $table->timestamps();
         });
 
-        // position_scan nullable → pas d'index spatial
-        DB::statement('ALTER TABLE jcodes ADD COLUMN position_scan POINT SRID 4326 NULL AFTER statut');
+        // position_scan nullable → pas d'index spatial (MySQL 5.7 : SRID non supporté dans ALTER TABLE)
+        DB::statement('ALTER TABLE jcodes ADD COLUMN position_scan POINT NULL AFTER statut');
     }
 
     public function down(): void

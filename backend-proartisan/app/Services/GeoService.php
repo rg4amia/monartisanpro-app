@@ -22,7 +22,7 @@ class GeoService
                 u.score_nzassa,
                 ST_X(u.position) AS lng,
                 ST_Y(u.position) AS lat,
-                ST_Distance_Sphere(u.position, ST_SRID(POINT(?, ?), 4326)) AS distance_metres,
+                ST_Distance_Sphere(u.position, POINT(?, ?)) AS distance_metres,
                 ap.photo_url,
                 ap.bio,
                 ap.experience_years,
@@ -35,7 +35,7 @@ class GeoService
             WHERE u.role = 'artisan'
               AND u.kyc_status = 'actif'
               AND u.position IS NOT NULL
-              AND ST_Distance_Sphere(u.position, ST_SRID(POINT(?, ?), 4326)) <= ?
+              AND ST_Distance_Sphere(u.position, POINT(?, ?)) <= ?
             ORDER BY u.score_nzassa DESC, distance_metres ASC
         ", [$lng, $lat, $lng, $lat, $radiusMeters]);
 
@@ -66,7 +66,7 @@ class GeoService
     {
         $row = DB::selectOne("
             SELECT ST_Distance_Sphere(
-                ST_SRID(POINT(?, ?), 4326),
+                POINT(?, ?),
                 fa.position
             ) AS distance_metres
             FROM fournisseurs_agrees fa

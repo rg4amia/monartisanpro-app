@@ -28,7 +28,7 @@ class FournisseurAgree extends Model
     public function setPosition(float $lat, float $lng): void
     {
         DB::statement(
-            'UPDATE fournisseurs_agrees SET position = ST_SRID(POINT(?, ?), 4326) WHERE id = ?',
+            'UPDATE fournisseurs_agrees SET position = POINT(?, ?) WHERE id = ?',
             [$lng, $lat, $this->id]
         );
     }

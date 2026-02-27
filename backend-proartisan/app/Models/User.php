@@ -100,12 +100,12 @@ class User extends Authenticatable
         return $this->role === 'fournisseur';
     }
 
-    // ── Méthodes GPS (SQL brut, SRID 4326) ──────────────────────────────────
+    // ── Méthodes GPS (SQL brut, compatible MySQL 5.7) ────────────────────────
 
     public function setPosition(float $lat, float $lng): void
     {
         DB::statement(
-            'UPDATE users SET position = ST_SRID(POINT(?, ?), 4326) WHERE id = ?',
+            'UPDATE users SET position = POINT(?, ?) WHERE id = ?',
             [$lng, $lat, $this->id]
         );
     }
