@@ -14,13 +14,18 @@ class HomeController extends GetxController {
   final artisans = <ArtisanModel>[].obs;
   final activeMissions = <MissionModel>[].obs;
   final isLoading = false.obs;
+  final isMapLoading = false.obs;
   final role = Rx<String?>(null);
   final userName = ''.obs;
   final walletMateriaux = 0.obs;
   final walletMo = 0.obs;
+  final selectedCategory = Rx<String?>(null);
 
   double? _lat;
   double? _lng;
+
+  double? get userLat => _lat;
+  double? get userLng => _lng;
 
   @override
   void onInit() {
@@ -46,6 +51,25 @@ class HomeController extends GetxController {
       // keep empty state
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  /// Recherche par catégorie — utilisé par carte et chips home
+  Future<void> searchByCategory(String? category) async {
+    selectedCategory.value = category;
+    isMapLoading.value = true;
+    try {
+      await _getLocation();
+      if (_lat == null) return;
+      artisans.value = await _artisanRepo.getNearby(
+        lat: _lat!,
+        lng: _lng!,
+        sectorId: category,
+      );
+    } catch (_) {
+      // garder l'état précédent
+    } finally {
+      isMapLoading.value = false;
     }
   }
 

@@ -29,6 +29,8 @@ import '../../modules/score/bindings/score_binding.dart';
 import '../../modules/score/views/score_screen.dart';
 import '../../modules/settings/bindings/settings_binding.dart';
 import '../../modules/settings/views/settings_screen.dart';
+import '../../modules/home/bindings/home_binding.dart';
+import '../../modules/home/views/artisan_map_screen.dart';
 import 'app_routes.dart';
 
 class AppPages {
@@ -143,6 +145,13 @@ class AppPages {
       name: Routes.litige,
       page: () => const LitigeScreen(),
       binding: LitigeBinding(),
+    ),
+
+    // Carte artisans
+    GetPage(
+      name: Routes.artisanMap,
+      page: () => const ArtisanMapScreen(),
+      binding: HomeBinding(),
     ),
   ];
 }

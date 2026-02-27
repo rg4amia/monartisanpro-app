@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../core/theme/app_colors.dart';
 import '../../home/views/artisan_home_screen.dart';
 import '../../home/views/client_home_screen.dart';
 import '../../home/views/supplier_home_screen.dart';
