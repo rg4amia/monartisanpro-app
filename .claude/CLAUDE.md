@@ -26,7 +26,7 @@ Tu m'assistes sur le développement de **ProsArtisan**, une plateforme marketpla
 |---|---|
 | Backend API | Laravel 11 (PHP 8.3) |
 | Base de données | **MySQL 8.0+ avec extension spatiale (InnoDB + SRID 4326)** |
-| App mobile | Flutter (Android prioritaire) |
+| App mobile | prosartisan-marketplace (Android prioritaire) |
 | IA | Google Gemini API |
 | SMS / OTP | Infobip ou Twilio |
 | Paiements | Wave CI API + Orange Money CI API |
@@ -299,7 +299,7 @@ SELECT ST_X(position) AS lng, ST_Y(position) AS lat FROM users WHERE id = :id;
 - Respecte l'architecture **Service Layer** : logique métier dans `app/Services/`, pas dans les controllers
 - Pour les jobs asynchrones (SMS, virements) : utilise les **Laravel Queues**
 - Les messages d'erreur et de validation sont toujours en **français**
-- Quand tu génères du Flutter : cible **Android en priorité**, supporte le mode hors-ligne pour les zones à faible connectivité
+- Quand tu génères du prosartisan-marketplace : cible **Android en priorité**, supporte le mode hors-ligne pour les zones à faible connectivité
 
 ---
 
