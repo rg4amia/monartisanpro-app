@@ -13,24 +13,59 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   final _c = Get.find<AuthController>();
   late final AnimationController _shakeCtrl;
   late final Animation<double> _shakeAnim;
+  late final AnimationController _fadeCtrl;
+  late final Animation<double> _fadeAnim;
+  late final AnimationController _slideCtrl;
+  late final Animation<Offset> _slideAnim;
 
   @override
   void initState() {
     super.initState();
+
+    // Shake animation
     _shakeCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 400),
     );
     _shakeAnim = Tween<double>(begin: 0, end: 1).animate(_shakeCtrl);
+
+    // Fade animation
+    _fadeCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _fadeAnim = CurvedAnimation(
+      parent: _fadeCtrl,
+      curve: Curves.easeInOut,
+    );
+
+    // Slide animation
+    _slideCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _slideAnim = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _slideCtrl,
+      curve: Curves.easeOutCubic,
+    ));
+
+    // Start animations
+    _fadeCtrl.forward();
+    _slideCtrl.forward();
   }
 
   @override
   void dispose() {
     _shakeCtrl.dispose();
+    _fadeCtrl.dispose();
+    _slideCtrl.dispose();
     super.dispose();
   }
 
@@ -86,9 +121,7 @@ class _LoginScreenState extends State<LoginScreen>
               ),
               const SizedBox(height: 48),
 
-              Obx(() => _c.otpSent.value
-                  ? _buildOtpStep()
-                  : _buildPhoneStep()),
+              Obx(() => _c.otpSent.value ? _buildOtpStep() : _buildPhoneStep()),
 
               const SizedBox(height: 20),
               Obx(() {
@@ -128,7 +161,8 @@ class _LoginScreenState extends State<LoginScreen>
       builder: (_, child) {
         final offset = _shakeAnim.value == 0
             ? 0.0
-            : (8 * (1 - _shakeAnim.value) *
+            : (8 *
+                (1 - _shakeAnim.value) *
                 (_shakeCtrl.status == AnimationStatus.forward ? 1 : -1));
         return Transform.translate(
           offset: Offset(offset, 0),
@@ -207,9 +241,8 @@ class _LoginScreenState extends State<LoginScreen>
                     ? (_c.isLoading.value ? null : _c.sendOtp)
                     : _shake,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _c.canSendOtp
-                      ? AppColors.primary
-                      : AppColors.textMuted,
+                  backgroundColor:
+                      _c.canSendOtp ? AppColors.primary : AppColors.textMuted,
                 ),
                 child: _c.isLoading.value
                     ? const SizedBox(
