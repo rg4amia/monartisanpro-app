@@ -1,0 +1,101 @@
+import 'package:dio/dio.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:pretty_dio_logger/pretty_dio_logger.dart';
+import 'api_endpoints.dart';
+
+class ApiClient {
+  static ApiClient? _instance;
+  late final Dio _dio;
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
+
+  ApiClient._() {
+    _dio = Dio(
+      BaseOptions(
+        baseUrl: ApiEndpoints.baseUrl,
+        connectTimeout: const Duration(seconds: 15),
+        receiveTimeout: const Duration(seconds: 15),
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      ),
+    );
+
+    _dio.interceptors.addAll([
+      _AuthInterceptor(_secureStorage),
+      PrettyDioLogger(
+        requestHeader: true,
+        requestBody: true,
+        responseBody: true,
+        responseHeader: false,
+        error: true,
+        compact: true,
+      ),
+    ]);
+  }
+
+  factory ApiClient() => _instance ??= ApiClient._();
+
+  Dio get dio => _dio;
+
+  Future<Response> get(String path, {Map<String, dynamic>? params}) =>
+      _dio.get(path, queryParameters: params);
+
+  Future<Response> post(String path, {dynamic data}) =>
+      _dio.post(path, data: data);
+
+  Future<Response> put(String path, {dynamic data}) =>
+      _dio.put(path, data: data);
+
+  Future<Response> delete(String path) => _dio.delete(path);
+
+  Future<Response> postMultipart(String path, FormData formData) =>
+      _dio.post(path, data: formData);
+}
+
+class _AuthInterceptor extends Interceptor {
+  final FlutterSecureStorage _storage;
+  static const String _tokenKey = 'auth_token';
+
+  _AuthInterceptor(this._storage);
+
+  @override
+  Future<void> onRequest(
+      RequestOptions options, RequestInterceptorHandler handler) async {
+    final token = await _storage.read(key: _tokenKey);
+    if (token != null) {
+      options.headers['Authorization'] = 'Bearer $token';
+    }
+    handler.next(options);
+  }
+
+  @override
+  void onError(DioException err, ErrorInterceptorHandler handler) {
+    if (err.response?.statusCode == 401) {
+      _storage.delete(key: _tokenKey);
+    }
+    handler.next(err);
+  }
+
+  static Future<void> saveToken(String token) async {
+    const FlutterSecureStorage storage = FlutterSecureStorage();
+    await storage.write(key: _tokenKey, value: token);
+  }
+
+  static Future<void> clearToken() async {
+    const FlutterSecureStorage storage = FlutterSecureStorage();
+    await storage.delete(key: _tokenKey);
+  }
+}
+
+class TokenStorage {
+  static const FlutterSecureStorage _storage = FlutterSecureStorage();
+  static const String _tokenKey = 'auth_token';
+
+  static Future<void> save(String token) =>
+      _storage.write(key: _tokenKey, value: token);
+
+  static Future<String?> get() => _storage.read(key: _tokenKey);
+
+  static Future<void> clear() => _storage.delete(key: _tokenKey);
+}

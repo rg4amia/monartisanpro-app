@@ -1,0 +1,85 @@
+import 'package:dio/dio.dart';
+
+import '../../core/network/api_client.dart';
+import '../../core/network/api_endpoints.dart';
+import '../../core/storage/storage_service.dart';
+import '../models/user_model.dart';
+
+class AuthRepository {
+  final ApiClient _client = ApiClient();
+
+  Future<void> sendOtp(String phone) async {
+    await _client.post(ApiEndpoints.sendOtp, data: {'phone': phone});
+  }
+
+  Future<String> verifyOtp(String phone, String otp) async {
+    final res = await _client.post(ApiEndpoints.verifyOtp, data: {
+      'phone': phone,
+      'otp': otp,
+    });
+    final token = res.data['token'] as String?;
+    if (token != null) await StorageService.saveToken(token);
+    return token ?? '';
+  }
+
+  Future<UserModel> register({
+    required String phone,
+    required String role,
+    required String name,
+  }) async {
+    final res = await _client.post(ApiEndpoints.register, data: {
+      'phone': phone,
+      'role': role,
+      'name': name,
+    });
+    return UserModel.fromJson(res.data['user'] as Map<String, dynamic>);
+  }
+
+  Future<UserModel> me() async {
+    final res = await _client.get(ApiEndpoints.me);
+    return UserModel.fromJson(res.data['user'] as Map<String, dynamic>);
+  }
+
+  Future<void> logout() async {
+    try {
+      await _client.post(ApiEndpoints.logout);
+    } on DioException {
+      // ignore errors on logout
+    } finally {
+      await StorageService.clearAll();
+    }
+  }
+
+  Future<String> kycStatus() async {
+    final res = await _client.get(ApiEndpoints.kycStatus);
+    return res.data['kycStatus'] as String;
+  }
+
+  Future<void> uploadCni(String filePath) async {
+    final formData = FormData.fromMap({
+      'cni': await MultipartFile.fromFile(filePath, filename: 'cni.jpg'),
+    });
+    await _client.postMultipart(ApiEndpoints.kycUploadCni, formData);
+  }
+
+  Future<void> uploadSelfie(String filePath) async {
+    final formData = FormData.fromMap({
+      'selfie': await MultipartFile.fromFile(filePath, filename: 'selfie.jpg'),
+    });
+    await _client.postMultipart(ApiEndpoints.kycUploadSelfie, formData);
+  }
+
+  Future<void> updateLocation(int userId, double lat, double lng) async {
+    await _client.put(
+      ApiEndpoints.updateLocation(userId),
+      data: {'lat': lat, 'lng': lng},
+    );
+  }
+
+  Future<void> setRole(int userId, String role) async {
+    await _client.put(
+      ApiEndpoints.setRole(userId),
+      data: {'role': role},
+    );
+  }
+}
