@@ -1,0 +1,216 @@
+flowchart TD
+    classDef client   fill:#3498db,stroke:#2980b9,color:#fff
+    classDef artisan  fill:#e67e22,stroke:#d35400,color:#fff
+    classDef supplier fill:#27ae60,stroke:#1e8449,color:#fff
+    classDef ai       fill:#9b59b6,stroke:#8e44ad,color:#fff
+    classDef system   fill:#f1c40f,stroke:#f39c12,color:#000
+    classDef database fill:#95a5a6,stroke:#7f8c8d,color:#fff
+    classDef admin    fill:#e74c3c,stroke:#c0392b,color:#fff
+    classDef referent fill:#1abc9c,stroke:#16a085,color:#fff
+
+    %% ═══════════════════════════════════════════════
+    %% ACTEURS (entrées et sorties visibles)
+    %% ═══════════════════════════════════════════════
+
+    CLIENT([👤 CLIENT]):::client
+    ARTISAN([🔨 ARTISAN]):::artisan
+    FOURNISSEUR([🏪 FOURNISSEUR]):::supplier
+    REFERENT([🧑‍⚖️ RÉFÉRENT DE ZONE]):::referent
+    ADMIN([⚙️ ADMINISTRATEUR]):::admin
+
+    %% ═══════════════════════════════════════════════
+    %% PHASE 0 — ONBOARDING
+    %% ═══════════════════════════════════════════════
+
+    subgraph ONBOARD ["🛡️ PHASE 0 — Onboarding & Confiance"]
+        direction TB
+        REG["Inscription\n(téléphone + rôle)"]:::system
+        KYC{"KYC\nCNI + Selfie Liveness"}:::database
+        KYC_OK["✅ Profil Activé\nstatut = actif"]:::system
+        KYC_NOK["❌ Rejet / Correction\ndemandée"]:::admin
+        FOURN_REG["Enregistrement\nQuincaillerie Partenaire"]:::system
+        FOURN_OK["✅ Partenaire Agréé"]:::system
+    end
+
+    CLIENT     -->|S'inscrit| REG
+    ARTISAN    -->|S'inscrit| REG
+    FOURNISSEUR-->|Demande partenariat| FOURN_REG
+    REG --> KYC
+    KYC -->|Valide| KYC_OK
+    KYC -->|Invalide| KYC_NOK
+    KYC_NOK -->|Corrige et resoumet| KYC
+    ADMIN -->|Vérifie et valide| KYC
+    FOURN_REG --> ADMIN
+    ADMIN -->|Approuve| FOURN_OK
+
+    %% ═══════════════════════════════════════════════
+    %% PHASE 1 — DIAGNOSTIC & MATCHING
+    %% ═══════════════════════════════════════════════
+
+    subgraph MATCHING ["🔍 PHASE 1 — Diagnostic & Matching"]
+        direction TB
+        BESOIN["Décrit son besoin\n(texte + photos)"]:::client
+        GEMINI["🤖 API Gemini\nAnalyse : catégorie + urgence\n+ estimation FCFA"]:::ai
+        GEOSEARCH["PostGIS Search\nRayon ≤ 2 km\nMarqueurs dorés prioritaires\n(position floutée à 50 m)"]:::database
+        SELECT["Consulte profils\n& Score N'Zassa\nSélectionne un artisan"]:::client
+        NOTIF_A["🔔 Notification\nNouvelle demande"]:::system
+        DEVIS["Établit le Devis\nMO vs Matériaux\n+ jalons + durée"]:::artisan
+        DEVIS_OK{"Client accepte\nle devis ?"}:::client
+        DEVIS_NOK["Négocie ou\ncherche un autre artisan"]:::client
+    end
+
+    KYC_OK --> BESOIN
+    BESOIN --> GEMINI
+    GEMINI --> GEOSEARCH
+    GEOSEARCH --> SELECT
+    SELECT -->|Envoie demande| NOTIF_A
+    NOTIF_A --> ARTISAN
+    ARTISAN -->|Répond| DEVIS
+    DEVIS --> DEVIS_OK
+    DEVIS_OK -->|Oui| PAY_STEP
+    DEVIS_OK -->|Non| DEVIS_NOK
+    DEVIS_NOK -->|Relance| DEVIS
+
+    %% ═══════════════════════════════════════════════
+    %% PHASE 2 — SÉQUESTRE & PAIEMENT
+    %% ═══════════════════════════════════════════════
+
+    subgraph FINANCE ["💰 PHASE 2 — Séquestre & Flux Financiers"]
+        direction TB
+        PAY_STEP["Paye l'acompte\nWave / Orange Money"]:::client
+        CONFIRM_PAY["🔔 SMS Confirmation\nStatut mission = Financée"]:::system
+        FRAG["⚙️ Fragmentation automatique\ndu Séquestre"]:::system
+        W_MAT["💼 Wallet A — Matériaux\n(ex: 65%) — Bloqué fournisseur"]:::system
+        W_LAB["💼 Wallet B — Main d'œuvre\n(ex: 35%) — Libéré par jalons"]:::system
+        NOTIF_ART["🔔 Notification Artisan\nMission financée, démarrez"]:::system
+    end
+
+    PAY_STEP --> CONFIRM_PAY
+    CONFIRM_PAY --> FRAG
+    FRAG --> W_MAT
+    FRAG --> W_LAB
+    FRAG --> NOTIF_ART
+    NOTIF_ART --> ARTISAN
+
+    %% ═══════════════════════════════════════════════
+    %% PHASE 3 — JETON MATÉRIEL
+    %% ═══════════════════════════════════════════════
+
+    subgraph LOGISTIQUE ["🛒 PHASE 3 — Jeton Matériel & Anti-Fraude"]
+        direction TB
+        GEN_TOKEN["Génère le J-Code\n(Code court PA-XXXX + QR)\nvia App ou USSD"]:::artisan
+        LISTE_FOURN["Affiche quincailleries\npartenaires proches"]:::system
+        DEPLACEMENT["Se déplace chez\nle fournisseur agréé"]:::artisan
+        SCAN["Scanne QR ou\nsaisit code USSD"]:::supplier
+        GPS_CHECK{"Vérif. GPS\nDistance < 100 m ?"}:::database
+        GPS_OK["✅ Transaction autorisée\nValidation partielle possible"]:::system
+        GPS_NOK["🚨 Blocage Transaction\nAlerte Admin auto"]:::admin
+        LIVRAISON["Livre les matériaux\nà l'artisan"]:::supplier
+        NOTIF_PAY_FOURN["🔔 Confirmation paiement\nVirement J+1 garanti"]:::system
+        PHOTO_PROOF["📸 Upload photo géolocalisée\nMatériaux sur chantier"]:::artisan
+        NOTIF_CLI["🔔 Notification Client\n'Vos matériaux sont arrivés'"]:::system
+    end
+
+    W_MAT --> GEN_TOKEN
+    GEN_TOKEN --> LISTE_FOURN
+    LISTE_FOURN --> DEPLACEMENT
+    DEPLACEMENT --> FOURNISSEUR
+    FOURNISSEUR -->|Reçoit l'artisan| SCAN
+    SCAN --> GPS_CHECK
+    GPS_CHECK -->|Validé| GPS_OK
+    GPS_CHECK -->|Suspect| GPS_NOK
+    GPS_NOK --> ADMIN
+    ADMIN -->|Enquête / Déblocage manuel| GPS_OK
+    GPS_OK --> LIVRAISON
+    LIVRAISON --> NOTIF_PAY_FOURN
+    NOTIF_PAY_FOURN --> FOURNISSEUR
+    LIVRAISON --> PHOTO_PROOF
+    PHOTO_PROOF --> NOTIF_CLI
+    NOTIF_CLI --> CLIENT
+
+    %% ═══════════════════════════════════════════════
+    %% PHASE 4 — TRAVAUX & JALONS
+    %% ═══════════════════════════════════════════════
+
+    subgraph EXECUTION ["🏗️ PHASE 4 — Travaux & Libération par Jalons"]
+        direction TB
+        WORK["Réalise les travaux\npar étape"]:::artisan
+        SUBMIT_JALON["Soumet le jalon terminé\n+ photos preuves géolocalisées"]:::artisan
+        NOTIF_OTP["🔔 OTP envoyé par SMS\nau Client"]:::system
+        OTP_CLIENT["Saisit le code OTP\nde validation"]:::client
+        REFERENT_CHECK{"Montant mission\n> 2 000 000 FCFA ?"}:::system
+        REFERENT_VISIT["Visite du chantier\npour validation physique"]:::referent
+        RELEASE["⚙️ Libération du jalon\nMain d'œuvre → Mobile Money"]:::system
+        MM_ART["💸 Virement instantané\nWave / Orange Money Artisan"]:::system
+        NEXT_JALON{"Autre jalon\nà valider ?"}:::system
+    end
+
+    PHOTO_PROOF --> WORK
+    WORK --> SUBMIT_JALON
+    SUBMIT_JALON --> NOTIF_OTP
+    NOTIF_OTP --> CLIENT
+    CLIENT -->|Valide| OTP_CLIENT
+    OTP_CLIENT --> REFERENT_CHECK
+    REFERENT_CHECK -->|Oui| REFERENT_VISIT
+    REFERENT_CHECK -->|Non| RELEASE
+    REFERENT_VISIT --> REFERENT
+    REFERENT -->|Valide sur site| RELEASE
+    RELEASE --> MM_ART
+    MM_ART --> ARTISAN
+    MM_ART --> NEXT_JALON
+    NEXT_JALON -->|Oui| WORK
+    NEXT_JALON -->|Non| CLOTURE
+
+    %% ═══════════════════════════════════════════════
+    %% PHASE 5 — CLÔTURE & SCORING
+    %% ═══════════════════════════════════════════════
+
+    subgraph REPUTATION ["📈 PHASE 5 — Clôture & Score N'Zassa"]
+        direction TB
+        CLOTURE["Soumet Fiche d'Intervention\n(check-list + récapitulatif)"]:::artisan
+        SIGN_CLI["Signe digitalement\n(doigt ou OTP SMS)"]:::client
+        MISSION_CLOSE["✅ Mission Clôturée\nstatut = terminée"]:::system
+        NOTE["Attribue une note\n(1 à 5 étoiles)"]:::client
+        CALC_SCORE["⚙️ Calcul Score N'Zassa\nFiabilité 40% + Intégrité 30%\n+ Qualité 20% + Réactivité 10%"]:::database
+        HISTO["Journal Score\nArchivé pour audit bancaire"]:::database
+        ELIGIBLE{"Score > 70/100 ?"}:::system
+        CREDIT["🏦 Accès Micro-crédit Urgence\nDéblocage < 2h"]:::system
+        RAPPORT["📄 Rapport PDF Solvabilité\n(pour microfinances partenaires)"]:::admin
+    end
+
+    CLOTURE --> SIGN_CLI
+    SIGN_CLI --> MISSION_CLOSE
+    MISSION_CLOSE --> NOTE
+    NOTE --> CALC_SCORE
+    CALC_SCORE --> HISTO
+    HISTO --> ELIGIBLE
+    ELIGIBLE -->|Oui| CREDIT
+    CREDIT --> ARTISAN
+    ELIGIBLE -->|Rapport demandé| RAPPORT
+    RAPPORT --> ADMIN
+
+    %% ═══════════════════════════════════════════════
+    %% GESTION DES LITIGES (flux parallèle)
+    %% ═══════════════════════════════════════════════
+
+    subgraph LITIGE ["⚠️ FLUX PARALLÈLE — Gestion des Litiges"]
+        direction LR
+        SIGNAL["🚨 Clique 'Signalement'"]:::client
+        SIGNAL_ART["🚨 Clique 'Signalement'"]:::artisan
+        INSTR["Instruit le dossier\nLogs + Photos + Chat"]:::admin
+        ARBITRAGE{"Décision d'arbitrage"}:::admin
+        REMB["💰 Rembourse\nle Client"]:::system
+        PAY_ART["💰 Paye\nl'Artisan"]:::system
+        GEL["❄️ Gèle les fonds\n+ Visite Référent"]:::system
+    end
+
+    CLIENT  -->|Litige| SIGNAL
+    ARTISAN -->|Litige| SIGNAL_ART
+    SIGNAL     --> ADMIN
+    SIGNAL_ART --> ADMIN
+    ADMIN --> INSTR
+    INSTR --> ARBITRAGE
+    ARBITRAGE -->|Client a raison| REMB
+    ARBITRAGE -->|Artisan a raison| PAY_ART
+    ARBITRAGE -->|Incertain| GEL
+    GEL --> REFERENT
