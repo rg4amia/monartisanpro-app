@@ -5,6 +5,7 @@ import '../../features/auth/presentation/screens/role_selection_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/artisan/presentation/screens/artisan_dashboard_screen.dart';
 import '../../features/vendor/presentation/screens/vendor_dashboard_screen.dart';
+import '../../features/messages/presentation/screens/conversations_screen.dart';
 
 class AppRoutes {
   static const String onboarding = '/onboarding';
@@ -13,6 +14,8 @@ class AppRoutes {
   static const String home = '/home';
   static const String artisanDashboard = '/artisan-dashboard';
   static const String vendorDashboard = '/vendor-dashboard';
+  static const String conversations = '/conversations';
+  static const String chat = '/chat';
 
   static List<GetPage> routes = [
     GetPage(name: onboarding, page: () => const OnboardingScreen()),
@@ -21,6 +24,7 @@ class AppRoutes {
     GetPage(name: home, page: () => const HomeScreen()),
     GetPage(name: artisanDashboard, page: () => const ArtisanDashboardScreen()),
     GetPage(name: vendorDashboard, page: () => const VendorDashboardScreen()),
+    GetPage(name: conversations, page: () => const ConversationsScreen()),
   ];
 
   /// Navigate to appropriate home screen based on user role

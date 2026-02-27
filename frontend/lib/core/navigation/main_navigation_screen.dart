@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/search/presentation/screens/search_filter_screen.dart';
 import '../../features/projects/presentation/screens/project_list_screen.dart';
+import '../../features/messages/presentation/screens/conversations_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
+import '../../shared/controllers/message_controller.dart';
 import '../theme/app_colors.dart';
 import '../constants/spacing.dart';
 
@@ -17,6 +20,7 @@ class MainNavigationScreen extends StatefulWidget {
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   late int _currentIndex;
+  final _messageController = Get.put(MessageController());
 
   @override
   void initState() {
@@ -30,8 +34,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       const HomeScreen(),
       const SearchFilterScreen(),
       const ProjectListScreen(),
-      // TODO: Implémenter ChatListScreen
-      _buildPlaceholderScreen('Messages', Icons.chat_bubble_outline),
+      const ConversationsScreen(),
       const ProfileScreen(),
     ];
   }
@@ -65,37 +68,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         label: 'Profil',
       ),
     ];
-  }
-
-  Widget _buildPlaceholderScreen(String title, IconData icon) {
-    return Scaffold(
-      backgroundColor: AppColors.darkBackground,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 80, color: AppColors.darkTextTertiary),
-            const SizedBox(height: Spacing.xl),
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w700,
-                color: AppColors.darkTextPrimary,
-              ),
-            ),
-            const SizedBox(height: Spacing.sm),
-            Text(
-              'Fonctionnalité à venir',
-              style: TextStyle(
-                fontSize: 14,
-                color: AppColors.darkTextSecondary,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   @override
@@ -136,6 +108,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   Widget _buildNavItem(int index) {
     final item = _navItems[index];
     final isSelected = _currentIndex == index;
+    final isMessagesTab = index == 3; // Messages tab index
 
     return Expanded(
       child: GestureDetector(
@@ -151,24 +124,67 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? AppColors.darkAccentPrimary.withValues(alpha: 0.15)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(Spacing.radiusMd),
-                ),
-                child: Icon(
-                  isSelected
-                      ? (item.activeIcon as Icon).icon
-                      : (item.icon as Icon).icon,
-                  color: isSelected
-                      ? AppColors.darkAccentPrimary
-                      : AppColors.darkTextTertiary,
-                  size: 22,
-                ),
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? AppColors.darkAccentPrimary.withValues(alpha: 0.15)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(Spacing.radiusMd),
+                    ),
+                    child: Icon(
+                      isSelected
+                          ? (item.activeIcon as Icon).icon
+                          : (item.icon as Icon).icon,
+                      color: isSelected
+                          ? AppColors.darkAccentPrimary
+                          : AppColors.darkTextTertiary,
+                      size: 22,
+                    ),
+                  ),
+                  // Badge pour les messages non lus
+                  if (isMessagesTab)
+                    Obx(() {
+                      final unreadCount = _messageController.totalUnreadCount;
+                      if (unreadCount > 0) {
+                        return Positioned(
+                          right: -2,
+                          top: -2,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: AppColors.error,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: AppColors.darkCard,
+                                width: 1.5,
+                              ),
+                            ),
+                            constraints: const BoxConstraints(
+                              minWidth: 18,
+                              minHeight: 18,
+                            ),
+                            child: Center(
+                              child: Text(
+                                unreadCount > 9 ? '9+' : '$unreadCount',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.bold,
+                                  height: 1,
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    }),
+                ],
               ),
               const SizedBox(height: 2),
               Flexible(
