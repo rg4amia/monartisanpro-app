@@ -1,5 +1,5 @@
 class ApiEndpoints {
-  static const String baseUrl = 'http://localhost:8000/api/v1';
+  static const String baseUrl = 'http://backend-proartisan.test/api/v1';
 
   // Auth
   static const String sendOtp = '/auth/send-otp';
