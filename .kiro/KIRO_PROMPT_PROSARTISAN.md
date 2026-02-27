@@ -6,7 +6,7 @@
 
 Build **ProsArtisan**, a full-stack marketplace platform connecting clients, artisans (craftsmen), and hardware suppliers (quincailleries) in Côte d'Ivoire, West Africa.
 
-The app is in **French**, uses **FCFA** as currency, and is built with **Laravel 11 (PHP)** for the backend API and **Flutter** for the mobile frontend. The database is **MYSQL** for geospatial queries.
+The app is in **French**, uses **FCFA** as currency, and is built with **Laravel 11 (PHP)** for the backend API and **prosartisan-marketplace** for the mobile frontend. The database is **MYSQL** for geospatial queries.
 
 ---
 
