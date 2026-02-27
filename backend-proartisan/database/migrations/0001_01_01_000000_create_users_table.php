@@ -24,8 +24,8 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // Colonne POINT SRID 4326 nullable — pas d'index spatial (MySQL l'interdit sur nullable)
-        DB::statement('ALTER TABLE users ADD COLUMN position POINT SRID 4326 NULL AFTER wallet_mo');
+        // Colonne POINT nullable — MySQL 5.7 compatible (pas d'index spatial sur nullable)
+        DB::statement('ALTER TABLE users ADD COLUMN position POINT NULL AFTER wallet_mo');
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
             $table->string('phone', 20)->primary();

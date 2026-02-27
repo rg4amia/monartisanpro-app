@@ -46,7 +46,7 @@ class JCode extends Model
     public function setPositionScan(float $lat, float $lng): void
     {
         DB::statement(
-            'UPDATE jcodes SET position_scan = ST_SRID(POINT(?, ?), 4326) WHERE id = ?',
+            'UPDATE jcodes SET position_scan = POINT(?, ?) WHERE id = ?',
             [$lng, $lat, $this->id]
         );
     }

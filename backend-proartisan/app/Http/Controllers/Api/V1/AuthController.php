@@ -1,0 +1,100 @@
+<?php
+
+namespace App\Http\Controllers\Api\V1;
+
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\RegisterRequest;
+use App\Http\Requests\Auth\SendOtpRequest;
+use App\Http\Requests\Auth\VerifyOtpRequest;
+use App\Http\Resources\UserResource;
+use App\Services\AuthService;
+use App\Services\OtpService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+
+class AuthController extends Controller
+{
+    public function __construct(
+        private OtpService $otpService,
+        private AuthService $authService,
+    ) {}
+
+    /**
+     * Envoie un OTP par SMS au numéro indiqué.
+     */
+    public function sendOtp(SendOtpRequest $request): JsonResponse
+    {
+        $this->otpService->sendOtp($request->phone);
+
+        return response()->json([
+            'success'    => true,
+            'message'    => 'Code OTP envoyé par SMS.',
+            'expires_in' => $this->otpService->ttlSeconds(),
+        ]);
+    }
+
+    /**
+     * Vérifie l'OTP et crée/connecte l'utilisateur.
+     * Retourne un token Sanctum.
+     */
+    public function verifyOtp(VerifyOtpRequest $request): JsonResponse
+    {
+        if (! $this->otpService->verifyOtp($request->phone, $request->otp)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Code OTP invalide ou expiré.',
+            ], 422);
+        }
+
+        $user  = $this->authService->findOrCreateByPhone($request->phone);
+        $token = $this->authService->createToken($user);
+
+        return response()->json([
+            'success' => true,
+            'token'   => $token,
+            'user'    => new UserResource($user->load('artisanProfile.sector', 'artisanProfile.trade')),
+        ]);
+    }
+
+    /**
+     * Complète l'inscription (nom + rôle).
+     */
+    public function register(RegisterRequest $request): JsonResponse
+    {
+        $user = $this->authService->findOrCreateByPhone($request->phone);
+
+        // Vérifie qu'un OTP a été vérifié récemment (via session ou token existant)
+        $user = $this->authService->register($user, $request->validated());
+
+        return response()->json([
+            'success' => true,
+            'user'    => new UserResource($user->load('artisanProfile.sector', 'artisanProfile.trade')),
+        ]);
+    }
+
+    /**
+     * Retourne le profil de l'utilisateur connecté.
+     */
+    public function me(Request $request): JsonResponse
+    {
+        $user = $request->user()->load('artisanProfile.sector', 'artisanProfile.trade', 'fournisseurAgree');
+
+        return response()->json([
+            'success' => true,
+            'data'    => new UserResource($user),
+        ]);
+    }
+
+    /**
+     * Déconnexion : révoque tous les tokens.
+     */
+    public function logout(Request $request): JsonResponse
+    {
+        $this->authService->logout($request->user());
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Déconnexion réussie.',
+        ]);
+    }
+}
