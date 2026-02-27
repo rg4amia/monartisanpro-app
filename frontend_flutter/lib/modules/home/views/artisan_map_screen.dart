@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:yandex_maps_mapkit/mapkit.dart' as mk;
+import 'package:yandex_maps_mapkit/image.dart' as mk_image;
+import 'package:yandex_maps_mapkit/yandex_map.dart';
 
 import '../../../app/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
@@ -13,7 +15,7 @@ import '../../../data/models/artisan_model.dart';
 import '../../../shared/widgets/score_nzassa.dart';
 import '../controllers/home_controller.dart';
 
-// ─── Constantes ──────────────────────────────────────────────────────────────
+// ─── Constantes ───────────────────────────────────────────────────────────────
 
 const double _kAbidjanLat = 5.3484;
 const double _kAbidjanLng = -4.0169;
@@ -43,11 +45,11 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
   mk.MapObjectCollection? _artisanCollection;
   mk.MapObjectCollection? _userCollection;
 
-  /// Lie chaque PlacemarkMapObject à son ArtisanModel
-  final Map<mk.PlacemarkMapObject, ArtisanModel> _placemarkIndex = {};
-
-  /// Conserve les listeners pour éviter le GC
+  /// Conserve les listeners pour éviter le GC (FFI binding)
   final List<_ArtisanTapListener> _tapListeners = [];
+
+  /// Lie chaque PlacemarkMapObject → ArtisanModel via userData
+  final Map<mk.PlacemarkMapObject, ArtisanModel> _placemarkIndex = {};
 
   ArtisanModel? _selectedArtisan;
   bool _mapReady = false;
@@ -55,11 +57,8 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
   @override
   void initState() {
     super.initState();
-    // Charger les artisans dès l'ouverture si pas encore fait
     final c = Get.find<HomeController>();
-    if (c.artisans.isEmpty) {
-      c.searchByCategory(null);
-    }
+    if (c.artisans.isEmpty) c.searchByCategory(null);
   }
 
   // ─── Lifecycle carte ────────────────────────────────────────────────────────
@@ -69,51 +68,45 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
     _artisanCollection = mapWindow.map.mapObjects.addCollection();
     _userCollection = mapWindow.map.mapObjects.addCollection();
 
-    setState(() => _mapReady = true);
+    if (mounted) setState(() => _mapReady = true);
+
     _centerOnUser(animated: false);
     _plotArtisans();
 
-    // Réagir aux changements de liste d'artisans
+    // Réagir aux changements de liste
     ever(Get.find<HomeController>().artisans, (_) => _plotArtisans());
   }
 
-  void _onMapDispose() {
-    _mapWindow = null;
-    _artisanCollection = null;
-    _userCollection = null;
-    _placemarkIndex.clear();
-    _tapListeners.clear();
-  }
-
-  // ─── Caméra ─────────────────────────────────────────────────────────────────
+  // ─── Caméra ──────────────────────────────────────────────────────────────────
 
   void _moveCamera(double lat, double lng, double zoom,
       {bool animated = true}) {
-    final mapWindow = _mapWindow;
-    if (mapWindow == null) return;
+    final mw = _mapWindow;
+    if (mw == null) return;
 
     final position = mk.CameraPosition(
       mk.Point(latitude: lat, longitude: lng),
-      zoom,
-      0.0,
-      0.0,
+      zoom: zoom,
+      azimuth: 0.0,
+      tilt: 0.0,
     );
 
-    if (animated) {
-      mapWindow.map.move(
-        position,
-        const mk.Animation(mk.AnimationType.smooth, 1.0),
-        null,
-      );
-    } else {
-      mapWindow.map.move(position);
-    }
+    mw.map.move(
+      position,
+      animation: animated
+          ? const mk.Animation(
+              type: mk.AnimationType.Smooth,
+              duration: 1.0,
+            )
+          : null,
+    );
   }
 
   Future<void> _centerOnUser({bool animated = true}) async {
     try {
       final pos = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+        locationSettings:
+            const LocationSettings(accuracy: LocationAccuracy.high),
       );
       _moveCamera(pos.latitude, pos.longitude, _kDefaultZoom,
           animated: animated);
@@ -123,26 +116,22 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
     }
   }
 
-  // ─── Marqueur position utilisateur ─────────────────────────────────────────
+  // ─── Marqueur position utilisateur ──────────────────────────────────────────
 
   Future<void> _plotUserPosition(double lat, double lng) async {
     final col = _userCollection;
     if (col == null) return;
     col.clear();
 
-    final iconBytes = await _renderUserIcon();
-    final pm = col.addPlacemark();
-    pm.geometry = mk.Point(latitude: lat, longitude: lng);
-    pm.setIcon(
-      mk.ImageProvider.fromImageData(
-        data: iconBytes,
-        format: mk.ImageDataFormat.png,
-      ),
-      const mk.PlacemarkIconStyle(scale: 1.0),
+    final bytes = await _renderUserIcon();
+    col.addPlacemarkWithImageStyle(
+      mk.Point(latitude: lat, longitude: lng),
+      mk_image.ImageProvider.fromImageProvider(MemoryImage(bytes)),
+      const mk.IconStyle(scale: 1.0),
     );
   }
 
-  // ─── Marqueurs artisans ──────────────────────────────────────────────────────
+  // ─── Marqueurs artisans ───────────────────────────────────────────────────────
 
   Future<void> _plotArtisans() async {
     final col = _artisanCollection;
@@ -157,26 +146,21 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
     for (final artisan in artisans) {
       if (artisan.lat == null || artisan.lng == null) continue;
 
-      final iconBytes = await _renderArtisanIcon(
-        artisan.isGoldenMarker ? const Color(0xFFF39C12) : AppColors.primary,
-        artisan.scoreNzassa.toString(),
-        artisan.isGoldenMarker,
-      );
+      final color =
+          artisan.isGoldenMarker ? const Color(0xFFF39C12) : AppColors.primary;
+      final bytes = await _renderArtisanIcon(
+          color, artisan.scoreNzassa.toString(), artisan.isGoldenMarker);
 
-      final pm = col.addPlacemark();
-      pm.geometry = mk.Point(latitude: artisan.lat!, longitude: artisan.lng!);
-      pm.setIcon(
-        mk.ImageProvider.fromImageData(
-          data: iconBytes,
-          format: mk.ImageDataFormat.png,
-        ),
-        const mk.PlacemarkIconStyle(scale: 1.0),
+      final pm = col.addPlacemarkWithImageStyle(
+        mk.Point(latitude: artisan.lat!, longitude: artisan.lng!),
+        mk_image.ImageProvider.fromImageProvider(MemoryImage(bytes)),
+        const mk.IconStyle(scale: 1.0),
       );
 
       _placemarkIndex[pm] = artisan;
 
-      final listener = _ArtisanTapListener((tappedPm, point) {
-        final found = _placemarkIndex[tappedPm];
+      final listener = _ArtisanTapListener((obj, point) {
+        final found = _placemarkIndex[obj as mk.PlacemarkMapObject];
         if (found != null) {
           setState(() => _selectedArtisan = found);
           _moveCamera(point.latitude, point.longitude, _kDefaultZoom + 1);
@@ -188,7 +172,7 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
     }
   }
 
-  // ─── Rendu icônes Canvas ────────────────────────────────────────────────────
+  // ─── Rendu icônes via Canvas ─────────────────────────────────────────────────
 
   Future<Uint8List> _renderArtisanIcon(
       Color color, String score, bool isGolden) async {
@@ -196,7 +180,7 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
 
-    // Ombre portée
+    // Ombre
     canvas.drawCircle(
       const Offset(size / 2 + 1, size / 2 + 2),
       26,
@@ -204,15 +188,10 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
         ..color = Colors.black26
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
     );
-
     // Cercle principal
     canvas.drawCircle(
-      Offset(size / 2, size / 2 - 4),
-      26,
-      Paint()..color = color,
-    );
-
-    // Pointe du marqueur
+        Offset(size / 2, size / 2 - 4), 26, Paint()..color = color);
+    // Pointe du pin
     canvas.drawPath(
       Path()
         ..moveTo(size / 2 - 8, size / 2 + 20)
@@ -221,34 +200,26 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
         ..close(),
       Paint()..color = color,
     );
-
     // Bordure blanche
     canvas.drawCircle(
       Offset(size / 2, size / 2 - 4),
       26,
       Paint()
-        ..color = Colors.white.withValues(alpha: 0.25)
+        ..color = Colors.white.withValues(alpha: 0.3)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2,
     );
-
-    // Étoile dorée pour isGoldenMarker
+    // Étoile (golden marker)
     if (isGolden) {
-      _paintText(canvas, '★', 14, Colors.white,
-          Offset(size / 2, size / 2 - 18));
+      _paintText(canvas, '★', 13, Colors.white,
+          Offset(size / 2, size / 2 - 17));
     }
-
     // Score
-    _paintText(
-      canvas,
-      score,
-      isGolden ? 13 : 16,
-      Colors.white,
-      Offset(size / 2, isGolden ? size / 2 - 4 : size / 2 - 4),
-    );
+    _paintText(canvas, score, isGolden ? 12 : 15, Colors.white,
+        Offset(size / 2, isGolden ? size / 2 - 4 : size / 2 - 4));
 
-    final picture = recorder.endRecording();
-    final img = await picture.toImage(size.toInt(), size.toInt());
+    final img =
+        await recorder.endRecording().toImage(size.toInt(), size.toInt());
     final data = await img.toByteData(format: ui.ImageByteFormat.png);
     return data!.buffer.asUint8List();
   }
@@ -257,52 +228,38 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
     const size = 48.0;
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
-
-    // Halo bleu
+    canvas.drawCircle(const Offset(size / 2, size / 2), 22,
+        Paint()..color = const Color(0xFF3498DB).withValues(alpha: 0.25));
+    canvas.drawCircle(const Offset(size / 2, size / 2), 10,
+        Paint()..color = const Color(0xFF3498DB));
     canvas.drawCircle(
-      const Offset(size / 2, size / 2),
-      22,
-      Paint()..color = const Color(0xFF3498DB).withValues(alpha: 0.25),
-    );
-    // Point central
-    canvas.drawCircle(
-      const Offset(size / 2, size / 2),
-      10,
-      Paint()..color = const Color(0xFF3498DB),
-    );
-    // Bordure blanche
-    canvas.drawCircle(
-      const Offset(size / 2, size / 2),
-      10,
-      Paint()
-        ..color = Colors.white
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 3,
-    );
-
-    final picture = recorder.endRecording();
-    final img = await picture.toImage(size.toInt(), size.toInt());
+        const Offset(size / 2, size / 2),
+        10,
+        Paint()
+          ..color = Colors.white
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 3);
+    final img =
+        await recorder.endRecording().toImage(size.toInt(), size.toInt());
     final data = await img.toByteData(format: ui.ImageByteFormat.png);
     return data!.buffer.asUint8List();
   }
 
-  void _paintText(Canvas canvas, String text, double fontSize, Color color,
-      Offset center) {
+  void _paintText(
+      Canvas canvas, String text, double fontSize, Color color, Offset center) {
     final tp = TextPainter(
       text: TextSpan(
-        text: text,
-        style: TextStyle(
-            fontSize: fontSize,
-            color: color,
-            fontWeight: FontWeight.bold),
-      ),
+          text: text,
+          style: TextStyle(
+              fontSize: fontSize,
+              color: color,
+              fontWeight: FontWeight.bold)),
       textDirection: TextDirection.ltr,
     )..layout();
-    tp.paint(
-        canvas, center - Offset(tp.width / 2, tp.height / 2));
+    tp.paint(canvas, center - Offset(tp.width / 2, tp.height / 2));
   }
 
-  // ─── Build ───────────────────────────────────────────────────────────────────
+  // ─── Build ────────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -310,12 +267,9 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
       body: Stack(
         children: [
           // ── Yandex Map ──
-          mk.FlutterMapWidget(
-            onMapCreated: _onMapCreated,
-            onMapDispose: _onMapDispose,
-          ),
+          YandexMap(onMapCreated: _onMapCreated),
 
-          // ── Header avec retour + filtre catégories ──
+          // ── Header : retour + filtre catégories ──
           Positioned(
             top: 0,
             left: 0,
@@ -329,32 +283,32 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
             ),
           ),
 
-          // ── Compteur artisans ──
+          // ── Badge compteur ──
           if (_mapReady)
             Positioned(
-              top: MediaQuery.of(context).padding.top + 100,
+              top: MediaQuery.of(context).padding.top + 102,
               right: 16,
-              child: _ArtisanCountBadge(),
+              child: const _ArtisanCountBadge(),
             ),
 
-          // ── Loader ──
+          // ── Indicateur de chargement ──
           Obx(() {
-            if (!Get.find<HomeController>().isMapLoading.value) {
-              return const SizedBox();
-            }
-            return const Positioned.fill(
-              child: ColoredBox(
-                color: Colors.black26,
-                child: Center(child: CircularProgressIndicator()),
-              ),
-            );
+            final loading = Get.find<HomeController>().isMapLoading.value;
+            return loading
+                ? const Positioned.fill(
+                    child: ColoredBox(
+                      color: Colors.black26,
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
+                  )
+                : const SizedBox.shrink();
           }),
 
-          // ── Bottom sheet artisan sélectionné ──
+          // ── Bottom panel artisan sélectionné ──
           AnimatedPositioned(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeOutCubic,
-            bottom: _selectedArtisan != null ? 0 : -260,
+            bottom: _selectedArtisan != null ? 0 : -280,
             left: 0,
             right: 0,
             child: _selectedArtisan != null
@@ -362,7 +316,7 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
                     artisan: _selectedArtisan!,
                     onClose: () => setState(() => _selectedArtisan = null),
                   )
-                : const SizedBox(height: 260),
+                : const SizedBox(height: 280),
           ),
         ],
       ),
@@ -370,10 +324,9 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
       // ── FAB Ma position ──
       floatingActionButton: Padding(
         padding: EdgeInsets.only(
-          bottom: _selectedArtisan != null ? 270 : 16,
-        ),
+            bottom: _selectedArtisan != null ? 285 : 16),
         child: FloatingActionButton(
-          heroTag: 'my_location',
+          heroTag: 'my_location_fab',
           backgroundColor: Colors.white,
           foregroundColor: AppColors.primary,
           onPressed: _centerOnUser,
@@ -384,13 +337,12 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
   }
 }
 
-// ─── Header avec bouton retour + filtre catégories ────────────────────────────
+// ─── Header carte ─────────────────────────────────────────────────────────────
 
 class _MapHeader extends StatefulWidget {
   final VoidCallback onBack;
   final void Function(String?) onCategorySelected;
-  const _MapHeader(
-      {required this.onBack, required this.onCategorySelected});
+  const _MapHeader({required this.onBack, required this.onCategorySelected});
 
   @override
   State<_MapHeader> createState() => _MapHeaderState();
@@ -417,9 +369,9 @@ class _MapHeaderState extends State<_MapHeader> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Bouton retour + titre
           Row(
             children: [
+              // Bouton retour
               GestureDetector(
                 onTap: widget.onBack,
                 child: Container(
@@ -466,8 +418,7 @@ class _MapHeaderState extends State<_MapHeader> {
                   icon: icon,
                   isSelected: isSelected,
                   onTap: () {
-                    setState(() =>
-                        _selected = isAll ? null : label);
+                    setState(() => _selected = isAll ? null : label);
                     widget.onCategorySelected(isAll ? null : label);
                   },
                 );
@@ -485,12 +436,11 @@ class _CategoryChip extends StatelessWidget {
   final IconData icon;
   final bool isSelected;
   final VoidCallback onTap;
-  const _CategoryChip({
-    required this.label,
-    required this.icon,
-    required this.isSelected,
-    required this.onTap,
-  });
+  const _CategoryChip(
+      {required this.label,
+      required this.icon,
+      required this.isSelected,
+      required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -500,14 +450,15 @@ class _CategoryChip extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Colors.white.withValues(alpha: 0.9),
+          color: isSelected
+              ? AppColors.primary
+              : Colors.white.withValues(alpha: 0.92),
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.15),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
+                color: Colors.black.withValues(alpha: 0.15),
+                blurRadius: 4,
+                offset: const Offset(0, 2)),
           ],
         ),
         child: Row(
@@ -532,9 +483,11 @@ class _CategoryChip extends StatelessWidget {
   }
 }
 
-// ─── Badge compteur d'artisans ────────────────────────────────────────────────
+// ─── Badge compteur ───────────────────────────────────────────────────────────
 
 class _ArtisanCountBadge extends StatelessWidget {
+  const _ArtisanCountBadge();
+
   @override
   Widget build(BuildContext context) {
     return Obx(() {
@@ -546,9 +499,7 @@ class _ArtisanCountBadge extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.12),
-              blurRadius: 6,
-            ),
+                color: Colors.black.withValues(alpha: 0.12), blurRadius: 6),
           ],
         ),
         child: Row(
@@ -559,10 +510,9 @@ class _ArtisanCountBadge extends StatelessWidget {
             Text(
               '$count artisan${count > 1 ? 's' : ''}',
               style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: AppColors.primary,
-              ),
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primary),
             ),
           ],
         ),
@@ -571,7 +521,7 @@ class _ArtisanCountBadge extends StatelessWidget {
   }
 }
 
-// ─── Bottom panel artisan sélectionné ────────────────────────────────────────
+// ─── Bottom panel artisan ─────────────────────────────────────────────────────
 
 class _ArtisanBottomPanel extends StatelessWidget {
   final ArtisanModel artisan;
@@ -586,10 +536,11 @@ class _ArtisanBottomPanel extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         boxShadow: [
-          BoxShadow(color: Colors.black26, blurRadius: 20, offset: Offset(0, -4)),
+          BoxShadow(
+              color: Colors.black26, blurRadius: 20, offset: Offset(0, -4)),
         ],
       ),
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -598,13 +549,11 @@ class _ArtisanBottomPanel extends StatelessWidget {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: AppColors.border,
-              borderRadius: BorderRadius.circular(2),
-            ),
+                color: AppColors.border,
+                borderRadius: BorderRadius.circular(2)),
           ),
           const SizedBox(height: 16),
 
-          // Infos artisan
           Row(
             children: [
               // Avatar
@@ -614,15 +563,13 @@ class _ArtisanBottomPanel extends StatelessWidget {
                 child: Text(
                   Formatters.initial(artisan.name ?? artisan.phone),
                   style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
-                  ),
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary),
                 ),
               ),
               const SizedBox(width: 14),
 
-              // Nom + métier + distance
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -633,10 +580,9 @@ class _ArtisanBottomPanel extends StatelessWidget {
                           child: Text(
                             artisan.name ?? 'Artisan',
                             style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                              color: AppColors.textPrimary,
-                            ),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: AppColors.textPrimary),
                           ),
                         ),
                         if (artisan.isGoldenMarker)
@@ -644,7 +590,8 @@ class _ArtisanBottomPanel extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF39C12).withValues(alpha: 0.15),
+                              color: const Color(0xFFF39C12)
+                                  .withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: const Row(
@@ -655,10 +602,9 @@ class _ArtisanBottomPanel extends StatelessWidget {
                                 SizedBox(width: 3),
                                 Text('Doré',
                                     style: TextStyle(
-                                      fontSize: 11,
-                                      color: Color(0xFFF39C12),
-                                      fontWeight: FontWeight.bold,
-                                    )),
+                                        fontSize: 11,
+                                        color: Color(0xFFF39C12),
+                                        fontWeight: FontWeight.bold)),
                               ],
                             ),
                           ),
@@ -666,13 +612,9 @@ class _ArtisanBottomPanel extends StatelessWidget {
                     ),
                     if (artisan.trade != null) ...[
                       const SizedBox(height: 2),
-                      Text(
-                        artisan.trade!,
-                        style: const TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 13,
-                        ),
-                      ),
+                      Text(artisan.trade!,
+                          style: const TextStyle(
+                              color: AppColors.textSecondary, fontSize: 13)),
                     ],
                     if (artisan.distance != null) ...[
                       const SizedBox(height: 4),
@@ -681,13 +623,9 @@ class _ArtisanBottomPanel extends StatelessWidget {
                           const Icon(Icons.location_on_outlined,
                               size: 13, color: AppColors.textMuted),
                           const SizedBox(width: 3),
-                          Text(
-                            Formatters.distance(artisan.distance!),
-                            style: const TextStyle(
-                              color: AppColors.textMuted,
-                              fontSize: 12,
-                            ),
-                          ),
+                          Text(Formatters.distance(artisan.distance!),
+                              style: const TextStyle(
+                                  color: AppColors.textMuted, fontSize: 12)),
                         ],
                       ),
                     ],
@@ -695,16 +633,11 @@ class _ArtisanBottomPanel extends StatelessWidget {
                 ),
               ),
 
-              // Score
-              ScoreNzassa(
-                score: artisan.scoreNzassa,
-                size: ScoreSize.medium,
-              ),
+              ScoreNzassa(score: artisan.scoreNzassa, size: ScoreSize.medium),
             ],
           ),
           const SizedBox(height: 20),
 
-          // Actions
           Row(
             children: [
               Expanded(
@@ -713,8 +646,7 @@ class _ArtisanBottomPanel extends StatelessWidget {
                   icon: const Icon(Icons.close, size: 16),
                   label: const Text('Fermer'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.textSecondary,
-                  ),
+                      foregroundColor: AppColors.textSecondary),
                 ),
               ),
               const SizedBox(width: 12),
@@ -723,10 +655,7 @@ class _ArtisanBottomPanel extends StatelessWidget {
                 child: ElevatedButton.icon(
                   onPressed: () {
                     onClose();
-                    Get.toNamed(
-                      Routes.artisanProfile,
-                      arguments: artisan,
-                    );
+                    Get.toNamed(Routes.artisanProfile, arguments: artisan);
                   },
                   icon: const Icon(Icons.handyman_outlined, size: 16),
                   label: const Text('Voir le profil'),
@@ -740,7 +669,7 @@ class _ArtisanBottomPanel extends StatelessWidget {
   }
 }
 
-// ─── Tap listener Yandex MapKit ───────────────────────────────────────────────
+// ─── Tap listener (FFI binding — doit rester en mémoire) ──────────────────────
 
 class _ArtisanTapListener implements mk.MapObjectTapListener {
   final bool Function(mk.MapObject, mk.Point) _onTap;
