@@ -1,5 +1,8 @@
+import 'package:frontend_flutter/core/config/env_config.dart';
+
 class ApiEndpoints {
-  static const String baseUrl = 'http://backend-proartisan.test/api/v1';
+  // Utilise la configuration d'environnement automatique
+  static String get baseUrl => EnvConfig.baseUrl;
 
   // Auth
   static const String sendOtp = '/auth/send-otp';

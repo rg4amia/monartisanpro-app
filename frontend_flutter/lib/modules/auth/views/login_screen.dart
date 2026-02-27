@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
-import '../../../core/theme/app_colors.dart';
 import '../controllers/auth_controller.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -418,24 +417,19 @@ class _LoginScreenState extends State<LoginScreen>
           child: Opacity(
             opacity: value,
             child: Container(
-              padding: const EdgeInsets.all(18),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.red.shade50,
-                    Colors.red.shade100,
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(16),
+                color: Colors.red.shade50,
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: Colors.red.shade300,
-                  width: 2,
+                  color: Colors.red.shade200,
+                  width: 1.5,
                 ),
               ),
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(10),
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: Colors.red.shade100,
                       shape: BoxShape.circle,
@@ -443,17 +437,17 @@ class _LoginScreenState extends State<LoginScreen>
                     child: Icon(
                       Icons.error_outline_rounded,
                       color: Colors.red.shade700,
-                      size: 22,
+                      size: 20,
                     ),
                   ),
-                  const SizedBox(width: 14),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       message,
                       style: TextStyle(
                         color: Colors.red.shade900,
                         fontSize: 14,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -474,34 +468,27 @@ class _LoginScreenState extends State<LoginScreen>
             'En continuant, vous acceptez nos',
             style: TextStyle(
               fontSize: 12,
-              color: const Color(0xFF4C1D95).withValues(alpha: 0.6),
+              color: const Color(0xFF334155).withValues(alpha: 0.7),
               fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 8),
-          Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 4,
+          const SizedBox(height: 6),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               TextButton(
                 onPressed: () {},
                 style: TextButton.styleFrom(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  backgroundColor:
-                      const Color(0xFF7C3AED).withValues(alpha: 0.08),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
                 ),
                 child: const Text(
-                  'Conditions',
+                  'Conditions d\'utilisation',
                   style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF7C3AED),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF0369A1),
                   ),
                 ),
               ),
@@ -509,29 +496,23 @@ class _LoginScreenState extends State<LoginScreen>
                 ' et ',
                 style: TextStyle(
                   fontSize: 12,
-                  color: const Color(0xFF4C1D95).withValues(alpha: 0.6),
+                  color: const Color(0xFF334155).withValues(alpha: 0.7),
                   fontWeight: FontWeight.w500,
                 ),
               ),
               TextButton(
                 onPressed: () {},
                 style: TextButton.styleFrom(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  backgroundColor:
-                      const Color(0xFF7C3AED).withValues(alpha: 0.08),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
                 ),
                 child: const Text(
-                  'Confidentialité',
+                  'Politique de confidentialité',
                   style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF7C3AED),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF0369A1),
                   ),
                 ),
               ),
@@ -557,19 +538,15 @@ class _LoginScreenState extends State<LoginScreen>
         );
       },
       child: Container(
-        padding: const EdgeInsets.all(28),
+        padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: const Color(0xFF7C3AED).withValues(alpha: 0.2),
-            width: 2,
-          ),
+          borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF7C3AED).withValues(alpha: 0.12),
-              blurRadius: 24,
-              offset: const Offset(0, 8),
+              color: const Color(0xFF0F172A).withValues(alpha: 0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
@@ -581,41 +558,36 @@ class _LoginScreenState extends State<LoginScreen>
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [
-                        Color(0xFF7C3AED),
-                        Color(0xFFA78BFA),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(16),
+                    color: const Color(0xFF0369A1).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
-                    Icons.shopping_bag_rounded,
-                    color: Colors.white,
-                    size: 28,
+                    Icons.phone_android_rounded,
+                    color: Color(0xFF0369A1),
+                    size: 24,
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 14),
                 const Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Commencer',
+                        'Connexion Sécurisée',
                         style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w900,
-                          color: Color(0xFF4C1D95),
-                          letterSpacing: -0.5,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF0F172A),
+                          letterSpacing: -0.3,
                         ),
                       ),
-                      SizedBox(height: 4),
+                      SizedBox(height: 3),
                       Text(
-                        'Accédez à 10k+ artisans',
+                        'Accédez aux meilleurs artisans',
                         style: TextStyle(
-                          fontSize: 14,
-                          color: Color(0xFF7C3AED),
-                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                          color: Color(0xFF334155),
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
@@ -623,67 +595,62 @@ class _LoginScreenState extends State<LoginScreen>
                 ),
               ],
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 24),
             const Text(
               'Numéro de téléphone',
               style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF4C1D95),
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF0F172A),
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
             Row(
               children: [
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 20,
+                    horizontal: 14,
+                    vertical: 18,
                   ),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        const Color(0xFF7C3AED).withValues(alpha: 0.1),
-                        const Color(0xFFA78BFA).withValues(alpha: 0.1),
-                      ],
-                    ),
+                    color: const Color(0xFFF8FAFC),
                     borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(16),
-                      bottomLeft: Radius.circular(16),
+                      topLeft: Radius.circular(12),
+                      bottomLeft: Radius.circular(12),
                     ),
                     border: Border.all(
-                      color: const Color(0xFF7C3AED).withValues(alpha: 0.3),
-                      width: 2,
+                      color: const Color(0xFF334155).withValues(alpha: 0.2),
+                      width: 1.5,
                     ),
                   ),
                   child: Row(
                     children: [
                       Container(
-                        width: 28,
-                        height: 20,
+                        width: 26,
+                        height: 18,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(4),
+                          borderRadius: BorderRadius.circular(3),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withValues(alpha: 0.1),
-                              blurRadius: 4,
+                              blurRadius: 2,
                             ),
                           ],
                         ),
                         child: const Center(
                           child: Text(
                             '🇨🇮',
-                            style: TextStyle(fontSize: 14),
+                            style: TextStyle(fontSize: 12),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 8),
                       const Text(
                         '+225',
                         style: TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 17,
-                          color: Color(0xFF4C1D95),
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                          color: Color(0xFF0F172A),
                         ),
                       ),
                     ],
@@ -698,85 +665,85 @@ class _LoginScreenState extends State<LoginScreen>
                     ],
                     maxLength: 10,
                     style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.2,
-                      color: Color(0xFF4C1D95),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
+                      color: Color(0xFF0F172A),
                     ),
                     decoration: InputDecoration(
                       hintText: '07 00 00 00 00',
                       hintStyle: TextStyle(
-                        color: const Color(0xFF7C3AED).withValues(alpha: 0.3),
-                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF334155).withValues(alpha: 0.4),
+                        fontWeight: FontWeight.w500,
                       ),
                       counterText: '',
                       contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 18,
-                        vertical: 20,
+                        horizontal: 16,
+                        vertical: 18,
                       ),
                       border: OutlineInputBorder(
                         borderRadius: const BorderRadius.only(
-                          topRight: Radius.circular(16),
-                          bottomRight: Radius.circular(16),
+                          topRight: Radius.circular(12),
+                          bottomRight: Radius.circular(12),
                         ),
                         borderSide: BorderSide(
-                          color: const Color(0xFF7C3AED).withValues(alpha: 0.3),
-                          width: 2,
+                          color: const Color(0xFF334155).withValues(alpha: 0.2),
+                          width: 1.5,
                         ),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: const BorderRadius.only(
-                          topRight: Radius.circular(16),
-                          bottomRight: Radius.circular(16),
+                          topRight: Radius.circular(12),
+                          bottomRight: Radius.circular(12),
                         ),
                         borderSide: BorderSide(
-                          color: const Color(0xFF7C3AED).withValues(alpha: 0.3),
-                          width: 2,
+                          color: const Color(0xFF334155).withValues(alpha: 0.2),
+                          width: 1.5,
                         ),
                       ),
                       focusedBorder: const OutlineInputBorder(
                         borderRadius: BorderRadius.only(
-                          topRight: Radius.circular(16),
-                          bottomRight: Radius.circular(16),
+                          topRight: Radius.circular(12),
+                          bottomRight: Radius.circular(12),
                         ),
                         borderSide: BorderSide(
-                          color: Color(0xFF7C3AED),
+                          color: Color(0xFF0369A1),
                           width: 2,
                         ),
                       ),
-                      fillColor: Colors.white,
+                      fillColor: const Color(0xFFF8FAFC),
                       filled: true,
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 24),
             Obx(() => SizedBox(
                   width: double.infinity,
-                  height: 60,
+                  height: 56,
                   child: ElevatedButton(
                     onPressed: _c.canSendOtp
                         ? (_c.isLoading.value ? null : _c.sendOtp)
                         : _shake,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _c.canSendOtp
-                          ? const Color(0xFF22C55E)
-                          : const Color(0xFFE5E7EB),
+                          ? const Color(0xFF0369A1)
+                          : const Color(0xFF334155).withValues(alpha: 0.3),
                       foregroundColor: Colors.white,
-                      elevation: _c.canSendOtp ? 4 : 0,
+                      elevation: _c.canSendOtp ? 2 : 0,
                       shadowColor:
-                          const Color(0xFF22C55E).withValues(alpha: 0.4),
+                          const Color(0xFF0369A1).withValues(alpha: 0.3),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                     child: _c.isLoading.value
                         ? const SizedBox(
-                            height: 26,
-                            width: 26,
+                            height: 24,
+                            width: 24,
                             child: CircularProgressIndicator(
-                              strokeWidth: 3,
+                              strokeWidth: 2.5,
                               color: Colors.white,
                             ),
                           )
@@ -786,16 +753,16 @@ class _LoginScreenState extends State<LoginScreen>
                               const Text(
                                 'Recevoir le code',
                                 style: TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w900,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
                                   letterSpacing: 0.3,
                                 ),
                               ),
-                              const SizedBox(width: 10),
+                              const SizedBox(width: 8),
                               Icon(
                                 Icons.arrow_forward_rounded,
-                                size: 22,
-                                color: Colors.white.withValues(alpha: 0.95),
+                                size: 20,
+                                color: Colors.white.withValues(alpha: 0.9),
                               ),
                             ],
                           ),
@@ -809,19 +776,15 @@ class _LoginScreenState extends State<LoginScreen>
 
   Widget _buildOtpStep() {
     return Container(
-      padding: const EdgeInsets.all(28),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: const Color(0xFF7C3AED).withValues(alpha: 0.2),
-          width: 2,
-        ),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF7C3AED).withValues(alpha: 0.12),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
+            color: const Color(0xFF0F172A).withValues(alpha: 0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -838,22 +801,17 @@ class _LoginScreenState extends State<LoginScreen>
                 child: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [
-                        Color(0xFF7C3AED),
-                        Color(0xFFA78BFA),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(12),
+                    color: const Color(0xFF0369A1).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(
                     Icons.arrow_back_rounded,
                     size: 20,
-                    color: Colors.white,
+                    color: Color(0xFF0369A1),
                   ),
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -861,19 +819,19 @@ class _LoginScreenState extends State<LoginScreen>
                     const Text(
                       'Vérification',
                       style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFF4C1D95),
-                        letterSpacing: -0.5,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF0F172A),
+                        letterSpacing: -0.3,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 3),
                     Text(
-                      'Code → ${_c.phone.value}',
+                      'Code envoyé au ${_c.phone.value}',
                       style: const TextStyle(
                         fontSize: 13,
-                        color: Color(0xFF7C3AED),
-                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF334155),
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
@@ -881,29 +839,24 @@ class _LoginScreenState extends State<LoginScreen>
               ),
             ],
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 28),
           const Text(
             'Code de vérification',
             style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF4C1D95),
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF0F172A),
             ),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 14),
           Container(
-            padding: const EdgeInsets.symmetric(vertical: 12),
+            padding: const EdgeInsets.symmetric(vertical: 10),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  const Color(0xFF7C3AED).withValues(alpha: 0.08),
-                  const Color(0xFFA78BFA).withValues(alpha: 0.08),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(18),
+              color: const Color(0xFF0369A1).withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: const Color(0xFF7C3AED).withValues(alpha: 0.3),
-                width: 2,
+                color: const Color(0xFF0369A1).withValues(alpha: 0.2),
+                width: 1.5,
               ),
             ),
             child: TextFormField(
@@ -919,49 +872,50 @@ class _LoginScreenState extends State<LoginScreen>
               textAlign: TextAlign.center,
               autofocus: true,
               style: const TextStyle(
-                fontSize: 48,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 24,
-                color: Color(0xFF7C3AED),
+                fontSize: 42,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 20,
+                color: Color(0xFF0369A1),
               ),
               decoration: InputDecoration(
                 counterText: '',
                 hintText: '····',
                 hintStyle: TextStyle(
-                  color: const Color(0xFF7C3AED).withValues(alpha: 0.25),
-                  letterSpacing: 24,
-                  fontSize: 48,
-                  fontWeight: FontWeight.w900,
+                  color: const Color(0xFF334155).withValues(alpha: 0.3),
+                  letterSpacing: 20,
+                  fontSize: 42,
+                  fontWeight: FontWeight.w800,
                 ),
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: 20),
+                contentPadding: const EdgeInsets.symmetric(vertical: 18),
               ),
             ),
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 24),
           Obx(() => SizedBox(
                 width: double.infinity,
-                height: 60,
+                height: 56,
                 child: ElevatedButton(
                   onPressed: _c.canVerifyOtp
                       ? (_c.isLoading.value ? null : _c.verifyOtp)
                       : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF22C55E),
+                    backgroundColor: const Color(0xFF0369A1),
                     foregroundColor: Colors.white,
-                    elevation: 4,
-                    shadowColor: const Color(0xFF22C55E).withValues(alpha: 0.4),
+                    elevation: 2,
+                    shadowColor: const Color(0xFF0369A1).withValues(alpha: 0.3),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    disabledBackgroundColor: const Color(0xFFE5E7EB),
+                    disabledBackgroundColor:
+                        const Color(0xFF334155).withValues(alpha: 0.3),
                   ),
                   child: _c.isLoading.value
                       ? const SizedBox(
-                          height: 26,
-                          width: 26,
+                          height: 24,
+                          width: 24,
                           child: CircularProgressIndicator(
-                            strokeWidth: 3,
+                            strokeWidth: 2.5,
                             color: Colors.white,
                           ),
                         )
@@ -969,45 +923,40 @@ class _LoginScreenState extends State<LoginScreen>
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             const Text(
-                              'Vérifier',
+                              'Vérifier le code',
                               style: TextStyle(
-                                fontSize: 17,
-                                fontWeight: FontWeight.w900,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
                                 letterSpacing: 0.3,
                               ),
                             ),
-                            const SizedBox(width: 10),
+                            const SizedBox(width: 8),
                             Icon(
-                              Icons.check_circle_rounded,
-                              size: 22,
-                              color: Colors.white.withValues(alpha: 0.95),
+                              Icons.check_circle_outline_rounded,
+                              size: 20,
+                              color: Colors.white.withValues(alpha: 0.9),
                             ),
                           ],
                         ),
                 ),
               )),
-          const SizedBox(height: 18),
+          const SizedBox(height: 16),
           Center(
             child: TextButton.icon(
               onPressed: _c.sendOtp,
-              icon: const Icon(Icons.refresh_rounded, size: 20),
+              icon: const Icon(Icons.refresh_rounded, size: 18),
               label: const Text(
                 'Renvoyer le code',
                 style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
               style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFF7C3AED),
+                foregroundColor: const Color(0xFF0369A1),
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 14,
-                ),
-                backgroundColor:
-                    const Color(0xFF7C3AED).withValues(alpha: 0.08),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+                  horizontal: 20,
+                  vertical: 12,
                 ),
               ),
             ),
@@ -1016,4 +965,37 @@ class _LoginScreenState extends State<LoginScreen>
       ),
     );
   }
+}
+
+// Custom painter for grid pattern
+class _GridPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.05)
+      ..strokeWidth = 1;
+
+    const spacing = 30.0;
+
+    // Draw vertical lines
+    for (double i = 0; i < size.width; i += spacing) {
+      canvas.drawLine(
+        Offset(i, 0),
+        Offset(i, size.height),
+        paint,
+      );
+    }
+
+    // Draw horizontal lines
+    for (double i = 0; i < size.height; i += spacing) {
+      canvas.drawLine(
+        Offset(0, i),
+        Offset(size.width, i),
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
