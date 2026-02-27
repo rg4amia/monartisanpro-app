@@ -2,27 +2,33 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
+            $table->string('phone', 20)->unique();
+            $table->string('name')->nullable();
+            $table->string('password')->nullable();
+            $table->enum('role', ['client', 'artisan', 'fournisseur', 'referent', 'admin'])->nullable();
+            $table->enum('kyc_status', ['en_attente', 'actif', 'rejete'])->default('en_attente');
+            $table->unsignedTinyInteger('score_nzassa')->default(0);
+            $table->bigInteger('wallet_materiaux')->default(0);
+            $table->bigInteger('wallet_mo')->default(0);
+            $table->string('fcm_token')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });
 
+        // Colonne POINT SRID 4326 nullable — pas d'index spatial (MySQL l'interdit sur nullable)
+        DB::statement('ALTER TABLE users ADD COLUMN position POINT SRID 4326 NULL AFTER wallet_mo');
+
         Schema::create('password_reset_tokens', function (Blueprint $table) {
-            $table->string('email')->primary();
+            $table->string('phone', 20)->primary();
             $table->string('token');
             $table->timestamp('created_at')->nullable();
         });
@@ -37,13 +43,11 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('users');
-        Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('sessions');
+        Schema::dropIfExists('password_reset_tokens');
+        DB::statement('ALTER TABLE users DROP COLUMN IF EXISTS position');
+        Schema::dropIfExists('users');
     }
 };
