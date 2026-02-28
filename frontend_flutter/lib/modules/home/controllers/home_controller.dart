@@ -6,10 +6,12 @@ import '../../../data/models/artisan_model.dart';
 import '../../../data/models/mission_model.dart';
 import '../../../data/repositories/artisan_repository.dart';
 import '../../../data/repositories/mission_repository.dart';
+import '../../../data/repositories/wallet_repository.dart';
 
 class HomeController extends GetxController {
   final ArtisanRepository _artisanRepo = ArtisanRepository();
   final MissionRepository _missionRepo = MissionRepository();
+  final WalletRepository _walletRepo = WalletRepository();
 
   final artisans = <ArtisanModel>[].obs;
   final activeMissions = <MissionModel>[].obs;
@@ -17,6 +19,8 @@ class HomeController extends GetxController {
   final isMapLoading = false.obs;
   final role = Rx<String?>(null);
   final userName = ''.obs;
+  final activeMissionsCount = 0.obs;
+  final nearbyArtisansCount = 0.obs;
   final walletMateriaux = 0.obs;
   final walletMo = 0.obs;
   final selectedCategory = Rx<String?>(null);
@@ -39,14 +43,22 @@ class HomeController extends GetxController {
     isLoading.value = true;
     try {
       await _getLocation();
+
+      // Load wallet balance for all users
+      final balance = await _walletRepo.getBalance();
+      walletMateriaux.value = balance['walletMateriaux']!;
+      walletMo.value = balance['walletMo']!;
+
       if (role.value == 'client' && _lat != null) {
         artisans.value = await _artisanRepo.getNearby(
           lat: _lat!,
           lng: _lng!,
         );
+        nearbyArtisansCount.value = artisans.length;
       }
       final missions = await _missionRepo.getMissions(status: 'en_cours');
       activeMissions.value = missions;
+      activeMissionsCount.value = missions.length;
     } catch (_) {
       // keep empty state
     } finally {
@@ -66,6 +78,7 @@ class HomeController extends GetxController {
         lng: _lng!,
         sectorId: category,
       );
+      nearbyArtisansCount.value = artisans.length;
     } catch (_) {
       // garder l'état précédent
     } finally {

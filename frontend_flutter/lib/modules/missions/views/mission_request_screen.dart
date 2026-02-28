@@ -17,10 +17,16 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
   final _descCtrl = TextEditingController();
   final _selectedCategory = ''.obs;
   final _urgency = 'moyen'.obs;
+  final _isDescValid = false.obs;
 
   static const _categories = [
-    'Plomberie', 'Électricité', 'Maçonnerie',
-    'Menuiserie', 'Peinture', 'Carrelage', 'Autre',
+    'Plomberie',
+    'Électricité',
+    'Maçonnerie',
+    'Menuiserie',
+    'Peinture',
+    'Carrelage',
+    'Autre',
   ];
 
   @override
@@ -30,6 +36,11 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
     if (args != null && args['category'] != null) {
       _selectedCategory.value = args['category'] as String;
     }
+
+    // Listen to text changes
+    _descCtrl.addListener(() {
+      _isDescValid.value = _descCtrl.text.length > 10;
+    });
   }
 
   @override
@@ -68,14 +79,11 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 14, vertical: 8),
                         decoration: BoxDecoration(
-                          color: selected
-                              ? AppColors.primary
-                              : AppColors.card,
+                          color: selected ? AppColors.primary : AppColors.card,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: selected
-                                ? AppColors.primary
-                                : AppColors.border,
+                            color:
+                                selected ? AppColors.primary : AppColors.border,
                           ),
                         ),
                         child: Text(cat,
@@ -146,17 +154,20 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
             // Estimate button
             Obx(() => OutlinedButton.icon(
                   onPressed: _descCtrl.text.length > 20 &&
-                          _selectedCategory.value.isNotEmpty
-                      ? () => c.estimate(
-                          _descCtrl.text, _selectedCategory.value)
+                          _selectedCategory.value.isNotEmpty &&
+                          !c.isEstimating.value
+                      ? () =>
+                          c.estimate(_descCtrl.text, _selectedCategory.value)
                       : null,
-                  icon: c.isLoading.value
+                  icon: c.isEstimating.value
                       ? const SizedBox(
                           width: 16,
                           height: 16,
                           child: CircularProgressIndicator(strokeWidth: 2))
                       : const Icon(Icons.auto_awesome),
-                  label: const Text('Estimation IA (Gemini)'),
+                  label: Text(c.isEstimating.value
+                      ? 'Génération en cours...'
+                      : 'Estimation IA (Gemini)'),
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 48),
                   ),
@@ -201,8 +212,7 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
                     if (est['urgency'] != null)
                       Text('Urgence détectée : ${est['urgency']}',
                           style: const TextStyle(
-                              fontSize: 13,
-                              color: AppColors.textSecondary)),
+                              fontSize: 13, color: AppColors.textSecondary)),
                   ],
                 ),
               );
@@ -211,14 +221,18 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
 
             // Submit
             Obx(() => ElevatedButton(
-                  onPressed: _descCtrl.text.length > 10 &&
+                  onPressed: _isDescValid.value &&
                           _selectedCategory.value.isNotEmpty &&
-                          !c.isLoading.value
+                          !c.isLoading.value &&
+                          !c.isEstimating.value
                       ? () async {
                           // Navigate to artisan selection after creating
                           Get.toNamed(Routes.artisanProfile);
                         }
                       : null,
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 48),
+                  ),
                   child: const Text('Trouver un artisan'),
                 )),
           ],

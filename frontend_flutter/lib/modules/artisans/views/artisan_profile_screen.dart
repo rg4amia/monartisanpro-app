@@ -31,9 +31,9 @@ class ArtisanProfileScreen extends StatelessWidget {
               pinned: true,
               backgroundColor: AppColors.primary,
               flexibleSpace: FlexibleSpaceBar(
-                background: a.photoUrl != null
+                background: a.photo != null
                     ? CachedNetworkImage(
-                        imageUrl: a.photoUrl!,
+                        imageUrl: a.photo!,
                         fit: BoxFit.cover,
                         placeholder: (_, __) => Container(
                             color: AppColors.primary.withValues(alpha: 0.3)),
@@ -82,8 +82,7 @@ class ArtisanProfileScreen extends StatelessWidget {
                                           horizontal: 8, vertical: 3),
                                       decoration: BoxDecoration(
                                         color: const Color(0xFFFFF3CD),
-                                        borderRadius:
-                                            BorderRadius.circular(8),
+                                        borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: const Row(
                                         children: [
@@ -95,8 +94,7 @@ class ArtisanProfileScreen extends StatelessWidget {
                                               style: TextStyle(
                                                   fontSize: 11,
                                                   color: Color(0xFFD4A017),
-                                                  fontWeight:
-                                                      FontWeight.w600)),
+                                                  fontWeight: FontWeight.w600)),
                                         ],
                                       ),
                                     ),
@@ -112,10 +110,8 @@ class ArtisanProfileScreen extends StatelessWidget {
                                 Row(
                                   children: [
                                     const Icon(Icons.location_on_outlined,
-                                        size: 14,
-                                        color: AppColors.textMuted),
-                                    Text(
-                                        Formatters.distance(a.distance!),
+                                        size: 14, color: AppColors.textMuted),
+                                    Text(a.distance!,
                                         style: const TextStyle(
                                             fontSize: 13,
                                             color: AppColors.textMuted)),
@@ -176,29 +172,29 @@ class ArtisanProfileScreen extends StatelessWidget {
                           _ScoreDimension(
                               label: 'Fiabilité',
                               pct: 40,
-                              value: (scoreData['fiabilite'] as num?)
-                                      ?.toInt() ??
-                                  0,
+                              value:
+                                  (scoreData['fiabilite'] as num?)?.toInt() ??
+                                      0,
                               color: AppColors.primary),
                           _ScoreDimension(
                               label: 'Intégrité',
                               pct: 30,
-                              value: (scoreData['integrite'] as num?)
-                                      ?.toInt() ??
-                                  0,
+                              value:
+                                  (scoreData['integrite'] as num?)?.toInt() ??
+                                      0,
                               color: AppColors.accent),
                           _ScoreDimension(
                               label: 'Qualité',
                               pct: 20,
-                              value: (scoreData['qualite'] as num?)?.toInt() ??
-                                  0,
+                              value:
+                                  (scoreData['qualite'] as num?)?.toInt() ?? 0,
                               color: AppColors.success),
                           _ScoreDimension(
                               label: 'Réactivité',
                               pct: 10,
-                              value: (scoreData['reactivite'] as num?)
-                                      ?.toInt() ??
-                                  0,
+                              value:
+                                  (scoreData['reactivite'] as num?)?.toInt() ??
+                                      0,
                               color: AppColors.warning),
                         ],
                       );
@@ -242,9 +238,7 @@ class _ScoreDimension extends StatelessWidget {
                       fontSize: 13, color: AppColors.textSecondary)),
               Text('$value / $pct pts',
                   style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: color)),
+                      fontSize: 13, fontWeight: FontWeight.w600, color: color)),
             ],
           ),
           const SizedBox(height: 4),

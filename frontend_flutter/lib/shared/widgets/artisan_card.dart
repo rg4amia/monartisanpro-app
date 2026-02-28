@@ -65,8 +65,8 @@ class ArtisanCard extends StatelessWidget {
                           child: const Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.star, size: 10,
-                                  color: Color(0xFFD4A017)),
+                              Icon(Icons.star,
+                                  size: 10, color: Color(0xFFD4A017)),
                               SizedBox(width: 2),
                               Text('Top',
                                   style: TextStyle(
@@ -91,9 +91,7 @@ class ArtisanCard extends StatelessWidget {
                           size: 12, color: AppColors.textMuted),
                       const SizedBox(width: 2),
                       Text(
-                        artisan.distance != null
-                            ? Formatters.distance(artisan.distance!)
-                            : artisan.sector ?? '',
+                        artisan.distance ?? artisan.sector ?? '',
                         style: const TextStyle(
                             fontSize: 12, color: AppColors.textMuted),
                       ),
@@ -112,11 +110,11 @@ class ArtisanCard extends StatelessWidget {
   }
 
   Widget _buildAvatar() {
-    if (artisan.photoUrl != null && artisan.photoUrl!.isNotEmpty) {
+    if (artisan.photo != null && artisan.photo!.isNotEmpty) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(26),
         child: CachedNetworkImage(
-          imageUrl: artisan.photoUrl!,
+          imageUrl: artisan.photo!,
           width: 52,
           height: 52,
           fit: BoxFit.cover,

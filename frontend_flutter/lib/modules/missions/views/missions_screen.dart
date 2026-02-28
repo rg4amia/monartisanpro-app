@@ -30,31 +30,51 @@ class MissionsScreen extends StatelessWidget {
           // List
           Expanded(
             child: Obx(() {
-              if (c.isLoading.value) {
+              // Loading state (première charge)
+              if (c.isLoading.value && c.missions.isEmpty) {
                 return Padding(
                   padding: const EdgeInsets.all(20),
                   child: LoadingShimmer.list(),
                 );
               }
+
+              // Empty state
               if (c.missions.isEmpty) {
-                return Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.assignment_outlined,
-                          size: 60,
-                          color: AppColors.textMuted.withValues(alpha: 0.4)),
-                      const SizedBox(height: 12),
-                      const Text('Aucune mission trouvée.',
-                          style: TextStyle(color: AppColors.textMuted)),
-                    ],
+                return RefreshIndicator(
+                  onRefresh: c.refresh,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: Container(
+                      height: MediaQuery.of(context).size.height * 0.6,
+                      alignment: Alignment.center,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.assignment_outlined,
+                              size: 60,
+                              color: AppColors.textMuted.withValues(alpha: 0.4)),
+                          const SizedBox(height: 12),
+                          const Text('Aucune mission trouvée.',
+                              style: TextStyle(
+                                  fontSize: 15,
+                                  color: AppColors.textMuted)),
+                          const SizedBox(height: 8),
+                          const Text('Tirez pour actualiser',
+                              style: TextStyle(
+                                  fontSize: 13,
+                                  color: AppColors.textMuted)),
+                        ],
+                      ),
+                    ),
                   ),
                 );
               }
+
+              // List with data
               return RefreshIndicator(
-                onRefresh: () =>
-                    c.loadMissions(status: c.selectedFilter.value),
+                onRefresh: c.refresh,
                 child: ListView.builder(
+                  physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.symmetric(
                       horizontal: 20, vertical: 8),
                   itemCount: c.missions.length,

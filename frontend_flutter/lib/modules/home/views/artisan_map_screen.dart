@@ -144,7 +144,9 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
     final artisans = Get.find<HomeController>().artisans;
 
     for (final artisan in artisans) {
-      if (artisan.lat == null || artisan.lng == null) continue;
+      if (artisan.location == null) continue;
+      final lat = artisan.location!['lat']!;
+      final lng = artisan.location!['lng']!;
 
       final color =
           artisan.isGoldenMarker ? const Color(0xFFF39C12) : AppColors.primary;
@@ -152,7 +154,7 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
           color, artisan.scoreNzassa.toString(), artisan.isGoldenMarker);
 
       final pm = col.addPlacemarkWithImageStyle(
-        mk.Point(latitude: artisan.lat!, longitude: artisan.lng!),
+        mk.Point(latitude: lat, longitude: lng),
         mk_image.ImageProvider.fromImageProvider(MemoryImage(bytes)),
         const mk.IconStyle(scale: 1.0),
       );
@@ -211,8 +213,8 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
     );
     // Étoile (golden marker)
     if (isGolden) {
-      _paintText(canvas, '★', 13, Colors.white,
-          Offset(size / 2, size / 2 - 17));
+      _paintText(
+          canvas, '★', 13, Colors.white, Offset(size / 2, size / 2 - 17));
     }
     // Score
     _paintText(canvas, score, isGolden ? 12 : 15, Colors.white,
@@ -251,9 +253,7 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
       text: TextSpan(
           text: text,
           style: TextStyle(
-              fontSize: fontSize,
-              color: color,
-              fontWeight: FontWeight.bold)),
+              fontSize: fontSize, color: color, fontWeight: FontWeight.bold)),
       textDirection: TextDirection.ltr,
     )..layout();
     tp.paint(canvas, center - Offset(tp.width / 2, tp.height / 2));
@@ -323,8 +323,7 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
 
       // ── FAB Ma position ──
       floatingActionButton: Padding(
-        padding: EdgeInsets.only(
-            bottom: _selectedArtisan != null ? 285 : 16),
+        padding: EdgeInsets.only(bottom: _selectedArtisan != null ? 285 : 16),
         child: FloatingActionButton(
           heroTag: 'my_location_fab',
           backgroundColor: Colors.white,
@@ -465,8 +464,7 @@ class _CategoryChip extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon,
-                size: 14,
-                color: isSelected ? Colors.white : AppColors.primary),
+                size: 14, color: isSelected ? Colors.white : AppColors.primary),
             const SizedBox(width: 4),
             Text(
               label,
@@ -526,8 +524,7 @@ class _ArtisanCountBadge extends StatelessWidget {
 class _ArtisanBottomPanel extends StatelessWidget {
   final ArtisanModel artisan;
   final VoidCallback onClose;
-  const _ArtisanBottomPanel(
-      {required this.artisan, required this.onClose});
+  const _ArtisanBottomPanel({required this.artisan, required this.onClose});
 
   @override
   Widget build(BuildContext context) {
@@ -623,7 +620,7 @@ class _ArtisanBottomPanel extends StatelessWidget {
                           const Icon(Icons.location_on_outlined,
                               size: 13, color: AppColors.textMuted),
                           const SizedBox(width: 3),
-                          Text(Formatters.distance(artisan.distance!),
+                          Text(artisan.distance!,
                               style: const TextStyle(
                                   color: AppColors.textMuted, fontSize: 12)),
                         ],
