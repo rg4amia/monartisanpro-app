@@ -7,15 +7,15 @@ import '../controllers/auth_controller.dart';
 // ─── Design Tokens ───────────────────────────────────────────────────────────
 
 class _Dt {
-  static const navy    = Color(0xFF0B0F1A);
-  static const gold    = Color(0xFFCA8A04);
-  static const goldBr  = Color(0xFFFBBF24);
-  static const blue    = Color(0xFF1D4ED8);
-  static const bg      = Color(0xFFF8FAFC);
+  static const navy = Color(0xFF1A2C5B);
+  static const gold = Color(0xFFE67E22);
+  static const goldBr = Color(0xFFF39C12);
+  static const blue = Color(0xFF3498DB);
+  static const bg = Color(0xFFF5F6FA);
   static const surface = Colors.white;
-  static const ink     = Color(0xFF0F172A);
-  static const muted   = Color(0xFF64748B);
-  static const border  = Color(0xFFE2E8F0);
+  static const ink = Color(0xFF1A2C5B);
+  static const muted = Color(0xFF6B7280);
+  static const border = Color(0xFFE8EAF0);
 }
 
 // ─── Login Screen ────────────────────────────────────────────────────────────
@@ -33,21 +33,20 @@ class _LoginScreenState extends State<LoginScreen>
 
   // Animations — nullable so hot-reload reassemble() can safely recreate them
   AnimationController? _heroCtrl;
-  Animation<double>?   _heroFade;
-  Animation<Offset>?   _heroSlide;
+  Animation<double>? _heroFade;
+  Animation<Offset>? _heroSlide;
   AnimationController? _cardCtrl;
-  Animation<double>?   _cardFade;
-  Animation<Offset>?   _cardSlide;
+  Animation<double>? _cardFade;
+  Animation<Offset>? _cardSlide;
   AnimationController? _glowCtrl;
-  Animation<double>?   _glowAnim;
+  Animation<double>? _glowAnim;
   AnimationController? _shakeCtrl;
-  Animation<double>?   _shakeAnim;
+  Animation<double>? _shakeAnim;
 
   // OTP
   final List<TextEditingController> _otpCtrl =
       List.generate(4, (_) => TextEditingController());
-  final List<FocusNode> _otpFocus =
-      List.generate(4, (_) => FocusNode());
+  final List<FocusNode> _otpFocus = List.generate(4, (_) => FocusNode());
 
   // ── Animation setup ───────────────────────────────────────────────────────
 
@@ -62,17 +61,19 @@ class _LoginScreenState extends State<LoginScreen>
       vsync: this,
       duration: const Duration(milliseconds: 800),
     );
-    _heroFade  = CurvedAnimation(parent: _heroCtrl!, curve: Curves.easeOut);
+    _heroFade = CurvedAnimation(parent: _heroCtrl!, curve: Curves.easeOut);
     _heroSlide = Tween<Offset>(begin: const Offset(0, -0.15), end: Offset.zero)
-        .animate(CurvedAnimation(parent: _heroCtrl!, curve: Curves.easeOutCubic));
+        .animate(
+            CurvedAnimation(parent: _heroCtrl!, curve: Curves.easeOutCubic));
 
     _cardCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 700),
     );
-    _cardFade  = CurvedAnimation(parent: _cardCtrl!, curve: Curves.easeOut);
+    _cardFade = CurvedAnimation(parent: _cardCtrl!, curve: Curves.easeOut);
     _cardSlide = Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero)
-        .animate(CurvedAnimation(parent: _cardCtrl!, curve: Curves.easeOutCubic));
+        .animate(
+            CurvedAnimation(parent: _cardCtrl!, curve: Curves.easeOutCubic));
 
     _glowCtrl = AnimationController(
       vsync: this,
@@ -121,8 +122,12 @@ class _LoginScreenState extends State<LoginScreen>
     _cardCtrl?.dispose();
     _glowCtrl?.dispose();
     _shakeCtrl?.dispose();
-    for (final c in _otpCtrl) { c.dispose(); }
-    for (final f in _otpFocus) { f.dispose(); }
+    for (final c in _otpCtrl) {
+      c.dispose();
+    }
+    for (final f in _otpFocus) {
+      f.dispose();
+    }
     super.dispose();
   }
 
@@ -151,9 +156,9 @@ class _LoginScreenState extends State<LoginScreen>
         backgroundColor: _Dt.navy,
         body: LayoutBuilder(
           builder: (context, constraints) {
-            final total     = constraints.maxHeight;
-            final heroH     = total * 0.40;
-            final minCardH  = total - heroH + 36; // +36 overlaps the arc
+            final total = constraints.maxHeight;
+            final heroH = total * 0.40;
+            final minCardH = total - heroH + 36; // +36 overlaps the arc
 
             return Stack(
               children: [
@@ -172,9 +177,11 @@ class _LoginScreenState extends State<LoginScreen>
                       children: [
                         // ── Hero
                         FadeTransition(
-                          opacity: _heroFade ?? const AlwaysStoppedAnimation(1.0),
+                          opacity:
+                              _heroFade ?? const AlwaysStoppedAnimation(1.0),
                           child: SlideTransition(
-                            position: _heroSlide ?? const AlwaysStoppedAnimation(Offset.zero),
+                            position: _heroSlide ??
+                                const AlwaysStoppedAnimation(Offset.zero),
                             child: SizedBox(
                               height: heroH,
                               child: _buildHero(),
@@ -184,9 +191,11 @@ class _LoginScreenState extends State<LoginScreen>
 
                         // ── White bottom card
                         FadeTransition(
-                          opacity: _cardFade ?? const AlwaysStoppedAnimation(1.0),
+                          opacity:
+                              _cardFade ?? const AlwaysStoppedAnimation(1.0),
                           child: SlideTransition(
-                            position: _cardSlide ?? const AlwaysStoppedAnimation(Offset.zero),
+                            position: _cardSlide ??
+                                const AlwaysStoppedAnimation(Offset.zero),
                             child: ConstrainedBox(
                               constraints: BoxConstraints(minHeight: minCardH),
                               child: Container(
@@ -196,8 +205,8 @@ class _LoginScreenState extends State<LoginScreen>
                                     top: Radius.circular(36),
                                   ),
                                 ),
-                                padding: const EdgeInsets.fromLTRB(
-                                    24, 16, 24, 40),
+                                padding:
+                                    const EdgeInsets.fromLTRB(24, 16, 24, 40),
                                 child: _buildCard(),
                               ),
                             ),
@@ -251,7 +260,11 @@ class _LoginScreenState extends State<LoginScreen>
                   gradient: const LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [Color(0xFFFBBF24), Color(0xFFCA8A04), Color(0xFF92400E)],
+                    colors: [
+                      Color(0xFFFBBF24),
+                      Color(0xFFCA8A04),
+                      Color(0xFF92400E)
+                    ],
                   ),
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
@@ -457,7 +470,7 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Widget _buildProgressStep(int index, int current, String label) {
-    final done   = index < current;
+    final done = index < current;
     final active = index == current;
     return Column(
       children: [
@@ -531,10 +544,11 @@ class _LoginScreenState extends State<LoginScreen>
     return AnimatedBuilder(
       animation: _shakeAnim ?? const AlwaysStoppedAnimation(0.0),
       builder: (_, child) {
-        final v  = _shakeAnim?.value ?? 0.0;
+        final v = _shakeAnim?.value ?? 0.0;
         final dx = v == 0.0
             ? 0.0
-            : 8 * (1 - v) *
+            : 8 *
+                (1 - v) *
                 (_shakeCtrl?.status == AnimationStatus.forward ? 1 : -1);
         return Transform.translate(offset: Offset(dx, 0), child: child);
       },
@@ -717,7 +731,9 @@ class _LoginScreenState extends State<LoginScreen>
             GestureDetector(
               onTap: () {
                 _c.otpSent.value = false;
-                for (final c in _otpCtrl) { c.clear(); }
+                for (final c in _otpCtrl) {
+                  c.clear();
+                }
                 _c.otp.value = '';
                 HapticFeedback.lightImpact();
               },
@@ -905,7 +921,8 @@ class _LoginScreenState extends State<LoginScreen>
           disabledBackgroundColor: _Dt.border,
           disabledForegroundColor: _Dt.muted,
           elevation: enabled ? 4 : 0,
-          shadowColor: enabled ? color.withValues(alpha: 0.4) : Colors.transparent,
+          shadowColor:
+              enabled ? color.withValues(alpha: 0.4) : Colors.transparent,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
@@ -1085,9 +1102,9 @@ class _KentePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     // Horizontal micro-bands (Kente textile feel — gold, red, green)
     final bands = [
-      (const Color(0xFFCA8A04), 2.5),  // gold
-      (const Color(0xFF7F1D1D), 1.5),  // dark red
-      (const Color(0xFF14532D), 1.5),  // dark green
+      (const Color(0xFFCA8A04), 2.5), // gold
+      (const Color(0xFF7F1D1D), 1.5), // dark red
+      (const Color(0xFF14532D), 1.5), // dark green
     ];
 
     final paint = Paint()..style = PaintingStyle.fill;
@@ -1109,7 +1126,8 @@ class _KentePainter extends CustomPainter {
 
     const step = 42.0;
     for (double i = -size.height; i < size.width + size.height; i += step) {
-      canvas.drawLine(Offset(i, 0), Offset(i + size.height, size.height), linePaint);
+      canvas.drawLine(
+          Offset(i, 0), Offset(i + size.height, size.height), linePaint);
     }
 
     // Sparse dot grid
@@ -1146,5 +1164,3 @@ class _KentePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
-
-
