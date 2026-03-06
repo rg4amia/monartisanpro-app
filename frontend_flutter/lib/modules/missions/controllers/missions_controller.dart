@@ -68,7 +68,15 @@ class MissionsController extends GetxController {
   }
 
   /// Charge une mission spécifique avec ses jalons
-  Future<void> loadMission(int id, {bool showLoader = true}) async {
+  ///
+  /// [id] - ID de la mission
+  /// [showLoader] - Afficher le loader (false pour refresh en arrière-plan)
+  /// [forceRefresh] - Forcer l'appel API (ignorer le cache)
+  Future<void> loadMission(
+    int id, {
+    bool showLoader = true,
+    bool forceRefresh = false,
+  }) async {
     if (showLoader) {
       isLoading.value = true;
     }
@@ -77,8 +85,8 @@ class MissionsController extends GetxController {
     try {
       // Charger la mission et les jalons en parallèle
       final results = await Future.wait([
-        _repo.getMission(id),
-        _repo.getJalons(id),
+        _repo.getMission(id, forceRefresh: forceRefresh),
+        _repo.getJalons(id, forceRefresh: forceRefresh),
       ]);
 
       currentMission.value = results[0] as MissionModel;
@@ -87,10 +95,17 @@ class MissionsController extends GetxController {
       errorMsg.value = null;
     } on DioException catch (e) {
       errorMsg.value = _handleDioError(e);
-      _showErrorSnackbar(errorMsg.value!);
+
+      // Ne pas afficher d'erreur si on a des données en cache
+      if (currentMission.value == null && jalons.isEmpty) {
+        _showErrorSnackbar(errorMsg.value!);
+      }
     } catch (e) {
       errorMsg.value = 'Impossible de charger les détails de la mission';
-      _showErrorSnackbar(errorMsg.value!);
+
+      if (currentMission.value == null && jalons.isEmpty) {
+        _showErrorSnackbar(errorMsg.value!);
+      }
     } finally {
       if (showLoader) {
         isLoading.value = false;
@@ -130,17 +145,78 @@ class MissionsController extends GetxController {
     }
   }
 
+  /// Crée une nouvelle mission
+  ///
+  /// [artisanId] - ID de l'artisan sélectionné
+  /// [description] - Description des travaux
+  /// [category] - Catégorie des travaux
+  /// [urgency] - Niveau d'urgence (faible, moyen, urgent)
+  /// [location] - Localisation optionnelle
+  Future<MissionModel?> createMission({
+    required int artisanId,
+    required String description,
+    required String category,
+    required String urgency,
+    String? location,
+  }) async {
+    isLoading.value = true;
+    errorMsg.value = null;
+
+    try {
+      final mission = await _repo.createMission(
+        artisanId: artisanId,
+        description: description,
+        category: category,
+        urgency: urgency,
+        location: location,
+      );
+
+      // Invalider le cache pour forcer le refresh
+      await _repo.clearCache();
+
+      // Recharger la liste des missions
+      await loadMissions();
+
+      Get.snackbar(
+        'Mission créée',
+        'Votre demande a été envoyée à l\'artisan',
+        snackPosition: SnackPosition.TOP,
+        duration: const Duration(seconds: 3),
+      );
+
+      return mission;
+    } on DioException catch (e) {
+      errorMsg.value = _handleDioError(e);
+      _showErrorSnackbar('Erreur lors de la création: ${errorMsg.value}');
+      return null;
+    } catch (e) {
+      errorMsg.value = 'Impossible de créer la mission';
+      _showErrorSnackbar(errorMsg.value!);
+      return null;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   /// Soumet un jalon pour validation
   Future<bool> submitJalon(int jalonId) async {
     isSubmittingJalon.value = true;
     errorMsg.value = null;
 
     try {
-      await _repo.submitJalon(jalonId);
+      // Passer le missionId pour invalider le cache
+      await _repo.submitJalon(
+        jalonId,
+        missionId: currentMission.value?.id,
+      );
 
-      // Recharger la mission en arrière-plan
+      // Recharger la mission en arrière-plan avec forceRefresh
       if (currentMission.value != null) {
-        await loadMission(currentMission.value!.id, showLoader: false);
+        await loadMission(
+          currentMission.value!.id,
+          showLoader: false,
+          forceRefresh: true,
+        );
       }
 
       Get.snackbar(
@@ -193,11 +269,20 @@ class MissionsController extends GetxController {
     errorMsg.value = null;
 
     try {
-      await _repo.validateOtp(jalonId, otp);
+      // Passer le missionId pour invalider le cache
+      await _repo.validateOtp(
+        jalonId,
+        otp,
+        missionId: currentMission.value?.id,
+      );
 
-      // Recharger la mission en arrière-plan
+      // Recharger la mission en arrière-plan avec forceRefresh
       if (currentMission.value != null) {
-        await loadMission(currentMission.value!.id, showLoader: false);
+        await loadMission(
+          currentMission.value!.id,
+          showLoader: false,
+          forceRefresh: true,
+        );
       }
 
       Get.snackbar(
@@ -232,6 +317,7 @@ class MissionsController extends GetxController {
   }
 
   /// Rafraîchit la liste des missions
+  @override
   Future<void> refresh() async {
     await loadMissions(status: selectedFilter.value, isRefresh: true);
   }
@@ -281,7 +367,7 @@ class MissionsController extends GetxController {
       message,
       snackPosition: SnackPosition.TOP,
       duration: const Duration(seconds: 4),
-      backgroundColor: Get.theme.colorScheme.error.withOpacity(0.9),
+      backgroundColor: Get.theme.colorScheme.error.withValues(alpha: 0.9),
       colorText: Get.theme.colorScheme.onError,
     );
   }
