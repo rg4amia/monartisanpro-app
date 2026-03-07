@@ -5,16 +5,22 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\JCode\GenerateJCodeRequest;
 use App\Http\Requests\JCode\ScanJCodeRequest;
+use App\Http\Requests\UploadJCodePhotoRequest;
 use App\Http\Resources\JCodeResource;
 use App\Models\JCode;
 use App\Models\Mission;
 use App\Services\JCodeService;
+use App\Services\PhotoService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class JCodeController extends Controller
 {
-    public function __construct(private JCodeService $jCodeService) {}
+    public function __construct(
+        private JCodeService $jCodeService,
+        private PhotoService $photoService
+    ) {}
 
     /**
      * Artisan génère un J-Code pour acheter des matériaux.
@@ -99,5 +105,88 @@ class JCodeController extends Controller
             'message'  => 'J-Code validé. Paiement J+1 garanti.',
             'data'     => $result,
         ]);
+    }
+
+    /**
+     * Upload photo géolocalisée des matériaux reçus sur chantier
+     * POST /api/v1/jcodes/{jcode}/photo-materiaux
+     */
+    public function uploadPhotoMateriaux(UploadJCodePhotoRequest $request, JCode $jcode): JsonResponse
+    {
+        try {
+            $user = auth()->user();
+
+            // Vérifier que l'utilisateur est bien l'artisan du J-Code
+            if ($jcode->artisan_id !== $user->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Non autorisé'
+                ], 403);
+            }
+
+            // Vérifier que le J-Code a été scanné (utilisé)
+            if ($jcode->statut !== 'utilise') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Le J-Code doit être utilisé avant d\'uploader une photo'
+                ], 400);
+            }
+
+            // Vérifier qu'il n'y a pas déjà une photo
+            if ($jcode->photo_materiaux_url) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Une photo a déjà été uploadée pour ce J-Code'
+                ], 400);
+            }
+
+            // Upload de la photo
+            $uploaded = $this->photoService->uploadGeolocatedPhoto(
+                $request->file('photo'),
+                (float) $request->latitude,
+                (float) $request->longitude,
+                'jcode',
+                $jcode->id
+            );
+
+            // Mise à jour du J-Code
+            $jcode->update([
+                'photo_materiaux_url' => $uploaded['url'],
+                'photo_latitude' => $uploaded['latitude'],
+                'photo_longitude' => $uploaded['longitude'],
+                'photo_taken_at' => now(),
+            ]);
+
+            // Notifier le client (TODO: implémenter notification)
+
+            Log::info('Photo matériaux J-Code uploadée', [
+                'jcode_id' => $jcode->id,
+                'mission_id' => $jcode->mission_id,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Photo des matériaux uploadée avec succès',
+                'data' => [
+                    'jcode_id' => $jcode->id,
+                    'photo_url' => $uploaded['url'],
+                    'latitude' => $uploaded['latitude'],
+                    'longitude' => $uploaded['longitude'],
+                    'taken_at' => $uploaded['taken_at'],
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Erreur upload photo matériaux J-Code', [
+                'jcode_id' => $jcode->id,
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de l\'upload de la photo: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }
