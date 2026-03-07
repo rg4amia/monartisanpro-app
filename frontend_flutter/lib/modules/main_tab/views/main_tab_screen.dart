@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../home/views/artisan_home_screen.dart';
+import '../../home/views/artisan_map_screen.dart';
 import '../../home/views/client_home_screen.dart';
 import '../../home/views/supplier_home_screen.dart';
 import '../../missions/views/missions_screen.dart';
-import '../../notifications/views/notifications_screen.dart';
 import '../../settings/views/settings_screen.dart';
 import '../controllers/main_tab_controller.dart';
 
@@ -40,29 +40,29 @@ class MainTabScreen extends StatelessWidget {
   _TabConfig _defaultTabs(bool isArtisan) => _TabConfig(
         screens: [
           isArtisan ? const ArtisanHomeScreen() : const ClientHomeScreen(),
+          const ArtisanMapScreen(),
           const MissionsScreen(),
-          const NotificationsScreen(),
           const SettingsScreen(),
         ],
         items: const [
           _NavItem(
             icon: Icons.home_outlined,
-            activeIcon: Icons.home_rounded,
+            activeIcon: Icons.home,
             label: 'Home',
           ),
           _NavItem(
-            icon: Icons.assignment_outlined,
-            activeIcon: Icons.assignment_rounded,
-            label: 'Missions',
+            icon: Icons.map_outlined,
+            activeIcon: Icons.map,
+            label: 'Map',
           ),
           _NavItem(
-            icon: Icons.wallet_outlined,
-            activeIcon: Icons.wallet_rounded,
-            label: 'Wallet',
+            icon: Icons.calendar_today_outlined,
+            activeIcon: Icons.calendar_today,
+            label: 'Bookings',
           ),
           _NavItem(
             icon: Icons.person_outline_rounded,
-            activeIcon: Icons.person_rounded,
+            activeIcon: Icons.person,
             label: 'Profile',
           ),
         ],

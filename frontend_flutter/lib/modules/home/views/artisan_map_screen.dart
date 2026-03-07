@@ -22,13 +22,10 @@ const double _kAbidjanLng = -4.0169;
 const double _kDefaultZoom = 14.0;
 
 const List<Map<String, dynamic>> _kCategories = [
-  {'label': 'Tous', 'icon': Icons.apps},
-  {'label': 'Plomberie', 'icon': Icons.water_drop_outlined},
-  {'label': 'Électricité', 'icon': Icons.bolt_outlined},
-  {'label': 'Maçonnerie', 'icon': Icons.construction_outlined},
-  {'label': 'Menuiserie', 'icon': Icons.chair_outlined},
-  {'label': 'Peinture', 'icon': Icons.format_paint_outlined},
-  {'label': 'Carrelage', 'icon': Icons.grid_on_outlined},
+  {'label': 'Top Rated', 'icon': Icons.stars},
+  {'label': 'Tailors', 'icon': null},
+  {'label': 'Carpenters', 'icon': null},
+  {'label': 'Plumbers', 'icon': null},
 ];
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
@@ -149,14 +146,17 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
       final lng = artisan.location!['lng']!;
 
       final color =
-          artisan.isGoldenMarker ? const Color(0xFFF39C12) : AppColors.primary;
+          artisan.isGoldenMarker ? const Color(0xFFFBBF24) : const Color(0xFF64748B);
       final bytes = await _renderArtisanIcon(
           color, artisan.scoreNzassa.toString(), artisan.isGoldenMarker);
 
       final pm = col.addPlacemarkWithImageStyle(
         mk.Point(latitude: lat, longitude: lng),
         mk_image.ImageProvider.fromImageProvider(MemoryImage(bytes)),
-        const mk.IconStyle(scale: 1.0),
+        const mk.IconStyle(
+          scale: 1.0,
+          anchor: Offset(0.5, 0.83),
+        ),
       );
 
       _placemarkIndex[pm] = artisan;
@@ -178,97 +178,36 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
 
   Future<Uint8List> _renderArtisanIcon(
       Color color, String score, bool isGolden) async {
-    const size = 90.0;
+    const size = 100.0;
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
 
-    // Ombre portée plus prononcée
-    canvas.drawCircle(
-      const Offset(size / 2 + 2, size / 2 + 3),
-      30,
-      Paint()
-        ..color = Colors.black.withValues(alpha: 0.25)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
-    );
-
-    // Cercle extérieur (bordure dorée pour golden)
     if (isGolden) {
-      canvas.drawCircle(
-        Offset(size / 2, size / 2 - 5),
-        32,
+      // Draw score badge
+      final badgeWidth = 40.0;
+      final badgeHeight = 22.0;
+      final badgeRect = Rect.fromCenter(
+        center: const Offset(size / 2, badgeHeight / 2 + 5),
+        width: badgeWidth,
+        height: badgeHeight,
+      );
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(badgeRect, const Radius.circular(6)),
         Paint()
-          ..color = const Color(0xFFFFD700)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 3,
+          ..color = const Color(0xFFFBBF24) // amber-400
+          ..style = PaintingStyle.fill,
       );
+      _paintText(canvas, score, 12, const Color(0xFF451A03),
+          const Offset(size / 2, badgeHeight / 2 + 5));
+
+      // Draw location icon
+      _paintIcon(canvas, Icons.location_on, 36, const Color(0xFFF59E0B),
+          const Offset(size / 2, size / 2 + 15));
+    } else {
+      // Just location icon for others
+      _paintIcon(canvas, Icons.location_on, 36, const Color(0xFF64748B),
+          const Offset(size / 2, size / 2 + 15));
     }
-
-    // Cercle principal avec gradient simulé
-    final mainCircleCenter = Offset(size / 2, size / 2 - 5);
-    canvas.drawCircle(mainCircleCenter, 30, Paint()..color = color);
-
-    // Effet de brillance (highlight)
-    canvas.drawCircle(
-      Offset(size / 2 - 8, size / 2 - 13),
-      8,
-      Paint()..color = Colors.white.withValues(alpha: 0.3),
-    );
-
-    // Pointe du pin avec ombre
-    final pinPath = Path()
-      ..moveTo(size / 2 - 10, size / 2 + 23)
-      ..lineTo(size / 2 + 10, size / 2 + 23)
-      ..lineTo(size / 2, size / 2 + 40)
-      ..close();
-    canvas.drawPath(pinPath, Paint()..color = color);
-
-    // Bordure blanche du cercle
-    canvas.drawCircle(
-      mainCircleCenter,
-      30,
-      Paint()
-        ..color = Colors.white
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.5,
-    );
-
-    // Badge étoile pour golden marker
-    if (isGolden) {
-      final starBadgeCenter = Offset(size / 2, size / 2 - 22);
-      canvas.drawCircle(
-        starBadgeCenter,
-        10,
-        Paint()..color = const Color(0xFFFFD700),
-      );
-      canvas.drawCircle(
-        starBadgeCenter,
-        10,
-        Paint()
-          ..color = Colors.white
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.5,
-      );
-      _paintText(canvas, '★', 14, Colors.white, starBadgeCenter);
-    }
-
-    // Icône artisan (marteau)
-    if (!isGolden) {
-      _paintIcon(canvas, Icons.handyman, 16,
-          Colors.white.withValues(alpha: 0.9), Offset(size / 2, size / 2 - 18));
-    }
-
-    // Score avec fond semi-transparent
-    final scoreY = isGolden ? size / 2 - 2 : size / 2 + 2;
-    final scoreRect = Rect.fromCenter(
-      center: Offset(size / 2, scoreY),
-      width: 36,
-      height: 20,
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(scoreRect, const Radius.circular(10)),
-      Paint()..color = Colors.black.withValues(alpha: 0.25),
-    );
-    _paintText(canvas, score, 13, Colors.white, Offset(size / 2, scoreY));
 
     final img =
         await recorder.endRecording().toImage(size.toInt(), size.toInt());
@@ -384,28 +323,41 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
             ),
           ),
 
-          // ── Badge compteur ──
+          // ── Zoom Controls & My Location ──
           if (_mapReady)
             Positioned(
-              top: MediaQuery.of(context).padding.top + 110,
               right: 16,
-              child: const _ArtisanCountBadge(),
-            ),
-
-          // ── Bouton liste ──
-          if (_mapReady)
-            Positioned(
-              top: MediaQuery.of(context).padding.top + 160,
-              right: 16,
-              child: _ListViewButton(
-                onTap: () {
-                  // TODO: Show artisan list view
-                  Get.snackbar(
-                    'Vue liste',
-                    'Affichage de la liste des artisans',
-                    snackPosition: SnackPosition.BOTTOM,
-                  );
-                },
+              bottom: _selectedArtisan != null ? 300 : 100,
+              child: Column(
+                children: [
+                  _MapControlButton(
+                    icon: Icons.add,
+                    onTap: () {
+                      final pos = _mapWindow?.map.cameraPosition;
+                      if (pos != null) {
+                        _moveCamera(pos.target.latitude, pos.target.longitude,
+                            pos.zoom + 1);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  _MapControlButton(
+                    icon: Icons.remove,
+                    onTap: () {
+                      final pos = _mapWindow?.map.cameraPosition;
+                      if (pos != null) {
+                        _moveCamera(pos.target.latitude, pos.target.longitude,
+                            pos.zoom - 1);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  _MapControlButton(
+                    icon: Icons.my_location,
+                    iconColor: AppColors.primary,
+                    onTap: _centerOnUser,
+                  ),
+                ],
               ),
             ),
 
@@ -439,16 +391,40 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
         ],
       ),
 
-      // ── FAB Ma position ──
-      floatingActionButton: Padding(
-        padding: EdgeInsets.only(bottom: _selectedArtisan != null ? 285 : 16),
-        child: FloatingActionButton(
-          heroTag: 'my_location_fab',
-          backgroundColor: Colors.white,
-          foregroundColor: AppColors.primary,
-          onPressed: _centerOnUser,
-          child: const Icon(Icons.my_location),
+    );
+  }
+}
+
+class _MapControlButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  final Color? iconColor;
+
+  const _MapControlButton({
+    required this.icon,
+    required this.onTap,
+    this.iconColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.15),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
+        child: Icon(icon, color: iconColor ?? const Color(0xFF64748B), size: 24),
       ),
     );
   }
@@ -473,7 +449,6 @@ class _MapHeader extends StatefulWidget {
 class _MapHeaderState extends State<_MapHeader> {
   String? _selected;
   final _searchCtrl = TextEditingController();
-  bool _showSearch = false;
 
   @override
   void dispose() {
@@ -505,109 +480,59 @@ class _MapHeaderState extends State<_MapHeader> {
               GestureDetector(
                 onTap: widget.onBack,
                 child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.95),
-                    borderRadius: BorderRadius.circular(12),
+                  width: 44,
+                  height: 44,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
+                        color: Colors.black12,
+                        blurRadius: 10,
+                        offset: Offset(0, 4),
                       ),
                     ],
                   ),
                   child: const Icon(Icons.arrow_back,
-                      color: AppColors.primary, size: 22),
+                      color: Color(0xFF64748B), size: 22),
                 ),
               ),
               const SizedBox(width: 12),
 
-              // Barre de recherche ou titre
+              // Barre de recherche
               Expanded(
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 300),
-                  child: _showSearch
-                      ? Container(
-                          key: const ValueKey('search'),
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.95),
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.1),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: TextField(
-                            controller: _searchCtrl,
-                            autofocus: true,
-                            decoration: InputDecoration(
-                              hintText: 'Rechercher un artisan...',
-                              hintStyle: TextStyle(
-                                color:
-                                    AppColors.textMuted.withValues(alpha: 0.6),
-                                fontSize: 14,
-                              ),
-                              prefixIcon: const Icon(Icons.search,
-                                  size: 20, color: AppColors.textMuted),
-                              border: InputBorder.none,
-                              contentPadding:
-                                  const EdgeInsets.symmetric(vertical: 10),
-                            ),
-                            onSubmitted: (value) {
-                              widget.onSearch(value);
-                              setState(() => _showSearch = false);
-                            },
-                          ),
-                        )
-                      : Container(
-                          key: const ValueKey('title'),
-                          alignment: Alignment.centerLeft,
-                          child: const Text(
-                            'Artisans à proximité',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 17,
-                              fontWeight: FontWeight.bold,
-                              shadows: [
-                                Shadow(blurRadius: 4, color: Colors.black54)
-                              ],
-                            ),
-                          ),
-                        ),
+                child: Container(
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(22),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: TextField(
+                    controller: _searchCtrl,
+                    decoration: InputDecoration(
+                      hintText: 'Search artisans...',
+                      hintStyle: const TextStyle(
+                        color: Color(0xFF94A3B8),
+                        fontSize: 14,
+                      ),
+                      prefixIcon: const Icon(Icons.search,
+                          size: 20, color: Color(0xFF94A3B8)),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    onSubmitted: widget.onSearch,
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
 
-              // Bouton recherche
-              GestureDetector(
-                onTap: () => setState(() => _showSearch = !_showSearch),
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.95),
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Icon(
-                    _showSearch ? Icons.close : Icons.search,
-                    color: AppColors.primary,
-                    size: 22,
-                  ),
-                ),
-              ),
             ],
           ),
           const SizedBox(height: 10),
@@ -622,17 +547,15 @@ class _MapHeaderState extends State<_MapHeader> {
               itemBuilder: (_, i) {
                 final cat = _kCategories[i];
                 final label = cat['label'] as String;
-                final icon = cat['icon'] as IconData;
-                final isAll = label == 'Tous';
-                final isSelected =
-                    isAll ? _selected == null : _selected == label;
+                final icon = cat['icon'] as IconData?;
+                final isSelected = _selected == label || (_selected == null && i == 0);
                 return _CategoryChip(
                   label: label,
                   icon: icon,
                   isSelected: isSelected,
                   onTap: () {
-                    setState(() => _selected = isAll ? null : label);
-                    widget.onCategorySelected(isAll ? null : label);
+                    setState(() => _selected = label);
+                    widget.onCategorySelected(label);
                   },
                 );
               },
@@ -646,12 +569,12 @@ class _MapHeaderState extends State<_MapHeader> {
 
 class _CategoryChip extends StatelessWidget {
   final String label;
-  final IconData icon;
+  final IconData? icon;
   final bool isSelected;
   final VoidCallback onTap;
   const _CategoryChip(
       {required this.label,
-      required this.icon,
+      this.icon,
       required this.isSelected,
       required this.onTap});
 
@@ -661,126 +584,39 @@ class _CategoryChip extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOutCubic,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        height: 36,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.primary
-              : Colors.white.withValues(alpha: 0.95),
-          borderRadius: BorderRadius.circular(20),
-          border: isSelected
-              ? Border.all(
-                  color: Colors.white.withValues(alpha: 0.3), width: 1.5)
-              : null,
+              ? const Color(0xFF4F46E5)
+              : Colors.white,
+          borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: isSelected
-                  ? AppColors.primary.withValues(alpha: 0.4)
-                  : Colors.black.withValues(alpha: 0.12),
-              blurRadius: isSelected ? 8 : 4,
-              offset: Offset(0, isSelected ? 3 : 2),
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon,
-                size: 15, color: isSelected ? Colors.white : AppColors.primary),
-            const SizedBox(width: 5),
+            if (icon != null) ...[
+              Icon(icon,
+                  size: 16,
+                  color: isSelected ? Colors.white : const Color(0xFF64748B)),
+              const SizedBox(width: 8),
+            ],
             Text(
               label,
               style: TextStyle(
                 fontSize: 13,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                color: isSelected ? Colors.white : AppColors.primary,
+                fontWeight: FontWeight.w600,
+                color: isSelected ? Colors.white : const Color(0xFF334155),
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Badge compteur ───────────────────────────────────────────────────────────
-
-class _ArtisanCountBadge extends StatelessWidget {
-  const _ArtisanCountBadge();
-
-  @override
-  Widget build(BuildContext context) {
-    return Obx(() {
-      final count = Get.find<HomeController>().artisans.length;
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.15),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child:
-                  const Icon(Icons.people, size: 14, color: AppColors.primary),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              '$count artisan${count > 1 ? 's' : ''}',
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: AppColors.primary,
-              ),
-            ),
-          ],
-        ),
-      );
-    });
-  }
-}
-
-// ─── Bouton vue liste ─────────────────────────────────────────────────────────
-
-class _ListViewButton extends StatelessWidget {
-  final VoidCallback onTap;
-  const _ListViewButton({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 48,
-        height: 48,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.15),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: const Icon(
-          Icons.list_rounded,
-          color: AppColors.primary,
-          size: 24,
         ),
       ),
     );
@@ -803,68 +639,42 @@ class _ArtisanBottomPanel extends StatelessWidget {
         }
       },
       child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.2),
-              blurRadius: 24,
-              offset: const Offset(0, -4),
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+        padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Drag handle
-            Container(
-              width: 48,
-              height: 5,
-              decoration: BoxDecoration(
-                color: AppColors.border,
-                borderRadius: BorderRadius.circular(3),
-              ),
-            ),
-            const SizedBox(height: 20),
-
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Avatar avec badge
-                Stack(
-                  children: [
-                    CircleAvatar(
-                      radius: 32,
-                      backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                      child: Text(
-                        Formatters.initial(artisan.name ?? artisan.phone),
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ),
-                    if (artisan.isGoldenMarker)
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFFD700),
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
-                          ),
-                          child: const Icon(
-                            Icons.star,
-                            color: Colors.white,
-                            size: 12,
-                          ),
-                        ),
-                      ),
-                  ],
+                // Image
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(12),
+                    image: artisan.photo != null
+                        ? DecorationImage(
+                            image: NetworkImage(artisan.photo!),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
+                  ),
+                  child: artisan.photo == null
+                      ? const Icon(Icons.person, color: Colors.grey, size: 40)
+                      : null,
                 ),
                 const SizedBox(width: 16),
 
@@ -872,143 +682,145 @@ class _ArtisanBottomPanel extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      if (artisan.isGoldenMarker)
+                        const Text(
+                          'GOLD ARTISAN',
+                          style: TextStyle(
+                            color: Color(0xFF4F46E5),
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1,
+                          ),
+                        ),
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Expanded(
                             child: Text(
                               artisan.name ?? 'Artisan',
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
-                                fontSize: 17,
-                                color: AppColors.textPrimary,
+                                fontSize: 18,
+                                color: Color(0xFF0F172A),
                               ),
                             ),
                           ),
-                          if (artisan.isGoldenMarker)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [
-                                    Color(0xFFFFD700),
-                                    Color(0xFFFFA500)
-                                  ],
-                                ),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.star,
-                                      color: Colors.white, size: 12),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    'TOP',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFF7ED),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: const Color(0xFFFFEDD5)),
                             ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.stars,
+                                    color: Color(0xFFF59E0B), size: 14),
+                                const SizedBox(width: 4),
+                                Text(
+                                  artisan.scoreNzassa.toString(),
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF9A3412),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ],
                       ),
-                      if (artisan.trade != null) ...[
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.work_outline,
-                              size: 14,
-                              color: AppColors.textSecondary,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              artisan.trade!,
-                              style: const TextStyle(
-                                color: AppColors.textSecondary,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                      if (artisan.distance != null) ...[
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.location_on_outlined,
-                              size: 14,
-                              color: AppColors.textMuted,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              artisan.distance!,
-                              style: const TextStyle(
-                                color: AppColors.textMuted,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(Icons.near_me,
+                              size: 14, color: Color(0xFF64748B)),
+                          const SizedBox(width: 4),
+                          Text(
+                            artisan.distance ?? '0.8 km away',
+                            style: const TextStyle(
+                                color: Color(0xFF64748B), fontSize: 13),
+                          ),
+                          const SizedBox(width: 8),
+                          const Icon(Icons.circle, size: 4, color: Color(0xFFCBD5E1)),
+                          const SizedBox(width: 8),
+                          Text(
+                            artisan.trade ?? 'Tailor',
+                            style: const TextStyle(
+                                color: Color(0xFF64748B), fontSize: 13),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
-
-                const SizedBox(width: 12),
-                ScoreNzassa(score: artisan.scoreNzassa, size: ScoreSize.large),
               ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
 
             Row(
               children: [
                 Expanded(
-                  child: OutlinedButton.icon(
+                  child: ElevatedButton(
                     onPressed: () {
                       onClose();
                       Get.toNamed(Routes.artisanProfile, arguments: artisan);
                     },
-                    icon: const Icon(Icons.person_outline, size: 18),
-                    label: const Text('Profil'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.primary,
-                      side: const BorderSide(
-                          color: AppColors.primary, width: 1.5),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF4F46E5),
+                      foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(10),
                       ),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      elevation: 0,
                     ),
+                    child: const Text('View Profile',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ),
                 const SizedBox(width: 12),
-                Expanded(
-                  flex: 2,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      onClose();
-                      Get.toNamed(
-                        Routes.missionRequest,
-                        arguments: {'artisan': artisan},
-                      );
-                    },
-                    icon: const Icon(Icons.send_outlined, size: 18),
-                    label: const Text('Demander devis'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEEF2FF),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.chat_bubble, color: Color(0xFF4F46E5)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 24,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF4F46E5),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Container(
+                  width: 6,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE2E8F0),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Container(
+                  width: 6,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE2E8F0),
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ],
