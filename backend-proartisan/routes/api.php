@@ -87,14 +87,16 @@ Route::prefix('v1')->group(function () {
         // ── Jalons ────────────────────────────────────────────────────────────
         Route::get('/missions/{mission}/jalons',     [JalonController::class, 'index']);
         Route::put('/jalons/{jalon}/submit',         [JalonController::class, 'submit']);
+        Route::post('/jalons/{jalon}/photos',        [JalonController::class, 'uploadPhotos']);
         Route::post('/jalons/{jalon}/request-otp',   [JalonController::class, 'requestOtp']);
         Route::post('/jalons/{jalon}/validate-otp',  [JalonController::class, 'validateOtp']);
 
         // ── J-Codes ───────────────────────────────────────────────────────────
-        Route::post('/jcodes',              [JCodeController::class, 'store']);
-        Route::get('/jcodes/active',        [JCodeController::class, 'active']);
-        Route::get('/jcodes/{jcode}',       [JCodeController::class, 'show']);
-        Route::post('/jcodes/{jcode}/scan', [JCodeController::class, 'scan']);
+        Route::post('/jcodes',                       [JCodeController::class, 'store']);
+        Route::get('/jcodes/active',                 [JCodeController::class, 'active']);
+        Route::get('/jcodes/{jcode}',                [JCodeController::class, 'show']);
+        Route::post('/jcodes/{jcode}/scan',          [JCodeController::class, 'scan']);
+        Route::post('/jcodes/{jcode}/photo-materiaux', [JCodeController::class, 'uploadPhotoMateriaux']);
 
         // ── Paiements (Wave & Orange Money) ───────────────────────────────────
         Route::prefix('payments')->group(function () {

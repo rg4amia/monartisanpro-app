@@ -26,6 +26,7 @@ abstract class Routes {
   static const missions = '/missions';
   static const notifications = '/notifications';
   static const settings = '/settings';
+  static const updateProfile = '/update-profile';
 
   // Map
   static const artisanMap = '/artisan-map';
