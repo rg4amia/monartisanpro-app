@@ -128,7 +128,16 @@ class UpdateProfileController extends GetxController {
     try {
       final userId = StorageService.getUserId();
       if (userId == null) {
-        throw Exception('User ID not found');
+        // User session is invalid, show friendly error
+        Get.snackbar(
+          'Session Error',
+          'Please log in again to update your profile',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: const Color(0xFFFEE2E2),
+          colorText: const Color(0xFFEF4444),
+          duration: const Duration(seconds: 3),
+        );
+        return;
       }
 
       await _userRepo.updateProfile(
@@ -148,7 +157,6 @@ class UpdateProfileController extends GetxController {
         colorText: const Color(0xFF10B981),
       );
     } catch (e) {
-      print(e.toString());
       Get.snackbar(
         'Error',
         'Failed to update profile: ${e.toString()}',

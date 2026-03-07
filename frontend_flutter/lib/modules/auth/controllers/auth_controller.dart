@@ -51,10 +51,18 @@ class AuthController extends GetxController {
 
       // Si le profil est complet, l'utilisateur est connecté
       if (hasCompletedProfile) {
-        final user = result['user'];
-        if (user != null) {
-          // Sauvegarder les infos utilisateur
-          // StorageService.saveUser(user);
+        final userData = result['user'];
+        if (userData != null) {
+          // Parse user data and save to storage
+          final user = userData is UserModel
+              ? userData
+              : UserModel.fromJson(userData as Map<String, dynamic>);
+
+          StorageService.saveUserId(user.id);
+          StorageService.saveName(user.name ?? '');
+          StorageService.saveRole(user.role);
+          StorageService.saveKycStatus(user.kycStatus);
+          StorageService.setOnboarded(true);
         }
       }
 
