@@ -25,6 +25,8 @@ class MissionRequestScreen extends StatefulWidget {
 class _MissionRequestScreenState extends State<MissionRequestScreen> {
   final _descCtrl = TextEditingController();
   final _selectedCategory = ''.obs;
+  final _selectedCategoryId = 0.obs;
+  final _selectedTradeId = 0.obs;
   final _location = 'Abidjan, Côte d\'Ivoire'.obs;
   final _locationDetail = 'Cocody, Riviera 3'.obs;
   final _photos = <XFile>[].obs;
@@ -88,10 +90,34 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
                   children: [
                     _SectionTitle(title: 'Service Category'),
                     const SizedBox(height: 12),
-                    _CategoryChips(
-                      categories: _categories,
-                      selected: _selectedCategory,
-                    ),
+                    Obx(() => _selectedCategory.value.isEmpty
+                        ? _SelectServiceButton(
+                            onTap: () async {
+                              final result = await Get.toNamed(Routes.services);
+                              if (result != null && result is Map) {
+                                _selectedCategory.value =
+                                    result['trade']?.name ?? '';
+                                _selectedCategoryId.value =
+                                    result['sector']?.id ?? 0;
+                                _selectedTradeId.value =
+                                    result['trade']?.id ?? 0;
+                              }
+                            },
+                          )
+                        : _SelectedServiceCard(
+                            category: _selectedCategory.value,
+                            onChangeTap: () async {
+                              final result = await Get.toNamed(Routes.services);
+                              if (result != null && result is Map) {
+                                _selectedCategory.value =
+                                    result['trade']?.name ?? '';
+                                _selectedCategoryId.value =
+                                    result['sector']?.id ?? 0;
+                                _selectedTradeId.value =
+                                    result['trade']?.id ?? 0;
+                              }
+                            },
+                          )),
                     const SizedBox(height: 24),
                     _SectionTitle(title: 'Mission Details'),
                     const SizedBox(height: 8),
@@ -205,6 +231,113 @@ class _SectionTitle extends StatelessWidget {
 }
 
 // ─── Category Chips ───────────────────────────────────────────────────────────
+class _SelectServiceButton extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _SelectServiceButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: _C.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: _C.subtle, width: 2),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: const [
+            Icon(Icons.add_circle_outline, color: _C.primary, size: 24),
+            SizedBox(width: 12),
+            Text(
+              'Select Service Category',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: _C.primary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SelectedServiceCard extends StatelessWidget {
+  final String category;
+  final VoidCallback onChangeTap;
+
+  const _SelectedServiceCard({
+    required this.category,
+    required this.onChangeTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _C.primaryLight,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _C.primary),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: _C.primary,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(Icons.check, color: Colors.white, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Selected Service',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: _C.muted,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  category,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: _C.ink,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: onChangeTap,
+            child: const Text(
+              'Change',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: _C.primary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _CategoryChips extends StatelessWidget {
   final List<Map<String, dynamic>> categories;
   final RxString selected;

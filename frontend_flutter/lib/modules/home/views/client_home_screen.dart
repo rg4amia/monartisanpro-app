@@ -65,7 +65,7 @@ class ClientHomeScreen extends StatelessWidget {
             _SectionTitle(
                 title: 'Service Categories',
                 trailing: TextButton(
-                  onPressed: () => Get.toNamed(Routes.sectors),
+                  onPressed: () => Get.toNamed(Routes.services),
                   child: const Text('See all',
                       style: TextStyle(color: _C.primary)),
                 )),

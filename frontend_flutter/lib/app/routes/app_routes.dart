@@ -31,6 +31,9 @@ abstract class Routes {
   // Map
   static const artisanMap = '/artisan-map';
 
+  // Services
+  static const services = '/services';
+
   // Modals
   static const rating = '/rating';
   static const litige = '/litige';
