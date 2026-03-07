@@ -1,8 +1,9 @@
 abstract class Routes {
   // Auth
   static const login = '/login';
-  static const roleSelect = '/role-select';
-  static const kyc = '/kyc';
+  static const otpVerification = '/otp-verification';
+  static const kycCni = '/kyc-cni';
+  static const kycSelfie = '/kyc-selfie';
 
   // Main
   static const mainTab = '/main';
@@ -18,6 +19,7 @@ abstract class Routes {
   static const scanner = '/scanner';
   static const transactionConfirm = '/transaction-confirm';
   static const score = '/score';
+  static const sectors = '/sectors';
 
   // Tabs
   static const missions = '/missions';

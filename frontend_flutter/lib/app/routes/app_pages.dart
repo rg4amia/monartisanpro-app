@@ -1,9 +1,10 @@
 import 'package:get/get.dart';
 
 import '../../modules/auth/bindings/auth_binding.dart';
-import '../../modules/auth/views/kyc_screen.dart';
+import '../../modules/auth/views/kyc_cni_capture_screen.dart';
+import '../../modules/auth/views/kyc_selfie_liveness_screen.dart';
 import '../../modules/auth/views/login_screen.dart';
-import '../../modules/auth/views/role_select_screen.dart';
+import '../../modules/auth/views/otp_verification_screen.dart';
 import '../../modules/artisans/bindings/artisans_binding.dart';
 import '../../modules/artisans/views/artisan_profile_screen.dart';
 import '../../modules/devis/bindings/devis_binding.dart';
@@ -42,13 +43,18 @@ class AppPages {
       binding: AuthBinding(),
     ),
     GetPage(
-      name: Routes.roleSelect,
-      page: () => const RoleSelectScreen(),
+      name: Routes.otpVerification,
+      page: () => const OtpVerificationScreen(),
       binding: AuthBinding(),
     ),
     GetPage(
-      name: Routes.kyc,
-      page: () => const KycScreen(),
+      name: Routes.kycCni,
+      page: () => const KycCniCaptureScreen(),
+      binding: AuthBinding(),
+    ),
+    GetPage(
+      name: Routes.kycSelfie,
+      page: () => const KycSelfieLivenessScreen(),
       binding: AuthBinding(),
     ),
 

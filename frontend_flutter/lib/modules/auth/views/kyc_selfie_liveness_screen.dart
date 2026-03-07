@@ -16,40 +16,62 @@ class _Dt {
   static const ink = Color(0xFF1A1D2E);
   static const muted = Color(0xFF6B7280);
   static const border = Color(0xFFE8EAF0);
-  static const cardBg = Color(0xFF2C3E50);
-  static const warning = Color(0xFFFBBF24);
 }
 
-// ─── CNI Capture Screen ──────────────────────────────────────────────────────
+// ─── Selfie Liveness Screen ──────────────────────────────────────────────────
 
-class KycCniCaptureScreen extends StatefulWidget {
-  const KycCniCaptureScreen({super.key});
+class KycSelfieLivenessScreen extends StatefulWidget {
+  const KycSelfieLivenessScreen({super.key});
 
   @override
-  State<KycCniCaptureScreen> createState() => _KycCniCaptureScreenState();
+  State<KycSelfieLivenessScreen> createState() =>
+      _KycSelfieLivenessScreenState();
 }
 
-class _KycCniCaptureScreenState extends State<KycCniCaptureScreen> {
+class _KycSelfieLivenessScreenState extends State<KycSelfieLivenessScreen>
+    with SingleTickerProviderStateMixin {
   final _c = Get.find<AuthController>();
   final _picker = ImagePicker();
 
-  Future<void> _captureImage() async {
+  AnimationController? _pulseCtrl;
+  Animation<double>? _pulseAnim;
+  bool _isReady = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
+    _pulseAnim = Tween<double>(begin: 0.95, end: 1.05).animate(
+      CurvedAnimation(parent: _pulseCtrl!, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pulseCtrl?.dispose();
+    super.dispose();
+  }
+
+  Future<void> _captureSelfie() async {
     HapticFeedback.mediumImpact();
     try {
       final img = await _picker.pickImage(
         source: ImageSource.camera,
         imageQuality: 85,
-        preferredCameraDevice: CameraDevice.rear,
+        preferredCameraDevice: CameraDevice.front,
       );
       if (img != null) {
-        _c.cniPath.value = img.path;
+        _c.selfiePath.value = img.path;
 
-        // Upload CNI immediately
-        await _c.uploadCni();
+        // Upload selfie immediately
+        await _c.uploadSelfie();
 
-        // Navigate to selfie screen if successful
+        // Navigate to main app if successful
         if (_c.errorMsg.value == null) {
-          Get.toNamed(Routes.kycSelfie);
+          Get.offAllNamed(Routes.mainTab);
         }
       }
     } catch (e) {
@@ -65,14 +87,14 @@ class _KycCniCaptureScreenState extends State<KycCniCaptureScreen> {
         imageQuality: 85,
       );
       if (img != null) {
-        _c.cniPath.value = img.path;
+        _c.selfiePath.value = img.path;
 
-        // Upload CNI immediately
-        await _c.uploadCni();
+        // Upload selfie immediately
+        await _c.uploadSelfie();
 
-        // Navigate to selfie screen if successful
+        // Navigate to main app if successful
         if (_c.errorMsg.value == null) {
-          Get.toNamed(Routes.kycSelfie);
+          Get.offAllNamed(Routes.mainTab);
         }
       }
     } catch (e) {
@@ -118,7 +140,7 @@ class _KycCniCaptureScreenState extends State<KycCniCaptureScreen> {
                 const SizedBox(height: 12),
                 _buildSubtitle(),
                 const SizedBox(height: 40),
-                _buildCaptureFrame(),
+                _buildFaceCircle(),
                 const SizedBox(height: 40),
                 _buildActionButtons(),
                 const SizedBox(height: 24),
@@ -132,7 +154,7 @@ class _KycCniCaptureScreenState extends State<KycCniCaptureScreen> {
                   );
                 }),
 
-                _buildPrivacyNote(),
+                _buildSecurityNote(),
               ],
             ),
           ),
@@ -149,42 +171,32 @@ class _KycCniCaptureScreenState extends State<KycCniCaptureScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
-              'STEP 1 OF 2',
+              'Selfie Liveness',
               style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                color: _Dt.primary,
-                letterSpacing: 1.2,
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+                color: _Dt.ink,
+                letterSpacing: -0.5,
               ),
             ),
             Text(
-              '50%',
+              'Step 2 of 2',
               style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
                 color: _Dt.muted,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 12),
-        const Text(
-          'CNI Capture',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w900,
-            color: _Dt.ink,
-            letterSpacing: -0.5,
-          ),
-        ),
         const SizedBox(height: 16),
         ClipRRect(
           borderRadius: BorderRadius.circular(4),
-          child: LinearProgressIndicator(
-            value: 0.5,
+          child: const LinearProgressIndicator(
+            value: 1.0,
             minHeight: 6,
             backgroundColor: _Dt.border,
-            valueColor: const AlwaysStoppedAnimation<Color>(_Dt.primary),
+            valueColor: AlwaysStoppedAnimation<Color>(_Dt.primary),
           ),
         ),
       ],
@@ -193,7 +205,20 @@ class _KycCniCaptureScreenState extends State<KycCniCaptureScreen> {
 
   Widget _buildTitle() {
     return const Text(
-      'Align your CNI card within the frame and ensure all details are clearly visible.',
+      'Face Verification',
+      style: TextStyle(
+        fontSize: 28,
+        fontWeight: FontWeight.w900,
+        color: _Dt.ink,
+        letterSpacing: -0.5,
+      ),
+      textAlign: TextAlign.center,
+    );
+  }
+
+  Widget _buildSubtitle() {
+    return const Text(
+      'Position your face in the circle and blink to confirm your identity',
       style: TextStyle(
         fontSize: 15,
         color: _Dt.muted,
@@ -204,121 +229,112 @@ class _KycCniCaptureScreenState extends State<KycCniCaptureScreen> {
     );
   }
 
-  Widget _buildSubtitle() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
-        color: _Dt.primary.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: const Text(
-        'Make sure your CNI is valid and not expired',
-        style: TextStyle(
-          fontSize: 13,
-          color: _Dt.primary,
-          fontWeight: FontWeight.w600,
-        ),
-        textAlign: TextAlign.center,
-      ),
-    );
-  }
-
-  Widget _buildCaptureFrame() {
+  Widget _buildFaceCircle() {
     return Obx(() {
-      if (_c.cniPath.value != null) {
+      if (_c.selfiePath.value != null) {
         return _buildPreview();
       }
 
-      return Container(
-        height: 240,
-        decoration: BoxDecoration(
-          color: _Dt.cardBg,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.2),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
+      return AnimatedBuilder(
+        animation: _pulseAnim!,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: _pulseAnim!.value,
+            child: child,
+          );
+        },
+        child: Container(
+          width: 280,
+          height: 280,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: const Color(0xFFE8EDF5),
+            border: Border.all(
+              color: _Dt.primary,
+              width: 4,
+              strokeAlign: BorderSide.strokeAlignOutside,
             ),
-          ],
-        ),
-        child: Stack(
-          children: [
-            // Frame overlay
-            Positioned.fill(
-              child: Padding(
-                padding: const EdgeInsets.all(32),
+          ),
+          child: Stack(
+            children: [
+              // Phone illustration
+              Center(
                 child: Container(
+                  width: 140,
+                  height: 240,
                   decoration: BoxDecoration(
+                    color: const Color(0xFF9CA3AF),
+                    borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: _Dt.primary,
+                      color: const Color(0xFF6B7280),
                       width: 3,
                     ),
-                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        Icons.credit_card,
-                        size: 48,
-                        color: Colors.white.withValues(alpha: 0.5),
+                      // Phone notch
+                      Container(
+                        margin: const EdgeInsets.only(top: 8),
+                        width: 60,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF4B5563),
+                          borderRadius: BorderRadius.circular(3),
+                        ),
                       ),
                       const SizedBox(height: 12),
-                      Text(
-                        'PLACE CNI CARD\nHERE',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white.withValues(alpha: 0.5),
-                          letterSpacing: 1.2,
-                          height: 1.5,
+                      // Screen with person silhouette
+                      Expanded(
+                        child: Container(
+                          margin: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFD1D5DB),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Center(
+                            child: Icon(
+                              Icons.person,
+                              size: 80,
+                              color: Colors.white.withValues(alpha: 0.6),
+                            ),
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
               ),
-            ),
 
-            // Tip banner
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.7),
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(20),
-                    bottomRight: Radius.circular(20),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.lightbulb_outline,
-                      color: _Dt.warning,
-                      size: 18,
-                    ),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'Tip: Avoid glare and use good lighting',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
+              // Ready badge
+              if (_isReady)
+                Positioned(
+                  bottom: 20,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _Dt.primary,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Text(
+                        'READY',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          letterSpacing: 1.2,
+                        ),
                       ),
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       );
     });
@@ -326,50 +342,53 @@ class _KycCniCaptureScreenState extends State<KycCniCaptureScreen> {
 
   Widget _buildPreview() {
     return Container(
-      height: 240,
+      width: 280,
+      height: 280,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
+        shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: _Dt.primary.withValues(alpha: 0.2),
+            color: _Dt.primary.withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
+      child: ClipOval(
         child: Stack(
           fit: StackFit.expand,
           children: [
             Image.file(
-              File(_c.cniPath.value!),
+              File(_c.selfiePath.value!),
               fit: BoxFit.cover,
             ),
             Positioned(
-              top: 12,
-              right: 12,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF10B981),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.check_circle, color: Colors.white, size: 16),
-                    SizedBox(width: 4),
-                    Text(
-                      'Captured',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
+              top: 16,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10B981),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.check_circle, color: Colors.white, size: 18),
+                      SizedBox(width: 6),
+                      Text(
+                        'Verified',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -382,6 +401,44 @@ class _KycCniCaptureScreenState extends State<KycCniCaptureScreen> {
   Widget _buildActionButtons() {
     return Obx(() {
       final isLoading = _c.isLoading.value;
+      final hasSelfie = _c.selfiePath.value != null;
+
+      if (hasSelfie) {
+        // Show "Start Scan" button when selfie is captured
+        return SizedBox(
+          height: 56,
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: isLoading ? null : () => Get.offAllNamed(Routes.mainTab),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _Dt.primary,
+              foregroundColor: Colors.white,
+              elevation: 4,
+              shadowColor: _Dt.primary.withValues(alpha: 0.3),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: isLoading
+                ? const SizedBox(
+                    height: 22,
+                    width: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Text(
+                    'Complete Verification',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+          ),
+        );
+      }
 
       return Row(
         children: [
@@ -444,7 +501,7 @@ class _KycCniCaptureScreenState extends State<KycCniCaptureScreen> {
             child: Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: isLoading ? null : _captureImage,
+                onTap: isLoading ? null : _captureSelfie,
                 customBorder: const CircleBorder(),
                 child: isLoading
                     ? const Center(
@@ -458,7 +515,7 @@ class _KycCniCaptureScreenState extends State<KycCniCaptureScreen> {
                         ),
                       )
                     : const Icon(
-                        Icons.camera_alt,
+                        Icons.camera_enhance,
                         color: Colors.white,
                         size: 36,
                       ),
@@ -468,7 +525,7 @@ class _KycCniCaptureScreenState extends State<KycCniCaptureScreen> {
 
           const SizedBox(width: 16),
 
-          // Flash button
+          // Switch camera button
           Expanded(
             child: Container(
               height: 72,
@@ -481,7 +538,7 @@ class _KycCniCaptureScreenState extends State<KycCniCaptureScreen> {
                 color: Colors.transparent,
                 child: InkWell(
                   onTap: () {
-                    // Toggle flash (implement if needed)
+                    // Toggle camera (implement if needed)
                     HapticFeedback.lightImpact();
                   },
                   borderRadius: BorderRadius.circular(16),
@@ -489,13 +546,13 @@ class _KycCniCaptureScreenState extends State<KycCniCaptureScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
-                        Icons.flash_off_outlined,
+                        Icons.cameraswitch_outlined,
                         color: _Dt.muted,
                         size: 28,
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'FLASH',
+                        'SWITCH',
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
@@ -514,26 +571,35 @@ class _KycCniCaptureScreenState extends State<KycCniCaptureScreen> {
     });
   }
 
-  Widget _buildPrivacyNote() {
-    return RichText(
-      textAlign: TextAlign.center,
-      text: TextSpan(
-        style: TextStyle(
-          fontSize: 12,
-          color: _Dt.muted,
-          height: 1.5,
+  Widget _buildSecurityNote() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0FDF4),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFF86EFAC),
+          width: 1,
         ),
-        children: const [
-          TextSpan(text: 'By continuing, you agree to N\'Zassa\'s '),
-          TextSpan(
-            text: 'Privacy Policy',
-            style: TextStyle(
-              color: _Dt.primary,
-              fontWeight: FontWeight.w700,
-              decoration: TextDecoration.underline,
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.lock_outline,
+            color: Color(0xFF16A34A),
+            size: 20,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Your biometric data is encrypted and secure',
+              style: TextStyle(
+                fontSize: 13,
+                color: _Dt.ink,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
-          TextSpan(text: ' regarding document processing.'),
         ],
       ),
     );
