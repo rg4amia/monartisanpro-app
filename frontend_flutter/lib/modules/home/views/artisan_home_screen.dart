@@ -66,6 +66,10 @@ class ArtisanHomeScreen extends StatelessWidget {
                     _ActionRequiredSection(),
                     const SizedBox(height: 24),
 
+                    // View All Services Button
+                    _ViewServicesButton(),
+                    const SizedBox(height: 24),
+
                     // Recent Activity
                     const Text(
                       'Recent Activity',
@@ -353,6 +357,48 @@ class _InfoCard extends StatelessWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+// View Services Button
+class _ViewServicesButton extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Get.toNamed(Routes.services),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFF4F46E5)),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: const [
+            Icon(Icons.grid_view_rounded, color: Color(0xFF4F46E5), size: 20),
+            SizedBox(width: 12),
+            Text(
+              'View All Services',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF4F46E5),
+              ),
+            ),
+            SizedBox(width: 8),
+            Icon(Icons.arrow_forward, color: Color(0xFF4F46E5), size: 18),
+          ],
+        ),
       ),
     );
   }

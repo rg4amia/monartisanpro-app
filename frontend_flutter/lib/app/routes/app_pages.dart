@@ -34,6 +34,7 @@ import '../../modules/settings/views/settings_screen.dart';
 import '../../modules/settings/views/update_profile_screen.dart';
 import '../../modules/home/bindings/home_binding.dart';
 import '../../modules/home/views/artisan_map_screen.dart';
+import '../../modules/services/views/services_screen.dart';
 import 'app_routes.dart';
 
 class AppPages {
@@ -170,6 +171,12 @@ class AppPages {
       name: Routes.artisanMap,
       page: () => const ArtisanMapScreen(),
       binding: HomeBinding(),
+    ),
+
+    // Services
+    GetPage(
+      name: Routes.services,
+      page: () => const ServicesScreen(),
     ),
   ];
 }
