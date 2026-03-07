@@ -9,9 +9,13 @@ import 'package:frontend_flutter/core/network/api_endpoints.dart';
 void main() {
   group('API Configuration Tests', () {
     test('should use correct Herd backend URL', () {
+      // Note: EnvConfig.baseUrl returns emulatorBaseUrl in non-production mode
       expect(
         ApiEndpoints.baseUrl,
-        'http://backend-proartisan.test/api/v1',
+        anyOf(
+          'http://backend-proartisan.test/api/v1',
+          'http://10.0.2.2:8000/api/v1',
+        ),
       );
     });
 
@@ -293,7 +297,7 @@ void main() {
       expect(json['description'], 'Réparer une fuite');
       expect(json['category'], 'plomberie');
       expect(json['status'], 'en_cours');
-      expect(json['montantTotal'], 100000);
+      expect(json['montant_total'], 100000);
     });
 
     test('needsReferent should return true for missions > 2M', () {
