@@ -29,6 +29,8 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
   final _selectedTradeId = 0.obs;
   final _location = 'Abidjan, Côte d\'Ivoire'.obs;
   final _locationDetail = 'Cocody, Riviera 3'.obs;
+  final _latitude = 0.0.obs;
+  final _longitude = 0.0.obs;
   final _photos = <XFile>[].obs;
   final _video = Rx<XFile?>(null);
 
@@ -139,13 +141,22 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
                     const SizedBox(height: 24),
                     _SectionTitle(title: 'Your Location'),
                     const SizedBox(height: 12),
-                    _LocationCard(
-                      location: _location.value,
-                      detail: _locationDetail.value,
-                      onChangeTap: () {
-                        // TODO: Implement location picker
-                      },
-                    ),
+                    Obx(() => _LocationCard(
+                          location: _location.value,
+                          detail: _locationDetail.value,
+                          onChangeTap: () async {
+                            final result =
+                                await Get.toNamed(Routes.locationPicker);
+                            if (result != null && result is Map) {
+                              _latitude.value = result['latitude'] ?? 0.0;
+                              _longitude.value = result['longitude'] ?? 0.0;
+                              _location.value =
+                                  result['address'] ?? 'Location selected';
+                              _locationDetail.value =
+                                  'Lat: ${_latitude.value.toStringAsFixed(4)}, Lng: ${_longitude.value.toStringAsFixed(4)}';
+                            }
+                          },
+                        )),
                     const SizedBox(height: 32),
                     _SearchButton(
                       onPressed: () {
