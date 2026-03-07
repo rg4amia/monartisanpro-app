@@ -10,9 +10,11 @@ use App\Http\Controllers\Api\V1\KycController;
 use App\Http\Controllers\Api\V1\LitigeController;
 use App\Http\Controllers\Api\V1\MissionController;
 use App\Http\Controllers\Api\V1\NotificationController;
+use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\SectorController;
 use App\Http\Controllers\Api\V1\TransactionController;
 use App\Http\Controllers\Api\V1\UserController;
+use App\Http\Controllers\Api\V1\WebhookController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -25,6 +27,12 @@ Route::prefix('v1')->group(function () {
         Route::post('/send-otp',   [AuthController::class, 'sendOtp']);
         Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
         Route::post('/register',   [AuthController::class, 'register']);
+    });
+
+    // ── Webhooks (sans authentification pour les callbacks externes) ─────────
+    Route::prefix('webhooks')->group(function () {
+        Route::post('/wave',         [WebhookController::class, 'wave']);
+        Route::post('/orange-money', [WebhookController::class, 'orangeMoney']);
     });
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -86,6 +94,13 @@ Route::prefix('v1')->group(function () {
         Route::get('/jcodes/active',        [JCodeController::class, 'active']);
         Route::get('/jcodes/{jcode}',       [JCodeController::class, 'show']);
         Route::post('/jcodes/{jcode}/scan', [JCodeController::class, 'scan']);
+
+        // ── Paiements (Wave & Orange Money) ───────────────────────────────────
+        Route::prefix('payments')->group(function () {
+            Route::post('/initiate',               [PaymentController::class, 'initiatePayment']);
+            Route::get('/{transaction}/status',    [PaymentController::class, 'checkStatus']);
+            Route::get('/history',                 [PaymentController::class, 'history']);
+        });
 
         // ── Wallet & Transactions ─────────────────────────────────────────────
         Route::get('/transactions',    [TransactionController::class, 'index']);

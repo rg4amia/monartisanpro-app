@@ -35,4 +35,37 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Payment Providers (Mobile Money - Côte d'Ivoire)
+    |--------------------------------------------------------------------------
+    */
+
+    'wave' => [
+        'api_url' => env('WAVE_API_URL', 'https://api.wave.com/v1'),
+        'api_key' => env('WAVE_API_KEY'),
+        'secret_key' => env('WAVE_SECRET_KEY'),
+        'webhook_secret' => env('WAVE_WEBHOOK_SECRET'),
+        'currency' => env('WAVE_CURRENCY', 'XOF'), // FCFA
+        'success_url' => env('WAVE_SUCCESS_URL', env('APP_URL') . '/payment/success'),
+        'error_url' => env('WAVE_ERROR_URL', env('APP_URL') . '/payment/error'),
+    ],
+
+    'orange_money' => [
+        'api_url' => env('ORANGE_MONEY_API_URL', 'https://api.orange.com/orange-money-webpay/ci/v1'),
+        'merchant_key' => env('ORANGE_MONEY_MERCHANT_KEY'),
+        'merchant_id' => env('ORANGE_MONEY_MERCHANT_ID'),
+        'auth_header' => env('ORANGE_MONEY_AUTH_HEADER'),
+        'currency' => env('ORANGE_MONEY_CURRENCY', 'XOF'), // FCFA
+        'return_url' => env('ORANGE_MONEY_RETURN_URL', env('APP_URL') . '/payment/return'),
+        'cancel_url' => env('ORANGE_MONEY_CANCEL_URL', env('APP_URL') . '/payment/cancel'),
+        'notif_url' => env('ORANGE_MONEY_NOTIF_URL', env('APP_URL') . '/api/webhooks/orange-money'),
+    ],
+
+    'infobip' => [
+        'api_url' => env('INFOBIP_API_URL', 'https://api.infobip.com'),
+        'api_key' => env('INFOBIP_API_KEY'),
+        'sender' => env('INFOBIP_SENDER', 'ProsArtisan'),
+    ],
+
 ];

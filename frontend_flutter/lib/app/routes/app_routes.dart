@@ -2,6 +2,7 @@ abstract class Routes {
   // Auth
   static const login = '/login';
   static const otpVerification = '/otp-verification';
+  static const register = '/register';
   static const kycCni = '/kyc-cni';
   static const kycSelfie = '/kyc-selfie';
 

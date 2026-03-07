@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Devis extends Model
 {
     protected $fillable = [
-        'mission_id', 'artisan_id', 'lignes_json', 'jalons_json', 'statut',
+        'mission_id', 'artisan_id', 'lignes_json', 'jalons_json', 'statut', 'ratio_materiaux',
     ];
 
     protected function casts(): array

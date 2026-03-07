@@ -34,8 +34,9 @@ class AuthController extends Controller
     }
 
     /**
-     * Vérifie l'OTP et crée/connecte l'utilisateur.
-     * Retourne un token Sanctum.
+     * Vérifie l'OTP et connecte l'utilisateur.
+     * Si l'utilisateur a déjà complété son profil, retourne un token directement.
+     * Sinon, retourne les infos pour rediriger vers l'écran de complétion de profil.
      */
     public function verifyOtp(VerifyOtpRequest $request): JsonResponse
     {
@@ -46,28 +47,52 @@ class AuthController extends Controller
             ], 422);
         }
 
-        $user  = $this->authService->findOrCreateByPhone($request->phone);
-        $token = $this->authService->createToken($user);
+        // Trouve ou crée l'utilisateur
+        $user = $this->authService->findOrCreateByPhone($request->phone);
 
+        $hasCompletedProfile = $user->name !== null && $user->role !== null;
+
+        // Si le profil est déjà complet, on connecte directement
+        if ($hasCompletedProfile) {
+            $token = $this->authService->createToken($user);
+
+            return response()->json([
+                'success'               => true,
+                'message'               => 'Connexion réussie.',
+                'token'                 => $token,
+                'user'                  => new UserResource($user->load('artisanProfile.sector', 'artisanProfile.trade')),
+                'has_completed_profile' => true,
+            ]);
+        }
+
+        // Sinon, on demande à l'utilisateur de compléter son profil
         return response()->json([
-            'success' => true,
-            'token'   => $token,
-            'user'    => new UserResource($user->load('artisanProfile.sector', 'artisanProfile.trade')),
+            'success'               => true,
+            'message'               => 'OTP vérifié. Veuillez compléter votre profil.',
+            'user_id'               => $user->id,
+            'phone'                 => $user->phone,
+            'has_completed_profile' => false,
         ]);
     }
 
     /**
-     * Complète l'inscription (nom + rôle).
+     * Complète l'inscription (nom + rôle) et retourne un token Sanctum.
+     * Ce endpoint finalise l'onboarding après vérification OTP.
      */
     public function register(RegisterRequest $request): JsonResponse
     {
         $user = $this->authService->findOrCreateByPhone($request->phone);
 
-        // Vérifie qu'un OTP a été vérifié récemment (via session ou token existant)
+        // Met à jour le profil utilisateur
         $user = $this->authService->register($user, $request->validated());
+
+        // Génère un token d'authentification
+        $token = $this->authService->createToken($user);
 
         return response()->json([
             'success' => true,
+            'message' => 'Inscription complétée avec succès.',
+            'token'   => $token,
             'user'    => new UserResource($user->load('artisanProfile.sector', 'artisanProfile.trade')),
         ]);
     }

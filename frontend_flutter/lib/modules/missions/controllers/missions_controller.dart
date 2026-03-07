@@ -198,8 +198,16 @@ class MissionsController extends GetxController {
     }
   }
 
-  /// Soumet un jalon pour validation
-  Future<bool> submitJalon(int jalonId) async {
+  /// Soumet un jalon pour validation avec photos géolocalisées
+  ///
+  /// [jalonId] - ID du jalon à soumettre
+  /// [photos] - Liste de photos géolocalisées (optionnel)
+  ///
+  /// Format photos: [{"url": "...", "lat": 5.3, "lng": -4.0, "taken_at": "2025-03-07T10:00:00Z"}]
+  Future<bool> submitJalon(
+    int jalonId, {
+    List<Map<String, dynamic>>? photos,
+  }) async {
     isSubmittingJalon.value = true;
     errorMsg.value = null;
 
@@ -207,6 +215,7 @@ class MissionsController extends GetxController {
       // Passer le missionId pour invalider le cache
       await _repo.submitJalon(
         jalonId,
+        photos: photos,
         missionId: currentMission.value?.id,
       );
 
@@ -221,9 +230,9 @@ class MissionsController extends GetxController {
 
       Get.snackbar(
         'Jalon soumis',
-        'Le jalon a été soumis avec succès',
+        'Le jalon a été soumis avec succès. Le client va recevoir un OTP.',
         snackPosition: SnackPosition.TOP,
-        duration: const Duration(seconds: 2),
+        duration: const Duration(seconds: 3),
       );
 
       return true;
