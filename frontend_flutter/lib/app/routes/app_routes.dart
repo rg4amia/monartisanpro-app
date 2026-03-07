@@ -34,6 +34,9 @@ abstract class Routes {
   // Services
   static const services = '/services';
 
+  // Location
+  static const locationPicker = '/location-picker';
+
   // Modals
   static const rating = '/rating';
   static const litige = '/litige';
