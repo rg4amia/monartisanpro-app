@@ -39,14 +39,14 @@ class DevisJalon {
         ordre: json['ordre'] as int,
         description: json['description'] as String,
         montant: json['montant'] as int,
-        dateCible: json['dateCible'] as String,
+        dateCible: json['date_cible'] as String? ?? json['dateCible'] as String,
       );
 
   Map<String, dynamic> toJson() => {
         'ordre': ordre,
         'description': description,
         'montant': montant,
-        'dateCible': dateCible,
+        'date_cible': dateCible,
       };
 }
 

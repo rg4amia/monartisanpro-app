@@ -5,6 +5,7 @@ import '../../modules/auth/views/kyc_cni_capture_screen.dart';
 import '../../modules/auth/views/kyc_selfie_liveness_screen.dart';
 import '../../modules/auth/views/login_screen.dart';
 import '../../modules/auth/views/otp_verification_screen.dart';
+import '../../modules/auth/views/register_screen.dart';
 import '../../modules/artisans/bindings/artisans_binding.dart';
 import '../../modules/artisans/views/artisan_profile_screen.dart';
 import '../../modules/devis/bindings/devis_binding.dart';
@@ -45,6 +46,11 @@ class AppPages {
     GetPage(
       name: Routes.otpVerification,
       page: () => const OtpVerificationScreen(),
+      binding: AuthBinding(),
+    ),
+    GetPage(
+      name: Routes.register,
+      page: () => const RegisterScreen(),
       binding: AuthBinding(),
     ),
     GetPage(

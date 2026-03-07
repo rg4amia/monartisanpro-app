@@ -2,7 +2,7 @@ import 'package:get/get.dart';
 
 import '../../../core/storage/storage_service.dart';
 import '../../../data/repositories/auth_repository.dart';
-import '../../../app/routes/app_routes.dart';
+import '../../../data/models/user_model.dart';
 
 class AuthController extends GetxController {
   final AuthRepository _repo = AuthRepository();
@@ -39,18 +39,29 @@ class AuthController extends GetxController {
     }
   }
 
-  Future<void> verifyOtp() async {
-    if (!canVerifyOtp) return;
+  Future<bool> verifyOtp() async {
+    if (!canVerifyOtp) return false;
     isLoading.value = true;
     errorMsg.value = null;
     try {
-      await _repo.verifyOtp(phone.value, otp.value);
+      final result = await _repo.verifyOtp(phone.value, otp.value);
       StorageService.savePhone(phone.value);
 
-      // After successful OTP verification, the OTP screen will handle navigation
-      // No navigation here - let the screen handle it
+      final hasCompletedProfile = result['has_completed_profile'] as bool;
+
+      // Si le profil est complet, l'utilisateur est connecté
+      if (hasCompletedProfile) {
+        final user = result['user'];
+        if (user != null) {
+          // Sauvegarder les infos utilisateur
+          // StorageService.saveUser(user);
+        }
+      }
+
+      return hasCompletedProfile;
     } catch (e) {
       errorMsg.value = _parseError(e);
+      return false;
     } finally {
       isLoading.value = false;
     }
@@ -67,16 +78,21 @@ class AuthController extends GetxController {
     isLoading.value = true;
     errorMsg.value = null;
     try {
-      final user = await _repo.register(
+      final result = await _repo.register(
         phone: phone.value,
         role: role.value!,
         name: name.value.trim(),
       );
+
+      final user = result['user'] as UserModel;
+
       StorageService.saveUserId(user.id);
       StorageService.saveName(user.name ?? name.value.trim());
       StorageService.saveKycStatus(user.kycStatus);
+      StorageService.saveRole(user.role);
       StorageService.setOnboarded(true);
-      Get.offAllNamed(Routes.mainTab);
+
+      // Token is already saved in repository
     } catch (e) {
       errorMsg.value = _parseError(e);
     } finally {

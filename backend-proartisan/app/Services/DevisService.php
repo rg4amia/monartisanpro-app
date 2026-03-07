@@ -20,11 +20,15 @@ class DevisService
      */
     public function create(Mission $mission, User $artisan, array $data): Devis
     {
+        // Normalisation : accepter lignes_json OU lignes
+        $lignes = $data['lignes_json'] ?? $data['lignes'] ?? [];
+        $jalons = $data['jalons_json'] ?? $data['jalons'] ?? [];
+
         return Devis::create([
             'mission_id'  => $mission->id,
             'artisan_id'  => $artisan->id,
-            'lignes_json' => $data['lignes'],
-            'jalons_json' => $data['jalons'],
+            'lignes_json' => $lignes,
+            'jalons_json' => $jalons,
             'statut'      => 'soumis',
         ]);
     }

@@ -12,17 +12,29 @@ class AuthRepository {
     await _client.post(ApiEndpoints.sendOtp, data: {'phone': phone});
   }
 
-  Future<String> verifyOtp(String phone, String otp) async {
+  Future<Map<String, dynamic>> verifyOtp(String phone, String otp) async {
     final res = await _client.post(ApiEndpoints.verifyOtp, data: {
       'phone': phone,
       'otp': otp,
     });
-    final token = res.data['token'] as String?;
-    if (token != null) await StorageService.saveToken(token);
-    return token ?? '';
+
+    final hasCompletedProfile = res.data['has_completed_profile'] as bool? ?? false;
+
+    // Si le profil est complet, on sauvegarde le token
+    if (hasCompletedProfile) {
+      final token = res.data['token'] as String?;
+      if (token != null) await StorageService.saveToken(token);
+    }
+
+    return {
+      'has_completed_profile': hasCompletedProfile,
+      'token': res.data['token'] as String?,
+      'user': res.data['user'],
+      'phone': res.data['phone'] as String?,
+    };
   }
 
-  Future<UserModel> register({
+  Future<Map<String, dynamic>> register({
     required String phone,
     required String role,
     required String name,
@@ -32,7 +44,14 @@ class AuthRepository {
       'role': role,
       'name': name,
     });
-    return UserModel.fromJson(res.data['user'] as Map<String, dynamic>);
+
+    final token = res.data['token'] as String?;
+    if (token != null) await StorageService.saveToken(token);
+
+    return {
+      'token': token,
+      'user': UserModel.fromJson(res.data['user'] as Map<String, dynamic>),
+    };
   }
 
   Future<UserModel> me() async {

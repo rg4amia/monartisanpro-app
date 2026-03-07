@@ -52,7 +52,7 @@ class DevisController extends Controller
         ]);
     }
 
-    public function update(Request $request, Devis $devis): JsonResponse
+    public function update(CreateDevisRequest $request, Devis $devis): JsonResponse
     {
         if ($devis->statut !== 'brouillon') {
             return response()->json([
@@ -61,12 +61,15 @@ class DevisController extends Controller
             ], 422);
         }
 
-        $data = $request->validate([
-            'lignes'  => ['sometimes', 'array', 'min:1'],
-            'jalons'  => ['sometimes', 'array', 'min:1'],
-        ]);
+        $data = $request->validated();
 
-        $devis->update($data);
+        // Normalisation : accepter lignes_json OU lignes
+        $updateData = [
+            'lignes_json' => $data['lignes_json'] ?? $data['lignes'] ?? $devis->lignes_json,
+            'jalons_json' => $data['jalons_json'] ?? $data['jalons'] ?? $devis->jalons_json,
+        ];
+
+        $devis->update($updateData);
 
         return response()->json([
             'success' => true,

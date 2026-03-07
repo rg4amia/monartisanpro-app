@@ -12,15 +12,13 @@ class DevisResource extends JsonResource
         return [
             'id'           => $this->id,
             'missionId'    => $this->mission_id,
+            'artisanId'    => $this->artisan_id,
             'statut'       => $this->statut,
-            'lignes'       => $this->lignes_json ?? [],
-            'jalons'       => $this->jalons_json ?? [],
-            'montantTotal' => $this->montant_total,
-            'montantMat'   => $this->montant_materiaux,
-            'montantMo'    => $this->montant_mo,
-            'artisan'      => $this->when(
+            'lignesJson'   => $this->lignes_json ?? [],
+            'jalonsJson'   => $this->jalons_json ?? [],
+            'artisanName'  => $this->when(
                 $this->relationLoaded('artisan'),
-                fn () => ['id' => $this->artisan->id, 'name' => $this->artisan->name]
+                fn () => $this->artisan->name ?? $this->artisan->phone
             ),
             'createdAt'    => $this->created_at?->toISOString(),
         ];

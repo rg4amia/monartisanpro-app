@@ -76,11 +76,17 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     HapticFeedback.mediumImpact();
 
     // Verify OTP
-    await _c.verifyOtp();
+    final hasCompletedProfile = await _c.verifyOtp();
 
-    // If verification successful, navigate to KYC CNI capture
+    // If verification successful
     if (_c.errorMsg.value == null) {
-      Get.offAllNamed(Routes.kycCni);
+      if (hasCompletedProfile) {
+        // User already has a profile, go to main tab
+        Get.offAllNamed(Routes.mainTab);
+      } else {
+        // User needs to complete profile first
+        Get.offAllNamed(Routes.register);
+      }
     }
   }
 

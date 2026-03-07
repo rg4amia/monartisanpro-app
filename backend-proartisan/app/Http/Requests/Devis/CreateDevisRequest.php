@@ -14,15 +14,27 @@ class CreateDevisRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'lignes'                 => ['required', 'array', 'min:1'],
-            'lignes.*.type'          => ['required', 'in:mo,mat'],
-            'lignes.*.description'   => ['required', 'string', 'max:255'],
-            'lignes.*.montant'       => ['required', 'integer', 'min:0'],
-            'jalons'                 => ['required', 'array', 'min:1'],
-            'jalons.*.ordre'         => ['required', 'integer', 'min:1'],
-            'jalons.*.description'   => ['required', 'string', 'max:255'],
-            'jalons.*.montant'       => ['required', 'integer', 'min:1000'],
-            'jalons.*.date_cible'    => ['required', 'date', 'after:today'],
+            'lignes_json'            => ['sometimes', 'array', 'min:1'],
+            'lignes_json.*.type'     => ['required_with:lignes_json', 'in:mo,mat'],
+            'lignes_json.*.description' => ['required_with:lignes_json', 'string', 'max:255'],
+            'lignes_json.*.montant'  => ['required_with:lignes_json', 'integer', 'min:0'],
+
+            'lignes'                 => ['sometimes', 'array', 'min:1'],
+            'lignes.*.type'          => ['required_with:lignes', 'in:mo,mat'],
+            'lignes.*.description'   => ['required_with:lignes', 'string', 'max:255'],
+            'lignes.*.montant'       => ['required_with:lignes', 'integer', 'min:0'],
+
+            'jalons_json'            => ['sometimes', 'array', 'min:1'],
+            'jalons_json.*.ordre'    => ['required_with:jalons_json', 'integer', 'min:1'],
+            'jalons_json.*.description' => ['required_with:jalons_json', 'string', 'max:255'],
+            'jalons_json.*.montant'  => ['required_with:jalons_json', 'integer', 'min:1000'],
+            'jalons_json.*.date_cible' => ['required_with:jalons_json', 'date', 'after:today'],
+
+            'jalons'                 => ['sometimes', 'array', 'min:1'],
+            'jalons.*.ordre'         => ['required_with:jalons', 'integer', 'min:1'],
+            'jalons.*.description'   => ['required_with:jalons', 'string', 'max:255'],
+            'jalons.*.montant'       => ['required_with:jalons', 'integer', 'min:1000'],
+            'jalons.*.date_cible'    => ['required_with:jalons', 'date', 'after:today'],
         ];
     }
 

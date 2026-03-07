@@ -252,9 +252,24 @@ class MissionRepository {
 
   /// Soumet un jalon pour validation client
   ///
+  /// [jalonId] - ID du jalon à soumettre
+  /// [photos] - Liste de photos géolocalisées (optionnel)
+  /// [missionId] - ID de la mission (pour invalider le cache)
+  ///
+  /// Format photos: [{"url": "...", "lat": 5.3, "lng": -4.0, "taken_at": "2025-03-07T10:00:00Z"}]
+  ///
   /// Invalide le cache des jalons après soumission
-  Future<void> submitJalon(int jalonId, {int? missionId}) async {
-    await _client.put(ApiEndpoints.submitJalon(jalonId));
+  Future<void> submitJalon(
+    int jalonId, {
+    List<Map<String, dynamic>>? photos,
+    int? missionId,
+  }) async {
+    final payload = photos != null ? {'photos': photos} : null;
+
+    await _client.put(
+      ApiEndpoints.submitJalon(jalonId),
+      data: payload,
+    );
 
     // Invalider le cache des jalons pour forcer un refresh
     if (missionId != null) {
