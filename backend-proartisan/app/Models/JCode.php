@@ -12,6 +12,7 @@ class JCode extends Model
     protected $fillable = [
         'mission_id', 'artisan_id', 'fournisseur_id', 'code',
         'qr_url', 'ussd_code', 'montant', 'statut', 'scanned_at', 'expires_at',
+        'photo_materiaux_url', 'photo_latitude', 'photo_longitude', 'photo_taken_at',
     ];
 
     protected function casts(): array
@@ -20,6 +21,9 @@ class JCode extends Model
             'montant'    => 'integer',
             'expires_at' => 'datetime',
             'scanned_at' => 'datetime',
+            'photo_latitude' => 'float',
+            'photo_longitude' => 'float',
+            'photo_taken_at' => 'datetime',
         ];
     }
 

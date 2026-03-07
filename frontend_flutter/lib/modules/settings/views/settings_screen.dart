@@ -278,7 +278,7 @@ class _MenuList extends StatelessWidget {
             iconColor: _C.primary,
             title: 'Personal Information',
             subtitle: 'Manage your identity details',
-            onTap: () {},
+            onTap: () => Get.toNamed(Routes.updateProfile),
           ),
           const SizedBox(height: 12),
           _MenuItem(
