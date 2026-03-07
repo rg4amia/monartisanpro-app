@@ -5,12 +5,15 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Jalon\SubmitJalonRequest;
 use App\Http\Requests\Jalon\ValidateOtpRequest;
+use App\Http\Requests\UploadJalonPhotosRequest;
 use App\Http\Resources\JalonResource;
 use App\Models\Jalon;
 use App\Models\Mission;
 use App\Services\JalonService;
+use App\Services\PhotoService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class JalonController extends Controller
 {
