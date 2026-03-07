@@ -11,7 +11,6 @@ use Illuminate\Http\Request;
 class KycController extends Controller
 {
     public function __construct(private KycService $kycService) {}
-
     public function uploadCni(UploadKycRequest $request): JsonResponse
     {
         $doc = $this->kycService->uploadDocument(

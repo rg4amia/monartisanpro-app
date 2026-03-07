@@ -57,14 +57,14 @@ class AuthRepository {
 
   Future<void> uploadCni(String filePath) async {
     final formData = FormData.fromMap({
-      'cni': await MultipartFile.fromFile(filePath, filename: 'cni.jpg'),
+      'file': await MultipartFile.fromFile(filePath, filename: 'cni.jpg'),
     });
     await _client.postMultipart(ApiEndpoints.kycUploadCni, formData);
   }
 
   Future<void> uploadSelfie(String filePath) async {
     final formData = FormData.fromMap({
-      'selfie': await MultipartFile.fromFile(filePath, filename: 'selfie.jpg'),
+      'file': await MultipartFile.fromFile(filePath, filename: 'selfie.jpg'),
     });
     await _client.postMultipart(ApiEndpoints.kycUploadSelfie, formData);
   }

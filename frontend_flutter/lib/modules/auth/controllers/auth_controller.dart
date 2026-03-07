@@ -46,7 +46,9 @@ class AuthController extends GetxController {
     try {
       await _repo.verifyOtp(phone.value, otp.value);
       StorageService.savePhone(phone.value);
-      Get.toNamed(Routes.roleSelect);
+
+      // After successful OTP verification, the OTP screen will handle navigation
+      // No navigation here - let the screen handle it
     } catch (e) {
       errorMsg.value = _parseError(e);
     } finally {
@@ -57,7 +59,7 @@ class AuthController extends GetxController {
   Future<void> selectRole(String selectedRole) async {
     role.value = selectedRole;
     StorageService.saveRole(selectedRole);
-    Get.toNamed(Routes.kyc);
+    // Role is now selected in login screen, no navigation needed here
   }
 
   Future<void> register() async {

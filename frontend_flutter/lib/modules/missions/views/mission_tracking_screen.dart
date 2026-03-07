@@ -15,8 +15,6 @@ class MissionTrackingScreen extends StatefulWidget {
 }
 
 class _MissionTrackingScreenState extends State<MissionTrackingScreen> {
-  final _otpCtrl = TextEditingController();
-
   @override
   void initState() {
     super.initState();
@@ -27,18 +25,16 @@ class _MissionTrackingScreenState extends State<MissionTrackingScreen> {
   }
 
   @override
-  void dispose() {
-    _otpCtrl.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final c = Get.find<MissionsController>();
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('Suivi de mission')),
+      appBar: AppBar(
+        title: const Text('Mission Details'),
+        elevation: 0,
+        backgroundColor: Colors.white,
+      ),
       body: Obx(() {
         final mission = c.currentMission.value;
         if (c.isLoading.value || mission == null) {
@@ -48,79 +44,252 @@ class _MissionTrackingScreenState extends State<MissionTrackingScreen> {
           onRefresh: () => c.loadMission(mission.id),
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Referent banner
-                if (mission.needsReferent) _referentBanner(),
-                // Status stepper
-                _StatusStepper(status: mission.status),
-                const SizedBox(height: 20),
-                // Escrow wallets
-                _EscrowCard(mission: mission),
-                const SizedBox(height: 20),
-                // Jalons
-                const Text('Jalons',
-                    style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary)),
-                const SizedBox(height: 12),
-                ...c.jalons.map((jalon) => _JalonTile(
-                      jalon: jalon,
-                      onSubmit: () => c.submitJalon(jalon.id),
-                      onRequestOtp: () => c.requestOtp(jalon.id),
-                      onValidateOtp: (otp) => c.validateOtp(jalon.id, otp),
-                    )),
-                const SizedBox(height: 20),
-                // Actions
-                if (mission.status == 'en_cours')
-                  Row(
+                // Header Section
+                Container(
+                  width: double.infinity,
+                  color: Colors.white,
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () => Get.toNamed(Routes.litige,
-                              arguments: mission),
-                          icon: const Icon(Icons.warning_outlined,
-                              color: AppColors.danger),
-                          label: const Text('Signaler',
-                              style: TextStyle(color: AppColors.danger)),
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: AppColors.danger),
+                      // Status Badge
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              Formatters.missionStatus(mission.status)
+                                  .toUpperCase(),
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.primary,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
                           ),
+                          const SizedBox(width: 12),
+                          Text(
+                            '#MS-${mission.id.toString().padLeft(5, '0')}',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: AppColors.textMuted,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      // Mission Title
+                      Text(
+                        mission.description ?? 'Mission',
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                          height: 1.2,
                         ),
+                      ),
+                      const SizedBox(height: 8),
+                      // Location
+                      Row(
+                        children: [
+                          const Icon(Icons.location_on_outlined,
+                              size: 16, color: AppColors.textMuted),
+                          const SizedBox(width: 4),
+                          Text(
+                            mission.location ?? 'Location',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: AppColors.textMuted,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
+                ),
+                const SizedBox(height: 16),
+                // Artisan Card
+                _ArtisanCard(mission: mission),
+                const SizedBox(height: 16),
+                // Progress Section
+                _ProgressSection(mission: mission),
+                const SizedBox(height: 16),
+                // Budget Section
+                _BudgetSection(mission: mission),
+                const SizedBox(height: 16),
+                // Recent Activity
+                _RecentActivitySection(jalons: c.jalons),
+                const SizedBox(height: 80),
               ],
             ),
           ),
         );
       }),
+      // Bottom Action Button
+      bottomNavigationBar: Obx(() {
+        final mission = c.currentMission.value;
+        if (mission == null) return const SizedBox.shrink();
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, -2),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    // TODO: Navigate to chat with artisan
+                    Get.snackbar(
+                      'Chat',
+                      'Opening chat with ${mission.artisanName ?? 'artisan'}',
+                      snackPosition: SnackPosition.BOTTOM,
+                    );
+                  },
+                  icon: const Icon(Icons.chat_bubble_outline, size: 20),
+                  label: const Text(
+                    'Chat with Artisan',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Container(
+                decoration: BoxDecoration(
+                  color: AppColors.danger.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: IconButton(
+                  onPressed: () =>
+                      Get.toNamed(Routes.litige, arguments: mission),
+                  icon: const Icon(Icons.warning_outlined),
+                  color: AppColors.danger,
+                  iconSize: 24,
+                ),
+              ),
+            ],
+          ),
+        );
+      }),
     );
   }
+}
 
-  Widget _referentBanner() {
+class _ArtisanCard extends StatelessWidget {
+  final MissionModel mission;
+  const _ArtisanCard({required this.mission});
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.warning.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      child: const Row(
+      child: Row(
         children: [
-          Icon(Icons.gavel, color: AppColors.warning, size: 20),
-          SizedBox(width: 10),
+          // Avatar
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.primary.withValues(alpha: 0.1),
+            ),
+            child: const Icon(Icons.person, color: AppColors.primary, size: 28),
+          ),
+          const SizedBox(width: 12),
+          // Info
           Expanded(
-            child: Text(
-              'Validation physique du Référent de zone requise (mission > 2 000 000 FCFA)',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  mission.artisanName ?? 'Artisan',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Text(
+                      mission.category ?? 'Expert',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Icon(Icons.star, size: 14, color: AppColors.warning),
+                    const SizedBox(width: 2),
+                    const Text(
+                      '4.8 stars',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          // Profile Button
+          TextButton(
+            onPressed: () {
+              Get.toNamed(Routes.artisanProfile, arguments: mission.artisanId);
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.primary,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            ),
+            child: const Text(
+              'Profile',
               style: TextStyle(
-                  fontSize: 13,
-                  color: AppColors.warning,
-                  fontWeight: FontWeight.w500),
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
@@ -129,129 +298,181 @@ class _MissionTrackingScreenState extends State<MissionTrackingScreen> {
   }
 }
 
-class _StatusStepper extends StatelessWidget {
-  final String status;
-  static const _steps = [
-    ('en_attente', 'Devis'),
-    ('financee', 'Financée'),
-    ('en_cours', 'En cours'),
-    ('terminee', 'Terminée'),
-  ];
-
-  const _StatusStepper({required this.status});
-
-  int get _currentIndex {
-    final idx = _steps.indexWhere((s) => s.$1 == status);
-    return idx < 0 ? 0 : idx;
-  }
+class _ProgressSection extends StatelessWidget {
+  final MissionModel mission;
+  const _ProgressSection({required this.mission});
 
   @override
   Widget build(BuildContext context) {
+    // Calculate progress based on status
+    final progress = _calculateProgress(mission.status);
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      child: Row(
-        children: List.generate(_steps.length * 2 - 1, (i) {
-          if (i.isOdd) {
-            return Expanded(
-              child: Container(
-                height: 2,
-                color: i ~/ 2 < _currentIndex
-                    ? AppColors.success
-                    : AppColors.border,
-              ),
-            );
-          }
-          final step = i ~/ 2;
-          final done = step < _currentIndex;
-          final active = step == _currentIndex;
-          return Column(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: done
-                      ? AppColors.success
-                      : active
-                          ? AppColors.primary
-                          : AppColors.border,
-                ),
-                child: Center(
-                  child: done
-                      ? const Icon(Icons.check, size: 14, color: Colors.white)
-                      : Text('${step + 1}',
-                          style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: active ? Colors.white : AppColors.textSecondary)),
+              const Text(
+                'Overall Progress',
+                style: TextStyle(
+                  fontSize: 15,
+                  color: AppColors.textMuted,
                 ),
               ),
-              const SizedBox(height: 4),
-              Text(_steps[step].$2,
-                  style: TextStyle(
-                      fontSize: 9,
-                      fontWeight: active ? FontWeight.w700 : FontWeight.normal,
-                      color: active
-                          ? AppColors.primary
-                          : AppColors.textSecondary)),
+              Text(
+                '$progress%',
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primary,
+                ),
+              ),
             ],
-          );
-        }),
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: LinearProgressIndicator(
+              value: progress / 100,
+              backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+              valueColor: const AlwaysStoppedAnimation(AppColors.primary),
+              minHeight: 8,
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Estimated completion: Friday, Oct 27',
+            style: TextStyle(
+              fontSize: 13,
+              color: AppColors.textMuted,
+            ),
+          ),
+        ],
       ),
     );
   }
+
+  int _calculateProgress(String status) {
+    switch (status) {
+      case 'en_attente':
+        return 10;
+      case 'financee':
+        return 25;
+      case 'en_cours':
+        return 65;
+      case 'terminee':
+        return 100;
+      default:
+        return 0;
+    }
+  }
 }
 
-class _EscrowCard extends StatelessWidget {
+class _BudgetSection extends StatelessWidget {
   final MissionModel mission;
-  const _EscrowCard({required this.mission});
+  const _BudgetSection({required this.mission});
 
   @override
   Widget build(BuildContext context) {
     final matPct = (mission.ratioMateriaux * 100).round();
     final moPct = 100 - matPct;
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Séquestre',
-              style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary)),
-          const SizedBox(height: 14),
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(
-                child: _WalletBar(
-                  label: 'Matériaux',
-                  amount: mission.montantMateriaux,
-                  pct: matPct,
-                  color: AppColors.accent,
+              const Text(
+                'Total Budget',
+                style: TextStyle(
+                  fontSize: 15,
+                  color: AppColors.textMuted,
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _WalletBar(
-                  label: 'Main d\'œuvre',
-                  amount: mission.montantMo,
-                  pct: moPct,
-                  color: AppColors.primary,
+              Text(
+                Formatters.fcfa(mission.montantTotal),
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 20),
+          // Materials Escrow
+          _EscrowBar(
+            label: 'Materials Escrow',
+            amount: mission.montantMateriaux,
+            percentage: matPct,
+            color: const Color(0xFF10B981),
+          ),
+          const SizedBox(height: 16),
+          // Labor Escrow
+          _EscrowBar(
+            label: 'Labor Escrow',
+            amount: mission.montantMo,
+            percentage: moPct,
+            color: AppColors.primary,
+          ),
+          const SizedBox(height: 16),
+          // Info banner
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF10B981).withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.shield_outlined,
+                  size: 16,
+                  color: const Color(0xFF10B981),
+                ),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'Funds are held safely in N\'Zassa Escrow',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF10B981),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -259,16 +480,16 @@ class _EscrowCard extends StatelessWidget {
   }
 }
 
-class _WalletBar extends StatelessWidget {
+class _EscrowBar extends StatelessWidget {
   final String label;
   final int amount;
-  final int pct;
+  final int percentage;
   final Color color;
 
-  const _WalletBar({
+  const _EscrowBar({
     required this.label,
     required this.amount,
-    required this.pct,
+    required this.percentage,
     required this.color,
   });
 
@@ -277,161 +498,151 @@ class _WalletBar extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: const TextStyle(
-                fontSize: 12, color: AppColors.textSecondary)),
-        const SizedBox(height: 4),
-        Text(Formatters.fcfa(amount),
-            style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: color)),
-        const SizedBox(height: 6),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.textMuted,
+              ),
+            ),
+            Text(
+              '$percentage% Secured',
+              style: TextStyle(
+                fontSize: 12,
+                color: color,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
         ClipRRect(
           borderRadius: BorderRadius.circular(4),
           child: LinearProgressIndicator(
-            value: pct / 100,
+            value: percentage / 100,
             backgroundColor: color.withValues(alpha: 0.15),
             valueColor: AlwaysStoppedAnimation(color),
             minHeight: 6,
           ),
         ),
-        const SizedBox(height: 4),
-        Text('$pct% du total',
-            style: const TextStyle(
-                fontSize: 11, color: AppColors.textMuted)),
       ],
     );
   }
 }
 
-class _JalonTile extends StatelessWidget {
-  final dynamic jalon;
-  final VoidCallback onSubmit;
-  final VoidCallback onRequestOtp;
-  final Function(String) onValidateOtp;
-
-  const _JalonTile({
-    required this.jalon,
-    required this.onSubmit,
-    required this.onRequestOtp,
-    required this.onValidateOtp,
-  });
+class _RecentActivitySection extends StatelessWidget {
+  final List<dynamic> jalons;
+  const _RecentActivitySection({required this.jalons});
 
   @override
   Widget build(BuildContext context) {
-    final statut = jalon.statut as String;
-    final color = {
-          'en_attente': AppColors.textMuted,
-          'soumis': AppColors.warning,
-          'valide': AppColors.info,
-          'paye': AppColors.success,
-        }[statut] ??
-        AppColors.textMuted;
-
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Text(
+            'Recent Activity',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Activity items
+          _ActivityItem(
+            icon: Icons.check_circle,
+            iconColor: AppColors.primary,
+            title: 'Milestone 1 Completed',
+            time: 'Today, 10:45 AM',
+          ),
+          const SizedBox(height: 12),
+          _ActivityItem(
+            icon: Icons.shopping_bag_outlined,
+            iconColor: AppColors.primary,
+            title: 'Materials Collected',
+            time: 'Yesterday, 02:30 PM',
+          ),
+          const SizedBox(height: 12),
+          _ActivityItem(
+            icon: Icons.play_circle_outline,
+            iconColor: AppColors.textMuted,
+            title: 'Mission Started',
+            time: 'Oct 24, 09:00 AM',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ActivityItem extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final String time;
+
+  const _ActivityItem({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.time,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: iconColor.withValues(alpha: 0.1),
+          ),
+          child: Icon(icon, size: 18, color: iconColor),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: color.withValues(alpha: 0.15),
-                  border: Border.all(color: color),
-                ),
-                child: Center(
-                  child: Text('${jalon.ordre}',
-                      style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: color)),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
                 ),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(jalon.description as String,
-                    style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary)),
-              ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  Formatters.jalonStatus(statut),
-                  style: TextStyle(
-                      fontSize: 11,
-                      color: color,
-                      fontWeight: FontWeight.w500),
+              const SizedBox(height: 2),
+              Text(
+                time,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textMuted,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(Formatters.fcfa(jalon.montant as int),
-              style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.primary)),
-          if (statut == 'en_attente')
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: ElevatedButton(
-                onPressed: onSubmit,
-                style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 40)),
-                child: const Text('Soumettre le jalon'),
-              ),
-            ),
-          if (statut == 'soumis')
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: ElevatedButton(
-                onPressed: onRequestOtp,
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.warning,
-                    minimumSize: const Size(double.infinity, 40)),
-                child: const Text('Demander OTP validation'),
-              ),
-            ),
-          if (statut == 'valide')
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Column(
-                children: [
-                  TextFormField(
-                    keyboardType: TextInputType.number,
-                    maxLength: 4,
-                    textAlign: TextAlign.center,
-                    decoration: const InputDecoration(
-                      hintText: 'Code OTP (4 chiffres)',
-                      counterText: '',
-                    ),
-                    onChanged: (v) {
-                      if (v.length == 4) onValidateOtp(v);
-                    },
-                  ),
-                ],
-              ),
-            ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
