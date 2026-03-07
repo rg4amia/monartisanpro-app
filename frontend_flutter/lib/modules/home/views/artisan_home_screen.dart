@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/widgets/loading_shimmer.dart';
-import '../../../shared/widgets/mission_card.dart';
 import '../controllers/home_controller.dart';
 
 class ArtisanHomeScreen extends StatelessWidget {
@@ -18,335 +17,436 @@ class ArtisanHomeScreen extends StatelessWidget {
       backgroundColor: const Color(0xFFF8FAFC),
       body: RefreshIndicator(
         onRefresh: c.refresh,
-        color: const Color(0xFF0369A1),
+        color: const Color(0xFF4F46E5),
         child: CustomScrollView(
           slivers: [
-            _buildAppBar(c),
+            _buildHeader(c),
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Professional stats cards
+                    // Total Earnings Card
+                    Obx(() => _EarningsCard(
+                          amount: c.walletMo.value,
+                          percentageChange: 12,
+                        )),
+                    const SizedBox(height: 16),
+
+                    // Stats Row
                     Obx(() => Row(
                           children: [
-                            _StatCard(
-                              label: 'Missions actives',
-                              value: '${c.activeMissions.length}',
-                              icon: Icons.work_outline_rounded,
-                              color: const Color(0xFF0369A1),
+                            Expanded(
+                              child: _InfoCard(
+                                icon: Icons.work_outline,
+                                iconColor: const Color(0xFF4F46E5),
+                                label: 'Active Missions',
+                                value: '${c.activeMissions.length}',
+                                subtitle: 'IN PROGRESS',
+                              ),
                             ),
                             const SizedBox(width: 12),
-                            _StatCard(
-                              label: 'Solde',
-                              value: Formatters.fcfa(c.walletMo.value),
-                              icon: Icons.account_balance_wallet_outlined,
-                              color: const Color(0xFF059669),
+                            const Expanded(
+                              child: _InfoCard(
+                                icon: Icons.verified_outlined,
+                                iconColor: Color(0xFF10B981),
+                                label: 'Reliability',
+                                value: '85',
+                                subtitle: '/100',
+                                showProgress: true,
+                                progress: 0.85,
+                              ),
                             ),
                           ],
                         )),
                     const SizedBox(height: 24),
 
-                    // Quick actions with professional icons
+                    // Action Required Section
+                    _ActionRequiredSection(),
+                    const SizedBox(height: 24),
+
+                    // Recent Activity
                     const Text(
-                      'Actions rapides',
+                      'Recent Activity',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 18,
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF0F172A),
                       ),
                     ),
-                    const SizedBox(height: 14),
-                    Row(
-                      children: [
-                        _QuickAction(
-                          label: 'J-Code',
-                          icon: Icons.qr_code_rounded,
-                          color: const Color(0xFF0369A1),
-                          onTap: () => Get.toNamed(Routes.jcode),
-                        ),
-                        const SizedBox(width: 12),
-                        _QuickAction(
-                          label: 'Score',
-                          icon: Icons.star_border_rounded,
-                          color: const Color(0xFFEAB308),
-                          onTap: () => Get.toNamed(Routes.score),
-                        ),
-                        const SizedBox(width: 12),
-                        _QuickAction(
-                          label: 'Devis',
-                          icon: Icons.description_outlined,
-                          color: const Color(0xFF8B5CF6),
-                          onTap: () => Get.toNamed(Routes.quoteBuilder),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 28),
-
-                    // Missions section
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Missions en cours',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF0F172A),
-                          ),
-                        ),
-                        Obx(() => Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF0369A1)
-                                    .withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                '${c.activeMissions.length}',
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF0369A1),
-                                ),
-                              ),
-                            )),
-                      ],
-                    ),
                     const SizedBox(height: 12),
+                    _ActivityItem(
+                      time: '2 hours ago',
+                      description: 'Earned \$150 from Mission #475',
+                      color: const Color(0xFF4F46E5),
+                    ),
+                    _ActivityItem(
+                      time: 'Yesterday',
+                      description: 'Reliability score increased by +2 points',
+                      color: const Color(0xFF94A3B8),
+                    ),
                   ],
                 ),
               ),
             ),
-            Obx(() {
-              if (c.isLoading.value) {
-                return SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: LoadingShimmer.list(),
-                  ),
-                );
-              }
-              if (c.activeMissions.isEmpty) {
-                return SliverToBoxAdapter(
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 20),
-                    padding: const EdgeInsets.all(32),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: const Color(0xFF334155).withValues(alpha: 0.1),
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color:
-                                const Color(0xFF0369A1).withValues(alpha: 0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.work_outline_rounded,
-                            size: 40,
-                            color: Color(0xFF0369A1),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'Aucune mission en cours',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF0F172A),
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'Vos nouvelles missions apparaîtront ici',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color:
-                                const Color(0xFF334155).withValues(alpha: 0.7),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }
-              return SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (_, i) => Padding(
-                    padding: const EdgeInsets.only(
-                      left: 20,
-                      right: 20,
-                      bottom: 12,
-                    ),
-                    child: MissionCard(
-                      mission: c.activeMissions[i],
-                      onTap: () => Get.toNamed(
-                        Routes.missionTracking,
-                        arguments: c.activeMissions[i],
-                      ),
-                    ),
-                  ),
-                  childCount: c.activeMissions.length,
-                ),
-              );
-            }),
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            const SliverToBoxAdapter(child: SizedBox(height: 80)),
           ],
         ),
       ),
     );
   }
 
-  SliverAppBar _buildAppBar(HomeController c) {
-    return SliverAppBar(
-      pinned: true,
-      backgroundColor: const Color(0xFF0F172A),
-      expandedHeight: 120,
-      flexibleSpace: FlexibleSpaceBar(
-        background: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Color(0xFF0F172A),
-                Color(0xFF1E293B),
-              ],
-            ),
-          ),
-          padding: const EdgeInsets.fromLTRB(20, 50, 20, 16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF0369A1),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.verified,
-                                size: 12,
-                                color: Colors.white,
-                              ),
-                              SizedBox(width: 4),
-                              Text(
-                                'PRO',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Tableau de bord',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.7),
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Obx(() => Text(
-                          c.userName.value.isNotEmpty
-                              ? c.userName.value
-                              : 'Artisan',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -0.5,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        )),
-                  ],
-                ),
+  Widget _buildHeader(HomeController c) {
+    return SliverToBoxAdapter(
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(20, 50, 20, 20),
+        color: Colors.white,
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF59E0B),
+                borderRadius: BorderRadius.circular(12),
               ),
-              GestureDetector(
-                onTap: () => Get.toNamed(Routes.notifications),
-                child: Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.1),
-                      width: 1,
-                    ),
-                  ),
-                  child: const Icon(
-                    Icons.notifications_outlined,
+              child: const Center(
+                child: Text(
+                  'N',
+                  style: TextStyle(
                     color: Colors.white,
-                    size: 22,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Obx(() => Text(
+                        'N\'Zassa Artisan',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF0F172A),
+                        ),
+                      )),
+                  Obx(() => Text(
+                        'Welcome back, ${c.userName.value.isNotEmpty ? c.userName.value.split(' ').first : 'Amara'}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: const Color(0xFF64748B),
+                        ),
+                      )),
+                ],
+              ),
+            ),
+            GestureDetector(
+              onTap: () => Get.toNamed(Routes.notifications),
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.notifications_outlined,
+                  color: Color(0xFF64748B),
+                  size: 22,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _StatCard extends StatelessWidget {
-  final String label;
-  final String value;
-  final IconData icon;
-  final Color color;
+// Earnings Card Widget
+class _EarningsCard extends StatelessWidget {
+  final int amount;
+  final int percentageChange;
 
-  const _StatCard({
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.color,
+  const _EarningsCard({
+    required this.amount,
+    required this.percentageChange,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF4F46E5),
+            Color(0xFF6366F1),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF4F46E5).withValues(alpha: 0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Total Earnings',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.account_balance_wallet_outlined,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            Formatters.fcfa(amount),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 32,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -1,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Icon(
+                Icons.trending_up,
+                color: Colors.white,
+                size: 16,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                '+$percentageChange% from last month',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Info Card Widget
+class _InfoCard extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String label;
+  final String value;
+  final String subtitle;
+  final bool showProgress;
+  final double progress;
+
+  const _InfoCard({
+    required this.icon,
+    required this.iconColor,
+    required this.label,
+    required this.value,
+    required this.subtitle,
+    this.showProgress = false,
+    this.progress = 0.0,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: iconColor, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
+                  color: iconColor,
+                  letterSpacing: -1,
+                ),
+              ),
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF94A3B8),
+                ),
+              ),
+            ],
+          ),
+          if (showProgress) ...[
+            const SizedBox(height: 8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: progress,
+                backgroundColor: const Color(0xFFE2E8F0),
+                valueColor: AlwaysStoppedAnimation<Color>(iconColor),
+                minHeight: 6,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+// Action Required Section
+class _ActionRequiredSection extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Action Required',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF0F172A),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEF4444).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Text(
+                '3 ALERTS',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFFEF4444),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        _ActionItem(
+          icon: Icons.qr_code_scanner,
+          iconColor: const Color(0xFF4F46E5),
+          title: 'Scan J-Code',
+          subtitle: 'Mission #482 - On-site arrival...',
+          onTap: () => Get.toNamed(Routes.jcode),
+        ),
+        const SizedBox(height: 8),
+        _ActionItem(
+          icon: Icons.check_circle_outline,
+          iconColor: const Color(0xFFF59E0B),
+          title: 'Submit Milestone',
+          subtitle: 'Project #391 - Electrical wiring phas...',
+          onTap: () {},
+        ),
+        const SizedBox(height: 8),
+        _ActionItem(
+          icon: Icons.payment_outlined,
+          iconColor: const Color(0xFF10B981),
+          title: 'Confirm Payment',
+          subtitle: 'Mission #478 - Final client sign-off...',
+          onTap: () {},
+        ),
+      ],
+    );
+  }
+}
+
+// Action Item Widget
+class _ActionItem extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _ActionItem({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: const Color(0xFF334155).withValues(alpha: 0.1),
-          ),
+          borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
               color: const Color(0xFF0F172A).withValues(alpha: 0.04),
@@ -355,35 +455,47 @@ class _StatCard extends StatelessWidget {
             ),
           ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
+                color: iconColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: color, size: 20),
+              child: Icon(icon, color: iconColor, size: 22),
             ),
-            const SizedBox(height: 12),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: color,
-                letterSpacing: -0.5,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF64748B),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF334155).withValues(alpha: 0.7),
-              ),
+            const Icon(
+              Icons.chevron_right,
+              color: Color(0xFF94A3B8),
+              size: 20,
             ),
           ],
         ),
@@ -392,49 +504,60 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-class _QuickAction extends StatelessWidget {
-  final String label;
-  final IconData icon;
+// Activity Item Widget
+class _ActivityItem extends StatelessWidget {
+  final String time;
+  final String description;
   final Color color;
-  final VoidCallback onTap;
 
-  const _QuickAction({
-    required this.label,
-    required this.icon,
+  const _ActivityItem({
+    required this.time,
+    required this.description,
     required this.color,
-    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: color.withValues(alpha: 0.2),
-              width: 1.5,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            margin: const EdgeInsets.only(top: 6),
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
             ),
           ),
-          child: Column(
-            children: [
-              Icon(icon, color: color, size: 26),
-              const SizedBox(height: 8),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: color,
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  time,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF94A3B8),
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 2),
+                Text(
+                  description,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF0F172A),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

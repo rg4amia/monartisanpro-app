@@ -72,29 +72,23 @@ class MainTabScreen extends StatelessWidget {
         screens: const [
           SupplierHomeScreen(),
           MissionsScreen(),
-          NotificationsScreen(),
           SettingsScreen(),
         ],
         items: const [
           _NavItem(
-            icon: Icons.qr_code_scanner_outlined,
-            activeIcon: Icons.qr_code_scanner_rounded,
-            label: 'Scanner',
+            icon: Icons.home_outlined,
+            activeIcon: Icons.home_rounded,
+            label: 'HOME',
           ),
           _NavItem(
-            icon: Icons.receipt_long_outlined,
-            activeIcon: Icons.receipt_long_rounded,
-            label: 'Transactions',
-          ),
-          _NavItem(
-            icon: Icons.notifications_outlined,
-            activeIcon: Icons.notifications_rounded,
-            label: 'Alertes',
+            icon: Icons.access_time_outlined,
+            activeIcon: Icons.access_time_rounded,
+            label: 'TRANSACTIONS',
           ),
           _NavItem(
             icon: Icons.person_outline_rounded,
             activeIcon: Icons.person_rounded,
-            label: 'Profil',
+            label: 'PROFILE',
           ),
         ],
       );

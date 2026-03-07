@@ -13,113 +13,303 @@ class TransactionConfirmScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('Confirmer la transaction')),
+      appBar: AppBar(
+        title: const Text('Confirmation de Transaction'),
+        centerTitle: true,
+      ),
       body: result == null
           ? const Center(child: Text('Aucune donnée'))
-          : Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                children: [
-                  const Icon(
-                    Icons.check_circle,
-                    color: AppColors.success,
-                    size: 72,
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'J-Code scanné avec succès',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Vérification GPS validée',
-                    style: TextStyle(color: AppColors.textSecondary),
-                  ),
-                  const SizedBox(height: 32),
-
-                  // Récap transaction
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        children: [
-                          _ResultRow(
-                            label: 'Code',
-                            value: result['code']?.toString() ?? '-',
-                            isBold: true,
+          : SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Success icon with background
+                    Center(
+                      child: Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          color: AppColors.success.withOpacity(0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Container(
+                            width: 64,
+                            height: 64,
+                            decoration: const BoxDecoration(
+                              color: AppColors.success,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.check,
+                              color: Colors.white,
+                              size: 40,
+                            ),
                           ),
-                          const Divider(height: 24),
-                          _ResultRow(
-                            label: 'Montant',
-                            value: result['montant'] != null
-                                ? Formatters.fcfa(
-                                    (result['montant'] as num).toInt())
-                                : '-',
-                            valueColor: AppColors.success,
-                            isBold: true,
-                          ),
-                          const Divider(height: 24),
-                          _ResultRow(
-                            label: 'Artisan',
-                            value: result['artisan']?.toString() ?? '-',
-                          ),
-                          const Divider(height: 24),
-                          _ResultRow(
-                            label: 'Mission',
-                            value: result['mission']?.toString() ?? '-',
-                          ),
-                        ],
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 24),
 
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.info.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
+                    // Success message with checkmark
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.info_outline, color: AppColors.info),
-                        const SizedBox(width: 12),
-                        const Expanded(
-                          child: Text(
-                            'Le paiement sera effectué sous 24h (J+1 garanti)',
-                            style: TextStyle(color: AppColors.info),
+                        Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: AppColors.success,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Icon(
+                            Icons.check,
+                            color: Colors.white,
+                            size: 16,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Transaction Autorisée',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.success,
                           ),
                         ),
                       ],
                     ),
-                  ),
-                  const Spacer(),
+                    const SizedBox(height: 12),
 
-                  ElevatedButton(
-                    onPressed: () => Get.offAllNamed(Routes.mainTab),
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: const Size.fromHeight(54),
+                    // Subtitle
+                    Text(
+                      'Les matériaux ont été approuvés. Le paiement\nest en cours de traitement.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textSecondary,
+                        height: 1.5,
+                      ),
                     ),
-                    child: const Text('Retour à l\'accueil',
-                        style: TextStyle(fontSize: 16)),
-                  ),
-                ],
+                    const SizedBox(height: 32),
+
+                    // Material image placeholder
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Container(
+                        height: 180,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          image: const DecorationImage(
+                            image: AssetImage(
+                                'assets/images/materials_placeholder.jpg'),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                Colors.black.withOpacity(0.3),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Details card
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Détails de l\'autorisation',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          _DetailRow(
+                            label: 'ID Mission',
+                            value: result['mission']?.toString() ?? '#MS-8829',
+                          ),
+                          const SizedBox(height: 16),
+                          _DetailRow(
+                            label: 'Artisan',
+                            value: result['artisan']?['name']?.toString() ??
+                                result['artisan']?.toString() ??
+                                'Mamadou Diop',
+                          ),
+                          const SizedBox(height: 16),
+                          _DetailRow(
+                            label: 'Montant Total',
+                            value: result['montant'] != null
+                                ? Formatters.fcfa(
+                                    (result['montant'] as num).toInt())
+                                : '45.000 FCFA',
+                            valueColor: AppColors.primary,
+                            isBold: true,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Payment guarantee info
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: const BoxDecoration(
+                              color: AppColors.primary,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.info_outline,
+                              color: Colors.white,
+                              size: 16,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Garantie de paiement',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                RichText(
+                                  text: const TextSpan(
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: AppColors.textSecondary,
+                                      height: 1.4,
+                                    ),
+                                    children: [
+                                      TextSpan(
+                                          text:
+                                              'Virement J+1 garanti vers votre compte '),
+                                      TextSpan(
+                                        text: 'Wave',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.w600),
+                                      ),
+                                      TextSpan(text: ' ou '),
+                                      TextSpan(
+                                        text: 'Orange Money',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.w600),
+                                      ),
+                                      TextSpan(text: '.'),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+
+                    // Share button
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        // TODO: Implement share/print receipt
+                        Get.snackbar(
+                          'Partage',
+                          'Fonctionnalité en cours de développement',
+                          snackPosition: SnackPosition.TOP,
+                        );
+                      },
+                      icon: const Icon(Icons.share_outlined, size: 20),
+                      label: const Text(
+                        'Imprimer / Partager le reçu',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Return to dashboard button
+                    OutlinedButton.icon(
+                      onPressed: () => Get.offAllNamed(Routes.mainTab),
+                      icon: const Icon(Icons.dashboard_outlined, size: 20),
+                      label: const Text(
+                        'Retour au Tableau de Bord',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.textPrimary,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        side: BorderSide(color: AppColors.border),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                ),
               ),
             ),
     );
   }
 }
 
-class _ResultRow extends StatelessWidget {
+class _DetailRow extends StatelessWidget {
   final String label;
   final String value;
   final Color? valueColor;
   final bool isBold;
-  const _ResultRow({
+
+  const _DetailRow({
     required this.label,
     required this.value,
     this.valueColor,
@@ -130,14 +320,25 @@ class _ResultRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: AppColors.textSecondary)),
         Text(
-          value,
-          style: TextStyle(
-            fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
-            color: valueColor ?? AppColors.textPrimary,
-            fontSize: isBold ? 16 : 14,
+          label,
+          style: const TextStyle(
+            color: AppColors.textSecondary,
+            fontSize: 14,
+          ),
+        ),
+        const SizedBox(width: 16),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.right,
+            style: TextStyle(
+              fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
+              color: valueColor ?? AppColors.textPrimary,
+              fontSize: isBold ? 16 : 14,
+            ),
           ),
         ),
       ],
