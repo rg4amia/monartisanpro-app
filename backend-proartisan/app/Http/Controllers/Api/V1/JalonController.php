@@ -17,7 +17,10 @@ use Illuminate\Support\Facades\Log;
 
 class JalonController extends Controller
 {
-    public function __construct(private JalonService $jalonService) {}
+    public function __construct(
+        private JalonService $jalonService,
+        private PhotoService $photoService
+    ) {}
 
     public function index(Mission $mission): JsonResponse
     {
@@ -103,5 +106,101 @@ class JalonController extends Controller
             'message' => $message,
             'data'    => new JalonResource($jalon),
         ]);
+    }
+
+    /**
+     * Upload de photos géolocalisées pour un jalon
+     * POST /api/v1/jalons/{jalon}/photos
+     */
+    public function uploadPhotos(UploadJalonPhotosRequest $request, Jalon $jalon): JsonResponse
+    {
+        try {
+            $user = auth()->user();
+
+            // Vérifier que l'utilisateur est bien l'artisan de la mission
+            if ($jalon->mission->artisan_id !== $user->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Non autorisé'
+                ], 403);
+            }
+
+            // Vérifier que le jalon n'est pas déjà validé
+            if ($jalon->statut !== 'en_attente') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ce jalon ne peut plus recevoir de photos'
+                ], 400);
+            }
+
+            $photosData = [];
+
+            foreach ($request->photos as $index => $photoInput) {
+                try {
+                    $uploaded = $this->photoService->uploadGeolocatedPhoto(
+                        $photoInput['photo'],
+                        (float) $photoInput['latitude'],
+                        (float) $photoInput['longitude'],
+                        'jalon',
+                        $jalon->id
+                    );
+
+                    $photosData[] = array_merge($uploaded, [
+                        'description' => $photoInput['description'] ?? null,
+                    ]);
+
+                } catch (\Exception $e) {
+                    Log::warning('Échec upload photo jalon', [
+                        'jalon_id' => $jalon->id,
+                        'photo_index' => $index,
+                        'error' => $e->getMessage(),
+                    ]);
+                    // Continue avec les autres photos
+                }
+            }
+
+            if (empty($photosData)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Aucune photo n\'a pu être uploadée'
+                ], 500);
+            }
+
+            // Ajouter les photos au jalon (merge avec existantes)
+            $existingPhotos = $jalon->photos_json ?? [];
+            $allPhotos = array_merge($existingPhotos, $photosData);
+
+            $jalon->update([
+                'photos_json' => $allPhotos
+            ]);
+
+            Log::info('Photos jalons uploadées', [
+                'jalon_id' => $jalon->id,
+                'count' => count($photosData),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => count($photosData) . ' photo(s) uploadée(s) avec succès',
+                'data' => [
+                    'jalon_id' => $jalon->id,
+                    'photos_uploaded' => count($photosData),
+                    'total_photos' => count($allPhotos),
+                    'photos' => $photosData,
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Erreur upload photos jalon', [
+                'jalon_id' => $jalon->id,
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de l\'upload des photos'
+            ], 500);
+        }
     }
 }
