@@ -68,4 +68,17 @@ return [
         'sender' => env('INFOBIP_SENDER', 'ProsArtisan'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | SMS Pro Africa
+    |--------------------------------------------------------------------------
+    */
+
+    'sms' => [
+        'provider' => env('SMS_PROVIDER', 'log'), // 'log' or 'smspro'
+        'api_token' => env('SMS_API_TOKEN'),
+        'base_url' => env('SMS_BASE_URL', 'https://app.smspro.africa/api/v3'),
+        'sender_id' => env('SMS_SENDER_ID', 'ProsArtisan'),
+    ],
+
 ];

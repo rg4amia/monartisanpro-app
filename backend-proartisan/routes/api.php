@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\V1\MissionController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\SectorController;
+use App\Http\Controllers\Api\V1\SmsController;
 use App\Http\Controllers\Api\V1\TransactionController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\WebhookController;
@@ -117,5 +118,12 @@ Route::prefix('v1')->group(function () {
         Route::get('/notifications',                     [NotificationController::class, 'index']);
         Route::put('/notifications/{notification}/read', [NotificationController::class, 'markRead']);
         Route::post('/notifications/mark-all-read',      [NotificationController::class, 'markAllRead']);
+
+        // ── SMS (Admin/Testing) ───────────────────────────────────────────────
+        Route::prefix('sms')->group(function () {
+            Route::post('/send',        [SmsController::class, 'send']);
+            Route::get('/',             [SmsController::class, 'viewAll']);
+            Route::get('/{uid}',        [SmsController::class, 'view']);
+        });
     });
 });

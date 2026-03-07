@@ -9,15 +9,17 @@ class OtpService
 {
     private int $length;
     private int $ttlMinutes;
+    private SmsService $smsService;
 
-    public function __construct()
+    public function __construct(SmsService $smsService)
     {
         $this->length     = config('prosartisan.otp.length', 4);
         $this->ttlMinutes = config('prosartisan.otp.ttl', 5);
+        $this->smsService = $smsService;
     }
 
     /**
-     * Génère et envoie un OTP par SMS (stub log pour dev).
+     * Génère et envoie un OTP par SMS via SMS Pro Africa.
      */
     public function sendOtp(string $phone): string
     {
@@ -25,8 +27,15 @@ class OtpService
 
         Cache::put($this->cacheKey($phone), $otp, now()->addMinutes($this->ttlMinutes));
 
-        // En production : remplacer par Infobip/Twilio
-        Log::info("[OTP STUB] Téléphone: {$phone} | Code: {$otp} | Expire dans {$this->ttlMinutes} min");
+        // Send via SMS Pro Africa
+        $result = $this->smsService->sendOtp($phone, $otp);
+
+        if ($result['status'] !== 'success') {
+            Log::error('[OTP] Failed to send SMS', [
+                'phone' => $phone,
+                'error' => $result['message'] ?? 'Unknown error',
+            ]);
+        }
 
         return $otp;
     }
