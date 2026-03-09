@@ -138,7 +138,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
             },
           ),
           title: const Text(
-            'Verify OTP',
+            'Vérification OTP',
             style: TextStyle(
               color: _Dt.ink,
               fontSize: 16,
@@ -197,7 +197,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         ),
         const SizedBox(height: 24),
         const Text(
-          'Enter Verification Code',
+          'Entrez le code de vérification',
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.w900,
@@ -208,7 +208,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         ),
         const SizedBox(height: 12),
         Text(
-          'We sent a 4-digit code to\n${_phone ?? 'your phone'}',
+          'Nous avons envoyé un code à 4 chiffres au\n${_phone ?? 'votre numéro'}',
           style: TextStyle(
             fontSize: 14,
             color: _Dt.muted,
@@ -306,7 +306,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'Verify Code',
+                      'Vérifier le code',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
@@ -325,8 +325,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   Widget _buildResendSection() {
     return Column(
       children: [
-        Text(
-          'Didn\'t receive the code?',
+        const Text(
+          'Vous n\'avez pas reçu le code ?',
           style: TextStyle(
             fontSize: 14,
             color: _Dt.muted,
@@ -338,7 +338,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
           onPressed: _c.isLoading.value ? null : _handleResend,
           icon: const Icon(Icons.refresh_rounded, size: 18),
           label: const Text(
-            'Resend Code',
+            'Renvoyer le code',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w700,

@@ -41,9 +41,9 @@ class ArtisanHomeScreen extends StatelessWidget {
                               child: _InfoCard(
                                 icon: Icons.work_outline,
                                 iconColor: const Color(0xFF4F46E5),
-                                label: 'Active Missions',
+                                label: 'Missions actives',
                                 value: '${c.activeMissions.length}',
-                                subtitle: 'IN PROGRESS',
+                                subtitle: 'EN COURS',
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -51,7 +51,7 @@ class ArtisanHomeScreen extends StatelessWidget {
                               child: _InfoCard(
                                 icon: Icons.verified_outlined,
                                 iconColor: Color(0xFF10B981),
-                                label: 'Reliability',
+                                label: 'Fiabilité',
                                 value: '85',
                                 subtitle: '/100',
                                 showProgress: true,
@@ -72,7 +72,7 @@ class ArtisanHomeScreen extends StatelessWidget {
 
                     // Recent Activity
                     const Text(
-                      'Recent Activity',
+                      'Activité récente',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
@@ -81,13 +81,13 @@ class ArtisanHomeScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     _ActivityItem(
-                      time: '2 hours ago',
-                      description: 'Earned \$150 from Mission #475',
+                      time: 'Il y a 2 heures',
+                      description: 'Gagné 150 FCFA de la Mission #475',
                       color: const Color(0xFF4F46E5),
                     ),
                     _ActivityItem(
-                      time: 'Yesterday',
-                      description: 'Reliability score increased by +2 points',
+                      time: 'Hier',
+                      description: 'Score de fiabilité augmenté de +2 points',
                       color: const Color(0xFF94A3B8),
                     ),
                   ],
@@ -140,7 +140,7 @@ class ArtisanHomeScreen extends StatelessWidget {
                         ),
                       )),
                   Obx(() => Text(
-                        'Welcome back, ${c.userName.value.isNotEmpty ? c.userName.value.split(' ').first : 'Amara'}',
+                        'Bon retour, ${c.userName.value.isNotEmpty ? c.userName.value.split(' ').first : 'Amara'}',
                         style: TextStyle(
                           fontSize: 14,
                           color: const Color(0xFF64748B),
@@ -211,7 +211,7 @@ class _EarningsCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                'Total Earnings',
+                'Gains Totaux',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 14,
@@ -252,7 +252,7 @@ class _EarningsCard extends StatelessWidget {
               ),
               const SizedBox(width: 4),
               Text(
-                '+$percentageChange% from last month',
+                '+$percentageChange% depuis le mois dernier',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 13,
@@ -388,7 +388,7 @@ class _ViewServicesButton extends StatelessWidget {
             Icon(Icons.grid_view_rounded, color: Color(0xFF4F46E5), size: 20),
             SizedBox(width: 12),
             Text(
-              'View All Services',
+              'Voir tous les services',
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
@@ -415,7 +415,7 @@ class _ActionRequiredSection extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
-              'Action Required',
+              'Actions Requises',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
@@ -429,7 +429,7 @@ class _ActionRequiredSection extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Text(
-                '3 ALERTS',
+                '3 ALERTES',
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
@@ -443,24 +443,24 @@ class _ActionRequiredSection extends StatelessWidget {
         _ActionItem(
           icon: Icons.qr_code_scanner,
           iconColor: const Color(0xFF4F46E5),
-          title: 'Scan J-Code',
-          subtitle: 'Mission #482 - On-site arrival...',
+          title: 'Scanner J-Code',
+          subtitle: 'Mission #482 - Arrivée sur site...',
           onTap: () => Get.toNamed(Routes.jcode),
         ),
         const SizedBox(height: 8),
         _ActionItem(
           icon: Icons.check_circle_outline,
           iconColor: const Color(0xFFF59E0B),
-          title: 'Submit Milestone',
-          subtitle: 'Project #391 - Electrical wiring phas...',
+          title: 'Soumettre Jalon',
+          subtitle: 'Projet #391 - Câblage électrique...',
           onTap: () {},
         ),
         const SizedBox(height: 8),
         _ActionItem(
           icon: Icons.payment_outlined,
           iconColor: const Color(0xFF10B981),
-          title: 'Confirm Payment',
-          subtitle: 'Mission #478 - Final client sign-off...',
+          title: 'Confirmer Paiement',
+          subtitle: 'Mission #478 - Signature client...',
           onTap: () {},
         ),
       ],

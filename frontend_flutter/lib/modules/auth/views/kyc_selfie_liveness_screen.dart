@@ -119,7 +119,7 @@ class _KycSelfieLivenessScreenState extends State<KycSelfieLivenessScreen>
             onPressed: () => Get.back(),
           ),
           title: const Text(
-            'Identity Verification',
+            'Vérification d\'identité',
             style: TextStyle(
               color: _Dt.ink,
               fontSize: 16,
@@ -171,7 +171,7 @@ class _KycSelfieLivenessScreenState extends State<KycSelfieLivenessScreen>
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
-              'Selfie Liveness',
+              'Selfie en direct',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w900,
@@ -180,7 +180,7 @@ class _KycSelfieLivenessScreenState extends State<KycSelfieLivenessScreen>
               ),
             ),
             Text(
-              'Step 2 of 2',
+              'Étape 2 sur 2',
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
@@ -205,7 +205,7 @@ class _KycSelfieLivenessScreenState extends State<KycSelfieLivenessScreen>
 
   Widget _buildTitle() {
     return const Text(
-      'Face Verification',
+      'Vérification faciale',
       style: TextStyle(
         fontSize: 28,
         fontWeight: FontWeight.w900,
@@ -218,7 +218,7 @@ class _KycSelfieLivenessScreenState extends State<KycSelfieLivenessScreen>
 
   Widget _buildSubtitle() {
     return const Text(
-      'Position your face in the circle and blink to confirm your identity',
+      'Positionnez votre visage dans le cercle pour confirmer votre identité',
       style: TextStyle(
         fontSize: 15,
         color: _Dt.muted,
@@ -322,7 +322,7 @@ class _KycSelfieLivenessScreenState extends State<KycSelfieLivenessScreen>
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: const Text(
-                        'READY',
+                        'PRÊT',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w800,
@@ -380,7 +380,7 @@ class _KycSelfieLivenessScreenState extends State<KycSelfieLivenessScreen>
                       Icon(Icons.check_circle, color: Colors.white, size: 18),
                       SizedBox(width: 6),
                       Text(
-                        'Verified',
+                        'Vérifié',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 13,
@@ -429,7 +429,7 @@ class _KycSelfieLivenessScreenState extends State<KycSelfieLivenessScreen>
                     ),
                   )
                 : const Text(
-                    'Complete Verification',
+                    'Terminer la vérification',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -466,7 +466,7 @@ class _KycSelfieLivenessScreenState extends State<KycSelfieLivenessScreen>
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'GALLERY',
+                        'GALERIE',
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
@@ -552,7 +552,7 @@ class _KycSelfieLivenessScreenState extends State<KycSelfieLivenessScreen>
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'SWITCH',
+                        'INVERSER',
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
@@ -592,7 +592,7 @@ class _KycSelfieLivenessScreenState extends State<KycSelfieLivenessScreen>
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Your biometric data is encrypted and secure',
+              'Vos données biométriques sont cryptées et sécurisées',
               style: TextStyle(
                 fontSize: 13,
                 color: _Dt.ink,
