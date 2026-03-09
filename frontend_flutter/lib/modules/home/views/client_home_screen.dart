@@ -63,15 +63,15 @@ class ClientHomeScreen extends StatelessWidget {
             SliverToBoxAdapter(child: _SearchBar()),
             SliverToBoxAdapter(child: _QuickRequestCard()),
             _SectionTitle(
-                title: 'Service Categories',
+                title: 'Catégories de services',
                 trailing: TextButton(
                   onPressed: () => Get.toNamed(Routes.services),
-                  child: const Text('See all',
+                  child: const Text('Voir tout',
                       style: TextStyle(color: _C.primary)),
                 )),
             SliverToBoxAdapter(child: _CategoriesGrid()),
             _SectionTitle(
-              title: 'Nearby Artisans',
+              title: 'Artisans à proximité',
               trailing: Obx(
                   () => _LocationChip(location: c.nearbyArtisansCount.value)),
             ),
@@ -133,8 +133,8 @@ class _AppBar extends StatelessWidget {
                   ),
                   Obx(() => Text(
                         controller.userName.value.isNotEmpty
-                            ? 'Welcome, ${controller.userName.value}'
-                            : 'Welcome back',
+                            ? 'Bienvenue, ${controller.userName.value}'
+                            : 'Bon retour',
                         style: const TextStyle(
                           fontSize: 13,
                           color: _C.muted,
@@ -209,7 +209,7 @@ class _SearchBar extends StatelessWidget {
               Icon(Icons.search, color: _C.muted, size: 22),
               const SizedBox(width: 12),
               const Text(
-                'What do you need help with?',
+                'Besoin d\'aide pour quoi ?',
                 style: TextStyle(
                   color: _C.muted,
                   fontSize: 15,
@@ -270,7 +270,7 @@ class _QuickRequestCard extends StatelessWidget {
                         Icon(Icons.stars, color: Colors.white, size: 16),
                         SizedBox(width: 6),
                         Text(
-                          'AI ASSISTANT',
+                          'ASSISTANT IA',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 11,
@@ -282,7 +282,7 @@ class _QuickRequestCard extends StatelessWidget {
                     ),
                     SizedBox(height: 4),
                     Text(
-                      'Quick Request',
+                      'Demande Rapide',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 17,
@@ -291,7 +291,7 @@ class _QuickRequestCard extends StatelessWidget {
                     ),
                     SizedBox(height: 2),
                     Text(
-                      'Describe your need in plain text for instant matching with the best artisans.',
+                      'Décrivez votre besoin en texte simple pour une mise en relation instantanée.',
                       style: TextStyle(
                         color: Colors.white70,
                         fontSize: 12,
@@ -518,7 +518,7 @@ class _EmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           const Text(
-            'No artisans found',
+            'Aucun artisan trouvé',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
@@ -527,7 +527,7 @@ class _EmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           const Text(
-            'Try adjusting your search criteria\nor expand your search area',
+            'Essayez d\'ajuster vos critères de recherche\nou élargissez votre zone de recherche',
             style: TextStyle(
               fontSize: 13,
               color: _C.muted,
