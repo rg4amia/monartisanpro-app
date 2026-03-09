@@ -31,7 +31,7 @@ class _MissionTrackingScreenState extends State<MissionTrackingScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Mission Details'),
+        title: const Text('Détails de la mission'),
         elevation: 0,
         backgroundColor: Colors.white,
       ),
@@ -158,14 +158,14 @@ class _MissionTrackingScreenState extends State<MissionTrackingScreen> {
                   onPressed: () {
                     // TODO: Navigate to chat with artisan
                     Get.snackbar(
-                      'Chat',
-                      'Opening chat with ${mission.artisanName ?? 'artisan'}',
+                      'Messagerie',
+                      'Ouverture de la discussion avec ${mission.artisanName ?? 'l\'artisan'}',
                       snackPosition: SnackPosition.BOTTOM,
                     );
                   },
                   icon: const Icon(Icons.chat_bubble_outline, size: 20),
                   label: const Text(
-                    'Chat with Artisan',
+                    'Discuter avec l\'Artisan',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -264,7 +264,7 @@ class _ArtisanCard extends StatelessWidget {
                     const Icon(Icons.star, size: 14, color: AppColors.warning),
                     const SizedBox(width: 2),
                     const Text(
-                      '4.8 stars',
+                      '4,8 étoiles',
                       style: TextStyle(
                         fontSize: 13,
                         color: AppColors.textMuted,
@@ -328,7 +328,7 @@ class _ProgressSection extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                'Overall Progress',
+                'Progression globale',
                 style: TextStyle(
                   fontSize: 15,
                   color: AppColors.textMuted,
@@ -356,7 +356,7 @@ class _ProgressSection extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           const Text(
-            'Estimated completion: Friday, Oct 27',
+            'Fin estimée : Vendredi 27 oct.',
             style: TextStyle(
               fontSize: 13,
               color: AppColors.textMuted,
@@ -413,7 +413,7 @@ class _BudgetSection extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                'Total Budget',
+                'Budget Total',
                 style: TextStyle(
                   fontSize: 15,
                   color: AppColors.textMuted,
@@ -432,7 +432,7 @@ class _BudgetSection extends StatelessWidget {
           const SizedBox(height: 20),
           // Materials Escrow
           _EscrowBar(
-            label: 'Materials Escrow',
+            label: 'Escrow Matériaux',
             amount: mission.montantMateriaux,
             percentage: matPct,
             color: const Color(0xFF10B981),
@@ -440,7 +440,7 @@ class _BudgetSection extends StatelessWidget {
           const SizedBox(height: 16),
           // Labor Escrow
           _EscrowBar(
-            label: 'Labor Escrow',
+            label: 'Escrow Main d\'œuvre',
             amount: mission.montantMo,
             percentage: moPct,
             color: AppColors.primary,
@@ -463,7 +463,7 @@ class _BudgetSection extends StatelessWidget {
                 const SizedBox(width: 8),
                 const Expanded(
                   child: Text(
-                    'Funds are held safely in N\'Zassa Escrow',
+                    'Les fonds sont conservés en toute sécurité sur N\'Zassa Escrow',
                     style: TextStyle(
                       fontSize: 12,
                       color: Color(0xFF10B981),
@@ -509,7 +509,7 @@ class _EscrowBar extends StatelessWidget {
               ),
             ),
             Text(
-              '$percentage% Secured',
+              '$percentage% Sécurisé',
               style: TextStyle(
                 fontSize: 12,
                 color: color,
@@ -557,7 +557,7 @@ class _RecentActivitySection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Recent Activity',
+            'Activité récente',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w700,
@@ -569,22 +569,22 @@ class _RecentActivitySection extends StatelessWidget {
           _ActivityItem(
             icon: Icons.check_circle,
             iconColor: AppColors.primary,
-            title: 'Milestone 1 Completed',
-            time: 'Today, 10:45 AM',
+            title: 'Jalon 1 terminé',
+            time: 'Aujourd\'hui, 10:45',
           ),
           const SizedBox(height: 12),
           _ActivityItem(
             icon: Icons.shopping_bag_outlined,
             iconColor: AppColors.primary,
-            title: 'Materials Collected',
-            time: 'Yesterday, 02:30 PM',
+            title: 'Matériaux collectés',
+            time: 'Hier, 14:30',
           ),
           const SizedBox(height: 12),
           _ActivityItem(
             icon: Icons.play_circle_outline,
             iconColor: AppColors.textMuted,
-            title: 'Mission Started',
-            time: 'Oct 24, 09:00 AM',
+            title: 'Mission commencée',
+            time: '24 oct., 09:00',
           ),
         ],
       ),
