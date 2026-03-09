@@ -112,6 +112,12 @@ class AuthController extends GetxController {
   Future<void> uploadCni() async {
     if (cniPath.value == null) return;
     isLoading.value = true;
+    errorMsg.value = null;
+    
+    // Debug: Check if token exists
+    final token = await StorageService.getToken();
+    print('DEBUG: Token before upload: ${token != null ? "EXISTS" : "NULL"}');
+    
     try {
       await _repo.uploadCni(cniPath.value!);
       kycStep.value = kycStep.value < 2 ? kycStep.value + 1 : kycStep.value;

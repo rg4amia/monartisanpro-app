@@ -2,7 +2,8 @@ class EnvConfig {
   // Configuration pour différents environnements
 
   // Pour émulateur Android
-  static const String emulatorBaseUrl = 'http://10.0.2.2:8000/api/v1';
+  //static const String emulatorBaseUrl = 'http://10.0.2.2:8000/api/v1';
+  static const String emulatorBaseUrl = 'https://prosartisan.net/api/v1';
 
   // Pour appareil physique (remplacez par votre IP locale)
   // Trouvez votre IP avec: ifconfig (Mac/Linux) ou ipconfig (Windows)
