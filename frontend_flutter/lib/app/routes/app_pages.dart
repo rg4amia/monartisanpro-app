@@ -1,5 +1,8 @@
 import 'package:get/get.dart';
 
+import '../../modules/onboarding/bindings/onboarding_binding.dart';
+import '../../modules/onboarding/views/splash_screen.dart';
+import '../../modules/onboarding/views/onboarding_screen.dart';
 import '../../modules/auth/bindings/auth_binding.dart';
 import '../../modules/auth/views/kyc_cni_capture_screen.dart';
 import '../../modules/auth/views/kyc_selfie_liveness_screen.dart';
@@ -40,6 +43,18 @@ import 'app_routes.dart';
 
 class AppPages {
   static final pages = [
+    // Onboarding
+    GetPage(
+      name: Routes.splash,
+      page: () => const SplashScreen(),
+      binding: OnboardingBinding(),
+    ),
+    GetPage(
+      name: Routes.onboarding,
+      page: () => const OnboardingScreen(),
+      binding: OnboardingBinding(),
+    ),
+
     // Auth
     GetPage(
       name: Routes.login,

@@ -28,4 +28,29 @@ class EnvConfig {
     // Pour le développement, utilisez l'émulateur par défaut
     return emulatorBaseUrl;
   }
+
+  // ── Telegram Logger Configuration ──────────────────────────────────────────
+  // 1. Créez un bot via @BotFather sur Telegram
+  // 2. Récupérez le token du bot
+  // 3. Envoyez un message à votre bot
+  // 4. Récupérez votre chat_id via: https://api.telegram.org/bot<TOKEN>/getUpdates
+  //8715763356:AAFPM6f1DALdYxn5gU6_DLX_-wZl6ZRtEJE
+  static const String telegramBotToken = String.fromEnvironment(
+    '8715763356:AAFPM6f1DALdYxn5gU6_DLX_-wZl6ZRtEJE',
+    defaultValue: '8715763356:AAFPM6f1DALdYxn5gU6_DLX_-wZl6ZRtEJE',
+  );
+  static const String telegramChatId = String.fromEnvironment(
+    '8715763356',
+    defaultValue: '8715763356',
+  );
+  
+  // Active les logs Telegram en debug/release
+  static const bool telegramLoggerDebug = bool.fromEnvironment(
+    'TELEGRAM_LOGGER_DEBUG',
+    defaultValue: true,
+  );
+  static const bool telegramLoggerRelease = bool.fromEnvironment(
+    'TELEGRAM_LOGGER_RELEASE',
+    defaultValue: true,
+  );
 }

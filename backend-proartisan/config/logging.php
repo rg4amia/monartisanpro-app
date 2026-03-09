@@ -1,5 +1,6 @@
 <?php
 
+use App\Logging\TelegramBotHandler;
 use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
@@ -56,6 +57,18 @@ return [
             'driver' => 'stack',
             'channels' => explode(',', (string) env('LOG_STACK', 'single')),
             'ignore_exceptions' => false,
+        ],
+
+        'telegram_bot' => [
+            'driver' => 'monolog',
+            'handler' => TelegramBotHandler::class,
+            'level' => env('LOG_TELEGRAM_LEVEL', 'error'),
+            'with' => [
+                'botToken' => env('TELEGRAM_BOT_TOKEN'),
+                'chatId' => env('TELEGRAM_CHAT_ID'),
+                'appName' => env('APP_NAME', 'ProsArtisan'),
+                'appEnv' => env('APP_ENV', 'production'),
+            ],
         ],
 
         'single' => [

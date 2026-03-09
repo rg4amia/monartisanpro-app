@@ -1,4 +1,8 @@
 abstract class Routes {
+  // Onboarding
+  static const splash = '/splash';
+  static const onboarding = '/onboarding';
+
   // Auth
   static const login = '/login';
   static const otpVerification = '/otp-verification';
