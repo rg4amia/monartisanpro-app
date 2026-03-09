@@ -67,6 +67,9 @@ class _KycCniCaptureScreenState extends State<KycCniCaptureScreen> {
       if (img != null) {
         _c.cniPath.value = img.path;
 
+        // Small delay to ensure token is saved
+        await Future.delayed(const Duration(milliseconds: 500));
+
         // Upload CNI immediately
         await _c.uploadCni();
 

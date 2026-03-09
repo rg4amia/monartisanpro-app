@@ -3,12 +3,12 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart' hide Response, FormData, MultipartFile;
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import '../../app/routes/app_routes.dart';
+import '../storage/storage_service.dart';
 import 'api_endpoints.dart';
 
 class ApiClient {
   static ApiClient? _instance;
   late final Dio _dio;
-  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
   ApiClient._() {
     _dio = Dio(
@@ -24,7 +24,7 @@ class ApiClient {
     );
 
     _dio.interceptors.addAll([
-      _AuthInterceptor(_secureStorage),
+      _AuthInterceptor(),
       PrettyDioLogger(
         requestHeader: true,
         requestBody: true,
@@ -56,17 +56,16 @@ class ApiClient {
 }
 
 class _AuthInterceptor extends Interceptor {
-  final FlutterSecureStorage _storage;
-  static const String _tokenKey = 'auth_token';
-
-  _AuthInterceptor(this._storage);
-
   @override
   Future<void> onRequest(
       RequestOptions options, RequestInterceptorHandler handler) async {
-    final token = await _storage.read(key: _tokenKey);
+    // Use StorageService instead of direct FlutterSecureStorage
+    final token = await StorageService.getToken();
     if (token != null) {
       options.headers['Authorization'] = 'Bearer $token';
+      print('DEBUG: Token added to request: ${token.substring(0, 20)}...');
+    } else {
+      print('DEBUG: No token found in storage');
     }
     handler.next(options);
   }
@@ -74,7 +73,7 @@ class _AuthInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
     if (err.response?.statusCode == 401) {
-      _storage.delete(key: _tokenKey);
+      StorageService.clearToken();
 
       // Redirect to login if not already there
       if (Get.currentRoute != Routes.login) {
@@ -82,16 +81,6 @@ class _AuthInterceptor extends Interceptor {
       }
     }
     handler.next(err);
-  }
-
-  static Future<void> saveToken(String token) async {
-    const FlutterSecureStorage storage = FlutterSecureStorage();
-    await storage.write(key: _tokenKey, value: token);
-  }
-
-  static Future<void> clearToken() async {
-    const FlutterSecureStorage storage = FlutterSecureStorage();
-    await storage.delete(key: _tokenKey);
   }
 }
 
