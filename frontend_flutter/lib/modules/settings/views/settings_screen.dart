@@ -66,7 +66,7 @@ class _AppBar extends StatelessWidget {
               ),
             ),
             const Text(
-              'Profile',
+              'Profil',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
@@ -144,7 +144,7 @@ class _ProfileHeader extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             controller.userName.value.isEmpty
-                ? 'User Profile'
+                ? 'Profil Utilisateur'
                 : controller.userName.value,
             style: const TextStyle(
               fontSize: 24,
@@ -156,7 +156,7 @@ class _ProfileHeader extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             controller.userPhone.value.isEmpty
-                ? 'No email'
+                ? 'Pas d\'email'
                 : '${controller.userPhone.value}@email.com',
             style: const TextStyle(
               fontSize: 14,
@@ -182,7 +182,7 @@ class _StatsRow extends StatelessWidget {
             children: [
               Expanded(
                 child: _StatCard(
-                  label: 'Balance',
+                  label: 'Solde',
                   value:
                       'FCFA ${_formatBalance(controller.walletBalance.value)}',
                   color: _C.primary,
@@ -191,7 +191,7 @@ class _StatsRow extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: _StatCard(
-                  label: 'Orders',
+                  label: 'Commandes',
                   value: '${controller.ordersCount.value}',
                   color: _C.primary,
                 ),
@@ -276,8 +276,8 @@ class _MenuList extends StatelessWidget {
             icon: Icons.person_outline,
             iconBg: _C.primaryLight,
             iconColor: _C.primary,
-            title: 'Personal Information',
-            subtitle: 'Manage your identity details',
+            title: 'Informations Personnelles',
+            subtitle: 'Gérez vos détails d\'identité',
             onTap: () => Get.toNamed(Routes.updateProfile),
           ),
           const SizedBox(height: 12),
@@ -285,8 +285,8 @@ class _MenuList extends StatelessWidget {
             icon: Icons.credit_card_outlined,
             iconBg: _C.primaryLight,
             iconColor: _C.primary,
-            title: 'Payment Methods',
-            subtitle: 'Cards, Mobile Money, Wallets',
+            title: 'Modes de Paiement',
+            subtitle: 'Cartes, Mobile Money, Portefeuilles',
             onTap: () {},
           ),
           const SizedBox(height: 12),
@@ -294,8 +294,8 @@ class _MenuList extends StatelessWidget {
             icon: Icons.shield_outlined,
             iconBg: _C.successLight,
             iconColor: _C.success,
-            title: 'Security & KYC Status',
-            subtitle: 'Secure your account and limits',
+            title: 'Sécurité & Statut KYC',
+            subtitle: 'Sécurisez votre compte et vos limites',
             trailing: _VerifiedBadge(status: controller.kycStatus.value),
             onTap: controller.kycStatus.value != 'actif'
                 ? () => Get.toNamed(Routes.kycCni)
@@ -306,8 +306,8 @@ class _MenuList extends StatelessWidget {
             icon: Icons.help_outline,
             iconBg: _C.primaryLight,
             iconColor: _C.primary,
-            title: 'Help Center',
-            subtitle: 'FAQs and customer support',
+            title: 'Centre d\'aide',
+            subtitle: 'FAQs et support client',
             onTap: () {},
           ),
           const SizedBox(height: 12),
@@ -315,8 +315,8 @@ class _MenuList extends StatelessWidget {
             icon: Icons.logout,
             iconBg: _C.dangerLight,
             iconColor: _C.danger,
-            title: 'Logout',
-            subtitle: 'Sign out of your account',
+            title: 'Déconnexion',
+            subtitle: 'Se déconnecter de votre compte',
             onTap: () => _confirmLogout(context, controller),
           ),
         ],
@@ -328,12 +328,12 @@ class _MenuList extends StatelessWidget {
     Get.dialog(
       AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to sign out?'),
+        title: const Text('Déconnexion'),
+        content: const Text('Êtes-vous sûr de vouloir vous déconnecter ?'),
         actions: [
           TextButton(
             onPressed: () => Get.back(),
-            child: const Text('Cancel'),
+            child: const Text('Annuler'),
           ),
           ElevatedButton(
             onPressed: () {
@@ -346,7 +346,7 @@ class _MenuList extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            child: const Text('Logout'),
+            child: const Text('Déconnexion'),
           ),
         ],
       ),
@@ -460,7 +460,7 @@ class _VerifiedBadge extends StatelessWidget {
           const Icon(Icons.check_circle, size: 14, color: _C.success),
           const SizedBox(width: 4),
           const Text(
-            'VERIFIED',
+            'VÉRIFIÉ',
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w700,

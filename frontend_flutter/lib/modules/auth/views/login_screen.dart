@@ -528,7 +528,7 @@ class _LoginScreenState extends State<LoginScreen>
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'Continue',
+                        'Continuer',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
@@ -610,7 +610,7 @@ class _LoginScreenState extends State<LoginScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Text(
-              'New to N\'Zassa? ',
+              'Nouveau sur N\'Zassa ? ',
               style: TextStyle(
                 fontSize: 14,
                 color: _Dt.muted,
@@ -627,7 +627,7 @@ class _LoginScreenState extends State<LoginScreen>
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
               child: const Text(
-                'Create an account',
+                'Créer un compte',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
@@ -657,7 +657,7 @@ class _LoginScreenState extends State<LoginScreen>
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
               child: const Text(
-                'Need help with the KYC process?',
+                'Besoin d\'aide avec le processus KYC ?',
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
