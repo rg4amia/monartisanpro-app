@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../../app/routes/app_routes.dart';
+import '../../../core/storage/storage_service.dart';
 import '../controllers/auth_controller.dart';
 
 // ─── Design Tokens ───────────────────────────────────────────────────────────
@@ -442,7 +443,14 @@ class _RegisterScreenState extends State<RegisterScreen>
 
     // If registration successful, navigate to KYC CNI capture
     if (_c.errorMsg.value == null) {
-      Get.offAllNamed(Routes.kycCni);
+      // Verify token is saved before navigation
+      final token = await StorageService.getToken();
+      
+      if (token != null) {
+        Get.offAllNamed(Routes.kycCni);
+      } else {
+        _c.errorMsg.value = 'Erreur: Token non reçu. Veuillez réessayer.';
+      }
     }
   }
 

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../../app/routes/app_routes.dart';
+import '../../../core/utils/debug_helper.dart';
 import '../controllers/auth_controller.dart';
 
 // ─── Design Tokens ───────────────────────────────────────────────────────────
@@ -90,6 +91,22 @@ class _LoginScreenState extends State<LoginScreen>
       ),
       child: Scaffold(
         backgroundColor: _Dt.bg,
+        // Debug button - remove in production or wrap with kDebugMode
+        // floatingActionButton: FloatingActionButton(
+        //   mini: true,
+        //   backgroundColor: Colors.red,
+        //   onPressed: () async {
+        //     await DebugHelper.printStorageState();
+        //     await DebugHelper.clearAllData();
+        //     Get.snackbar(
+        //       'Debug',
+        //       'Storage cleared. Restart the app.',
+        //       backgroundColor: Colors.red,
+        //       colorText: Colors.white,
+        //     );
+        //   },
+        //   child: const Icon(Icons.bug_report, size: 20),
+        // ),
         body: FadeTransition(
           opacity: _fadeAnim ?? const AlwaysStoppedAnimation(1.0),
           child: SafeArea(
@@ -196,7 +213,7 @@ class _LoginScreenState extends State<LoginScreen>
                 _selectedProfile.value == 'CLIENT',
                 () {
                   _selectedProfile.value = 'CLIENT';
-                  _c.role.value = 'CLIENT';
+                  _c.role.value = 'client';
                   HapticFeedback.mediumImpact();
                 },
               ),
@@ -210,7 +227,7 @@ class _LoginScreenState extends State<LoginScreen>
                 _selectedProfile.value == 'ARTISAN',
                 () {
                   _selectedProfile.value = 'ARTISAN';
-                  _c.role.value = 'ARTISAN';
+                  _c.role.value = 'artisan';
                   HapticFeedback.mediumImpact();
                 },
               ),
@@ -224,7 +241,7 @@ class _LoginScreenState extends State<LoginScreen>
                 _selectedProfile.value == 'FOURNISSEUR',
                 () {
                   _selectedProfile.value = 'FOURNISSEUR';
-                  _c.role.value = 'FOURNISSEUR';
+                  _c.role.value = 'fournisseur';
                   HapticFeedback.mediumImpact();
                 },
               ),
@@ -413,7 +430,7 @@ class _LoginScreenState extends State<LoginScreen>
               ),
               Expanded(
                 child: Obx(() {
-                  final hasContent = _phoneCtrl.text.isNotEmpty;
+                  final hasContent = _c.phone.value.length > 4; // Use observable instead
                   return TextFormField(
                     controller: _phoneCtrl,
                     onChanged: (v) => _c.phone.value = '+225$v',
@@ -434,9 +451,9 @@ class _LoginScreenState extends State<LoginScreen>
                         letterSpacing: 1.2,
                       ),
                       suffixIcon: hasContent
-                          ? Icon(
+                          ? const Icon(
                               Icons.check_circle,
-                              color: _Dt.success,
+                              color: Color(0xFF10B981), // success color
                               size: 20,
                             )
                           : null,

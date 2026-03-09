@@ -84,8 +84,10 @@ class AuthController extends GetxController {
 
   Future<void> register() async {
     if (name.value.trim().isEmpty || role.value == null) return;
+    
     isLoading.value = true;
     errorMsg.value = null;
+    
     try {
       final result = await _repo.register(
         phone: phone.value,
@@ -113,10 +115,6 @@ class AuthController extends GetxController {
     if (cniPath.value == null) return;
     isLoading.value = true;
     errorMsg.value = null;
-    
-    // Debug: Check if token exists
-    final token = await StorageService.getToken();
-    print('DEBUG: Token before upload: ${token != null ? "EXISTS" : "NULL"}');
     
     try {
       await _repo.uploadCni(cniPath.value!);

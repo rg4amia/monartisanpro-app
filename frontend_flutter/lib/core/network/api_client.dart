@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart' hide Response, FormData, MultipartFile;
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import '../../app/routes/app_routes.dart';
 import '../storage/storage_service.dart';
+import '../utils/error_handler.dart';
 import 'api_endpoints.dart';
 
 class ApiClient {
@@ -25,15 +28,21 @@ class ApiClient {
 
     _dio.interceptors.addAll([
       _AuthInterceptor(),
-      PrettyDioLogger(
-        requestHeader: true,
-        requestBody: true,
-        responseBody: true,
-        responseHeader: false,
-        error: true,
-        compact: true,
-      ),
+      _ErrorLoggerInterceptor(),
     ]);
+
+    if (!kReleaseMode) {
+      _dio.interceptors.add(
+        PrettyDioLogger(
+          requestHeader: true,
+          requestBody: true,
+          responseBody: true,
+          responseHeader: false,
+          error: true,
+          compact: true,
+        ),
+      );
+    }
   }
 
   factory ApiClient() => _instance ??= ApiClient._();
@@ -63,9 +72,6 @@ class _AuthInterceptor extends Interceptor {
     final token = await StorageService.getToken();
     if (token != null) {
       options.headers['Authorization'] = 'Bearer $token';
-      print('DEBUG: Token added to request: ${token.substring(0, 20)}...');
-    } else {
-      print('DEBUG: No token found in storage');
     }
     handler.next(options);
   }
@@ -84,14 +90,19 @@ class _AuthInterceptor extends Interceptor {
   }
 }
 
-class TokenStorage {
-  static const FlutterSecureStorage _storage = FlutterSecureStorage();
-  static const String _tokenKey = 'auth_token';
-
-  static Future<void> save(String token) =>
-      _storage.write(key: _tokenKey, value: token);
-
-  static Future<String?> get() => _storage.read(key: _tokenKey);
-
-  static Future<void> clear() => _storage.delete(key: _tokenKey);
+/// Interceptor pour logger automatiquement les erreurs HTTP vers Telegram
+class _ErrorLoggerInterceptor extends Interceptor {
+  @override
+  void onError(DioException err, ErrorInterceptorHandler handler) {
+    // Log automatiquement vers Telegram (sans bloquer la requête).
+    unawaited(
+      ErrorHandler.handleDioError(
+        err,
+        context: '${err.requestOptions.method} ${err.requestOptions.path}',
+        showSnackbar: false, // Le controller gérera l'affichage
+      ),
+    );
+    
+    handler.next(err);
+  }
 }

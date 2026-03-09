@@ -84,8 +84,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         // User already has a profile, go to main tab
         Get.offAllNamed(Routes.mainTab);
       } else {
-        // User needs to complete profile first
-        Get.offAllNamed(Routes.register);
+        // User needs to complete profile first - use toNamed to keep controller alive
+        Get.toNamed(Routes.register);
       }
     }
   }

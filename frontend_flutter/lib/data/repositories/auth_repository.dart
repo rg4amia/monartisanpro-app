@@ -48,9 +48,6 @@ class AuthRepository {
     final token = res.data['token'] as String?;
     if (token != null) {
       await StorageService.saveToken(token);
-      print('DEBUG: Token saved after registration: ${token.substring(0, 20)}...');
-    } else {
-      print('DEBUG: No token received from registration');
     }
 
     return {
