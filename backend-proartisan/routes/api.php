@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\ArtisanController;
+use App\Http\Controllers\Api\V1\AdminController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\DevisController;
 use App\Http\Controllers\Api\V1\EvaluationController;
@@ -126,6 +127,23 @@ Route::prefix('v1')->group(function () {
             Route::post('/send',        [SmsController::class, 'send']);
             Route::get('/',             [SmsController::class, 'viewAll']);
             Route::get('/{uid}',        [SmsController::class, 'view']);
+        });
+
+        // ── Administration ─────────────────────────────────────────────────────
+        Route::prefix('admin')->middleware('admin.only')->group(function () {
+            Route::get('/dashboard', [AdminController::class, 'dashboard']);
+
+            Route::get('/kyc/pending', [AdminController::class, 'pendingKyc']);
+            Route::post('/kyc/{user}/review', [AdminController::class, 'reviewKyc']);
+
+            Route::get('/litiges', [AdminController::class, 'litiges']);
+            Route::post('/litiges/{litige}/resolve', [AdminController::class, 'resolveLitige']);
+
+            Route::get('/fournisseurs/pending', [AdminController::class, 'pendingFournisseurs']);
+            Route::post('/fournisseurs/{fournisseur}/review', [AdminController::class, 'reviewFournisseur']);
+
+            Route::get('/users', [AdminController::class, 'users']);
+            Route::get('/transactions', [AdminController::class, 'transactions']);
         });
     });
 });
