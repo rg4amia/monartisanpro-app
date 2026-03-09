@@ -31,7 +31,7 @@ class ServicesScreen extends StatelessWidget {
 
                 if (controller.sectors.isEmpty) {
                   return const Center(
-                    child: Text('No services available'),
+                    child: Text('Aucun service disponible'),
                   );
                 }
 
@@ -39,7 +39,7 @@ class ServicesScreen extends StatelessWidget {
                   padding: const EdgeInsets.all(20),
                   children: [
                     const Text(
-                      'Service Categories',
+                      'Catégories de service',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
@@ -48,7 +48,7 @@ class ServicesScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      'Find the best local professionals for your home and personal needs.',
+                      'Trouvez les meilleurs professionnels locaux pour vos besoins domestiques et personnels.',
                       style: TextStyle(
                         fontSize: 14,
                         color: Color(0xFF64748B),
@@ -98,7 +98,7 @@ class ServicesScreen extends StatelessWidget {
           ),
           const Expanded(
             child: Text(
-              'Our Services',
+              'Nos Services',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 18,
@@ -125,7 +125,7 @@ class ServicesScreen extends StatelessWidget {
         ),
         child: const TextField(
           decoration: InputDecoration(
-            hintText: 'Search for a service (e.g. Plumber)',
+            hintText: 'Rechercher un service (ex. Plombier)',
             hintStyle: TextStyle(
               color: Color(0xFF94A3B8),
               fontSize: 14,
@@ -180,7 +180,7 @@ class ServicesScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${sector.name} Services',
+                          'Services de ${sector.name}',
                           style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w700,
@@ -189,7 +189,7 @@ class ServicesScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         const Text(
-                          'Select a specific task',
+                          'Sélectionnez une tâche spécifique',
                           style: TextStyle(
                             fontSize: 14,
                             color: Color(0xFF64748B),
@@ -230,7 +230,7 @@ class ServicesScreen extends StatelessWidget {
 
                 if (controller.trades.isEmpty) {
                   return const Center(
-                    child: Text('No specific tasks available'),
+                    child: Text('Aucune tâche spécifique disponible'),
                   );
                 }
 
@@ -345,7 +345,7 @@ class _ServiceCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'View available services',
+                    'Voir les services disponibles',
                     style: TextStyle(
                       fontSize: 13,
                       color: const Color(0xFF64748B),
@@ -419,7 +419,7 @@ class _TradeItem extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Text(
-                'Select',
+                'Choisir',
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -454,7 +454,7 @@ class _NeedHelpCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Need something else?',
+            'Besoin d\'autre chose ?',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w700,
@@ -463,7 +463,7 @@ class _NeedHelpCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Can\'t find the service you\'re looking for? Let us know.',
+            'Vous ne trouvez pas le service que vous cherchez ? Dites-le nous.',
             style: TextStyle(
               fontSize: 14,
               color: Colors.white,
@@ -483,7 +483,7 @@ class _NeedHelpCard extends StatelessWidget {
                 ),
               ),
               child: const Text(
-                'Request Service',
+                'Demander un service',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,

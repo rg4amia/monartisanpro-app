@@ -35,10 +35,10 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
   final _video = Rx<XFile?>(null);
 
   static const _categories = [
-    {'label': 'Plumbing', 'icon': Icons.plumbing_outlined},
-    {'label': 'Electricity', 'icon': Icons.electric_bolt_outlined},
-    {'label': 'Painting', 'icon': Icons.format_paint_outlined},
-    {'label': 'Masonry', 'icon': Icons.foundation_outlined},
+    {'label': 'Plomberie', 'icon': Icons.plumbing_outlined},
+    {'label': 'Électricité', 'icon': Icons.electric_bolt_outlined},
+    {'label': 'Peinture', 'icon': Icons.format_paint_outlined},
+    {'label': 'Maçonnerie', 'icon': Icons.foundation_outlined},
   ];
 
   @override
@@ -58,7 +58,7 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
 
   Future<void> _pickImage() async {
     if (_photos.length >= 5) {
-      Get.snackbar('Limit Reached', 'Maximum 5 photos allowed');
+      Get.snackbar('Limite atteinte', 'Maximum 5 photos autorisées');
       return;
     }
     final picker = ImagePicker();
@@ -90,7 +90,7 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _SectionTitle(title: 'Service Category'),
+                    _SectionTitle(title: 'Catégorie de service'),
                     const SizedBox(height: 12),
                     Obx(() => _selectedCategory.value.isEmpty
                         ? _SelectServiceButton(
@@ -121,16 +121,16 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
                             },
                           )),
                     const SizedBox(height: 24),
-                    _SectionTitle(title: 'Mission Details'),
+                    _SectionTitle(title: 'Détails de la mission'),
                     const SizedBox(height: 8),
                     const Text(
-                      'Describe your problem',
+                      'Décrivez votre problème',
                       style: TextStyle(fontSize: 13, color: _C.muted),
                     ),
                     const SizedBox(height: 12),
                     _DescriptionField(controller: _descCtrl),
                     const SizedBox(height: 24),
-                    _SectionTitle(title: 'Visuals (Photos or Videos)'),
+                    _SectionTitle(title: 'Visuels (Photos ou Vidéos)'),
                     const SizedBox(height: 12),
                     _MediaPicker(
                       photos: _photos,
@@ -139,7 +139,7 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
                       onPickVideo: _pickVideo,
                     ),
                     const SizedBox(height: 24),
-                    _SectionTitle(title: 'Your Location'),
+                    _SectionTitle(title: 'Votre emplacement'),
                     const SizedBox(height: 12),
                     Obx(() => _LocationCard(
                           location: _location.value,
@@ -161,11 +161,11 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
                     _SearchButton(
                       onPressed: () {
                         if (_selectedCategory.value.isEmpty) {
-                          Get.snackbar('Error', 'Please select a category');
+                          Get.snackbar('Erreur', 'Veuillez sélectionner une catégorie');
                           return;
                         }
                         if (_descCtrl.text.length < 10) {
-                          Get.snackbar('Error', 'Please provide more details');
+                          Get.snackbar('Erreur', 'Veuillez fournir plus de détails');
                           return;
                         }
                         // Navigate to artisan search/list
@@ -207,7 +207,7 @@ class _AppBar extends StatelessWidget {
           ),
           const Expanded(
             child: Text(
-              'Create Mission',
+              'Créer une mission',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 18,
@@ -264,7 +264,7 @@ class _SelectServiceButton extends StatelessWidget {
             Icon(Icons.add_circle_outline, color: _C.primary, size: 24),
             SizedBox(width: 12),
             Text(
-              'Select Service Category',
+              'Sélectionner la catégorie de service',
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
@@ -313,7 +313,7 @@ class _SelectedServiceCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Selected Service',
+                  'Service sélectionné',
                   style: TextStyle(
                     fontSize: 12,
                     color: _C.muted,
@@ -335,7 +335,7 @@ class _SelectedServiceCard extends StatelessWidget {
           TextButton(
             onPressed: onChangeTap,
             child: const Text(
-              'Change',
+              'Modifier',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
@@ -425,7 +425,7 @@ class _DescriptionField extends StatelessWidget {
         maxLength: 500,
         decoration: const InputDecoration(
           hintText:
-              'Please provide as much detail as possible about the issue...',
+              'Veuillez fournir autant de détails que possible sur le problème...',
           hintStyle: TextStyle(color: _C.muted, fontSize: 14),
           border: InputBorder.none,
           contentPadding: EdgeInsets.all(16),
@@ -460,7 +460,7 @@ class _MediaPicker extends StatelessWidget {
             Expanded(
               child: _MediaButton(
                 icon: Icons.add_photo_alternate_outlined,
-                label: 'Add Photo',
+                label: 'Ajouter une Photo',
                 onTap: onPickImage,
               ),
             ),
@@ -468,7 +468,7 @@ class _MediaPicker extends StatelessWidget {
             Expanded(
               child: _MediaButton(
                 icon: Icons.videocam_outlined,
-                label: 'Add Video',
+                label: 'Ajouter une Vidéo',
                 onTap: onPickVideo,
               ),
             ),
@@ -476,7 +476,7 @@ class _MediaPicker extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         const Text(
-          'Max 5 photos and 1 video (max 30s)',
+          'Max 5 photos et 1 vidéo (max 30s)',
           style: TextStyle(fontSize: 12, color: _C.muted),
         ),
         Obx(() {
@@ -659,7 +659,7 @@ class _LocationCard extends StatelessWidget {
           TextButton(
             onPressed: onChangeTap,
             child: const Text(
-              'Change',
+              'Modifier',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
@@ -698,7 +698,7 @@ class _SearchButton extends StatelessWidget {
             Icon(Icons.search, size: 20),
             SizedBox(width: 8),
             Text(
-              'Search for Artisans',
+              'Rechercher des artisans',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,

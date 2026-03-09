@@ -50,7 +50,7 @@ class UpdateProfileController extends GetxController {
               ),
               const SizedBox(height: 20),
               const Text(
-                'Choose Photo Source',
+                'Choisir la source de la photo',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
@@ -60,19 +60,19 @@ class UpdateProfileController extends GetxController {
               const SizedBox(height: 20),
               _SourceOption(
                 icon: Icons.camera_alt,
-                label: 'Take Photo',
+                label: 'Prendre une photo',
                 onTap: () => Get.back(result: ImageSource.camera),
               ),
               const SizedBox(height: 12),
               _SourceOption(
                 icon: Icons.photo_library,
-                label: 'Choose from Gallery',
+                label: 'Choisir depuis la galerie',
                 onTap: () => Get.back(result: ImageSource.gallery),
               ),
               const SizedBox(height: 12),
               TextButton(
                 onPressed: () => Get.back(),
-                child: const Text('Cancel'),
+                child: const Text('Annuler'),
               ),
             ],
           ),
@@ -94,8 +94,8 @@ class UpdateProfileController extends GetxController {
         profileImagePath.value = image.path;
         // TODO: Upload to server when backend endpoint is ready
         Get.snackbar(
-          'Photo Selected',
-          'Profile photo will be uploaded when you save',
+          'Photo sélectionnée',
+          'La photo de profil sera téléchargée lors de l\'enregistrement',
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: const Color(0xFFD1FAE5),
           colorText: const Color(0xFF10B981),
@@ -103,8 +103,8 @@ class UpdateProfileController extends GetxController {
       }
     } catch (e) {
       Get.snackbar(
-        'Error',
-        'Failed to pick image: ${e.toString()}',
+        'Erreur',
+        'Échec du choix de l\'image : ${e.toString()}',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: const Color(0xFFFEE2E2),
         colorText: const Color(0xFFEF4444),
@@ -115,8 +115,8 @@ class UpdateProfileController extends GetxController {
   Future<void> updateProfile() async {
     if (nameController.text.trim().isEmpty) {
       Get.snackbar(
-        'Error',
-        'Name cannot be empty',
+        'Erreur',
+        'Le nom ne peut pas être vide',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: const Color(0xFFFEE2E2),
         colorText: const Color(0xFFEF4444),
@@ -130,8 +130,8 @@ class UpdateProfileController extends GetxController {
       if (userId == null) {
         // User session is invalid, show friendly error
         Get.snackbar(
-          'Session Error',
-          'Please log in again to update your profile',
+          'Erreur de session',
+          'Veuillez vous reconnecter pour mettre à jour votre profil',
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: const Color(0xFFFEE2E2),
           colorText: const Color(0xFFEF4444),
@@ -150,16 +150,16 @@ class UpdateProfileController extends GetxController {
 
       Get.back();
       Get.snackbar(
-        'Success',
-        'Profile updated successfully',
+        'Succès',
+        'Profil mis à jour avec succès',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: const Color(0xFFD1FAE5),
         colorText: const Color(0xFF10B981),
       );
     } catch (e) {
       Get.snackbar(
-        'Error',
-        'Failed to update profile: ${e.toString()}',
+        'Erreur',
+        'Échec de la mise à jour du profil : ${e.toString()}',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: const Color(0xFFFEE2E2),
         colorText: const Color(0xFFEF4444),

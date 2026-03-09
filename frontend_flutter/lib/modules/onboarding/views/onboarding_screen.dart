@@ -18,31 +18,31 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final List<OnboardingPage> _pages = [
     OnboardingPage(
       image: 'assets/images/onboarding_1.png',
-      title: 'Find Verified Experts',
+      title: 'Trouvez des Experts Vérifiés',
       description:
-          'Connect with skilled artisans for all your home maintenance needs, from plumbing to electricity.',
+          'Connectez-vous avec des artisans qualifiés pour tous vos besoins d\'entretien domestique, de la plomberie à l\'électricité.',
       backgroundColor: const Color(0xFFFDB750),
     ),
     OnboardingPage(
       image: 'assets/images/onboarding_2.png',
-      title: 'Secure Escrow Payments',
+      title: 'Paiements Sécurisés',
       description:
-          'Your funds are held safely in escrow and only released when the job is done to your satisfaction.',
+          'Vos fonds sont conservés en toute sécurité et ne sont libérés que lorsque le travail est terminé à votre entière satisfaction.',
       backgroundColor: const Color(0xFF424242),
     ),
     OnboardingPage(
       image: 'assets/images/onboarding_3.png',
-      title: "Trust with N'Zassa Score",
+      title: "Confiance avec le Score N'Zassa",
       description:
-          'We rate every professional on reliability, quality, and integrity so you can choose with confidence.',
+          'Nous évaluons chaque professionnel sur sa fiabilité, sa qualité et son intégrité afin que vous puissiez choisir en toute confiance.',
       backgroundColor: Colors.white,
       showProfile: true,
     ),
     OnboardingPage(
       image: 'assets/images/onboarding_4.png',
-      title: 'Ready to Begin?',
+      title: 'Prêt à Commencer ?',
       description:
-          'Join the ecosystem as a Client, Artisan, or Supplier and start building trust today.',
+          'Rejoignez l\'écosystème en tant que Client, Artisan ou Fournisseur et commencez à instaurer la confiance dès aujourd\'hui.',
       backgroundColor: const Color(0xFFFDB750),
       showRoleSelection: true,
     ),
@@ -115,7 +115,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             TextButton(
               onPressed: _skipOnboarding,
               child: const Text(
-                'Skip',
+                'Passer',
                 style: TextStyle(
                   color: Color(0xFF5B5FEF),
                   fontSize: 16,
@@ -182,8 +182,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       children: [
                         Text(
                           _currentPage == _pages.length - 1
-                              ? 'Get Started'
-                              : 'Next',
+                              ? 'Commencer'
+                              : 'Suivant',
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -200,7 +200,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 if (_currentPage < _pages.length - 1) ...[
                   const SizedBox(height: 12),
                   Text(
-                    'Step ${_currentPage + 1} of ${_pages.length}',
+                    'Étape ${_currentPage + 1} sur ${_pages.length}',
                     style: const TextStyle(
                       fontSize: 14,
                       color: Color(0xFF9E9E9E),
@@ -336,7 +336,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ),
                       SizedBox(width: 4),
                       Text(
-                        'VERIFIED',
+                        'VÉRIFIÉ',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 12,
@@ -369,7 +369,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 const Row(
                   children: [
                     Text(
-                      'ELITE PROVIDER',
+                      'PRESTATAIRE D\'ÉLITE',
                       style: TextStyle(
                         fontSize: 12,
                         color: Color(0xFF5B5FEF),
@@ -411,7 +411,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 const Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'Master Carpenter • 8 yrs exp.',
+                    'Maître Menuisier • 8 ans d\'exp.',
                     style: TextStyle(
                       fontSize: 14,
                       color: Color(0xFF616161),
@@ -432,12 +432,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 const SizedBox(height: 16),
                 _buildStatRow(
                   Icons.check_circle_outline,
-                  '99% Reliability Rate',
+                  '99% de Taux de Fiabilité',
                 ),
                 const SizedBox(height: 8),
                 _buildStatRow(
                   Icons.thumb_up_outlined,
-                  'Top Quality Feedback',
+                  'Excellents Retours Qualité',
                 ),
               ],
             ),
