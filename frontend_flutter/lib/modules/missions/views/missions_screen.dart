@@ -76,7 +76,7 @@ class MissionsScreen extends StatelessWidget {
               backgroundColor: _C.primary,
               icon: const Icon(Icons.add, color: Colors.white),
               label: const Text(
-                'New Mission',
+                'Nouvelle Mission',
                 style:
                     TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
               ),
@@ -112,7 +112,7 @@ class _AppBar extends StatelessWidget {
             ),
           ),
           Text(
-            role == 'fournisseur' ? 'Transactions' : 'Mission History',
+            role == 'fournisseur' ? 'Transactions' : 'Historique des missions',
             style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w700,
@@ -149,15 +149,15 @@ class _TabBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final tabs = role == 'fournisseur'
         ? const [
-            ('all', 'All'),
-            ('validee', 'Validated'),
-            ('en_attente', 'Pending'),
-            ('payee', 'Paid'),
+            ('all', 'Tout'),
+            ('validee', 'Validé'),
+            ('en_attente', 'En attente'),
+            ('payee', 'Payé'),
           ]
         : const [
-            ('all', 'All'),
-            ('en_cours', 'Ongoing'),
-            ('terminee', 'Completed'),
+            ('all', 'Tout'),
+            ('en_cours', 'En cours'),
+            ('terminee', 'Terminé'),
           ];
 
     return Container(
@@ -271,7 +271,7 @@ class _MissionCard extends StatelessWidget {
                           size: 14, color: _C.muted),
                       const SizedBox(width: 4),
                       Text(
-                        'Artisan: ${mission.artisanName ?? 'Unknown'}',
+                        'Artisan: ${mission.artisanName ?? 'Inconnu'}',
                         style: const TextStyle(fontSize: 13, color: _C.muted),
                       ),
                     ],
@@ -283,7 +283,7 @@ class _MissionCard extends StatelessWidget {
                           size: 14, color: _C.muted),
                       const SizedBox(width: 4),
                       Text(
-                        'Started ${_formatDate(mission.createdAt)}',
+                        'Lancée le ${_formatDate(mission.createdAt)}',
                         style: const TextStyle(fontSize: 13, color: _C.muted),
                       ),
                     ],
@@ -296,7 +296,7 @@ class _MissionCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            'Project Progress',
+                            'Progression du projet',
                             style: TextStyle(fontSize: 12, color: _C.muted),
                           ),
                           const SizedBox(height: 4),
@@ -331,7 +331,7 @@ class _MissionCard extends StatelessWidget {
                         ),
                       ),
                       child: const Text(
-                        'View Details',
+                        'Voir détails',
                         style: TextStyle(fontWeight: FontWeight.w600),
                       ),
                     ),
@@ -415,19 +415,19 @@ class _StatusBadge extends StatelessWidget {
     switch (status) {
       case 'en_cours':
         return {
-          'label': 'ONGOING',
+          'label': 'EN COURS',
           'color': _C.primary,
           'bg': _C.primaryLight,
         };
       case 'terminee':
         return {
-          'label': 'COMPLETED',
+          'label': 'TERMINÉ',
           'color': _C.success,
           'bg': _C.successLight,
         };
       case 'en_attente':
         return {
-          'label': 'PENDING',
+          'label': 'EN ATTENTE',
           'color': _C.warning,
           'bg': _C.warningLight,
         };
@@ -457,7 +457,7 @@ class _FinanceBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
       ),
       child: const Text(
-        'Financed',
+        'Financé',
         style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w600,
@@ -525,7 +525,7 @@ class _EmptyState extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               const Text(
-                'No missions found',
+                'Aucune mission trouvée',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
@@ -534,7 +534,7 @@ class _EmptyState extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               const Text(
-                'Pull to refresh',
+                'Tirer pour rafraîchir',
                 style: TextStyle(
                   fontSize: 13,
                   color: _C.muted,
