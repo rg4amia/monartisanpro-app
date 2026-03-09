@@ -42,11 +42,25 @@ class _AppState extends State<App> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const MaterialApp(
+      return MaterialApp(
         debugShowCheckedModeBanner: false,
         home: Scaffold(
+          backgroundColor: Colors.white,
           body: Center(
-            child: CircularProgressIndicator(),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset(
+                  'assets/logo/logos.png',
+                  width: 180,
+                  height: 180,
+                ),
+                const SizedBox(height: 24),
+                const CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF5B5FEF)),
+                ),
+              ],
+            ),
           ),
         ),
       );
