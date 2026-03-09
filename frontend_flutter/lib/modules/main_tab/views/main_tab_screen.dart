@@ -48,22 +48,22 @@ class MainTabScreen extends StatelessWidget {
           _NavItem(
             icon: Icons.home_outlined,
             activeIcon: Icons.home,
-            label: 'Home',
+            label: 'Accueil',
           ),
           _NavItem(
             icon: Icons.map_outlined,
             activeIcon: Icons.map,
-            label: 'Map',
+            label: 'Carte',
           ),
           _NavItem(
             icon: Icons.calendar_today_outlined,
             activeIcon: Icons.calendar_today,
-            label: 'Bookings',
+            label: 'Missions',
           ),
           _NavItem(
             icon: Icons.person_outline_rounded,
             activeIcon: Icons.person,
-            label: 'Profile',
+            label: 'Profil',
           ),
         ],
       );
@@ -78,7 +78,7 @@ class MainTabScreen extends StatelessWidget {
           _NavItem(
             icon: Icons.home_outlined,
             activeIcon: Icons.home_rounded,
-            label: 'HOME',
+            label: 'ACCUEIL',
           ),
           _NavItem(
             icon: Icons.access_time_outlined,
@@ -88,7 +88,7 @@ class MainTabScreen extends StatelessWidget {
           _NavItem(
             icon: Icons.person_outline_rounded,
             activeIcon: Icons.person_rounded,
-            label: 'PROFILE',
+            label: 'PROFIL',
           ),
         ],
       );

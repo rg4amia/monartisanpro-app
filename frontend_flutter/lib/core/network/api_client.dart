@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:get/get.dart' hide Response, FormData, MultipartFile;
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
+import '../../app/routes/app_routes.dart';
 import 'api_endpoints.dart';
 
 class ApiClient {
@@ -73,6 +75,11 @@ class _AuthInterceptor extends Interceptor {
   void onError(DioException err, ErrorInterceptorHandler handler) {
     if (err.response?.statusCode == 401) {
       _storage.delete(key: _tokenKey);
+
+      // Redirect to login if not already there
+      if (Get.currentRoute != Routes.login) {
+        Get.offAllNamed(Routes.login);
+      }
     }
     handler.next(err);
   }

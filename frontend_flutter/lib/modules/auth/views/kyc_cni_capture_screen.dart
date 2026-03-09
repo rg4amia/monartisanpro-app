@@ -97,7 +97,7 @@ class _KycCniCaptureScreenState extends State<KycCniCaptureScreen> {
             onPressed: () => Get.back(),
           ),
           title: const Text(
-            'Identity Verification',
+            'Vérification d\'identité',
             style: TextStyle(
               color: _Dt.ink,
               fontSize: 16,
@@ -149,7 +149,7 @@ class _KycCniCaptureScreenState extends State<KycCniCaptureScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
-              'STEP 1 OF 2',
+              'ÉTAPE 1 SUR 2',
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w800,
@@ -169,7 +169,7 @@ class _KycCniCaptureScreenState extends State<KycCniCaptureScreen> {
         ),
         const SizedBox(height: 12),
         const Text(
-          'CNI Capture',
+          'Capture de la CNI',
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.w900,
@@ -193,7 +193,7 @@ class _KycCniCaptureScreenState extends State<KycCniCaptureScreen> {
 
   Widget _buildTitle() {
     return const Text(
-      'Align your CNI card within the frame and ensure all details are clearly visible.',
+      'Alignez votre carte CNI dans le cadre et assurez-vous que tous les détails sont clairement visibles.',
       style: TextStyle(
         fontSize: 15,
         color: _Dt.muted,
@@ -212,7 +212,7 @@ class _KycCniCaptureScreenState extends State<KycCniCaptureScreen> {
         borderRadius: BorderRadius.circular(8),
       ),
       child: const Text(
-        'Make sure your CNI is valid and not expired',
+        'Assurez-vous que votre CNI est valide et non expirée',
         style: TextStyle(
           fontSize: 13,
           color: _Dt.primary,
@@ -266,7 +266,7 @@ class _KycCniCaptureScreenState extends State<KycCniCaptureScreen> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'PLACE CNI CARD\nHERE',
+                        'PLACEZ LA CNI\nICI',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 14,
@@ -307,7 +307,7 @@ class _KycCniCaptureScreenState extends State<KycCniCaptureScreen> {
                     ),
                     const SizedBox(width: 8),
                     const Text(
-                      'Tip: Avoid glare and use good lighting',
+                      'Conseil : Évitez les reflets et utilisez un bon éclairage',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -362,7 +362,7 @@ class _KycCniCaptureScreenState extends State<KycCniCaptureScreen> {
                     Icon(Icons.check_circle, color: Colors.white, size: 16),
                     SizedBox(width: 4),
                     Text(
-                      'Captured',
+                      'Capturé',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 12,
@@ -409,7 +409,7 @@ class _KycCniCaptureScreenState extends State<KycCniCaptureScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'GALLERY',
+                        'GALERIE',
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
@@ -524,16 +524,16 @@ class _KycCniCaptureScreenState extends State<KycCniCaptureScreen> {
           height: 1.5,
         ),
         children: const [
-          TextSpan(text: 'By continuing, you agree to N\'Zassa\'s '),
+          TextSpan(text: 'En continuant, vous acceptez la '),
           TextSpan(
-            text: 'Privacy Policy',
+            text: 'Politique de confidentialité',
             style: TextStyle(
               color: _Dt.primary,
               fontWeight: FontWeight.w700,
               decoration: TextDecoration.underline,
             ),
           ),
-          TextSpan(text: ' regarding document processing.'),
+          TextSpan(text: ' de N\'Zassa concernant le traitement des documents.'),
         ],
       ),
     );
