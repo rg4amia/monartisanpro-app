@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 
 import '../../../core/storage/storage_service.dart';
@@ -135,6 +136,34 @@ class AuthController extends GetxController {
   }
 
   String _parseError(dynamic e) {
+    if (e is DioException) {
+      if (e.response?.statusCode == 401) {
+        return "Votre session a expiré ou vos identifiants sont incorrects. Veuillez vous reconnecter.";
+      }
+      if (e.response?.statusCode == 403) {
+        return "Accès refusé. Vous n'avez pas les permissions nécessaires.";
+      }
+      if (e.response?.statusCode == 422) {
+        if (e.response?.data != null && e.response?.data is Map) {
+          final message = e.response?.data['message'];
+          if (message != null) return message.toString();
+        }
+        return "Les données fournies sont invalides.";
+      }
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        return "Délai d'attente dépassé. Veuillez vérifier votre connexion internet.";
+      }
+      if (e.type == DioExceptionType.connectionError) {
+        return "Impossible de contacter le serveur. Veuillez vérifier votre connexion.";
+      }
+
+      if (e.response?.data != null && e.response?.data is Map) {
+        final message = e.response?.data['message'];
+        if (message != null) return message.toString();
+      }
+      return "Une erreur réseau est survenue (${e.response?.statusCode ?? 'Inconnue'}).";
+    }
     return e.toString().replaceAll('Exception: ', '');
   }
 }
