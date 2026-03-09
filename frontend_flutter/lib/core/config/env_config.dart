@@ -12,7 +12,7 @@ class EnvConfig {
   static const String iosSimulatorBaseUrl = 'http://localhost:8000/api/v1';
 
   // Pour production
-  static const String productionBaseUrl = 'https://api.prosartisan.com/api/v1';
+  static const String productionBaseUrl = 'https://prosartisan.net/api/v1';
 
   // Détection automatique de l'environnement
   static String get baseUrl {

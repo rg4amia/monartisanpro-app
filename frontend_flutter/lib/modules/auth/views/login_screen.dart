@@ -144,6 +144,12 @@ class _LoginScreenState extends State<LoginScreen>
   Widget _buildWelcomeSection() {
     return Column(
       children: [
+        Image.asset(
+          'assets/logo/logos.png',
+          width: 120,
+          height: 120,
+        ),
+        const SizedBox(height: 20),
         const Text(
           'Bienvenue sur ProsArtisan',
           style: TextStyle(

@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
@@ -153,9 +154,9 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
       final pm = col.addPlacemarkWithImageStyle(
         mk.Point(latitude: lat, longitude: lng),
         mk_image.ImageProvider.fromImageProvider(MemoryImage(bytes)),
-        const mk.IconStyle(
+        mk.IconStyle(
           scale: 1.0,
-          anchor: Offset(0.5, 0.83),
+          anchor: Point(0.5, 0.83),
         ),
       );
 
@@ -187,7 +188,7 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
       final badgeWidth = 40.0;
       final badgeHeight = 22.0;
       final badgeRect = Rect.fromCenter(
-        center: const Offset(size / 2, badgeHeight / 2 + 5),
+        center: Offset(size / 2, badgeHeight / 2 + 5),
         width: badgeWidth,
         height: badgeHeight,
       );
@@ -198,7 +199,7 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
           ..style = PaintingStyle.fill,
       );
       _paintText(canvas, score, 12, const Color(0xFF451A03),
-          const Offset(size / 2, badgeHeight / 2 + 5));
+          Offset(size / 2, badgeHeight / 2 + 5));
 
       // Draw location icon
       _paintIcon(canvas, Icons.location_on, 36, const Color(0xFFF59E0B),
