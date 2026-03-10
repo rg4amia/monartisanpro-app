@@ -90,20 +90,20 @@ class _SupplierHomeScreenState extends State<SupplierHomeScreen> {
                   children: [
                     Expanded(
                       child: _StatCard(
-                        title: 'Total Materials',
+                        title: 'Total Matériaux',
                         value: '1,240',
                         change: '+12%',
-                        subtitle: 'Units delivered this month',
+                        subtitle: 'Unités livrées ce mois-ci',
                         isPositive: true,
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: _StatCard(
-                        title: 'Pending (J+1)',
+                        title: 'En attente (J+1)',
                         value: '450k',
                         change: '+5%',
-                        subtitle: 'FCFA expected tomorrow',
+                        subtitle: 'FCFA attendus demain',
                         isPositive: true,
                       ),
                     ),
@@ -162,7 +162,7 @@ class _SupplierHomeScreenState extends State<SupplierHomeScreen> {
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
-                  'Scan an artisan\'s J-Code to confirm material handover',
+                  'Scannez le J-Code d\'un artisan pour confirmer la remise des matériaux',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 13,
@@ -181,7 +181,7 @@ class _SupplierHomeScreenState extends State<SupplierHomeScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
-                      'Recent Orders',
+                      'Commandes Récentes',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
@@ -191,7 +191,7 @@ class _SupplierHomeScreenState extends State<SupplierHomeScreen> {
                     TextButton(
                       onPressed: () {},
                       child: const Text(
-                        'View All',
+                        'Voir Tout',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -226,7 +226,7 @@ class _SupplierHomeScreenState extends State<SupplierHomeScreen> {
                         ),
                         const SizedBox(height: 16),
                         const Text(
-                          'No orders yet',
+                          'Aucune commande pour le moment',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -235,7 +235,7 @@ class _SupplierHomeScreenState extends State<SupplierHomeScreen> {
                         ),
                         const SizedBox(height: 4),
                         const Text(
-                          'Your recent orders will appear here',
+                          'Vos commandes récentes apparaîtront ici',
                           style: TextStyle(
                             fontSize: 14,
                             color: Color(0xFF9CA3AF),
@@ -392,7 +392,7 @@ class _SupplierHomeScreenState extends State<SupplierHomeScreen> {
                               ),
                               const SizedBox(width: 8),
                               const Text(
-                                '12 Active collections in your area',
+                                '12 collectes actives dans votre zone',
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
@@ -419,7 +419,7 @@ class _SupplierHomeScreenState extends State<SupplierHomeScreen> {
   _OrderStatus _getOrderStatus(dynamic mission) {
     // Simplified status logic
     return _OrderStatus(
-      label: 'Pending',
+      label: 'En attente',
       color: const Color(0xFFF59E0B),
       icon: Icons.schedule,
     );

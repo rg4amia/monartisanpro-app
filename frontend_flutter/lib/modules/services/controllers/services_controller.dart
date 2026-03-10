@@ -30,7 +30,7 @@ class ServicesController extends GetxController {
         sectors.value = data.map((e) => SectorModel.fromJson(e)).toList();
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to load services: $e');
+      Get.snackbar('Erreur', 'Échec du chargement des services : $e');
     } finally {
       isLoading.value = false;
     }
@@ -49,7 +49,7 @@ class ServicesController extends GetxController {
         trades.value = data.map((e) => TradeModel.fromJson(e)).toList();
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to load trades: $e');
+      Get.snackbar('Erreur', 'Échec du chargement des métiers : $e');
     } finally {
       isLoadingTrades.value = false;
     }
