@@ -84,7 +84,7 @@ class _SplashScreenState extends State<SplashScreen> {
             const SizedBox(height: 8),
             // Sous-titre
             const Text(
-              'Trustworthy & Professional',
+              'Fiable & Professionnel',
               style: TextStyle(
                 fontSize: 16,
                 color: Color(0xFF9E9E9E),
@@ -113,7 +113,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  'SECURE CONNECTION',
+                  'CONNEXION SÉCURISÉE',
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.grey[400],

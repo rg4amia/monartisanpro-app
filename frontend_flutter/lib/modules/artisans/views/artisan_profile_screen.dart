@@ -90,7 +90,7 @@ class ArtisanProfileScreen extends StatelessWidget {
                                               size: 12,
                                               color: Color(0xFFD4A017)),
                                           SizedBox(width: 3),
-                                          Text('Top Artisan',
+                                          Text('Artisan d\'élite',
                                               style: TextStyle(
                                                   fontSize: 11,
                                                   color: Color(0xFFD4A017),
