@@ -39,6 +39,7 @@ import '../../modules/home/bindings/home_binding.dart';
 import '../../modules/home/views/artisan_map_screen.dart';
 import '../../modules/services/views/services_screen.dart';
 import '../../modules/missions/views/location_picker_screen.dart';
+import '../../modules/missions/views/artisan_selection_screen.dart';
 import 'app_routes.dart';
 
 class AppPages {
@@ -199,6 +200,13 @@ class AppPages {
     GetPage(
       name: Routes.locationPicker,
       page: () => const LocationPickerScreen(),
+    ),
+
+    // Artisan Selection
+    GetPage(
+      name: Routes.artisanSelection,
+      page: () => const ArtisanSelectionScreen(),
+      binding: MissionsBinding(),
     ),
   ];
 }

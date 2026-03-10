@@ -40,6 +40,9 @@ abstract class Routes {
 
   // Location
   static const locationPicker = '/location-picker';
+  
+  // Artisan selection
+  static const artisanSelection = '/artisan-selection';
 
   // Modals
   static const rating = '/rating';
