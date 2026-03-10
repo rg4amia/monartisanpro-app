@@ -11,9 +11,7 @@ import 'package:yandex_maps_mapkit/yandex_map.dart';
 
 import '../../../app/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/utils/formatters.dart';
 import '../../../data/models/artisan_model.dart';
-import '../../../shared/widgets/score_nzassa.dart';
 import '../controllers/home_controller.dart';
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
@@ -304,7 +302,9 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
       body: Stack(
         children: [
           // ── Yandex Map ──
-          YandexMap(onMapCreated: _onMapCreated),
+          YandexMap(
+            onMapCreated: _onMapCreated,
+          ),
 
           // ── Header : retour + recherche + filtre catégories ──
           Positioned(
@@ -314,8 +314,8 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
             child: _MapHeader(
               onBack: () => Get.back(),
               onSearch: (query) {
-                // TODO: Implement search functionality
-                print('Search: $query');
+                // Recherche d'artisans par nom ou métier
+                Get.find<HomeController>().searchArtisans(query);
               },
               onCategorySelected: (cat) {
                 setState(() => _selectedArtisan = null);

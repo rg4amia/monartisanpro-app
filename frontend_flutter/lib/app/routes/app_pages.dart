@@ -40,6 +40,8 @@ import '../../modules/home/views/artisan_map_screen.dart';
 import '../../modules/services/views/services_screen.dart';
 import '../../modules/missions/views/location_picker_screen.dart';
 import '../../modules/missions/views/artisan_selection_screen.dart';
+import '../../modules/missions/views/devis_creation_screen.dart';
+import '../../modules/missions/views/devis_review_screen.dart';
 import 'app_routes.dart';
 
 class AppPages {
@@ -206,6 +208,18 @@ class AppPages {
     GetPage(
       name: Routes.artisanSelection,
       page: () => const ArtisanSelectionScreen(),
+      binding: MissionsBinding(),
+    ),
+
+    // Devis - Nouveau workflow
+    GetPage(
+      name: Routes.devisCreation,
+      page: () => const DevisCreationScreen(),
+      binding: MissionsBinding(),
+    ),
+    GetPage(
+      name: Routes.devisReview,
+      page: () => const DevisReviewScreen(),
       binding: MissionsBinding(),
     ),
   ];

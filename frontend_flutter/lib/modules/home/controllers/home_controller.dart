@@ -86,6 +86,41 @@ class HomeController extends GetxController {
     }
   }
 
+  /// Recherche d'artisans par texte (nom ou métier)
+  Future<void> searchArtisans(String query) async {
+    if (query.trim().isEmpty) {
+      await searchByCategory(selectedCategory.value);
+      return;
+    }
+    
+    isMapLoading.value = true;
+    try {
+      await _getLocation();
+      if (_lat == null) return;
+      
+      final results = await _artisanRepo.getNearby(
+        lat: _lat!,
+        lng: _lng!,
+        sectorId: selectedCategory.value,
+      );
+      
+      // Filtrer localement par nom ou métier
+      final filtered = results.where((artisan) {
+        final name = artisan.name?.toLowerCase() ?? '';
+        final trade = artisan.trade?.toLowerCase() ?? '';
+        final searchLower = query.toLowerCase();
+        return name.contains(searchLower) || trade.contains(searchLower);
+      }).toList();
+      
+      artisans.value = filtered;
+      nearbyArtisansCount.value = filtered.length;
+    } catch (_) {
+      // garder l'état précédent
+    } finally {
+      isMapLoading.value = false;
+    }
+  }
+
   @override
   Future<void> refresh() => _loadData();
 

@@ -44,6 +44,10 @@ abstract class Routes {
   // Artisan selection
   static const artisanSelection = '/artisan-selection';
 
+  // Devis
+  static const devisCreation = '/devis-creation';
+  static const devisReview = '/devis-review';
+
   // Modals
   static const rating = '/rating';
   static const litige = '/litige';
