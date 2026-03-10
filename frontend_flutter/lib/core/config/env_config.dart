@@ -39,9 +39,10 @@ class EnvConfig {
     '8715763356:AAFPM6f1DALdYxn5gU6_DLX_-wZl6ZRtEJE',
     defaultValue: '8715763356:AAFPM6f1DALdYxn5gU6_DLX_-wZl6ZRtEJE',
   );
+  
   static const String telegramChatId = String.fromEnvironment(
-    '8715763356',
-    defaultValue: '8715763356',
+    '422674168',
+    defaultValue: '422674168',
   );
   
   // Active les logs Telegram en debug/release
@@ -49,6 +50,7 @@ class EnvConfig {
     'TELEGRAM_LOGGER_DEBUG',
     defaultValue: true,
   );
+
   static const bool telegramLoggerRelease = bool.fromEnvironment(
     'TELEGRAM_LOGGER_RELEASE',
     defaultValue: true,

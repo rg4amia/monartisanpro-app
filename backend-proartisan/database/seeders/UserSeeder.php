@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\ArtisanProfile;
+use App\Models\Commune;
 use App\Models\Sector;
 use App\Models\Trade;
 use App\Models\User;
@@ -24,12 +25,16 @@ class UserSeeder extends Seeder
         ]);
 
         // ── Client test ────────────────────────────────────────────────────────
+        $plateau = Commune::where('slug', 'plateau')->first();
+        $yopougon = Commune::where('slug', 'yopougon')->first();
+
         $client = User::create([
             'phone'      => '+2250100000001',
             'name'       => 'Adjoua Kouassi',
             'password'   => bcrypt('client123'),
             'role'       => 'client',
             'kyc_status' => 'actif',
+            'commune_id' => $plateau?->id,
         ]);
         // Position Abidjan Plateau
         $client->setPosition(5.3543, -4.0083);
@@ -45,6 +50,7 @@ class UserSeeder extends Seeder
             'role'           => 'artisan',
             'kyc_status'     => 'actif',
             'score_nzassa'   => 78,
+            'commune_id'     => $plateau?->id,
         ]);
         $artisan1->setPosition(5.3560, -4.0076);
 
@@ -66,6 +72,7 @@ class UserSeeder extends Seeder
             'role'           => 'artisan',
             'kyc_status'     => 'actif',
             'score_nzassa'   => 65,
+            'commune_id'     => $plateau?->id,
         ]);
         $artisan2->setPosition(5.3590, -4.0100);
 
@@ -84,6 +91,7 @@ class UserSeeder extends Seeder
             'password'   => bcrypt('fourn123'),
             'role'       => 'fournisseur',
             'kyc_status' => 'actif',
+            'commune_id' => $yopougon?->id,
         ]);
 
         // position NOT NULL → INSERT direct avec la colonne POINT (MySQL 5.7 compatible)
