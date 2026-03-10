@@ -51,7 +51,7 @@ flowchart TD
         direction TB
         BESOIN["Décrit son besoin\n(texte + photos)"]:::client
         GEMINI["🤖 API Gemini\nAnalyse : catégorie + urgence\n+ estimation FCFA"]:::ai
-        GEOSEARCH["PostGIS Search\nRayon ≤ 2 km\nMarqueurs dorés prioritaires\n(position floutée à 50 m)"]:::database
+        GEOSEARCH["MySQL Spatial Search\nST_Distance_Sphere\nRayon ≤ 2 km\nMarqueurs dorés prioritaires\n(position floutée à 50 m)"]:::database
         SELECT["Consulte profils\n& Score N'Zassa\nSélectionne un artisan"]:::client
         NOTIF_A["🔔 Notification\nNouvelle demande"]:::system
         DEVIS["Établit le Devis\nMO vs Matériaux\n+ jalons + durée"]:::artisan
