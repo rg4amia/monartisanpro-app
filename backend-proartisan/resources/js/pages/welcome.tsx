@@ -18,13 +18,12 @@ export default function Welcome() {
                         <div className="flex justify-between items-center h-16">
                             {/* Logo */}
                             <div className="flex items-center space-x-2">
-                                <div className="flex items-center space-x-1">
-                                    <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-                                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                        </svg>
-                                    </div>
-                                    <span className="text-xl font-bold text-gray-900">N'ZASSA</span>
+                                <div className="flex items-center space-x-3">
+                                    <img
+                                        src="/img/prosartisan-logo.png"
+                                        alt="ProsArtisan Logo"
+                                        className="h-10 w-auto"
+                                    />
                                 </div>
                             </div>
 
@@ -72,20 +71,21 @@ export default function Welcome() {
                                 <div className="inline-flex items-center space-x-2 px-3 py-1.5 bg-indigo-100 rounded-full">
                                     <div className="w-2 h-2 bg-indigo-600 rounded-full animate-pulse" />
                                     <span className="text-sm font-semibold text-indigo-700">
-                                        VÉRIFIÉ & SÉCURISÉ ÉCOSYSTÈME
+                                        PLATEFORME SÉCURISÉE & VÉRIFIÉE
                                     </span>
                                 </div>
 
                                 <h1 className="text-5xl lg:text-6xl font-bold leading-tight">
-                                    <span className="text-gray-900">Construisez la Confiance,</span>
+                                    <span className="text-gray-900">Trouvez des Artisans</span>
                                     <br />
-                                    <span className="text-gray-900">Sécurisez le Travail,</span>
+                                    <span className="text-gray-900">de Confiance,</span>
                                     <br />
-                                    <span className="text-indigo-600">et Développez Votre Entreprise</span>
+                                    <span className="text-indigo-600">Paiements Sécurisés</span>
                                 </h1>
 
                                 <p className="text-lg text-gray-600 leading-relaxed max-w-xl">
-                                    Connexion des clients, artisans et fournisseurs à travers un système de notation transparent et une protection de paiement sécurisée.
+                                    La plateforme qui connecte clients, artisans et quincailleries en Côte d'Ivoire.
+                                    Système de notation N'Zassa, paiement par jalons et protection complète de vos projets.
                                 </p>
 
                                 <div className="flex flex-col sm:flex-row gap-4">
@@ -430,15 +430,15 @@ export default function Welcome() {
                             {/* Company Info */}
                             <div className="space-y-4">
                                 <div className="flex items-center space-x-2">
-                                    <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-                                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                        </svg>
-                                    </div>
-                                    <span className="text-xl font-bold text-white">N'ZASSA</span>
+                                    <img
+                                        src="/img/prosartisan-logo.png"
+                                        alt="ProsArtisan Logo"
+                                        className="h-10 w-auto"
+                                    />
                                 </div>
                                 <p className="text-sm text-gray-400 leading-relaxed">
-                                    Construire le monde de travail moderne connecté. Bâtir la confiance par la technologie.
+                                    ProsArtisan - La marketplace qui connecte clients, artisans et quincailleries en Côte d'Ivoire.
+                                    Paiements sécurisés, notation transparente, protection garantie.
                                 </p>
                                 <div className="flex space-x-4">
                                     <a href="#" className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-indigo-600 transition">
@@ -486,11 +486,11 @@ export default function Welcome() {
                                 <h4 className="text-white font-semibold mb-4">Contact</h4>
                                 <ul className="space-y-2">
                                     <li>
-                                        <a href="mailto:hello@nzassa.com" className="text-sm hover:text-white transition flex items-center">
+                                        <a href="mailto:contact@prosartisan.ci" className="text-sm hover:text-white transition flex items-center">
                                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                             </svg>
-                                            hello@nzassa.com
+                                            contact@prosartisan.ci
                                         </a>
                                     </li>
                                     <li>
@@ -515,7 +515,7 @@ export default function Welcome() {
                         {/* Bottom Bar */}
                         <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
                             <p className="text-sm text-gray-400">
-                                © 2024 N'Zassa Ecosystem. Tous droits réservés.
+                                © 2024 ProsArtisan. Tous droits réservés.
                             </p>
                             <div className="flex flex-wrap justify-center gap-6 text-sm">
                                 <a href="#privacy" className="hover:text-white transition">Politique de confidentialité</a>
