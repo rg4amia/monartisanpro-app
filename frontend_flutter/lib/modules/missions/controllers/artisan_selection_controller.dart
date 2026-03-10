@@ -146,6 +146,7 @@ class ArtisanSelectionController extends GetxController {
         scoreNzassa: isGolden ? 85 + random.nextInt(15) : 60 + random.nextInt(25),
         rating: 3.5 + random.nextDouble() * 1.5,
         isGoldenMarker: isGolden,
+        experienceYears: 2 + random.nextInt(18), // 2 à 20 ans d'expérience
         location: {
           'lat': lat,
           'lng': lng,
