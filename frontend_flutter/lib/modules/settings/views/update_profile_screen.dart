@@ -69,7 +69,7 @@ class _AppBar extends StatelessWidget {
             ),
           ),
           const Text(
-            'Edit Profile',
+            'Modifier le profil',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w700,
@@ -163,7 +163,7 @@ class _FormSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Personal Information',
+          'Informations personnelles',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w700,
@@ -172,25 +172,25 @@ class _FormSection extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         _InputField(
-          label: 'Full Name',
+          label: 'Nom complet',
           controller: controller.nameController,
           icon: Icons.person_outline,
-          hint: 'Enter your full name',
+          hint: 'Entrez votre nom complet',
         ),
         const SizedBox(height: 16),
         _InputField(
-          label: 'Phone Number',
+          label: 'Numéro de téléphone',
           controller: controller.phoneController,
           icon: Icons.phone_outlined,
-          hint: 'Your phone number',
+          hint: 'Votre numéro de téléphone',
           enabled: false,
         ),
         const SizedBox(height: 16),
         _InputField(
-          label: 'Email (Optional)',
+          label: 'E-mail (Optionnel)',
           controller: controller.emailController,
           icon: Icons.email_outlined,
-          hint: 'your.email@example.com',
+          hint: 'votre.email@exemple.com',
           keyboardType: TextInputType.emailAddress,
         ),
       ],
@@ -302,7 +302,7 @@ class _BottomActions extends StatelessWidget {
                     ),
                   )
                 : const Text(
-                    'Save Changes',
+                    'Enregistrer les modifications',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
