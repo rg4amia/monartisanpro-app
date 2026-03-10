@@ -7,8 +7,33 @@ class NotificationsController extends GetxController {
 
   final notifications = <NotificationModel>[].obs;
   final isLoading = false.obs;
+  final selectedTab = 'all'.obs;
 
   int get unreadCount => notifications.where((n) => !n.isRead).length;
+
+  List<NotificationModel> get filteredNotifications {
+    if (selectedTab.value == 'all') {
+      return notifications;
+    } else if (selectedTab.value == 'missions') {
+      return notifications.where((n) => 
+        n.type == 'mission' || 
+        n.type == 'mission_update' ||
+        n.type == 'jalon' ||
+        n.type == 'jcode'
+      ).toList();
+    } else if (selectedTab.value == 'finances') {
+      return notifications.where((n) => 
+        n.type == 'payment' || 
+        n.type == 'payment_alert' ||
+        n.type == 'wallet'
+      ).toList();
+    }
+    return notifications;
+  }
+
+  void selectTab(String tab) {
+    selectedTab.value = tab;
+  }
 
   @override
   void onInit() {

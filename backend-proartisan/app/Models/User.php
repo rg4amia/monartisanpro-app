@@ -15,6 +15,7 @@ class User extends Authenticatable
     protected $fillable = [
         'phone', 'name', 'password', 'role', 'kyc_status',
         'score_nzassa', 'wallet_materiaux', 'wallet_mo', 'fcm_token',
+        'commune_id',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -46,6 +47,11 @@ class User extends Authenticatable
     public function artisanProfile()
     {
         return $this->hasOne(ArtisanProfile::class);
+    }
+
+    public function commune()
+    {
+        return $this->belongsTo(Commune::class);
     }
 
     public function fournisseurAgree()
