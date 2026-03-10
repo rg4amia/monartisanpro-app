@@ -1,0 +1,1171 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:intl/intl.dart';
+
+import '../../../data/models/devis_model.dart';
+import '../controllers/devis_controller.dart';
+
+// ─── Design Tokens ────────────────────────────────────────────────────────────
+abstract class _C {
+  static const bg = Color(0xFFF8F9FA);
+  static const surface = Colors.white;
+  static const primary = Color(0xFF4F46E5);
+  static const primaryLight = Color(0xFFEEF2FF);
+  static const ink = Color(0xFF111827);
+  static const muted = Color(0xFF6B7280);
+  static const subtle = Color(0xFFE5E7EB);
+  static const success = Color(0xFF10B981);
+  static const successLight = Color(0xFFD1FAE5);
+  static const warning = Color(0xFFF59E0B);
+  static const warningLight = Color(0xFFFEF3C7);
+  static const danger = Color(0xFFEF4444);
+  static const dangerLight = Color(0xFFFEE2E2);
+}
+
+/// Vue de consultation et validation/refus de devis pour le client
+///
+/// WORKFLOW:
+/// 1. Client crée mission + sélectionne artisan → Notification artisan
+/// 2. Artisan crée devis → Notification client
+/// 3. **Client valide/refuse devis (cette vue)**
+///    - Si validé → Paiement → Mission financée
+///    - Si refusé → Retour à l'artisan
+class DevisReviewScreen extends StatelessWidget {
+  const DevisReviewScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = Get.put(DevisController());
+    final devisId = Get.arguments as int?;
+
+    if (devisId != null) {
+      controller.loadDevis(devisId);
+    }
+
+    return Scaffold(
+      backgroundColor: _C.bg,
+      body: SafeArea(
+        child: Column(
+          children: [
+            _AppBar(),
+            Expanded(
+              child: Obx(() {
+                if (controller.isLoading.value) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                final devis = controller.currentDevis.value;
+                if (devis == null) {
+                  return _ErrorState(
+                    onRetry: () => controller.loadDevis(devisId ?? 0),
+                  );
+                }
+
+                return SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _StatusCard(devis: devis),
+                      const SizedBox(height: 24),
+                      _ArtisanInfoCard(devis: devis),
+                      const SizedBox(height: 24),
+                      _LignesSection(devis: devis),
+                      const SizedBox(height: 24),
+                      _JalonsSection(devis: devis),
+                      const SizedBox(height: 24),
+                      _RecapSection(devis: devis),
+                      const SizedBox(height: 120),
+                    ],
+                  ),
+                );
+              }),
+            ),
+          ],
+        ),
+      ),
+      bottomNavigationBar: Obx(() {
+        final devis = controller.currentDevis.value;
+        if (devis == null || devis.statut != 'soumis') {
+          return const SizedBox.shrink();
+        }
+        return _ActionButtons(
+          controller: controller,
+          devisId: devis.id,
+        );
+      }),
+    );
+  }
+}
+
+// ─── App Bar ──────────────────────────────────────────────────────────────────
+class _AppBar extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () => Get.back(),
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: _C.surface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _C.subtle),
+              ),
+              child: const Icon(Icons.arrow_back, size: 20),
+            ),
+          ),
+          const Expanded(
+            child: Text(
+              'Devis reçu',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: _C.ink,
+              ),
+            ),
+          ),
+          const SizedBox(width: 40),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Status Card ──────────────────────────────────────────────────────────────
+class _StatusCard extends StatelessWidget {
+  final DevisModel devis;
+  const _StatusCard({required this.devis});
+
+  @override
+  Widget build(BuildContext context) {
+    final config = _getStatusConfig(devis.statut);
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: config['bg'] as Color,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: config['borderColor'] as Color),
+      ),
+      child: Row(
+        children: [
+          Icon(config['icon'] as IconData, color: config['color'] as Color, size: 24),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  config['title'] as String,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: config['color'] as Color,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  config['subtitle'] as String,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: _C.muted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Map<String, dynamic> _getStatusConfig(String statut) {
+    switch (statut) {
+      case 'soumis':
+        return {
+          'icon': Icons.schedule,
+          'title': 'Devis en attente de votre validation',
+          'subtitle': 'Consultez les détails et décidez d\'accepter ou refuser',
+          'color': _C.warning,
+          'bg': _C.warningLight,
+          'borderColor': _C.warning.withValues(alpha: 0.2),
+        };
+      case 'accepte':
+        return {
+          'icon': Icons.check_circle,
+          'title': 'Devis accepté',
+          'subtitle': 'Procédez au paiement pour lancer la mission',
+          'color': _C.success,
+          'bg': _C.successLight,
+          'borderColor': _C.success.withValues(alpha: 0.2),
+        };
+      case 'refuse':
+        return {
+          'icon': Icons.cancel,
+          'title': 'Devis refusé',
+          'subtitle': 'Vous avez refusé ce devis',
+          'color': _C.danger,
+          'bg': _C.dangerLight,
+          'borderColor': _C.danger.withValues(alpha: 0.2),
+        };
+      default:
+        return {
+          'icon': Icons.info,
+          'title': 'Devis en brouillon',
+          'subtitle': 'L\'artisan prépare le devis',
+          'color': _C.muted,
+          'bg': _C.subtle,
+          'borderColor': _C.muted.withValues(alpha: 0.2),
+        };
+    }
+  }
+}
+
+// ─── Artisan Info Card ────────────────────────────────────────────────────────
+class _ArtisanInfoCard extends StatelessWidget {
+  final DevisModel devis;
+  const _ArtisanInfoCard({required this.devis});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _C.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _C.subtle),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              color: _C.primaryLight,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(Icons.person, color: _C.primary, size: 28),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  devis.artisanName ?? 'Artisan #${devis.artisanId}',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: _C.ink,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Créé le ${_formatDate(devis.createdAt)}',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: _C.muted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatDate(String date) {
+    try {
+      final dt = DateTime.parse(date);
+      return DateFormat('dd/MM/yyyy à HH:mm').format(dt);
+    } catch (_) {
+      return date;
+    }
+  }
+}
+
+// ─── Lignes Section ───────────────────────────────────────────────────────────
+class _LignesSection extends StatelessWidget {
+  final DevisModel devis;
+  const _LignesSection({required this.devis});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Détail des travaux',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: _C.ink,
+          ),
+        ),
+        const SizedBox(height: 12),
+        ...devis.lignes.map((ligne) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _LigneCard(ligne: ligne),
+            )),
+      ],
+    );
+  }
+}
+
+// ─── Jalons Section ───────────────────────────────────────────────────────────
+class _JalonsSection extends StatelessWidget {
+  final DevisModel devis;
+  const _JalonsSection({required this.devis});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Jalons de paiement',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: _C.ink,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: _C.primaryLight,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.info_outline, color: _C.primary, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Les paiements seront libérés jalon par jalon après validation avec code OTP',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: _C.primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        ...devis.jalons.map((jalon) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _JalonCard(jalon: jalon),
+            )),
+      ],
+    );
+  }
+}
+
+// ─── Recap Section ────────────────────────────────────────────────────────────
+class _RecapSection extends StatelessWidget {
+  final DevisModel devis;
+  const _RecapSection({required this.devis});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _C.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _C.subtle),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Récapitulatif financier',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: _C.ink,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _RecapRow(
+            label: 'Main d\'œuvre',
+            value: _formatFCFA(devis.totalMo),
+            valueColor: _C.success,
+          ),
+          const SizedBox(height: 8),
+          _RecapRow(
+            label: 'Matériaux',
+            value: _formatFCFA(devis.totalMat),
+            valueColor: _C.warning,
+          ),
+          const Divider(height: 24),
+          _RecapRow(
+            label: 'MONTANT TOTAL À PAYER',
+            value: _formatFCFA(devis.totalGeneral),
+            valueColor: _C.primary,
+            isBold: true,
+            isLarge: true,
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: _C.bg,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Répartition automatique du séquestre',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: _C.ink,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _ProgressBar(
+                        label: 'Matériaux',
+                        percentage: (devis.totalMat / devis.totalGeneral * 100),
+                        color: _C.warning,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _ProgressBar(
+                        label: 'Main d\'œuvre',
+                        percentage: (devis.totalMo / devis.totalGeneral * 100),
+                        color: _C.success,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatFCFA(int amount) {
+    return '${amount.toString().replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (Match m) => '${m[1]} ',
+        )} FCFA';
+  }
+}
+
+// ─── Action Buttons ───────────────────────────────────────────────────────────
+class _ActionButtons extends StatelessWidget {
+  final DevisController controller;
+  final int devisId;
+
+  const _ActionButtons({
+    required this.controller,
+    required this.devisId,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: _C.surface,
+        boxShadow: [
+          BoxShadow(
+            color: _C.ink.withValues(alpha: 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Obx(() => Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Bouton Accepter
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: controller.isSubmitting.value
+                        ? null
+                        : () => _showAcceptDialog(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _C.success,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: controller.isSubmitting.value
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.check_circle, size: 20),
+                              SizedBox(width: 8),
+                              Text(
+                                'Accepter et payer',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // Bouton Refuser
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: controller.isSubmitting.value
+                        ? null
+                        : () => _showRefuseDialog(context),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: _C.danger,
+                      side: const BorderSide(color: _C.danger),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.cancel, size: 20),
+                        SizedBox(width: 8),
+                        Text(
+                          'Refuser ce devis',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            )),
+      ),
+    );
+  }
+
+  void _showAcceptDialog(BuildContext context) {
+    String selectedProvider = 'wave';
+
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: _C.successLight,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Icon(Icons.payment, color: _C.success, size: 32),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Accepter le devis',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: _C.ink,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Choisissez votre méthode de paiement pour l\'acompte',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: _C.muted,
+                ),
+              ),
+              const SizedBox(height: 20),
+              StatefulBuilder(
+                builder: (context, setState) => Column(
+                  children: [
+                    _PaymentOption(
+                      label: 'Wave CI',
+                      value: 'wave',
+                      groupValue: selectedProvider,
+                      icon: Icons.waves,
+                      onChanged: (v) => setState(() => selectedProvider = v!),
+                    ),
+                    const SizedBox(height: 12),
+                    _PaymentOption(
+                      label: 'Orange Money CI',
+                      value: 'orange_money',
+                      groupValue: selectedProvider,
+                      icon: Icons.phone_android,
+                      onChanged: (v) => setState(() => selectedProvider = v!),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Get.back(),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text('Annuler'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        Get.back();
+                        final success = await controller.acceptDevis(
+                          devisId,
+                          provider: selectedProvider,
+                        );
+                        if (success) {
+                          Get.back(result: true);
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _C.success,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text('Confirmer'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showRefuseDialog(BuildContext context) {
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: _C.dangerLight,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Icon(Icons.warning, color: _C.danger, size: 32),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Refuser le devis',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: _C.ink,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Êtes-vous sûr de vouloir refuser ce devis ? L\'artisan en sera informé.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: _C.muted,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Get.back(),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text('Annuler'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        Get.back();
+                        final success = await controller.refuseDevis(devisId);
+                        if (success) {
+                          Get.back(result: false);
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _C.danger,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text('Refuser'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Widgets utilitaires ──────────────────────────────────────────────────────
+class _LigneCard extends StatelessWidget {
+  final DevisLigne ligne;
+  const _LigneCard({required this.ligne});
+
+  @override
+  Widget build(BuildContext context) {
+    final isMo = ligne.type == 'mo';
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: _C.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _C.subtle),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: isMo ? _C.successLight : _C.warningLight,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              isMo ? Icons.build : Icons.category,
+              size: 20,
+              color: isMo ? _C.success : _C.warning,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  ligne.description,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: _C.ink,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  isMo ? 'Main d\'œuvre' : 'Matériaux',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isMo ? _C.success : _C.warning,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            _formatFCFA(ligne.montant),
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: isMo ? _C.success : _C.warning,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatFCFA(int amount) {
+    return '${amount.toString().replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (Match m) => '${m[1]} ',
+        )} FCFA';
+  }
+}
+
+class _JalonCard extends StatelessWidget {
+  final DevisJalon jalon;
+  const _JalonCard({required this.jalon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: _C.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _C.subtle),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: _C.primaryLight,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Center(
+              child: Text(
+                '${jalon.ordre}',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: _C.primary,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  jalon.description,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: _C.ink,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    const Icon(Icons.calendar_today, size: 12, color: _C.muted),
+                    const SizedBox(width: 4),
+                    Text(
+                      _formatDate(jalon.dateCible),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: _C.muted,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Text(
+            _formatFCFA(jalon.montant),
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: _C.primary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatFCFA(int amount) {
+    return '${amount.toString().replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (Match m) => '${m[1]} ',
+        )} FCFA';
+  }
+
+  String _formatDate(String date) {
+    try {
+      final dt = DateTime.parse(date);
+      return DateFormat('dd/MM/yyyy').format(dt);
+    } catch (_) {
+      return date;
+    }
+  }
+}
+
+class _RecapRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color valueColor;
+  final bool isBold;
+  final bool isLarge;
+
+  const _RecapRow({
+    required this.label,
+    required this.value,
+    required this.valueColor,
+    this.isBold = false,
+    this.isLarge = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: isLarge ? 16 : 14,
+              fontWeight: isBold ? FontWeight.w700 : FontWeight.w500,
+              color: _C.ink,
+            ),
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: isLarge ? 18 : 14,
+            fontWeight: FontWeight.w700,
+            color: valueColor,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ProgressBar extends StatelessWidget {
+  final String label;
+  final double percentage;
+  final Color color;
+
+  const _ProgressBar({
+    required this.label,
+    required this.percentage,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: _C.ink,
+              ),
+            ),
+            Text(
+              '${percentage.toStringAsFixed(1)}%',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: SizedBox(
+            height: 8,
+            child: LinearProgressIndicator(
+              value: percentage / 100,
+              backgroundColor: _C.subtle,
+              valueColor: AlwaysStoppedAnimation(color),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PaymentOption extends StatelessWidget {
+  final String label;
+  final String value;
+  final String groupValue;
+  final IconData icon;
+  final ValueChanged<String?> onChanged;
+
+  const _PaymentOption({
+    required this.label,
+    required this.value,
+    required this.groupValue,
+    required this.icon,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isSelected = value == groupValue;
+    return GestureDetector(
+      onTap: () => onChanged(value),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isSelected ? _C.primaryLight : _C.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? _C.primary : _C.subtle,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSelected ? _C.primary : _C.muted,
+                  width: 2,
+                ),
+                color: isSelected ? _C.primary : _C.surface,
+              ),
+              child: isSelected
+                  ? const Center(
+                      child: Icon(
+                        Icons.check,
+                        size: 12,
+                        color: Colors.white,
+                      ),
+                    )
+                  : null,
+            ),
+            const SizedBox(width: 12),
+            Icon(icon, color: isSelected ? _C.primary : _C.muted, size: 20),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  color: isSelected ? _C.primary : _C.ink,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ErrorState extends StatelessWidget {
+  final VoidCallback onRetry;
+  const _ErrorState({required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: _C.dangerLight,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Icon(
+              Icons.error_outline,
+              size: 40,
+              color: _C.danger,
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'Impossible de charger le devis',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: _C.ink,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Vérifiez votre connexion et réessayez',
+            style: TextStyle(
+              fontSize: 14,
+              color: _C.muted,
+            ),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh, size: 18),
+            label: const Text('Réessayer'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _C.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
