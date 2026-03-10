@@ -23,10 +23,10 @@ const double _kAbidjanLng = -4.0169;
 const double _kDefaultZoom = 14.0;
 
 const List<Map<String, dynamic>> _kCategories = [
-  {'label': 'Top Rated', 'icon': Icons.stars},
-  {'label': 'Tailors', 'icon': null},
-  {'label': 'Carpenters', 'icon': null},
-  {'label': 'Plumbers', 'icon': null},
+  {'label': 'Mieux Notés', 'icon': Icons.stars},
+  {'label': 'Tailleurs', 'icon': null},
+  {'label': 'Charpentiers', 'icon': null},
+  {'label': 'Plombiers', 'icon': null},
 ];
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
@@ -518,7 +518,7 @@ class _MapHeaderState extends State<_MapHeader> {
                   child: TextField(
                     controller: _searchCtrl,
                     decoration: InputDecoration(
-                      hintText: 'Search artisans...',
+                      hintText: 'Rechercher des artisans...',
                       hintStyle: const TextStyle(
                         color: Color(0xFF94A3B8),
                         fontSize: 14,
@@ -685,7 +685,7 @@ class _ArtisanBottomPanel extends StatelessWidget {
                     children: [
                       if (artisan.isGoldenMarker)
                         const Text(
-                          'GOLD ARTISAN',
+                          'ARTISAN D\'ÉLITE',
                           style: TextStyle(
                             color: Color(0xFF4F46E5),
                             fontSize: 10,
@@ -740,7 +740,7 @@ class _ArtisanBottomPanel extends StatelessWidget {
                               size: 14, color: Color(0xFF64748B)),
                           const SizedBox(width: 4),
                           Text(
-                            artisan.distance ?? '0.8 km away',
+                            artisan.distance ?? 'à 0,8 km',
                             style: const TextStyle(
                                 color: Color(0xFF64748B), fontSize: 13),
                           ),
@@ -748,7 +748,7 @@ class _ArtisanBottomPanel extends StatelessWidget {
                           const Icon(Icons.circle, size: 4, color: Color(0xFFCBD5E1)),
                           const SizedBox(width: 8),
                           Text(
-                            artisan.trade ?? 'Tailor',
+                            artisan.trade ?? 'Tailleur',
                             style: const TextStyle(
                                 color: Color(0xFF64748B), fontSize: 13),
                           ),
@@ -778,7 +778,7 @@ class _ArtisanBottomPanel extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       elevation: 0,
                     ),
-                    child: const Text('View Profile',
+                    child: const Text('Voir le Profil',
                         style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ),
