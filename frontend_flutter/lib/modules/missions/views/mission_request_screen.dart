@@ -168,8 +168,15 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
                           Get.snackbar('Erreur', 'Veuillez fournir plus de détails');
                           return;
                         }
-                        // Navigate to artisan search/list
-                        Get.toNamed(Routes.artisanMap);
+                        // Navigate to artisan selection with mission data
+                        Get.toNamed(Routes.artisanSelection, arguments: {
+                          'category': _selectedCategory.value,
+                          'categoryId': _selectedCategoryId.value,
+                          'tradeId': _selectedTradeId.value,
+                          'description': _descCtrl.text,
+                          'latitude': _latitude.value,
+                          'longitude': _longitude.value,
+                        });
                       },
                     ),
                     const SizedBox(height: 24),

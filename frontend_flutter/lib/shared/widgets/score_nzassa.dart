@@ -77,3 +77,47 @@ class ScoreNzassa extends StatelessWidget {
     );
   }
 }
+
+/// Badge compact pour afficher le score N'Zassa dans les listes
+class ScoreNzassaBadge extends StatelessWidget {
+  final int score;
+  
+  const ScoreNzassaBadge({
+    super.key,
+    required this.score,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = AppColors.scoreColor(score);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '$score',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+          Text(
+            'N\'Zassa',
+            style: TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

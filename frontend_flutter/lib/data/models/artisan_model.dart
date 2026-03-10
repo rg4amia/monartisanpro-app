@@ -15,6 +15,9 @@ class ArtisanModel {
   final bool isGoldenMarker;
   final String? kycStatus;
   final Map<String, double>? location;
+  final String? commune;
+  final bool isAvailable;
+  final DateTime? joinedDate;
 
   const ArtisanModel({
     required this.id,
@@ -33,6 +36,9 @@ class ArtisanModel {
     this.distanceMetres,
     this.kycStatus,
     this.location,
+    this.commune,
+    this.isAvailable = true,
+    this.joinedDate,
   });
 
   factory ArtisanModel.fromJson(Map<String, dynamic> json) {
@@ -53,6 +59,11 @@ class ArtisanModel {
       distanceMetres: (json['distanceMetres'] as num?)?.toDouble(),
       isGoldenMarker: json['isGoldenMarker'] as bool? ?? false,
       kycStatus: json['kycStatus'] as String?,
+      commune: json['commune'] as String?,
+      isAvailable: json['isAvailable'] as bool? ?? true,
+      joinedDate: json['joinedDate'] != null 
+          ? DateTime.tryParse(json['joinedDate'] as String)
+          : null,
       location: locationData != null
           ? {
               'lat': (locationData['lat'] as num).toDouble(),
@@ -78,6 +89,9 @@ class ArtisanModel {
         'distanceMetres': distanceMetres,
         'isGoldenMarker': isGoldenMarker,
         'kycStatus': kycStatus,
+        'commune': commune,
+        'isAvailable': isAvailable,
+        'joinedDate': joinedDate?.toIso8601String(),
         'location': location,
       };
 }
