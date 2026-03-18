@@ -8,6 +8,7 @@ use App\Models\Litige;
 use App\Models\Mission;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Models\JCode;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\DB;
@@ -30,6 +31,8 @@ class AdminService
             'referent_required_open' => Mission::where('referent_required', true)
                 ->whereIn('status', ['financee', 'en_cours', 'litige'])
                 ->count(),
+            'recent_fraud_alerts'    => JCode::where('statut', 'actif')->count(), // Placeholder for actual fraud tracking
+            'volume_transactions_24h' => Transaction::where('created_at', '>=', now()->subDay())->sum('montant'),
         ];
     }
 

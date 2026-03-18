@@ -70,10 +70,16 @@ class JCodeService
 
         // Enregistre la position du scan
         $jcode->setPositionScan($lat, $lng);
-        $jcode->update(['fournisseur_id' => $fournisseur->id]);
 
-        // Paiement fournisseur
-        $this->walletService->payFournisseur($jcode);
+        // NOUVEAU : On ne paye pas immédiatement, on programme pour J+1
+        $jcode->update([
+            'fournisseur_id'  => $fournisseur->id,
+            'statut'          => 'utilise',
+            'scanned_at'      => now(),
+            'paiement_status' => 'programme',
+        ]);
+
+        \App\Jobs\PaySupplierJob::dispatch($jcode->id)->delay(now()->addDay());
 
         $this->notificationService->send(
             $jcode->artisan,

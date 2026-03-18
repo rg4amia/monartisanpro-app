@@ -8,7 +8,7 @@ class Litige extends Model
 {
     protected $fillable = [
         'mission_id', 'declencheur_id', 'type', 'description',
-        'statut', 'decision', 'resolu_at',
+        'statut', 'decision', 'resolu_at', 'admin_notes'
     ];
 
     protected function casts(): array

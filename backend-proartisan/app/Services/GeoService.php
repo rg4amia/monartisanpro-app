@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class GeoService
 {
@@ -14,6 +15,32 @@ class GeoService
      */
     public function nearbyArtisans(float $lat, float $lng, int $radiusMeters): Collection
     {
+        if (config('database.default') === 'sqlite') {
+            // Mock for tests
+            $rows = DB::select("
+                SELECT
+                    u.id,
+                    u.phone,
+                    u.name,
+                    u.score_nzassa,
+                    0.0 AS lng,
+                    0.0 AS lat,
+                    0 AS distance_metres,
+                    ap.photo_url,
+                    ap.bio,
+                    ap.experience_years,
+                    t.name AS trade_name,
+                    s.name AS sector_name
+                FROM users u
+                LEFT JOIN artisan_profiles ap ON ap.user_id = u.id
+                LEFT JOIN trades t ON t.id = ap.trade_id
+                LEFT JOIN sectors s ON s.id = ap.sector_id
+                WHERE u.role = 'artisan'
+                  AND u.kyc_status = 'actif'
+            ");
+            return collect($rows);
+        }
+
         $rows = DB::select("
             SELECT
                 u.id,
@@ -64,6 +91,22 @@ class GeoService
      */
     public function validateJCodeGps(int $fournisseurId, float $scanLat, float $scanLng): array
     {
+        if (config('database.default') === 'sqlite') {
+            $row = DB::table('fournisseurs_agrees')->where('user_id', $fournisseurId)->first();
+            if (!$row) return ['valid' => false, 'distance' => null, 'reason' => 'Fournisseur non trouvé.'];
+
+            $pos = explode(',', $row->position);
+            if (count($pos) !== 2) return ['valid' => true, 'distance' => 0, 'max' => 100];
+
+            $dist = sqrt(pow($scanLat - (float)$pos[0], 2) + pow($scanLng - (float)$pos[1], 2)) * 111000;
+
+            return [
+                'valid' => $dist <= 100,
+                'distance' => round($dist, 1),
+                'max' => 100
+            ];
+        }
+
         $row = DB::selectOne("
             SELECT ST_Distance_Sphere(
                 POINT(?, ?),

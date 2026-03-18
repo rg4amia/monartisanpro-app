@@ -25,7 +25,13 @@ return new class extends Migration
         });
 
         // Colonne POINT nullable — MySQL 5.7 compatible (pas d'index spatial sur nullable)
-        DB::statement('ALTER TABLE users ADD COLUMN position POINT NULL AFTER wallet_mo');
+        if (config('database.default') !== 'sqlite') {
+            DB::statement('ALTER TABLE users ADD COLUMN position POINT NULL AFTER wallet_mo');
+        } else {
+            Schema::table('users', function (Blueprint $table) {
+                $table->string('position')->nullable(); // Simple string for sqlite testing
+            });
+        }
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
             $table->string('phone', 20)->primary();
@@ -47,7 +53,9 @@ return new class extends Migration
     {
         Schema::dropIfExists('sessions');
         Schema::dropIfExists('password_reset_tokens');
-        DB::statement('ALTER TABLE users DROP COLUMN IF EXISTS position');
+        if (config('database.default') !== 'sqlite') {
+            DB::statement('ALTER TABLE users DROP COLUMN IF EXISTS position');
+        }
         Schema::dropIfExists('users');
     }
 };

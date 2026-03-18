@@ -18,9 +18,14 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // POINT NOT NULL → peut avoir un index spatial (MySQL 5.7 : SRID non supporté dans ALTER TABLE)
-        DB::statement('ALTER TABLE fournisseurs_agrees ADD COLUMN position POINT NOT NULL AFTER nom_boutique');
-        DB::statement('ALTER TABLE fournisseurs_agrees ADD SPATIAL INDEX idx_fournisseur_position (position)');
+        if (config('database.default') !== 'sqlite') {
+            DB::statement('ALTER TABLE fournisseurs_agrees ADD COLUMN position POINT NOT NULL AFTER nom_boutique');
+            DB::statement('ALTER TABLE fournisseurs_agrees ADD SPATIAL INDEX idx_fournisseur_position (position)');
+        } else {
+            Schema::table('fournisseurs_agrees', function (Blueprint $table) {
+                $table->string('position')->nullable();
+            });
+        }
     }
 
     public function down(): void

@@ -181,14 +181,18 @@ class ScoreScreen extends GetView<ScoreController> {
                         ? 'Déblocage en moins de 2h'
                         : 'Score > 70 requis (actuel : ${controller.score.value})',
                   ),
-                  trailing: Icon(
-                    controller.hasAccesMicrocredit.value
-                        ? Icons.check_circle
-                        : Icons.lock,
-                    color: controller.hasAccesMicrocredit.value
-                        ? AppColors.success
-                        : AppColors.textMuted,
-                  ),
+                  trailing: controller.hasAccesMicrocredit.value
+                      ? ElevatedButton(
+                          onPressed: () => Get.to(() => const MicroCreditScreen(),
+                              binding: BindingsBuilder.put(() => MicroCreditController())),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.success,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                          ),
+                          child: const Text('Demander'),
+                        )
+                      : const Icon(Icons.lock, color: AppColors.textMuted),
                 ),
               ),
             ],

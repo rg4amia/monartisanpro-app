@@ -20,6 +20,7 @@ import '../../modules/jcode/views/scanner_screen.dart';
 import '../../modules/jcode/views/transaction_confirm_screen.dart';
 import '../../modules/litige/bindings/litige_binding.dart';
 import '../../modules/litige/views/litige_screen.dart';
+import '../../modules/litige/views/litige_detail_screen.dart';
 import '../../modules/main_tab/bindings/main_tab_binding.dart';
 import '../../modules/main_tab/views/main_tab_screen.dart';
 import '../../modules/missions/bindings/missions_binding.dart';
@@ -42,6 +43,7 @@ import '../../modules/missions/views/location_picker_screen.dart';
 import '../../modules/missions/views/artisan_selection_screen.dart';
 import '../../modules/missions/views/devis_creation_screen.dart';
 import '../../modules/missions/views/devis_review_screen.dart';
+import '../../modules/missions/views/referent_validation_screen.dart';
 import 'app_routes.dart';
 
 class AppPages {
@@ -184,6 +186,11 @@ class AppPages {
       page: () => const LitigeScreen(),
       binding: LitigeBinding(),
     ),
+    GetPage(
+      name: Routes.litigeDetail,
+      page: () => const LitigeDetailScreen(),
+      binding: LitigeBinding(),
+    ),
 
     // Carte artisans
     GetPage(
@@ -221,6 +228,11 @@ class AppPages {
       name: Routes.devisReview,
       page: () => const DevisReviewScreen(),
       binding: MissionsBinding(),
+    ),
+    GetPage(
+      name: Routes.referentValidation,
+      page: () => const ReferentValidationScreen(),
+      binding: BindingsBuilder.put(() => ReferentValidationController()),
     ),
   ];
 }

@@ -7,6 +7,7 @@ use App\Http\Resources\ArtisanResource;
 use App\Models\User;
 use App\Services\GeoService;
 use App\Services\ScoreService;
+use App\Services\PdfService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -15,6 +16,7 @@ class ArtisanController extends Controller
     public function __construct(
         private GeoService $geoService,
         private ScoreService $scoreService,
+        private PdfService $pdfService,
     ) {}
 
     /**
@@ -114,5 +116,19 @@ class ArtisanController extends Controller
             'success' => true,
             'data'    => $scoreDetail,
         ]);
+    }
+
+    /**
+     * Télécharger le rapport de solvabilité PDF.
+     */
+    public function downloadReport(User $user)
+    {
+        if ($user->role !== 'artisan') {
+            abort(404);
+        }
+
+        $path = $this->pdfService->generateSolvabilityReport($user);
+
+        return response()->download($path);
     }
 }

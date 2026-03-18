@@ -5,26 +5,23 @@ namespace App\Services;
 use App\Enums\WalletOperation;
 use App\Enums\WalletType;
 use App\Models\Jalon;
-use App\Models\JCode;
 use App\Models\Mission;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\WalletTransaction;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class WalletService
 {
+    public function __construct(
+        private WaveService $waveService,
+        private OrangeMoneyService $orangeMoneyService
+    ) {}
+
     /**
-     * Créditer un wallet utilisateur
-     *
-     * @param User $user
-     * @param WalletType $walletType
-     * @param int $montant Montant en FCFA
-     * @param string|null $description
-     * @param array $metadata
-     * @return WalletTransaction
-     * @throws \Exception
+     * CrÃ©diter un wallet utilisateur
      */
     public function credit(
         User $user,
@@ -34,35 +31,34 @@ class WalletService
         array $metadata = []
     ): WalletTransaction {
         if ($montant <= 0) {
-            throw new \InvalidArgumentException('Le montant doit être supérieur à 0');
+            throw new \InvalidArgumentException('Le montant doit Ãªtre supÃ©rieur Ã  0');
         }
 
         return DB::transaction(function () use ($user, $walletType, $montant, $description, $metadata) {
-            // Lock user row pour éviter les race conditions
+            // Lock user row pour Ã©viter les race conditions
             $user = User::lockForUpdate()->findOrFail($user->id);
 
             $columnName = $walletType->columnName();
-            $soldeAvant = $user->{$columnName};
+            $soldeAvant = $user->{$columnName} ?? 0;
             $soldeApres = $soldeAvant + $montant;
 
-            // Mise à jour du wallet
-            $user->update([
-                $columnName => $soldeApres
-            ]);
+            // Mise Ã  jour de l'utilisateur
+            $user->update([$columnName => $soldeApres]);
 
-            // Création de la transaction wallet
+            // CrÃ©ation de la transaction de wallet
             $walletTransaction = WalletTransaction::create([
                 'user_id' => $user->id,
-                'wallet_type' => $walletType,
+                'wallet_type' => $walletType->value,
                 'operation' => WalletOperation::CREDIT,
                 'montant' => $montant,
+                'reference' => 'WTX-' . strtoupper(Str::random(12)),
                 'solde_avant' => $soldeAvant,
                 'solde_apres' => $soldeApres,
-                'description' => $description ?? "Crédit wallet {$walletType->label()}",
+                'description' => $description ?? "CrÃ©dit wallet {$walletType->label()}",
                 'metadata' => $metadata,
             ]);
 
-            Log::info('Wallet crédité', [
+            Log::info('Wallet crÃ©ditÃ©', [
                 'user_id' => $user->id,
                 'wallet_type' => $walletType->value,
                 'montant' => $montant,
@@ -74,15 +70,7 @@ class WalletService
     }
 
     /**
-     * Débiter un wallet utilisateur
-     *
-     * @param User $user
-     * @param WalletType $walletType
-     * @param int $montant Montant en FCFA
-     * @param string|null $description
-     * @param array $metadata
-     * @return WalletTransaction
-     * @throws \Exception
+     * DÃ©biter un wallet utilisateur
      */
     public function debit(
         User $user,
@@ -92,41 +80,39 @@ class WalletService
         array $metadata = []
     ): WalletTransaction {
         if ($montant <= 0) {
-            throw new \InvalidArgumentException('Le montant doit être supérieur à 0');
+            throw new \InvalidArgumentException('Le montant doit Ãªtre supÃ©rieur Ã  0');
         }
 
         return DB::transaction(function () use ($user, $walletType, $montant, $description, $metadata) {
-            // Lock user row pour éviter les race conditions
+            // Lock user row pour Ã©viter les race conditions
             $user = User::lockForUpdate()->findOrFail($user->id);
 
             $columnName = $walletType->columnName();
-            $soldeAvant = $user->{$columnName};
+            $soldeAvant = $user->{$columnName} ?? 0;
 
-            // Vérification du solde
             if ($soldeAvant < $montant) {
-                throw new \Exception("Solde insuffisant dans le {$walletType->label()}. Solde: {$soldeAvant} FCFA, Requis: {$montant} FCFA");
+                throw new \Exception("Solde insuffisant dans le wallet {$walletType->label()}");
             }
 
             $soldeApres = $soldeAvant - $montant;
 
-            // Mise à jour du wallet
-            $user->update([
-                $columnName => $soldeApres
-            ]);
+            // Mise Ã  jour de l'utilisateur
+            $user->update([$columnName => $soldeApres]);
 
-            // Création de la transaction wallet
+            // CrÃ©ation de la transaction de wallet
             $walletTransaction = WalletTransaction::create([
                 'user_id' => $user->id,
-                'wallet_type' => $walletType,
+                'wallet_type' => $walletType->value,
                 'operation' => WalletOperation::DEBIT,
                 'montant' => $montant,
+                'reference' => 'WTX-' . strtoupper(Str::random(12)),
                 'solde_avant' => $soldeAvant,
                 'solde_apres' => $soldeApres,
-                'description' => $description ?? "Débit wallet {$walletType->label()}",
+                'description' => $description ?? "DÃ©bit wallet {$walletType->label()}",
                 'metadata' => $metadata,
             ]);
 
-            Log::info('Wallet débité', [
+            Log::info('Wallet dÃ©bitÃ©', [
                 'user_id' => $user->id,
                 'wallet_type' => $walletType->value,
                 'montant' => $montant,
@@ -138,16 +124,7 @@ class WalletService
     }
 
     /**
-     * Transférer des fonds d'un wallet à un autre (même utilisateur ou différent)
-     *
-     * @param User $sourceUser
-     * @param WalletType $sourceWalletType
-     * @param User $destUser
-     * @param WalletType $destWalletType
-     * @param int $montant
-     * @param string|null $description
-     * @param array $metadata
-     * @return array ['debit' => WalletTransaction, 'credit' => WalletTransaction]
+     * TransfÃ©rer des fonds d'un wallet Ã  un autre
      */
     public function transfer(
         User $sourceUser,
@@ -167,7 +144,7 @@ class WalletService
             $description,
             $metadata
         ) {
-            // Débit du wallet source
+            // DÃ©bit du wallet source
             $debitTx = $this->debit(
                 $sourceUser,
                 $sourceWalletType,
@@ -176,7 +153,7 @@ class WalletService
                 array_merge($metadata, ['transfer_to' => $destUser->id])
             );
 
-            // Crédit du wallet destination
+            // CrÃ©dit du wallet destination
             $creditTx = $this->credit(
                 $destUser,
                 $destWalletType,
@@ -193,16 +170,7 @@ class WalletService
     }
 
     /**
-     * Fragmente le séquestre lors de l'acceptation du devis.
-     * RÈGLE : ratio_materiaux fixé ici, immuable ensuite.
-     *
-     * @param Mission $mission
-     * @param User $client
-     * @param User $artisan
-     * @param int $montantTotal
-     * @param float $ratioMat
-     * @param Transaction $paiementTransaction Transaction de paiement Wave/Orange Money confirmée
-     * @return void
+     * Fragmente le sÃ©questre lors de l'acceptation du devis.
      */
     public function fragmentEscrow(
         Mission $mission,
@@ -224,7 +192,7 @@ class WalletService
             $ratioMat,
             $paiementTransaction
         ) {
-            // Mise à jour mission
+            // Mise Ã  jour mission
             $mission->update([
                 'montant_total'     => $montantTotal,
                 'montant_materiaux' => $montantMat,
@@ -233,12 +201,12 @@ class WalletService
                 'status'            => 'financee',
             ]);
 
-            // Crédit du wallet_materiaux de l'artisan
+            // CrÃ©dit du wallet_materiaux de l'artisan
             $this->credit(
                 $artisan,
                 WalletType::WALLET_MATERIAUX,
                 $montantMat,
-                "Séquestre matériaux - Mission #{$mission->id}",
+                "SÃ©questre matÃ©riaux - Mission #{$mission->id}",
                 [
                     'mission_id' => $mission->id,
                     'transaction_id' => $paiementTransaction->id,
@@ -246,12 +214,12 @@ class WalletService
                 ]
             );
 
-            // Crédit du wallet_mo de l'artisan (bloqué jusqu'à validation jalons)
+            // CrÃ©dit du wallet_mo de l'artisan
             $this->credit(
                 $artisan,
                 WalletType::WALLET_MO,
                 $montantMo,
-                "Séquestre main d'Suvre - Mission #{$mission->id}",
+                "SÃ©questre main d'Å“uvre - Mission #{$mission->id}",
                 [
                     'mission_id' => $mission->id,
                     'transaction_id' => $paiementTransaction->id,
@@ -259,7 +227,7 @@ class WalletService
                 ]
             );
 
-            Log::info('Séquestre fragmenté', [
+            Log::info('SÃ©questre fragmentÃ©', [
                 'mission_id' => $mission->id,
                 'montant_total' => $montantTotal,
                 'montant_materiaux' => $montantMat,
@@ -270,10 +238,7 @@ class WalletService
     }
 
     /**
-     * Libère le montant d'un jalon vers l'artisan (main d'Suvre).
-     *
-     * @param Jalon $jalon
-     * @return void
+     * LibÃ¨re le montant d'un jalon vers l'artisan.
      */
     public function releaseJalon(Jalon $jalon): void
     {
@@ -286,12 +251,12 @@ class WalletService
                 'paye_at' => now(),
             ]);
 
-            // Débit du wallet_mo (libération du séquestre)
+            // DÃ©bit du wallet_mo
             $this->debit(
                 $artisan,
                 WalletType::WALLET_MO,
                 $jalon->montant,
-                "Libération jalon #{$jalon->ordre} - Mission #{$mission->id}",
+                "LibÃ©ration jalon #{$jalon->ordre} - Mission #{$mission->id}",
                 [
                     'mission_id' => $mission->id,
                     'jalon_id' => $jalon->id,
@@ -300,18 +265,44 @@ class WalletService
             );
 
             // Transaction externe vers Mobile Money de l'artisan
-            Transaction::create([
+            $transaction = Transaction::create([
                 'mission_id'    => $mission->id,
                 'user_id'       => $mission->artisan_id,
                 'type'          => 'liberation_jalon',
                 'montant'       => $jalon->montant,
                 'wallet_source' => 'escrow_mission_' . $mission->id,
                 'wallet_dest'   => 'artisan_mobile_money_' . $mission->artisan_id,
-                'provider'      => 'wave', // TODO: choisir provider artisan
+                'provider'      => 'wave', // Default provider
                 'statut'        => 'en_attente',
             ]);
 
-            Log::info('Jalon libéré', [
+            // Virement rÃ©el vers Mobile Money
+            $provider = $artisan->preferred_payment_provider ?? 'wave';
+            $description = "Paiement jalon #{$jalon->ordre} mission #{$mission->id}";
+
+            try {
+                if ($provider === 'wave') {
+                    $result = $this->waveService->transferToMobileMoney($artisan->phone, $jalon->montant, $description);
+                    $transaction->update([
+                        'reference_externe' => $result['id'] ?? null,
+                        'statut' => 'confirme',
+                    ]);
+                } elseif ($provider === 'orange_money') {
+                    $result = $this->orangeMoneyService->transferToMobileMoney($artisan->phone, $jalon->montant, $description);
+                    $transaction->update([
+                        'reference_externe' => $result['txnid'] ?? null,
+                        'statut' => 'confirme',
+                    ]);
+                }
+            } catch (\Exception $e) {
+                Log::error('Erreur lors du virement automatique artisan', [
+                    'jalon_id' => $jalon->id,
+                    'artisan_id' => $artisan->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            Log::info('Jalon libÃ©rÃ©', [
                 'jalon_id' => $jalon->id,
                 'mission_id' => $mission->id,
                 'montant' => $jalon->montant,
@@ -320,65 +311,82 @@ class WalletService
     }
 
     /**
-     * Paye le fournisseur lors de la validation d'un J-Code.
-     *
-     * @param JCode $jcode
-     * @return void
+     * Rembourser le client suite Ã  un litige.
      */
-    public function payFournisseur(JCode $jcode): void
+    public function refundClient(Mission $mission): void
     {
-        $mission = $jcode->mission;
+        $client = $mission->client;
         $artisan = $mission->artisan;
-        $fournisseur = $jcode->fournisseur;
 
-        DB::transaction(function () use ($jcode, $mission, $artisan, $fournisseur) {
-            $jcode->update([
-                'statut'     => 'utilise',
-                'scanned_at' => now(),
-            ]);
+        DB::transaction(function () use ($mission, $client, $artisan) {
+            // RÃ©cupÃ©rer ce qui reste dans les wallets de l'artisan pour cette mission
+            if ($artisan->wallet_materiaux > 0) {
+                $this->debit(
+                    $artisan,
+                    WalletType::WALLET_MATERIAUX,
+                    min($artisan->wallet_materiaux, $mission->montant_materiaux),
+                    "Remboursement client - Litige mission #{$mission->id}"
+                );
+            }
 
-            // Débit du wallet_materiaux de l'artisan
-            $this->debit(
-                $artisan,
-                WalletType::WALLET_MATERIAUX,
-                $jcode->montant,
-                "Paiement fournisseur via J-Code {$jcode->code}",
-                [
-                    'mission_id' => $mission->id,
-                    'jcode_id' => $jcode->id,
-                    'fournisseur_id' => $fournisseur->id,
-                    'type' => 'paiement_fournisseur'
-                ]
-            );
+            if ($artisan->wallet_mo > 0) {
+                $this->debit(
+                    $artisan,
+                    WalletType::WALLET_MO,
+                    min($artisan->wallet_mo, $mission->montant_mo),
+                    "Remboursement client - Litige mission #{$mission->id}"
+                );
+            }
 
-            // Transaction virement bancaire J+1 vers fournisseur
-            Transaction::create([
-                'mission_id'    => $mission->id,
-                'user_id'       => $jcode->fournisseur_id,
-                'type'          => 'paiement_fournisseur',
-                'montant'       => $jcode->montant,
-                'wallet_source' => 'escrow_mission_' . $mission->id,
-                'wallet_dest'   => 'fournisseur_' . $jcode->fournisseur_id,
-                'provider'      => 'virement_bancaire',
-                'statut'        => 'en_attente', // virement J+1
-                'metadata'      => ['jcode' => $jcode->code],
-            ]);
-
-            Log::info('Fournisseur payé', [
-                'jcode_id' => $jcode->id,
+            // Virement Mobile Money vers client
+            $transaction = Transaction::create([
                 'mission_id' => $mission->id,
-                'fournisseur_id' => $fournisseur->id,
-                'montant' => $jcode->montant,
+                'user_id' => $client->id,
+                'type' => 'remboursement',
+                'montant' => $mission->montant_total,
+                'wallet_source' => 'escrow_mission_' . $mission->id,
+                'wallet_dest' => 'client_mobile_money_' . $client->id,
+                'provider' => 'wave',
+                'statut' => 'en_attente',
             ]);
+
+            try {
+                $result = $this->waveService->transferToMobileMoney($client->phone, $mission->montant_total, "Remboursement mission #{$mission->id}");
+                $transaction->update([
+                    'reference_externe' => $result['id'] ?? null,
+                    'statut' => 'confirme',
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Erreur lors du remboursement automatique client', [
+                    'mission_id' => $mission->id,
+                    'client_id' => $client->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            $mission->update(['status' => 'annulee']);
         });
     }
 
     /**
+     * Payer l'artisan suite Ã  un litige (dÃ©bloquer les jalons restants).
+     */
+    public function payArtisan(Mission $mission): void
+    {
+        // LibÃ©rer tous les jalons en attente ou soumis
+        $jalonsRestants = $mission->jalons()
+            ->whereIn('statut', ['en_attente', 'soumis', 'valide'])
+            ->get();
+
+        foreach ($jalonsRestants as $jalon) {
+            $this->releaseJalon($jalon);
+        }
+
+        $mission->update(['status' => 'terminee']);
+    }
+
+    /**
      * Obtenir le solde d'un wallet
-     *
-     * @param User $user
-     * @param WalletType $walletType
-     * @return int
      */
     public function getBalance(User $user, WalletType $walletType): int
     {
@@ -388,9 +396,6 @@ class WalletService
 
     /**
      * Obtenir tous les soldes de wallets d'un utilisateur
-     *
-     * @param User $user
-     * @return array
      */
     public function getAllBalances(User $user): array
     {
@@ -399,29 +404,5 @@ class WalletService
             'wallet_mo' => $user->wallet_mo ?? 0,
             'total' => ($user->wallet_materiaux ?? 0) + ($user->wallet_mo ?? 0),
         ];
-    }
-
-    /**
-     * Obtenir l'historique des transactions d'un wallet
-     *
-     * @param User $user
-     * @param WalletType|null $walletType
-     * @param int $limit
-     * @return \Illuminate\Database\Eloquent\Collection
-     */
-    public function getTransactionHistory(
-        User $user,
-        ?WalletType $walletType = null,
-        int $limit = 50
-    ) {
-        $query = WalletTransaction::where('user_id', $user->id);
-
-        if ($walletType) {
-            $query->where('wallet_type', $walletType);
-        }
-
-        return $query->orderBy('created_at', 'desc')
-            ->limit($limit)
-            ->get();
     }
 }

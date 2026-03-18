@@ -10,6 +10,7 @@ use App\Http\Resources\JCodeResource;
 use App\Models\JCode;
 use App\Models\Mission;
 use App\Services\JCodeService;
+use App\Services\NotificationService;
 use App\Services\PhotoService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -19,7 +20,8 @@ class JCodeController extends Controller
 {
     public function __construct(
         private JCodeService $jCodeService,
-        private PhotoService $photoService
+        private PhotoService $photoService,
+        private NotificationService $notificationService
     ) {}
 
     /**
@@ -157,9 +159,21 @@ class JCodeController extends Controller
                 'photo_taken_at' => now(),
             ]);
 
-            // Notifier le client (TODO: implémenter notification)
+            // Notifier le client
+            $client = $jcode->mission->client;
+            $this->notificationService->send(
+                $client,
+                'materials',
+                'Vos matériaux sont arrivés !',
+                "L'artisan {$jcode->artisan->name} a reçu les matériaux pour votre mission #{$jcode->mission_id}. Photo géolocalisée disponible.",
+                [
+                    'mission_id' => $jcode->mission_id,
+                    'jcode_id' => $jcode->id,
+                    'photo_url' => $uploaded['url'],
+                ]
+            );
 
-            Log::info('Photo matériaux J-Code uploadée', [
+            Log::info('Photo matériaux J-Code uploadée et client notifié', [
                 'jcode_id' => $jcode->id,
                 'mission_id' => $jcode->mission_id,
             ]);
