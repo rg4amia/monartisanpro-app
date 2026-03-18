@@ -51,4 +51,6 @@ abstract class Routes {
   // Modals
   static const rating = '/rating';
   static const litige = '/litige';
+  static const litigeDetail = '/litige-detail';
+  static const referentValidation = '/referent-validation';
 }

@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../app/routes/app_routes.dart';
+import '../../../core/storage/storage_service.dart';
 
 // ─── Design Tokens ────────────────────────────────────────────────────────────
 abstract class _C {
@@ -44,6 +45,25 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
   @override
   void initState() {
     super.initState();
+
+    // RÈGLE CRITIQUE : Vérifier KYC avant création mission
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final kycStatus = StorageService.getKycStatus();
+      if (kycStatus != 'actif') {
+        Get.snackbar(
+          'KYC requis',
+          'Veuillez compléter votre vérification d\'identité avant de créer une mission',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 5),
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        // On redirige vers le profil ou l'onboarding KYC si nécessaire
+        // Pour l'instant, on retourne en arrière pour bloquer l'accès
+        Get.back();
+      }
+    });
+
     final args = Get.arguments as Map<String, dynamic>?;
     if (args != null && args['category'] != null) {
       _selectedCategory.value = args['category'] as String;

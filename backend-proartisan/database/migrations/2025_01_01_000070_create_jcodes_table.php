@@ -25,12 +25,17 @@ return new class extends Migration
         });
 
         // position_scan nullable → pas d'index spatial (MySQL 5.7 : SRID non supporté dans ALTER TABLE)
-        DB::statement('ALTER TABLE jcodes ADD COLUMN position_scan POINT NULL AFTER statut');
+        if (config('database.default') !== 'sqlite') {
+            DB::statement('ALTER TABLE jcodes ADD COLUMN position_scan POINT NULL AFTER statut');
+        } else {
+            Schema::table('jcodes', function (Blueprint $table) {
+                $table->string('position_scan')->nullable();
+            });
+        }
     }
 
     public function down(): void
     {
-        DB::statement('ALTER TABLE jcodes DROP COLUMN IF EXISTS position_scan');
         Schema::dropIfExists('jcodes');
     }
 };

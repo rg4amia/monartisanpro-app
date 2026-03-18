@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Log;
 
 class MissionService
 {
+    public function __construct(private GeminiService $geminiService) {}
+
     /**
      * Crée une mission et appelle Gemini pour l'estimation.
      */
@@ -20,8 +22,9 @@ class MissionService
             'status'      => 'en_attente',
         ]);
 
-        // Enrichissement Gemini (asynchrone dans un vrai système)
-        $estimate = $this->estimate($data);
+        // Enrichissement Gemini
+        $estimate = $this->geminiService->analyzeMission($data['description']);
+
         $mission->update([
             'gemini_category'       => $estimate['category'],
             'gemini_urgency'        => $estimate['urgency'],
@@ -33,38 +36,10 @@ class MissionService
     }
 
     /**
-     * Analyse le besoin du client via Gemini API (stub pour dev).
+     * Analyse le besoin du client via Gemini API.
      */
     public function estimate(array $data): array
     {
-        Log::info('[Gemini STUB] Estimation demandée pour : ' . ($data['description'] ?? ''));
-
-        // En production : appel Gemini API avec clé GEMINI_API_KEY
-        // Pour dev : retourne une estimation par défaut selon mots-clés
-        $description = strtolower($data['description'] ?? '');
-
-        $category = 'Travaux généraux';
-        if (str_contains($description, 'électri') || str_contains($description, 'electri')) {
-            $category = 'Électricité';
-        } elseif (str_contains($description, 'plomb') || str_contains($description, 'eau') || str_contains($description, 'tuyau')) {
-            $category = 'Plomberie';
-        } elseif (str_contains($description, 'peinture') || str_contains($description, 'mur')) {
-            $category = 'Peinture';
-        } elseif (str_contains($description, 'cliamtis') || str_contains($description, 'clim')) {
-            $category = 'Climatisation';
-        } elseif (str_contains($description, 'maçon') || str_contains($description, 'béton') || str_contains($description, 'beton')) {
-            $category = 'Maçonnerie';
-        }
-
-        return [
-            'category'  => $category,
-            'urgency'   => 'moyen',
-            'price_min' => 50000,
-            'price_max' => 250000,
-            'breakdown' => [
-                'materials' => ['min' => 30000, 'max' => 150000],
-                'labor'     => ['min' => 20000, 'max' => 100000],
-            ],
-        ];
+        return $this->geminiService->analyzeMission($data['description'] ?? '');
     }
 }

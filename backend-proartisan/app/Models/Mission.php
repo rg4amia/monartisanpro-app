@@ -13,7 +13,8 @@ class Mission extends Model
         'client_id', 'artisan_id', 'description', 'photos_json',
         'gemini_category', 'gemini_urgency', 'gemini_estimation_min', 'gemini_estimation_max',
         'status', 'montant_total', 'montant_materiaux', 'montant_mo',
-        'ratio_materiaux', 'referent_required',
+        'ratio_materiaux', 'referent_required', 'funds_frozen',
+        'referent_validated_at', 'referent_validated_by'
     ];
 
     protected function casts(): array
@@ -25,8 +26,10 @@ class Mission extends Model
             'montant_mo'          => 'integer',
             'ratio_materiaux'     => 'decimal:4',
             'referent_required'   => 'boolean',
+            'funds_frozen'        => 'boolean',
             'gemini_estimation_min' => 'integer',
             'gemini_estimation_max' => 'integer',
+            'referent_validated_at' => 'datetime',
         ];
     }
 
@@ -38,6 +41,11 @@ class Mission extends Model
     public function artisan()
     {
         return $this->belongsTo(User::class, 'artisan_id');
+    }
+
+    public function referent()
+    {
+        return $this->belongsTo(User::class, 'referent_validated_by');
     }
 
     public function devis()

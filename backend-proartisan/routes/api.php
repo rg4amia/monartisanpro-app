@@ -65,6 +65,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/artisans',              [ArtisanController::class, 'nearby']);
         Route::get('/artisans/{user}',       [ArtisanController::class, 'show']);
         Route::get('/artisans/{user}/score', [ArtisanController::class, 'score']);
+        Route::get('/artisans/{user}/report', [ArtisanController::class, 'downloadReport']);
 
         // ── Secteurs & Métiers ────────────────────────────────────────────────
         Route::get('/sectors',                 [SectorController::class, 'index']);
@@ -76,6 +77,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/missions/{mission}',            [MissionController::class, 'show']);
         Route::post('/missions/estimate',            [MissionController::class, 'estimate']);
         Route::put('/missions/{mission}/status',     [MissionController::class, 'updateStatus']);
+        Route::post('/missions/{mission}/referent-validate', [\App\Http\Controllers\Api\V1\ReferentController::class, 'validateMission']);
 
         // ── Devis ────────────────────────────────────────────────────────────
         Route::get('/missions/{mission}/devis',      [DevisController::class, 'index']);
@@ -111,8 +113,9 @@ Route::prefix('v1')->group(function () {
         Route::get('/wallets/balance', [TransactionController::class, 'balance']);
 
         // ── Litiges ───────────────────────────────────────────────────────────
-        Route::post('/litiges',          [LitigeController::class, 'store']);
-        Route::get('/litiges/{litige}',  [LitigeController::class, 'show']);
+        Route::post('/litiges',              [LitigeController::class, 'store']);
+        Route::get('/litiges/{litige}',      [LitigeController::class, 'show']);
+        Route::put('/litiges/{litige}/arbitrage', [LitigeController::class, 'arbitrage']);
 
         // ── Évaluations ───────────────────────────────────────────────────────
         Route::post('/evaluations', [EvaluationController::class, 'store']);
