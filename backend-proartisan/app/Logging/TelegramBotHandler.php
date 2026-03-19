@@ -55,6 +55,12 @@ class TelegramBotHandler extends AbstractProcessingHandler
             $lines[] = '<code>'.e($this->truncate($exceptionMessage, 1200)).'</code>';
         }
 
+        $contextData = array_filter($context, fn($key) => $key !== 'exception', ARRAY_FILTER_USE_KEY);
+        if (! empty($contextData)) {
+            $lines[] = '<b>Contexte:</b>';
+            $lines[] = '<code>'.e($this->truncate(json_encode($contextData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT), 1200)).'</code>';
+        }
+
         $lines[] = '<b>Heure UTC:</b> '.e(now('UTC')->toDateTimeString());
 
         try {

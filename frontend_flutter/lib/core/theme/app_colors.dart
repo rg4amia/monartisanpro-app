@@ -16,9 +16,11 @@ class AppColors {
   static const Color danger = Color(0xFFE74C3C);
   static const Color warning = Color(0xFFF39C12);
   static const Color info = Color(0xFF3498DB);
+  static const Color infoLight = Color(0xFFD6EAF8);
 
   // Backgrounds
   static const Color background = Color(0xFFF5F6FA);
+  static const Color surface = Color(0xFFFFFFFF);
   static const Color card = Color(0xFFFFFFFF);
   static const Color border = Color(0xFFE8EAF0);
 

@@ -62,7 +62,7 @@ return [
         'telegram_bot' => [
             'driver' => 'monolog',
             'handler' => TelegramBotHandler::class,
-            'level' => env('LOG_TELEGRAM_LEVEL', 'error'),
+            'level' => env('LOG_TELEGRAM_LEVEL', 'debug'),
             'with' => [
                 'botToken' => env('TELEGRAM_BOT_TOKEN'),
                 'chatId' => env('TELEGRAM_CHAT_ID'),
