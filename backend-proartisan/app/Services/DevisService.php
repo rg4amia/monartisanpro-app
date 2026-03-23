@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Devis;
 use App\Models\Jalon;
 use App\Models\Mission;
+use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
@@ -48,9 +49,38 @@ class DevisService
      * Accepte un devis.
      * RÈGLE : ratio_materiaux fixé ici, immuable. Crée les jalons en base.
      */
-    public function accept(Devis $devis, string $provider = 'wave'): void
+    public function accept(Devis $devis, Transaction $paymentTransaction): void
     {
-        DB::transaction(function () use ($devis, $provider) {
+        DB::transaction(function () use ($devis, $paymentTransaction) {
+            $devis = Devis::query()
+                ->with(['mission.client', 'artisan'])
+                ->lockForUpdate()
+                ->findOrFail($devis->id);
+
+            $paymentTransaction = Transaction::query()
+                ->lockForUpdate()
+                ->findOrFail($paymentTransaction->id);
+
+            if ($paymentTransaction->mission_id !== $devis->mission_id) {
+                throw new \InvalidArgumentException('La transaction ne correspond pas à ce devis.');
+            }
+
+            if (($paymentTransaction->metadata['devis_id'] ?? null) !== $devis->id) {
+                throw new \InvalidArgumentException('La transaction n\'a pas été initiée pour ce devis.');
+            }
+
+            if (! $paymentTransaction->statut->isSuccessful()) {
+                throw new \InvalidArgumentException('Le paiement doit être confirmé avant d\'accepter le devis.');
+            }
+
+            if ($devis->statut === 'accepte' && $devis->mission->status === 'financee') {
+                return;
+            }
+
+            if ($devis->statut !== 'soumis') {
+                throw new \InvalidArgumentException('Ce devis ne peut plus être accepté.');
+            }
+
             // 1. Calcul du ratio matériaux
             $lignes         = collect($devis->lignes_json);
             $montantTotal   = $lignes->sum('montant');
@@ -58,27 +88,35 @@ class DevisService
             $ratioMat       = $montantTotal > 0 ? round($montantMat / $montantTotal, 4) : 0.6500;
 
             // 2. Mise à jour du devis
-            $devis->update(['statut' => 'accepte']);
+            $devis->update([
+                'statut' => 'accepte',
+                'ratio_materiaux' => $ratioMat,
+            ]);
 
             // 3. Association artisan ↔ mission
             $devis->mission->update(['artisan_id' => $devis->artisan_id]);
 
             // 4. Création des jalons depuis jalons_json
-            foreach ($devis->jalons_json as $jalonData) {
-                Jalon::create([
-                    'mission_id'  => $devis->mission_id,
-                    'ordre'       => $jalonData['ordre'],
-                    'description' => $jalonData['description'],
-                    'montant'     => $jalonData['montant'],
-                    'statut'      => 'en_attente',
-                ]);
+            if (! $devis->mission->jalons()->exists()) {
+                foreach ($devis->jalons_json as $jalonData) {
+                    Jalon::create([
+                        'mission_id'  => $devis->mission_id,
+                        'ordre'       => $jalonData['ordre'],
+                        'description' => $jalonData['description'],
+                        'montant'     => $jalonData['montant'],
+                        'statut'      => 'en_attente',
+                    ]);
+                }
             }
 
             // 5. Fragmentation du séquestre
             $this->walletService->fragmentEscrow(
                 $devis->mission,
+                $devis->mission->client,
+                $devis->artisan,
                 $montantTotal,
-                $ratioMat
+                $ratioMat,
+                $paymentTransaction
             );
 
             // 6. Notifier l'artisan

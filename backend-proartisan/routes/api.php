@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\JCodeController;
 use App\Http\Controllers\Api\V1\KycController;
 use App\Http\Controllers\Api\V1\LitigeController;
 use App\Http\Controllers\Api\V1\MissionController;
+use App\Http\Controllers\Api\V1\MicroCreditController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\SectorController;
@@ -115,6 +116,12 @@ Route::prefix('v1')->group(function () {
             Route::post('/initiate',               [PaymentController::class, 'initiatePayment']);
             Route::get('/{transaction}/status',    [PaymentController::class, 'checkStatus']);
             Route::get('/history',                 [PaymentController::class, 'history']);
+        });
+
+        // ── Micro-crédit ───────────────────────────────────────────────────────
+        Route::prefix('micro-credit')->group(function () {
+            Route::get('/eligibility', [MicroCreditController::class, 'eligibility']);
+            Route::post('/apply', [MicroCreditController::class, 'apply']);
         });
 
         // ── Wallet & Transactions ─────────────────────────────────────────────

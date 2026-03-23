@@ -42,11 +42,12 @@ class DevisRepository {
     return DevisModel.fromJson(res.data['data'] as Map<String, dynamic>);
   }
 
-  Future<void> acceptDevis(int id, {String provider = 'wave'}) async {
-    await _client.post(
+  Future<DevisModel> acceptDevis(int id, {required int transactionId}) async {
+    final res = await _client.post(
       ApiEndpoints.acceptDevis(id),
-      data: {'provider': provider},
+      data: {'transaction_id': transactionId},
     );
+    return DevisModel.fromJson(res.data['data'] as Map<String, dynamic>);
   }
 
   Future<void> refuseDevis(int id) async {

@@ -66,7 +66,12 @@ class DevisReviewScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _StatusCard(devis: devis),
+                      _StatusCard(
+                        devis: devis,
+                        hasPendingPayment: controller.hasPendingPaymentFor(
+                          devis.id,
+                        ),
+                      ),
                       const SizedBox(height: 24),
                       _ArtisanInfoCard(devis: devis),
                       const SizedBox(height: 24),
@@ -86,7 +91,16 @@ class DevisReviewScreen extends StatelessWidget {
       ),
       bottomNavigationBar: Obx(() {
         final devis = controller.currentDevis.value;
-        if (devis == null || devis.statut != 'soumis') {
+        if (devis == null) {
+          return const SizedBox.shrink();
+        }
+        if (controller.hasPendingPaymentFor(devis.id)) {
+          return _PendingPaymentButtons(
+            controller: controller,
+            devisId: devis.id,
+          );
+        }
+        if (devis.statut != 'soumis') {
           return const SizedBox.shrink();
         }
         return _ActionButtons(
@@ -140,7 +154,12 @@ class _AppBar extends StatelessWidget {
 // ─── Status Card ──────────────────────────────────────────────────────────────
 class _StatusCard extends StatelessWidget {
   final DevisModel devis;
-  const _StatusCard({required this.devis});
+  final bool hasPendingPayment;
+
+  const _StatusCard({
+    required this.devis,
+    required this.hasPendingPayment,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -186,6 +205,18 @@ class _StatusCard extends StatelessWidget {
   }
 
   Map<String, dynamic> _getStatusConfig(String statut) {
+    if (hasPendingPayment) {
+      return {
+        'icon': Icons.payment,
+        'title': 'Paiement de l\'acompte en attente',
+        'subtitle':
+            'Validez le paiement sur votre Mobile Money puis revenez vérifier le statut.',
+        'color': _C.primary,
+        'bg': _C.primaryLight,
+        'borderColor': _C.primary.withValues(alpha: 0.2),
+      };
+    }
+
     switch (statut) {
       case 'soumis':
         return {
@@ -199,8 +230,8 @@ class _StatusCard extends StatelessWidget {
       case 'accepte':
         return {
           'icon': Icons.check_circle,
-          'title': 'Devis accepté',
-          'subtitle': 'Procédez au paiement pour lancer la mission',
+          'title': 'Mission financée',
+          'subtitle': 'Le devis a été accepté et le séquestre est en place',
           'color': _C.success,
           'bg': _C.successLight,
           'borderColor': _C.success.withValues(alpha: 0.2),
@@ -760,6 +791,120 @@ class _ActionButtons extends StatelessWidget {
                     ),
                   ),
                 ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PendingPaymentButtons extends StatelessWidget {
+  final DevisController controller;
+  final int devisId;
+
+  const _PendingPaymentButtons({
+    required this.controller,
+    required this.devisId,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: _C.surface,
+        boxShadow: [
+          BoxShadow(
+            color: _C.ink.withValues(alpha: 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Obx(
+          () => Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: controller.isSubmitting.value ||
+                          controller.isCheckingPayment.value ||
+                          !controller.canReopenPendingPayment
+                      ? null
+                      : () => controller.reopenPendingPayment(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _C.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.open_in_new, size: 20),
+                      SizedBox(width: 8),
+                      Text(
+                        'Ouvrir le paiement',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: controller.isSubmitting.value ||
+                          controller.isCheckingPayment.value
+                      ? null
+                      : () async {
+                          final success = await controller.verifyPendingPayment(
+                            devisId,
+                            maxAttempts: 1,
+                          );
+                          if (success) {
+                            Get.back(result: true);
+                          }
+                        },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: _C.primary,
+                    side: const BorderSide(color: _C.primary),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: controller.isCheckingPayment.value
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.refresh, size: 20),
+                            SizedBox(width: 8),
+                            Text(
+                              'Vérifier le paiement',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                ),
               ),
             ],
           ),

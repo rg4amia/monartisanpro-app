@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Mission;
+use App\Services\GeoService;
 use App\Services\WalletService;
 use App\Services\NotificationService;
 use Illuminate\Http\JsonResponse;
@@ -13,6 +14,7 @@ use Illuminate\Support\Facades\Log;
 class ReferentController extends Controller
 {
     public function __construct(
+        private GeoService $geoService,
         private WalletService $walletService,
         private NotificationService $notificationService
     ) {}
@@ -47,7 +49,25 @@ class ReferentController extends Controller
             'notes'     => ['nullable', 'string', 'max:1000'],
         ]);
 
-        // TODO: Vérifier que le référent est dans la zone géographique de la mission (ST_Distance_Sphere)
+        $gpsCheck = $this->geoService->validateReferentMissionGps(
+            $mission,
+            (float) $data['latitude'],
+            (float) $data['longitude']
+        );
+
+        if (! $gpsCheck['valid']) {
+            return response()->json([
+                'success' => false,
+                'message' => $gpsCheck['reason'] ??
+                    "Position GPS invalide. Distance {$gpsCheck['distance']} m (maximum {$gpsCheck['max']} m).",
+                'errors' => [
+                    'gps' => [
+                        $gpsCheck['reason'] ??
+                            "Le référent doit être à moins de {$gpsCheck['max']} m du chantier.",
+                    ],
+                ],
+            ], 422);
+        }
 
         // Libérer tous les jalons validés en attente de paiement
         $jalonsEnAttente = $mission->jalons()
@@ -79,6 +99,7 @@ class ReferentController extends Controller
             'data' => [
                 'mission_id' => $mission->id,
                 'jalons_liberes' => $jalonsEnAttente->count(),
+                'distance_metres' => $gpsCheck['distance'],
             ],
         ]);
     }

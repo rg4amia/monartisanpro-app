@@ -25,14 +25,42 @@ class ScoreController extends GetxController {
     try {
       final res = await _repo.getScore(artisanId);
       final data = (res['data'] as Map<String, dynamic>?) ?? res;
-      score.value = (data['scoreNzassa'] as num?)?.toInt() ?? 0;
-      fiabilite.value = (data['fiabilite'] as num?)?.toDouble() ?? 0;
-      integrite.value = (data['integrite'] as num?)?.toDouble() ?? 0;
-      qualite.value = (data['qualite'] as num?)?.toDouble() ?? 0;
-      reactivite.value = (data['reactivite'] as num?)?.toDouble() ?? 0;
-      hasAccesMicrocredit.value = score.value > 70;
+      final breakdown = data['breakdown'] is Map
+          ? Map<String, dynamic>.from(data['breakdown'] as Map)
+          : const <String, dynamic>{};
+
+      score.value = _asInt(data['score_nzassa'] ?? data['scoreNzassa']);
+      fiabilite.value = _normalizeCriterion(breakdown['fiabilite']);
+      integrite.value = _normalizeCriterion(breakdown['integrite']);
+      qualite.value = _normalizeCriterion(breakdown['qualite']);
+      reactivite.value = _normalizeCriterion(breakdown['reactivite']);
+      hasAccesMicrocredit.value =
+          (data['micro_credit_eligible'] as bool?) ?? score.value >= 70;
     } finally {
       isLoading.value = false;
     }
+  }
+
+  int _asInt(dynamic value) {
+    if (value == null) return 0;
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    return int.tryParse(value.toString()) ?? 0;
+  }
+
+  double _normalizeCriterion(dynamic value) {
+    double parsed;
+
+    if (value is num) {
+      parsed = value.toDouble();
+    } else {
+      parsed = double.tryParse(value?.toString() ?? '') ?? 0;
+    }
+
+    if (parsed <= 5) {
+      return (parsed / 5 * 100).clamp(0, 100);
+    }
+
+    return parsed.clamp(0, 100);
   }
 }

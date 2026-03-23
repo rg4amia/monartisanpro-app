@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Mission;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -138,6 +139,60 @@ class GeoService
 
         $distance = (float) $row->distance_metres;
         $maxDist = config('prosartisan.gps.jcode_max_distance', 100);
+
+        return [
+            'valid' => $distance <= $maxDist,
+            'distance' => round($distance, 1),
+            'max' => $maxDist,
+        ];
+    }
+
+    /**
+     * Vérifie qu'un référent est physiquement proche de la mission.
+     * RÈGLE : distance > 500 m → validation refusée.
+     */
+    public function validateReferentMissionGps(
+        Mission $mission,
+        float $referentLat,
+        float $referentLng
+    ): array {
+        if ($mission->client_latitude === null || $mission->client_longitude === null) {
+            return [
+                'valid' => false,
+                'distance' => null,
+                'max' => 500,
+                'reason' => 'La position de la mission est introuvable.',
+            ];
+        }
+
+        $maxDist = 500;
+
+        if (config('database.default') === 'sqlite') {
+            $dist = sqrt(
+                pow($referentLat - (float) $mission->client_latitude, 2) +
+                pow($referentLng - (float) $mission->client_longitude, 2)
+            ) * 111000;
+
+            return [
+                'valid' => $dist <= $maxDist,
+                'distance' => round($dist, 1),
+                'max' => $maxDist,
+            ];
+        }
+
+        $row = DB::selectOne("
+            SELECT ST_Distance_Sphere(
+                ST_SRID(POINT(?, ?), 4326),
+                ST_SRID(POINT(?, ?), 4326)
+            ) AS distance_metres
+        ", [
+            $referentLng,
+            $referentLat,
+            (float) $mission->client_longitude,
+            (float) $mission->client_latitude,
+        ]);
+
+        $distance = (float) ($row->distance_metres ?? 0);
 
         return [
             'valid' => $distance <= $maxDist,

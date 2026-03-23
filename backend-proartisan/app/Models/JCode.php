@@ -51,6 +51,23 @@ class JCode extends Model
         return $this->statut === 'actif' && $this->expires_at->isFuture();
     }
 
+    public function resolveRouteBinding($value, $field = null)
+    {
+        if ($field !== null) {
+            return parent::resolveRouteBinding($value, $field);
+        }
+
+        if (is_numeric($value)) {
+            return $this->newQuery()->whereKey((int) $value)->firstOrFail();
+        }
+
+        $normalized = strtoupper(trim((string) $value));
+
+        return $this->newQuery()
+            ->whereRaw('UPPER(code) = ?', [$normalized])
+            ->firstOrFail();
+    }
+
     public function setPositionScan(float $lat, float $lng): void
     {
         if (config('database.default') === 'sqlite') {

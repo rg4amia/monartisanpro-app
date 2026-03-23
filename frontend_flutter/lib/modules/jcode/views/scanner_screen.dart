@@ -56,11 +56,12 @@ class ScannerScreen extends GetView<JcodeController> {
                       onDetect: (capture) async {
                         final barcode = capture.barcodes.firstOrNull;
                         if (barcode?.rawValue == null) return;
-                        final raw = barcode!.rawValue!;
-                        final jcodeId = int.tryParse(raw);
-                        if (jcodeId == null) return;
+                        final identifier = _normalizeJcodeIdentifier(
+                          barcode!.rawValue!,
+                        );
+                        if (identifier == null) return;
                         scannerCtrl.stop();
-                        await _doScan(jcodeId);
+                        await _doScan(identifier);
                       },
                     ),
                   ),
@@ -125,7 +126,7 @@ class ScannerScreen extends GetView<JcodeController> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 10,
                     offset: const Offset(0, 2),
                   ),
@@ -136,7 +137,7 @@ class ScannerScreen extends GetView<JcodeController> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: AppColors.success.withOpacity(0.1),
+                      color: AppColors.success.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(
@@ -172,7 +173,9 @@ class ScannerScreen extends GetView<JcodeController> {
                   Obx(() => Switch(
                         value: gpsEnabled.value,
                         onChanged: (val) => gpsEnabled.value = val,
-                        activeColor: AppColors.success,
+                        activeThumbColor: AppColors.success,
+                        activeTrackColor:
+                            AppColors.success.withValues(alpha: 0.4),
                       )),
                 ],
               ),
@@ -237,12 +240,10 @@ class ScannerScreen extends GetView<JcodeController> {
                         : () async {
                             final code = manualCodeCtrl.text.trim();
                             if (code.isEmpty) return;
-                            // Try to parse as ID or code
-                            final id = int.tryParse(code);
-                            if (id != null) {
-                              await _doScan(id);
+                            final identifier = _normalizeJcodeIdentifier(code);
+                            if (identifier != null) {
+                              await _doScan(identifier);
                             } else {
-                              // TODO: Lookup by code string
                               Get.snackbar(
                                 'Code invalide',
                                 'Veuillez entrer un code valide (ex: PA-XXXX)',
@@ -290,7 +291,7 @@ class ScannerScreen extends GetView<JcodeController> {
     );
   }
 
-  Future<void> _doScan(int jcodeId) async {
+  Future<void> _doScan(String identifier) async {
     try {
       final permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
@@ -301,7 +302,7 @@ class ScannerScreen extends GetView<JcodeController> {
           accuracy: LocationAccuracy.high,
         ),
       );
-      await controller.scanJcode(jcodeId, pos.latitude, pos.longitude);
+      await controller.scanJcode(identifier, pos.latitude, pos.longitude);
     } catch (e) {
       Get.snackbar(
         'Erreur GPS',
@@ -311,6 +312,21 @@ class ScannerScreen extends GetView<JcodeController> {
         colorText: Colors.white,
       );
     }
+  }
+
+  String? _normalizeJcodeIdentifier(String raw) {
+    final normalized = raw.trim().toUpperCase();
+    if (normalized.isEmpty) return null;
+
+    if (RegExp(r'^\d+$').hasMatch(normalized)) {
+      return normalized;
+    }
+
+    if (RegExp(r'^PA-[A-Z0-9]{4}$').hasMatch(normalized)) {
+      return normalized;
+    }
+
+    return null;
   }
 }
 

@@ -1,9 +1,16 @@
+import 'dart:async';
+
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import '../../../core/storage/storage_service.dart';
 import '../../../data/models/devis_model.dart';
 import '../../../data/repositories/devis_repository.dart';
+import '../../../data/repositories/payment_repository.dart';
 
 class DevisController extends GetxController {
   final DevisRepository _repo = DevisRepository();
+  final PaymentRepository _paymentRepo = PaymentRepository();
 
   final devis = Rx<DevisModel?>(null);
   final devoiList = <DevisModel>[].obs;
@@ -48,7 +55,8 @@ class DevisController extends GetxController {
   }
 
   void addLigne(String type, String description, int montant) {
-    lignes.add(DevisLigne(type: type, description: description, montant: montant));
+    lignes.add(
+        DevisLigne(type: type, description: description, montant: montant));
   }
 
   void removeLigne(int index) => lignes.removeAt(index);
@@ -92,9 +100,62 @@ class DevisController extends GetxController {
   }
 
   Future<void> acceptDevis(int id) async {
-    await _repo.acceptDevis(id);
-    Get.snackbar('Devis accepté', 'La mission est maintenant financée.',
-        snackPosition: SnackPosition.TOP);
+    final current = devis.value;
+    if (current == null) {
+      await loadDevis(id);
+    }
+
+    final target = devis.value;
+    final phone = StorageService.getPhone();
+
+    if (target == null || phone == null || phone.isEmpty) {
+      Get.snackbar(
+        'Paiement impossible',
+        'Numéro de téléphone introuvable. Reconnectez-vous puis réessayez.',
+        snackPosition: SnackPosition.TOP,
+      );
+      return;
+    }
+
+    final payment = await _paymentRepo.initiatePayment(
+      missionId: target.missionId,
+      devisId: target.id,
+      montant: target.totalGeneral,
+      provider: 'wave',
+      phone: phone,
+    );
+
+    final url = payment.launchUrl;
+    if (url != null && url.isNotEmpty) {
+      await launchUrl(
+        Uri.parse(url),
+        mode: LaunchMode.externalApplication,
+      );
+    }
+
+    for (var attempt = 0; attempt < 3; attempt++) {
+      final status = await _paymentRepo.checkStatus(payment.transactionId);
+      if (status.isConfirmed) {
+        devis.value = await _repo.acceptDevis(
+          id,
+          transactionId: payment.transactionId,
+        );
+        Get.snackbar(
+          'Devis accepté',
+          'La mission est maintenant financée.',
+          snackPosition: SnackPosition.TOP,
+        );
+        return;
+      }
+
+      await Future.delayed(const Duration(seconds: 2));
+    }
+
+    Get.snackbar(
+      'Paiement en attente',
+      'Validez le paiement puis revenez sur cet écran pour réessayer.',
+      snackPosition: SnackPosition.TOP,
+    );
   }
 
   Future<void> refuseDevis(int id) async {

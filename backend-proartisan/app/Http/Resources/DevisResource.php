@@ -14,6 +14,14 @@ class DevisResource extends JsonResource
             'missionId'    => $this->mission_id,
             'artisanId'    => $this->artisan_id,
             'statut'       => $this->statut,
+            'missionStatus'=> $this->when(
+                $this->relationLoaded('mission'),
+                fn () => $this->mission->status
+            ),
+            'ratioMateriaux' => $this->ratio_materiaux !== null ? (float) $this->ratio_materiaux : null,
+            'montantTotal' => $this->montant_total,
+            'montantMateriaux' => $this->montant_materiaux,
+            'montantMo' => $this->montant_mo,
             'lignesJson'   => $this->lignes_json ?? [],
             'jalonsJson'   => $this->jalons_json ?? [],
             'artisanName'  => $this->when(

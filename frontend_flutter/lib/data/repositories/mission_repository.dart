@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../core/cache/mission_cache_service.dart';
 import '../../core/network/api_client.dart';
@@ -203,6 +204,34 @@ class MissionRepository {
     await _client.put(ApiEndpoints.missionStatus(id), data: {'status': status});
   }
 
+  Future<Map<String, dynamic>> validateReferentMission({
+    required int missionId,
+    required double latitude,
+    required double longitude,
+    required List<XFile> photos,
+    String? notes,
+  }) async {
+    final formData = FormData.fromMap({
+      'latitude': latitude,
+      'longitude': longitude,
+      if (notes != null && notes.trim().isNotEmpty) 'notes': notes.trim(),
+      'photos': [
+        for (final photo in photos)
+          await MultipartFile.fromFile(
+            photo.path,
+            filename: photo.name,
+          ),
+      ],
+    });
+
+    final res = await _client.postMultipart(
+      ApiEndpoints.missionReferentValidate(missionId),
+      formData,
+    );
+
+    return res.data as Map<String, dynamic>;
+  }
+
   /// Récupère les jalons d'une mission
   ///
   /// Stratégie cache-first avec fallback
@@ -340,8 +369,7 @@ class MissionRepository {
             if (attempt < retries) {
               // Délai exponentiel pour 429
               final delay = statusCode == 429
-                  ? _retryDelay *
-                        (1 << attempt) // 2s, 4s, 8s...
+                  ? _retryDelay * (1 << attempt) // 2s, 4s, 8s...
                   : _retryDelay;
               await Future.delayed(Duration(milliseconds: delay));
               continue;
@@ -355,8 +383,7 @@ class MissionRepository {
         }
 
         // Retry pour erreurs réseau et timeouts
-        final shouldRetry =
-            e.type == DioExceptionType.connectionTimeout ||
+        final shouldRetry = e.type == DioExceptionType.connectionTimeout ||
             e.type == DioExceptionType.receiveTimeout ||
             e.type == DioExceptionType.sendTimeout ||
             e.type == DioExceptionType.connectionError;
