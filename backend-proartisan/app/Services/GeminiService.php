@@ -19,14 +19,14 @@ class GeminiService
     /**
      * Analyse un besoin de travaux et retourne une estimation.
      */
-    public function analyzeMission(string $description, array $photoUrls = []): array
+    public function analyzeMission(string $description, array $context = []): array
     {
         if (empty($this->apiKey) || config('app.env') === 'testing') {
             return $this->getFallbackAnalysis($description);
         }
 
         try {
-            $prompt = $this->buildPrompt($description);
+            $prompt = $this->buildPrompt($description, $context);
 
             $response = Http::post("https://generativelanguage.googleapis.com/v1beta/models/{$this->model}:generateContent?key={$this->apiKey}", [
                 'contents' => [
@@ -60,10 +60,22 @@ class GeminiService
         return $this->getFallbackAnalysis($description);
     }
 
-    private function buildPrompt(string $description): string
+    private function buildPrompt(string $description, array $context = []): string
     {
+        $categoryHint = trim((string) ($context['category'] ?? ''));
+        $locationHint = trim((string) ($context['location_address'] ?? ''));
+
+        $contextLines = array_filter([
+            $categoryHint !== '' ? "Catégorie suggérée par l'application : {$categoryHint}" : null,
+            $locationHint !== '' ? "Zone d'intervention : {$locationHint}" : null,
+        ]);
+
+        $contextBlock = empty($contextLines)
+            ? ''
+            : "\nContexte complémentaire:\n- " . implode("\n- ", $contextLines) . "\n";
+
         return "Tu es un expert en bâtiment en Côte d'Ivoire. Analyse ce besoin client et retourne un JSON.
-        Description: {$description}
+        Description: {$description}{$contextBlock}
         
         Retourne obligatoirement ce format JSON:
         {

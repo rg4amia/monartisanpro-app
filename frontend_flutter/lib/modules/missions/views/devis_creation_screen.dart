@@ -224,38 +224,40 @@ class _LignesSection extends StatelessWidget {
     String selectedType = 'mo';
     final descController = TextEditingController();
     final montantController = TextEditingController();
+    final quantityController = TextEditingController(text: '1');
+    final unitPriceController = TextEditingController();
+    final skuController = TextEditingController();
 
     Get.dialog(
-      Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Ajouter une ligne',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: _C.ink,
+      StatefulBuilder(
+        builder: (context, setState) => Dialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Ajouter une ligne',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: _C.ink,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 20),
-
-              // Type
-              const Text(
-                'Type',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: _C.ink,
+                const SizedBox(height: 20),
+                const Text(
+                  'Type',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: _C.ink,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              StatefulBuilder(
-                builder: (context, setState) => Row(
+                const SizedBox(height: 8),
+                Row(
                   children: [
                     Expanded(
                       child: _RadioButton(
@@ -276,138 +278,285 @@ class _LignesSection extends StatelessWidget {
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 16),
-
-              // Description
-              const Text(
-                'Description',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: _C.ink,
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: descController,
-                maxLines: 2,
-                decoration: InputDecoration(
-                  hintText: 'Ex: Pose de carrelage 20m²',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: _C.subtle),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: _C.subtle),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: _C.primary, width: 2),
+                const SizedBox(height: 16),
+                const Text(
+                  'Description',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: _C.ink,
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-
-              // Montant
-              const Text(
-                'Montant (FCFA)',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: _C.ink,
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: montantController,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: InputDecoration(
-                  hintText: '0',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: _C.subtle),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: _C.subtle),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: _C.primary, width: 2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Actions
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Get.back(),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text('Annuler'),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: descController,
+                  maxLines: 2,
+                  decoration: InputDecoration(
+                    hintText: selectedType == 'mo'
+                        ? 'Ex: Pose de carrelage 20m²'
+                        : 'Ex: Carrelage 60x60 beige',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: _C.subtle),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: _C.subtle),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: _C.primary, width: 2),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        final desc = descController.text.trim();
-                        final montantStr = montantController.text.trim();
-
-                        if (desc.isEmpty || montantStr.isEmpty) {
-                          Get.snackbar(
-                            'Erreur',
-                            'Veuillez remplir tous les champs',
-                            snackPosition: SnackPosition.TOP,
-                          );
-                          return;
-                        }
-
-                        final montant = int.tryParse(montantStr);
-                        if (montant == null || montant <= 0) {
-                          Get.snackbar(
-                            'Erreur',
-                            'Montant invalide',
-                            snackPosition: SnackPosition.TOP,
-                          );
-                          return;
-                        }
-
-                        controller.addLigne(
-                          type: selectedType,
-                          description: desc,
-                          montant: montant,
-                        );
-                        Get.back();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _C.primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                ),
+                const SizedBox(height: 16),
+                if (selectedType == 'mo') ...[
+                  const Text(
+                    'Montant (FCFA)',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: _C.ink,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: montantController,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    decoration: InputDecoration(
+                      hintText: '0',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: _C.subtle),
                       ),
-                      child: const Text('Ajouter'),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: _C.subtle),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide:
+                            const BorderSide(color: _C.primary, width: 2),
+                      ),
+                    ),
+                  ),
+                ] else ...[
+                  const Text(
+                    'Quantité',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: _C.ink,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: quantityController,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    onChanged: (_) => setState(() {}),
+                    decoration: InputDecoration(
+                      hintText: '1',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: _C.subtle),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: _C.subtle),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide:
+                            const BorderSide(color: _C.primary, width: 2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Prix unitaire (FCFA)',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: _C.ink,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: unitPriceController,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    onChanged: (_) => setState(() {}),
+                    decoration: InputDecoration(
+                      hintText: '0',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: _C.subtle),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: _C.subtle),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide:
+                            const BorderSide(color: _C.primary, width: 2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'SKU / Référence (optionnel)',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: _C.ink,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: skuController,
+                    decoration: InputDecoration(
+                      hintText: 'Ex: MAT-001',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: _C.subtle),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: _C.subtle),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide:
+                            const BorderSide(color: _C.primary, width: 2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: _C.warningLight,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      'Total matériaux: ${_formatFCFA((int.tryParse(quantityController.text.trim()) ?? 0) * (int.tryParse(unitPriceController.text.trim()) ?? 0))}',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: _C.warning,
+                      ),
                     ),
                   ),
                 ],
-              ),
-            ],
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Get.back(),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text('Annuler'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          final desc = descController.text.trim();
+                          if (desc.isEmpty) {
+                            Get.snackbar(
+                              'Erreur',
+                              'Veuillez renseigner une description',
+                              snackPosition: SnackPosition.TOP,
+                            );
+                            return;
+                          }
+
+                          if (selectedType == 'mo') {
+                            final montant =
+                                int.tryParse(montantController.text.trim());
+                            if (montant == null || montant <= 0) {
+                              Get.snackbar(
+                                'Erreur',
+                                'Montant invalide',
+                                snackPosition: SnackPosition.TOP,
+                              );
+                              return;
+                            }
+
+                            controller.addLigne(
+                              type: 'mo',
+                              description: desc,
+                              montant: montant,
+                            );
+                          } else {
+                            final quantity =
+                                int.tryParse(quantityController.text.trim());
+                            final unitPrice =
+                                int.tryParse(unitPriceController.text.trim());
+
+                            if (quantity == null ||
+                                quantity <= 0 ||
+                                unitPrice == null ||
+                                unitPrice <= 0) {
+                              Get.snackbar(
+                                'Erreur',
+                                'Quantité ou prix unitaire invalide',
+                                snackPosition: SnackPosition.TOP,
+                              );
+                              return;
+                            }
+
+                            controller.addLigne(
+                              type: 'mat',
+                              description: desc,
+                              montant: quantity * unitPrice,
+                              source: 'custom',
+                              quantity: quantity,
+                              unitPrice: unitPrice,
+                              sku: skuController.text.trim().isEmpty
+                                  ? null
+                                  : skuController.text.trim(),
+                            );
+                          }
+
+                          Get.back();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _C.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text('Ajouter'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
+  }
+
+  String _formatFCFA(int amount) {
+    return '${amount.toString().replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (Match m) => '${m[1]} ',
+        )} FCFA';
   }
 }
 
@@ -580,7 +729,8 @@ class _JalonsSection extends StatelessWidget {
                     );
                     if (date != null) {
                       selectedDate = date;
-                      dateController.text = DateFormat('dd/MM/yyyy').format(date);
+                      dateController.text =
+                          DateFormat('dd/MM/yyyy').format(date);
                       setState(() {});
                     }
                   },
@@ -626,7 +776,9 @@ class _JalonsSection extends StatelessWidget {
                         final desc = descController.text.trim();
                         final montantStr = montantController.text.trim();
 
-                        if (desc.isEmpty || montantStr.isEmpty || selectedDate == null) {
+                        if (desc.isEmpty ||
+                            montantStr.isEmpty ||
+                            selectedDate == null) {
                           Get.snackbar(
                             'Erreur',
                             'Veuillez remplir tous les champs',
@@ -722,7 +874,8 @@ class _RecapSection extends StatelessWidget {
                   const SizedBox(height: 8),
                   _RecapRow(
                     label: 'Ratio matériaux',
-                    value: '${(controller.ratioMateriaux * 100).toStringAsFixed(1)}%',
+                    value:
+                        '${(controller.ratioMateriaux * 100).toStringAsFixed(1)}%',
                     valueColor: _C.muted,
                   ),
                 ],
@@ -810,6 +963,9 @@ class _LigneCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isMo = ligne.type == 'mo';
+    final detail = !isMo
+        ? '${ligne.resolvedQuantity} x ${_formatFCFA(ligne.resolvedUnitPrice)}'
+        : null;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -855,6 +1011,16 @@ class _LigneCard extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
+                if (detail != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    detail,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: _C.muted,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

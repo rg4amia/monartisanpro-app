@@ -77,11 +77,21 @@ class DevisController extends GetxController {
     required String type,
     required String description,
     required int montant,
+    String? source,
+    int? quantity,
+    int? unitPrice,
+    String? sku,
+    int? supplierProductId,
   }) {
     lignes.add(DevisLigne(
       type: type,
       description: description,
       montant: montant,
+      source: source,
+      quantity: quantity,
+      unitPrice: unitPrice,
+      sku: sku,
+      supplierProductId: supplierProductId,
     ));
   }
 
@@ -124,14 +134,12 @@ class DevisController extends GetxController {
   }
 
   /// Calcule le montant total des lignes main d'œuvre
-  int get totalMo => lignes
-      .where((l) => l.type == 'mo')
-      .fold(0, (sum, l) => sum + l.montant);
+  int get totalMo =>
+      lignes.where((l) => l.type == 'mo').fold(0, (sum, l) => sum + l.montant);
 
   /// Calcule le montant total des lignes matériaux
-  int get totalMat => lignes
-      .where((l) => l.type == 'mat')
-      .fold(0, (sum, l) => sum + l.montant);
+  int get totalMat =>
+      lignes.where((l) => l.type == 'mat').fold(0, (sum, l) => sum + l.montant);
 
   /// Calcule le montant total général
   int get totalGeneral => totalMo + totalMat;

@@ -57,7 +57,9 @@ class ArtisanCard extends StatelessWidget {
                         Container(
                           margin: const EdgeInsets.only(left: 6),
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: const Color(0xFFFFF3CD),
                             borderRadius: BorderRadius.circular(8),
@@ -65,14 +67,20 @@ class ArtisanCard extends StatelessWidget {
                           child: const Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.star,
-                                  size: 10, color: Color(0xFFD4A017)),
+                              Icon(
+                                Icons.star,
+                                size: 10,
+                                color: Color(0xFFD4A017),
+                              ),
                               SizedBox(width: 2),
-                              Text('Top',
-                                  style: TextStyle(
-                                      fontSize: 10,
-                                      color: Color(0xFFD4A017),
-                                      fontWeight: FontWeight.w600)),
+                              Text(
+                                'Top',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: Color(0xFFD4A017),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -82,18 +90,29 @@ class ArtisanCard extends StatelessWidget {
                     Text(
                       artisan.trade!,
                       style: const TextStyle(
-                          fontSize: 13, color: AppColors.textSecondary),
+                        fontSize: 13,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      const Icon(Icons.location_on_outlined,
-                          size: 12, color: AppColors.textMuted),
+                      const Icon(
+                        Icons.location_on_outlined,
+                        size: 12,
+                        color: AppColors.textMuted,
+                      ),
                       const SizedBox(width: 2),
                       Text(
-                        artisan.distance ?? artisan.sector ?? '',
+                        artisan.distance ??
+                            artisan.locationLabel ??
+                            artisan.commune ??
+                            artisan.sector ??
+                            '',
                         style: const TextStyle(
-                            fontSize: 12, color: AppColors.textMuted),
+                          fontSize: 12,
+                          color: AppColors.textMuted,
+                        ),
                       ),
                     ],
                   ),

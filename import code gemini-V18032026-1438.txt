@@ -1,0 +1,1618 @@
+import React, { useState, useEffect } from 'react';
+
+// --- 1. DICTIONNAIRE SVG NATIF (Anti-Crash) ---
+const Svg=({children,size=24,className="",fill="none"})=> <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{children}</svg>;
+const ICONS = {
+  Search: <><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></>, Home: <><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>,
+  User: <><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>, MapPin: <><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></>,
+  Star: <><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></>, Wrench: <><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></>,
+  Zap: <><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></>, Droplet: <><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></>,
+  Hammer: <><path d="m15 12-8.5 8.5c-.83.83-2.17.83-3 0 0 0 0 0 0 0a2.12 2.12 0 0 1 0-3L12 9"/><path d="M17.64 15 22 10.64"/><path d="m20.91 11.7-1.25-1.25c-.6-.6-.93-1.4-.93-2.25v-.86L16.01 4.6a5.56 5.56 0 0 0-3.94-1.64H9l.92.82A6.18 6.18 0 0 1 12 8.4v1.56l2 2h2.47l2.26 1.91"/></>,
+  ChevronLeft: <><path d="m15 18-6-6 6-6"/></>, CheckCircle: <><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></>, X: <><path d="M18 6 6 18"/><path d="m6 6 12 12"/></>,
+  AlertTriangle: <><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></>, Loader2: <><path d="M21 12a9 9 0 1 1-6.219-8.56"/></>,
+  ArrowRight: <><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></>, History: <><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></>,
+  Send: <><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></>, Upload: <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></>,
+  Navigation: <><polygon points="3 11 22 2 13 21 11 13 3 11"/></>, LogOut: <><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></>,
+  Bell: <><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></>, Check: <><polyline points="20 6 9 17 4 12"/></>,
+  Edit2: <><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></>, Phone: <><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></>,
+  Mail: <><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></>, Save: <><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></>,
+  FileText: <><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></>, ClipboardList: <><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></>,
+  Clock: <><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>, Plus: <><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></>,
+  Trash2: <><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></>, Calculator: <><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></>,
+  Camera: <><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></>, Store: <><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2-2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2v0a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12v0a2 2 0 0 1-2-2V7"/></>,
+  Package: <><line x1="16.5" x2="7.5" y1="9.4" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" x2="12" y1="22.08" y2="12"/></>, ShoppingCart: <><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></>,
+  Lock: <><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></>, Tag: <><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/><path d="M7 7h.01"/></>,
+  Truck: <><path d="M10 17h4V5H2v12h3"/><path d="M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5v8h2"/><path d="M14 17h1"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></>, Smartphone: <><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></>,
+  Activity: <><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></>, Info: <><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></>, 
+  Settings: <><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></>,
+  Briefcase: <><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></>, ArrowDown: <><line x1="12" x2="12" y1="5" y2="19"/><polyline points="19 12 12 19 5 12"/></>,
+  QrCode: <><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/></>,
+  Scan: <><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/></>, Shield: <><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></>,
+  Bank: <><rect width="20" height="14" x="2" y="6" rx="2"/><path d="M2 10h20"/><path d="M6 14h.01"/><path d="M10 14h.01"/><path d="M14 14h.01"/><path d="M18 14h.01"/></>,
+  Sparkles: <><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></>, Wallet: <><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></>
+};
+const Icon = ({ name, size=24, className="", fill="none" }) => <Svg size={size} className={className} fill={fill}>{ICONS[name]||<circle cx="12" cy="12" r="10"/>}</Svg>;
+
+// --- 2. DONNÉES INITIALES ET MOCK DB ---
+const INITIAL_CATEGORIES = [
+  { id: 'plomberie', name: 'Plomberie', iconName: 'Droplet', color: 'bg-blue-100 text-blue-600' },
+  { id: 'electricite', name: 'Électricité', iconName: 'Zap', color: 'bg-yellow-100 text-yellow-600' },
+  { id: 'menuiserie', name: 'Menuiserie', iconName: 'Hammer', color: 'bg-orange-100 text-orange-600' },
+  { id: 'reparation', name: 'Réparation', iconName: 'Wrench', color: 'bg-gray-100 text-gray-600' },
+  { id: 'livraison', name: 'Livraison', iconName: 'Truck', color: 'bg-teal-100 text-teal-600' }
+];
+
+const INITIAL_SUPPLIER_SECTORS = ["Quincaillerie", "Matériaux Construction", "Plomberie Sanitaire", "Électricité Éclairage"];
+
+// Les mock datas avec des chantiers (jobs) et commandes (orders)
+const MOCK_DB = {
+  suppliers: [
+      { id: 1, role: 'supplier', raisonSociale: "Quincaillerie Pro", adresse: "Abidjan, Adjamé", secteur: "Quincaillerie", contactMobile: "0707070701", password: "123", catalog: [{ id: 'mat1', sku: 'VIS-001', name: "Siphon PVC", price: 2500, stock: 50, image: null }, { id: 'mat2', sku: 'CIM-002', name: "Ciment Bélier 50kg", price: 4500, stock: 100, image: null }] }
+  ],
+  artisans: [
+      { id: 1, role: 'artisan', name: "Kouassi", prenoms: "Jean", telephone: "0505050501", password: "123", category: "plomberie", rating: 4.8, location: "Abidjan, Cocody", price: "Sur devis" },
+      { id: 3, role: 'driver', name: "Koné", prenoms: "Moussa", telephone: "0707070705", password: "123", category: "livraison", rating: 4.9, location: "Abidjan, Adjamé", price: "Sur devis" }
+  ],
+  jobs: [
+      { id: 202, clientId: 999, clientName: "Paul A.", problem: "Changement de tuyauterie salle de bain.", status: "sent", artisanId: 1, artisanName: "Kouassi Jean", artisanCategory: "plomberie", paymentStatus: 'pending', financials: { tokenCode: null, tokenAmount: 0, laborCost: 0, platformFeesBreakdown: { labor: 0, material: 0, delivery: 0 } }, interventionData: { materials: [] }, milestones: [{ id: 1, status: 'pending' }, { id: 2, status: 'pending' }] },
+      { id: 203, clientId: 999, clientName: "Marc B.", problem: "Réparation chauffe-eau", status: "disputed", disputeReason: "Le chauffe-eau fuit toujours après l'intervention", artisanId: 1, artisanName: "Kouassi Jean", artisanCategory: "plomberie", paymentStatus: 'funded', financials: { tokenCode: 'PA-5544', tokenAmount: 0, laborCost: 15000, platformFeesBreakdown: { labor: 750, material: 0, delivery: 0 } }, interventionData: { materials: [] }, milestones: [{ id: 1, status: 'validated' }, { id: 2, status: 'pending' }] },
+      { id: 204, clientId: 999, clientName: "Sylvie D.", problem: "Remplacement disjoncteur", status: "completed", artisanId: 2, artisanName: "Bamba Ali", artisanCategory: "electricite", paymentStatus: 'funded', financials: { tokenCode: 'PA-9988', tokenAmount: 0, laborCost: 20000, platformFeesBreakdown: { labor: 1400, material: 0, delivery: 0 } }, interventionData: { materials: [] }, milestones: [{ id: 1, status: 'validated' }, { id: 2, status: 'validated' }] }
+  ],
+  orders: [
+      { id: 301, clientId: 999, clientName: "Marc B.", supplierId: 1, supplierName: "Quincaillerie Pro", driverId: 3, deliveryMode: 'delivery', subtotal: 5000, status: 'shipping', deliveryCost: 1500, deliveryCode: 'LIVREUR-9999', driverToClientCode: 'LIV-8888', clientReceiveCode: 'RECEPTION-8888', platformFeesBreakdown: { material: 400, delivery: 75, labor: 0 }, total: 6975, items: [{ id: 'mat2', name: "Ciment", quantity: 1, price: 5000, image: null }], rejectedBy: [] },
+      { id: 302, clientId: 999, clientName: "Jean P.", supplierId: 1, supplierName: "Quincaillerie Pro", deliveryMode: 'pickup', subtotal: 10000, status: 'delivered', deliveryCost: 0, pickupCode: 'RETRAIT-1111', deliveryCode: '', driverToClientCode: '', clientReceiveCode: '', platformFeesBreakdown: { material: 800, delivery: 0, labor: 0 }, total: 10800, items: [{ id: 'mat1', name: "Siphon PVC", quantity: 4, price: 2500, image: null }], rejectedBy: [] }
+  ]
+};
+
+// --- 3. COMPOSANTS UTILITAIRES ---
+const Button = ({ children, onClick, variant = 'primary', className = '', iconName, disabled, type = "button" }) => {
+  const v = { primary: "bg-blue-600 text-white hover:bg-blue-700", secondary: "bg-white text-gray-700 border hover:bg-gray-50", ai: "bg-gradient-to-r from-purple-600 to-blue-600 text-white", success: "bg-green-600 text-white hover:bg-green-700", danger: "bg-red-50 text-red-600 border border-red-100 hover:bg-red-100", ghost: "bg-transparent text-gray-500 hover:bg-gray-100", outline: "border-2 border-blue-600 text-blue-600 bg-white hover:bg-blue-50", admin: "bg-slate-800 text-white hover:bg-slate-900" };
+  return <button onClick={onClick} type={type} disabled={disabled} className={`px-4 py-3 rounded-xl font-medium flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 ${v[variant]} ${className}`}>{iconName && <Icon name={iconName} size={18} />}{children}</button>;
+};
+const Badge = ({ text, color="bg-blue-50 text-blue-700 border-blue-100" }) => <span className={`px-2 py-1 text-[10px] font-bold rounded-md border ${color}`}>{text}</span>;
+const InputGroup = ({ label, children }) => <div className="mb-3"><label className="block text-xs font-bold text-gray-700 uppercase mb-1">{label}</label>{children}</div>;
+const BasicInput = ({value, onChange, placeholder, type="text", required=false, readOnly=false}) => <input type={type} value={value} onChange={onChange} placeholder={placeholder} readOnly={readOnly} className={`w-full bg-gray-50 border p-3 rounded-xl outline-none focus:border-blue-500 ${readOnly ? 'text-gray-500' : ''}`} required={required}/>;
+
+const WorkflowTracker = ({ steps, currentStepIndex }) => (
+    <div className="flex flex-col mb-4 bg-gray-50 p-3 rounded-xl border border-gray-100">
+        <div className="flex items-center justify-between mb-2">
+            {steps.map((_, idx) => (
+                <div key={idx} className={`h-1.5 flex-1 mx-1 rounded-full ${idx <= currentStepIndex ? 'bg-blue-600' : 'bg-gray-200'}`} />
+            ))}
+        </div>
+        <p className="text-xs font-bold text-blue-800 text-center">{steps[currentStepIndex]}</p>
+    </div>
+);
+
+// --- 4. MODALES REQUISES ---
+const PaymentModal = ({ amount, onClose, onSuccess }) => {
+    const [provider, setProvider] = useState(null);
+    const [loading, setLoading] = useState(false);
+    return (
+        <div className="fixed inset-0 bg-black/50 z-[100] flex items-end sm:items-center justify-center p-4 backdrop-blur-sm animate-in fade-in"><div className="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl relative"><button onClick={onClose} className="absolute top-4 right-4 text-gray-400"><Icon name="X" size={24}/></button><h3 className="text-xl font-bold mb-2 flex items-center gap-2"><Icon name="Shield" className="text-green-600"/> Paiement Sécurisé</h3><p className="text-sm text-gray-500 mb-6">Fonds placés sous séquestre ProsArtisan.</p><div className="text-center mb-6"><span className="text-3xl font-bold text-blue-900">{(amount || 0).toLocaleString()} FCFA</span></div>{!provider ? (<div className="grid grid-cols-2 gap-4"><button onClick={() => setProvider('wave')} className="p-4 rounded-xl bg-sky-50 flex flex-col items-center border border-transparent hover:border-sky-300"><div className="w-10 h-10 bg-sky-500 rounded-full flex items-center justify-center text-white font-bold">W</div><span className="font-bold text-sky-700 mt-2">Wave</span></button><button onClick={() => setProvider('om')} className="p-4 rounded-xl bg-orange-50 flex flex-col items-center border border-transparent hover:border-orange-300"><div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold">OM</div><span className="font-bold text-orange-700 mt-2">Orange</span></button></div>) : (<div className="space-y-4"><InputGroup label="Numéro Mobile"><BasicInput type="tel" placeholder="07 XX XX XX XX"/></InputGroup><Button onClick={() => { setLoading(true); setTimeout(onSuccess, 1500); }} disabled={loading} className="w-full">{loading ? 'Traitement...' : `Payer ${(amount || 0).toLocaleString()} FCFA`}</Button></div>)}</div></div>
+    );
+};
+
+// Modale de vérification de code SANS ALERT()
+const CodeVerificationModal = ({ title, description, expectedCode, onSuccess, onClose }) => {
+    const [inputCode, setInputCode] = useState('');
+    const [error, setError] = useState('');
+    
+    const handleVerify = () => {
+        if(inputCode.trim().toUpperCase() === expectedCode) {
+            setError('');
+            onSuccess();
+        } else {
+            setError("Le code saisi est incorrect. Veuillez vérifier.");
+        }
+    };
+    
+    return (
+        <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
+            <div className="bg-white w-full max-w-sm rounded-3xl p-6 text-center relative shadow-2xl">
+                <button onClick={onClose} className="absolute top-4 right-4 text-gray-400"><Icon name="X"/></button>
+                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600"><Icon name="Scan" size={32}/></div>
+                <h3 className="text-xl font-bold text-gray-800 mb-2">{title}</h3>
+                <p className="text-sm text-gray-500 mb-4">{description}</p>
+                
+                {error && <p className="text-xs font-bold text-red-600 bg-red-50 p-2 rounded-lg mb-4">{error}</p>}
+                
+                <input value={inputCode} onChange={e => {setInputCode(e.target.value.toUpperCase()); setError('');}} placeholder="Ex: RECEPTION-XXXX" className="w-full p-4 border-2 border-gray-200 focus:border-blue-500 outline-none rounded-xl text-center text-lg font-mono mb-4 tracking-widest uppercase"/>
+                <Button className="w-full py-3" variant="primary" onClick={handleVerify}>Confirmer le code</Button>
+            </div>
+        </div>
+    );
+};
+
+const DisputeModal = ({ targetInfo, onClose, onSubmit }) => {
+    const [reason, setReason] = useState('Travail incomplet / mal fait');
+    const [description, setDescription] = useState('');
+    return (
+        <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in"><div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl relative"><button onClick={onClose} className="absolute top-4 right-4 text-gray-400"><Icon name="X"/></button><h3 className="text-lg font-bold text-gray-800">Signaler un Litige</h3><p className="text-xs text-red-600 mb-4 font-bold">{targetInfo.title}</p><InputGroup label="Motif"><select value={reason} onChange={e=>setReason(e.target.value)} className="w-full bg-gray-50 border p-3 rounded-xl outline-none"><option>Travail incomplet / mal fait</option><option>Retard important</option><option>Matériel défectueux ou non conforme</option></select></InputGroup><InputGroup label="Description"><textarea className="w-full bg-gray-50 border rounded-xl p-3 h-24" value={description} onChange={e=>setDescription(e.target.value)} placeholder="Décrivez le problème rencontré..."/></InputGroup><Button onClick={() => onSubmit({reason, description})} variant="danger" className="w-full">Geler les fonds et Soumettre</Button></div></div>
+    );
+};
+
+const ProofUploadModal = ({ onClose, onSubmit, isMaterialStep }) => {
+    const [photo, setPhoto] = useState(null);
+    return (
+        <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in"><div className="bg-white w-full max-w-sm rounded-3xl p-6"><div className="flex justify-between items-center mb-4"><h3 className="font-bold text-lg flex items-center gap-2"><Icon name="Camera" className="text-blue-600"/> {isMaterialStep ? "Preuve Matériel" : "Preuve Travaux"}</h3><button onClick={onClose} className="text-gray-400"><Icon name="X"/></button></div><p className="text-xs text-gray-500 mb-4">{isMaterialStep ? "Prenez une photo du matériel récupéré chez le fournisseur." : "Prenez une photo claire de votre réalisation pour que le client valide la fin des travaux."}</p><div className="mb-4 bg-gray-50 h-48 rounded-xl flex items-center justify-center border-2 border-dashed border-gray-300 hover:bg-gray-100 cursor-pointer relative transition-colors"><input type="file" onChange={e => {const r=new FileReader(); r.onload=()=>setPhoto(r.result); r.readAsDataURL(e.target.files[0]);}} className="absolute inset-0 opacity-0 z-10 cursor-pointer"/>{photo ? <img src={photo} className="w-full h-full object-cover rounded-xl"/> : <div className="text-center text-gray-400"><Icon name="Camera" size={32} className="mx-auto mb-2"/><p className="text-xs font-bold">Ajouter Photo</p></div>}</div><Button disabled={!photo} onClick={() => onSubmit(photo)} className="w-full" variant="success">Envoyer la Preuve</Button></div></div>
+    );
+};
+
+// Modale de notation granulaire (Client note le Fournisseur, l'Artisan ou le Livreur)
+const RatingModal = ({ targetInfo, onClose, onSubmit }) => {
+    const [rating, setRating] = useState(0);
+    const [comment, setComment] = useState('');
+    return (
+        <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
+            <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl relative">
+                <button onClick={onClose} className="absolute top-4 right-4 text-gray-400"><Icon name="X"/></button>
+                <h3 className="text-lg font-bold text-gray-800 text-center mb-2">Évaluer {targetInfo.name}</h3>
+                <p className="text-xs text-gray-500 text-center mb-6">
+                    {targetInfo.role === 'artisan' ? "Comment s'est passée l'intervention ?" : 
+                     targetInfo.role === 'driver' ? "Comment s'est passée la livraison ?" : "Avez-vous été satisfait de votre commande ?"}
+                </p>
+
+                <div className="flex justify-center gap-2 mb-6">
+                    {[1, 2, 3, 4, 5].map(star => (
+                        <button key={star} type="button" onClick={() => setRating(star)} className={`${star <= rating ? 'text-yellow-400' : 'text-gray-200'} transition-colors`}>
+                            <Icon name="Star" size={40} fill={star <= rating ? 'currentColor' : 'none'} />
+                        </button>
+                    ))}
+                </div>
+
+                <InputGroup label="Laissez un commentaire (optionnel)">
+                    <textarea className="w-full bg-gray-50 border rounded-xl p-3 h-24 outline-none focus:border-blue-500" value={comment} onChange={e=>setComment(e.target.value)} placeholder="Votre avis nous aide à améliorer le service..."/>
+                </InputGroup>
+
+                <Button onClick={() => onSubmit({rating, comment})} disabled={rating === 0} className="w-full mt-2">Soumettre l'évaluation</Button>
+            </div>
+        </div>
+    )
+};
+
+// --- AUTH & INSCRIPTION ---
+const LoginScreen = ({ onLogin, onGoToRegister }) => {
+  const [id, setId] = useState('0707070701'); const [pwd, setPwd] = useState('123'); // Default Fournisseur
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-slate-50">
+      <div className="w-full max-w-sm space-y-6 bg-white p-8 rounded-3xl shadow-xl">
+        <div className="text-center"><div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4"><Icon name="Briefcase" size={32}/></div><h1 className="text-3xl font-black text-gray-900 tracking-tight">ProsArtisan</h1></div>
+        <form onSubmit={e => { e.preventDefault(); onLogin(id, pwd); }} className="space-y-4">
+          <InputGroup label="Identifiant / Téléphone"><BasicInput value={id} onChange={e=>setId(e.target.value)} required /></InputGroup>
+          <InputGroup label="Mot de passe"><BasicInput type="password" value={pwd} onChange={e=>setPwd(e.target.value)} required /></InputGroup>
+          <Button type="submit" className="w-full py-4 text-lg">Se connecter</Button>
+        </form>
+        <div className="mt-4 text-center text-[10px] text-gray-500 bg-gray-100 p-3 rounded-xl leading-relaxed">
+            <span className="font-bold border-b pb-1 mb-1 block">Comptes de test (Pass: 123) :</span>
+            Admin: <b>admin (pass: admin)</b><br/>
+            Client: <b>0707070707</b><br/>Artisan: <b>0505050501</b><br/>Livreur: <b>0707070705</b><br/>Fournisseur: <b>0707070701</b>
+        </div>
+        <div className="text-center pt-4 border-t"><Button variant="ghost" className="w-full text-sm text-blue-600" onClick={onGoToRegister}>Créer un compte</Button></div>
+      </div>
+    </div>
+  );
+};
+
+const RoleSelectionScreen = ({ onSelectRole, onBack }) => (
+  <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-slate-50 relative">
+    <button onClick={onBack} className="absolute top-6 left-6 text-gray-500 flex items-center gap-1"><Icon name="ChevronLeft" size={18}/> Retour</button>
+    <div className="w-full max-w-sm space-y-4 mt-10">
+      <div className="text-center mb-8"><h1 className="text-2xl font-bold text-blue-600">Inscription</h1><p className="text-gray-500">Choisissez votre profil</p></div>
+      <Button className="w-full py-4 shadow-md" onClick={() => onSelectRole('client')} iconName="User">Je suis Client</Button>
+      <Button className="w-full py-4" onClick={() => onSelectRole('artisan')} variant="secondary" iconName="Wrench">Je suis Artisan</Button>
+      <Button className="w-full py-4" onClick={() => onSelectRole('supplier')} variant="secondary" iconName="Store">Je suis Fournisseur</Button>
+      <Button className="w-full py-4" onClick={() => onSelectRole('driver')} variant="secondary" iconName="Truck">Je suis Livreur</Button>
+    </div>
+  </div>
+);
+
+const RegistrationFlow = ({ initialRole, onRegister, onBack, categories, supplierSectors }) => {
+  const role = initialRole;
+  const [f, setF] = useState({ nom: '', prenoms: '', tel: '', pwd: '', adresse: '', category: 'plomberie', secteur: 'Quincaillerie', rccm: '', rs: '', cc: '' });
+  
+  const submit = (e) => { 
+      e.preventDefault(); 
+      const finalData = { ...f, role, id: Date.now() };
+      if (role === 'supplier') { finalData.catalog = []; finalData.walletBalance = 0; } 
+      else if (role === 'artisan' || role === 'driver') { finalData.rating = 5.0; finalData.location = f.adresse; finalData.price = "Sur devis"; }
+      onRegister(finalData); 
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 p-6 pt-12 pb-20 overflow-y-auto">
+      <button onClick={onBack} className="mb-6 text-gray-500 flex items-center gap-1"><Icon name="ChevronLeft"/> Retour</button><h2 className="text-2xl font-bold mb-6">Détails du profil</h2>
+      <form onSubmit={submit} className="space-y-4 bg-white p-6 rounded-2xl shadow-sm">
+        {role === 'supplier' && (<><InputGroup label="Raison Sociale"><BasicInput value={f.rs} onChange={e=>setF({...f,rs:e.target.value})} required/></InputGroup><InputGroup label="Secteur principal"><select className="w-full bg-gray-50 border p-3 rounded-xl outline-none" onChange={e=>setF({...f,secteur:e.target.value})} required><option value="">Choisir</option>{supplierSectors.map(s=><option key={s}>{s}</option>)}</select></InputGroup></>)}
+        {(role === 'artisan' || role === 'driver') && (<><div className="grid grid-cols-2 gap-3"><InputGroup label="Nom"><BasicInput value={f.nom} onChange={e=>setF({...f,nom:e.target.value})} required/></InputGroup><InputGroup label="Prénoms"><BasicInput value={f.prenoms} onChange={e=>setF({...f,prenoms:e.target.value})} required/></InputGroup></div><InputGroup label="Spécialité"><select className="w-full bg-gray-50 border p-3 rounded-xl outline-none" onChange={e=>setF({...f,category:e.target.value})} required><option value="">Choisir</option>{categories.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></InputGroup></>)}
+        {role === 'client' && (<div className="grid grid-cols-2 gap-3"><InputGroup label="Nom"><BasicInput value={f.nom} onChange={e=>setF({...f,nom:e.target.value})} required/></InputGroup><InputGroup label="Prénoms"><BasicInput value={f.prenoms} onChange={e=>setF({...f,prenoms:e.target.value})} required/></InputGroup></div>)}
+        <InputGroup label="Téléphone"><BasicInput type="tel" value={f.tel} onChange={e=>setF({...f,tel:e.target.value})} required/></InputGroup>
+        <InputGroup label="Adresse"><BasicInput value={f.adresse} onChange={e=>setF({...f,adresse:e.target.value})} required/></InputGroup>
+        <InputGroup label="Mot de passe"><BasicInput type="password" value={f.pwd} onChange={e=>setF({...f,pwd:e.target.value})} required/></InputGroup>
+        <Button type="submit" className="w-full mt-6 py-4 text-lg">Créer mon compte</Button>
+      </form>
+    </div>
+  );
+};
+
+// --- DASHBOARDS METIERS ---
+
+// 1. ESPACE ADMINISTRATEUR
+const AdminDashboard = ({ user, onLogout, categories, setCategories, supplierSectors, setSupplierSectors, platformFees, setPlatformFees, jobs, orders }) => {
+    const [tab, setTab] = useState('dashboard');
+    const [newCat, setNewCat] = useState({ name: '', fee: '' });
+    const [newSec, setNewSec] = useState({ name: '', fee: '' });
+
+    const validJobs = jobs.filter(j => ['funded', 'materials_picked_up', 'work_done', 'completed'].includes(j.status));
+    const revLabor = validJobs.reduce((acc, j) => acc + (j.financials?.platformFeesBreakdown?.labor || 0), 0);
+    
+    const validOrders = orders.filter(o => ['paid', 'prepared', 'searching_driver', 'driver_assigned', 'driver_picked_up', 'shipping', 'delivered'].includes(o.status));
+    const revMaterial = validOrders.reduce((acc, o) => acc + (o.platformFeesBreakdown?.material || 0), 0);
+    const revDelivery = validOrders.reduce((acc, o) => acc + (o.platformFeesBreakdown?.delivery || 0), 0);
+    
+    const totalRev = revLabor + revMaterial + revDelivery;
+
+    const revByCategory = validJobs.reduce((acc, j) => {
+        const cat = j.artisanCategory;
+        const fee = j.financials?.platformFeesBreakdown?.labor || 0;
+        if(fee > 0) acc[cat] = (acc[cat] || 0) + fee;
+        return acc;
+    }, {});
+
+    const handleAddCategory = (e) => {
+        e.preventDefault();
+        if(!newCat.name || !newCat.fee) return;
+        const id = newCat.name.toLowerCase().replace(/\s+/g, '_');
+        setCategories([...categories, { id, name: newCat.name, iconName: 'Wrench', color: 'bg-indigo-100 text-indigo-600' }]);
+        setPlatformFees(prev => ({ ...prev, artisanCategories: { ...prev.artisanCategories, [id]: parseFloat(newCat.fee) } }));
+        setNewCat({ name: '', fee: '' });
+    };
+
+    const handleAddSector = (e) => {
+        e.preventDefault();
+        if(!newSec.name || !newSec.fee) return;
+        setSupplierSectors([...supplierSectors, newSec.name]);
+        setPlatformFees(prev => ({ ...prev, supplierSectors: { ...prev.supplierSectors, [newSec.name]: parseFloat(newSec.fee) } }));
+        setNewSec({ name: '', fee: '' });
+    };
+
+    return (
+        <div className="min-h-screen bg-slate-900 text-white pb-20 flex flex-col">
+            <div className="pt-12 pb-6 px-6 flex justify-between items-center border-b border-slate-800">
+                <div><p className="text-xs text-blue-400 uppercase font-bold tracking-widest mb-1">Super Admin</p><h1 className="text-2xl font-bold">ProsArtisan</h1></div>
+                <Button variant="danger" onClick={onLogout} className="p-2"><Icon name="LogOut"/></Button>
+            </div>
+
+            <div className="px-4 mt-6 flex-1">
+                {tab === 'dashboard' && (
+                    <div className="animate-in fade-in space-y-6">
+                        <div className="bg-gradient-to-br from-blue-600 to-indigo-800 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+                            <p className="text-blue-100 text-xs font-bold uppercase mb-1">Revenus Globaux Sécurisés</p>
+                            <h3 className="text-4xl font-black mb-2">{(totalRev || 0).toLocaleString()} <span className="text-xl font-medium">F</span></h3>
+                        </div>
+
+                        <div className="space-y-3">
+                            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest border-b border-slate-800 pb-2">Ventilation par pôle</h3>
+                            <div className="bg-slate-800 p-4 rounded-xl flex justify-between items-center"><div className="flex items-center gap-3"><div className="w-10 h-10 bg-slate-700 rounded-lg flex items-center justify-center text-blue-400"><Icon name="Wrench"/></div><span className="font-bold">Main d'œuvre</span></div><span className="font-bold text-blue-400">{(revLabor || 0).toLocaleString()} F</span></div>
+                            <div className="bg-slate-800 p-4 rounded-xl flex justify-between items-center"><div className="flex items-center gap-3"><div className="w-10 h-10 bg-slate-700 rounded-lg flex items-center justify-center text-green-400"><Icon name="Store"/></div><span className="font-bold">Matériaux (B2C/B2B)</span></div><span className="font-bold text-green-400">{(revMaterial || 0).toLocaleString()} F</span></div>
+                            <div className="bg-slate-800 p-4 rounded-xl flex justify-between items-center"><div className="flex items-center gap-3"><div className="w-10 h-10 bg-slate-700 rounded-lg flex items-center justify-center text-teal-400"><Icon name="Truck"/></div><span className="font-bold">Livraison</span></div><span className="font-bold text-teal-400">{(revDelivery || 0).toLocaleString()} F</span></div>
+                        </div>
+
+                        {Object.keys(revByCategory).length > 0 && (
+                            <div className="space-y-3 mt-6">
+                                <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest border-b border-slate-800 pb-2">Performances par métier</h3>
+                                {Object.entries(revByCategory).map(([cat, amount]) => (
+                                    <div key={cat} className="flex justify-between text-sm text-slate-300">
+                                        <span className="capitalize">{categories.find(c=>c.id===cat)?.name || cat}</span>
+                                        <span className="font-bold text-white">{(amount || 0).toLocaleString()} F</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {tab === 'commissions' && (
+                    <div className="animate-in slide-in-from-bottom-5 space-y-6">
+                        <div className="bg-blue-900/30 p-4 rounded-xl border border-blue-800/50 mb-6">
+                            <p className="text-xs text-blue-300"><Icon name="Info" size={14} className="inline mr-1"/>Les taux modifiés ici ne s'appliqueront qu'aux <b>nouvelles transactions</b>. L'historique financier reste intact.</p>
+                        </div>
+
+                        <div className="space-y-3">
+                            <h3 className="text-sm font-bold text-blue-400 uppercase tracking-widest border-b border-slate-800 pb-2">Taux Globaux par Défaut</h3>
+                            <div className="bg-slate-800 p-3 rounded-xl flex justify-between items-center"><span className="text-sm">Main d'œuvre Artisan</span><div className="flex items-center gap-2"><input type="number" value={platformFees.labor} onChange={e=>setPlatformFees({...platformFees, labor: parseFloat(e.target.value)})} className="w-16 bg-slate-900 border border-slate-700 p-2 rounded text-center text-sm outline-none"/><span>%</span></div></div>
+                            <div className="bg-slate-800 p-3 rounded-xl flex justify-between items-center"><span className="text-sm">Vente Matériaux</span><div className="flex items-center gap-2"><input type="number" value={platformFees.material} onChange={e=>setPlatformFees({...platformFees, material: parseFloat(e.target.value)})} className="w-16 bg-slate-900 border border-slate-700 p-2 rounded text-center text-sm outline-none"/><span>%</span></div></div>
+                            <div className="bg-slate-800 p-3 rounded-xl flex justify-between items-center"><span className="text-sm">Frais Livraison</span><div className="flex items-center gap-2"><input type="number" value={platformFees.delivery} onChange={e=>setPlatformFees({...platformFees, delivery: parseFloat(e.target.value)})} className="w-16 bg-slate-900 border border-slate-700 p-2 rounded text-center text-sm outline-none"/><span>%</span></div></div>
+                        </div>
+
+                        <div className="space-y-3 mt-6">
+                            <h3 className="text-sm font-bold text-orange-400 uppercase tracking-widest border-b border-slate-800 pb-2">Taux Spécifiques (Métiers)</h3>
+                            {categories.filter(c => c.id !== 'livraison').map(cat => (
+                                <div key={cat.id} className="bg-slate-800 p-3 rounded-xl flex justify-between items-center">
+                                    <span className="text-sm">{cat.name}</span>
+                                    <div className="flex items-center gap-2"><input type="number" value={(platformFees.artisanCategories && platformFees.artisanCategories[cat.id]) || platformFees.labor} onChange={e=>setPlatformFees({...platformFees, artisanCategories: {...platformFees.artisanCategories, [cat.id]: parseFloat(e.target.value)}})} className="w-16 bg-slate-900 border border-slate-700 p-2 rounded text-center text-sm outline-none text-orange-400"/><span>%</span></div>
+                                </div>
+                            ))}
+                            <form onSubmit={handleAddCategory} className="bg-slate-800 p-3 rounded-xl flex gap-2">
+                                <input type="text" placeholder="Nouveau métier" value={newCat.name} onChange={e=>setNewCat({...newCat, name: e.target.value})} className="flex-1 bg-slate-900 border border-slate-700 p-2 rounded text-sm outline-none" required/>
+                                <input type="number" placeholder="Taux %" value={newCat.fee} onChange={e=>setNewCat({...newCat, fee: e.target.value})} className="w-20 bg-slate-900 border border-slate-700 p-2 rounded text-sm outline-none text-center" required/>
+                                <Button type="submit" variant="admin" className="p-2"><Icon name="Plus" size={16}/></Button>
+                            </form>
+                        </div>
+
+                        <div className="space-y-3 mt-6">
+                            <h3 className="text-sm font-bold text-green-400 uppercase tracking-widest border-b border-slate-800 pb-2">Taux Spécifiques (Fournisseurs)</h3>
+                            {supplierSectors.map(sec => (
+                                <div key={sec} className="bg-slate-800 p-3 rounded-xl flex justify-between items-center">
+                                    <span className="text-sm">{sec}</span>
+                                    <div className="flex items-center gap-2"><input type="number" value={(platformFees.supplierSectors && platformFees.supplierSectors[sec]) || platformFees.material} onChange={e=>setPlatformFees({...platformFees, supplierSectors: {...platformFees.supplierSectors, [sec]: parseFloat(e.target.value)}})} className="w-16 bg-slate-900 border border-slate-700 p-2 rounded text-center text-sm outline-none text-green-400"/><span>%</span></div>
+                                </div>
+                            ))}
+                            <form onSubmit={handleAddSector} className="bg-slate-800 p-3 rounded-xl flex gap-2">
+                                <input type="text" placeholder="Nouveau secteur" value={newSec.name} onChange={e=>setNewSec({...newSec, name: e.target.value})} className="flex-1 bg-slate-900 border border-slate-700 p-2 rounded text-sm outline-none" required/>
+                                <input type="number" placeholder="Taux %" value={newSec.fee} onChange={e=>setNewSec({...newSec, fee: e.target.value})} className="w-20 bg-slate-900 border border-slate-700 p-2 rounded text-sm outline-none text-center" required/>
+                                <Button type="submit" variant="admin" className="p-2"><Icon name="Plus" size={16}/></Button>
+                            </form>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            <div className="fixed bottom-0 w-full max-w-md bg-slate-900 border-t border-slate-800 py-3 px-6 flex justify-around z-50">
+                <button onClick={() => setTab('dashboard')} className={`flex-1 flex flex-col items-center gap-1 text-[10px] ${tab === 'dashboard' ? 'text-blue-400' : 'text-slate-500'}`}><Icon name="Activity" size={20}/><span>Portefeuille</span></button>
+                <button onClick={() => setTab('commissions')} className={`flex-1 flex flex-col items-center gap-1 text-[10px] ${tab === 'commissions' ? 'text-blue-400' : 'text-slate-500'}`}><Icon name="Settings" size={20}/><span>Commissions</span></button>
+            </div>
+        </div>
+    );
+};
+
+// 2. ESPACE CLIENT
+const ClientDashboard = ({ user, onLogout, categories, artisans, suppliers, jobs, orders, onAddJob, onAddOrder, platformFees, onNotify, onUpdateJob, onUpdateOrder }) => {
+  const [tab, setTab] = useState('home');
+  const [directoryType, setDirectoryType] = useState('artisan');
+  const [artisanCategoryFilter, setArtisanCategoryFilter] = useState('all');
+  const [supplierZoneFilter, setSupplierZoneFilter] = useState('all');
+
+  const [selectedArtisan, setSelectedArtisan] = useState(null);
+  const [problemDescription, setProblemDescription] = useState('');
+  
+  const [selectedSupplier, setSelectedSupplier] = useState(null);
+  const [cart, setCart] = useState([]);
+  const [showCart, setShowCart] = useState(false);
+  const [showPayment, setShowPayment] = useState(null); 
+  const [showDisputeModal, setShowDisputeModal] = useState(null);
+  const [ratingTarget, setRatingTarget] = useState(null);
+  const [deliveryMode, setDeliveryMode] = useState('pickup');
+  const [localNotif, setLocalNotif] = useState(null);
+
+  const DELIVERY_FEE = 1500;
+
+  const showNotification = (title, text) => {
+      setLocalNotif({ title, text });
+      setTimeout(() => setLocalNotif(null), 4000);
+  };
+
+  const getGrossMatPrice = (netPrice, sector) => {
+      const feePercent = (platformFees?.supplierSectors && platformFees.supplierSectors[sector]) || platformFees?.material || 3;
+      return Math.round((netPrice || 0) * (1 + feePercent / 100));
+  };
+  const grossDeliveryFee = Math.round(DELIVERY_FEE * (1 + (platformFees?.delivery || 5) / 100));
+  
+  const getJobTotal = (j) => {
+      if(!j || !j.financials) return 0;
+      return (j.financials.laborCost || 0) + (j.financials.tokenAmount || 0) + (j.financials.platformFeesBreakdown?.labor || 0) + (j.financials.platformFeesBreakdown?.material || 0);
+  };
+
+  const uniqueZones = [...new Set(suppliers.map(s => s.adresse?.split(',')[0].trim()).filter(Boolean))];
+  const filteredArtisans = artisans.filter(a => artisanCategoryFilter === 'all' || a.category === artisanCategoryFilter);
+  const filteredSuppliers = suppliers.filter(s => supplierZoneFilter === 'all' || (s.adresse && s.adresse.includes(supplierZoneFilter)));
+
+  const myRequests = jobs.filter(j => j.clientId === user.id || j.clientId === 999);
+  const myOrders = orders.filter(o => o.clientId === user.id || o.clientId === 999);
+
+  const getOrderTotal = (o) => o.total || ((o.subtotal || 0) + (o.platformFee || 0) + (o.deliveryCost || 0));
+
+  const escrowJobsTotal = myRequests.filter(j => ['funded', 'materials_picked_up', 'work_done', 'disputed'].includes(j.status)).reduce((acc, j) => acc + getJobTotal(j), 0);
+  const completedJobsTotal = myRequests.filter(j => j.status === 'completed').reduce((acc, j) => acc + getJobTotal(j), 0);
+  
+  const escrowOrdersTotal = myOrders.filter(o => ['paid', 'prepared', 'searching_driver', 'driver_assigned', 'shipping', 'disputed'].includes(o.status)).reduce((acc, o) => acc + getOrderTotal(o), 0);
+  const completedOrdersTotal = myOrders.filter(o => o.status === 'delivered').reduce((acc, o) => acc + getOrderTotal(o), 0);
+  
+  const totalEscrow = escrowJobsTotal + escrowOrdersTotal;
+  const totalDisbursed = completedJobsTotal + completedOrdersTotal;
+  const totalSpent = totalEscrow + totalDisbursed;
+
+  const allTransactions = [
+      ...myRequests.filter(j => j.status !== 'sent' && j.status !== 'quote_provided').map(j => ({ id: j.id, type: 'job', title: `Chantier: ${j.artisanName}`, date: j.date || new Date().toLocaleDateString(), amount: getJobTotal(j), status: j.status })),
+      ...myOrders.map(o => ({ id: o.id, type: 'order', title: `Commande: ${o.supplierName}`, date: o.date || new Date().toLocaleDateString(), amount: getOrderTotal(o), status: o.status }))
+  ].sort((a, b) => b.id - a.id);
+
+  const handleSendQuoteRequest = () => {
+      if(!problemDescription.trim()) return alert("Veuillez décrire votre besoin.");
+      onAddJob({ id: Date.now(), clientId: user.id, clientName: user.prenoms, artisanId: selectedArtisan.id, artisanName: selectedArtisan.name, artisanCategory: selectedArtisan.category, problem: problemDescription, status: 'sent', date: new Date().toLocaleDateString(), paymentStatus: 'pending', financials: { tokenCode: null, tokenAmount: 0, laborCost: 0, platformFeesBreakdown: { labor: 0, material: 0, delivery: 0 } }, interventionData: { materials: [] }, milestones: [{id: 1, status: 'pending'}, {id: 2, status: 'pending'}] });
+      onNotify(selectedArtisan.id, 'artisan', `Nouvelle demande de devis reçue de ${user.prenoms}.`);
+      showNotification("Demande envoyée", "L'artisan a été notifié de votre besoin.");
+      setSelectedArtisan(null);
+      setProblemDescription('');
+      setTab('requests');
+  };
+
+  const handleCheckoutSuccess = () => {
+      if (showPayment.type === 'order') {
+          const subtotalNet = cart.reduce((a, b) => a + (b.price || 0), 0);
+          const subtotalGross = cart.reduce((a, b) => a + getGrossMatPrice(b.price, selectedSupplier.secteur), 0);
+          const matFeeAmount = subtotalGross - subtotalNet;
+          
+          const finalDeliveryCostNet = deliveryMode === 'delivery' ? DELIVERY_FEE : 0;
+          const deliveryFeeAmount = deliveryMode === 'delivery' ? (grossDeliveryFee - DELIVERY_FEE) : 0;
+
+          onAddOrder({ id: Date.now(), clientId: user.id, clientName: user.prenoms, supplierId: selectedSupplier.id, supplierName: selectedSupplier.raisonSociale, items: cart, subtotal: subtotalNet, deliveryCost: finalDeliveryCostNet, platformFee: matFeeAmount + deliveryFeeAmount, total: subtotalGross + (deliveryMode === 'delivery' ? grossDeliveryFee : 0), status: 'paid', deliveryMode: deliveryMode, pickupCode: `RETRAIT-${Math.floor(1000 + Math.random() * 9000)}`, deliveryCode: `LIVREUR-${Math.floor(1000 + Math.random() * 9000)}`, clientReceiveCode: `RECEPTION-${Math.floor(1000 + Math.random() * 9000)}`, platformFeesBreakdown: { material: matFeeAmount, delivery: deliveryFeeAmount, labor: 0 }, date: new Date().toLocaleDateString() });
+          setCart([]);
+          setShowCart(false);
+          setSelectedSupplier(null);
+          setTab('requests');
+          showNotification("Paiement Réussi", "Votre commande a été validée sous séquestre.");
+      } else {
+          const code = `PA-${Math.floor(1000 + Math.random() * 9000)}`;
+          onUpdateJob(showPayment.id, { ...showPayment, status: 'funded', paymentStatus: 'funded', financials: { ...showPayment.financials, tokenCode: code } });
+          onNotify(showPayment.artisanId, 'artisan', `Le devis a été payé et placé sous séquestre. Vous pouvez retirer le matériel.`);
+          showNotification("Séquestre Validé", "L'artisan est notifié et a reçu le code matériel.");
+      }
+      setShowPayment(null);
+  };
+
+  const handleValidateWork = (job) => {
+      onUpdateJob(job.id, { ...job, status: 'completed', milestones: job.milestones.map(m=>m.id===2?{...m, status:'validated'}:m) });
+      onNotify(job.artisanId, 'artisan', `Le client a validé les travaux ! Vos fonds (Main d'œuvre) ont été décaissés.`);
+      showNotification("Travaux validés", "La main d'œuvre a été débloquée pour l'artisan.");
+  };
+
+  const handleRatingSubmit = (data) => {
+      if (ratingTarget.type === 'job') {
+          onUpdateJob(ratingTarget.id, { ...jobs.find(j=>j.id===ratingTarget.id), rating: data.rating, review: data.comment });
+      } else if (ratingTarget.type === 'order_supplier') {
+          onUpdateOrder(ratingTarget.id, { ...orders.find(o=>o.id===ratingTarget.id), supplierRating: data.rating, supplierReview: data.comment });
+      } else if (ratingTarget.type === 'order_driver') {
+          onUpdateOrder(ratingTarget.id, { ...orders.find(o=>o.id===ratingTarget.id), driverRating: data.rating, driverReview: data.comment });
+      }
+      setRatingTarget(null);
+      showNotification("Évaluation enregistrée", "Merci pour votre contribution !");
+  };
+
+  if (selectedArtisan) {
+      return (
+          <div className="bg-white min-h-screen pt-12 px-6 flex flex-col">
+              <button onClick={() => setSelectedArtisan(null)} className="mb-4 flex items-center gap-1 text-gray-500"><Icon name="ChevronLeft"/> Retour</button>
+              <h2 className="text-2xl font-bold mb-2">{selectedArtisan.name} {selectedArtisan.prenoms}</h2>
+              <Badge text={categories.find(c=>c.id===selectedArtisan.category)?.name || selectedArtisan.category} />
+              <div className="mt-8 flex-1">
+                  <InputGroup label="Décrivez précisément votre besoin">
+                      <textarea className="w-full h-32 bg-gray-50 border rounded-xl p-3 outline-none" value={problemDescription} onChange={e=>setProblemDescription(e.target.value)} placeholder="Ex: Fuite d'eau importante sous l'évier de la cuisine..."></textarea>
+                  </InputGroup>
+                  <Button className="w-full mt-4 py-3" iconName="Send" onClick={handleSendQuoteRequest}>Envoyer la Demande</Button>
+              </div>
+          </div>
+      );
+  }
+
+  if (selectedSupplier) {
+      const subtotalGross = cart.reduce((a,b)=>a+getGrossMatPrice(b.price, selectedSupplier.secteur),0);
+      const deliveryCostGross = deliveryMode === 'delivery' ? grossDeliveryFee : 0;
+      
+      return (
+          <div className="bg-gray-50 min-h-screen pb-24">
+              {showPayment && <PaymentModal amount={showPayment.type === 'order' ? (showPayment.total || 0) : 0} onClose={()=>setShowPayment(null)} onSuccess={handleCheckoutSuccess}/>}
+
+              <div className="bg-green-800 text-white pt-12 pb-8 px-6 rounded-b-[2rem]">
+                  <button onClick={() => setSelectedSupplier(null)} className="mb-4 flex items-center gap-1 text-green-200"><Icon name="ChevronLeft"/> Retour</button>
+                  <h1 className="text-2xl font-bold">{selectedSupplier.raisonSociale}</h1>
+                  <p className="text-sm text-green-200">{selectedSupplier.secteur}</p>
+              </div>
+              <div className="p-6">
+                  <h3 className="font-bold text-lg mb-4">Catalogue en ligne</h3>
+                  <div className="space-y-3">
+                      {selectedSupplier.catalog?.map(item => (
+                          <div key={item.id} className="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-3">
+                              {item.image ? (
+                                  <img src={item.image} alt={item.name} className="w-14 h-14 object-cover rounded-xl border border-gray-100" />
+                              ) : (
+                                  <div className="w-14 h-14 bg-gray-50 rounded-xl flex items-center justify-center border border-gray-100 text-gray-400"><Icon name="Package" size={24}/></div>
+                              )}
+                              <div className="flex-1">
+                                  <p className="font-bold text-gray-800 leading-tight">{item.name}</p>
+                                  <p className="text-sm font-black text-green-600 mt-1">{(getGrossMatPrice(item.price, selectedSupplier.secteur) || 0).toLocaleString()} F</p>
+                              </div>
+                              <button onClick={() => {setCart([...cart, item]); showNotification("Succès", "Article ajouté au panier");}} className="w-10 h-10 bg-green-50 text-green-600 rounded-xl flex items-center justify-center hover:bg-green-100 active:scale-95 transition-all"><Icon name="Plus" size={20}/></button>
+                          </div>
+                      ))}
+                      {!selectedSupplier.catalog?.length && <p className="text-center text-gray-500 py-10">Ce catalogue est vide pour le moment.</p>}
+                  </div>
+              </div>
+              {cart.length > 0 && (
+                  <button onClick={() => setShowCart(true)} className="fixed bottom-6 right-6 bg-green-600 text-white p-4 rounded-full shadow-lg z-40 animate-bounce">
+                      <div className="relative">
+                          <Icon name="ShoppingCart" size={24}/>
+                          <span className="absolute -top-3 -right-3 bg-red-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">{cart.length}</span>
+                      </div>
+                  </button>
+              )}
+              {showCart && (
+                  <div className="fixed inset-0 bg-black/60 z-[60] flex items-end justify-center p-4 backdrop-blur-sm animate-in fade-in">
+                      <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-xl animate-in slide-in-from-bottom-5">
+                          <div className="flex justify-between items-center mb-4"><h3 className="font-bold text-lg">Votre Panier</h3><button onClick={() => setShowCart(false)} className="text-gray-400"><Icon name="X"/></button></div>
+                          <div className="max-h-40 overflow-y-auto mb-4 space-y-3 border-b pb-4">
+                              {cart.map((item, i) => (
+                                  <div key={i} className="flex items-center gap-3 text-sm text-gray-700">
+                                      {item.image ? <img src={item.image} className="w-10 h-10 object-cover rounded-lg"/> : <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center"><Icon name="Package" size={16} className="text-gray-400"/></div>}
+                                      <span className="flex-1 truncate">{item.name}</span>
+                                      <span className="font-bold">{(getGrossMatPrice(item.price, selectedSupplier.secteur) || 0).toLocaleString()} F</span>
+                                  </div>
+                              ))}
+                          </div>
+                          
+                          <div className="mb-4">
+                              <p className="text-xs font-bold text-gray-700 uppercase mb-2">Mode de récupération</p>
+                              <div className="flex gap-2">
+                                  <label className={`flex-1 p-3 rounded-xl border-2 flex flex-col items-center cursor-pointer transition-all ${deliveryMode === 'pickup' ? 'border-green-600 bg-green-50' : 'border-gray-200'}`}>
+                                      <input type="radio" name="delivery" className="hidden" checked={deliveryMode === 'pickup'} onChange={() => setDeliveryMode('pickup')}/>
+                                      <Icon name="Store" size={20} className={deliveryMode === 'pickup' ? 'text-green-600' : 'text-gray-400'}/>
+                                      <span className={`text-[10px] font-bold mt-1 ${deliveryMode === 'pickup' ? 'text-green-800' : 'text-gray-500'}`}>Retrait Magasin</span>
+                                      <span className="text-[10px] text-gray-400">Gratuit</span>
+                                  </label>
+                                  <label className={`flex-1 p-3 rounded-xl border-2 flex flex-col items-center cursor-pointer transition-all ${deliveryMode === 'delivery' ? 'border-green-600 bg-green-50' : 'border-gray-200'}`}>
+                                      <input type="radio" name="delivery" className="hidden" checked={deliveryMode === 'delivery'} onChange={() => setDeliveryMode('delivery')}/>
+                                      <Icon name="Truck" size={20} className={deliveryMode === 'delivery' ? 'text-green-600' : 'text-gray-400'}/>
+                                      <span className={`text-[10px] font-bold mt-1 ${deliveryMode === 'delivery' ? 'text-green-800' : 'text-gray-500'}`}>Livraison (Pro)</span>
+                                      <span className="text-[10px] text-gray-400">+{(grossDeliveryFee || 0).toLocaleString()} F</span>
+                                  </label>
+                              </div>
+                          </div>
+
+                          <div className="space-y-2 mb-4 text-sm pt-4 border-t">
+                              <div className="flex justify-between text-gray-500"><span>Sous-total Matériel</span><span>{(subtotalGross || 0).toLocaleString()} F</span></div>
+                              {deliveryMode === 'delivery' && <div className="flex justify-between text-gray-500"><span>Livraison</span><span>{(grossDeliveryFee || 0).toLocaleString()} F</span></div>}
+                              <div className="font-bold flex justify-between text-lg mt-2 pt-2 border-t text-gray-900"><span>Total Général</span><span className="text-green-600">{((subtotalGross || 0) + (deliveryCostGross || 0)).toLocaleString()} F</span></div>
+                          </div>
+
+                          <Button className="w-full" variant="success" onClick={() => { setShowPayment({ type: 'order', total: subtotalGross + deliveryCostGross }); }}>Payer en compte séquestre</Button>
+                      </div>
+                  </div>
+              )}
+          </div>
+      );
+  }
+
+  return (
+    <div className="bg-gray-50 min-h-screen pb-20 relative">
+      {localNotif && (
+          <div className="absolute top-4 left-4 right-4 bg-green-600 text-white p-4 rounded-xl shadow-2xl z-[100] animate-in slide-in-from-top-5 flex items-start gap-3">
+              <Icon name="CheckCircle" size={24} className="shrink-0" />
+              <div>
+                  <p className="font-bold text-sm">{localNotif.title}</p>
+                  <p className="text-xs text-green-100">{localNotif.text}</p>
+              </div>
+              <button onClick={() => setLocalNotif(null)} className="ml-auto text-green-200 hover:text-white"><Icon name="X" size={16}/></button>
+          </div>
+      )}
+
+      {showPayment && <PaymentModal amount={showPayment.type === 'order' ? (showPayment.total || 0) : (getJobTotal(showPayment) || 0)} onClose={()=>setShowPayment(null)} onSuccess={handleCheckoutSuccess}/>}
+      {ratingTarget && <RatingModal targetInfo={ratingTarget} onClose={()=>setRatingTarget(null)} onSubmit={handleRatingSubmit} />}
+      
+      {showDisputeModal && <DisputeModal targetInfo={showDisputeModal} onClose={()=>setShowDisputeModal(null)} onSubmit={(data)=>{
+          onUpdateJob(showDisputeModal.id, { ...jobs.find(j=>j.id===showDisputeModal.id), status: 'disputed', disputeReason: data.reason });
+          onNotify(99, 'admin', `Nouveau litige déclaré par ${user.nom}`);
+          setShowDisputeModal(null);
+          showNotification("Litige enregistré", "Les fonds sont gelés jusqu'à résolution.");
+      }} />}
+
+      {tab === 'home' && (
+          <div className="space-y-6">
+              <div className="bg-blue-600 pt-12 pb-8 px-6 rounded-b-[2rem] shadow-lg text-white">
+                  <div className="mb-6"><p className="text-blue-100 text-sm">Bonjour, {user.prenoms}</p><h1 className="text-2xl font-bold">Besoin d'un pro ?</h1></div>
+                  <div className="bg-white rounded-xl flex items-center px-4 py-3 shadow-sm text-gray-700 cursor-pointer" onClick={() => {setDirectoryType('artisan'); setTab('search');}}>
+                      <Icon name="Search" className="text-gray-400 mr-3" size={20} /><span className="text-sm text-gray-400">Rechercher...</span>
+                  </div>
+              </div>
+              <div className="px-6 grid grid-cols-4 gap-4">
+                  {categories.filter(c => c.id !== 'livraison').map(cat => (
+                      <button key={cat.id} onClick={() => { setDirectoryType('artisan'); setTab('search'); setArtisanCategoryFilter(cat.id); }} className="flex flex-col items-center gap-2">
+                          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${cat.color}`}><Icon name={cat.iconName} size={24}/></div>
+                          <span className="text-[10px] font-medium truncate w-full text-center">{cat.name}</span>
+                      </button>
+                  ))}
+              </div>
+          </div>
+      )}
+      
+      {tab === 'search' && (
+          <div className="pt-12 px-6 pb-6">
+              <h2 className="font-bold text-xl mb-4">Annuaire</h2>
+              <div className="bg-gray-200 p-1 rounded-xl flex mb-4">
+                  <button onClick={() => setDirectoryType('artisan')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${directoryType === 'artisan' ? 'bg-white shadow text-blue-600' : 'text-gray-500'}`}>Artisans</button>
+                  <button onClick={() => setDirectoryType('supplier')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${directoryType === 'supplier' ? 'bg-white shadow text-green-600' : 'text-gray-500'}`}>Fournisseurs</button>
+              </div>
+
+              {directoryType === 'artisan' && (
+                  <div className="mb-4">
+                      <select value={artisanCategoryFilter} onChange={e => setArtisanCategoryFilter(e.target.value)} className="w-full bg-white border border-gray-200 p-3 rounded-xl outline-none text-sm text-gray-700 font-medium shadow-sm">
+                          <option value="all">Toutes les catégories</option>
+                          {categories.filter(c => c.id !== 'livraison').map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                      </select>
+                  </div>
+              )}
+              {directoryType === 'supplier' && (
+                  <div className="mb-4">
+                      <select value={supplierZoneFilter} onChange={e => setSupplierZoneFilter(e.target.value)} className="w-full bg-white border border-gray-200 p-3 rounded-xl outline-none text-sm text-gray-700 font-medium shadow-sm">
+                          <option value="all">Toutes les régions / zones</option>
+                          {uniqueZones.map(z => <option key={z} value={z}>{z}</option>)}
+                      </select>
+                  </div>
+              )}
+
+              <div className="space-y-3 pb-8">
+                  {directoryType === 'artisan' && (filteredArtisans.length === 0 ? <p className="text-center text-gray-400 py-10">Aucun artisan trouvé.</p> : filteredArtisans.map(a => (
+                      <div key={a.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex gap-4">
+                         <div className="w-16 h-16 bg-blue-50 rounded-xl flex items-center justify-center text-blue-500 font-bold text-xl uppercase">{a.name[0]}{a.prenoms[0]}</div>
+                         <div className="flex-1">
+                             <div className="flex justify-between items-center"><h3 className="font-bold text-gray-800">{a.name} {a.prenoms}</h3><div className="flex items-center text-yellow-500 text-xs font-bold"><Icon name="Star" size={12} fill="currentColor" className="mr-1"/>{a.rating}</div></div>
+                             <p className="text-xs text-blue-600 capitalize font-medium mb-1">{categories.find(c=>c.id === a.category)?.name || a.category}</p>
+                             <Button className="w-full py-2 mt-2 text-xs" iconName="Send" onClick={() => setSelectedArtisan(a)}>Demander Devis</Button>
+                         </div>
+                      </div>
+                  )))}
+                  {directoryType === 'supplier' && (filteredSuppliers.length === 0 ? <p className="text-center text-gray-400 py-10">Aucun fournisseur trouvé dans cette zone.</p> : filteredSuppliers.map(s => (
+                      <div key={s.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex gap-4">
+                         <div className="w-16 h-16 bg-green-50 rounded-xl flex items-center justify-center text-green-500 font-bold"><Icon name="Store" size={28}/></div>
+                         <div className="flex-1">
+                             <h3 className="font-bold text-gray-800">{s.raisonSociale}</h3>
+                             <p className="text-xs text-green-600 font-medium mb-1">{s.secteur}</p>
+                             <Button variant="success" className="w-full py-2 mt-2 text-xs" iconName="Package" onClick={() => setSelectedSupplier(s)}>Voir catalogue</Button>
+                         </div>
+                      </div>
+                  )))}
+              </div>
+          </div>
+      )}
+
+      {tab === 'requests' && (
+          <div className="pt-12 px-6 pb-6">
+              <h2 className="font-bold text-2xl text-slate-800 mb-6">Mon Suivi Opérationnel</h2>
+              
+              <div className="space-y-6">
+                  {/* CHANTIERS (ARTISANS) */}
+                  {myRequests.length > 0 && (
+                      <div className="space-y-4">
+                          <h3 className="text-sm font-bold text-blue-600 uppercase tracking-widest border-b pb-1">Chantiers / Dépannages</h3>
+                          {myRequests.map(job => (
+                              <div key={job.id} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                                  <div className="flex justify-between items-start mb-2">
+                                      <div><span className="font-bold text-sm text-gray-800 block">Pro: {job.artisanName}</span><span className="text-[10px] text-gray-400">{job.date}</span></div>
+                                      <Badge text={job.status === 'sent' ? 'En attente devis' : job.status === 'quote_provided' ? 'Devis Reçu' : job.status === 'funded' ? 'Payé (Séquestre)' : job.status === 'materials_picked_up' ? 'En Travaux' : job.status === 'work_done' ? 'À valider' : job.status === 'disputed' ? 'En Litige' : job.status === 'completed' ? 'Clôturé' : job.status} color={job.status === 'quote_provided' || job.status === 'work_done' ? "bg-orange-100 text-orange-700 border-orange-200" : job.status === 'completed' ? "bg-green-100 text-green-700 border-green-200" : job.status === 'disputed' ? "bg-red-100 text-red-700 border-red-200" : "bg-blue-50 text-blue-700 border-blue-200"} />
+                                  </div>
+                                  <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-xl mb-4 italic">"{job.problem}"</p>
+                                  
+                                  {/* CLIENT REÇOIT LE DEVIS - PRIX TTC UNIQUEMENT */}
+                                  {job.status === 'quote_provided' && (
+                                      <div className="pt-4 border-t border-gray-100">
+                                          <p className="text-xs font-bold text-gray-800 uppercase mb-3"><Icon name="FileText" size={14} className="inline text-blue-600"/> Devis Détaillé</p>
+                                          <div className="bg-orange-50 p-3 rounded-lg border border-orange-100 mb-4">
+                                              <div className="flex justify-between text-xs mb-2 pb-2 border-b border-orange-200/50"><span className="text-orange-800">Matériaux (TTC):</span><span className="font-bold text-orange-900">{((job.financials?.tokenAmount || 0) + (job.financials?.platformFeesBreakdown?.material || 0)).toLocaleString()} F</span></div>
+                                              <div className="flex justify-between text-xs mb-2 pb-2 border-b border-orange-200/50"><span className="text-orange-800">Main d'œuvre (TTC):</span><span className="font-bold text-orange-900">{((job.financials?.laborCost || 0) + (job.financials?.platformFeesBreakdown?.labor || 0)).toLocaleString()} F</span></div>
+                                              <div className="flex justify-between text-sm font-black text-orange-900 mt-3 pt-2 border-t border-orange-200"><span>TOTAL À PAYER:</span><span>{(getJobTotal(job) || 0).toLocaleString()} F</span></div>
+                                          </div>
+                                          <div className="flex gap-2">
+                                              <Button variant="danger" className="flex-1 text-xs shadow-none" onClick={()=>onUpdateJob(job.id, {...job, status: 'quote_rejected'})}>Refuser</Button>
+                                              <Button variant="success" className="flex-1 text-xs shadow-none" onClick={()=>setShowPayment(job)}>Payer (Séquestre)</Button>
+                                          </div>
+                                      </div>
+                                  )}
+
+                                  {job.status === 'funded' && <p className="text-xs text-center text-blue-600 bg-blue-50 p-2 rounded-lg font-medium mt-3">Les fonds sont en sécurité. L'artisan va récupérer le matériel avec le code {job.financials.tokenCode}.</p>}
+                                  {job.status === 'materials_picked_up' && <p className="text-xs text-center text-orange-600 bg-orange-50 p-2 rounded-lg font-medium mt-3">L'artisan a récupéré le matériel chez le fournisseur. Les travaux sont en cours.</p>}
+
+                                  {/* CLIENT VALIDE LA FIN DES TRAVAUX */}
+                                  {job.status === 'work_done' && (
+                                      <div className="pt-4 border-t border-gray-100">
+                                          <div className="bg-green-50 p-4 rounded-xl border border-green-200 text-center mb-4">
+                                              <Icon name="CheckCircle" className="mx-auto text-green-600 mb-2" size={32}/>
+                                              <p className="text-xs font-bold text-green-900">L'artisan a déclaré la fin des travaux et envoyé une preuve photo.</p>
+                                          </div>
+                                          {job.milestones[1]?.proof && (
+                                              <div className="mb-4 w-full h-32 rounded-lg overflow-hidden border border-gray-200"><img src={job.milestones[1].proof} className="w-full h-full object-cover"/></div>
+                                          )}
+                                          <div className="flex gap-3">
+                                              <Button variant="outline" className="flex-1 py-3 text-xs text-red-600 border-red-600 hover:bg-red-50" onClick={()=>setShowDisputeModal({id: job.id, title: `Litige Chantier: ${job.artisanName}`})}>Problème (Litige)</Button>
+                                              <Button variant="success" className="flex-1 py-3 text-xs" onClick={()=>handleValidateWork(job)}>Valider les travaux</Button>
+                                          </div>
+                                      </div>
+                                  )}
+
+                                  {/* SYSTEME DE NOTATION ARTISAN */}
+                                  {job.status === 'completed' && (
+                                      job.rating ? (
+                                          <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
+                                              <span className="text-xs text-gray-500">Votre note :</span>
+                                              <div className="flex text-yellow-400">
+                                                  {[...Array(5)].map((_, i) => <Icon key={i} name="Star" size={14} fill={i < job.rating ? 'currentColor' : 'none'} className={i < job.rating ? '' : 'text-gray-300'} />)}
+                                              </div>
+                                          </div>
+                                      ) : (
+                                          <Button variant="outline" className="w-full py-2 mt-3 text-xs shadow-none border-blue-200 text-blue-700" onClick={() => setRatingTarget({ type: 'job', id: job.id, name: job.artisanName, role: 'artisan' })}>Évaluer l'artisan</Button>
+                                      )
+                                  )}
+                                  
+                                  {job.status === 'disputed' && (
+                                      <div className="bg-red-50 p-3 rounded-xl border border-red-200 mt-3 text-xs text-red-800">
+                                          <b>Litige Ouvert :</b> "{job.disputeReason}". Les fonds sont gelés jusqu'à résolution.
+                                      </div>
+                                  )}
+                              </div>
+                          ))}
+                      </div>
+                  )}
+
+                  {/* COMMANDES E-COMMERCE (MATERIEL) */}
+                  {myOrders.length > 0 && (
+                      <div className="space-y-4 pt-4 border-t border-gray-200">
+                          <h3 className="text-sm font-bold text-green-600 uppercase tracking-widest border-b pb-1">Commandes Matériel</h3>
+                          {myOrders.map(order => (
+                              <div key={order.id} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                                  <div className="flex justify-between items-center mb-3">
+                                      <span className="font-bold text-sm text-gray-800">CMD #{String(order.id).slice(-4)}</span>
+                                      <Badge text={order.status === 'paid' ? 'En attente de préparation' : order.status === 'prepared' ? 'Prêt pour retrait' : order.status === 'searching_driver' ? 'Recherche livreur' : order.status === 'driver_assigned' ? 'Livreur en route' : order.status === 'shipping' ? 'En cours de livraison' : order.status === 'delivered' ? 'Livré' : order.status} color="bg-green-50 text-green-700 border-green-200"/>
+                                  </div>
+                                  <p className="text-xs text-gray-500 mb-1"><Icon name="Store" size={12} className="inline"/> Fournisseur: {order.supplierName}</p>
+                                  <p className="text-xs text-gray-500 mb-3"><Icon name={order.deliveryMode === 'delivery' ? 'Truck' : 'Store'} size={12} className="inline"/> Mode: {order.deliveryMode === 'delivery' ? 'Livraison' : 'Retrait Magasin'}</p>
+                                  
+                                  {order.deliveryMode === 'pickup' && order.status === 'prepared' && (
+                                      <div className="bg-orange-50 p-4 rounded-xl text-center border border-orange-100 mt-3">
+                                          <p className="text-xs font-bold text-orange-900 mb-1">Votre commande vous attend !</p>
+                                          <p className="text-xs text-orange-800 mb-2">Présentez ce code au fournisseur :</p>
+                                          <span className="font-mono text-lg font-bold text-orange-900 tracking-widest bg-white px-3 py-1 rounded-lg border">{order.pickupCode}</span>
+                                      </div>
+                                  )}
+
+                                  {/* COTE CLIENT: ON AFFICHE UNIQUEMENT LE CODE SECRET POUR QU'IL LE DONNE AU LIVREUR */}
+                                  {order.deliveryMode === 'delivery' && ['driver_assigned', 'shipping'].includes(order.status) && (
+                                      <div className="bg-teal-50 p-4 rounded-xl text-center border border-teal-100 mt-3">
+                                          <p className="text-xs font-bold text-teal-900 mb-1">Votre livreur est en route !</p>
+                                          <p className="text-xs text-teal-800 mb-2">À son arrivée, communiquez-lui ce code secret pour recevoir votre colis :</p>
+                                          <span className="font-mono text-lg font-bold text-teal-900 tracking-widest bg-white px-3 py-1 rounded-lg border">{order.clientReceiveCode}</span>
+                                      </div>
+                                  )}
+
+                                  {order.status === 'delivered' && (
+                                      <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
+                                          <p className="text-xs text-center text-green-600 font-bold mb-3">Commande réceptionnée.</p>
+                                          
+                                          {/* NOTATION FOURNISSEUR */}
+                                          {order.supplierRating ? (
+                                              <div className="flex justify-between items-center text-xs text-gray-500 bg-gray-50 p-2 rounded">
+                                                  <span>Avis Fournisseur :</span>
+                                                  <div className="flex text-yellow-400">{[...Array(5)].map((_, i) => <Icon key={i} name="Star" size={12} fill={i < order.supplierRating ? 'currentColor' : 'none'} className={i < order.supplierRating ? '' : 'text-gray-300'} />)}</div>
+                                              </div>
+                                          ) : (
+                                              <Button variant="outline" className="w-full py-2 text-xs shadow-none border-green-200 text-green-700" onClick={() => setRatingTarget({ type: 'order_supplier', id: order.id, name: order.supplierName, role: 'supplier' })}>Évaluer le fournisseur</Button>
+                                          )}
+
+                                          {/* NOTATION LIVREUR */}
+                                          {order.deliveryMode === 'delivery' && (
+                                              order.driverRating ? (
+                                                  <div className="flex justify-between items-center text-xs text-gray-500 bg-gray-50 p-2 rounded">
+                                                      <span>Avis Livreur :</span>
+                                                      <div className="flex text-yellow-400">{[...Array(5)].map((_, i) => <Icon key={i} name="Star" size={12} fill={i < order.driverRating ? 'currentColor' : 'none'} className={i < order.driverRating ? '' : 'text-gray-300'} />)}</div>
+                                                  </div>
+                                              ) : (
+                                                  <Button variant="outline" className="w-full py-2 text-xs shadow-none border-teal-200 text-teal-700" onClick={() => setRatingTarget({ type: 'order_driver', id: order.id, name: 'Votre Livreur', role: 'driver' })}>Évaluer le livreur</Button>
+                                              )
+                                          )}
+                                      </div>
+                                  )}
+                              </div>
+                          ))}
+                      </div>
+                  )}
+
+                  {myRequests.length === 0 && myOrders.length === 0 && <p className="text-center text-gray-400 py-10">Aucune activité récente.</p>}
+              </div>
+          </div>
+      )}
+
+      {tab === 'finances' && (
+          <div className="pt-12 px-6 pb-6">
+              <h2 className="font-bold text-2xl text-slate-800 mb-6">Mes Paiements</h2>
+
+              <div className="space-y-6 animate-in fade-in">
+                  <div className="bg-gradient-to-br from-blue-600 to-indigo-800 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
+                      <Icon name="Wallet" className="absolute -bottom-4 -right-4 text-white/10" size={120}/>
+                      <p className="text-white/80 text-xs font-bold uppercase mb-1 relative z-10">Total Engagé</p>
+                      <h3 className="text-4xl font-bold mb-1 relative z-10">{(totalSpent || 0).toLocaleString()} <span className="text-xl">F</span></h3>
+                      <p className="text-xs text-blue-100 relative z-10">Somme de tous vos paiements sur ProsArtisan.</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-white p-4 rounded-xl shadow-sm border border-blue-200">
+                          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 mb-2"><Icon name="Shield" size={16}/></div>
+                          <p className="text-[10px] text-gray-500 font-bold uppercase mb-1">En Séquestre (Sécurisé)</p>
+                          <p className="text-xl font-black text-blue-800">{(totalEscrow || 0).toLocaleString()} F</p>
+                      </div>
+                      <div className="bg-white p-4 rounded-xl shadow-sm border border-green-200">
+                          <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center text-green-600 mb-2"><Icon name="CheckCircle" size={16}/></div>
+                          <p className="text-[10px] text-gray-500 font-bold uppercase mb-1">Payé aux Pros (Terminé)</p>
+                          <p className="text-xl font-black text-green-800">{(totalDisbursed || 0).toLocaleString()} F</p>
+                      </div>
+                  </div>
+
+                  <div>
+                      <h3 className="font-bold text-sm text-slate-800 border-b pb-2 mb-4">Historique des Transactions</h3>
+                      <div className="space-y-3">
+                          {allTransactions.length === 0 ? <p className="text-center text-gray-400 py-6 text-xs">Aucune transaction.</p> : 
+                          allTransactions.map((t, idx) => (
+                              <div key={idx} className="bg-white p-3 rounded-xl border border-gray-100 flex justify-between items-center shadow-sm">
+                                  <div className="flex gap-3 items-center">
+                                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${t.type === 'job' ? 'bg-blue-50 text-blue-600' : 'bg-green-50 text-green-600'}`}>
+                                          <Icon name={t.type === 'job' ? 'Wrench' : 'Package'} size={18}/>
+                                      </div>
+                                      <div>
+                                          <p className="text-xs font-bold text-gray-800">{t.title}</p>
+                                          <p className="text-[10px] text-gray-500">{t.date}</p>
+                                      </div>
+                                  </div>
+                                  <div className="text-right">
+                                      <p className="text-sm font-bold text-gray-900">{(t.amount || 0).toLocaleString()} F</p>
+                                      <p className="text-[9px] font-bold text-gray-400 uppercase">{['completed', 'delivered'].includes(t.status) ? 'Décaissé' : 'En Séquestre'}</p>
+                                  </div>
+                              </div>
+                          ))}
+                      </div>
+                  </div>
+              </div>
+          </div>
+      )}
+      
+      <div className="fixed bottom-0 w-full max-w-md bg-white border-t py-3 px-6 flex justify-around z-50">
+          <button onClick={() => setTab('home')} className={`flex-1 flex flex-col items-center gap-1 text-[10px] ${tab === 'home' ? 'text-blue-600' : 'text-gray-400'}`}><Icon name="Home" size={20}/><span>Accueil</span></button>
+          <button onClick={() => setTab('requests')} className={`flex-1 flex flex-col items-center gap-1 text-[10px] ${tab === 'requests' ? 'text-blue-600' : 'text-gray-400'}`}><Icon name="ClipboardList" size={20}/><span>Suivi</span></button>
+          <button onClick={() => setTab('finances')} className={`flex-1 flex flex-col items-center gap-1 text-[10px] ${tab === 'finances' ? 'text-blue-600' : 'text-gray-400'}`}><Icon name="Wallet" size={20}/><span>Paiements</span></button>
+          <button onClick={onLogout} className="flex-1 text-gray-400 flex flex-col items-center gap-1 text-[10px]"><Icon name="LogOut" size={20}/><span>Quitter</span></button>
+      </div>
+    </div>
+  );
+};
+
+// 3. ESPACE FOURNISSEUR
+const SupplierDashboard = ({ supplier, jobs, orders, onUpdateJob, onUpdateOrder, onUpdateUser, onNotify, onLogout }) => {
+    const [tab, setTab] = useState('dashboard');
+    const [scanCode, setScanCode] = useState('');
+    const [newItem, setNewItem] = useState({ name: '', sku: '', price: '', stock: '', image: null });
+    const [isAddingItem, setIsAddingItem] = useState(false);
+    const [localNotif, setLocalNotif] = useState(null);
+
+    const showNotification = (title, text) => {
+        setLocalNotif({ title, text });
+        setTimeout(() => setLocalNotif(null), 4000);
+    };
+
+    // --- LOGIQUE FINANCIERE FOURNISSEUR ---
+    const myOrders = orders.filter(o => o.supplierId === supplier.id);
+    const ordersToPrepare = myOrders.filter(o => o.status === 'paid');
+    
+    const escrowOrders = myOrders.filter(o => ['paid', 'prepared', 'searching_driver', 'driver_assigned'].includes(o.status));
+    const releasedOrders = myOrders.filter(o => ['shipping', 'delivered'].includes(o.status));
+    
+    const supplierJobs = jobs.filter(j => j.interventionData?.materials?.some(m => m.supplierId === supplier.id));
+    const escrowJobs = supplierJobs.filter(j => ['funded', 'disputed'].includes(j.status) && j.milestones && j.milestones[0]?.status !== 'validated');
+    const releasedJobs = supplierJobs.filter(j => j.milestones && j.milestones[0]?.status === 'validated');
+    
+    const calcMatAmount = (job) => job.interventionData.materials.filter(m => m.supplierId === supplier.id).reduce((sum, m) => sum + ((m.price || 0) * (m.quantity || 1)), 0);
+    
+    const escrowJobsBalance = escrowJobs.reduce((acc, j) => acc + calcMatAmount(j), 0);
+    const releasedJobsBalance = releasedJobs.reduce((acc, j) => acc + calcMatAmount(j), 0);
+    const escrowOrdersBalance = escrowOrders.reduce((acc, o) => acc + (o.subtotal || 0), 0);
+    const releasedOrdersBalance = releasedOrders.reduce((acc, o) => acc + (o.subtotal || 0), 0);
+
+    const totalEscrow = escrowJobsBalance + escrowOrdersBalance;
+    const availableBalance = releasedJobsBalance + releasedOrdersBalance;
+
+    const disputedOrders = myOrders.filter(o => o.status === 'disputed');
+
+    // FILTRES DE TRACKING FOURNISSEUR
+    const [trackingFilter, setTrackingFilter] = useState('new'); 
+    const newB2COrders = myOrders.filter(o => o.status === 'paid');
+    const activeB2COrders = myOrders.filter(o => ['prepared', 'searching_driver', 'driver_assigned', 'shipping'].includes(o.status));
+    const historyB2COrders = myOrders.filter(o => ['delivered', 'disputed'].includes(o.status));
+
+    const newB2BJobs = supplierJobs.filter(j => j.status === 'funded' && j.milestones[0]?.status !== 'validated');
+    const activeB2BJobs = supplierJobs.filter(j => ['materials_picked_up', 'work_done'].includes(j.status));
+    const historyB2BJobs = supplierJobs.filter(j => ['completed', 'disputed'].includes(j.status));
+
+    const handleScan = () => {
+        const job = jobs.find(j => j.financials?.tokenCode === scanCode && j.status === 'funded');
+        const order = orders.find(o => o.deliveryCode === scanCode && o.status === 'driver_assigned') || orders.find(o => o.pickupCode === scanCode && o.status === 'prepared');
+
+        if(job) {
+            onUpdateJob(job.id, { ...job, status: 'materials_picked_up', milestones: job.milestones.map(m=>m.id===1?{...m, status:'validated'}:m) });
+            onNotify(job.clientId, 'client', `Le fournisseur a remis le matériel à l'artisan. Les travaux commencent.`);
+            onNotify(job.artisanId, 'artisan', "Matériel récupéré ! Vous pouvez démarrer les travaux.");
+            const amount = calcMatAmount(job);
+            showNotification("Retrait B2B validé", `Matériel remis à l'artisan. ${(amount || 0).toLocaleString()} F transférés vers votre solde disponible.`);
+            setScanCode('');
+        } else if (order) {
+            if (order.deliveryMode === 'delivery') onUpdateOrder(order.id, { status: 'shipping' });
+            else onUpdateOrder(order.id, { status: 'delivered' });
+            showNotification("Retrait B2C validé", `Colis remis. ${(order.subtotal || 0).toLocaleString()} F transférés vers votre solde disponible.`);
+            setScanCode('');
+        } else {
+            showNotification("Erreur", "Code invalide ou commande non prête.");
+        }
+    };
+
+    const handlePrepareOrder = (orderId) => {
+        const order = orders.find(o => o.id === orderId);
+        onUpdateOrder(orderId, { status: order.deliveryMode === 'delivery' ? 'searching_driver' : 'prepared' });
+        showNotification("Commande prête", `La commande est passée en attente de retrait.`);
+    };
+
+    const handleAddItem = (e) => {
+        e.preventDefault();
+        if (!newItem.name || !newItem.price) return alert("Nom et prix obligatoires.");
+        const product = { id: `prod_${Date.now()}`, sku: newItem.sku || `SKU-${Math.floor(Math.random()*1000)}`, name: newItem.name, price: parseInt(newItem.price), stock: parseInt(newItem.stock) || 0, image: newItem.image };
+        onUpdateUser({ ...supplier, catalog: [...(supplier.catalog || []), product] });
+        setNewItem({ name: '', sku: '', price: '', stock: '', image: null });
+        setIsAddingItem(false);
+        showNotification("Catalogue mis à jour", `Le produit a été ajouté avec succès.`);
+    };
+
+    return (
+        <div className="min-h-screen bg-gray-50 pb-20 flex flex-col relative">
+            {localNotif && (
+                <div className="absolute top-4 left-4 right-4 bg-green-600 text-white p-4 rounded-xl shadow-2xl z-[100] animate-in slide-in-from-top-5 flex items-start gap-3">
+                    <Icon name={localNotif.title === "Erreur" ? "AlertTriangle" : "CheckCircle"} size={24} className="shrink-0" />
+                    <div><p className="font-bold text-sm">{localNotif.title}</p><p className="text-xs text-green-100">{localNotif.text}</p></div>
+                    <button onClick={() => setLocalNotif(null)} className="ml-auto text-green-200 hover:text-white"><Icon name="X" size={16}/></button>
+                </div>
+            )}
+            
+            <div className="bg-green-800 text-white pt-12 pb-8 px-6 rounded-b-[2rem] flex justify-between items-center shadow-lg">
+                <div className="text-left"><p className="text-xs text-green-200 uppercase font-bold">Espace Fournisseur</p><h1 className="text-2xl font-bold mt-1">{supplier.raisonSociale}</h1></div>
+                <Button variant="ghost" onClick={onLogout} className="p-2 text-white hover:text-green-200"><Icon name="LogOut"/></Button>
+            </div>
+            
+            <div className="px-4 mt-6 flex-1">
+                {tab === 'dashboard' && (
+                    <div className="space-y-6 animate-in fade-in">
+                        <div className="bg-gradient-to-r from-green-700 to-emerald-900 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden transition-all">
+                            <Icon name="Wallet" className="absolute -bottom-4 -right-4 text-white/10" size={100}/>
+                            <p className="text-white/80 text-xs font-bold uppercase mb-1 relative z-10">Portefeuille (Disponible)</p>
+                            <h3 className="text-4xl font-bold mb-2 relative z-10">{(availableBalance || 0).toLocaleString()} <span className="text-xl">F</span></h3>
+                        </div>
+                        <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 transition-all">
+                            <h3 className="text-[10px] text-gray-500 font-bold uppercase mb-2">Séquestre Bloqué</h3>
+                            <p className="text-3xl font-bold text-blue-600 mb-3">{(totalEscrow || 0).toLocaleString()} F</p>
+                        </div>
+                    </div>
+                )}
+
+                {/* MODULE DE SUIVI FOURNISSEUR RÉINTÉGRÉ */}
+                {tab === 'tracking' && (
+                    <div className="space-y-4 animate-in slide-in-from-bottom-5">
+                        <div className="flex bg-gray-200 p-1 rounded-xl mb-4">
+                            <button onClick={() => setTrackingFilter('new')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${trackingFilter === 'new' ? 'bg-white shadow text-green-600' : 'text-gray-500'}`}>À Préparer</button>
+                            <button onClick={() => setTrackingFilter('active')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${trackingFilter === 'active' ? 'bg-white shadow text-green-600' : 'text-gray-500'}`}>En transit</button>
+                            <button onClick={() => setTrackingFilter('history')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${trackingFilter === 'history' ? 'bg-white shadow text-green-600' : 'text-gray-500'}`}>Historique</button>
+                        </div>
+
+                        {trackingFilter === 'new' && (
+                            <>
+                                {newB2COrders.length === 0 && newB2BJobs.length === 0 && <p className="text-center text-gray-400 py-10 text-sm">Rien à préparer pour le moment.</p>}
+                                
+                                {newB2COrders.map(o => (
+                                    <div key={o.id} className="bg-white p-4 rounded-xl shadow-sm border-l-4 border-orange-500 mb-3">
+                                        <div className="flex justify-between items-center mb-2"><span className="font-bold text-sm">CMD B2C #{String(o.id).slice(-4)}</span><span className="font-bold text-green-600">{(o.subtotal || 0).toLocaleString()} F</span></div>
+                                        <p className="text-xs text-gray-500 mb-3"><Icon name={o.deliveryMode === 'delivery' ? 'Truck' : 'Store'} size={12} className="inline mr-1"/> {o.deliveryMode === 'delivery' ? 'Pour Livraison (Via Livreur)' : 'Retrait en Magasin (Client)'}</p>
+                                        <Button className="w-full py-2 text-xs bg-orange-600 hover:bg-orange-700" onClick={() => handlePrepareOrder(o.id)}>Marquer comme Prête</Button>
+                                    </div>
+                                ))}
+
+                                {newB2BJobs.map(j => (
+                                    <div key={j.id} className="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-500 mb-3">
+                                        <div className="flex justify-between items-center mb-2"><span className="font-bold text-sm">Devis B2B (Artisan)</span><span className="font-bold text-green-600">{calcMatAmount(j).toLocaleString()} F</span></div>
+                                        <p className="text-xs text-gray-500">L'artisan <b>{j.artisanName}</b> va passer récupérer du matériel. Le paiement est déjà sous séquestre.</p>
+                                    </div>
+                                ))}
+                            </>
+                        )}
+
+                        {trackingFilter === 'active' && (
+                            <>
+                                {activeB2COrders.length === 0 && activeB2BJobs.length === 0 && <p className="text-center text-gray-400 py-10 text-sm">Aucune commande en cours d'acheminement.</p>}
+                                {activeB2COrders.map(o => (
+                                    <div key={o.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-3">
+                                        <div className="flex justify-between items-center mb-1"><span className="font-bold text-sm text-gray-800">CMD B2C #{String(o.id).slice(-4)}</span><Badge text="En transit" color="bg-blue-50 text-blue-700"/></div>
+                                        <p className="text-xs text-gray-500 mt-2">Le colis a quitté votre magasin.</p>
+                                    </div>
+                                ))}
+                                {activeB2BJobs.map(j => (
+                                    <div key={j.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-3">
+                                        <div className="flex justify-between items-center mb-1"><span className="font-bold text-sm text-gray-800">Devis B2B #{String(j.id).slice(-4)}</span><Badge text="Matériel Récupéré" color="bg-blue-50 text-blue-700"/></div>
+                                        <p className="text-xs text-gray-500 mt-2">L'artisan {j.artisanName} réalise les travaux.</p>
+                                    </div>
+                                ))}
+                            </>
+                        )}
+
+                        {trackingFilter === 'history' && (
+                            <>
+                                {historyB2COrders.length === 0 && historyB2BJobs.length === 0 && <p className="text-center text-gray-400 py-10 text-sm">Aucun historique.</p>}
+                                {[...historyB2COrders, ...historyB2BJobs].map((item, idx) => (
+                                    <div key={idx} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-3 flex justify-between items-center">
+                                        <div>
+                                            <p className="font-bold text-sm text-gray-800">{item.clientName ? `Chantier: ${item.clientName}` : `CMD #${String(item.id).slice(-4)}`}</p>
+                                            <p className="text-[10px] text-gray-400">{item.status === 'disputed' ? 'Litige' : 'Terminé/Livré'}</p>
+                                        </div>
+                                        <span className={`font-bold text-sm ${item.status === 'disputed' ? 'text-red-600' : 'text-green-600'}`}>{(item.subtotal || calcMatAmount(item)).toLocaleString()} F</span>
+                                    </div>
+                                ))}
+                            </>
+                        )}
+                    </div>
+                )}
+
+                {tab === 'catalog' && (
+                    <div className="space-y-4 animate-in slide-in-from-bottom-5">
+                        <div className="flex justify-between items-center border-b pb-2"><h2 className="font-bold text-lg text-slate-800">Mon Catalogue</h2><Button variant="success" className="py-2 text-xs shadow-none" iconName="Plus" onClick={() => setIsAddingItem(!isAddingItem)}>{isAddingItem ? 'Fermer' : 'Ajouter un article'}</Button></div>
+                        {isAddingItem && (
+                            <form onSubmit={handleAddItem} className="bg-white p-4 rounded-xl shadow-sm border border-green-200 space-y-4 mb-6">
+                                <div className="flex gap-4 items-start">
+                                    {newItem.image ? (
+                                        <div className="w-20 h-20 shrink-0 relative rounded-xl border border-gray-200 overflow-hidden"><img src={newItem.image} className="w-full h-full object-cover" /><button type="button" onClick={()=>setNewItem({...newItem, image:null})} className="absolute top-1 right-1 bg-white/80 rounded-full p-1"><Icon name="X" size={12} className="text-red-500"/></button></div>
+                                    ) : (
+                                        <label className="w-20 h-20 shrink-0 bg-gray-50 hover:bg-gray-100 rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer transition-colors text-gray-400">
+                                            <Icon name="Camera" size={20} className="mb-1"/>
+                                            <span className="text-[10px] font-bold">Photo</span>
+                                            <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden"/>
+                                        </label>
+                                    )}
+                                    <div className="flex-1 space-y-3">
+                                        <InputGroup label="Nom de l'article"><BasicInput value={newItem.name} onChange={e=>setNewItem({...newItem, name: e.target.value})} placeholder="Ex: Ciment Bélier" required/></InputGroup>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-3"><InputGroup label="Prix (Net) (FCFA)"><input type="number" value={newItem.price} onChange={e=>setNewItem({...newItem, price: e.target.value})} className="w-full bg-gray-50 border p-3 rounded-xl" required/></InputGroup><InputGroup label="Stock dispo"><input type="number" value={newItem.stock} onChange={e=>setNewItem({...newItem, stock: e.target.value})} className="w-full bg-gray-50 border p-3 rounded-xl"/></InputGroup></div>
+                                <Button type="submit" variant="success" className="w-full">Enregistrer l'article</Button>
+                            </form>
+                        )}
+                        <div className="space-y-3 pb-8">
+                            {!supplier.catalog || supplier.catalog.length === 0 ? <p className="text-center text-gray-400 py-10">Votre catalogue est vide.</p> : 
+                            supplier.catalog.map(item => (
+                                <div key={item.id} className="bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex items-center gap-3">
+                                    {item.image ? <img src={item.image} className="w-12 h-12 object-cover rounded-lg border border-gray-100"/> : <div className="w-12 h-12 bg-gray-50 rounded-lg flex items-center justify-center border border-gray-100 text-gray-400"><Icon name="Package" size={20}/></div>}
+                                    <div className="flex-1"><p className="font-bold text-gray-800 text-sm">{item.name}</p><p className="text-xs text-gray-400 mt-1">Réf: {item.sku || 'N/A'}</p></div>
+                                    <span className="font-bold text-green-700">{(item.price || 0).toLocaleString()} F</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {tab === 'scan' && (
+                    <div className="animate-in slide-in-from-bottom-5">
+                        <div className="bg-white p-6 rounded-2xl shadow-lg border border-green-100 text-center">
+                            <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4 text-green-600"><Icon name="Scan" size={40}/></div>
+                            <h2 className="text-xl font-bold text-gray-800 mb-2">Validation de Retrait</h2>
+                            <p className="text-sm text-gray-500 mb-6">Scannez le code présenté par l'artisan ou le livreur pour valider la remise et débloquer les fonds du compte séquestre.</p>
+                            <input value={scanCode} onChange={e=>setScanCode(e.target.value.toUpperCase())} placeholder="Ex: PA-1234" className="w-full border-2 border-gray-200 focus:border-green-500 p-4 text-center text-2xl font-mono mb-4 rounded-xl outline-none tracking-widest uppercase"/>
+                            <Button onClick={handleScan} className="w-full py-4 text-lg bg-green-600 hover:bg-green-700 shadow-lg shadow-green-200" disabled={scanCode.length < 5}>Valider la remise</Button>
+                        </div>
+                    </div>
+                )}
+            </div>
+            
+            <div className="fixed bottom-0 w-full max-w-md bg-white border-t py-2 px-3 flex justify-between z-50">
+                <button onClick={() => setTab('dashboard')} className={`flex flex-col items-center gap-1 p-2 w-1/4 ${tab === 'dashboard' ? 'text-green-600' : 'text-gray-400'}`}>
+                    <Icon name="Bank" size={20}/>
+                    <span className="text-[9px] font-bold">Finances</span>
+                </button>
+                <button onClick={() => setTab('tracking')} className={`flex flex-col items-center gap-1 p-2 w-1/4 ${tab === 'tracking' ? 'text-green-600' : 'text-gray-400'}`}>
+                    <div className="relative"><Icon name="ClipboardList" size={20}/>{(ordersToPrepare.length>0) && <span className="absolute -top-1 -right-2 w-2.5 h-2.5 bg-orange-500 rounded-full border-2 border-white"></span>}</div>
+                    <span className="text-[9px] font-bold">Suivi</span>
+                </button>
+                <button onClick={() => setTab('catalog')} className={`flex flex-col items-center gap-1 p-2 w-1/4 ${tab === 'catalog' ? 'text-green-600' : 'text-gray-400'}`}>
+                    <Icon name="Package" size={20}/>
+                    <span className="text-[9px] font-bold">Catalogue</span>
+                </button>
+                <button onClick={() => setTab('scan')} className={`flex flex-col items-center gap-1 p-2 w-1/4 ${tab === 'scan' ? 'text-green-600' : 'text-gray-400'}`}>
+                    <Icon name="Scan" size={20}/>
+                    <span className="text-[9px] font-bold">Scanner</span>
+                </button>
+            </div>
+        </div>
+    );
+};
+
+// 4. ESPACE ARTISAN & LIVREUR
+const ArtisanDashboard = ({ artisan, jobs, onUpdateJob, orders, onUpdateOrder, suppliers, onLogout, platformFees, onNotify }) => {
+    const [tab, setTab] = useState('tracking');
+    const [trackingFilter, setTrackingFilter] = useState('active'); 
+    
+    const [historySearch, setHistorySearch] = useState('');
+    const [historyStatusFilter, setHistoryStatusFilter] = useState('all');
+    
+    // ETAT DU GENERATEUR DE DEVIS (Artisan)
+    const [quoteBuilderJobId, setQuoteBuilderJobId] = useState(null);
+    const [quoteDraft, setQuoteDraft] = useState({ supplierId: '', materials: [], laborCost: '' });
+    
+    // MODALES PREUVES / VERIFICATION
+    const [codeVerificationModal, setCodeVerificationModal] = useState(null); // { orderId }
+    const [proofModalJobId, setProofModalJobId] = useState(null);
+    const [localNotif, setLocalNotif] = useState(null);
+
+    const isDriver = artisan.role === 'driver' || artisan.category === 'livraison';
+
+    const showNotification = (title, text) => {
+        setLocalNotif({ title, text });
+        setTimeout(() => setLocalNotif(null), 4000);
+    };
+
+    // -- ARTISAN DATA --
+    const myJobs = jobs.filter(j => j.artisanId === artisan.id);
+    const newJobs = myJobs.filter(j => j.status === 'sent');
+    const activeJobs = myJobs.filter(j => ['quote_provided', 'funded', 'materials_picked_up', 'work_done'].includes(j.status));
+    const disputedJobs = myJobs.filter(j => j.status === 'disputed');
+    const pastJobs = myJobs.filter(j => ['completed', 'disputed', 'quote_rejected'].includes(j.status));
+
+    // -- DRIVER DATA --
+    const availableOrders = orders.filter(o => o.deliveryMode === 'delivery' && o.status === 'searching_driver' && !(o.rejectedBy || []).includes(artisan.id));
+    const myDeliveries = orders.filter(o => o.driverId === artisan.id);
+    const activeDeliveries = myDeliveries.filter(o => ['driver_assigned', 'shipping'].includes(o.status));
+    const disputedDeliveries = myDeliveries.filter(o => o.status === 'disputed');
+    const pastDeliveries = myDeliveries.filter(o => ['delivered', 'disputed'].includes(o.status));
+
+    // KPIs
+    const countReceived = isDriver ? availableOrders.length : newJobs.length;
+    const escrowAmount = isDriver ? activeDeliveries.reduce((acc, o) => acc + (o.deliveryCost || 0), 0) : activeJobs.filter(j => ['funded', 'materials_picked_up', 'work_done'].includes(j.status)).reduce((acc, j) => acc + (j.financials?.laborCost || 0), 0);
+    const disbursedAmount = isDriver ? pastDeliveries.filter(o=>o.status==='delivered').reduce((acc, o) => acc + (o.deliveryCost || 0), 0) : pastJobs.filter(j=>j.status==='completed').reduce((acc, j) => acc + (j.financials?.laborCost || 0), 0);
+
+    // Historique
+    const historyItems = isDriver ? pastDeliveries : pastJobs;
+    const filteredHistory = historyItems.filter(item => {
+        const matchesSearch = (item.clientName || '').toLowerCase().includes(historySearch.toLowerCase());
+        const statusMap = {
+            'completed': ['completed', 'delivered'],
+            'disputed': ['disputed'],
+            'rejected': ['quote_rejected']
+        };
+        const matchesStatus = historyStatusFilter === 'all' || (statusMap[historyStatusFilter] && statusMap[historyStatusFilter].includes(item.status));
+        return matchesSearch && matchesStatus;
+    }).sort((a, b) => b.id - a.id);
+
+    // -- ACTIONS ARTISAN --
+    const submitQuote = (job) => {
+        if(!quoteDraft.supplierId || !quoteDraft.laborCost || quoteDraft.materials.length === 0) return alert("Veuillez sélectionner un fournisseur, ajouter au moins un matériau et indiquer votre main d'œuvre.");
+        
+        const matAmountNet = quoteDraft.materials.reduce((acc, item) => acc + ((item.price || 0) * (item.quantity || 1)), 0);
+        const sup = suppliers.find(s => s.id === parseInt(quoteDraft.supplierId));
+        
+        const laborFeePercent = (platformFees?.artisanCategories && platformFees.artisanCategories[artisan.category]) || platformFees?.labor || 10;
+        const laborFeeAmount = Math.round(parseInt(quoteDraft.laborCost) * (laborFeePercent / 100));
+        const matFeePercent = (platformFees?.supplierSectors && platformFees.supplierSectors[sup.secteur]) || platformFees?.material || 3;
+        const matFeeAmount = Math.round(matAmountNet * (matFeePercent / 100));
+        
+        onUpdateJob(job.id, { 
+            ...job, status: 'quote_provided', interventionData: { materials: quoteDraft.materials },
+            financials: { tokenCode: null, tokenAmount: matAmountNet, laborCost: parseInt(quoteDraft.laborCost), platformFeesBreakdown: { labor: laborFeeAmount, material: matFeeAmount, delivery: 0 } }
+        });
+        
+        showNotification("Devis Envoyé", "Le client a été notifié et doit procéder au paiement sous séquestre.");
+        setQuoteBuilderJobId(null);
+        setQuoteDraft({ supplierId: '', materials: [], laborCost: '' });
+        setTrackingFilter('active');
+    };
+
+    const handleAddMaterialToQuote = (item) => {
+        const sup = suppliers.find(s => s.id === parseInt(quoteDraft.supplierId));
+        setQuoteDraft({...quoteDraft, materials: [...quoteDraft.materials, {...item, quantity: 1, supplierId: sup.id, supplierName: sup.raisonSociale}]});
+    };
+
+    const handleRemoveMaterialFromQuote = (itemId) => {
+        setQuoteDraft({...quoteDraft, materials: quoteDraft.materials.filter(m => m.id !== itemId)});
+    };
+
+    const handleProofUpload = (photo) => {
+        const job = jobs.find(j=>j.id === proofModalJobId);
+        onUpdateJob(job.id, { ...job, status: 'work_done', milestones: job.milestones.map(m=>m.id===2?{...m, status:'validated', proof:photo}:m) });
+        showNotification("Preuve Envoyée", "En attente de validation client pour débloquer votre paiement.");
+        setProofModalJobId(null);
+    };
+
+    // -- ACTIONS LIVREUR --
+    const handleAcceptDelivery = (order) => {
+        onUpdateOrder(order.id, { status: 'driver_assigned', driverId: artisan.id });
+        showNotification("Course Acceptée", "Dirigez-vous vers le fournisseur pour récupérer le colis.");
+        setTrackingFilter('active');
+    };
+
+    const handleRejectDelivery = (order) => {
+        onUpdateOrder(order.id, { rejectedBy: [...(order.rejectedBy || []), artisan.id] });
+    };
+
+    // LIVREUR VALIDE LE CODE DU CLIENT
+    const handleVerifyClientReceptionCode = () => {
+        onUpdateOrder(codeVerificationModal.orderId, { status: 'delivered' });
+        showNotification("Livraison Confirmée", "La course est terminée. Vos frais de livraison sont débloqués !");
+        setCodeVerificationModal(null);
+    };
+
+    const selectedSupplierData = quoteDraft.supplierId ? suppliers.find(s => s.id === parseInt(quoteDraft.supplierId)) : null;
+
+    return (
+        <div className="min-h-screen bg-slate-50 pb-24 relative">
+            
+            {localNotif && (
+                <div className="absolute top-4 left-4 right-4 bg-green-600 text-white p-4 rounded-xl shadow-2xl z-[100] animate-in slide-in-from-top-5 flex items-start gap-3">
+                    <Icon name="CheckCircle" size={24} className="shrink-0" />
+                    <div>
+                        <p className="font-bold text-sm">{localNotif.title}</p>
+                        <p className="text-xs text-green-100">{localNotif.text}</p>
+                    </div>
+                    <button onClick={() => setLocalNotif(null)} className="ml-auto text-green-200 hover:text-white"><Icon name="X" size={16}/></button>
+                </div>
+            )}
+
+            {/* MODALE DE VALIDATION LOGISTIQUE (LE LIVREUR TAPE LE CODE DU CLIENT) */}
+            {codeVerificationModal && (
+                <CodeVerificationModal 
+                    title="Code Client Requis" 
+                    description="Demandez le code secret de réception au client et saisissez-le ici pour clôturer la livraison." 
+                    expectedCode={orders.find(o=>o.id===codeVerificationModal.orderId)?.clientReceiveCode} 
+                    onSuccess={handleVerifyClientReceptionCode} 
+                    onClose={() => setCodeVerificationModal(null)} 
+                />
+            )}
+
+            {proofModalJobId && <ProofUploadModal onClose={()=>setProofModalJobId(null)} onSubmit={handleProofUpload} />}
+            
+            <div className={`pt-12 pb-8 px-6 rounded-b-[2rem] text-white flex justify-between items-center shadow-lg ${isDriver ? 'bg-teal-800' : 'bg-slate-900'}`}>
+                <div><p className="text-xs uppercase font-bold tracking-widest mb-1 text-white/70">{isDriver ? 'Espace Logistique' : 'Espace Pro'}</p><h1 className="text-2xl font-bold">{artisan.prenoms} {artisan.nom}</h1></div>
+                <Button variant="ghost" onClick={onLogout} className="p-2 text-white hover:text-red-400"><Icon name="LogOut"/></Button>
+            </div>
+            
+            <div className="px-4 mt-6">
+                
+                {/* --- ONGLET PORTEFEUILLE (WALLET) --- */}
+                {tab === 'wallet' && (
+                    <div className="space-y-6 animate-in slide-in-from-bottom-5">
+                        <h2 className="font-bold text-lg text-slate-800 border-b pb-2">Mon Portefeuille</h2>
+                        <div className="bg-gradient-to-br from-green-600 to-emerald-800 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
+                            <Icon name="Bank" className="absolute -bottom-4 -right-4 text-white/20" size={120}/>
+                            <p className="text-white/80 text-xs font-bold uppercase mb-1 relative z-10">Fonds Décaissés (Retirables)</p>
+                            <h3 className="text-4xl font-bold mb-4 relative z-10">{(disbursedAmount || 0).toLocaleString()} <span className="text-xl">F</span></h3>
+                            <Button className="w-full bg-white text-green-800 hover:bg-gray-100 shadow-none relative z-10" iconName="Wallet">Demander un Virement</Button>
+                        </div>
+                        <div className="bg-blue-50 p-5 rounded-2xl border border-blue-200 text-center relative overflow-hidden">
+                            <div className="w-14 h-14 bg-blue-100 rounded-full mx-auto flex items-center justify-center text-blue-600 mb-3"><Icon name="Lock" size={24}/></div>
+                            <h3 className="font-bold text-blue-900 text-sm uppercase mb-1">Fonds sous Séquestre</h3>
+                            <p className="text-3xl font-black text-blue-800 mb-3">{(escrowAmount || 0).toLocaleString()} F</p>
+                            <p className="text-xs text-blue-700 bg-white/50 p-3 rounded-lg border border-blue-100">Ces fonds ont été payés par le client et garantis par la plateforme. Ils vous seront versés après validation de la fin des travaux ou de la livraison.</p>
+                        </div>
+                    </div>
+                )}
+
+                {/* --- ONGLET INCIDENTS (LITIGES) --- */}
+                {tab === 'incidents' && (
+                    <div className="space-y-4 animate-in slide-in-from-bottom-5">
+                        <h2 className="font-bold text-lg text-slate-800 border-b pb-2">Suivi des Litiges</h2>
+                        {((isDriver ? disputedDeliveries : disputedJobs).length === 0) ? (
+                            <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 text-center mt-6">
+                                <Icon name="CheckCircle" className="mx-auto text-green-500 mb-3" size={48}/>
+                                <h3 className="font-bold text-gray-800">Aucun litige</h3>
+                                <p className="text-gray-500 text-xs mt-2">Votre réputation est impeccable. Continuez ainsi !</p>
+                            </div>
+                        ) : (isDriver ? disputedDeliveries : disputedJobs).map(item => (
+                            <div key={item.id} className="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-red-500 mb-4">
+                                <div className="flex justify-between items-start mb-3">
+                                    <div>
+                                        <h3 className="font-bold text-sm text-gray-800">{isDriver ? `Course #${String(item.id).slice(-4)}` : `Chantier: ${item.clientName}`}</h3>
+                                        <p className="text-xs text-gray-500">Fonds gelés: <span className="font-bold text-red-600">{(isDriver ? (item.deliveryCost || 0) : (item.financials?.laborCost || 0)).toLocaleString()} F</span></p>
+                                    </div>
+                                    <Badge text="Bloqué" color="bg-red-100 text-red-700"/>
+                                </div>
+                                <div className="bg-red-50 p-3 rounded-lg border border-red-100 mb-4">
+                                    <p className="text-xs font-bold text-red-900 mb-1"><Icon name="AlertTriangle" size={12} className="inline"/> Motif déclaré par le client :</p>
+                                    <p className="text-xs text-red-800 italic">"{item.disputeReason || 'Travail incomplet / non conforme'}"</p>
+                                </div>
+                                <Button variant="outline" className="w-full text-xs border-gray-300 text-gray-700" onClick={() => alert("Mise en relation avec le support de médiation ProsArtisan...")}>Contacter la Médiation</Button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {/* --- ONGLET TRACKING --- */}
+                {tab === 'tracking' && (
+                    <div className="space-y-4 animate-in slide-in-from-bottom-5">
+                        <div className="flex bg-gray-200 p-1 rounded-xl mb-6">
+                            <button onClick={() => setTrackingFilter('new')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${trackingFilter === 'new' ? `bg-white shadow ${isDriver?'text-teal-600':'text-blue-600'}` : 'text-gray-500'}`}>{isDriver?'Courses Dispos':'Nouveaux'}</button>
+                            <button onClick={() => setTrackingFilter('active')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${trackingFilter === 'active' ? `bg-white shadow ${isDriver?'text-teal-600':'text-blue-600'}` : 'text-gray-500'}`}>En cours</button>
+                        </div>
+
+                        {/* --- LIVREUR --- */}
+                        {isDriver ? (
+                            <>
+                                {trackingFilter === 'new' && (
+                                    availableOrders.length === 0 ? <p className="text-center text-gray-400 py-10">Aucune nouvelle course.</p> : availableOrders.map(o => (
+                                        <div key={o.id} className="bg-white p-4 rounded-xl shadow-sm border-l-4 border-teal-500 mb-3">
+                                            <div className="flex justify-between mb-2"><span className="text-sm font-bold text-gray-800">Livraison</span><span className="font-bold text-teal-600">{(o.deliveryCost || 0).toLocaleString()} F</span></div>
+                                            <p className="text-xs text-gray-500 mb-4"><Icon name="MapPin" size={12} className="inline mr-1"/> Vers : {o.clientName}</p>
+                                            <div className="flex gap-2">
+                                                <Button className="flex-1 py-2 text-xs" variant="outline" onClick={() => handleRejectDelivery(o)}>Refuser</Button>
+                                                <Button className="flex-2 py-2 text-xs bg-teal-600 text-white" onClick={() => handleAcceptDelivery(o)}>Accepter</Button>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+
+                                {trackingFilter === 'active' && (
+                                    activeDeliveries.length === 0 ? <p className="text-center text-gray-400 py-10">Aucune course en cours.</p> : activeDeliveries.map(o => {
+                                        const step = o.status === 'driver_assigned' ? 0 : 1;
+                                        return (
+                                            <div key={o.id} className="bg-white p-4 rounded-xl shadow-sm border border-teal-100 mb-4">
+                                                <div className="flex justify-between items-center mb-4"><span className="font-bold text-sm">Course #{String(o.id).slice(-4)}</span><span className="font-bold text-teal-600">{(o.deliveryCost || 0).toLocaleString()} F</span></div>
+                                                <WorkflowTracker steps={["Fournisseur", "Livraison Client"]} currentStepIndex={step} />
+                                                
+                                                {step === 0 && (
+                                                    <div className="bg-orange-50 p-4 rounded-xl text-center border border-orange-100 mt-4">
+                                                        <p className="text-xs text-orange-800 mb-2">Présentez ce code au fournisseur pour récupérer le colis :</p>
+                                                        <span className="font-mono text-xl font-bold text-orange-900 tracking-widest bg-white px-4 py-2 rounded-lg border">{o.deliveryCode}</span>
+                                                    </div>
+                                                )}
+                                                
+                                                {/* C'EST ICI QUE LE LIVREUR VALIDE AVEC LE CODE DU CLIENT */}
+                                                {step === 1 && (
+                                                    <div className="bg-teal-50 p-4 rounded-xl text-center border border-teal-100 mt-4">
+                                                        <p className="text-xs text-teal-800 mb-3">Colis récupéré. À votre arrivée chez le client, demandez-lui son code de réception secret pour clôturer la course.</p>
+                                                        <Button className="w-full bg-teal-600 shadow-none text-white" onClick={()=>setCodeVerificationModal({orderId: o.id})}>Saisir le Code Client</Button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )
+                                    })
+                                )}
+                            </>
+                        ) : (
+                        /* --- ARTISAN --- */
+                            <>
+                                {trackingFilter === 'new' && (
+                                    newJobs.length === 0 ? <p className="text-center text-gray-400 py-10">Aucun nouveau chantier.</p> : newJobs.map(job => (
+                                        <div key={job.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-3">
+                                            <div className="flex justify-between items-start mb-2"><h3 className="font-bold text-sm text-gray-800">{job.clientName}</h3><Badge text="À Deviser" color="bg-red-100 text-red-700"/></div>
+                                            <p className="text-xs text-gray-600 bg-gray-50 p-3 rounded-lg mb-4 italic">"{job.problem}"</p>
+                                            
+                                            {quoteBuilderJobId === job.id ? (
+                                                <div className="bg-blue-50 p-4 rounded-xl border border-blue-200 space-y-4 animate-in fade-in">
+                                                    <h4 className="font-bold text-blue-900 text-sm flex items-center gap-2"><Icon name="FileText" size={16}/> Élaboration du Devis</h4>
+                                                    
+                                                    <div>
+                                                        <label className="text-xs font-bold text-blue-800 mb-1 block">1. Choisissez une Quincaillerie</label>
+                                                        <select className="w-full p-3 text-sm rounded-xl border border-blue-200 outline-none bg-white" value={quoteDraft.supplierId} onChange={e=>{setQuoteDraft({supplierId: e.target.value, materials: [], laborCost:''})}}>
+                                                            <option value="">Sélectionnez un partenaire...</option>
+                                                            {suppliers.map(s=><option key={s.id} value={s.id}>{s.raisonSociale}</option>)}
+                                                        </select>
+                                                    </div>
+
+                                                    {selectedSupplierData && (
+                                                        <div>
+                                                            <label className="text-xs font-bold text-blue-800 mb-1 block">2. Ajoutez les Matériaux nécessaires</label>
+                                                            <div className="bg-white rounded-xl border border-blue-100 p-2 max-h-48 overflow-y-auto custom-scrollbar">
+                                                                {selectedSupplierData.catalog.map(item => (
+                                                                    <div key={item.id} className="flex justify-between items-center p-2 border-b border-gray-50 last:border-0">
+                                                                        <div className="flex items-center gap-2">
+                                                                            {item.image ? <img src={item.image} className="w-8 h-8 object-cover rounded"/> : <div className="w-8 h-8 bg-gray-100 rounded flex items-center justify-center"><Icon name="Package" size={12} className="text-gray-400"/></div>}
+                                                                            <div><p className="text-sm font-bold text-gray-700">{item.name}</p><p className="text-xs text-green-600 font-bold">{(item.price || 0).toLocaleString()} F</p></div>
+                                                                        </div>
+                                                                        <button onClick={() => handleAddMaterialToQuote(item)} type="button" className="bg-blue-100 text-blue-700 p-1.5 rounded-lg hover:bg-blue-200"><Icon name="Plus" size={16}/></button>
+                                                                    </div>
+                                                                ))}
+                                                                {selectedSupplierData.catalog.length === 0 && <p className="text-xs text-gray-400 text-center py-2">Ce catalogue est vide.</p>}
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {quoteDraft.materials.length > 0 && (
+                                                        <div className="bg-white p-3 rounded-xl border border-blue-100">
+                                                            <p className="text-xs font-bold text-gray-500 mb-2 border-b pb-1">Matériel inclus (Prix Net Fournisseur) :</p>
+                                                            {quoteDraft.materials.map((m, idx) => (
+                                                                <div key={idx} className="flex justify-between items-center text-xs text-gray-700 mb-2">
+                                                                    <div className="flex items-center gap-2">
+                                                                        {m.image ? <img src={m.image} className="w-6 h-6 object-cover rounded"/> : <div className="w-6 h-6 bg-gray-100 rounded flex items-center justify-center"><Icon name="Package" size={10} className="text-gray-400"/></div>}
+                                                                        <span>{m.quantity}x {m.name}</span>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className="font-bold">{((m.price || 0) * (m.quantity || 1)).toLocaleString()} F</span>
+                                                                        <button onClick={() => handleRemoveMaterialFromQuote(m.id)} className="text-red-400 hover:text-red-600"><Icon name="Trash2" size={14}/></button>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                            <div className="text-right text-sm font-black text-blue-900 pt-2 mt-2 border-t">Total Matériel: {(quoteDraft.materials.reduce((a,b)=>a+((b.price || 0)*(b.quantity || 1)),0) || 0).toLocaleString()} F</div>
+                                                        </div>
+                                                    )}
+
+                                                    <div>
+                                                        <label className="text-xs font-bold text-blue-800 mb-1 block">3. Votre Main d'œuvre (Net) (FCFA)</label>
+                                                        <input type="number" className="w-full p-3 text-lg font-bold font-mono text-center rounded-xl border border-blue-200 outline-none bg-white" value={quoteDraft.laborCost} onChange={e=>setQuoteDraft({...quoteDraft, laborCost: e.target.value})} placeholder="Ex: 15000"/>
+                                                    </div>
+
+                                                    <div className="flex gap-2 pt-2">
+                                                        <Button variant="secondary" onClick={()=>{setQuoteBuilderJobId(null); setQuoteDraft({supplierId:'', materials:[], laborCost:''});}} className="flex-1 shadow-none text-xs">Annuler</Button>
+                                                        <Button onClick={()=>submitQuote(job)} className="flex-1 text-xs">Envoyer au Client</Button>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <Button className="w-full py-2 text-xs" onClick={() => setQuoteBuilderJobId(job.id)}>Faire un devis (Matériaux + Main d'œuvre)</Button>
+                                            )}
+                                        </div>
+                                    ))
+                                )}
+
+                                {trackingFilter === 'active' && (
+                                    activeJobs.length === 0 ? <p className="text-center text-gray-400 py-10">Aucun chantier en cours.</p> : activeJobs.map(job => {
+                                    let step = job.status === 'quote_provided' ? 0 : job.status === 'funded' ? 1 : job.status === 'materials_picked_up' ? 2 : 3;
+                                    const steps = ["Devis Envoyé", "Paiement Séquestre", "Matériel", "Travaux / Valid."];
+                                    
+                                    return (
+                                        <div key={job.id} className="bg-white p-5 rounded-2xl shadow-sm border border-blue-100 mb-4">
+                                            <div className="flex justify-between items-start mb-4">
+                                                <h3 className="font-bold text-sm text-gray-800">Chantier: {job.clientName}</h3>
+                                                <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">MO Nette: {(job.financials?.laborCost || 0).toLocaleString()} F</span>
+                                            </div>
+                                            
+                                            <WorkflowTracker steps={steps} currentStepIndex={step} />
+                                            
+                                            <div className="mt-4 pt-4 border-t border-gray-50">
+                                                {step === 0 && <p className="text-center text-xs text-gray-500 bg-gray-50 p-3 rounded-lg border">Le devis a été transmis au client. En attente de son acceptation et du paiement sous séquestre pour débuter.</p>}
+                                                
+                                                {step === 1 && (
+                                                    <div className="bg-blue-50 p-4 rounded-xl text-center border border-blue-200 animate-in fade-in">
+                                                        <p className="text-xs font-bold text-blue-900 mb-1">Paiement Séquestre Validé !</p>
+                                                        <p className="text-xs text-blue-700 mb-3">Le client a payé. Rendez-vous chez le fournisseur partenaire et présentez ce code pour retirer le matériel payé :</p>
+                                                        <span className="font-mono text-xl font-bold text-blue-900 tracking-widest bg-white px-4 py-2 rounded-lg border border-blue-300 shadow-sm">{job.financials.tokenCode}</span>
+                                                    </div>
+                                                )}
+                                                
+                                                {step === 2 && (
+                                                    <div className="bg-orange-50 p-4 rounded-xl text-center border border-orange-200 animate-in fade-in">
+                                                        <p className="text-sm font-bold text-orange-900 mb-2">Matériel Récupéré.</p>
+                                                        <p className="text-xs text-orange-800 mb-4">Le fournisseur a validé le retrait. Réalisez les travaux chez le client. Une fois terminé, prenez une photo claire du résultat pour réclamer votre paiement de main d'œuvre.</p>
+                                                        <Button className="w-full bg-orange-600 hover:bg-orange-700 shadow-none" iconName="Camera" onClick={()=>setProofModalJobId(job.id)}>Envoyer Preuve de Fin de Travaux</Button>
+                                                    </div>
+                                                )}
+                                                
+                                                {step === 3 && (
+                                                    <div className="bg-green-50 p-4 rounded-xl text-center border border-green-200 animate-in fade-in">
+                                                        <Icon name="CheckCircle" className="mx-auto text-green-600 mb-2" size={24}/>
+                                                        <p className="text-sm font-bold text-green-900">Preuve envoyée au client.</p>
+                                                        <p className="text-xs text-green-700 mt-1">Dès que le client validera dans son application, les {(job.financials?.laborCost || 0).toLocaleString()} F en séquestre seront transférés sur votre portefeuille retirable.</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )
+                                }))}
+                            </>
+                        )}
+                    </div>
+                )}
+
+                {/* --- ONGLET HISTORIQUE (NOUVEAU) --- */}
+                {tab === 'history' && (
+                    <div className="space-y-4 animate-in slide-in-from-bottom-5">
+                        <h2 className="font-bold text-lg text-slate-800 border-b pb-2">Historique d'Activité</h2>
+
+                        <div className="space-y-3">
+                            <div className="relative">
+                                <Icon name="Search" className="absolute left-3 top-3 text-gray-400" size={18}/>
+                                <input type="text" placeholder="Rechercher un client..." value={historySearch} onChange={e=>setHistorySearch(e.target.value)} className="w-full bg-white border border-gray-200 pl-10 pr-4 py-3 rounded-xl outline-none focus:border-blue-500 text-sm"/>
+                            </div>
+                            <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
+                                <button onClick={()=>setHistoryStatusFilter('all')} className={`px-4 py-1.5 rounded-full text-xs font-bold shrink-0 ${historyStatusFilter === 'all' ? 'bg-slate-800 text-white' : 'bg-gray-200 text-gray-600'}`}>Toutes</button>
+                                <button onClick={()=>setHistoryStatusFilter('completed')} className={`px-4 py-1.5 rounded-full text-xs font-bold shrink-0 ${historyStatusFilter === 'completed' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-600'}`}>Terminées</button>
+                                <button onClick={()=>setHistoryStatusFilter('disputed')} className={`px-4 py-1.5 rounded-full text-xs font-bold shrink-0 ${historyStatusFilter === 'disputed' ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-600'}`}>Litiges</button>
+                            </div>
+                        </div>
+
+                        <div className="space-y-3 mt-4">
+                            {filteredHistory.length === 0 ? (
+                                <p className="text-center text-gray-400 py-10 text-sm">Aucun historique trouvé.</p>
+                            ) : filteredHistory.map(item => (
+                                <div key={item.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col gap-2">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <h3 className="font-bold text-sm text-gray-800">{item.clientName}</h3>
+                                            <p className="text-[10px] text-gray-500">{item.date || 'Date inconnue'}</p>
+                                        </div>
+                                        <Badge
+                                            text={['completed', 'delivered'].includes(item.status) ? 'Succès' : item.status === 'disputed' ? 'Litige' : 'Refusé'}
+                                            color={['completed', 'delivered'].includes(item.status) ? 'bg-green-100 text-green-700' : item.status === 'disputed' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'}
+                                        />
+                                    </div>
+                                    <div className="flex justify-between items-end mt-2 pt-2 border-t border-gray-50">
+                                        <p className="text-xs text-gray-600 truncate max-w-[200px]">{isDriver ? `Course #${String(item.id).slice(-4)}` : item.problem}</p>
+                                        <span className="font-black text-sm text-slate-800">{(isDriver ? item.deliveryCost : (item.financials?.laborCost || 0)).toLocaleString()} F</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
+            
+            <div className="fixed bottom-0 w-full max-w-md bg-white border-t py-2 px-3 flex justify-between z-50">
+                <button onClick={() => setTab('tracking')} className={`flex flex-col items-center gap-1 p-2 w-1/4 ${tab === 'tracking' ? (isDriver?'text-teal-600':'text-blue-600') : 'text-gray-400'}`}>
+                    <div className="relative"><Icon name="ClipboardList" size={20}/>{(countReceived>0) && <span className="absolute -top-1 -right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>}</div>
+                    <span className="text-[9px] font-bold">Suivi</span>
+                </button>
+                <button onClick={() => setTab('history')} className={`flex flex-col items-center gap-1 p-2 w-1/4 ${tab === 'history' ? (isDriver?'text-teal-600':'text-blue-600') : 'text-gray-400'}`}>
+                    <Icon name="History" size={20}/>
+                    <span className="text-[9px] font-bold">Historique</span>
+                </button>
+                <button onClick={() => setTab('wallet')} className={`flex flex-col items-center gap-1 p-2 w-1/4 ${tab === 'wallet' ? (isDriver?'text-teal-600':'text-blue-600') : 'text-gray-400'}`}>
+                    <Icon name="Wallet" size={20}/>
+                    <span className="text-[9px] font-bold">Gains</span>
+                </button>
+                <button onClick={() => setTab('incidents')} className={`flex flex-col items-center gap-1 p-2 w-1/4 ${tab === 'incidents' ? 'text-red-500' : 'text-gray-400'}`}>
+                    <div className="relative"><Icon name="AlertTriangle" size={20}/>{(isDriver ? disputedDeliveries : disputedJobs).length > 0 && <span className="absolute -top-1 -right-2 w-4 h-4 bg-red-500 text-white text-[8px] font-bold flex items-center justify-center rounded-full">{(isDriver ? disputedDeliveries : disputedJobs).length}</span>}</div>
+                    <span className="text-[9px] font-bold">Incidents</span>
+                </button>
+            </div>
+        </div>
+    );
+};
+
+// --- APP PRINCIPALE ---
+export default function App() {
+  const [screen, setScreen] = useState('login');
+  const [user, setUser] = useState(null);
+
+  const [categories, setCategories] = useState(INITIAL_CATEGORIES);
+  const [supplierSectors, setSupplierSectors] = useState(INITIAL_SUPPLIER_SECTORS);
+  const [jobs, setJobs] = useState(MOCK_DB.jobs);
+  const [orders, setOrders] = useState(MOCK_DB.orders);
+  const [artisans, setArtisans] = useState(MOCK_DB.artisans);
+  const [suppliers, setSuppliers] = useState(MOCK_DB.suppliers);
+  
+  const [platformFees, setPlatformFees] = useState({ labor: 10, material: 3, delivery: 5, artisanCategories: { 'plomberie': 5, 'electricite': 7 }, supplierSectors: { 'Quincaillerie': 8 } });
+
+  const DEMO_USERS = {
+    'admin': { id: 0, nom: "Admin", prenoms: "Super", role: 'admin', telephone: "admin", password: "admin" },
+    '0707070707': { id: 999, nom: "Amon", prenoms: "Paul", role: 'client', telephone: "0707070707", password: "123", adresseManuelle: "Cocody" },
+    '0505050501': artisans[0], 
+    '0707070701': suppliers[0], 
+    '0707070705': artisans[1], // Livreur (Koné)
+  };
+
+  const handleLogin = (id, pwd) => {
+    const found = [ ...artisans, ...suppliers, DEMO_USERS['admin'], DEMO_USERS['0707070707'] ].find(u => (u.telephone === id || u.contactMobile === id || u.id === id) && u.password === pwd);
+    if (found) { setUser(found); setScreen('dashboard'); } else alert("Identifiants incorrects.");
+  };
+
+  const handleUpdateUser = (updatedUser) => {
+      setUser(updatedUser);
+      if (updatedUser.role === 'supplier') { setSuppliers(suppliers.map(s => s.id === updatedUser.id ? updatedUser : s)); } 
+      else if (updatedUser.role === 'artisan' || updatedUser.role === 'driver') { setArtisans(artisans.map(a => a.id === updatedUser.id ? updatedUser : a)); }
+  };
+
+  return (
+    <div className="mx-auto max-w-md min-h-screen bg-gray-50 shadow-2xl relative overflow-hidden font-sans text-gray-900">
+      {screen === 'login' && <LoginScreen onLogin={handleLogin} onGoToRegister={() => setScreen('role_selection')} />}
+      {screen === 'role_selection' && <RoleSelectionScreen onSelectRole={(r) => setScreen(`register_${r}`)} onBack={() => setScreen('login')} />}
+      {screen.startsWith('register_') && <RegistrationFlow initialRole={screen.split('_')[1]} onRegister={(u) => {setUser(u); setScreen('dashboard');}} onBack={() => setScreen('role_selection')} categories={categories} supplierSectors={supplierSectors}/>}
+
+      {screen === 'dashboard' && user && (
+        <>
+          {user.role === 'admin' && <AdminDashboard user={user} onLogout={()=>setScreen('login')} categories={categories} setCategories={setCategories} supplierSectors={supplierSectors} setSupplierSectors={setSupplierSectors} platformFees={platformFees} setPlatformFees={setPlatformFees} jobs={jobs} orders={orders} />}
+          {user.role === 'client' && <ClientDashboard user={user} onLogout={()=>setScreen('login')} categories={categories} artisans={artisans} suppliers={suppliers} jobs={jobs} orders={orders} onAddJob={(j)=>setJobs([j, ...jobs])} onAddOrder={(o)=>setOrders([o, ...orders])} platformFees={platformFees} onNotify={()=>console.log("Notified")} onUpdateJob={(id, d)=>setJobs(jobs.map(j=>j.id===id?{...j,...d}:j))} onUpdateOrder={(id, d)=>setOrders(orders.map(o=>o.id===id?{...o,...d}:o))} />}
+          {(user.role === 'artisan' || user.role === 'driver') && <ArtisanDashboard artisan={user} jobs={jobs} orders={orders} onUpdateJob={(id, d)=>setJobs(jobs.map(j=>j.id===id?{...j,...d}:j))} onUpdateOrder={(id, d)=>setOrders(orders.map(o=>o.id===id?{...o,...d}:o))} onLogout={()=>setScreen('login')} platformFees={platformFees} suppliers={suppliers} onNotify={()=>console.log("Notified")} />}
+          {user.role === 'supplier' && <SupplierDashboard supplier={user} jobs={jobs} orders={orders} onUpdateJob={(id, d)=>setJobs(jobs.map(j=>j.id===id?{...j,...d}:j))} onUpdateOrder={(id, d)=>setOrders(orders.map(o=>o.id===id?{...o,...d}:o))} onUpdateUser={handleUpdateUser} onNotify={()=>console.log("Notified")} onLogout={()=>setScreen('login')} />}
+        </>
+      )}
+    </div>
+  );
+}

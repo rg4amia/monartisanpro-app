@@ -45,6 +45,7 @@ Future<void> main() async {
       // Yandex MapKit — clé API
       await mapkit_init.initMapkit(
         apiKey: 'REVOKED-YANDEX-KEY',
+        locale: 'fr_FR',
       );
 
       runApp(const App());

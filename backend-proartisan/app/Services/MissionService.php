@@ -16,14 +16,23 @@ class MissionService
     public function create(User $client, array $data): Mission
     {
         $mission = Mission::create([
-            'client_id'   => $client->id,
-            'description' => $data['description'],
-            'photos_json' => $data['photos'] ?? null,
-            'status'      => 'en_attente',
+            'client_id'           => $client->id,
+            'artisan_id'          => $data['artisan_id'] ?? null,
+            'requested_sector_id' => $data['sector_id'] ?? null,
+            'requested_trade_id'  => $data['trade_id'] ?? null,
+            'description'         => $data['description'],
+            'photos_json'         => $data['photos'] ?? null,
+            'status'              => 'en_attente',
+            'client_latitude'     => $data['lat'] ?? null,
+            'client_longitude'    => $data['lng'] ?? null,
+            'client_address'      => $data['location_address'] ?? null,
         ]);
 
         // Enrichissement Gemini
-        $estimate = $this->geminiService->analyzeMission($data['description']);
+        $estimate = $this->geminiService->analyzeMission($data['description'], [
+            'category' => $data['category'] ?? null,
+            'location_address' => $data['location_address'] ?? null,
+        ]);
 
         $mission->update([
             'gemini_category'       => $estimate['category'],
@@ -40,6 +49,9 @@ class MissionService
      */
     public function estimate(array $data): array
     {
-        return $this->geminiService->analyzeMission($data['description'] ?? '');
+        return $this->geminiService->analyzeMission($data['description'] ?? '', [
+            'category' => $data['category'] ?? null,
+            'location_address' => $data['location_address'] ?? null,
+        ]);
     }
 }

@@ -81,4 +81,9 @@ return [
         'sender_id' => env('SMS_SENDER_ID', 'ProsArtisan'),
     ],
 
+    'gemini' => [
+        'api_key' => env('GEMINI_API_KEY'),
+        'model' => env('GEMINI_MODEL', 'gemini-1.5-flash'),
+    ],
+
 ];

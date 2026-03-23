@@ -1,82 +1,514 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../data/models/jcode_item_model.dart';
+import '../../../data/models/jcode_model.dart';
+import '../../../data/models/supplier_model.dart';
+import '../../../data/models/supplier_product_model.dart';
 import '../controllers/jcode_controller.dart';
 
-class JcodeScreen extends GetView<JcodeController> {
+class JcodeScreen extends StatefulWidget {
   const JcodeScreen({super.key});
+
+  @override
+  State<JcodeScreen> createState() => _JcodeScreenState();
+}
+
+class _JcodeScreenState extends State<JcodeScreen> {
+  late final JcodeController controller;
+  final TextEditingController _missionIdCtrl = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    controller = Get.find<JcodeController>();
+
+    final args = Get.arguments;
+    if (args is int) {
+      _missionIdCtrl.text = args.toString();
+    } else if (args is Map<String, dynamic> && args['missionId'] != null) {
+      _missionIdCtrl.text = args['missionId'].toString();
+    }
+  }
+
+  @override
+  void dispose() {
+    _missionIdCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('J-Code Matériaux')),
+      appBar: AppBar(
+        title: const Text('J-Code Matériaux'),
+        actions: [
+          IconButton(
+            onPressed: controller.loadActiveJcode,
+            icon: const Icon(Icons.refresh),
+          ),
+        ],
+      ),
       body: Obx(() {
-        if (controller.isLoading.value) {
+        if (controller.isLoading.value &&
+            controller.activeJcode.value == null) {
           return const Center(child: CircularProgressIndicator());
         }
+
         final jcode = controller.activeJcode.value;
-        if (jcode == null) {
-          return _EmptyState(
-            onGenerate: () => _showGenerateDialog(context),
-          );
+        if (jcode != null) {
+          return _JcodeDetail(jcode: jcode);
         }
-        return _JcodeDetail(jcode: jcode);
-      }),
-      floatingActionButton: Obx(() {
-        if (controller.activeJcode.value != null) return const SizedBox();
-        return FloatingActionButton.extended(
-          onPressed: () => _showGenerateDialog(context),
-          icon: const Icon(Icons.add),
-          label: const Text('Générer J-Code'),
+
+        return _ComposerView(
+          controller: controller,
+          missionIdCtrl: _missionIdCtrl,
+          onAddCustomItem: _showCustomItemDialog,
         );
       }),
     );
   }
 
-  void _showGenerateDialog(BuildContext context) {
-    final missionIdCtrl = TextEditingController();
-    final montantCtrl = TextEditingController();
-    Get.dialog(
+  Future<void> _showCustomItemDialog() async {
+    final nameCtrl = TextEditingController();
+    final skuCtrl = TextEditingController();
+    final quantityCtrl = TextEditingController(text: '1');
+    final priceCtrl = TextEditingController();
+
+    await Get.dialog(
       AlertDialog(
-        title: const Text('Générer un J-Code'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: missionIdCtrl,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'ID de la mission'),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: montantCtrl,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Montant matériaux (FCFA)',
-                suffixText: 'FCFA',
+        title: const Text('Article hors catalogue'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Nom de l\'article',
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 12),
+              TextField(
+                controller: skuCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'SKU / Référence (optionnel)',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: quantityCtrl,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'Quantité'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: priceCtrl,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Prix unitaire (FCFA)',
+                ),
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
-            onPressed: () => Get.back(),
+            onPressed: Get.back,
             child: const Text('Annuler'),
           ),
           ElevatedButton(
             onPressed: () {
-              final missionId = int.tryParse(missionIdCtrl.text);
-              final montant = int.tryParse(montantCtrl.text);
-              if (missionId != null && montant != null && montant > 0) {
-                Get.back();
-                controller.generateJcode(missionId, montant);
+              final name = nameCtrl.text.trim();
+              final quantity = int.tryParse(quantityCtrl.text.trim());
+              final unitPrice = int.tryParse(priceCtrl.text.trim());
+
+              if (name.isEmpty ||
+                  quantity == null ||
+                  quantity <= 0 ||
+                  unitPrice == null ||
+                  unitPrice <= 0) {
+                Get.snackbar(
+                  'Champs invalides',
+                  'Renseignez un nom, une quantité et un prix unitaire valides.',
+                  snackPosition: SnackPosition.TOP,
+                );
+                return;
               }
+
+              controller.addCustomItem(
+                name: name,
+                sku: skuCtrl.text.trim(),
+                quantity: quantity,
+                unitPrice: unitPrice,
+              );
+              Get.back();
             },
-            child: const Text('Générer'),
+            child: const Text('Ajouter'),
           ),
+        ],
+      ),
+    );
+
+    nameCtrl.dispose();
+    skuCtrl.dispose();
+    quantityCtrl.dispose();
+    priceCtrl.dispose();
+  }
+}
+
+class _ComposerView extends StatelessWidget {
+  final JcodeController controller;
+  final TextEditingController missionIdCtrl;
+  final Future<void> Function() onAddCustomItem;
+
+  const _ComposerView({
+    required this.controller,
+    required this.missionIdCtrl,
+    required this.onAddCustomItem,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return RefreshIndicator(
+      onRefresh: () async {
+        await controller.loadSuppliers();
+        final supplier = controller.selectedSupplier.value;
+        if (supplier != null) {
+          await controller.loadSupplierProducts(supplier.id);
+        }
+      },
+      child: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          _SectionCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Créer une commande matériaux',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Choisissez un fournisseur, ajoutez les articles du catalogue ou vos articles personnalisés, puis générez le J-Code.',
+                  style: TextStyle(color: AppColors.textSecondary, height: 1.4),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: missionIdCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'ID de la mission',
+                    hintText: 'Exemple: 125',
+                    prefixIcon: Icon(Icons.work_outline),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Obx(
+                  () => SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: controller.isImportingDevis.value
+                          ? null
+                          : () {
+                              final missionId =
+                                  int.tryParse(missionIdCtrl.text.trim());
+                              if (missionId == null || missionId <= 0) {
+                                Get.snackbar(
+                                  'Mission invalide',
+                                  'Renseignez d\'abord un ID de mission valide pour importer le devis.',
+                                  snackPosition: SnackPosition.TOP,
+                                );
+                                return;
+                              }
+                              controller.importMaterialsFromMission(missionId);
+                            },
+                      icon: controller.isImportingDevis.value
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.file_download_outlined),
+                      label: Text(
+                        controller.isImportingDevis.value
+                            ? 'Import en cours...'
+                            : 'Importer les matériaux du devis',
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          _SectionCard(
+            child: Obx(() {
+              final suppliers = controller.suppliers;
+              final selectedSupplier = controller.selectedSupplier.value;
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Fournisseur',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: controller.loadSuppliers,
+                        icon: const Icon(Icons.refresh),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  if (controller.isSuppliersLoading.value && suppliers.isEmpty)
+                    const Center(child: CircularProgressIndicator())
+                  else if (suppliers.isEmpty)
+                    const Text(
+                      'Aucun fournisseur agréé disponible pour le moment.',
+                      style: TextStyle(color: AppColors.textSecondary),
+                    )
+                  else
+                    DropdownButtonFormField<int>(
+                      initialValue: selectedSupplier?.id,
+                      decoration: const InputDecoration(
+                        labelText: 'Sélectionnez un fournisseur',
+                        prefixIcon: Icon(Icons.storefront_outlined),
+                      ),
+                      items: suppliers
+                          .map(
+                            (supplier) => DropdownMenuItem<int>(
+                              value: supplier.id,
+                              child: Text(
+                                '${supplier.shopName} (${supplier.activeProductsCount} articles)',
+                              ),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        SupplierModel? supplier;
+                        for (final candidate in suppliers) {
+                          if (candidate.id == value) {
+                            supplier = candidate;
+                            break;
+                          }
+                        }
+                        controller.selectSupplier(supplier);
+                      },
+                    ),
+                  if (selectedSupplier != null) ...[
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.06),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            selectedSupplier.shopName,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            Formatters.phone(selectedSupplier.phone),
+                            style: const TextStyle(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${selectedSupplier.activeProductsCount} articles disponibles',
+                            style: const TextStyle(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              );
+            }),
+          ),
+          const SizedBox(height: 16),
+          _SectionCard(
+            child: Obx(() {
+              final supplier = controller.selectedSupplier.value;
+              final products = controller.supplierProducts;
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Articles du catalogue',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                      TextButton.icon(
+                        onPressed: supplier == null ? null : onAddCustomItem,
+                        icon: const Icon(Icons.add_circle_outline),
+                        label: const Text('Article hors catalogue'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  if (supplier == null)
+                    const Text(
+                      'Choisissez un fournisseur pour afficher son catalogue.',
+                      style: TextStyle(color: AppColors.textSecondary),
+                    )
+                  else if (controller.isCatalogLoading.value &&
+                      products.isEmpty)
+                    const Center(child: CircularProgressIndicator())
+                  else if (products.isEmpty)
+                    const Text(
+                      'Ce fournisseur n\'a pas encore publié d\'article actif.',
+                      style: TextStyle(color: AppColors.textSecondary),
+                    )
+                  else
+                    ...products.map(
+                      (product) => _SupplierProductTile(
+                        product: product,
+                        onAdd: () => controller.addCatalogProduct(product),
+                      ),
+                    ),
+                ],
+              );
+            }),
+          ),
+          const SizedBox(height: 16),
+          Obx(() {
+            final items = controller.draftItems;
+
+            return _SectionCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Demande en cours',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  if (items.isEmpty)
+                    const Text(
+                      'Ajoutez des articles du catalogue ou des articles hors catalogue pour préparer la commande.',
+                      style: TextStyle(color: AppColors.textSecondary),
+                    )
+                  else
+                    ...items.map(
+                      (item) => _DraftItemTile(
+                        item: item,
+                        onIncrement: () => controller.updateDraftQuantity(
+                          item,
+                          item.quantity + 1,
+                        ),
+                        onDecrement: () => controller.updateDraftQuantity(
+                          item,
+                          item.quantity - 1,
+                        ),
+                        onRemove: () => controller.removeDraftItem(item),
+                      ),
+                    ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.success.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Montant matériaux',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          Formatters.fcfa(controller.draftTotal),
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.success,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: controller.isLoading.value
+                          ? null
+                          : () {
+                              final missionId =
+                                  int.tryParse(missionIdCtrl.text.trim());
+                              if (missionId == null || missionId <= 0) {
+                                Get.snackbar(
+                                  'Mission invalide',
+                                  'Renseignez un ID de mission valide.',
+                                  snackPosition: SnackPosition.TOP,
+                                );
+                                return;
+                              }
+                              controller.generateJcodeForDraft(missionId);
+                            },
+                      icon: controller.isLoading.value
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.qr_code_2),
+                      label: Text(
+                        controller.isLoading.value
+                            ? 'Génération...'
+                            : 'Générer le J-Code',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
         ],
       ),
     );
@@ -84,101 +516,335 @@ class JcodeScreen extends GetView<JcodeController> {
 }
 
 class _JcodeDetail extends StatelessWidget {
-  final dynamic jcode;
+  final JcodeModel jcode;
+
   const _JcodeDetail({required this.jcode});
 
   @override
   Widget build(BuildContext context) {
     final isActif = jcode.statut == 'actif';
-    return SingleChildScrollView(
+
+    return ListView(
       padding: const EdgeInsets.all(24),
-      child: Column(
-        children: [
-          // QR Code
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                children: [
-                  if (isActif)
-                    QrImageView(
-                      data: jcode.id.toString(),
-                      version: QrVersions.auto,
-                      size: 200,
-                    )
-                  else
-                    const Icon(Icons.qr_code, size: 200, color: AppColors.border),
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      jcode.code,
-                      style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 4,
-                        color: AppColors.primary,
-                      ),
-                    ),
+      children: [
+        _SectionCard(
+          child: Column(
+            children: [
+              if (isActif)
+                QrImageView(
+                  data: jcode.id.toString(),
+                  version: QrVersions.auto,
+                  size: 190,
+                )
+              else
+                const Icon(Icons.qr_code, size: 180, color: AppColors.border),
+              const SizedBox(height: 18),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  jcode.code,
+                  style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 4,
+                    color: AppColors.primary,
                   ),
-                  const SizedBox(height: 8),
-                  _StatusBadge(statut: jcode.statut),
-                ],
+                ),
               ),
-            ),
+              const SizedBox(height: 10),
+              _StatusBadge(statut: jcode.statut),
+            ],
           ),
-          const SizedBox(height: 16),
-
-          // Détails
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  _DetailRow(
-                    label: 'Montant',
-                    value: Formatters.fcfa(jcode.montant as int),
-                    valueStyle: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                      color: AppColors.success,
-                    ),
-                  ),
-                  const Divider(height: 16),
-                  _DetailRow(
-                    label: 'Expire le',
-                    value: Formatters.dateTime(jcode.expiresAt),
-                  ),
-                  if (jcode.scannedAt != null) ...[
-                    const Divider(height: 16),
-                    _DetailRow(
-                      label: 'Scanné le',
-                      value: Formatters.dateTime(jcode.scannedAt),
-                    ),
-                  ],
-                ],
+        ),
+        const SizedBox(height: 16),
+        _SectionCard(
+          child: Column(
+            children: [
+              _DetailRow(
+                label: 'Mission',
+                value: '#${jcode.missionId}',
               ),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Code USSD
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.phone_in_talk, color: AppColors.primary),
-              title: const Text('Code USSD'),
-              subtitle: Text(
-                jcode.ussdCode ?? '*144#',
-                style: const TextStyle(
+              const Divider(height: 20),
+              _DetailRow(
+                label: 'Montant',
+                value: Formatters.fcfa(jcode.montant),
+                valueStyle: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
-                  letterSpacing: 2,
+                  color: AppColors.success,
                 ),
+              ),
+              const Divider(height: 20),
+              _DetailRow(
+                label: 'Expire le',
+                value: Formatters.dateTime(jcode.expiresAt),
+              ),
+              if (jcode.scannedAt != null) ...[
+                const Divider(height: 20),
+                _DetailRow(
+                  label: 'Scanné le',
+                  value: Formatters.dateTime(jcode.scannedAt!),
+                ),
+              ],
+            ],
+          ),
+        ),
+        if (jcode.supplier != null) ...[
+          const SizedBox(height: 16),
+          _SectionCard(
+            child: ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.success.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.storefront, color: AppColors.success),
+              ),
+              title: Text(
+                jcode.supplier!.shopName,
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+              subtitle: Text(Formatters.phone(jcode.supplier!.phone)),
+            ),
+          ),
+        ],
+        if (jcode.items.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          _SectionCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Articles demandés',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                ...jcode.items.map((item) => _ServedItemTile(item: item)),
+              ],
+            ),
+          ),
+        ],
+        const SizedBox(height: 16),
+        _SectionCard(
+          child: ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.phone_in_talk, color: AppColors.primary),
+            title: const Text('Code USSD'),
+            subtitle: Text(
+              jcode.ussdCode ?? '*144#',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+                letterSpacing: 2,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SupplierProductTile extends StatelessWidget {
+  final SupplierProductModel product;
+  final VoidCallback onAdd;
+
+  const _SupplierProductTile({
+    required this.product,
+    required this.onAdd,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final outOfStock = product.stockQuantity <= 0;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(Icons.inventory_2_outlined,
+                color: AppColors.primary),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  product.name,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                if ((product.description ?? '').isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    product.description!,
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      height: 1.3,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _InfoChip(
+                      label: Formatters.fcfa(product.unitPrice),
+                      color: AppColors.success,
+                    ),
+                    _InfoChip(
+                      label: 'Stock: ${product.stockQuantity}',
+                      color: outOfStock ? AppColors.danger : AppColors.info,
+                    ),
+                    if ((product.sku ?? '').isNotEmpty)
+                      _InfoChip(
+                        label: product.sku!,
+                        color: AppColors.primary,
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          ElevatedButton(
+            onPressed: outOfStock ? null : onAdd,
+            child: const Text('Ajouter'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DraftItemTile extends StatelessWidget {
+  final JcodeItemModel item;
+  final VoidCallback onIncrement;
+  final VoidCallback onDecrement;
+  final VoidCallback onRemove;
+
+  const _DraftItemTile({
+    required this.item,
+    required this.onIncrement,
+    required this.onDecrement,
+    required this.onRemove,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final badgeColor = item.isCatalog ? AppColors.info : AppColors.warning;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  item.name,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: badgeColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  item.isCatalog ? 'Catalogue' : 'Personnalisé',
+                  style: TextStyle(
+                    color: badgeColor,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+              IconButton(
+                onPressed: onRemove,
+                icon: const Icon(Icons.delete_outline, color: AppColors.danger),
+              ),
+            ],
+          ),
+          if ((item.sku ?? '').isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                item.sku!,
+                style: const TextStyle(color: AppColors.textSecondary),
+              ),
+            ),
+          Row(
+            children: [
+              Text(
+                Formatters.fcfa(item.unitPrice),
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const Spacer(),
+              _QtyButton(icon: Icons.remove, onTap: onDecrement),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Text(
+                  '${item.quantity}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+              _QtyButton(icon: Icons.add, onTap: onIncrement),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              Formatters.fcfa(item.subtotal),
+              style: const TextStyle(
+                fontWeight: FontWeight.w800,
+                color: AppColors.textPrimary,
               ),
             ),
           ),
@@ -188,39 +854,162 @@ class _JcodeDetail extends StatelessWidget {
   }
 }
 
-class _EmptyState extends StatelessWidget {
-  final VoidCallback onGenerate;
-  const _EmptyState({required this.onGenerate});
+class _ServedItemTile extends StatelessWidget {
+  final JcodeItemModel item;
+
+  const _ServedItemTile({required this.item});
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
         children: [
-          const Icon(Icons.qr_code_2, size: 80, color: AppColors.border),
-          const SizedBox(height: 16),
-          const Text(
-            'Aucun J-Code actif',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.name,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${item.quantity} x ${Formatters.fcfa(item.unitPrice)}',
+                  style: const TextStyle(color: AppColors.textSecondary),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 8),
-          const Text(
-            'Générez un J-Code pour commander\ndes matériaux auprès d\'un fournisseur',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.textMuted),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: onGenerate,
-            icon: const Icon(Icons.add),
-            label: const Text('Générer un J-Code'),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                Formatters.fcfa(item.subtotal),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 6),
+              _StatusDot(
+                label: item.status == 'served' ? 'Servi' : 'Demandé',
+                color: item.status == 'served'
+                    ? AppColors.success
+                    : AppColors.warning,
+              ),
+            ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _SectionCard extends StatelessWidget {
+  final Widget child;
+
+  const _SectionCard({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadowColor.withValues(alpha: 0.12),
+            blurRadius: 22,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+}
+
+class _InfoChip extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _InfoChip({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.w700,
+          fontSize: 12,
+        ),
+      ),
+    );
+  }
+}
+
+class _QtyButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _QtyButton({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        width: 30,
+        height: 30,
+        decoration: BoxDecoration(
+          color: AppColors.primary.withValues(alpha: 0.08),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, size: 18, color: AppColors.primary),
+      ),
+    );
+  }
+}
+
+class _StatusDot extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _StatusDot({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -228,6 +1017,7 @@ class _EmptyState extends StatelessWidget {
 
 class _StatusBadge extends StatelessWidget {
   final String statut;
+
   const _StatusBadge({required this.statut});
 
   @override
@@ -252,7 +1042,12 @@ class _DetailRow extends StatelessWidget {
   final String label;
   final String value;
   final TextStyle? valueStyle;
-  const _DetailRow({required this.label, required this.value, this.valueStyle});
+
+  const _DetailRow({
+    required this.label,
+    required this.value,
+    this.valueStyle,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -260,9 +1055,10 @@ class _DetailRow extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label, style: const TextStyle(color: AppColors.textSecondary)),
-        Text(value,
-            style: valueStyle ??
-                const TextStyle(fontWeight: FontWeight.w600)),
+        Text(
+          value,
+          style: valueStyle ?? const TextStyle(fontWeight: FontWeight.w600),
+        ),
       ],
     );
   }

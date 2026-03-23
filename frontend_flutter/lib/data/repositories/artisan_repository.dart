@@ -10,13 +10,18 @@ class ArtisanRepository {
     required double lng,
     int? radiusMeters,
     String? sectorId,
+    String? tradeId,
   }) async {
-    final res = await _client.get(ApiEndpoints.artisans, params: {
-      'lat': lat,
-      'lng': lng,
-      if (radiusMeters != null) 'radius': radiusMeters,
-      if (sectorId != null) 'sector': sectorId,
-    });
+    final res = await _client.get(
+      ApiEndpoints.artisans,
+      params: {
+        'lat': lat,
+        'lng': lng,
+        if (radiusMeters != null) 'radius': radiusMeters,
+        if (sectorId != null) 'sector': sectorId,
+        if (tradeId != null) 'trade': tradeId,
+      },
+    );
     final list = res.data['data'] as List<dynamic>;
     return list
         .map((e) => ArtisanModel.fromJson(e as Map<String, dynamic>))

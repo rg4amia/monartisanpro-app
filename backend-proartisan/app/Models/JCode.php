@@ -41,6 +41,11 @@ class JCode extends Model
         return $this->belongsTo(User::class, 'fournisseur_id');
     }
 
+    public function items()
+    {
+        return $this->hasMany(JCodeItem::class, 'jcode_id')->orderBy('id');
+    }
+
     public function isActif(): bool
     {
         return $this->statut === 'actif' && $this->expires_at->isFuture();
@@ -54,7 +59,7 @@ class JCode extends Model
         }
 
         DB::statement(
-            'UPDATE jcodes SET position_scan = POINT(?, ?) WHERE id = ?',
+            'UPDATE jcodes SET position_scan = ST_SRID(POINT(?, ?), 4326) WHERE id = ?',
             [$lng, $lat, $this->id]
         );
     }

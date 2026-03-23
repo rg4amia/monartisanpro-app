@@ -17,12 +17,14 @@ import '../../modules/devis/views/quote_screen.dart';
 import '../../modules/jcode/bindings/jcode_binding.dart';
 import '../../modules/jcode/views/jcode_screen.dart';
 import '../../modules/jcode/views/scanner_screen.dart';
+import '../../modules/jcode/views/supplier_catalog_screen.dart';
 import '../../modules/jcode/views/transaction_confirm_screen.dart';
 import '../../modules/litige/bindings/litige_binding.dart';
 import '../../modules/litige/views/litige_screen.dart';
 import '../../modules/litige/views/litige_detail_screen.dart';
 import '../../modules/main_tab/bindings/main_tab_binding.dart';
 import '../../modules/main_tab/views/main_tab_screen.dart';
+import '../../modules/missions/bindings/location_picker_binding.dart';
 import '../../modules/missions/bindings/missions_binding.dart';
 import '../../modules/missions/views/mission_request_screen.dart';
 import '../../modules/missions/views/mission_tracking_screen.dart';
@@ -142,6 +144,11 @@ class AppPages {
       binding: JcodeBinding(),
     ),
     GetPage(
+      name: Routes.supplierCatalog,
+      page: () => const SupplierCatalogScreen(),
+      binding: JcodeBinding(),
+    ),
+    GetPage(
       name: Routes.transactionConfirm,
       page: () => const TransactionConfirmScreen(),
       binding: JcodeBinding(),
@@ -209,6 +216,7 @@ class AppPages {
     GetPage(
       name: Routes.locationPicker,
       page: () => const LocationPickerScreen(),
+      binding: LocationPickerBinding(),
     ),
 
     // Artisan Selection

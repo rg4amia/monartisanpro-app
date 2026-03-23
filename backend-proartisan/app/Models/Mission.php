@@ -11,10 +11,12 @@ class Mission extends Model
 
     protected $fillable = [
         'client_id', 'artisan_id', 'description', 'photos_json',
+        'requested_sector_id', 'requested_trade_id',
         'gemini_category', 'gemini_urgency', 'gemini_estimation_min', 'gemini_estimation_max',
         'status', 'montant_total', 'montant_materiaux', 'montant_mo',
         'ratio_materiaux', 'referent_required', 'funds_frozen',
-        'referent_validated_at', 'referent_validated_by'
+        'referent_validated_at', 'referent_validated_by',
+        'client_latitude', 'client_longitude', 'client_address',
     ];
 
     protected function casts(): array
@@ -30,6 +32,8 @@ class Mission extends Model
             'gemini_estimation_min' => 'integer',
             'gemini_estimation_max' => 'integer',
             'referent_validated_at' => 'datetime',
+            'client_latitude'       => 'float',
+            'client_longitude'      => 'float',
         ];
     }
 
@@ -46,6 +50,16 @@ class Mission extends Model
     public function referent()
     {
         return $this->belongsTo(User::class, 'referent_validated_by');
+    }
+
+    public function requestedSector()
+    {
+        return $this->belongsTo(Sector::class, 'requested_sector_id');
+    }
+
+    public function requestedTrade()
+    {
+        return $this->belongsTo(Trade::class, 'requested_trade_id');
     }
 
     public function devis()

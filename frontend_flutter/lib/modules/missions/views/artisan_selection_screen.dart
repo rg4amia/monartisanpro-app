@@ -25,7 +25,7 @@ class ArtisanSelectionScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(ArtisanSelectionController());
-    
+
     // Récupérer les données de la mission depuis les arguments
     final args = Get.arguments as Map<String, dynamic>?;
     if (args != null) {
@@ -44,8 +44,8 @@ class ArtisanSelectionScreen extends StatelessWidget {
                 if (controller.isLoading.value) {
                   return const Center(child: CircularProgressIndicator());
                 }
-                
-                return controller.isMapView.value 
+
+                return controller.isMapView.value
                     ? _MapView(controller: controller)
                     : _ListView(controller: controller);
               }),
@@ -108,7 +108,7 @@ class _AppBar extends StatelessWidget {
 // ─── View Toggle ──────────────────────────────────────────────────────────────
 class _ViewToggle extends StatelessWidget {
   final ArtisanSelectionController controller;
-  
+
   const _ViewToggle({required this.controller});
 
   @override
@@ -124,20 +124,24 @@ class _ViewToggle extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: Obx(() => _ToggleButton(
-              icon: Icons.map_outlined,
-              label: 'Carte',
-              isSelected: controller.isMapView.value,
-              onTap: () => controller.setMapView(true),
-            )),
+            child: Obx(
+              () => _ToggleButton(
+                icon: Icons.map_outlined,
+                label: 'Carte',
+                isSelected: controller.isMapView.value,
+                onTap: () => controller.setMapView(true),
+              ),
+            ),
           ),
           Expanded(
-            child: Obx(() => _ToggleButton(
-              icon: Icons.list_outlined,
-              label: 'Liste',
-              isSelected: !controller.isMapView.value,
-              onTap: () => controller.setMapView(false),
-            )),
+            child: Obx(
+              () => _ToggleButton(
+                icon: Icons.list_outlined,
+                label: 'Liste',
+                isSelected: !controller.isMapView.value,
+                onTap: () => controller.setMapView(false),
+              ),
+            ),
           ),
         ],
       ),
@@ -171,11 +175,7 @@ class _ToggleButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              size: 18,
-              color: isSelected ? Colors.white : _C.muted,
-            ),
+            Icon(icon, size: 18, color: isSelected ? Colors.white : _C.muted),
             const SizedBox(width: 8),
             Text(
               label,
@@ -195,7 +195,7 @@ class _ToggleButton extends StatelessWidget {
 // ─── Map View ─────────────────────────────────────────────────────────────────
 class _MapView extends StatelessWidget {
   final ArtisanSelectionController controller;
-  
+
   const _MapView({required this.controller});
 
   @override
@@ -232,16 +232,13 @@ class _MapView extends StatelessWidget {
                     SizedBox(height: 8),
                     Text(
                       'Carte Yandex Maps intégrée ici',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: _C.muted,
-                      ),
+                      style: TextStyle(fontSize: 14, color: _C.muted),
                     ),
                   ],
                 ),
               ),
             ),
-            
+
             // Bouton pour ouvrir la carte complète
             Positioned(
               bottom: 16,
@@ -253,7 +250,10 @@ class _MapView extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _C.primary,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -270,18 +270,18 @@ class _MapView extends StatelessWidget {
 // ─── List View ────────────────────────────────────────────────────────────────
 class _ListView extends StatelessWidget {
   final ArtisanSelectionController controller;
-  
+
   const _ListView({required this.controller});
 
   @override
   Widget build(BuildContext context) {
     return Obx(() {
       final artisans = controller.artisans;
-      
+
       if (artisans.isEmpty) {
         return _EmptyState();
       }
-      
+
       return RefreshIndicator(
         onRefresh: controller.refreshArtisans,
         child: ListView.separated(
@@ -303,10 +303,7 @@ class _ArtisanCard extends StatelessWidget {
   final ArtisanModel artisan;
   final VoidCallback onTap;
 
-  const _ArtisanCard({
-    required this.artisan,
-    required this.onTap,
-  });
+  const _ArtisanCard({required this.artisan, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -358,7 +355,7 @@ class _ArtisanCard extends StatelessWidget {
                   ],
                 ),
               ),
-            
+
             // Contenu principal
             Row(
               children: [
@@ -381,7 +378,7 @@ class _ArtisanCard extends StatelessWidget {
                       : null,
                 ),
                 const SizedBox(width: 12),
-                
+
                 // Infos
                 Expanded(
                   child: Column(
@@ -398,18 +395,22 @@ class _ArtisanCard extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         artisan.trade ?? 'Métier',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: _C.muted,
-                        ),
+                        style: const TextStyle(fontSize: 14, color: _C.muted),
                       ),
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          Icon(Icons.location_on_outlined, size: 14, color: _C.muted),
+                          Icon(
+                            Icons.location_on_outlined,
+                            size: 14,
+                            color: _C.muted,
+                          ),
                           const SizedBox(width: 4),
                           Text(
-                            artisan.distance ?? 'Distance inconnue',
+                            artisan.distance ??
+                                artisan.locationLabel ??
+                                artisan.commune ??
+                                'Distance inconnue',
                             style: const TextStyle(
                               fontSize: 13,
                               color: _C.muted,
@@ -431,14 +432,17 @@ class _ArtisanCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                
+
                 // Score N'Zassa
                 Column(
                   children: [
                     ScoreNzassaBadge(score: artisan.scoreNzassa),
                     const SizedBox(height: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: _C.success.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6),
@@ -456,20 +460,23 @@ class _ArtisanCard extends StatelessWidget {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Actions
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () => Get.toNamed(Routes.artisanProfile, arguments: artisan),
+                    onPressed: () =>
+                        Get.toNamed(Routes.artisanProfile, arguments: artisan),
                     icon: const Icon(Icons.person_outline, size: 16),
                     label: const Text('Profil'),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: _C.primary,
-                      side: BorderSide(color: _C.primary.withValues(alpha: 0.3)),
+                      side: BorderSide(
+                        color: _C.primary.withValues(alpha: 0.3),
+                      ),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -517,11 +524,7 @@ class _EmptyState extends StatelessWidget {
               color: _C.primaryLight,
               borderRadius: BorderRadius.circular(20),
             ),
-            child: const Icon(
-              Icons.search_off,
-              size: 40,
-              color: _C.primary,
-            ),
+            child: const Icon(Icons.search_off, size: 40, color: _C.primary),
           ),
           const SizedBox(height: 16),
           const Text(
@@ -536,14 +539,12 @@ class _EmptyState extends StatelessWidget {
           const Text(
             'Essayez d\'élargir votre zone de recherche\nou changez de catégorie',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              color: _C.muted,
-            ),
+            style: TextStyle(fontSize: 14, color: _C.muted),
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
-            onPressed: () => Get.find<ArtisanSelectionController>().refreshArtisans(),
+            onPressed: () =>
+                Get.find<ArtisanSelectionController>().refreshArtisans(),
             icon: const Icon(Icons.refresh, size: 18),
             label: const Text('Actualiser'),
             style: ElevatedButton.styleFrom(

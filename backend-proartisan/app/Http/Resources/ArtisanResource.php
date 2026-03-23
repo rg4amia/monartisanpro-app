@@ -31,9 +31,12 @@ class ArtisanResource extends JsonResource
 
         return [
             'id'                 => $this->id,
+            'role'               => 'artisan',
             'name'               => $this->name,
             'phone'              => $this->phone,
+            'telephone'          => $this->phone,
             'trade'              => $profile?->trade?->name,
+            'category'           => $profile?->trade?->name,
             'sector'             => $profile?->sector?->name,
             'photo'              => $profile?->photo_url,
             'bio'                => $profile?->bio,
@@ -49,6 +52,9 @@ class ArtisanResource extends JsonResource
             'distanceMetres'     => $this->distanceMetres,
             'isGoldenMarker'     => $this->score_nzassa >= 70,
             'kycStatus'          => $this->kyc_status,
+            'commune'            => $this->commune?->name,
+            'locationLabel'      => $this->commune?->name ?? $profile?->sector?->name,
+            'price'              => 'Sur devis',
         ];
     }
 

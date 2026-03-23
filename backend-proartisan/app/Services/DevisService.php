@@ -20,17 +20,28 @@ class DevisService
      */
     public function create(Mission $mission, User $artisan, array $data): Devis
     {
-        // Normalisation : accepter lignes_json OU lignes
-        $lignes = $data['lignes_json'] ?? $data['lignes'] ?? [];
-        $jalons = $data['jalons_json'] ?? $data['jalons'] ?? [];
+        $payload = $this->normalizePayload($data);
 
         return Devis::create([
             'mission_id'  => $mission->id,
             'artisan_id'  => $artisan->id,
-            'lignes_json' => $lignes,
-            'jalons_json' => $jalons,
+            'lignes_json' => $payload['lignes_json'],
+            'jalons_json' => $payload['jalons_json'],
             'statut'      => 'soumis',
         ]);
+    }
+
+    public function normalizePayload(array $data): array
+    {
+        $lignes = collect($data['lignes_json'] ?? $data['lignes'] ?? [])
+            ->map(fn (array $ligne) => $this->normalizeLigne($ligne))
+            ->values()
+            ->all();
+
+        return [
+            'lignes_json' => $lignes,
+            'jalons_json' => $data['jalons_json'] ?? $data['jalons'] ?? [],
+        ];
     }
 
     /**
@@ -87,5 +98,45 @@ class DevisService
     public function refuse(Devis $devis): void
     {
         $devis->update(['statut' => 'refuse']);
+    }
+
+    private function normalizeLigne(array $ligne): array
+    {
+        $type = $ligne['type'] ?? 'mo';
+        $montant = (int) ($ligne['montant'] ?? 0);
+
+        $normalized = [
+            'type' => $type,
+            'description' => $ligne['description'] ?? '',
+            'montant' => $montant,
+        ];
+
+        if ($type !== 'mat') {
+            return $normalized;
+        }
+
+        $quantity = max(1, (int) ($ligne['quantity'] ?? 1));
+        $unitPrice = isset($ligne['unit_price']) ? (int) $ligne['unit_price'] : null;
+
+        if ($unitPrice !== null && $unitPrice > 0) {
+            $montant = $quantity * $unitPrice;
+        } else {
+            $unitPrice = $quantity > 0 ? (int) round($montant / $quantity) : $montant;
+        }
+
+        $normalized['montant'] = $montant;
+        $normalized['quantity'] = $quantity;
+        $normalized['unit_price'] = $unitPrice;
+        $normalized['source'] = $ligne['source'] ?? (! empty($ligne['supplier_product_id']) ? 'catalog' : 'custom');
+
+        if (! empty($ligne['sku'])) {
+            $normalized['sku'] = trim((string) $ligne['sku']);
+        }
+
+        if (! empty($ligne['supplier_product_id'])) {
+            $normalized['supplier_product_id'] = (int) $ligne['supplier_product_id'];
+        }
+
+        return $normalized;
     }
 }

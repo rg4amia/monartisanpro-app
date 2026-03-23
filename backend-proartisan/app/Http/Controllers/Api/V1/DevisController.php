@@ -62,11 +62,11 @@ class DevisController extends Controller
         }
 
         $data = $request->validated();
+        $payload = $this->devisService->normalizePayload($data);
 
-        // Normalisation : accepter lignes_json OU lignes
         $updateData = [
-            'lignes_json' => $data['lignes_json'] ?? $data['lignes'] ?? $devis->lignes_json,
-            'jalons_json' => $data['jalons_json'] ?? $data['jalons'] ?? $devis->jalons_json,
+            'lignes_json' => $payload['lignes_json'] ?: $devis->lignes_json,
+            'jalons_json' => $payload['jalons_json'] ?: $devis->jalons_json,
         ];
 
         $devis->update($updateData);

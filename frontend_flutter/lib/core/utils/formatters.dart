@@ -30,6 +30,13 @@ class Formatters {
       'en_cours': 'En cours',
       'terminee': 'Terminée',
       'litige': 'Litige',
+      'sent': 'En attente',
+      'quote_provided': 'Devis reçu',
+      'funded': 'Financée',
+      'materials_picked_up': 'En cours',
+      'work_done': 'Travaux terminés',
+      'completed': 'Terminée',
+      'disputed': 'Litige',
     };
     return labels[status] ?? status;
   }
@@ -44,11 +51,7 @@ class Formatters {
   }
 
   static String jcodeStatus(String status) {
-    const labels = {
-      'actif': 'Actif',
-      'utilise': 'Utilisé',
-      'expire': 'Expiré',
-    };
+    const labels = {'actif': 'Actif', 'utilise': 'Utilisé', 'expire': 'Expiré'};
     return labels[status] ?? status;
   }
 
@@ -67,6 +70,8 @@ class Formatters {
       'client': 'Client',
       'artisan': 'Artisan',
       'fournisseur': 'Fournisseur',
+      'supplier': 'Fournisseur',
+      'driver': 'Livreur',
       'referent': 'Référent',
       'admin': 'Administrateur',
     };

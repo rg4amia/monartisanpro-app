@@ -32,7 +32,7 @@ class MissionController extends Controller
             $query->where('status', $status);
         }
 
-        $missions = $query->with(['client', 'artisan', 'jalons'])
+        $missions = $query->with(['client', 'artisan', 'jalons', 'requestedSector', 'requestedTrade'])
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
@@ -65,7 +65,7 @@ class MissionController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => new MissionResource($mission->load('client', 'jalons')),
+            'data'    => new MissionResource($mission->load('client', 'jalons', 'requestedSector', 'requestedTrade')),
         ], 201);
     }
 
@@ -83,7 +83,14 @@ class MissionController extends Controller
             ], 403);
         }
 
-        $mission->load(['client', 'artisan.artisanProfile.trade', 'jalons', 'devis']);
+        $mission->load([
+            'client',
+            'artisan.artisanProfile.trade',
+            'jalons',
+            'devis',
+            'requestedSector',
+            'requestedTrade',
+        ]);
 
         return response()->json([
             'success' => true,
@@ -98,6 +105,8 @@ class MissionController extends Controller
     {
         $data = $request->validate([
             'description' => ['required', 'string', 'min:10'],
+            'category'    => ['nullable', 'string', 'max:100'],
+            'location_address' => ['nullable', 'string', 'max:255'],
         ]);
 
         $estimate = $this->missionService->estimate($data);

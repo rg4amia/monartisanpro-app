@@ -29,6 +29,8 @@ class ArtisanController extends Controller
             'lat'    => ['required', 'numeric', 'between:-90,90'],
             'lng'    => ['required', 'numeric', 'between:-180,180'],
             'radius' => ['nullable', 'integer', 'min:100', 'max:50000'],
+            'sector' => ['nullable'],
+            'trade'  => ['nullable'],
         ], [
             'lat.required' => 'La latitude est obligatoire.',
             'lng.required' => 'La longitude est obligatoire.',
@@ -38,13 +40,15 @@ class ArtisanController extends Controller
         $artisans = $this->geoService->nearbyArtisans(
             (float) $data['lat'],
             (float) $data['lng'],
-            (int) $radius
+            (int) $radius,
+            isset($data['sector']) ? (string) $data['sector'] : null,
+            isset($data['trade']) ? (string) $data['trade'] : null,
         );
 
         $blurRadius = config('prosartisan.gps.artisan_blur_radius', 50);
 
         $result = $artisans->map(function ($row) use ($blurRadius) {
-            $user = User::with(['artisanProfile.sector', 'artisanProfile.trade'])
+            $user = User::with(['artisanProfile.sector', 'artisanProfile.trade', 'commune'])
                 ->find($row->id);
 
             if (! $user) {
@@ -84,7 +88,7 @@ class ArtisanController extends Controller
             ], 404);
         }
 
-        $user->load('artisanProfile.sector', 'artisanProfile.trade', 'evaluationsRecues');
+        $user->load('artisanProfile.sector', 'artisanProfile.trade', 'evaluationsRecues', 'commune');
         $coords = $user->getPositionCoords();
 
         // Flouter la position

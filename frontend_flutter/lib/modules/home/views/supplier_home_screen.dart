@@ -174,6 +174,25 @@ class _SupplierHomeScreenState extends State<SupplierHomeScreen> {
 
               const SizedBox(height: 24),
 
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: OutlinedButton.icon(
+                  onPressed: () => Get.toNamed(Routes.supplierCatalog),
+                  icon: const Icon(Icons.inventory_2_outlined),
+                  label: const Text('Gérer mon catalogue'),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(52),
+                    foregroundColor: const Color(0xFF4F46E5),
+                    side: const BorderSide(color: Color(0xFF4F46E5)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
               // Recent Orders Header
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
