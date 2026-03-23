@@ -37,6 +37,11 @@ class Mission extends Model
         ];
     }
 
+    public function isFundsFrozen(): bool
+    {
+        return (bool) $this->funds_frozen;
+    }
+
     public function client()
     {
         return $this->belongsTo(User::class, 'client_id');

@@ -27,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'kyc.verified' => \App\Http\Middleware\KycVerified::class,
             'admin.only' => \App\Http\Middleware\AdminOnly::class,
+            'account.active' => \App\Http\Middleware\AccountActive::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

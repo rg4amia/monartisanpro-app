@@ -7,8 +7,16 @@ class LitigeController extends GetxController {
   final ApiClient _client = ApiClient();
 
   final description = ''.obs;
-  final selectedType = 'client'.obs;
+  final selectedMotif = 'Travail inacheve'.obs;
   final isLoading = false.obs;
+  final motifs = const [
+    'Travail inacheve',
+    'Malfacons',
+    'Materiaux non conformes',
+    'Retard important',
+    'Fraude suspectee',
+    'Autre',
+  ];
 
   late int missionId;
 
@@ -27,15 +35,22 @@ class LitigeController extends GetxController {
     }
     isLoading.value = true;
     try {
-      await _client.post(ApiEndpoints.litiges, data: {
+      final response = await _client.post(ApiEndpoints.litiges, data: {
         'mission_id': missionId,
-        'type': selectedType.value,
+        'motif': selectedMotif.value,
         'description': description.value.trim(),
       });
-      Get.offAllNamed(Routes.mainTab);
+
+      final litigeId = response.data['data']?['id'];
+      if (litigeId is int) {
+        Get.offNamed(Routes.litigeDetail, arguments: {'litigeId': litigeId});
+      } else {
+        Get.offAllNamed(Routes.mainTab);
+      }
+
       Get.snackbar(
         'Litige signalé',
-        'Notre équipe va instruire votre dossier',
+        'Le dossier est ouvert et les fonds sont geles jusqu a decision.',
         snackPosition: SnackPosition.TOP,
       );
     } finally {

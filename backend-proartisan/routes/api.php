@@ -43,7 +43,7 @@ Route::prefix('v1')->group(function () {
     // ROUTES PROTÉGÉES (Sanctum token)
     // ─────────────────────────────────────────────────────────────────────────
 
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware(['auth:sanctum', 'account.active'])->group(function () {
 
         // ── Auth ─────────────────────────────────────────────────────────────
         Route::prefix('auth')->group(function () {
@@ -129,8 +129,11 @@ Route::prefix('v1')->group(function () {
         Route::get('/wallets/balance', [TransactionController::class, 'balance']);
 
         // ── Litiges ───────────────────────────────────────────────────────────
+        Route::get('/litiges',               [LitigeController::class, 'index']);
         Route::post('/litiges',              [LitigeController::class, 'store']);
         Route::get('/litiges/{litige}',      [LitigeController::class, 'show']);
+        Route::post('/litiges/{litige}/preuves', [LitigeController::class, 'storeEvidence']);
+        Route::post('/litiges/{litige}/evaluate-sla', [LitigeController::class, 'evaluateSla']);
         Route::put('/litiges/{litige}/arbitrage', [LitigeController::class, 'arbitrage']);
 
         // ── Évaluations ───────────────────────────────────────────────────────

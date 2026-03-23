@@ -40,30 +40,29 @@ class LitigeScreen extends GetView<LitigeController> {
             const SizedBox(height: 24),
 
             const Text(
-              'Vous signalez en tant que',
+              'Motif principal',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 color: AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 12),
-            Obx(() => Row(
-                  children: [
-                    _TypeButton(
-                      label: 'Client',
-                      icon: Icons.person,
-                      selected: controller.selectedType.value == 'client',
-                      onTap: () => controller.selectedType.value = 'client',
-                    ),
-                    const SizedBox(width: 12),
-                    _TypeButton(
-                      label: 'Artisan',
-                      icon: Icons.handyman,
-                      selected: controller.selectedType.value == 'artisan',
-                      onTap: () => controller.selectedType.value = 'artisan',
-                    ),
-                  ],
-                )),
+            Obx(
+              () => Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: controller.motifs
+                    .map(
+                      (motif) => _TypeButton(
+                        label: motif,
+                        icon: Icons.report_problem_outlined,
+                        selected: controller.selectedMotif.value == motif,
+                        onTap: () => controller.selectedMotif.value = motif,
+                      ),
+                    )
+                    .toList(),
+              ),
+            ),
             const SizedBox(height: 24),
 
             const Text(
@@ -118,40 +117,37 @@ class _TypeButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          decoration: BoxDecoration(
-            color: selected
-                ? AppColors.primary.withValues(alpha: 0.1)
-                : AppColors.card,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: selected ? AppColors.primary : AppColors.border,
-              width: selected ? 2 : 1,
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        decoration: BoxDecoration(
+          color:
+              selected ? AppColors.primary.withValues(alpha: 0.1) : AppColors.card,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: selected ? AppColors.primary : AppColors.border,
+            width: selected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: selected ? AppColors.primary : AppColors.textSecondary,
+              size: 18,
             ),
-          ),
-          child: Column(
-            children: [
-              Icon(
-                icon,
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontWeight: selected ? FontWeight.bold : FontWeight.normal,
                 color: selected ? AppColors.primary : AppColors.textSecondary,
-                size: 28,
               ),
-              const SizedBox(height: 6),
-              Text(
-                label,
-                style: TextStyle(
-                  fontWeight:
-                      selected ? FontWeight.bold : FontWeight.normal,
-                  color: selected ? AppColors.primary : AppColors.textSecondary,
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

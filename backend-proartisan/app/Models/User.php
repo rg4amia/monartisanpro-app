@@ -14,6 +14,7 @@ class User extends Authenticatable
 
     protected $fillable = [
         'phone', 'name', 'password', 'role', 'kyc_status',
+        'account_status', 'account_status_reason', 'blocked_at',
         'score_nzassa', 'wallet_materiaux', 'wallet_mo', 'fcm_token',
         'commune_id',
     ];
@@ -24,6 +25,7 @@ class User extends Authenticatable
     {
         return [
             'password'         => 'hashed',
+            'blocked_at'       => 'datetime',
             'wallet_materiaux' => 'integer',
             'wallet_mo'        => 'integer',
             'score_nzassa'     => 'integer',
@@ -109,6 +111,11 @@ class User extends Authenticatable
     public function isFournisseur(): bool
     {
         return $this->role === 'fournisseur';
+    }
+
+    public function isAccountActive(): bool
+    {
+        return ($this->account_status ?? 'actif') === 'actif';
     }
 
     // ── Méthodes GPS (SQL brut, compatible MySQL 5.7) ────────────────────────

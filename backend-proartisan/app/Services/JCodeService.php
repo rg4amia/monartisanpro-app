@@ -225,6 +225,70 @@ class JCodeService
         ];
     }
 
+    public function settleSupplierPayment(JCode $jcode, bool $force = false): void
+    {
+        $jcode->loadMissing(['mission', 'artisan', 'fournisseur']);
+
+        if ($jcode->statut !== 'utilise' || $jcode->paiement_status === 'paye') {
+            return;
+        }
+
+        if ($jcode->mission?->funds_frozen && ! $force) {
+            Log::warning("Paiement fournisseur suspendu: mission #{$jcode->mission_id} en litige");
+            return;
+        }
+
+        $this->walletService->debit(
+            $jcode->artisan,
+            \App\Enums\WalletType::WALLET_MATERIAUX,
+            $jcode->montant,
+            "Paiement fournisseur J-Code {$jcode->code}",
+            [
+                'mission_id' => $jcode->mission_id,
+                'jcode_id' => $jcode->id,
+                'fournisseur_id' => $jcode->fournisseur_id,
+                'type' => 'paiement_fournisseur',
+            ]
+        );
+
+        $provider = $jcode->fournisseur->preferred_payment_provider ?? 'wave';
+        $description = "Paiement J-Code {$jcode->code} mission #{$jcode->mission_id}";
+
+        if ($provider === 'orange_money') {
+            $result = app(OrangeMoneyService::class)->transferToMobileMoney($jcode->fournisseur->phone, $jcode->montant, $description);
+            $reference = $result['txnid'] ?? null;
+        } else {
+            $result = app(WaveService::class)->transferToMobileMoney($jcode->fournisseur->phone, $jcode->montant, $description);
+            $reference = $result['id'] ?? null;
+        }
+
+        \App\Models\Transaction::create([
+            'mission_id' => $jcode->mission_id,
+            'user_id' => $jcode->fournisseur_id,
+            'type' => 'paiement_fournisseur',
+            'montant' => $jcode->montant,
+            'wallet_source' => 'escrow_mission_' . $jcode->mission_id,
+            'wallet_dest' => 'supplier_mobile_money_' . $jcode->fournisseur_id,
+            'provider' => $provider,
+            'statut' => 'confirme',
+            'reference_externe' => $reference,
+            'metadata' => ['jcode_id' => $jcode->id],
+        ]);
+
+        $this->notificationService->send(
+            $jcode->fournisseur,
+            'payment',
+            'Paiement J-Code recu',
+            "Vous avez recu {$jcode->montant} FCFA pour le J-Code {$jcode->code}.",
+            ['jcode_id' => $jcode->id, 'montant' => $jcode->montant]
+        );
+
+        $jcode->update([
+            'paiement_status' => 'paye',
+            'paye_at' => now(),
+        ]);
+    }
+
     /**
      * Génère un code PA-XXXX unique.
      */

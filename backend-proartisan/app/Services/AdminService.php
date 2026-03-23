@@ -15,7 +15,10 @@ use Illuminate\Support\Facades\DB;
 
 class AdminService
 {
-    public function __construct(private NotificationService $notificationService) {}
+    public function __construct(
+        private NotificationService $notificationService,
+        private LitigeService $litigeService,
+    ) {}
 
     public function dashboard(): array
     {
@@ -93,56 +96,18 @@ class AdminService
 
     public function listLitiges(?string $statut = null, int $perPage = 20): LengthAwarePaginator
     {
+        $this->litigeService->evaluateDueLitiges();
+
         return Litige::query()
-            ->with(['mission.client', 'mission.artisan', 'declencheur'])
+            ->with(['mission.client', 'mission.artisan', 'declencheur', 'preuves.user'])
             ->when($statut, fn ($q) => $q->where('statut', $statut))
             ->orderByDesc('created_at')
             ->paginate($perPage);
     }
 
-    public function resolveLitige(User $admin, Litige $litige, string $decision): Litige
+    public function resolveLitige(User $admin, Litige $litige, array $payload): Litige
     {
-        DB::transaction(function () use ($litige, $decision): void {
-            $litige->update([
-                'statut'   => 'resolu',
-                'decision' => $decision,
-                'resolu_at' => now(),
-            ]);
-
-            $missionStatus = $decision === 'gel' ? 'litige' : 'en_cours';
-            $litige->mission->update(['status' => $missionStatus]);
-        });
-
-        $litige = $litige->fresh(['mission.client', 'mission.artisan', 'declencheur']);
-
-        $this->notificationService->sendAdmin(
-            'litige',
-            'Litige arbitré',
-            "Le litige #{$litige->id} a été clôturé avec la décision: {$decision}.",
-            ['litige_id' => $litige->id, 'decision' => $decision, 'admin_id' => $admin->id]
-        );
-
-        if ($litige->mission->client) {
-            $this->notificationService->send(
-                $litige->mission->client,
-                'litige',
-                'Décision de litige rendue',
-                "Le litige de la mission #{$litige->mission_id} a été arbitré. Décision: {$decision}.",
-                ['litige_id' => $litige->id, 'decision' => $decision]
-            );
-        }
-
-        if ($litige->mission->artisan) {
-            $this->notificationService->send(
-                $litige->mission->artisan,
-                'litige',
-                'Décision de litige rendue',
-                "Le litige de la mission #{$litige->mission_id} a été arbitré. Décision: {$decision}.",
-                ['litige_id' => $litige->id, 'decision' => $decision]
-            );
-        }
-
-        return $litige;
+        return $this->litigeService->arbitrate($admin, $litige, $payload);
     }
 
     public function pendingFournisseurs(int $perPage = 20): LengthAwarePaginator

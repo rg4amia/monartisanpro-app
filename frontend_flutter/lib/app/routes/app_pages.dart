@@ -20,6 +20,7 @@ import '../../modules/jcode/views/scanner_screen.dart';
 import '../../modules/jcode/views/supplier_catalog_screen.dart';
 import '../../modules/jcode/views/transaction_confirm_screen.dart';
 import '../../modules/litige/bindings/litige_binding.dart';
+import '../../modules/litige/bindings/litige_detail_binding.dart';
 import '../../modules/litige/views/litige_screen.dart';
 import '../../modules/litige/views/litige_detail_screen.dart';
 import '../../modules/main_tab/bindings/main_tab_binding.dart';
@@ -196,7 +197,7 @@ class AppPages {
     GetPage(
       name: Routes.litigeDetail,
       page: () => const LitigeDetailScreen(),
-      binding: LitigeBinding(),
+      binding: LitigeDetailBinding(),
     ),
 
     // Carte artisans
