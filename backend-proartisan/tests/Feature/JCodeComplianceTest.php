@@ -6,9 +6,8 @@ use App\Models\JCode;
 use App\Models\Mission;
 use App\Models\User;
 use App\Models\FournisseurAgree;
-use App\Services\GeoService;
+use App\Models\SupplierProduct;
 use App\Services\JCodeService;
-use App\Services\WalletService;
 use App\Services\NotificationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
@@ -28,11 +27,20 @@ class JCodeComplianceTest extends TestCase
         $fournisseur = User::factory()->create(['role' => 'fournisseur', 'kyc_status' => 'actif']);
         
         // Setup fournisseur agree
-        FournisseurAgree::create([
+        $agreement = FournisseurAgree::create([
             'user_id' => $fournisseur->id,
             'nom_boutique' => 'Test Shop',
-            'position' => '5.3,-4.0', // Simple string for sqlite tests
             'statut' => 'agree'
+        ]);
+        $agreement->setPosition(5.3, -4.0);
+
+        $product = SupplierProduct::create([
+            'supplier_id' => $fournisseur->id,
+            'name' => 'Ciment',
+            'sku' => 'CIM-001',
+            'unit_price' => 25000,
+            'stock_quantity' => 10,
+            'is_active' => true,
         ]);
 
         $mission = Mission::create([
@@ -47,7 +55,12 @@ class JCodeComplianceTest extends TestCase
         ]);
 
         $jCodeService = app(JCodeService::class);
-        $jcode = $jCodeService->generate($mission, $artisan, 50000);
+        $jcode = $jCodeService->generate($mission, $artisan, $fournisseur, [
+            [
+                'supplier_product_id' => $product->id,
+                'quantity' => 2,
+            ],
+        ]);
 
         // Act - Scan at same position
         $jCodeService->scan($jcode, $fournisseur, 5.3, -4.0);
@@ -65,11 +78,20 @@ class JCodeComplianceTest extends TestCase
         $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
         $fournisseur = User::factory()->create(['role' => 'fournisseur', 'kyc_status' => 'actif']);
         
-        FournisseurAgree::create([
+        $agreement = FournisseurAgree::create([
             'user_id' => $fournisseur->id,
             'nom_boutique' => 'Test Shop',
-            'position' => '5.3,-4.0', // Simple string for sqlite tests
             'statut' => 'agree'
+        ]);
+        $agreement->setPosition(5.3, -4.0);
+
+        $product = SupplierProduct::create([
+            'supplier_id' => $fournisseur->id,
+            'name' => 'Ciment',
+            'sku' => 'CIM-001',
+            'unit_price' => 25000,
+            'stock_quantity' => 10,
+            'is_active' => true,
         ]);
 
         $mission = Mission::create([
@@ -84,7 +106,12 @@ class JCodeComplianceTest extends TestCase
         ]);
 
         $jCodeService = app(JCodeService::class);
-        $jcode = $jCodeService->generate($mission, $artisan, 50000);
+        $jcode = $jCodeService->generate($mission, $artisan, $fournisseur, [
+            [
+                'supplier_product_id' => $product->id,
+                'quantity' => 2,
+            ],
+        ]);
 
         // Act & Assert - Scan far away (1 degree lat difference is ~111km)
         try {

@@ -15,9 +15,12 @@ class ArtisanModel {
   final bool isGoldenMarker;
   final String? kycStatus;
   final Map<String, double>? location;
+  final String? locationLabel;
   final String? commune;
   final bool isAvailable;
   final DateTime? joinedDate;
+  final String? role;
+  final String? price;
 
   const ArtisanModel({
     required this.id,
@@ -36,62 +39,145 @@ class ArtisanModel {
     this.distanceMetres,
     this.kycStatus,
     this.location,
+    this.locationLabel,
     this.commune,
     this.isAvailable = true,
     this.joinedDate,
+    this.role,
+    this.price,
   });
 
   factory ArtisanModel.fromJson(Map<String, dynamic> json) {
-    final locationData = json['location'] as Map<String, dynamic>?;
+    final parsedLocation = _parseLocation(json);
+    final scoreNzassa = _parseInt(json['scoreNzassa'] ?? json['score_nzassa']);
+    final distanceMetres = _parseDouble(
+      json['distanceMetres'] ?? json['distance_metres'],
+    );
+
     return ArtisanModel(
-      id: json['id'] as int,
-      phone: json['phone'] as String,
-      name: json['name'] as String?,
-      photo: json['photo'] as String?,
+      id: _parseInt(json['id']),
+      phone: (json['phone'] ?? json['telephone'] ?? json['contactMobile'] ?? '')
+          .toString(),
+      name: _parseName(json),
+      photo: (json['photo'] ?? json['image']) as String?,
       bio: json['bio'] as String?,
-      trade: json['trade'] as String?,
-      sector: json['sector'] as String?,
-      experienceYears: json['experienceYears'] as int? ?? 0,
-      scoreNzassa: json['scoreNzassa'] as int? ?? 0,
-      rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
-      completedMissions: json['completedMissions'] as int? ?? 0,
-      distance: json['distance'] as String?,
-      distanceMetres: (json['distanceMetres'] as num?)?.toDouble(),
-      isGoldenMarker: json['isGoldenMarker'] as bool? ?? false,
-      kycStatus: json['kycStatus'] as String?,
-      commune: json['commune'] as String?,
-      isAvailable: json['isAvailable'] as bool? ?? true,
-      joinedDate: json['joinedDate'] != null 
-          ? DateTime.tryParse(json['joinedDate'] as String)
-          : null,
-      location: locationData != null
-          ? {
-              'lat': (locationData['lat'] as num).toDouble(),
-              'lng': (locationData['lng'] as num).toDouble(),
-            }
-          : null,
+      trade:
+          (json['trade'] ?? json['category'] ?? json['artisanCategory'])
+              as String?,
+      sector: (json['sector'] ?? json['secteur']) as String?,
+      experienceYears: _parseInt(
+        json['experienceYears'] ?? json['experience_years'],
+      ),
+      scoreNzassa: scoreNzassa,
+      rating: _parseDouble(json['rating']) ?? 0.0,
+      completedMissions: _parseInt(
+        json['completedMissions'] ?? json['completed_missions'],
+      ),
+      distance:
+          (json['distance'] as String?) ??
+          (distanceMetres != null ? _formatDistance(distanceMetres) : null),
+      distanceMetres: distanceMetres,
+      isGoldenMarker: (json['isGoldenMarker'] as bool?) ?? scoreNzassa >= 70,
+      kycStatus: (json['kycStatus'] ?? json['kyc_status']) as String?,
+      location: parsedLocation,
+      locationLabel: _parseLocationLabel(json),
+      commune: (json['commune'] ?? _parseLocationLabel(json)) as String?,
+      isAvailable: (json['isAvailable'] ?? json['active']) as bool? ?? true,
+      joinedDate: _parseDate(
+        json['joinedDate'] ?? json['createdAt'] ?? json['created_at'],
+      ),
+      role: json['role'] as String?,
+      price: json['price'] as String?,
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'phone': phone,
-        'name': name,
-        'photo': photo,
-        'bio': bio,
-        'trade': trade,
-        'sector': sector,
-        'experienceYears': experienceYears,
-        'scoreNzassa': scoreNzassa,
-        'rating': rating,
-        'completedMissions': completedMissions,
-        'distance': distance,
-        'distanceMetres': distanceMetres,
-        'isGoldenMarker': isGoldenMarker,
-        'kycStatus': kycStatus,
-        'commune': commune,
-        'isAvailable': isAvailable,
-        'joinedDate': joinedDate?.toIso8601String(),
-        'location': location,
-      };
+    'id': id,
+    'phone': phone,
+    'name': name,
+    'photo': photo,
+    'bio': bio,
+    'trade': trade,
+    'sector': sector,
+    'experienceYears': experienceYears,
+    'scoreNzassa': scoreNzassa,
+    'rating': rating,
+    'completedMissions': completedMissions,
+    'distance': distance,
+    'distanceMetres': distanceMetres,
+    'isGoldenMarker': isGoldenMarker,
+    'kycStatus': kycStatus,
+    'commune': commune,
+    'location': location,
+    'locationLabel': locationLabel,
+    'isAvailable': isAvailable,
+    'joinedDate': joinedDate?.toIso8601String(),
+    'role': role,
+    'price': price,
+  };
+
+  static Map<String, double>? _parseLocation(Map<String, dynamic> json) {
+    final value = json['location'];
+    if (value is Map<String, dynamic>) {
+      final lat = _parseDouble(
+        value['lat'] ?? value['latitude'] ?? json['lat'] ?? json['latitude'],
+      );
+      final lng = _parseDouble(
+        value['lng'] ?? value['longitude'] ?? json['lng'] ?? json['longitude'],
+      );
+      if (lat == null || lng == null) return null;
+      return {'lat': lat, 'lng': lng};
+    }
+
+    final lat = _parseDouble(json['lat'] ?? json['latitude']);
+    final lng = _parseDouble(json['lng'] ?? json['longitude']);
+    if (lat == null || lng == null) return null;
+    return {'lat': lat, 'lng': lng};
+  }
+
+  static String? _parseLocationLabel(Map<String, dynamic> json) {
+    final location = json['location'];
+    if (location is String && location.trim().isNotEmpty) {
+      return location;
+    }
+
+    return (json['locationLabel'] ?? json['commune'] ?? json['adresse'])
+        as String?;
+  }
+
+  static String? _parseName(Map<String, dynamic> json) {
+    final name = json['name'] as String?;
+    if (name != null && name.trim().isNotEmpty) {
+      return name;
+    }
+
+    final nom = (json['nom'] ?? '').toString().trim();
+    final prenoms = (json['prenoms'] ?? '').toString().trim();
+    final combined = [nom, prenoms].where((part) => part.isNotEmpty).join(' ');
+    return combined.isEmpty ? null : combined;
+  }
+
+  static int _parseInt(dynamic value) {
+    if (value == null) return 0;
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    return int.tryParse(value.toString()) ?? 0;
+  }
+
+  static double? _parseDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    return double.tryParse(value.toString());
+  }
+
+  static DateTime? _parseDate(dynamic value) {
+    if (value == null) return null;
+    return DateTime.tryParse(value.toString());
+  }
+
+  static String _formatDistance(double metres) {
+    if (metres < 1000) return '${metres.round()} m';
+    return '${(metres / 1000).toStringAsFixed(1)} km';
+  }
 }

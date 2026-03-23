@@ -136,6 +136,10 @@ class MissionRepository {
     required String description,
     required String category,
     required String urgency,
+    int? sectorId,
+    int? tradeId,
+    double? lat,
+    double? lng,
     String? location,
     Map<String, dynamic>? additionalData,
   }) async {
@@ -144,7 +148,11 @@ class MissionRepository {
       'description': description,
       'category': category,
       'urgency': urgency,
-      if (location != null) 'location': location,
+      if (sectorId != null) 'sector_id': sectorId,
+      if (tradeId != null) 'trade_id': tradeId,
+      if (lat != null) 'lat': lat,
+      if (lng != null) 'lng': lng,
+      if (location != null) 'location_address': location,
       if (additionalData != null) ...additionalData,
     };
 
@@ -170,10 +178,10 @@ class MissionRepository {
     required String category,
   }) async {
     final res = await _executeWithRetry(
-      () => _client.post(ApiEndpoints.missionEstimate, data: {
-        'description': description,
-        'category': category,
-      }),
+      () => _client.post(
+        ApiEndpoints.missionEstimate,
+        data: {'description': description, 'category': category},
+      ),
       retries: 2, // Moins de tentatives pour l'IA (coût API)
     );
 
@@ -192,10 +200,7 @@ class MissionRepository {
 
   /// Met à jour le statut d'une mission
   Future<void> updateStatus(int id, String status) async {
-    await _client.put(
-      ApiEndpoints.missionStatus(id),
-      data: {'status': status},
-    );
+    await _client.put(ApiEndpoints.missionStatus(id), data: {'status': status});
   }
 
   /// Récupère les jalons d'une mission
@@ -266,10 +271,7 @@ class MissionRepository {
   }) async {
     final payload = photos != null ? {'photos': photos} : null;
 
-    await _client.put(
-      ApiEndpoints.submitJalon(jalonId),
-      data: payload,
-    );
+    await _client.put(ApiEndpoints.submitJalon(jalonId), data: payload);
 
     // Invalider le cache des jalons pour forcer un refresh
     if (missionId != null) {
@@ -286,10 +288,7 @@ class MissionRepository {
   ///
   /// Invalide le cache des jalons et de la mission après validation
   Future<void> validateOtp(int jalonId, String otp, {int? missionId}) async {
-    await _client.post(
-      ApiEndpoints.validateOtp(jalonId),
-      data: {'otp': otp},
-    );
+    await _client.post(ApiEndpoints.validateOtp(jalonId), data: {'otp': otp});
 
     // Invalider le cache pour forcer un refresh
     if (missionId != null) {
@@ -311,10 +310,7 @@ class MissionRepository {
   Future<Map<String, dynamic>> getCacheInfo() async {
     await initCache();
 
-    return {
-      'size': _cache.cacheSize,
-      'isInitialized': _cache.isInitialized,
-    };
+    return {'size': _cache.cacheSize, 'isInitialized': _cache.isInitialized};
   }
 
   /// Exécute une requête avec mécanisme de retry automatique
@@ -344,7 +340,8 @@ class MissionRepository {
             if (attempt < retries) {
               // Délai exponentiel pour 429
               final delay = statusCode == 429
-                  ? _retryDelay * (1 << attempt) // 2s, 4s, 8s...
+                  ? _retryDelay *
+                        (1 << attempt) // 2s, 4s, 8s...
                   : _retryDelay;
               await Future.delayed(Duration(milliseconds: delay));
               continue;
@@ -358,7 +355,8 @@ class MissionRepository {
         }
 
         // Retry pour erreurs réseau et timeouts
-        final shouldRetry = e.type == DioExceptionType.connectionTimeout ||
+        final shouldRetry =
+            e.type == DioExceptionType.connectionTimeout ||
             e.type == DioExceptionType.receiveTimeout ||
             e.type == DioExceptionType.sendTimeout ||
             e.type == DioExceptionType.connectionError;
@@ -375,9 +373,10 @@ class MissionRepository {
     }
 
     // Si on arrive ici, toutes les tentatives ont échoué
-    throw lastError ?? DioException(
-      requestOptions: RequestOptions(path: ''),
-      error: 'Toutes les tentatives ont échoué',
-    );
+    throw lastError ??
+        DioException(
+          requestOptions: RequestOptions(path: ''),
+          error: 'Toutes les tentatives ont échoué',
+        );
   }
 }

@@ -1,5 +1,6 @@
 import '../../core/network/api_client.dart';
 import '../../core/network/api_endpoints.dart';
+import '../models/jcode_item_model.dart';
 import '../models/jcode_model.dart';
 
 class JcodeRepository {
@@ -7,12 +8,19 @@ class JcodeRepository {
 
   Future<JcodeModel> createJcode({
     required int missionId,
-    required int montant,
+    required int fournisseurId,
+    required List<JcodeItemModel> items,
+    int? montant,
   }) async {
-    final res = await _client.post(ApiEndpoints.jcodes, data: {
-      'mission_id': missionId,
-      'montant': montant,
-    });
+    final res = await _client.post(
+      ApiEndpoints.jcodes,
+      data: {
+        'mission_id': missionId,
+        'fournisseur_id': fournisseurId,
+        if (montant != null) 'montant': montant,
+        'items': items.map((item) => item.toRequestJson()).toList(),
+      },
+    );
     return JcodeModel.fromJson(res.data['data'] as Map<String, dynamic>);
   }
 
@@ -20,7 +28,13 @@ class JcodeRepository {
     final res = await _client.get(ApiEndpoints.jcodesActive);
     final data = res.data['data'];
     if (data == null) return null;
-    return JcodeModel.fromJson(data as Map<String, dynamic>);
+    if (data is List && data.isNotEmpty) {
+      return JcodeModel.fromJson(data.first as Map<String, dynamic>);
+    }
+    if (data is Map<String, dynamic>) {
+      return JcodeModel.fromJson(data);
+    }
+    return null;
   }
 
   Future<JcodeModel> getJcode(int id) async {
@@ -34,10 +48,10 @@ class JcodeRepository {
     required double lat,
     required double lng,
   }) async {
-    final res = await _client.post(ApiEndpoints.scanJcode(id), data: {
-      'lat': lat,
-      'lng': lng,
-    });
+    final res = await _client.post(
+      ApiEndpoints.scanJcode(id),
+      data: {'lat': lat, 'lng': lng},
+    );
     return res.data as Map<String, dynamic>;
   }
 }

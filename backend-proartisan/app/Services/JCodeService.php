@@ -4,7 +4,9 @@ namespace App\Services;
 
 use App\Models\JCode;
 use App\Models\Mission;
+use App\Models\SupplierProduct;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
@@ -14,26 +16,122 @@ class JCodeService
         private GeoService $geoService,
         private WalletService $walletService,
         private NotificationService $notificationService,
+        private SupplierCatalogService $supplierCatalogService,
     ) {}
 
     /**
      * Génère un J-Code pour l'achat de matériaux.
      * Format : PA-XXXX (4 caractères alphanumériques majuscules).
      */
-    public function generate(Mission $mission, User $artisan, int $montant): JCode
+    public function generate(
+        Mission $mission,
+        User $artisan,
+        User $fournisseur,
+        array $items,
+        ?int $montant = null
+    ): JCode
     {
-        $code = $this->generateUniqueCode();
+        $this->supplierCatalogService->ensureApprovedSupplier($fournisseur);
 
-        return JCode::create([
-            'mission_id'  => $mission->id,
-            'artisan_id'  => $artisan->id,
-            'code'        => $code,
-            'ussd_code'   => '*555*' . str_replace('PA-', '', $code) . '#',
-            'qr_url'      => null, // Généré à la demande (URL /api/v1/jcodes/{code}/qr)
-            'montant'     => $montant,
-            'statut'      => 'actif',
-            'expires_at'  => now()->addHours(config('prosartisan.jcode.ttl_hours', 48)),
-        ]);
+        return DB::transaction(function () use ($mission, $artisan, $fournisseur, $items, $montant) {
+            $normalizedItems = [];
+            $computedTotal = 0;
+
+            foreach ($items as $index => $item) {
+                $quantity = (int) ($item['quantity'] ?? 0);
+                $productId = $item['supplier_product_id'] ?? null;
+
+                if ($productId) {
+                    $product = SupplierProduct::query()
+                        ->whereKey($productId)
+                        ->where('supplier_id', $fournisseur->id)
+                        ->where('is_active', true)
+                        ->first();
+
+                    if (! $product) {
+                        throw ValidationException::withMessages([
+                            "items.$index.supplier_product_id" => ['Cet article n\'appartient pas au fournisseur sélectionné.'],
+                        ]);
+                    }
+
+                    if ($product->stock_quantity < $quantity) {
+                        throw ValidationException::withMessages([
+                            "items.$index.quantity" => ["Stock insuffisant pour {$product->name}. Disponible : {$product->stock_quantity}."],
+                        ]);
+                    }
+
+                    $unitPrice = (int) $product->unit_price;
+                    $name = $product->name;
+                    $sku = $product->sku;
+                    $source = 'catalog';
+                    $supplierProductId = $product->id;
+                } else {
+                    $name = trim((string) ($item['name'] ?? ''));
+                    $sku = isset($item['sku']) ? trim((string) $item['sku']) : null;
+                    $unitPrice = (int) ($item['unit_price'] ?? 0);
+
+                    if ($name === '') {
+                        throw ValidationException::withMessages([
+                            "items.$index.name" => ['Le nom de l\'article personnalisé est obligatoire.'],
+                        ]);
+                    }
+
+                    if ($unitPrice <= 0) {
+                        throw ValidationException::withMessages([
+                            "items.$index.unit_price" => ['Le prix unitaire doit être supérieur à zéro.'],
+                        ]);
+                    }
+
+                    $source = 'custom';
+                    $supplierProductId = null;
+                    $sku = $sku !== '' ? $sku : null;
+                }
+
+                $subtotal = $unitPrice * $quantity;
+                $computedTotal += $subtotal;
+
+                $normalizedItems[] = [
+                    'supplier_product_id' => $supplierProductId,
+                    'source' => $source,
+                    'item_name' => $name,
+                    'item_sku' => $sku,
+                    'quantity' => $quantity,
+                    'unit_price' => $unitPrice,
+                    'subtotal' => $subtotal,
+                    'status' => 'requested',
+                ];
+            }
+
+            if ($computedTotal < 1000) {
+                throw ValidationException::withMessages([
+                    'montant' => ['Le montant minimum est de 1 000 FCFA.'],
+                ]);
+            }
+
+            if ($montant !== null && $montant !== $computedTotal) {
+                throw ValidationException::withMessages([
+                    'montant' => ['Le montant ne correspond pas à la somme des articles sélectionnés.'],
+                ]);
+            }
+
+            $code = $this->generateUniqueCode();
+
+            $jcode = JCode::create([
+                'mission_id' => $mission->id,
+                'artisan_id' => $artisan->id,
+                'fournisseur_id' => $fournisseur->id,
+                'code' => $code,
+                'ussd_code' => '*555*' . str_replace('PA-', '', $code) . '#',
+                'qr_url' => null,
+                'montant' => $computedTotal,
+                'statut' => 'actif',
+                'expires_at' => now()->addHours(config('prosartisan.jcode.ttl_hours', 48)),
+            ]);
+
+            $jcode->items()->createMany($normalizedItems);
+
+            return $jcode->load(['artisan', 'fournisseur.fournisseurAgree', 'items.supplierProduct']);
+        });
     }
 
     /**
@@ -42,9 +140,19 @@ class JCodeService
      */
     public function scan(JCode $jcode, User $fournisseur, float $lat, float $lng): array
     {
+        $jcode->loadMissing(['artisan', 'items.supplierProduct']);
+
         if (! $jcode->isActif()) {
             throw ValidationException::withMessages([
                 'code' => ['Ce J-Code est expiré ou déjà utilisé.'],
+            ]);
+        }
+
+        $this->supplierCatalogService->ensureApprovedSupplier($fournisseur);
+
+        if ($jcode->fournisseur_id !== null && $jcode->fournisseur_id !== $fournisseur->id) {
+            throw ValidationException::withMessages([
+                'fournisseur' => ['Ce J-Code est réservé à un autre fournisseur.'],
             ]);
         }
 
@@ -68,16 +176,35 @@ class JCodeService
             ]);
         }
 
-        // Enregistre la position du scan
-        $jcode->setPositionScan($lat, $lng);
+        DB::transaction(function () use ($jcode, $fournisseur, $lat, $lng) {
+            $jcode->setPositionScan($lat, $lng);
 
-        // NOUVEAU : On ne paye pas immédiatement, on programme pour J+1
-        $jcode->update([
-            'fournisseur_id'  => $fournisseur->id,
-            'statut'          => 'utilise',
-            'scanned_at'      => now(),
-            'paiement_status' => 'programme',
-        ]);
+            foreach ($jcode->items as $item) {
+                if ($item->source === 'catalog') {
+                    if (! $item->supplierProduct || $item->supplierProduct->supplier_id !== $fournisseur->id) {
+                        throw ValidationException::withMessages([
+                            'items' => ["L'article catalogue {$item->item_name} n'est plus valide pour ce fournisseur."],
+                        ]);
+                    }
+
+                    $this->supplierCatalogService->decrementStockForServedItem(
+                        $item->supplierProduct,
+                        $item->quantity,
+                    );
+                }
+
+                if ($item->status !== 'served') {
+                    $item->update(['status' => 'served']);
+                }
+            }
+
+            $jcode->update([
+                'fournisseur_id' => $fournisseur->id,
+                'statut' => 'utilise',
+                'scanned_at' => now(),
+                'paiement_status' => 'programme',
+            ]);
+        });
 
         \App\Jobs\PaySupplierJob::dispatch($jcode->id)->delay(now()->addDay());
 
@@ -93,6 +220,7 @@ class JCodeService
             'valid'    => true,
             'distance' => $gpsCheck['distance'],
             'montant'  => $jcode->montant,
+            'items_served' => $jcode->items->count(),
             'artisan'  => ['id' => $jcode->artisan_id, 'name' => $jcode->artisan->name],
         ];
     }

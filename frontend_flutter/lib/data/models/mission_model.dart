@@ -15,6 +15,8 @@ class MissionModel {
   final String? location;
   final String createdAt;
   final String? updatedAt;
+  final String? paymentStatus;
+  final String? statusGemini;
 
   const MissionModel({
     required this.id,
@@ -33,23 +35,22 @@ class MissionModel {
     this.urgency,
     this.location,
     this.updatedAt,
+    this.paymentStatus,
+    this.statusGemini,
   });
 
-  /// Indique si cette mission nécessite la validation d'un Référent de zone
-  /// (missions > 2 000 000 FCFA selon les règles métier)
   bool get needsReferent => montantTotal > 2000000;
 
-  /// Statut formaté en français
   String get statusLabel {
     switch (status) {
       case 'en_attente':
         return 'Devis en attente';
       case 'financee':
-        return 'Financée';
+        return 'Financee';
       case 'en_cours':
         return 'En cours';
       case 'terminee':
-        return 'Terminée';
+        return 'Terminee';
       case 'litige':
         return 'Litige en cours';
       default:
@@ -57,7 +58,6 @@ class MissionModel {
     }
   }
 
-  /// Urgence formatée en français
   String get urgencyLabel {
     switch (urgency) {
       case 'faible':
@@ -67,70 +67,104 @@ class MissionModel {
       case 'urgent':
         return 'Urgent';
       default:
-        return urgency ?? 'Non spécifié';
+        return urgency ?? 'Non specifie';
     }
   }
 
   factory MissionModel.fromJson(Map<String, dynamic> json) {
-    // Support pour snake_case (Laravel) et camelCase (frontend)
+    final client = json['client'] is Map<String, dynamic>
+        ? json['client'] as Map<String, dynamic>
+        : null;
+    final artisan = json['artisan'] is Map<String, dynamic>
+        ? json['artisan'] as Map<String, dynamic>
+        : null;
+    final financials = json['financials'] as Map<String, dynamic>?;
+    final montantMateriaux = _parseAmount(
+      json['montant_materiaux'] ??
+          json['montantMateriaux'] ??
+          financials?['tokenAmount'],
+    );
+    final montantMo = _parseAmount(
+      json['montant_mo'] ?? json['montantMo'] ?? financials?['laborCost'],
+    );
+    final montantTotal = _parseAmount(
+      json['montant_total'] ??
+          json['montantTotal'] ??
+          json['total'] ??
+          (montantMateriaux + montantMo),
+    );
+
     return MissionModel(
-      id: json['id'] as int,
-      clientId: (json['client_id'] ?? json['clientId']) as int,
-      artisanId: (json['artisan_id'] ?? json['artisanId']) as int,
-      status: json['status'] as String,
-      montantTotal: _parseAmount(json['montant_total'] ?? json['montantTotal']),
-      montantMateriaux: _parseAmount(json['montant_materiaux'] ?? json['montantMateriaux']),
-      montantMo: _parseAmount(json['montant_mo'] ?? json['montantMo']),
-      ratioMateriaux: _parseRatio(json['ratio_materiaux'] ?? json['ratioMateriaux']),
-      createdAt: (json['created_at'] ?? json['createdAt']) as String,
-      updatedAt: (json['updated_at'] ?? json['updatedAt']) as String?,
-      clientName: (json['client_name'] ?? json['clientName']) as String?,
-      artisanName: (json['artisan_name'] ?? json['artisanName']) as String?,
-      description: json['description'] as String?,
-      category: json['category'] as String?,
-      urgency: json['urgency'] as String?,
-      location: json['location'] as String?,
+      id: _parseInt(json['id']),
+      clientId: _parseInt(
+        json['client_id'] ?? json['clientId'] ?? client?['id'],
+      ),
+      artisanId: _parseInt(
+        json['artisan_id'] ?? json['artisanId'] ?? artisan?['id'],
+      ),
+      status: _normalizeStatus((json['status'] ?? '').toString()),
+      montantTotal: montantTotal,
+      montantMateriaux: montantMateriaux,
+      montantMo: montantMo,
+      ratioMateriaux: _parseRatio(
+        json['ratio_materiaux'] ??
+            json['ratioMateriaux'] ??
+            _computeRatio(montantMateriaux, montantTotal),
+      ),
+      createdAt:
+          (json['created_at'] ??
+                  json['createdAt'] ??
+                  DateTime.now().toIso8601String())
+              .toString(),
+      updatedAt: (json['updated_at'] ?? json['updatedAt'])?.toString(),
+      clientName:
+          (json['client_name'] ??
+                  json['clientName'] ??
+                  client?['name'] ??
+                  json['clientNom'])
+              as String?,
+      artisanName:
+          (json['artisan_name'] ?? json['artisanName'] ?? artisan?['name'])
+              as String?,
+      description: (json['description'] ?? json['problem']) as String?,
+      category:
+          (json['category'] ??
+                  json['geminiCategory'] ??
+                  json['artisanCategory'])
+              as String?,
+      urgency: (json['urgency'] ?? json['geminiUrgency']) as String?,
+      location: _parseLocation(json),
+      paymentStatus:
+          (json['paymentStatus'] as String?) ??
+          _derivePaymentStatus((json['status'] ?? '').toString()),
+      statusGemini:
+          (json['statusGemini'] ?? json['status'] ?? '').toString().isEmpty
+          ? null
+          : (json['statusGemini'] ?? json['status']).toString(),
     );
   }
 
-  /// Parse un montant en FCFA (entier)
-  static int _parseAmount(dynamic value) {
-    if (value == null) return 0;
-    if (value is int) return value;
-    if (value is double) return value.toInt();
-    if (value is String) return int.tryParse(value) ?? 0;
-    return 0;
-  }
-
-  /// Parse un ratio (0.0 à 1.0)
-  static double _parseRatio(dynamic value) {
-    if (value == null) return 0.0;
-    if (value is double) return value;
-    if (value is int) return value.toDouble();
-    if (value is String) return double.tryParse(value) ?? 0.0;
-    return 0.0;
-  }
-
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'client_id': clientId,
-        'artisan_id': artisanId,
-        'status': status,
-        'montant_total': montantTotal,
-        'montant_materiaux': montantMateriaux,
-        'montant_mo': montantMo,
-        'ratio_materiaux': ratioMateriaux,
-        'created_at': createdAt,
-        'updated_at': updatedAt,
-        'client_name': clientName,
-        'artisan_name': artisanName,
-        'description': description,
-        'category': category,
-        'urgency': urgency,
-        'location': location,
-      };
+    'id': id,
+    'client_id': clientId,
+    'artisan_id': artisanId,
+    'status': status,
+    'montant_total': montantTotal,
+    'montant_materiaux': montantMateriaux,
+    'montant_mo': montantMo,
+    'ratio_materiaux': ratioMateriaux,
+    'created_at': createdAt,
+    'updated_at': updatedAt,
+    'client_name': clientName,
+    'artisan_name': artisanName,
+    'description': description,
+    'category': category,
+    'urgency': urgency,
+    'location': location,
+    'paymentStatus': paymentStatus,
+    'statusGemini': statusGemini,
+  };
 
-  /// Copie l'objet avec des modifications
   MissionModel copyWith({
     int? id,
     int? clientId,
@@ -148,6 +182,8 @@ class MissionModel {
     String? location,
     String? createdAt,
     String? updatedAt,
+    String? paymentStatus,
+    String? statusGemini,
   }) {
     return MissionModel(
       id: id ?? this.id,
@@ -166,6 +202,89 @@ class MissionModel {
       category: category ?? this.category,
       urgency: urgency ?? this.urgency,
       location: location ?? this.location,
+      paymentStatus: paymentStatus ?? this.paymentStatus,
+      statusGemini: statusGemini ?? this.statusGemini,
     );
+  }
+
+  static String? _parseLocation(Map<String, dynamic> json) {
+    final location = json['location'];
+    if (location is String && location.trim().isNotEmpty) {
+      return location;
+    }
+
+    return (json['clientAddress'] ??
+            json['location_address'] ??
+            json['adresse'])
+        as String?;
+  }
+
+  static int _parseInt(dynamic value) {
+    if (value == null) return 0;
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    return int.tryParse(value.toString()) ?? 0;
+  }
+
+  static int _parseAmount(dynamic value) {
+    if (value == null) return 0;
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    return int.tryParse(value.toString()) ?? 0;
+  }
+
+  static double _parseRatio(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is double) return value.clamp(0.0, 1.0);
+    if (value is int) return value.toDouble().clamp(0.0, 1.0);
+    return (double.tryParse(value.toString()) ?? 0.0).clamp(0.0, 1.0);
+  }
+
+  static double _computeRatio(int materiaux, int total) {
+    if (total <= 0) return 0.0;
+    return (materiaux / total).clamp(0.0, 1.0);
+  }
+
+  static String _normalizeStatus(String rawStatus) {
+    switch (rawStatus) {
+      case 'sent':
+      case 'quote_provided':
+      case 'quote_rejected':
+      case 'pending':
+        return 'en_attente';
+      case 'funded':
+      case 'paid':
+        return 'financee';
+      case 'materials_picked_up':
+      case 'work_done':
+      case 'shipping':
+      case 'driver_assigned':
+        return 'en_cours';
+      case 'completed':
+      case 'delivered':
+        return 'terminee';
+      case 'disputed':
+        return 'litige';
+      default:
+        return rawStatus.isEmpty ? 'en_attente' : rawStatus;
+    }
+  }
+
+  static String? _derivePaymentStatus(String status) {
+    switch (status) {
+      case 'funded':
+      case 'paid':
+      case 'financee':
+      case 'en_cours':
+      case 'terminee':
+        return 'funded';
+      case 'disputed':
+      case 'litige':
+        return 'blocked';
+      case '':
+        return null;
+      default:
+        return 'pending';
+    }
   }
 }

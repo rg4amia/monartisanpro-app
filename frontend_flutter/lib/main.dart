@@ -45,6 +45,7 @@ Future<void> main() async {
       // Yandex MapKit — clé API
       await mapkit_init.initMapkit(
         apiKey: 'e8411c6c-7c2d-414b-9cb0-029fc7d5a71d',
+        locale: 'fr_FR',
       );
 
       runApp(const App());

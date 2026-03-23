@@ -157,6 +157,10 @@ class MissionsController extends GetxController {
     required String description,
     required String category,
     required String urgency,
+    int? sectorId,
+    int? tradeId,
+    double? lat,
+    double? lng,
     String? location,
   }) async {
     isLoading.value = true;
@@ -168,6 +172,10 @@ class MissionsController extends GetxController {
         description: description,
         category: category,
         urgency: urgency,
+        sectorId: sectorId,
+        tradeId: tradeId,
+        lat: lat,
+        lng: lng,
         location: location,
       );
 

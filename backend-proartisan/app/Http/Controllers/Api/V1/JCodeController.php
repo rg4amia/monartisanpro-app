@@ -9,6 +9,7 @@ use App\Http\Requests\UploadJCodePhotoRequest;
 use App\Http\Resources\JCodeResource;
 use App\Models\JCode;
 use App\Models\Mission;
+use App\Models\User;
 use App\Services\JCodeService;
 use App\Services\NotificationService;
 use App\Services\PhotoService;
@@ -31,6 +32,7 @@ class JCodeController extends Controller
     {
         $user    = $request->user();
         $mission = Mission::findOrFail($request->mission_id);
+        $fournisseur = User::findOrFail($request->fournisseur_id);
 
         if ($mission->artisan_id !== $user->id) {
             return response()->json([
@@ -46,11 +48,17 @@ class JCodeController extends Controller
             ], 422);
         }
 
-        $jcode = $this->jCodeService->generate($mission, $user, $request->montant);
+        $jcode = $this->jCodeService->generate(
+            $mission,
+            $user,
+            $fournisseur,
+            $request->validated('items'),
+            $request->validated('montant'),
+        );
 
         return response()->json([
             'success' => true,
-            'data'    => new JCodeResource($jcode->load('artisan')),
+            'data'    => new JCodeResource($jcode),
         ], 201);
     }
 
@@ -62,7 +70,7 @@ class JCodeController extends Controller
         $jcodes = JCode::where('artisan_id', $request->user()->id)
             ->where('statut', 'actif')
             ->where('expires_at', '>', now())
-            ->with(['artisan', 'mission'])
+            ->with(['artisan', 'mission', 'fournisseur.fournisseurAgree', 'items.supplierProduct'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -76,7 +84,7 @@ class JCodeController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data'    => new JCodeResource($jcode->load('artisan', 'fournisseur')),
+            'data'    => new JCodeResource($jcode->load('artisan', 'fournisseur.fournisseurAgree', 'items.supplierProduct')),
         ]);
     }
 

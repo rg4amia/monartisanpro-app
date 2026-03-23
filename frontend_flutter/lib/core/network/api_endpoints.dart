@@ -26,6 +26,12 @@ class ApiEndpoints {
   static String artisan(int id) => '/artisans/$id';
   static String artisanScore(int id) => '/artisans/$id/score';
 
+  // Fournisseurs
+  static const String fournisseurs = '/fournisseurs';
+  static String fournisseurArticles(int id) => '/fournisseurs/$id/articles';
+  static const String supplierProducts = '/supplier-products';
+  static String supplierProduct(int id) => '/supplier-products/$id';
+
   // Sectors
   static const String sectors = '/sectors';
   static String sectorTrades(int id) => '/sectors/$id/trades';

@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\SectorController;
 use App\Http\Controllers\Api\V1\SmsController;
+use App\Http\Controllers\Api\V1\SupplierCatalogController;
 use App\Http\Controllers\Api\V1\TransactionController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\WebhookController;
@@ -70,6 +71,14 @@ Route::prefix('v1')->group(function () {
         // ── Secteurs & Métiers ────────────────────────────────────────────────
         Route::get('/sectors',                 [SectorController::class, 'index']);
         Route::get('/sectors/{sector}/trades', [SectorController::class, 'trades']);
+
+        // ── Fournisseurs & catalogue ─────────────────────────────────────────
+        Route::get('/fournisseurs', [SupplierCatalogController::class, 'suppliers']);
+        Route::get('/fournisseurs/{user}/articles', [SupplierCatalogController::class, 'supplierProducts']);
+        Route::get('/supplier-products', [SupplierCatalogController::class, 'myProducts']);
+        Route::post('/supplier-products', [SupplierCatalogController::class, 'store']);
+        Route::put('/supplier-products/{supplierProduct}', [SupplierCatalogController::class, 'update']);
+        Route::delete('/supplier-products/{supplierProduct}', [SupplierCatalogController::class, 'destroy']);
 
         // ── Missions ──────────────────────────────────────────────────────────
         Route::get('/missions',                      [MissionController::class, 'index']);

@@ -22,6 +22,7 @@ abstract class Routes {
   static const quoteBuilder = '/quote-builder';
   static const jcode = '/jcode';
   static const scanner = '/scanner';
+  static const supplierCatalog = '/supplier-catalog';
   static const transactionConfirm = '/transaction-confirm';
   static const score = '/score';
   static const sectors = '/sectors';
@@ -40,7 +41,7 @@ abstract class Routes {
 
   // Location
   static const locationPicker = '/location-picker';
-  
+
   // Artisan selection
   static const artisanSelection = '/artisan-selection';
 

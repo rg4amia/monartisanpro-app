@@ -35,13 +35,6 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
   final _photos = <XFile>[].obs;
   final _video = Rx<XFile?>(null);
 
-  static const _categories = [
-    {'label': 'Plomberie', 'icon': Icons.plumbing_outlined},
-    {'label': 'Électricité', 'icon': Icons.electric_bolt_outlined},
-    {'label': 'Peinture', 'icon': Icons.format_paint_outlined},
-    {'label': 'Maçonnerie', 'icon': Icons.foundation_outlined},
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -112,34 +105,40 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
                   children: [
                     _SectionTitle(title: 'Catégorie de service'),
                     const SizedBox(height: 12),
-                    Obx(() => _selectedCategory.value.isEmpty
-                        ? _SelectServiceButton(
-                            onTap: () async {
-                              final result = await Get.toNamed(Routes.services);
-                              if (result != null && result is Map) {
-                                _selectedCategory.value =
-                                    result['trade']?.name ?? '';
-                                _selectedCategoryId.value =
-                                    result['sector']?.id ?? 0;
-                                _selectedTradeId.value =
-                                    result['trade']?.id ?? 0;
-                              }
-                            },
-                          )
-                        : _SelectedServiceCard(
-                            category: _selectedCategory.value,
-                            onChangeTap: () async {
-                              final result = await Get.toNamed(Routes.services);
-                              if (result != null && result is Map) {
-                                _selectedCategory.value =
-                                    result['trade']?.name ?? '';
-                                _selectedCategoryId.value =
-                                    result['sector']?.id ?? 0;
-                                _selectedTradeId.value =
-                                    result['trade']?.id ?? 0;
-                              }
-                            },
-                          )),
+                    Obx(
+                      () => _selectedCategory.value.isEmpty
+                          ? _SelectServiceButton(
+                              onTap: () async {
+                                final result = await Get.toNamed(
+                                  Routes.services,
+                                );
+                                if (result != null && result is Map) {
+                                  _selectedCategory.value =
+                                      result['trade']?.name ?? '';
+                                  _selectedCategoryId.value =
+                                      result['sector']?.id ?? 0;
+                                  _selectedTradeId.value =
+                                      result['trade']?.id ?? 0;
+                                }
+                              },
+                            )
+                          : _SelectedServiceCard(
+                              category: _selectedCategory.value,
+                              onChangeTap: () async {
+                                final result = await Get.toNamed(
+                                  Routes.services,
+                                );
+                                if (result != null && result is Map) {
+                                  _selectedCategory.value =
+                                      result['trade']?.name ?? '';
+                                  _selectedCategoryId.value =
+                                      result['sector']?.id ?? 0;
+                                  _selectedTradeId.value =
+                                      result['trade']?.id ?? 0;
+                                }
+                              },
+                            ),
+                    ),
                     const SizedBox(height: 24),
                     _SectionTitle(title: 'Détails de la mission'),
                     const SizedBox(height: 8),
@@ -161,42 +160,56 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
                     const SizedBox(height: 24),
                     _SectionTitle(title: 'Votre emplacement'),
                     const SizedBox(height: 12),
-                    Obx(() => _LocationCard(
-                          location: _location.value,
-                          detail: _locationDetail.value,
-                          onChangeTap: () async {
-                            final result =
-                                await Get.toNamed(Routes.locationPicker);
-                            if (result != null && result is Map) {
-                              _latitude.value = result['latitude'] ?? 0.0;
-                              _longitude.value = result['longitude'] ?? 0.0;
-                              _location.value =
-                                  result['address'] ?? 'Location selected';
-                              _locationDetail.value =
-                                  'Lat: ${_latitude.value.toStringAsFixed(4)}, Lng: ${_longitude.value.toStringAsFixed(4)}';
-                            }
-                          },
-                        )),
+                    Obx(
+                      () => _LocationCard(
+                        location: _location.value,
+                        detail: _locationDetail.value,
+                        onChangeTap: () async {
+                          final result = await Get.toNamed(
+                            Routes.locationPicker,
+                          );
+                          if (result != null && result is Map) {
+                            _latitude.value = result['latitude'] ?? 0.0;
+                            _longitude.value = result['longitude'] ?? 0.0;
+                            _location.value =
+                                result['address'] ?? 'Location selected';
+                            _locationDetail.value =
+                                'Lat: ${_latitude.value.toStringAsFixed(4)}, Lng: ${_longitude.value.toStringAsFixed(4)}';
+                          }
+                        },
+                      ),
+                    ),
                     const SizedBox(height: 32),
                     _SearchButton(
                       onPressed: () {
                         if (_selectedCategory.value.isEmpty) {
-                          Get.snackbar('Erreur', 'Veuillez sélectionner une catégorie');
+                          Get.snackbar(
+                            'Erreur',
+                            'Veuillez sélectionner une catégorie',
+                          );
                           return;
                         }
                         if (_descCtrl.text.length < 10) {
-                          Get.snackbar('Erreur', 'Veuillez fournir plus de détails');
+                          Get.snackbar(
+                            'Erreur',
+                            'Veuillez fournir plus de détails',
+                          );
                           return;
                         }
                         // Navigate to artisan selection with mission data
-                        Get.toNamed(Routes.artisanSelection, arguments: {
-                          'category': _selectedCategory.value,
-                          'categoryId': _selectedCategoryId.value,
-                          'tradeId': _selectedTradeId.value,
-                          'description': _descCtrl.text,
-                          'latitude': _latitude.value,
-                          'longitude': _longitude.value,
-                        });
+                        Get.toNamed(
+                          Routes.artisanSelection,
+                          arguments: {
+                            'category': _selectedCategory.value,
+                            'categoryId': _selectedCategoryId.value,
+                            'tradeId': _selectedTradeId.value,
+                            'description': _descCtrl.text,
+                            'locationAddress': _location.value,
+                            'locationDetail': _locationDetail.value,
+                            'latitude': _latitude.value,
+                            'longitude': _longitude.value,
+                          },
+                        );
                       },
                     ),
                     const SizedBox(height: 24),
@@ -376,63 +389,6 @@ class _SelectedServiceCard extends StatelessWidget {
   }
 }
 
-class _CategoryChips extends StatelessWidget {
-  final List<Map<String, dynamic>> categories;
-  final RxString selected;
-
-  const _CategoryChips({
-    required this.categories,
-    required this.selected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Obx(() => Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: categories.map((cat) {
-            final label = cat['label'] as String;
-            final icon = cat['icon'] as IconData;
-            final isSelected = selected.value == label;
-
-            return GestureDetector(
-              onTap: () => selected.value = label,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: isSelected ? _C.primary : _C.surface,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isSelected ? _C.primary : _C.subtle,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      icon,
-                      size: 18,
-                      color: isSelected ? Colors.white : _C.ink,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      label,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: isSelected ? Colors.white : _C.ink,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }).toList(),
-        ));
-  }
-}
-
 // ─── Description Field ────────────────────────────────────────────────────────
 class _DescriptionField extends StatelessWidget {
   final TextEditingController controller;
@@ -516,10 +472,12 @@ class _MediaPicker extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
-                ...photos.map((photo) => _MediaThumbnail(
-                      file: photo,
-                      onRemove: () => photos.remove(photo),
-                    )),
+                ...photos.map(
+                  (photo) => _MediaThumbnail(
+                    file: photo,
+                    onRemove: () => photos.remove(photo),
+                  ),
+                ),
                 if (video.value != null)
                   _MediaThumbnail(
                     file: video.value!,
@@ -675,10 +633,7 @@ class _LocationCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   detail,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: _C.muted,
-                  ),
+                  style: const TextStyle(fontSize: 12, color: _C.muted),
                 ),
               ],
             ),
@@ -726,10 +681,7 @@ class _SearchButton extends StatelessWidget {
             SizedBox(width: 8),
             Text(
               'Rechercher des artisans',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
           ],
         ),

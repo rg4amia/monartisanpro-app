@@ -59,6 +59,11 @@ class User extends Authenticatable
         return $this->hasOne(FournisseurAgree::class);
     }
 
+    public function supplierProducts()
+    {
+        return $this->hasMany(SupplierProduct::class, 'supplier_id');
+    }
+
     public function kycDocuments()
     {
         return $this->hasMany(KycDocument::class);
@@ -111,7 +116,7 @@ class User extends Authenticatable
     public function setPosition(float $lat, float $lng): void
     {
         DB::statement(
-            'UPDATE users SET position = POINT(?, ?) WHERE id = ?',
+            'UPDATE users SET position = ST_SRID(POINT(?, ?), 4326) WHERE id = ?',
             [$lng, $lat, $this->id]
         );
     }

@@ -23,41 +23,54 @@ class TransactionModel {
 
   factory TransactionModel.fromJson(Map<String, dynamic> json) =>
       TransactionModel(
-        id: json['id'] as int,
-        type: json['type'] as String,
-        montant: json['montant'] as int,
-        walletSource: json['walletSource'] as String,
-        walletDest: json['walletDest'] as String,
-        provider: json['provider'] as String,
-        statut: json['statut'] as String,
-        createdAt: json['createdAt'] as String,
-        referenceExterne: json['referenceExterne'] as String?,
+        id: _parseInt(json['id']),
+        type: (json['type'] ?? '').toString(),
+        montant: _parseInt(json['montant']),
+        walletSource: (json['walletSource'] ?? json['wallet_source'] ?? '')
+            .toString(),
+        walletDest: (json['walletDest'] ?? json['wallet_dest'] ?? '')
+            .toString(),
+        provider: (json['provider'] ?? '').toString(),
+        statut: (json['statut'] ?? json['status'] ?? '').toString(),
+        createdAt:
+            (json['createdAt'] ??
+                    json['created_at'] ??
+                    DateTime.now().toIso8601String())
+                .toString(),
+        referenceExterne:
+            (json['referenceExterne'] ?? json['reference_externe']) as String?,
       );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'type': type,
-        'montant': montant,
-        'walletSource': walletSource,
-        'walletDest': walletDest,
-        'provider': provider,
-        'statut': statut,
-        'createdAt': createdAt,
-        'referenceExterne': referenceExterne,
-      };
+    'id': id,
+    'type': type,
+    'montant': montant,
+    'walletSource': walletSource,
+    'walletDest': walletDest,
+    'provider': provider,
+    'statut': statut,
+    'createdAt': createdAt,
+    'referenceExterne': referenceExterne,
+  };
+
+  static int _parseInt(dynamic value) {
+    if (value == null) return 0;
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    return int.tryParse(value.toString()) ?? 0;
+  }
 }
 
 class WalletBalance {
   final int walletMateriaux;
   final int walletMo;
 
-  const WalletBalance({
-    required this.walletMateriaux,
-    required this.walletMo,
-  });
+  const WalletBalance({required this.walletMateriaux, required this.walletMo});
 
   factory WalletBalance.fromJson(Map<String, dynamic> json) => WalletBalance(
-        walletMateriaux: json['walletMateriaux'] as int,
-        walletMo: json['walletMo'] as int,
-      );
+    walletMateriaux: TransactionModel._parseInt(
+      json['walletMateriaux'] ?? json['wallet_materiaux'],
+    ),
+    walletMo: TransactionModel._parseInt(json['walletMo'] ?? json['wallet_mo']),
+  );
 }

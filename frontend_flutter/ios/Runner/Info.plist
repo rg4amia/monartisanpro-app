@@ -45,8 +45,14 @@
         <true/>
         <key>UIApplicationSupportsIndirectInputEvents</key>
         <true/>
+        <key>YMKMapKitApiKey</key>
+        <string>e8411c6c-7c2d-414b-9cb0-029fc7d5a71d</string>
         <key>NSCameraUsageDescription</key>
         <string>We need access to your camera to take profile photos</string>
+        <key>NSLocationWhenInUseUsageDescription</key>
+        <string>Nous avons besoin de votre position pour afficher les adresses et trouver les artisans proches</string>
+        <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+        <string>Nous avons besoin de votre position pour afficher les adresses et trouver les artisans proches</string>
         <key>NSPhotoLibraryUsageDescription</key>
         <string>We need access to your photo library to select profile photos</string>
     </dict>

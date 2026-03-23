@@ -154,7 +154,8 @@ class _StatusCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(config['icon'] as IconData, color: config['color'] as Color, size: 24),
+          Icon(config['icon'] as IconData,
+              color: config['color'] as Color, size: 24),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -776,6 +777,9 @@ class _LigneCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isMo = ligne.type == 'mo';
+    final materialDetail = !isMo
+        ? '${ligne.resolvedQuantity} x ${_formatFCFA(ligne.resolvedUnitPrice)}'
+        : null;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -821,6 +825,16 @@ class _LigneCard extends StatelessWidget {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
+                if (materialDetail != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    materialDetail,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: _C.muted,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
