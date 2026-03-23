@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\WalletOperation;
 use App\Enums\WalletType;
 use App\Models\Jalon;
+use App\Models\Litige;
 use App\Models\Mission;
 use App\Models\Transaction;
 use App\Models\User;
@@ -51,6 +52,9 @@ class WalletService
                 'wallet_type' => $walletType->value,
                 'operation' => WalletOperation::CREDIT,
                 'montant' => $montant,
+                'mission_id' => $metadata['mission_id'] ?? null,
+                'jalon_id' => $metadata['jalon_id'] ?? null,
+                'transaction_id' => $metadata['transaction_id'] ?? null,
                 'reference' => 'WTX-' . strtoupper(Str::random(12)),
                 'solde_avant' => $soldeAvant,
                 'solde_apres' => $soldeApres,
@@ -105,6 +109,9 @@ class WalletService
                 'wallet_type' => $walletType->value,
                 'operation' => WalletOperation::DEBIT,
                 'montant' => $montant,
+                'mission_id' => $metadata['mission_id'] ?? null,
+                'jalon_id' => $metadata['jalon_id'] ?? null,
+                'transaction_id' => $metadata['transaction_id'] ?? null,
                 'reference' => 'WTX-' . strtoupper(Str::random(12)),
                 'solde_avant' => $soldeAvant,
                 'solde_apres' => $soldeApres,
@@ -245,7 +252,13 @@ class WalletService
         $mission = $jalon->mission;
         $artisan = $mission->artisan;
 
+        if ($mission->isFundsFrozen()) {
+            throw new \InvalidArgumentException('Les fonds de cette mission sont gelés suite à un litige.');
+        }
+
         DB::transaction(function () use ($jalon, $mission, $artisan) {
+            $provider = $this->resolveMissionProvider($mission, $artisan);
+
             $jalon->update([
                 'statut'  => 'paye',
                 'paye_at' => now(),
@@ -272,28 +285,19 @@ class WalletService
                 'montant'       => $jalon->montant,
                 'wallet_source' => 'escrow_mission_' . $mission->id,
                 'wallet_dest'   => 'artisan_mobile_money_' . $mission->artisan_id,
-                'provider'      => 'wave', // Default provider
+                'provider'      => $provider,
                 'statut'        => 'en_attente',
             ]);
 
             // Virement réel vers Mobile Money
-            $provider = $artisan->preferred_payment_provider ?? 'wave';
             $description = "Paiement jalon #{$jalon->ordre} mission #{$mission->id}";
 
             try {
-                if ($provider === 'wave') {
-                    $result = $this->waveService->transferToMobileMoney($artisan->phone, $jalon->montant, $description);
-                    $transaction->update([
-                        'reference_externe' => $result['id'] ?? null,
-                        'statut' => 'confirme',
-                    ]);
-                } elseif ($provider === 'orange_money') {
-                    $result = $this->orangeMoneyService->transferToMobileMoney($artisan->phone, $jalon->montant, $description);
-                    $transaction->update([
-                        'reference_externe' => $result['txnid'] ?? null,
-                        'statut' => 'confirme',
-                    ]);
-                }
+                $result = $this->transferToMobileMoney($provider, $artisan->phone, $jalon->montant, $description);
+                $transaction->update([
+                    'reference_externe' => $result['id'] ?? $result['txnid'] ?? null,
+                    'statut' => 'confirme',
+                ]);
             } catch (\Exception $e) {
                 Log::error('Erreur lors du virement automatique artisan', [
                     'jalon_id' => $jalon->id,
@@ -315,45 +319,138 @@ class WalletService
      */
     public function refundClient(Mission $mission): void
     {
+        $this->refundClientFromDispute(
+            $mission,
+            $this->getMissionEscrowBalance($mission, WalletType::WALLET_MATERIAUX),
+            $this->getMissionEscrowBalance($mission, WalletType::WALLET_MO),
+        );
+
+        $mission->update([
+            'status' => 'annulee',
+            'funds_frozen' => false,
+        ]);
+    }
+
+    /**
+     * Payer l'artisan suite à un litige (débloquer les jalons restants).
+     */
+    public function payArtisan(Mission $mission): void
+    {
+        $this->releaseLaborEscrowToArtisan(
+            $mission,
+            $this->getMissionEscrowBalance($mission, WalletType::WALLET_MO),
+            null,
+            true
+        );
+        $this->releaseMaterialEscrowToArtisan(
+            $mission,
+            $this->getMissionEscrowBalance($mission, WalletType::WALLET_MATERIAUX),
+        );
+
+        $mission->update([
+            'status' => 'terminee',
+            'funds_frozen' => false,
+        ]);
+    }
+
+    public function getMissionEscrowBalance(Mission $mission, WalletType $walletType): int
+    {
+        $hasMissionTransactions = WalletTransaction::query()
+            ->where('user_id', $mission->artisan_id)
+            ->where('mission_id', $mission->id)
+            ->where('wallet_type', $walletType->value)
+            ->exists();
+
+        if (! $hasMissionTransactions) {
+            $userBalance = $mission->artisan?->{$walletType->columnName()} ?? 0;
+            $missionAmount = $walletType === WalletType::WALLET_MATERIAUX
+                ? (int) $mission->montant_materiaux
+                : (int) $mission->montant_mo;
+
+            return max(0, min((int) $userBalance, $missionAmount));
+        }
+
+        $credits = WalletTransaction::query()
+            ->where('user_id', $mission->artisan_id)
+            ->where('mission_id', $mission->id)
+            ->where('wallet_type', $walletType->value)
+            ->whereIn('operation', [WalletOperation::CREDIT->value, WalletOperation::DEBLOCAGE->value])
+            ->sum('montant');
+
+        $debits = WalletTransaction::query()
+            ->where('user_id', $mission->artisan_id)
+            ->where('mission_id', $mission->id)
+            ->where('wallet_type', $walletType->value)
+            ->whereIn('operation', [WalletOperation::DEBIT->value, WalletOperation::BLOCAGE->value])
+            ->sum('montant');
+
+        return max(0, (int) $credits - (int) $debits);
+    }
+
+    public function refundClientFromDispute(
+        Mission $mission,
+        int $refundMateriaux,
+        int $refundMo,
+        ?Litige $litige = null
+    ): ?Transaction {
         $client = $mission->client;
         $artisan = $mission->artisan;
+        $total = $refundMateriaux + $refundMo;
 
-        DB::transaction(function () use ($mission, $client, $artisan) {
-            // Récupérer ce qui reste dans les wallets de l'artisan pour cette mission
-            if ($artisan->wallet_materiaux > 0) {
+        return DB::transaction(function () use ($mission, $client, $artisan, $refundMateriaux, $refundMo, $total, $litige) {
+            if ($refundMateriaux > 0) {
                 $this->debit(
                     $artisan,
                     WalletType::WALLET_MATERIAUX,
-                    min($artisan->wallet_materiaux, $mission->montant_materiaux),
-                    "Remboursement client - Litige mission #{$mission->id}"
+                    $refundMateriaux,
+                    "Remboursement litige mission #{$mission->id}",
+                    [
+                        'mission_id' => $mission->id,
+                        'litige_id' => $litige?->id,
+                        'type' => 'litige_refund_materiaux',
+                    ]
                 );
             }
 
-            if ($artisan->wallet_mo > 0) {
+            if ($refundMo > 0) {
                 $this->debit(
                     $artisan,
                     WalletType::WALLET_MO,
-                    min($artisan->wallet_mo, $mission->montant_mo),
-                    "Remboursement client - Litige mission #{$mission->id}"
+                    $refundMo,
+                    "Remboursement litige mission #{$mission->id}",
+                    [
+                        'mission_id' => $mission->id,
+                        'litige_id' => $litige?->id,
+                        'type' => 'litige_refund_mo',
+                    ]
                 );
             }
 
-            // Virement Mobile Money vers client
+            if ($total <= 0) {
+                return null;
+            }
+
+            $provider = $this->resolveMissionProvider($mission, $client);
             $transaction = Transaction::create([
                 'mission_id' => $mission->id,
                 'user_id' => $client->id,
                 'type' => 'remboursement',
-                'montant' => $mission->montant_total,
+                'montant' => $total,
                 'wallet_source' => 'escrow_mission_' . $mission->id,
                 'wallet_dest' => 'client_mobile_money_' . $client->id,
-                'provider' => 'wave',
+                'provider' => $provider,
                 'statut' => 'en_attente',
+                'metadata' => [
+                    'litige_id' => $litige?->id,
+                    'refund_materiaux' => $refundMateriaux,
+                    'refund_mo' => $refundMo,
+                ],
             ]);
 
             try {
-                $result = $this->waveService->transferToMobileMoney($client->phone, $mission->montant_total, "Remboursement mission #{$mission->id}");
+                $result = $this->transferToMobileMoney($provider, $client->phone, $total, "Remboursement mission #{$mission->id}");
                 $transaction->update([
-                    'reference_externe' => $result['id'] ?? null,
+                    'reference_externe' => $result['id'] ?? $result['txnid'] ?? null,
                     'statut' => 'confirme',
                 ]);
             } catch (\Exception $e) {
@@ -364,25 +461,136 @@ class WalletService
                 ]);
             }
 
-            $mission->update(['status' => 'annulee']);
+            return $transaction->fresh();
         });
     }
 
-    /**
-     * Payer l'artisan suite à un litige (débloquer les jalons restants).
-     */
-    public function payArtisan(Mission $mission): void
-    {
-        // Libérer tous les jalons en attente ou soumis
-        $jalonsRestants = $mission->jalons()
-            ->whereIn('statut', ['en_attente', 'soumis', 'valide'])
-            ->get();
-
-        foreach ($jalonsRestants as $jalon) {
-            $this->releaseJalon($jalon);
+    public function releaseLaborEscrowToArtisan(
+        Mission $mission,
+        int $amount,
+        ?Litige $litige = null,
+        bool $force = false
+    ): ?Transaction {
+        if ($amount <= 0) {
+            return null;
         }
 
-        $mission->update(['status' => 'terminee']);
+        if ($mission->isFundsFrozen() && ! $force) {
+            throw new \InvalidArgumentException('Les fonds de cette mission sont gelés suite à un litige.');
+        }
+
+        $artisan = $mission->artisan;
+        $provider = $this->resolveMissionProvider($mission, $artisan);
+
+        return DB::transaction(function () use ($mission, $artisan, $amount, $litige, $provider) {
+            $this->debit(
+                $artisan,
+                WalletType::WALLET_MO,
+                $amount,
+                "Paiement force suite au litige mission #{$mission->id}",
+                [
+                    'mission_id' => $mission->id,
+                    'litige_id' => $litige?->id,
+                    'type' => 'litige_release_mo',
+                ]
+            );
+
+            $transaction = Transaction::create([
+                'mission_id' => $mission->id,
+                'user_id' => $artisan->id,
+                'type' => 'liberation_jalon',
+                'montant' => $amount,
+                'wallet_source' => 'escrow_mission_' . $mission->id,
+                'wallet_dest' => 'artisan_mobile_money_' . $artisan->id,
+                'provider' => $provider,
+                'statut' => 'en_attente',
+                'metadata' => [
+                    'litige_id' => $litige?->id,
+                    'forced_release' => true,
+                ],
+            ]);
+
+            try {
+                $result = $this->transferToMobileMoney($provider, $artisan->phone, $amount, "Reglement litige mission #{$mission->id}");
+                $transaction->update([
+                    'reference_externe' => $result['id'] ?? $result['txnid'] ?? null,
+                    'statut' => 'confirme',
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Erreur lors du paiement force artisan', [
+                    'mission_id' => $mission->id,
+                    'artisan_id' => $artisan->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            $mission->jalons()
+                ->whereIn('statut', ['en_attente', 'soumis', 'valide'])
+                ->update([
+                    'statut' => 'paye',
+                    'paye_at' => now(),
+                ]);
+
+            return $transaction->fresh();
+        });
+    }
+
+    public function releaseMaterialEscrowToArtisan(
+        Mission $mission,
+        int $amount,
+        ?Litige $litige = null
+    ): ?Transaction {
+        if ($amount <= 0) {
+            return null;
+        }
+
+        $artisan = $mission->artisan;
+        $provider = $this->resolveMissionProvider($mission, $artisan);
+
+        return DB::transaction(function () use ($mission, $artisan, $amount, $litige, $provider) {
+            $this->debit(
+                $artisan,
+                WalletType::WALLET_MATERIAUX,
+                $amount,
+                "Liberation materiaux suite au litige mission #{$mission->id}",
+                [
+                    'mission_id' => $mission->id,
+                    'litige_id' => $litige?->id,
+                    'type' => 'litige_release_materiaux',
+                ]
+            );
+
+            $transaction = Transaction::create([
+                'mission_id' => $mission->id,
+                'user_id' => $artisan->id,
+                'type' => 'credit',
+                'montant' => $amount,
+                'wallet_source' => 'escrow_mission_' . $mission->id,
+                'wallet_dest' => 'artisan_mobile_money_' . $artisan->id,
+                'provider' => $provider,
+                'statut' => 'en_attente',
+                'metadata' => [
+                    'litige_id' => $litige?->id,
+                    'wallet_type' => WalletType::WALLET_MATERIAUX->value,
+                ],
+            ]);
+
+            try {
+                $result = $this->transferToMobileMoney($provider, $artisan->phone, $amount, "Liberation materiaux mission #{$mission->id}");
+                $transaction->update([
+                    'reference_externe' => $result['id'] ?? $result['txnid'] ?? null,
+                    'statut' => 'confirme',
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Erreur lors de la liberation materiaux artisan', [
+                    'mission_id' => $mission->id,
+                    'artisan_id' => $artisan->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            return $transaction->fresh();
+        });
     }
 
     /**
@@ -404,5 +612,27 @@ class WalletService
             'wallet_mo' => $user->wallet_mo ?? 0,
             'total' => ($user->wallet_materiaux ?? 0) + ($user->wallet_mo ?? 0),
         ];
+    }
+
+    private function resolveMissionProvider(Mission $mission, User $recipient): string
+    {
+        $provider = $mission->transactions()
+            ->orderByDesc('id')
+            ->value('provider');
+
+        if (is_string($provider) && $provider !== '') {
+            return $provider;
+        }
+
+        return $recipient->preferred_payment_provider ?? 'wave';
+    }
+
+    private function transferToMobileMoney(string $provider, string $phone, int $montant, string $description): array
+    {
+        if ($provider === 'orange_money') {
+            return $this->orangeMoneyService->transferToMobileMoney($phone, $montant, $description);
+        }
+
+        return $this->waveService->transferToMobileMoney($phone, $montant, $description);
     }
 }

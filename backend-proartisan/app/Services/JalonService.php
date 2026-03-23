@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Jalon;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class JalonService
 {
@@ -38,6 +39,12 @@ class JalonService
      */
     public function requestOtp(Jalon $jalon): void
     {
+        if ($jalon->mission->isFundsFrozen()) {
+            throw ValidationException::withMessages([
+                'jalon' => ['Les fonds de cette mission sont geles en raison d un litige.'],
+            ]);
+        }
+
         $client  = $jalon->mission->client;
         $otp     = $this->otpService->sendOtp($client->phone);
         $expires = now()->addMinutes(config('prosartisan.otp.ttl', 5));
@@ -55,6 +62,12 @@ class JalonService
     public function validateOtp(Jalon $jalon, string $otp): bool
     {
         $client = $jalon->mission->client;
+
+        if ($jalon->mission->isFundsFrozen()) {
+            throw ValidationException::withMessages([
+                'jalon' => ['Les fonds de cette mission sont geles en raison d un litige.'],
+            ]);
+        }
 
         if (! $this->otpService->verifyOtp($client->phone, $otp)) {
             return false;

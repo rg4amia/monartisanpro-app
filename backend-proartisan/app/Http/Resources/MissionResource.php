@@ -96,6 +96,7 @@ class MissionResource extends JsonResource
             'en_cours' => 'work_done',
             'terminee' => 'completed',
             'litige' => 'disputed',
+            'annulee' => 'cancelled',
             default => 'sent',
         };
     }
@@ -114,6 +115,7 @@ class MissionResource extends JsonResource
         return match ($this->status) {
             'financee', 'en_cours', 'terminee' => 'funded',
             'litige' => $this->funds_frozen ? 'blocked' : 'funded',
+            'annulee' => 'refunded',
             default => 'pending',
         };
     }

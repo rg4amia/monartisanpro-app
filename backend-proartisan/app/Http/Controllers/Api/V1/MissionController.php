@@ -123,7 +123,7 @@ class MissionController extends Controller
     public function updateStatus(Request $request, Mission $mission): JsonResponse
     {
         $data = $request->validate([
-            'status' => ['required', 'in:en_attente,financee,en_cours,terminee,litige'],
+            'status' => ['required', 'in:en_attente,financee,en_cours,terminee,litige,annulee'],
         ]);
 
         $mission->update(['status' => $data['status']]);

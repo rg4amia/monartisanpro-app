@@ -77,6 +77,8 @@ class ApiEndpoints {
   // Litiges
   static const String litiges = '/litiges';
   static String litige(int id) => '/litiges/$id';
+  static String litigeEvidence(int id) => '/litiges/$id/preuves';
+  static String litigeEvaluateSla(int id) => '/litiges/$id/evaluate-sla';
 
   // Evaluations
   static const String evaluations = '/evaluations';

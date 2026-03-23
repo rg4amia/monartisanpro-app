@@ -17,6 +17,8 @@ class UserResource extends JsonResource
             'name'             => $this->name,
             'role'             => $this->role,
             'kycStatus'        => $this->kyc_status,
+            'accountStatus'    => $this->account_status ?? 'actif',
+            'accountStatusReason' => $this->account_status_reason,
             'scoreNzassa'      => $this->score_nzassa,
             'walletMateriaux'  => $this->wallet_materiaux,
             'walletMo'         => $this->wallet_mo,

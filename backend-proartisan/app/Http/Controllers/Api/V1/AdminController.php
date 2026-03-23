@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Admin\ResolveLitigeRequest;
+use App\Http\Requests\Litige\ArbitrateLitigeRequest;
 use App\Http\Requests\Admin\ReviewFournisseurRequest;
 use App\Http\Requests\Admin\ReviewKycRequest;
 use App\Models\FournisseurAgree;
@@ -80,12 +80,12 @@ class AdminController extends Controller
         ]);
     }
 
-    public function resolveLitige(ResolveLitigeRequest $request, Litige $litige): JsonResponse
+    public function resolveLitige(ArbitrateLitigeRequest $request, Litige $litige): JsonResponse
     {
         $litige = $this->adminService->resolveLitige(
             $request->user(),
             $litige,
-            $request->validated('decision')
+            $request->validated()
         );
 
         return response()->json([

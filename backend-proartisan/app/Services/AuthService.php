@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
+use Illuminate\Validation\ValidationException;
 
 class AuthService
 {
@@ -35,6 +36,14 @@ class AuthService
      */
     public function createToken(User $user): string
     {
+        if (! $user->isAccountActive()) {
+            throw ValidationException::withMessages([
+                'account' => [$user->account_status === 'banni'
+                    ? 'Votre compte a ete banni suite a des litiges repetes.'
+                    : 'Votre compte est temporairement bloque en raison de litiges abusifs.'],
+            ]);
+        }
+
         return $user->createToken('prosartisan-mobile')->plainTextToken;
     }
 
