@@ -7,6 +7,7 @@ use App\Http\Requests\Devis\CreateDevisRequest;
 use App\Http\Resources\DevisResource;
 use App\Models\Devis;
 use App\Models\Mission;
+use App\Models\Transaction;
 use App\Services\DevisService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,7 +18,7 @@ class DevisController extends Controller
 
     public function index(Mission $mission): JsonResponse
     {
-        $devis = $mission->devis()->with('artisan')->orderBy('created_at', 'desc')->get();
+        $devis = $mission->devis()->with(['artisan', 'mission'])->orderBy('created_at', 'desc')->get();
 
         return response()->json([
             'success' => true,
@@ -40,7 +41,7 @@ class DevisController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => new DevisResource($devis->load('artisan')),
+            'data'    => new DevisResource($devis->load(['artisan', 'mission'])),
         ], 201);
     }
 
@@ -48,7 +49,7 @@ class DevisController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data'    => new DevisResource($devis->load('artisan')),
+            'data'    => new DevisResource($devis->load(['artisan', 'mission'])),
         ]);
     }
 
@@ -73,15 +74,67 @@ class DevisController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => new DevisResource($devis->fresh()->load('artisan')),
+            'data'    => new DevisResource($devis->fresh()->load(['artisan', 'mission'])),
         ]);
     }
 
     /**
-     * Client accepte le devis → fragmentation séquestre + création jalons.
+     * Client accepte le devis après confirmation du paiement.
      */
     public function accept(Request $request, Devis $devis): JsonResponse
     {
+        $user = $request->user();
+        $devis->loadMissing('mission');
+
+        if ($devis->mission->client_id !== $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Seul le client de la mission peut accepter ce devis.',
+            ], 403);
+        }
+
+        $data = $request->validate([
+            'transaction_id' => ['required', 'integer', 'exists:transactions,id'],
+        ]);
+
+        $transaction = Transaction::findOrFail($data['transaction_id']);
+
+        if ($transaction->user_id !== $user->id || $transaction->mission_id !== $devis->mission_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cette transaction ne correspond pas à ce devis.',
+            ], 422);
+        }
+
+        if ($transaction->type !== 'acompte') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Seule une transaction d\'acompte peut financer un devis.',
+            ], 422);
+        }
+
+        if (($transaction->metadata['devis_id'] ?? null) !== $devis->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cette transaction n\'a pas été initiée pour ce devis.',
+            ], 422);
+        }
+
+        if (! $transaction->statut->isSuccessful()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Le paiement doit être confirmé avant de financer la mission.',
+            ], 422);
+        }
+
+        if ($devis->statut === 'accepte' && $devis->mission->status === 'financee') {
+            return response()->json([
+                'success' => true,
+                'message' => 'Ce devis est déjà accepté et financé.',
+                'data'    => new DevisResource($devis->fresh()->load(['artisan', 'mission'])),
+            ]);
+        }
+
         if ($devis->statut !== 'soumis') {
             return response()->json([
                 'success' => false,
@@ -89,21 +142,26 @@ class DevisController extends Controller
             ], 422);
         }
 
-        $data = $request->validate([
-            'provider' => ['sometimes', 'in:wave,orange_money'],
-        ]);
-
-        $this->devisService->accept($devis, $data['provider'] ?? 'wave');
+        $this->devisService->accept($devis, $transaction);
 
         return response()->json([
             'success' => true,
             'message' => 'Devis accepté. La mission est maintenant financée.',
-            'data'    => new DevisResource($devis->fresh()->load('artisan')),
+            'data'    => new DevisResource($devis->fresh()->load(['artisan', 'mission'])),
         ]);
     }
 
-    public function refuse(Devis $devis): JsonResponse
+    public function refuse(Request $request, Devis $devis): JsonResponse
     {
+        $devis->loadMissing('mission');
+
+        if ($devis->mission->client_id !== $request->user()->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Seul le client de la mission peut refuser ce devis.',
+            ], 403);
+        }
+
         if ($devis->statut !== 'soumis') {
             return response()->json([
                 'success' => false,

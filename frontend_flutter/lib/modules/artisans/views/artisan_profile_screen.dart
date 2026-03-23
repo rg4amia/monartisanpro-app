@@ -160,6 +160,14 @@ class ArtisanProfileScreen extends StatelessWidget {
                     Obx(() {
                       final scoreData = c.score.value;
                       if (scoreData == null) return const SizedBox.shrink();
+                      final rootData =
+                          (scoreData['data'] as Map<String, dynamic>?) ??
+                              scoreData;
+                      final breakdown = rootData['breakdown'] is Map
+                          ? Map<String, dynamic>.from(
+                              rootData['breakdown'] as Map,
+                            )
+                          : const <String, dynamic>{};
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -172,29 +180,34 @@ class ArtisanProfileScreen extends StatelessWidget {
                           _ScoreDimension(
                               label: 'Fiabilité',
                               pct: 40,
-                              value:
-                                  (scoreData['fiabilite'] as num?)?.toInt() ??
-                                      0,
+                              value: _weightedBreakdownValue(
+                                breakdown['fiabilite'],
+                                40,
+                              ),
                               color: AppColors.primary),
                           _ScoreDimension(
                               label: 'Intégrité',
                               pct: 30,
-                              value:
-                                  (scoreData['integrite'] as num?)?.toInt() ??
-                                      0,
+                              value: _weightedBreakdownValue(
+                                breakdown['integrite'],
+                                30,
+                              ),
                               color: AppColors.accent),
                           _ScoreDimension(
                               label: 'Qualité',
                               pct: 20,
-                              value:
-                                  (scoreData['qualite'] as num?)?.toInt() ?? 0,
+                              value: _weightedBreakdownValue(
+                                breakdown['qualite'],
+                                20,
+                              ),
                               color: AppColors.success),
                           _ScoreDimension(
                               label: 'Réactivité',
                               pct: 10,
-                              value:
-                                  (scoreData['reactivite'] as num?)?.toInt() ??
-                                      0,
+                              value: _weightedBreakdownValue(
+                                breakdown['reactivite'],
+                                10,
+                              ),
                               color: AppColors.warning),
                         ],
                       );
@@ -207,6 +220,18 @@ class ArtisanProfileScreen extends StatelessWidget {
         );
       }),
     );
+  }
+
+  int _weightedBreakdownValue(dynamic value, int maxPoints) {
+    double parsed;
+
+    if (value is num) {
+      parsed = value.toDouble();
+    } else {
+      parsed = double.tryParse(value?.toString() ?? '') ?? 0;
+    }
+
+    return (parsed / 5 * maxPoints).round().clamp(0, maxPoints);
   }
 }
 

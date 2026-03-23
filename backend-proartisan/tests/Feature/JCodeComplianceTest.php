@@ -121,4 +121,59 @@ class JCodeComplianceTest extends TestCase
             $this->assertArrayHasKey('gps', $e->errors());
         }
     }
+
+    public function test_supplier_can_scan_jcode_using_business_code_route_binding()
+    {
+        Queue::fake();
+
+        $artisan = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif', 'wallet_materiaux' => 100000]);
+        $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
+        $fournisseur = User::factory()->create(['role' => 'fournisseur', 'kyc_status' => 'actif']);
+
+        $agreement = FournisseurAgree::create([
+            'user_id' => $fournisseur->id,
+            'nom_boutique' => 'Test Shop',
+            'statut' => 'agree'
+        ]);
+        $agreement->setPosition(5.3, -4.0);
+
+        $product = SupplierProduct::create([
+            'supplier_id' => $fournisseur->id,
+            'name' => 'Ciment',
+            'sku' => 'CIM-001',
+            'unit_price' => 25000,
+            'stock_quantity' => 10,
+            'is_active' => true,
+        ]);
+
+        $mission = Mission::create([
+            'client_id' => $client->id,
+            'artisan_id' => $artisan->id,
+            'description' => 'Test Mission',
+            'status' => 'financee',
+            'montant_total' => 100000,
+            'montant_materiaux' => 65000,
+            'montant_mo' => 35000,
+            'ratio_materiaux' => 0.65
+        ]);
+
+        $jCodeService = app(JCodeService::class);
+        $jcode = $jCodeService->generate($mission, $artisan, $fournisseur, [
+            [
+                'supplier_product_id' => $product->id,
+                'quantity' => 2,
+            ],
+        ]);
+
+        $this->actingAs($fournisseur)
+            ->postJson("/api/v1/jcodes/{$jcode->code}/scan", [
+                'lat' => 5.3,
+                'lng' => -4.0,
+            ])
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('message', 'J-Code validé. Paiement J+1 garanti.');
+
+        $this->assertEquals('utilise', $jcode->fresh()->statut);
+    }
 }

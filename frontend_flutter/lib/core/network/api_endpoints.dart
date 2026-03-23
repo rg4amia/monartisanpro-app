@@ -43,11 +43,21 @@ class ApiEndpoints {
   static String missionStatus(int id) => '/missions/$id/status';
   static String missionDevis(int id) => '/missions/$id/devis';
   static String missionJalons(int id) => '/missions/$id/jalons';
+  static String missionReferentValidate(int id) =>
+      '/missions/$id/referent-validate';
 
   // Devis
   static String devis(int id) => '/devis/$id';
   static String acceptDevis(int id) => '/devis/$id/accept';
   static String refuseDevis(int id) => '/devis/$id/refuse';
+
+  // Paiements
+  static const String paymentsInitiate = '/payments/initiate';
+  static String paymentStatus(int id) => '/payments/$id/status';
+
+  // Micro-crédit
+  static const String microCreditEligibility = '/micro-credit/eligibility';
+  static const String microCreditApply = '/micro-credit/apply';
 
   // Jalons
   static String submitJalon(int id) => '/jalons/$id/submit';
@@ -57,8 +67,8 @@ class ApiEndpoints {
   // J-Codes
   static const String jcodes = '/jcodes';
   static const String jcodesActive = '/jcodes/active';
-  static String jcode(int id) => '/jcodes/$id';
-  static String scanJcode(int id) => '/jcodes/$id/scan';
+  static String jcode(Object identifier) => '/jcodes/$identifier';
+  static String scanJcode(Object identifier) => '/jcodes/$identifier/scan';
 
   // Wallet & Transactions
   static const String transactions = '/transactions';

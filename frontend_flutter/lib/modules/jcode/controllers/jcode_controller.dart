@@ -342,10 +342,14 @@ class JcodeController extends GetxController {
     }
   }
 
-  Future<void> scanJcode(int jcodeId, double lat, double lng) async {
+  Future<void> scanJcode(String identifier, double lat, double lng) async {
     isScanning.value = true;
     try {
-      final result = await _repo.scanJcode(id: jcodeId, lat: lat, lng: lng);
+      final result = await _repo.scanJcode(
+        identifier: identifier,
+        lat: lat,
+        lng: lng,
+      );
       scanResult.value = result;
       Get.toNamed(Routes.transactionConfirm, arguments: result);
     } catch (e) {

@@ -130,6 +130,8 @@ class DevisModel {
   final String statut;
   final String createdAt;
   final String? artisanName;
+  final String? missionStatus;
+  final double? ratioMateriaux;
 
   const DevisModel({
     required this.id,
@@ -140,6 +142,8 @@ class DevisModel {
     required this.statut,
     required this.createdAt,
     this.artisanName,
+    this.missionStatus,
+    this.ratioMateriaux,
   });
 
   int get totalMo =>
@@ -167,6 +171,11 @@ class DevisModel {
         statut: (json['statut'] ?? '').toString(),
         createdAt: (json['createdAt'] ?? '').toString(),
         artisanName: json['artisanName'] as String?,
+        missionStatus: json['missionStatus']?.toString() ??
+            json['mission_status']?.toString(),
+        ratioMateriaux: _parseNullableDouble(
+          json['ratioMateriaux'] ?? json['ratio_materiaux'],
+        ),
       );
 
   Map<String, dynamic> toJson() => {
@@ -178,6 +187,8 @@ class DevisModel {
         'statut': statut,
         'createdAt': createdAt,
         'artisanName': artisanName,
+        'missionStatus': missionStatus,
+        'ratioMateriaux': ratioMateriaux,
       };
 
   static int _parseInt(dynamic value) {
@@ -185,5 +196,12 @@ class DevisModel {
     if (value is int) return value;
     if (value is double) return value.toInt();
     return int.tryParse(value.toString()) ?? 0;
+  }
+
+  static double? _parseNullableDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    return double.tryParse(value.toString());
   }
 }

@@ -1,0 +1,78 @@
+Workflow Implacable de Résolution des Litiges : ProsArtisan
+
+Si tu veux que ta plateforme survive, la gestion des litiges ne doit laisser aucune place à l'émotion ou à l'improvisation. Elle doit être régie par des délais stricts (SLA) et des preuves numériques indéniables.
+
+Voici le workflow de A à Z, de la seconde où le client clique sur "Signaler un litige" jusqu'au déblocage des fonds.
+
+Phase 1 : Le Déclenchement (T=0) - Le "Kill Switch"
+
+Le client clique sur "Signaler un Litige" et soumet un motif (ex: "Travail inachevé") et une description.
+
+Gel Immédiat (Freeze) : L'état du Chantier (Job) ou de la Commande (Order) passe instantanément à disputed.
+
+Verrouillage Séquestre : L'argent associé à cette transaction dans le Ledger (Compte Séquestre) est marqué d'un flag locked. Aucun retrait ou transfert automatique n'est plus possible, même si un code OTP est saisi.
+
+Double Notification : * Au Pro (Artisan/Fournisseur/Livreur) : "Alerte : Le client a contesté votre prestation. Vos fonds sont gelés. Veuillez soumettre vos preuves."
+
+À l'Admin : Un ticket est généré dans le back-office Dispute Management.
+
+Phase 2 : La Charge de la Preuve (T+0h à T+48h)
+
+C'est ici que tu élimines les menteurs et les fraudeurs. La charge de la preuve incombe aux deux parties. Un compte à rebours de 48 heures est lancé.
+
+Obligation du Client : Il doit uploader dans l'application au moins 2 photos claires prouvant le défaut (ex: le tuyau fuit encore, le mur est mal peint, le ciment livré est ouvert).
+
+Obligation du Pro : Il doit uploader ses preuves (ex: la photo de fin de chantier avec l'heure, la géolocalisation de son passage, ou la preuve que le matériel livré était conforme).
+
+La Règle Couperet (Automatique) :
+
+⏳ Si le Pro ne répond pas sous 48h : Perte par défaut. L'Admin déclenche un remboursement à 100% au client.
+
+⏳ Si le Client ne fournit pas de photos valides sous 48h : Perte par défaut. Le litige est rejeté, et la plateforme débloque l'argent pour le Pro.
+
+Phase 3 : L'Arbitrage par la Plateforme (T+48h à T+72h)
+
+Si les deux parties ont soumis leurs preuves, le dossier passe à l'équipe de Médiation (Admin). L'Admin examine les photos, l'historique du chat intégré, et les coordonnées GPS. L'Admin dispose de 3 boutons d'action finale sur son tableau de bord :
+
+Scénario A : Le Pro est en tort (Remboursement Client)
+
+Cas : L'artisan a mal fait le travail ou n'a pas fini. Le livreur a endommagé le colis.
+
+Action : Remboursement total (ou partiel) du Client depuis le compte séquestre.
+
+Note : La plateforme ne prend aucune commission sur une transaction annulée.
+
+Scénario B : Le Client est en tort (Paiement du Pro)
+
+Cas : Le client est de mauvaise foi, il cherche à avoir une prestation gratuite alors que le travail est fait selon le devis.
+
+Action : Levée du litige. Forçage du paiement. Les fonds en séquestre sont virés sur le portefeuille du Pro. La commission de la plateforme est prélevée.
+
+Scénario C : La Décision Mixte (Le Cas Complexe B2B2C)
+
+Cas (Très fréquent) : L'artisan a utilisé du bon ciment (venant de ton fournisseur partenaire), mais a mal coulé la dalle.
+
+Le Piège : Tu ne peux pas pénaliser le fournisseur ! Il a livré le bon matériel.
+
+Action : 1. L'Admin valide la part Matériaux : Le fournisseur reçoit son argent.
+2. L'Admin annule la part Main d'œuvre : Le client est remboursé de la somme correspondant au travail de l'artisan.
+
+Phase 4 : L'Exécution et la Clôture
+
+Une fois l'arbitrage rendu, la décision est irrévocable sur l'application.
+
+Exécution des flux financiers : Le Backend déclenche les API appropriées (API Mobile Money de remboursement ou transfert vers les Wallet internes).
+
+Mise à jour du statut : Le statut de la transaction passe à resolved (Résolu) ou refunded (Remboursé).
+
+Phase 5 : Le Système de Sanctions (La Réputation)
+
+Un litige n'est pas qu'une question d'argent, c'est une question de qualité de ta plateforme. Tu dois purger les mauvais éléments.
+
+Pour les Artisans/Livreurs/Fournisseurs : * Un litige perdu = -1 étoile automatique sur la note globale.
+
+Système Three Strikes : 3 litiges perdus sur une période de 6 mois = Bannissement automatique et définitif de la plateforme. Tu ne gardes que l'élite.
+
+Pour les Clients :
+
+Un client qui ouvre abusivement des litiges à répétition (et les perd) voit son compte bloqué. On appelle ça de la fraude au remboursement.

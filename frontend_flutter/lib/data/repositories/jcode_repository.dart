@@ -37,19 +37,19 @@ class JcodeRepository {
     return null;
   }
 
-  Future<JcodeModel> getJcode(int id) async {
-    final res = await _client.get(ApiEndpoints.jcode(id));
+  Future<JcodeModel> getJcode(Object identifier) async {
+    final res = await _client.get(ApiEndpoints.jcode(identifier));
     return JcodeModel.fromJson(res.data['data'] as Map<String, dynamic>);
   }
 
-  /// Supplier scans a J-Code. [lat]/[lng] = GPS of supplier at scan time.
+  /// Supplier scans a J-Code by numeric ID or business code (ex: PA-AB12).
   Future<Map<String, dynamic>> scanJcode({
-    required int id,
+    required String identifier,
     required double lat,
     required double lng,
   }) async {
     final res = await _client.post(
-      ApiEndpoints.scanJcode(id),
+      ApiEndpoints.scanJcode(identifier),
       data: {'lat': lat, 'lng': lng},
     );
     return res.data as Map<String, dynamic>;

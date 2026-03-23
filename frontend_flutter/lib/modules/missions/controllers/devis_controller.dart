@@ -1,17 +1,31 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/storage/storage_service.dart';
 import '../../../data/models/devis_model.dart';
+import '../../../data/models/payment_model.dart';
 import '../../../data/repositories/devis_repository.dart';
+import '../../../data/repositories/payment_repository.dart';
 
 class DevisController extends GetxController {
   final DevisRepository _repo = DevisRepository();
+  final PaymentRepository _paymentRepo = PaymentRepository();
 
   final devisList = <DevisModel>[].obs;
   final currentDevis = Rx<DevisModel?>(null);
   final isLoading = false.obs;
   final isSubmitting = false.obs;
+  final isCheckingPayment = false.obs;
   final errorMsg = Rx<String?>(null);
+
+  final pendingTransactionId = RxnInt();
+  final pendingDevisId = RxnInt();
+  final pendingPaymentUrl = RxnString();
+  final pendingLaunchUrl = RxnString();
+  final pendingProvider = RxnString();
 
   // Données pour la création de devis (artisan)
   final lignes = <DevisLigne>[].obs;
@@ -19,6 +33,12 @@ class DevisController extends GetxController {
 
   // Mission associée
   int? missionId;
+
+  bool hasPendingPaymentFor(int devisId) =>
+      pendingTransactionId.value != null && pendingDevisId.value == devisId;
+
+  bool get canReopenPendingPayment =>
+      (pendingLaunchUrl.value ?? pendingPaymentUrl.value)?.isNotEmpty ?? false;
 
   /// Initialise le controller avec les données de la mission
   void initializeWithMission(int id) {
@@ -35,7 +55,6 @@ class DevisController extends GetxController {
       final result = await _repo.getMissionDevis(missionId);
       devisList.value = result;
 
-      // Si un devis existe, le définir comme courant
       if (result.isNotEmpty) {
         currentDevis.value = result.first;
       }
@@ -44,7 +63,7 @@ class DevisController extends GetxController {
     } on DioException catch (e) {
       errorMsg.value = _handleDioError(e);
       _showErrorSnackbar(errorMsg.value!);
-    } catch (e) {
+    } catch (_) {
       errorMsg.value = 'Impossible de charger les devis';
       _showErrorSnackbar(errorMsg.value!);
     } finally {
@@ -64,7 +83,7 @@ class DevisController extends GetxController {
     } on DioException catch (e) {
       errorMsg.value = _handleDioError(e);
       _showErrorSnackbar(errorMsg.value!);
-    } catch (e) {
+    } catch (_) {
       errorMsg.value = 'Impossible de charger le devis';
       _showErrorSnackbar(errorMsg.value!);
     } finally {
@@ -83,16 +102,18 @@ class DevisController extends GetxController {
     String? sku,
     int? supplierProductId,
   }) {
-    lignes.add(DevisLigne(
-      type: type,
-      description: description,
-      montant: montant,
-      source: source,
-      quantity: quantity,
-      unitPrice: unitPrice,
-      sku: sku,
-      supplierProductId: supplierProductId,
-    ));
+    lignes.add(
+      DevisLigne(
+        type: type,
+        description: description,
+        montant: montant,
+        source: source,
+        quantity: quantity,
+        unitPrice: unitPrice,
+        sku: sku,
+        supplierProductId: supplierProductId,
+      ),
+    );
   }
 
   /// Supprime une ligne du devis
@@ -108,12 +129,14 @@ class DevisController extends GetxController {
     required int montant,
     required String dateCible,
   }) {
-    jalons.add(DevisJalon(
-      ordre: jalons.length + 1,
-      description: description,
-      montant: montant,
-      dateCible: dateCible,
-    ));
+    jalons.add(
+      DevisJalon(
+        ordre: jalons.length + 1,
+        description: description,
+        montant: montant,
+        dateCible: dateCible,
+      ),
+    );
   }
 
   /// Supprime un jalon du devis
@@ -121,7 +144,6 @@ class DevisController extends GetxController {
     if (index >= 0 && index < jalons.length) {
       jalons.removeAt(index);
 
-      // Réorganiser les ordres
       for (int i = 0; i < jalons.length; i++) {
         jalons[i] = DevisJalon(
           ordre: i + 1,
@@ -164,7 +186,6 @@ class DevisController extends GetxController {
       return false;
     }
 
-    // Vérifier que la somme des jalons = total général
     final totalJalons = jalons.fold(0, (sum, j) => sum + j.montant);
     if (totalJalons != totalGeneral) {
       errorMsg.value =
@@ -201,7 +222,6 @@ class DevisController extends GetxController {
         duration: const Duration(seconds: 3),
       );
 
-      // Réinitialiser les listes
       lignes.clear();
       jalons.clear();
 
@@ -210,7 +230,7 @@ class DevisController extends GetxController {
       errorMsg.value = _handleDioError(e);
       _showErrorSnackbar('Erreur lors de la création: ${errorMsg.value}');
       return false;
-    } catch (e) {
+    } catch (_) {
       errorMsg.value = 'Impossible de créer le devis';
       _showErrorSnackbar(errorMsg.value!);
       return false;
@@ -250,7 +270,7 @@ class DevisController extends GetxController {
       errorMsg.value = _handleDioError(e);
       _showErrorSnackbar('Erreur lors de la modification: ${errorMsg.value}');
       return false;
-    } catch (e) {
+    } catch (_) {
       errorMsg.value = 'Impossible de modifier le devis';
       _showErrorSnackbar(errorMsg.value!);
       return false;
@@ -259,36 +279,213 @@ class DevisController extends GetxController {
     }
   }
 
-  /// Accepte un devis (client)
+  /// Initie le paiement puis finalise l'acceptation du devis si le paiement est confirmé.
   Future<bool> acceptDevis(int devisId, {String provider = 'wave'}) async {
     isSubmitting.value = true;
     errorMsg.value = null;
 
     try {
-      await _repo.acceptDevis(devisId, provider: provider);
+      var devis = currentDevis.value;
+      if (devis == null || devis.id != devisId) {
+        await loadDevis(devisId);
+        devis = currentDevis.value;
+      }
 
-      // Recharger le devis pour obtenir le nouveau statut
-      await loadDevis(devisId);
+      if (devis == null) {
+        throw StateError('Devis introuvable');
+      }
 
-      Get.snackbar(
-        'Devis accepté',
-        'Vous allez être redirigé vers le paiement',
-        snackPosition: SnackPosition.TOP,
-        duration: const Duration(seconds: 3),
+      final phone = StorageService.getPhone();
+      if (phone == null || phone.trim().isEmpty) {
+        _showErrorSnackbar(
+          'Numéro de téléphone introuvable. Reconnectez-vous puis réessayez.',
+        );
+        return false;
+      }
+
+      final payment = await _paymentRepo.initiatePayment(
+        missionId: devis.missionId,
+        devisId: devis.id,
+        montant: devis.totalGeneral,
+        provider: provider,
+        phone: phone,
       );
 
-      return true;
+      _setPendingPayment(payment, devis.id);
+      final launchOpened = await reopenPendingPayment(showError: false);
+
+      if (!launchOpened) {
+        Get.snackbar(
+          'Paiement prêt',
+          'Le lien de paiement est prêt. Utilisez "Ouvrir le paiement" pour continuer.',
+          snackPosition: SnackPosition.TOP,
+          duration: const Duration(seconds: 4),
+        );
+      }
+
+      final confirmed = await verifyPendingPayment(
+        devisId,
+        maxAttempts: 6,
+        delayBetweenChecks: const Duration(seconds: 2),
+        silentPending: true,
+      );
+
+      if (confirmed) {
+        return true;
+      }
+
+      Get.snackbar(
+        'Paiement en attente',
+        'Validez le paiement sur votre Mobile Money puis revenez vérifier le statut.',
+        snackPosition: SnackPosition.TOP,
+        duration: const Duration(seconds: 4),
+      );
+
+      return false;
     } on DioException catch (e) {
       errorMsg.value = _handleDioError(e);
       _showErrorSnackbar('Erreur lors de l\'acceptation: ${errorMsg.value}');
       return false;
-    } catch (e) {
+    } catch (_) {
       errorMsg.value = 'Impossible d\'accepter le devis';
       _showErrorSnackbar(errorMsg.value!);
       return false;
     } finally {
       isSubmitting.value = false;
     }
+  }
+
+  Future<bool> reopenPendingPayment({bool showError = true}) async {
+    final rawUrl = pendingLaunchUrl.value ?? pendingPaymentUrl.value;
+    if (rawUrl == null || rawUrl.isEmpty) {
+      if (showError) {
+        _showErrorSnackbar('Aucun lien de paiement disponible.');
+      }
+      return false;
+    }
+
+    final uri = Uri.tryParse(rawUrl);
+    if (uri == null) {
+      if (showError) {
+        _showErrorSnackbar('Lien de paiement invalide.');
+      }
+      return false;
+    }
+
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!launched && showError) {
+      _showErrorSnackbar('Impossible d\'ouvrir le lien de paiement.');
+    }
+
+    return launched;
+  }
+
+  Future<bool> verifyPendingPayment(
+    int devisId, {
+    int maxAttempts = 1,
+    Duration delayBetweenChecks = Duration.zero,
+    bool silentPending = false,
+  }) async {
+    final transactionId = pendingTransactionId.value;
+    if (transactionId == null || pendingDevisId.value != devisId) {
+      if (!silentPending) {
+        _showErrorSnackbar('Aucun paiement en attente pour ce devis.');
+      }
+      return false;
+    }
+
+    isCheckingPayment.value = true;
+    errorMsg.value = null;
+
+    try {
+      for (int attempt = 0; attempt < maxAttempts; attempt++) {
+        final status = await _paymentRepo.checkStatus(transactionId);
+
+        if (status.isConfirmed) {
+          await _finalizeAcceptedDevis(devisId, transactionId);
+          return true;
+        }
+
+        if (status.isFailed) {
+          _clearPendingPayment();
+          _showErrorSnackbar('Le paiement a échoué ou a été annulé.');
+          return false;
+        }
+
+        if (attempt < maxAttempts - 1 && delayBetweenChecks > Duration.zero) {
+          await Future.delayed(delayBetweenChecks);
+        }
+      }
+
+      if (!silentPending) {
+        Get.snackbar(
+          'Toujours en attente',
+          'Le paiement n\'est pas encore confirmé. Réessayez dans quelques secondes.',
+          snackPosition: SnackPosition.TOP,
+          duration: const Duration(seconds: 4),
+        );
+      }
+
+      return false;
+    } on DioException catch (e) {
+      errorMsg.value = _handleDioError(e);
+      if (!silentPending) {
+        _showErrorSnackbar('Erreur lors de la vérification: ${errorMsg.value}');
+      }
+      return false;
+    } catch (_) {
+      if (!silentPending) {
+        _showErrorSnackbar('Impossible de vérifier le paiement.');
+      }
+      return false;
+    } finally {
+      isCheckingPayment.value = false;
+    }
+  }
+
+  Future<void> _finalizeAcceptedDevis(int devisId, int transactionId) async {
+    final devis = await _repo.acceptDevis(
+      devisId,
+      transactionId: transactionId,
+    );
+
+    currentDevis.value = devis;
+    _replaceDevisInList(devis);
+    _clearPendingPayment();
+
+    if (missionId != null) {
+      unawaited(loadMissionDevis(missionId!));
+    }
+
+    Get.snackbar(
+      'Mission financée',
+      'Le devis a été accepté et le séquestre a bien été financé.',
+      snackPosition: SnackPosition.TOP,
+      duration: const Duration(seconds: 4),
+    );
+  }
+
+  void _replaceDevisInList(DevisModel devis) {
+    final index = devisList.indexWhere((item) => item.id == devis.id);
+    if (index >= 0) {
+      devisList[index] = devis;
+    }
+  }
+
+  void _setPendingPayment(PaymentInitiationModel payment, int devisId) {
+    pendingTransactionId.value = payment.transactionId;
+    pendingDevisId.value = devisId;
+    pendingPaymentUrl.value = payment.paymentUrl;
+    pendingLaunchUrl.value = payment.waveLaunchUrl;
+    pendingProvider.value = payment.provider;
+  }
+
+  void _clearPendingPayment() {
+    pendingTransactionId.value = null;
+    pendingDevisId.value = null;
+    pendingPaymentUrl.value = null;
+    pendingLaunchUrl.value = null;
+    pendingProvider.value = null;
   }
 
   /// Refuse un devis (client)
@@ -298,8 +495,7 @@ class DevisController extends GetxController {
 
     try {
       await _repo.refuseDevis(devisId);
-
-      // Recharger le devis pour obtenir le nouveau statut
+      _clearPendingPayment();
       await loadDevis(devisId);
 
       Get.snackbar(
@@ -314,7 +510,7 @@ class DevisController extends GetxController {
       errorMsg.value = _handleDioError(e);
       _showErrorSnackbar('Erreur lors du refus: ${errorMsg.value}');
       return false;
-    } catch (e) {
+    } catch (_) {
       errorMsg.value = 'Impossible de refuser le devis';
       _showErrorSnackbar(errorMsg.value!);
       return false;
@@ -328,6 +524,7 @@ class DevisController extends GetxController {
     lignes.clear();
     jalons.clear();
     errorMsg.value = null;
+    _clearPendingPayment();
   }
 
   /// Gère les erreurs Dio et retourne un message en français
