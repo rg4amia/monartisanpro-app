@@ -754,6 +754,38 @@ class _ArtisanBottomPanel extends StatelessWidget {
                           ),
                         ],
                       ),
+                      if (artisan.nightInterventionAvailable) ...[
+                        const SizedBox(height: 10),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEEF2FF),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.nightlight_round,
+                                size: 14,
+                                color: Color(0xFF4F46E5),
+                              ),
+                              SizedBox(width: 6),
+                              Text(
+                                'Intervention de nuit',
+                                style: TextStyle(
+                                  color: Color(0xFF4F46E5),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),

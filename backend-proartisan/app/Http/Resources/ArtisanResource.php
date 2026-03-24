@@ -41,6 +41,7 @@ class ArtisanResource extends JsonResource
             'photo'              => $profile?->photo_url,
             'bio'                => $profile?->bio,
             'experienceYears'    => $profile?->experience_years ?? 0,
+            'nightInterventionAvailable' => (bool) ($profile?->intervient_la_nuit ?? false),
             'scoreNzassa'        => $this->score_nzassa,
             'rating'             => round((float) $avgRating, 1),
             'completedMissions'  => $missionsCount,

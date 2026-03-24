@@ -116,6 +116,27 @@ class ArtisanCard extends StatelessWidget {
                       ),
                     ],
                   ),
+                  if (artisan.nightInterventionAvailable) ...[
+                    const SizedBox(height: 6),
+                    Row(
+                      children: const [
+                        Icon(
+                          Icons.nightlight_round,
+                          size: 12,
+                          color: AppColors.primary,
+                        ),
+                        SizedBox(width: 4),
+                        Text(
+                          'Disponible la nuit',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),

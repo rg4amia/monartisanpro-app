@@ -24,6 +24,10 @@ class JalonService
             'photos_json' => $photos,
         ]);
 
+        if ($jalon->mission->status === 'financee') {
+            $jalon->mission->update(['status' => 'en_cours']);
+        }
+
         // Notifier le client
         $this->notificationService->send(
             $jalon->mission->client,

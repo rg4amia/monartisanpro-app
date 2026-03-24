@@ -19,6 +19,7 @@ class ArtisanSelectionController extends GetxController {
   final missionDescription = ''.obs;
   final locationAddress = ''.obs;
   final locationDetail = ''.obs;
+  final nightIntervention = false.obs;
   final artisans = <ArtisanModel>[].obs;
 
   bool _initializedFromArgs = false;
@@ -40,6 +41,7 @@ class ArtisanSelectionController extends GetxController {
     final nextDescription = (data['description'] ?? '').toString();
     final nextLocationAddress = (data['locationAddress'] ?? '').toString();
     final nextLocationDetail = (data['locationDetail'] ?? '').toString();
+    final nextNightIntervention = _parseBool(data['nightIntervention']);
 
     final hasSamePayload =
         _initializedFromArgs &&
@@ -50,7 +52,8 @@ class ArtisanSelectionController extends GetxController {
         clientLongitude.value == nextLongitude &&
         missionDescription.value == nextDescription &&
         locationAddress.value == nextLocationAddress &&
-        locationDetail.value == nextLocationDetail;
+        locationDetail.value == nextLocationDetail &&
+        nightIntervention.value == nextNightIntervention;
 
     if (hasSamePayload) {
       return;
@@ -65,6 +68,7 @@ class ArtisanSelectionController extends GetxController {
     missionDescription.value = nextDescription;
     locationAddress.value = nextLocationAddress;
     locationDetail.value = nextLocationDetail;
+    nightIntervention.value = nextNightIntervention;
 
     _loadNearbyArtisans();
   }
@@ -129,6 +133,7 @@ class ArtisanSelectionController extends GetxController {
         tradeId: selectedTradeId.value > 0
             ? selectedTradeId.value.toString()
             : null,
+        interventionNuit: nightIntervention.value,
       );
 
       artisans.assignAll(results);
@@ -175,5 +180,15 @@ class ArtisanSelectionController extends GetxController {
     if (value is double) return value;
     if (value is int) return value.toDouble();
     return double.tryParse(value?.toString() ?? '') ?? 0.0;
+  }
+
+  bool _parseBool(dynamic value) {
+    if (value is bool) return value;
+    if (value is int) return value == 1;
+    if (value is String) {
+      final normalized = value.trim().toLowerCase();
+      return normalized == '1' || normalized == 'true' || normalized == 'oui';
+    }
+    return false;
   }
 }

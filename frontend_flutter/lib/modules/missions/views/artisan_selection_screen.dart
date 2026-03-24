@@ -39,6 +39,9 @@ class ArtisanSelectionScreen extends StatelessWidget {
           children: [
             _AppBar(),
             _ViewToggle(controller: controller),
+            Obx(() => controller.nightIntervention.value
+                ? const _NightFilterBanner()
+                : const SizedBox.shrink()),
             Expanded(
               child: Obx(() {
                 if (controller.isLoading.value) {
@@ -52,6 +55,41 @@ class ArtisanSelectionScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _NightFilterBanner extends StatelessWidget {
+  const _NightFilterBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: _C.primaryLight,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _C.primary.withValues(alpha: 0.16)),
+      ),
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.nightlight_round, color: _C.primary, size: 18),
+          SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Mode nuit activé. Seuls les artisans disponibles pour les interventions de nuit sont affichés.',
+              style: TextStyle(
+                fontSize: 13,
+                height: 1.35,
+                color: _C.ink,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -329,29 +367,71 @@ class _ArtisanCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header avec badge élite si applicable
-            if (artisan.isGoldenMarker)
+            if (artisan.isGoldenMarker || artisan.nightInterventionAvailable)
               Container(
                 margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: _C.warning.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
                   children: [
-                    Icon(Icons.stars, size: 14, color: _C.warning),
-                    const SizedBox(width: 4),
-                    Text(
-                      'ARTISAN D\'ÉLITE',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: _C.warning,
-                        letterSpacing: 0.5,
+                    if (artisan.isGoldenMarker)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _C.warning.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.stars, size: 14, color: _C.warning),
+                            const SizedBox(width: 4),
+                            Text(
+                              'ARTISAN D\'ÉLITE',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: _C.warning,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
+                    if (artisan.nightInterventionAvailable)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _C.primaryLight,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.nightlight_round,
+                              size: 14,
+                              color: _C.primary,
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              'INTERVENTION DE NUIT',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: _C.primary,
+                                letterSpacing: 0.4,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -397,6 +477,27 @@ class _ArtisanCard extends StatelessWidget {
                         artisan.trade ?? 'Métier',
                         style: const TextStyle(fontSize: 14, color: _C.muted),
                       ),
+                      if (artisan.nightInterventionAvailable) ...[
+                        const SizedBox(height: 6),
+                        Row(
+                          children: const [
+                            Icon(
+                              Icons.nightlight_round,
+                              size: 14,
+                              color: _C.primary,
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              'Disponible la nuit',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: _C.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                       const SizedBox(height: 8),
                       Row(
                         children: [

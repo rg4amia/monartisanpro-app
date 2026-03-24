@@ -10,6 +10,7 @@ class UserModel {
   final String? photoUrl;
   final double? lat;
   final double? lng;
+  final bool nightInterventionAvailable;
 
   const UserModel({
     required this.id,
@@ -23,6 +24,7 @@ class UserModel {
     this.photoUrl,
     this.lat,
     this.lng,
+    this.nightInterventionAvailable = false,
   });
 
   bool get isKycActif => kycStatus == 'actif';
@@ -40,6 +42,13 @@ class UserModel {
         photoUrl: json['photoUrl'] as String?,
         lat: (json['lat'] as num?)?.toDouble(),
         lng: (json['lng'] as num?)?.toDouble(),
+        nightInterventionAvailable: _parseBool(
+          json['nightInterventionAvailable'] ??
+              (json['artisanProfile'] is Map<String, dynamic>
+                  ? (json['artisanProfile']
+                          as Map<String, dynamic>)['nightInterventionAvailable']
+                  : null),
+        ),
       );
 
   Map<String, dynamic> toJson() => {
@@ -54,5 +63,16 @@ class UserModel {
         'photoUrl': photoUrl,
         'lat': lat,
         'lng': lng,
+        'nightInterventionAvailable': nightInterventionAvailable,
       };
+
+  static bool _parseBool(dynamic value) {
+    if (value is bool) return value;
+    if (value is int) return value == 1;
+    if (value is String) {
+      final normalized = value.trim().toLowerCase();
+      return normalized == '1' || normalized == 'true' || normalized == 'oui';
+    }
+    return false;
+  }
 }

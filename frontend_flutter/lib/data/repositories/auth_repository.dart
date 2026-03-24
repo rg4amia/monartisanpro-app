@@ -58,7 +58,9 @@ class AuthRepository {
 
   Future<UserModel> me() async {
     final res = await _client.get(ApiEndpoints.me);
-    return UserModel.fromJson(res.data['user'] as Map<String, dynamic>);
+    final payload =
+        (res.data['data'] ?? res.data['user']) as Map<String, dynamic>;
+    return UserModel.fromJson(payload);
   }
 
   Future<void> logout() async {

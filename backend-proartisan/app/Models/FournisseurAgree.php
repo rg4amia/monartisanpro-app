@@ -45,6 +45,19 @@ class FournisseurAgree extends Model
 
     public function getPositionCoords(): ?array
     {
+        if (config('database.default') === 'sqlite') {
+            if (! is_string($this->position) || ! str_contains($this->position, ',')) {
+                return null;
+            }
+
+            [$lat, $lng] = array_map('trim', explode(',', $this->position, 2));
+
+            return [
+                'lat' => (float) $lat,
+                'lng' => (float) $lng,
+            ];
+        }
+
         $row = DB::selectOne(
             'SELECT ST_X(position) as lng, ST_Y(position) as lat FROM fournisseurs_agrees WHERE id = ?',
             [$this->id]

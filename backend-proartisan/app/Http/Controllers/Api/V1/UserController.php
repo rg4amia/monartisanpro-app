@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
+use App\Models\ArtisanProfile;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class UserController extends Controller
 {
@@ -15,15 +17,37 @@ class UserController extends Controller
         //$this->authorize('update', $user);
 
         $data = $request->validate([
-            'name'      => ['sometimes', 'string', 'min:2', 'max:100'],
+            'name' => ['sometimes', 'string', 'min:2', 'max:100'],
             'fcm_token' => ['sometimes', 'nullable', 'string'],
+            'intervention_nuit' => ['sometimes', 'boolean'],
         ]);
 
-        $user->update($data);
+        if (array_key_exists('intervention_nuit', $data)) {
+            if ($user->role !== 'artisan') {
+                throw ValidationException::withMessages([
+                    'intervention_nuit' => ['Seuls les artisans peuvent activer le mode intervention de nuit.'],
+                ]);
+            }
+
+            ArtisanProfile::query()->firstOrCreate(
+                ['user_id' => $user->id],
+                ['intervient_la_nuit' => false]
+            )->update([
+                'intervient_la_nuit' => (bool) $data['intervention_nuit'],
+            ]);
+
+            unset($data['intervention_nuit']);
+        }
+
+        if ($data !== []) {
+            $user->update($data);
+        }
+
+        $user = $user->fresh()->load('artisanProfile.sector', 'artisanProfile.trade');
 
         return response()->json([
             'success' => true,
-            'data'    => new UserResource($user->fresh()),
+            'data'    => new UserResource($user),
         ]);
     }
 
@@ -61,9 +85,16 @@ class UserController extends Controller
 
         $user->update(['role' => $data['role']]);
 
+        if ($data['role'] === 'artisan') {
+            ArtisanProfile::query()->firstOrCreate(
+                ['user_id' => $user->id],
+                ['intervient_la_nuit' => false]
+            );
+        }
+
         return response()->json([
             'success' => true,
-            'data'    => new UserResource($user->fresh()),
+            'data'    => new UserResource($user->fresh()->load('artisanProfile.sector', 'artisanProfile.trade')),
         ]);
     }
 }

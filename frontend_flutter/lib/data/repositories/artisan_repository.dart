@@ -11,6 +11,7 @@ class ArtisanRepository {
     int? radiusMeters,
     String? sectorId,
     String? tradeId,
+    bool? interventionNuit,
   }) async {
     final res = await _client.get(
       ApiEndpoints.artisans,
@@ -20,6 +21,7 @@ class ArtisanRepository {
         if (radiusMeters != null) 'radius': radiusMeters,
         if (sectorId != null) 'sector': sectorId,
         if (tradeId != null) 'trade': tradeId,
+        if (interventionNuit != null) 'intervention_nuit': interventionNuit,
       },
     );
     final list = res.data['data'] as List<dynamic>;

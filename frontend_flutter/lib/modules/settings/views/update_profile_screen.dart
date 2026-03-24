@@ -193,6 +193,18 @@ class _FormSection extends StatelessWidget {
           hint: 'votre.email@exemple.com',
           keyboardType: TextInputType.emailAddress,
         ),
+        Obx(() {
+          if (!controller.isArtisan.value) {
+            return const SizedBox.shrink();
+          }
+
+          return Column(
+            children: [
+              const SizedBox(height: 24),
+              _NightModeCard(controller: controller),
+            ],
+          );
+        }),
       ],
     );
   }
@@ -260,6 +272,77 @@ class _InputField extends StatelessWidget {
   }
 }
 
+class _NightModeCard extends StatelessWidget {
+  final UpdateProfileController controller;
+
+  const _NightModeCard({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() => Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: _C.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: _C.subtle),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: _C.primaryLight,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.nightlight_round,
+                  color: _C.primary,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Interventions de nuit',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: _C.ink,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      controller.isProfileLoading.value
+                          ? 'Chargement de votre disponibilité actuelle...'
+                          : 'Activez ce mode si vous acceptez les demandes entre 18h et 7h.',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: _C.muted,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Switch(
+                value: controller.nightInterventionsEnabled.value,
+                activeThumbColor: _C.primary,
+                onChanged: controller.isProfileLoading.value
+                    ? null
+                    : (value) =>
+                        controller.nightInterventionsEnabled.value = value,
+              ),
+            ],
+          ),
+        ));
+  }
+}
+
 // ─── Bottom Actions ───────────────────────────────────────────────────────────
 class _BottomActions extends StatelessWidget {
   final UpdateProfileController controller;
@@ -282,7 +365,9 @@ class _BottomActions extends StatelessWidget {
       ),
       child: Obx(() => ElevatedButton(
             onPressed:
-                controller.isLoading.value ? null : controller.updateProfile,
+                controller.isLoading.value || controller.isProfileLoading.value
+                    ? null
+                    : controller.updateProfile,
             style: ElevatedButton.styleFrom(
               backgroundColor: _C.primary,
               foregroundColor: Colors.white,
@@ -292,7 +377,7 @@ class _BottomActions extends StatelessWidget {
               ),
               elevation: 0,
             ),
-            child: controller.isLoading.value
+            child: controller.isLoading.value || controller.isProfileLoading.value
                 ? const SizedBox(
                     width: 20,
                     height: 20,
