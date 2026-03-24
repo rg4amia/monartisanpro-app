@@ -105,8 +105,20 @@ class ArtisanSelectionController extends GetxController {
       );
 
       if (mission != null) {
+        // Redirection vers le suivi de mission avec la mission créée
         Get.offNamed(Routes.missionTracking, arguments: mission);
+      } else {
+        // Si mission est null, c'est qu'une erreur s'est produite
+        // Le message d'erreur a déjà été affiché par le controller
+        Get.back(); // Retour à l'écran précédent
       }
+    } catch (e) {
+      // Erreur inattendue non gérée par le controller
+      Get.snackbar(
+        'Erreur',
+        'Une erreur inattendue s\'est produite',
+        snackPosition: SnackPosition.TOP,
+      );
     } finally {
       isLoading.value = false;
     }

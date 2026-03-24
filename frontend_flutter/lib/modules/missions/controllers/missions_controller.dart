@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 
+import '../../../app/routes/app_routes.dart';
 import '../../../data/models/jalon_model.dart';
 import '../../../data/models/mission_model.dart';
 import '../../../data/repositories/mission_repository.dart';
@@ -185,16 +186,30 @@ class MissionsController extends GetxController {
       // Recharger la liste des missions
       await loadMissions();
 
+      // Message de succès avec détails
       Get.snackbar(
         'Mission créée',
-        'Votre demande a été envoyée à l\'artisan',
+        'Votre demande a été envoyée à l\'artisan. Vous recevrez une notification dès qu\'il aura soumis un devis.',
         snackPosition: SnackPosition.TOP,
-        duration: const Duration(seconds: 3),
+        duration: const Duration(seconds: 4),
       );
 
       return mission;
     } on DioException catch (e) {
       errorMsg.value = _handleDioError(e);
+
+      // KYC non validé → rediriger vers le parcours KYC
+      if (e.response?.statusCode == 403) {
+        Get.snackbar(
+          'KYC requis',
+          errorMsg.value!,
+          snackPosition: SnackPosition.TOP,
+          duration: const Duration(seconds: 4),
+        );
+        Get.toNamed(Routes.kycCni);
+        return null;
+      }
+
       _showErrorSnackbar('Erreur lors de la création: ${errorMsg.value}');
       return null;
     } catch (e) {
@@ -357,6 +372,11 @@ class MissionsController extends GetxController {
         case 401:
           return 'Session expirée. Veuillez vous reconnecter.';
         case 403:
+          // Extraire le message backend (ex: KYC non validé)
+          final data403 = e.response!.data;
+          if (data403 is Map && data403.containsKey('message')) {
+            return data403['message'] as String;
+          }
           return 'Accès refusé';
         case 404:
           return 'Ressource introuvable';
