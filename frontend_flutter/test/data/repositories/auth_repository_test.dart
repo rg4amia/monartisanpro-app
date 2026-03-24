@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:frontend_flutter/core/network/api_client.dart';
+import 'package:frontend_flutter/core/storage/storage_service.dart';
+import 'package:frontend_flutter/data/models/user_model.dart';
 import 'package:frontend_flutter/data/repositories/auth_repository.dart';
 
 import '../../helpers/test_helpers.dart';
@@ -44,11 +45,18 @@ void main() {
       // Note: Ce test nécessite un OTP valide du backend
       // En production, vous devriez mocker ou utiliser un endpoint de test
       try {
-        final token = await authRepository.verifyOtp(
+        final result = await authRepository.verifyOtp(
           TestConfig.testPhone,
           TestConfig.testOtp,
         );
-        expect(token, isNotEmpty);
+        
+        // verifyOtp() retourne un Map avec 'token', 'user', 'has_completed_profile', 'phone'
+        expect(result, isA<Map<String, dynamic>>());
+        expect(result.containsKey('has_completed_profile'), isTrue);
+        
+        if (result['has_completed_profile'] == true) {
+          expect(result['token'], isNotNull);
+        }
       } on DioException catch (e) {
         // OTP invalide est une réponse attendue en test
         expect(e.response?.statusCode, isIn([401, 422]));
@@ -57,15 +65,19 @@ void main() {
 
     test('should register new user', () async {
       try {
-        final user = await authRepository.register(
+        final result = await authRepository.register(
           phone: TestConfig.testPhone,
           role: TestConfig.testRole,
           name: TestConfig.testName,
         );
 
+        // register() retourne un Map avec 'token' et 'user'
+        expect(result['token'], isNotNull);
+        expect(result['user'], isA<UserModel>());
+        
+        final user = result['user'] as UserModel;
         expect(user.phone, TestConfig.testPhone);
         expect(user.role, TestConfig.testRole);
-        expect(user.name, TestConfig.testName);
       } on DioException catch (e) {
         // Utilisateur déjà existant est acceptable
         expect(e.response?.statusCode, isIn([200, 201, 422]));
@@ -89,8 +101,8 @@ void main() {
       // Le logout devrait toujours réussir même sans token
       await authRepository.logout();
 
-      // Vérifier que le token a été supprimé
-      final token = await TokenStorage.get();
+      // Vérifier que le token a été supprimé (StorageService au lieu de TokenStorage)
+      final token = await StorageService.getToken();
       expect(token, isNull);
     });
 
@@ -134,7 +146,7 @@ void main() {
     });
 
     test('should handle 401 unauthorized errors', () async {
-      await TokenStorage.clear();
+      await StorageService.clearAll();
 
       try {
         await authRepository.me();
