@@ -33,11 +33,12 @@ class ArtisanHomeScreen extends StatelessWidget {
         onRefresh: controller.refresh,
         color: _Palette.primary,
         child: Obx(() {
-          if (controller.isLoading.value && controller.artisanMissions.isEmpty) {
+          if (controller.isLoading.value &&
+              controller.artisanMissions.isEmpty) {
             return ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(20),
-              children: [LoadingShimmer.list(itemCount: 4)],
+              children: [LoadingShimmer.list(count: 4)],
             );
           }
 
@@ -50,7 +51,7 @@ class ArtisanHomeScreen extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       _StatGrid(controller: controller),
                       const SizedBox(height: 24),
@@ -394,7 +395,7 @@ class _QuickActions extends StatelessWidget {
     final ongoingMission = _findFirst(missions, 'en_cours');
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const Text(
           'Actions rapides',
@@ -416,7 +417,7 @@ class _QuickActions extends StatelessWidget {
               : pendingMission.description ?? 'Nouvelle demande client',
           onTap: () {
             if (pendingMission != null) {
-              Get.toNamed(Routes.devisCreation, arguments: pendingMission.id);
+              Get.toNamed(Routes.devisCreation, arguments: pendingMission);
             } else {
               _openArtisanTab(1);
             }
@@ -499,6 +500,7 @@ class _ActionTile extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
+        width: double.infinity,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: _Palette.surface,
@@ -570,6 +572,7 @@ class _WorkflowReminder extends StatelessWidget {
     );
 
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: _Palette.primary.withValues(alpha: 0.06),
@@ -700,6 +703,7 @@ class _MissionQueue extends StatelessWidget {
           )
         else
           Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: queue
                 .map(
                   (mission) => Padding(
@@ -724,6 +728,7 @@ class _MissionQueueCard extends StatelessWidget {
     final action = _resolveAction(mission);
 
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: _Palette.surface,
@@ -784,35 +789,33 @@ class _MissionQueueCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  action.subtitle,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: _Palette.muted,
-                    fontWeight: FontWeight.w600,
-                  ),
+          Text(
+            action.subtitle,
+            style: const TextStyle(
+              fontSize: 12,
+              color: _Palette.muted,
+              fontWeight: FontWeight.w600,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerRight,
+            child: ElevatedButton(
+              onPressed: action.onTap,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: action.color,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              const SizedBox(width: 12),
-              ElevatedButton(
-                onPressed: action.onTap,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: action.color,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: Text(action.label),
-              ),
-            ],
+              child: Text(action.label),
+            ),
           ),
         ],
       ),
@@ -824,9 +827,10 @@ class _MissionQueueCard extends StatelessWidget {
       case 'en_attente':
         return _MissionAction(
           label: 'Devis',
-          subtitle: 'Votre chiffrage est attendu pour lancer le parcours client.',
+          subtitle:
+              'Votre chiffrage est attendu pour lancer le parcours client.',
           color: _Palette.warning,
-          onTap: () => Get.toNamed(Routes.devisCreation, arguments: mission.id),
+          onTap: () => Get.toNamed(Routes.devisCreation, arguments: mission),
         );
       case 'financee':
         return _MissionAction(

@@ -165,14 +165,15 @@ class _FilterTabs extends StatelessWidget {
     return Container(
       height: 50,
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-      child: Obx(
-        () => ListView.separated(
+      child: Obx(() {
+        final selectedFilter = controller.selectedFilter.value;
+        return ListView.separated(
           scrollDirection: Axis.horizontal,
           itemCount: tabs.length,
           separatorBuilder: (_, __) => const SizedBox(width: 8),
           itemBuilder: (_, index) {
             final (value, label) = tabs[index];
-            final selected = controller.selectedFilter.value == value;
+            final selected = selectedFilter == value;
 
             return GestureDetector(
               onTap: () => controller.applyFilter(value),
@@ -186,9 +187,7 @@ class _FilterTabs extends StatelessWidget {
                   color: selected ? _Palette.primary : _Palette.surface,
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: selected
-                        ? _Palette.primary
-                        : _Palette.subtle,
+                    color: selected ? _Palette.primary : _Palette.subtle,
                   ),
                 ),
                 child: Center(
@@ -204,8 +203,8 @@ class _FilterTabs extends StatelessWidget {
               ),
             );
           },
-        ),
-      ),
+        );
+      }),
     );
   }
 
@@ -364,8 +363,8 @@ class _MissionCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () =>
-                          Get.toNamed(Routes.missionTracking, arguments: mission),
+                      onPressed: () => Get.toNamed(Routes.missionTracking,
+                          arguments: mission),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: _Palette.primary,
                         side: BorderSide(
@@ -412,7 +411,7 @@ class _MissionCard extends StatelessWidget {
             subtitle: 'Chiffrage attendu pour debloquer la suite du workflow.',
             color: _Palette.warning,
             icon: Icons.receipt_long_outlined,
-            onTap: () => Get.toNamed(Routes.devisCreation, arguments: mission.id),
+            onTap: () => Get.toNamed(Routes.devisCreation, arguments: mission),
           );
         case 'financee':
           return _MissionAction(
@@ -431,7 +430,8 @@ class _MissionCard extends StatelessWidget {
             subtitle: 'Soumettez vos jalons et vos preuves photo.',
             color: _Palette.success,
             icon: Icons.construction_outlined,
-            onTap: () => Get.toNamed(Routes.missionTracking, arguments: mission),
+            onTap: () =>
+                Get.toNamed(Routes.missionTracking, arguments: mission),
           );
         case 'litige':
           return _MissionAction(
@@ -439,7 +439,8 @@ class _MissionCard extends StatelessWidget {
             subtitle: 'Des preuves et un suivi sont requis sur ce dossier.',
             color: _Palette.danger,
             icon: Icons.gpp_bad_outlined,
-            onTap: () => Get.toNamed(Routes.missionTracking, arguments: mission),
+            onTap: () =>
+                Get.toNamed(Routes.missionTracking, arguments: mission),
           );
       }
     }

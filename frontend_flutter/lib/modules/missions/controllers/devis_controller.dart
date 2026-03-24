@@ -7,12 +7,16 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/storage/storage_service.dart';
 import '../../../data/models/devis_model.dart';
 import '../../../data/models/payment_model.dart';
+import '../../../data/models/supplier_model.dart';
+import '../../../data/models/supplier_product_model.dart';
 import '../../../data/repositories/devis_repository.dart';
 import '../../../data/repositories/payment_repository.dart';
+import '../../../data/repositories/supplier_catalog_repository.dart';
 
 class DevisController extends GetxController {
   final DevisRepository _repo = DevisRepository();
   final PaymentRepository _paymentRepo = PaymentRepository();
+  final SupplierCatalogRepository _catalogRepo = SupplierCatalogRepository();
 
   final devisList = <DevisModel>[].obs;
   final currentDevis = Rx<DevisModel?>(null);
@@ -20,6 +24,11 @@ class DevisController extends GetxController {
   final isSubmitting = false.obs;
   final isCheckingPayment = false.obs;
   final errorMsg = Rx<String?>(null);
+  final suppliers = <SupplierModel>[].obs;
+  final supplierProducts = <SupplierProductModel>[].obs;
+  final selectedSupplier = Rx<SupplierModel?>(null);
+  final isSuppliersLoading = false.obs;
+  final isCatalogLoading = false.obs;
 
   final pendingTransactionId = RxnInt();
   final pendingDevisId = RxnInt();
@@ -33,6 +42,151 @@ class DevisController extends GetxController {
 
   // Mission associée
   int? missionId;
+
+  void prepareDraftForMission(int id) {
+    if (missionId == id &&
+        (lignes.isNotEmpty ||
+            jalons.isNotEmpty ||
+            selectedSupplier.value != null)) {
+      return;
+    }
+
+    missionId = id;
+    currentDevis.value = null;
+    errorMsg.value = null;
+    selectedSupplier.value = null;
+    supplierProducts.clear();
+    lignes.clear();
+    jalons.clear();
+  }
+
+  List<DevisLigne> get laborLines =>
+      lignes.where((ligne) => ligne.type == 'mo').toList();
+
+  List<DevisLigne> get materialLines =>
+      lignes.where((ligne) => ligne.type == 'mat').toList();
+
+  Future<void> loadSuppliers({bool forceRefresh = false}) async {
+    if (!forceRefresh && suppliers.isNotEmpty) {
+      return;
+    }
+
+    isSuppliersLoading.value = true;
+    try {
+      suppliers.value = await _catalogRepo.getApprovedSuppliers();
+    } catch (e) {
+      _showErrorSnackbar('Impossible de charger les fournisseurs partenaires.');
+    } finally {
+      isSuppliersLoading.value = false;
+    }
+  }
+
+  Future<void> selectSupplier(SupplierModel? supplier) async {
+    final previousSupplierId = selectedSupplier.value?.id;
+    selectedSupplier.value = supplier;
+
+    if (supplier == null) {
+      supplierProducts.clear();
+      _clearMaterialLines();
+      return;
+    }
+
+    if (previousSupplierId != supplier.id) {
+      _clearMaterialLines();
+    }
+
+    await loadSupplierProducts(supplier.id);
+  }
+
+  Future<void> loadSupplierProducts(int supplierId) async {
+    isCatalogLoading.value = true;
+    try {
+      supplierProducts.value =
+          await _catalogRepo.getSupplierProducts(supplierId);
+    } catch (e) {
+      supplierProducts.clear();
+      _showErrorSnackbar('Impossible de charger le catalogue du fournisseur.');
+    } finally {
+      isCatalogLoading.value = false;
+    }
+  }
+
+  void addCatalogProduct(SupplierProductModel product) {
+    if (selectedSupplier.value == null) {
+      _showErrorSnackbar('Choisissez d\'abord une quincaillerie partenaire.');
+      return;
+    }
+
+    final index = lignes.indexWhere(
+      (ligne) => ligne.type == 'mat' && ligne.supplierProductId == product.id,
+    );
+
+    if (index >= 0) {
+      final existing = lignes[index];
+      final nextQuantity = existing.resolvedQuantity + 1;
+      lignes[index] = DevisLigne(
+        type: 'mat',
+        description: existing.description,
+        montant: nextQuantity * existing.resolvedUnitPrice,
+        source: existing.source,
+        quantity: nextQuantity,
+        unitPrice: existing.resolvedUnitPrice,
+        sku: existing.sku,
+        supplierProductId: existing.supplierProductId,
+      );
+      return;
+    }
+
+    addLigne(
+      type: 'mat',
+      description: product.name,
+      montant: product.unitPrice,
+      source: 'catalog',
+      quantity: 1,
+      unitPrice: product.unitPrice,
+      sku: product.sku,
+      supplierProductId: product.id,
+    );
+  }
+
+  void addCustomMaterial({
+    required String description,
+    required int quantity,
+    required int unitPrice,
+    String? sku,
+  }) {
+    if (selectedSupplier.value == null) {
+      _showErrorSnackbar('Choisissez d\'abord une quincaillerie partenaire.');
+      return;
+    }
+
+    addLigne(
+      type: 'mat',
+      description: description,
+      montant: quantity * unitPrice,
+      source: 'custom',
+      quantity: quantity,
+      unitPrice: unitPrice,
+      sku: sku,
+    );
+  }
+
+  void removeLigneItem(DevisLigne ligne) {
+    lignes.remove(ligne);
+  }
+
+  int quantityForProduct(int productId) {
+    for (final ligne in materialLines) {
+      if (ligne.supplierProductId == productId) {
+        return ligne.resolvedQuantity;
+      }
+    }
+    return 0;
+  }
+
+  void _clearMaterialLines() {
+    lignes.removeWhere((ligne) => ligne.type == 'mat');
+  }
 
   bool hasPendingPaymentFor(int devisId) =>
       pendingTransactionId.value != null && pendingDevisId.value == devisId;
@@ -181,6 +335,12 @@ class DevisController extends GetxController {
       return false;
     }
 
+    if (materialLines.isNotEmpty && selectedSupplier.value == null) {
+      errorMsg.value =
+          'Sélectionnez un fournisseur partenaire pour les matériaux du devis';
+      return false;
+    }
+
     if (jalons.isEmpty) {
       errorMsg.value = 'Ajoutez au moins un jalon au devis';
       return false;
@@ -222,6 +382,8 @@ class DevisController extends GetxController {
         duration: const Duration(seconds: 3),
       );
 
+      selectedSupplier.value = null;
+      supplierProducts.clear();
       lignes.clear();
       jalons.clear();
 
