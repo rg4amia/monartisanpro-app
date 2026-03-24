@@ -5,6 +5,7 @@ import '../../home/views/artisan_home_screen.dart';
 import '../../home/views/artisan_map_screen.dart';
 import '../../home/views/client_home_screen.dart';
 import '../../home/views/supplier_home_screen.dart';
+import '../../jcode/views/jcode_screen.dart';
 import '../../missions/views/missions_screen.dart';
 import '../../settings/views/settings_screen.dart';
 import '../controllers/main_tab_controller.dart';
@@ -19,9 +20,13 @@ class MainTabScreen extends StatelessWidget {
     return Obx(() {
       final role = c.role.value ?? 'client';
       final isFournisseur = role == 'fournisseur';
+      final isArtisan = role == 'artisan';
 
-      final tabs =
-          isFournisseur ? _fournisseurTabs() : _defaultTabs(role == 'artisan');
+      final tabs = isFournisseur
+          ? _fournisseurTabs()
+          : isArtisan
+              ? _artisanTabs()
+              : _clientTabs();
 
       return Scaffold(
         body: IndexedStack(
@@ -37,9 +42,9 @@ class MainTabScreen extends StatelessWidget {
     });
   }
 
-  _TabConfig _defaultTabs(bool isArtisan) => _TabConfig(
+  _TabConfig _clientTabs() => _TabConfig(
         screens: [
-          isArtisan ? const ArtisanHomeScreen() : const ClientHomeScreen(),
+          const ClientHomeScreen(),
           const ArtisanMapScreen(),
           const MissionsScreen(),
           const SettingsScreen(),
@@ -59,6 +64,37 @@ class MainTabScreen extends StatelessWidget {
             icon: Icons.calendar_today_outlined,
             activeIcon: Icons.calendar_today,
             label: 'Missions',
+          ),
+          _NavItem(
+            icon: Icons.person_outline_rounded,
+            activeIcon: Icons.person,
+            label: 'Profil',
+          ),
+        ],
+      );
+
+  _TabConfig _artisanTabs() => _TabConfig(
+        screens: const [
+          ArtisanHomeScreen(),
+          MissionsScreen(),
+          JcodeScreen(),
+          SettingsScreen(),
+        ],
+        items: const [
+          _NavItem(
+            icon: Icons.home_outlined,
+            activeIcon: Icons.home,
+            label: 'Accueil',
+          ),
+          _NavItem(
+            icon: Icons.work_outline,
+            activeIcon: Icons.work,
+            label: 'Missions',
+          ),
+          _NavItem(
+            icon: Icons.qr_code_2_outlined,
+            activeIcon: Icons.qr_code_2,
+            label: 'J-Code',
           ),
           _NavItem(
             icon: Icons.person_outline_rounded,

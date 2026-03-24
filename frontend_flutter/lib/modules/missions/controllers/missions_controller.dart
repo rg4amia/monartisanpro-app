@@ -2,15 +2,19 @@ import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 
 import '../../../app/routes/app_routes.dart';
+import '../../../data/models/devis_model.dart';
 import '../../../data/models/jalon_model.dart';
 import '../../../data/models/mission_model.dart';
+import '../../../data/repositories/devis_repository.dart';
 import '../../../data/repositories/mission_repository.dart';
 
 class MissionsController extends GetxController {
   final MissionRepository _repo = MissionRepository();
+  final DevisRepository _devisRepo = DevisRepository();
 
   final missions = <MissionModel>[].obs;
   final currentMission = Rx<MissionModel?>(null);
+  final currentMissionDevis = <DevisModel>[].obs;
   final jalons = <JalonModel>[].obs;
   final isLoading = false.obs;
   final isRefreshing = false.obs;
@@ -84,7 +88,8 @@ class MissionsController extends GetxController {
     errorMsg.value = null;
 
     try {
-      // Charger la mission et les jalons en parallèle
+      currentMissionDevis.clear();
+
       final results = await Future.wait([
         _repo.getMission(id, forceRefresh: forceRefresh),
         _repo.getJalons(id, forceRefresh: forceRefresh),
@@ -92,6 +97,12 @@ class MissionsController extends GetxController {
 
       currentMission.value = results[0] as MissionModel;
       jalons.value = results[1] as List<JalonModel>;
+
+      try {
+        currentMissionDevis.value = await _devisRepo.getMissionDevis(id);
+      } catch (_) {
+        currentMissionDevis.clear();
+      }
 
       errorMsg.value = null;
     } on DioException catch (e) {
@@ -112,6 +123,36 @@ class MissionsController extends GetxController {
         isLoading.value = false;
       }
     }
+  }
+
+  DevisModel? get latestDevis =>
+      currentMissionDevis.isEmpty ? null : currentMissionDevis.first;
+
+  JalonModel? get nextPendingJalon {
+    for (final jalon in jalons) {
+      if (jalon.statut == 'en_attente') {
+        return jalon;
+      }
+    }
+    return null;
+  }
+
+  JalonModel? get nextSubmittedJalon {
+    for (final jalon in jalons) {
+      if (jalon.statut == 'soumis') {
+        return jalon;
+      }
+    }
+    return null;
+  }
+
+  bool get hasReferentPendingValidation {
+    final mission = currentMission.value;
+    if (mission == null || !mission.needsReferent) {
+      return false;
+    }
+
+    return jalons.any((jalon) => jalon.isValidated && !jalon.isPaid);
   }
 
   /// Demande une estimation Gemini AI
@@ -339,6 +380,35 @@ class MissionsController extends GetxController {
     } catch (e) {
       _showErrorSnackbar('Impossible de valider le code OTP');
       return false;
+    }
+  }
+
+  Future<bool> updateMissionStatus(int missionId, String status) async {
+    isLoading.value = true;
+    errorMsg.value = null;
+
+    try {
+      await _repo.updateStatus(missionId, status);
+      await loadMission(missionId, showLoader: false, forceRefresh: true);
+      await loadMissions(status: selectedFilter.value, isRefresh: true);
+
+      Get.snackbar(
+        'Mission mise a jour',
+        'Le statut de la mission a ete actualise.',
+        snackPosition: SnackPosition.TOP,
+        duration: const Duration(seconds: 3),
+      );
+
+      return true;
+    } on DioException catch (e) {
+      errorMsg.value = _handleDioError(e);
+      _showErrorSnackbar(errorMsg.value!);
+      return false;
+    } catch (_) {
+      _showErrorSnackbar('Impossible de mettre a jour la mission');
+      return false;
+    } finally {
+      isLoading.value = false;
     }
   }
 

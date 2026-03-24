@@ -43,8 +43,7 @@ class ArtisanSelectionController extends GetxController {
     final nextLocationDetail = (data['locationDetail'] ?? '').toString();
     final nextNightIntervention = _parseBool(data['nightIntervention']);
 
-    final hasSamePayload =
-        _initializedFromArgs &&
+    final hasSamePayload = _initializedFromArgs &&
         selectedCategory.value == nextCategory &&
         selectedCategoryId.value == nextCategoryId &&
         selectedTradeId.value == nextTradeId &&
@@ -93,15 +92,13 @@ class ArtisanSelectionController extends GetxController {
             ? selectedCategory.value
             : (artisan.trade ?? 'Travaux generaux'),
         urgency: 'moyen',
-        sectorId: selectedCategoryId.value > 0
-            ? selectedCategoryId.value
-            : null,
+        sectorId:
+            selectedCategoryId.value > 0 ? selectedCategoryId.value : null,
         tradeId: selectedTradeId.value > 0 ? selectedTradeId.value : null,
         lat: clientLatitude.value != 0.0 ? clientLatitude.value : null,
         lng: clientLongitude.value != 0.0 ? clientLongitude.value : null,
-        location: locationAddress.value.isNotEmpty
-            ? locationAddress.value
-            : null,
+        location:
+            locationAddress.value.isNotEmpty ? locationAddress.value : null,
       );
 
       if (mission != null) {
@@ -142,9 +139,8 @@ class ArtisanSelectionController extends GetxController {
         sectorId: selectedCategoryId.value > 0
             ? selectedCategoryId.value.toString()
             : null,
-        tradeId: selectedTradeId.value > 0
-            ? selectedTradeId.value.toString()
-            : null,
+        tradeId:
+            selectedTradeId.value > 0 ? selectedTradeId.value.toString() : null,
         interventionNuit: nightIntervention.value,
       );
 

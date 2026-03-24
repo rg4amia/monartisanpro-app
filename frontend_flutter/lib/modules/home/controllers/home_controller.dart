@@ -14,6 +14,7 @@ class HomeController extends GetxController {
   final WalletRepository _walletRepo = WalletRepository();
 
   final artisans = <ArtisanModel>[].obs;
+  final artisanMissions = <MissionModel>[].obs;
   final activeMissions = <MissionModel>[].obs;
   final isLoading = false.obs;
   final isMapLoading = false.obs;
@@ -30,6 +31,27 @@ class HomeController extends GetxController {
 
   double? get userLat => _lat;
   double? get userLng => _lng;
+  int get pendingMissionCount =>
+      artisanMissions.where((mission) => mission.status == 'en_attente').length;
+  int get fundedMissionCount =>
+      artisanMissions.where((mission) => mission.status == 'financee').length;
+  int get ongoingMissionCount =>
+      artisanMissions.where((mission) => mission.status == 'en_cours').length;
+  int get disputedMissionCount =>
+      artisanMissions.where((mission) => mission.status == 'litige').length;
+
+  List<MissionModel> get prioritizedArtisanMissions {
+    final missions = artisanMissions.toList();
+    missions.sort((a, b) {
+      final aRank = _statusRank(a.status);
+      final bRank = _statusRank(b.status);
+      if (aRank != bRank) {
+        return aRank.compareTo(bRank);
+      }
+      return b.id.compareTo(a.id);
+    });
+    return missions;
+  }
 
   @override
   void onInit() {
@@ -56,9 +78,23 @@ class HomeController extends GetxController {
         );
         nearbyArtisansCount.value = artisans.length;
       }
-      final missions = await _missionRepo.getMissions(status: 'en_cours');
-      activeMissions.value = missions;
-      activeMissionsCount.value = missions.length;
+
+      if (role.value == 'artisan') {
+        final missions = await _missionRepo.getMissions();
+        artisanMissions.value = missions;
+        activeMissions.value = missions
+            .where(
+              (mission) =>
+                  mission.status == 'financee' ||
+                  mission.status == 'en_cours',
+            )
+            .toList();
+        activeMissionsCount.value = activeMissions.length;
+      } else {
+        final missions = await _missionRepo.getMissions(status: 'en_cours');
+        activeMissions.value = missions;
+        activeMissionsCount.value = missions.length;
+      }
     } catch (_) {
       // keep empty state
     } finally {
@@ -139,5 +175,22 @@ class HomeController extends GetxController {
       _lat = pos.latitude;
       _lng = pos.longitude;
     } catch (_) {}
+  }
+
+  int _statusRank(String status) {
+    switch (status) {
+      case 'en_attente':
+        return 0;
+      case 'financee':
+        return 1;
+      case 'en_cours':
+        return 2;
+      case 'litige':
+        return 3;
+      case 'terminee':
+        return 4;
+      default:
+        return 5;
+    }
   }
 }
