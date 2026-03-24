@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:yandex_maps_mapkit/init.dart' as mapkit_init;
 
 import 'app/app.dart';
@@ -38,6 +39,9 @@ Future<void> main() async {
         );
         return true;
       };
+
+      // Initialisation locale française pour formatage dates
+      await initializeDateFormatting('fr_FR', null);
 
       // GetStorage (user prefs — role, nom, kyc_status…)
       await GetStorage.init();
