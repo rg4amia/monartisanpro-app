@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend_flutter/data/repositories/jcode_repository.dart';
+import 'package:frontend_flutter/data/models/jcode_item_model.dart';
 
 import '../../helpers/test_helpers.dart';
 
@@ -24,6 +25,16 @@ void main() {
       try {
         final jcode = await jcodeRepository.createJcode(
           missionId: 1,
+          fournisseurId: 2,
+          items: [
+            JcodeItemModel(
+              source: 'custom',
+              name: 'Ciment',
+              quantity: 10,
+              unitPrice: 5000,
+              subtotal: 50000,
+            ),
+          ],
           montant: 50000,
         );
 
@@ -65,7 +76,7 @@ void main() {
     test('should scan J-Code with GPS coordinates', () async {
       try {
         final result = await jcodeRepository.scanJcode(
-          id: 1,
+          identifier: 'PA-AB12',
           lat: 5.3599517,
           lng: -4.0082563,
         );
@@ -82,6 +93,8 @@ void main() {
       try {
         await jcodeRepository.createJcode(
           missionId: -1,
+          fournisseurId: -1,
+          items: [],
           montant: -1000,
         );
         fail('Should throw validation error');
@@ -102,7 +115,7 @@ void main() {
     test('should validate GPS coordinates on scan', () async {
       try {
         await jcodeRepository.scanJcode(
-          id: 1,
+          identifier: 'PA-AB12',
           lat: 200.0, // Latitude invalide
           lng: 200.0, // Longitude invalide
         );
@@ -116,7 +129,7 @@ void main() {
       try {
         // Tenter de scanner un J-Code expiré
         await jcodeRepository.scanJcode(
-          id: 1,
+          identifier: 'PA-EXPIRED',
           lat: 5.3599517,
           lng: -4.0082563,
         );

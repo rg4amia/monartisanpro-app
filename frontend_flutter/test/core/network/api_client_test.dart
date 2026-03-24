@@ -1,9 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend_flutter/core/network/api_client.dart';
-import 'package:frontend_flutter/core/network/api_endpoints.dart';
+import 'package:frontend_flutter/core/storage/storage_service.dart';
 
 import '../../helpers/test_helpers.dart';
-import '../../test_config.dart';
 
 void main() {
   setUpAll(() async {
@@ -46,25 +45,25 @@ void main() {
     });
   });
 
-  group('TokenStorage Tests', () {
+  group('StorageService Tests', () {
     const testToken = 'test_token_12345';
 
     test('should save and retrieve token', () async {
-      await TokenStorage.save(testToken);
-      final retrieved = await TokenStorage.get();
+      await StorageService.saveToken(testToken);
+      final retrieved = await StorageService.getToken();
       expect(retrieved, testToken);
     });
 
     test('should clear token', () async {
-      await TokenStorage.save(testToken);
-      await TokenStorage.clear();
-      final retrieved = await TokenStorage.get();
+      await StorageService.saveToken(testToken);
+      await StorageService.clearToken();
+      final retrieved = await StorageService.getToken();
       expect(retrieved, isNull);
     });
 
     test('should return null when no token exists', () async {
-      await TokenStorage.clear();
-      final retrieved = await TokenStorage.get();
+      await StorageService.clearToken();
+      final retrieved = await StorageService.getToken();
       expect(retrieved, isNull);
     });
   });
