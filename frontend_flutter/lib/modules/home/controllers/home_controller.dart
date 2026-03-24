@@ -85,8 +85,7 @@ class HomeController extends GetxController {
         activeMissions.value = missions
             .where(
               (mission) =>
-                  mission.status == 'financee' ||
-                  mission.status == 'en_cours',
+                  mission.status == 'financee' || mission.status == 'en_cours',
             )
             .toList();
         activeMissionsCount.value = activeMissions.length;
@@ -128,18 +127,18 @@ class HomeController extends GetxController {
       await searchByCategory(selectedCategory.value);
       return;
     }
-    
+
     isMapLoading.value = true;
     try {
       await _getLocation();
       if (_lat == null) return;
-      
+
       final results = await _artisanRepo.getNearby(
         lat: _lat!,
         lng: _lng!,
         sectorId: selectedCategory.value,
       );
-      
+
       // Filtrer localement par nom ou métier
       final filtered = results.where((artisan) {
         final name = artisan.name?.toLowerCase() ?? '';
@@ -147,7 +146,7 @@ class HomeController extends GetxController {
         final searchLower = query.toLowerCase();
         return name.contains(searchLower) || trade.contains(searchLower);
       }).toList();
-      
+
       artisans.value = filtered;
       nearbyArtisansCount.value = filtered.length;
     } catch (_) {
