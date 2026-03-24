@@ -1526,7 +1526,13 @@ class _SubmitButton extends StatelessWidget {
                       missionId: missionId!,
                     );
                     if (success) {
-                      Get.back(result: true);
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (Navigator.of(context).canPop()) {
+                          Navigator.of(context).pop(true);
+                          return;
+                        }
+                        Get.back(result: true);
+                      });
                     }
                   },
             style: ElevatedButton.styleFrom(

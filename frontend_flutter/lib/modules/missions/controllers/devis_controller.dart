@@ -375,18 +375,6 @@ class DevisController extends GetxController {
 
       currentDevis.value = devis;
 
-      Get.snackbar(
-        'Devis créé',
-        'Votre devis a été envoyé au client pour validation',
-        snackPosition: SnackPosition.TOP,
-        duration: const Duration(seconds: 3),
-      );
-
-      selectedSupplier.value = null;
-      supplierProducts.clear();
-      lignes.clear();
-      jalons.clear();
-
       return true;
     } on DioException catch (e) {
       errorMsg.value = _handleDioError(e);
