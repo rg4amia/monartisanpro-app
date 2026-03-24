@@ -32,6 +32,7 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
   final _locationDetail = 'Cocody, Riviera 3'.obs;
   final _latitude = 0.0.obs;
   final _longitude = 0.0.obs;
+  final _nightIntervention = false.obs;
   final _photos = <XFile>[].obs;
   final _video = Rx<XFile?>(null);
 
@@ -149,6 +150,16 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
                     const SizedBox(height: 12),
                     _DescriptionField(controller: _descCtrl),
                     const SizedBox(height: 24),
+                    _SectionTitle(title: 'Options d\'intervention'),
+                    const SizedBox(height: 12),
+                    Obx(
+                      () => _NightInterventionCard(
+                        enabled: _nightIntervention.value,
+                        onChanged: (value) =>
+                            _nightIntervention.value = value,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
                     _SectionTitle(title: 'Visuels (Photos ou Vidéos)'),
                     const SizedBox(height: 12),
                     _MediaPicker(
@@ -208,6 +219,7 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
                             'locationDetail': _locationDetail.value,
                             'latitude': _latitude.value,
                             'longitude': _longitude.value,
+                            'nightIntervention': _nightIntervention.value,
                           },
                         );
                       },
@@ -219,6 +231,75 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _NightInterventionCard extends StatelessWidget {
+  final bool enabled;
+  final ValueChanged<bool> onChanged;
+
+  const _NightInterventionCard({
+    required this.enabled,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _C.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _C.subtle),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: _C.primaryLight,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.nightlight_round,
+              color: _C.primary,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                Text(
+                  'Intervention de nuit',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: _C.ink,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Affiche seulement les artisans qui acceptent les demandes entre 18h et 7h.',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: _C.muted,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: enabled,
+            activeThumbColor: _C.primary,
+            onChanged: onChanged,
+          ),
+        ],
       ),
     );
   }

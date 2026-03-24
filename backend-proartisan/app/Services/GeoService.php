@@ -18,7 +18,8 @@ class GeoService
         float $lng,
         int $radiusMeters,
         ?string $sectorFilter = null,
-        ?string $tradeFilter = null
+        ?string $tradeFilter = null,
+        bool $nightOnly = false
     ): Collection {
         $sectorFilter = $this->sanitizeFilter($sectorFilter);
         $tradeFilter = $this->sanitizeFilter($tradeFilter);
@@ -47,7 +48,7 @@ class GeoService
             ";
 
             $bindings = [];
-            [$sql, $bindings] = $this->appendFilters($sql, $bindings, $sectorFilter, $tradeFilter);
+            [$sql, $bindings] = $this->appendFilters($sql, $bindings, $sectorFilter, $tradeFilter, $nightOnly);
 
             return collect(DB::select($sql, $bindings));
         }
@@ -77,7 +78,7 @@ class GeoService
         ";
 
         $bindings = [$lng, $lat, $lng, $lat, $radiusMeters];
-        [$sql, $bindings] = $this->appendFilters($sql, $bindings, $sectorFilter, $tradeFilter);
+        [$sql, $bindings] = $this->appendFilters($sql, $bindings, $sectorFilter, $tradeFilter, $nightOnly);
         $sql .= " ORDER BY u.score_nzassa DESC, distance_metres ASC";
 
         return collect(DB::select($sql, $bindings));
@@ -217,7 +218,8 @@ class GeoService
         string $sql,
         array $bindings,
         ?string $sectorFilter,
-        ?string $tradeFilter
+        ?string $tradeFilter,
+        bool $nightOnly
     ): array {
         if ($sectorFilter !== null) {
             if (is_numeric($sectorFilter)) {
@@ -237,6 +239,11 @@ class GeoService
                 $sql .= " AND LOWER(t.name) LIKE ?";
                 $bindings[] = '%' . $tradeFilter . '%';
             }
+        }
+
+        if ($nightOnly) {
+            $sql .= " AND ap.intervient_la_nuit = ?";
+            $bindings[] = 1;
         }
 
         return [$sql, $bindings];

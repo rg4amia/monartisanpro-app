@@ -13,6 +13,7 @@ class ArtisanModel {
   final String? distance;
   final double? distanceMetres;
   final bool isGoldenMarker;
+  final bool nightInterventionAvailable;
   final String? kycStatus;
   final Map<String, double>? location;
   final String? locationLabel;
@@ -27,6 +28,7 @@ class ArtisanModel {
     required this.phone,
     required this.scoreNzassa,
     required this.isGoldenMarker,
+    this.nightInterventionAvailable = false,
     required this.experienceYears,
     required this.rating,
     required this.completedMissions,
@@ -78,6 +80,11 @@ class ArtisanModel {
           (distanceMetres != null ? _formatDistance(distanceMetres) : null),
       distanceMetres: distanceMetres,
       isGoldenMarker: (json['isGoldenMarker'] as bool?) ?? scoreNzassa >= 70,
+      nightInterventionAvailable: _parseBool(
+        json['nightInterventionAvailable'] ??
+            json['intervention_nuit'] ??
+            json['intervientLaNuit'],
+      ),
       kycStatus: (json['kycStatus'] ?? json['kyc_status']) as String?,
       location: parsedLocation,
       locationLabel: _parseLocationLabel(json),
@@ -106,6 +113,7 @@ class ArtisanModel {
     'distance': distance,
     'distanceMetres': distanceMetres,
     'isGoldenMarker': isGoldenMarker,
+    'nightInterventionAvailable': nightInterventionAvailable,
     'kycStatus': kycStatus,
     'commune': commune,
     'location': location,
@@ -174,6 +182,16 @@ class ArtisanModel {
   static DateTime? _parseDate(dynamic value) {
     if (value == null) return null;
     return DateTime.tryParse(value.toString());
+  }
+
+  static bool _parseBool(dynamic value) {
+    if (value is bool) return value;
+    if (value is int) return value == 1;
+    if (value is String) {
+      final normalized = value.trim().toLowerCase();
+      return normalized == '1' || normalized == 'true' || normalized == 'oui';
+    }
+    return false;
   }
 
   static String _formatDistance(double metres) {

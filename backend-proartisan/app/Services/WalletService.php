@@ -311,6 +311,16 @@ class WalletService
                 'mission_id' => $mission->id,
                 'montant' => $jalon->montant,
             ]);
+
+            $remainingJalons = $mission->jalons()
+                ->whereIn('statut', ['en_attente', 'soumis', 'valide'])
+                ->count();
+
+            if ($remainingJalons === 0) {
+                $mission->update(['status' => 'terminee']);
+            } elseif ($mission->status === 'financee') {
+                $mission->update(['status' => 'en_cours']);
+            }
         });
     }
 

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../data/repositories/auth_repository.dart';
 import '../../../core/storage/storage_service.dart';
 import '../../../data/repositories/user_repository.dart';
 
 class UpdateProfileController extends GetxController {
   final UserRepository _userRepo = UserRepository();
+  final AuthRepository _authRepo = AuthRepository();
   final ImagePicker _picker = ImagePicker();
 
   final nameController = TextEditingController();
@@ -13,18 +15,45 @@ class UpdateProfileController extends GetxController {
   final emailController = TextEditingController();
 
   final isLoading = false.obs;
+  final isProfileLoading = false.obs;
+  final isArtisan = false.obs;
+  final nightInterventionsEnabled = false.obs;
   final profileImagePath = Rx<String?>(null);
 
   @override
   void onInit() {
     super.onInit();
     _loadUserData();
+    _loadCurrentProfile();
   }
 
   void _loadUserData() {
     nameController.text = StorageService.getName() ?? '';
     phoneController.text = StorageService.getPhone() ?? '';
-    // Email is optional and not stored yet
+    isArtisan.value = StorageService.getRole() == 'artisan';
+  }
+
+  Future<void> _loadCurrentProfile() async {
+    isProfileLoading.value = true;
+
+    try {
+      final user = await _authRepo.me();
+
+      if ((user.name ?? '').trim().isNotEmpty) {
+        nameController.text = user.name!.trim();
+      }
+
+      isArtisan.value = user.role == 'artisan';
+      nightInterventionsEnabled.value = user.nightInterventionAvailable;
+
+      StorageService.saveRole(user.role);
+      StorageService.saveName(user.name ?? nameController.text.trim());
+      StorageService.saveKycStatus(user.kycStatus);
+    } catch (_) {
+      // Conserver les valeurs locales si l'API n'est pas joignable.
+    } finally {
+      isProfileLoading.value = false;
+    }
   }
 
   Future<void> pickProfileImage() async {
@@ -143,6 +172,9 @@ class UpdateProfileController extends GetxController {
       await _userRepo.updateProfile(
         userId: userId,
         name: nameController.text.trim(),
+        nightInterventionAvailable: isArtisan.value
+            ? nightInterventionsEnabled.value
+            : null,
       );
 
       // Update local storage

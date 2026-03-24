@@ -122,6 +122,14 @@ class User extends Authenticatable
 
     public function setPosition(float $lat, float $lng): void
     {
+        if (config('database.default') === 'sqlite') {
+            $this->forceFill([
+                'position' => $lat . ',' . $lng,
+            ])->save();
+
+            return;
+        }
+
         DB::statement(
             'UPDATE users SET position = ST_SRID(POINT(?, ?), 4326) WHERE id = ?',
             [$lng, $lat, $this->id]
@@ -130,6 +138,28 @@ class User extends Authenticatable
 
     public function getPositionCoords(): ?array
     {
+        if (config('database.default') === 'sqlite') {
+            $row = DB::table('users')
+                ->select('position')
+                ->where('id', $this->id)
+                ->first();
+
+            if (! $row || ! is_string($row->position) || trim($row->position) === '') {
+                return null;
+            }
+
+            $parts = explode(',', $row->position);
+
+            if (count($parts) !== 2) {
+                return null;
+            }
+
+            return [
+                'lat' => (float) $parts[0],
+                'lng' => (float) $parts[1],
+            ];
+        }
+
         $row = DB::selectOne(
             'SELECT ST_X(position) as lng, ST_Y(position) as lat FROM users WHERE id = ? AND position IS NOT NULL',
             [$this->id]

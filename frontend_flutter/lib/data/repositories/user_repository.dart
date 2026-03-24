@@ -7,10 +7,15 @@ class UserRepository {
   Future<Map<String, dynamic>> updateProfile({
     required int userId,
     required String name,
+    bool? nightInterventionAvailable,
   }) async {
     final response = await _client.put(
       ApiEndpoints.updateUser(userId),
-      data: {'name': name},
+      data: {
+        'name': name,
+        if (nightInterventionAvailable != null)
+          'intervention_nuit': nightInterventionAvailable,
+      },
     );
     return response.data as Map<String, dynamic>;
   }

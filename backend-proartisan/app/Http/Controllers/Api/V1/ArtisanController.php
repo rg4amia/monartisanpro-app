@@ -26,11 +26,12 @@ class ArtisanController extends Controller
     public function nearby(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'lat'    => ['required', 'numeric', 'between:-90,90'],
-            'lng'    => ['required', 'numeric', 'between:-180,180'],
+            'lat' => ['required', 'numeric', 'between:-90,90'],
+            'lng' => ['required', 'numeric', 'between:-180,180'],
             'radius' => ['nullable', 'integer', 'min:100', 'max:50000'],
             'sector' => ['nullable'],
-            'trade'  => ['nullable'],
+            'trade' => ['nullable'],
+            'intervention_nuit' => ['nullable', 'boolean'],
         ], [
             'lat.required' => 'La latitude est obligatoire.',
             'lng.required' => 'La longitude est obligatoire.',
@@ -43,6 +44,7 @@ class ArtisanController extends Controller
             (int) $radius,
             isset($data['sector']) ? (string) $data['sector'] : null,
             isset($data['trade']) ? (string) $data['trade'] : null,
+            (bool) ($data['intervention_nuit'] ?? false),
         );
 
         $blurRadius = config('prosartisan.gps.artisan_blur_radius', 50);
@@ -71,6 +73,7 @@ class ArtisanController extends Controller
             'meta'    => [
                 'total'       => $result->count(),
                 'radius'      => $radius,
+                'intervention_nuit' => (bool) ($data['intervention_nuit'] ?? false),
                 'center'      => ['lat' => (float) $data['lat'], 'lng' => (float) $data['lng']],
             ],
         ]);

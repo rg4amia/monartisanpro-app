@@ -10,6 +10,7 @@ class UserResource extends JsonResource
     public function toArray(Request $request): array
     {
         $coords = $this->getPositionCoords();
+        $artisanProfile = $this->artisanProfile;
 
         return [
             'id'               => $this->id,
@@ -23,14 +24,16 @@ class UserResource extends JsonResource
             'walletMateriaux'  => $this->wallet_materiaux,
             'walletMo'         => $this->wallet_mo,
             'position'         => $coords,
+            'nightInterventionAvailable' => (bool) ($artisanProfile?->intervient_la_nuit ?? false),
             'artisanProfile'   => $this->when(
                 $this->role === 'artisan' && $this->relationLoaded('artisanProfile'),
-                fn () => $this->artisanProfile ? [
-                    'sector'          => $this->artisanProfile->sector?->name,
-                    'trade'           => $this->artisanProfile->trade?->name,
-                    'bio'             => $this->artisanProfile->bio,
-                    'experienceYears' => $this->artisanProfile->experience_years,
-                    'photoUrl'        => $this->artisanProfile->photo_url,
+                fn () => $artisanProfile ? [
+                    'sector' => $artisanProfile->sector?->name,
+                    'trade' => $artisanProfile->trade?->name,
+                    'bio' => $artisanProfile->bio,
+                    'experienceYears' => $artisanProfile->experience_years,
+                    'photoUrl' => $artisanProfile->photo_url,
+                    'nightInterventionAvailable' => (bool) $artisanProfile->intervient_la_nuit,
                 ] : null
             ),
             'createdAt'        => $this->created_at?->toISOString(),
