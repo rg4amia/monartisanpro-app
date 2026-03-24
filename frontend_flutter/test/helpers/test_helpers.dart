@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:get_storage/get_storage.dart';
 
 import '../test_config.dart';
 
@@ -8,7 +9,12 @@ import '../test_config.dart';
 class TestHelpers {
   static Future<void> initializeTestEnvironment() async {
     TestWidgetsFlutterBinding.ensureInitialized();
-    // GetStorage init removed - causes issues in unit tests
+    
+    // Mock FlutterSecureStorage for tests
+    FlutterSecureStorage.setMockInitialValues({});
+    
+    // Initialize GetStorage for tests
+    await GetStorage.init();
   }
 
   static Dio createTestDio() {
@@ -28,7 +34,10 @@ class TestHelpers {
   static Future<void> cleanupTestData() async {
     const storage = FlutterSecureStorage();
     await storage.deleteAll();
-    // GetStorage cleanup removed - causes issues in unit tests
+    
+    // Clear GetStorage data
+    final box = GetStorage();
+    await box.erase();
   }
 
   static void expectSuccessResponse(Response response) {
