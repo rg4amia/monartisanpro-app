@@ -45,7 +45,10 @@ class _MissionTrackingScreenState extends State<MissionTrackingScreen> {
     }
 
     if (_missionId != null) {
-      Get.find<MissionsController>().loadMission(_missionId!);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        Get.find<MissionsController>().loadMission(_missionId!);
+      });
     }
   }
 
@@ -139,6 +142,28 @@ class _MissionTrackingScreenState extends State<MissionTrackingScreen> {
       }),
     );
   }
+}
+
+Future<void> _openDevisCreation(MissionModel mission) async {
+  final result = await Get.toNamed(Routes.devisCreation, arguments: mission);
+  if (result != true || !Get.isRegistered<MissionsController>()) {
+    return;
+  }
+
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    final controller = Get.find<MissionsController>();
+    controller.loadMission(
+      mission.id,
+      forceRefresh: true,
+    );
+
+    Get.snackbar(
+      'Devis créé',
+      'Votre devis a été envoyé au client pour validation.',
+      snackPosition: SnackPosition.TOP,
+      duration: const Duration(seconds: 3),
+    );
+  });
 }
 
 class _MissionHeaderCard extends StatelessWidget {
@@ -691,8 +716,7 @@ class _DevisSection extends StatelessWidget {
                 if (isArtisan) ...[
                   const SizedBox(height: 14),
                   ElevatedButton.icon(
-                    onPressed: () =>
-                        Get.toNamed(Routes.devisCreation, arguments: mission),
+                    onPressed: () => _openDevisCreation(mission),
                     icon: const Icon(Icons.receipt_long_outlined, size: 18),
                     label: const Text('Creer le devis'),
                     style: ElevatedButton.styleFrom(
@@ -1128,7 +1152,7 @@ class _BottomActions extends StatelessWidget {
           label: 'Creer le devis',
           icon: Icons.receipt_long_outlined,
           color: _Palette.warning,
-          onTap: () => Get.toNamed(Routes.devisCreation, arguments: mission),
+          onTap: () => _openDevisCreation(mission),
         ),
         secondary: _ActionButtonConfig(
           label: 'Signaler',
