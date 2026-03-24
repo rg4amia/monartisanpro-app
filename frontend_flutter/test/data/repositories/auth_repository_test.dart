@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend_flutter/core/storage/storage_service.dart';
 import 'package:frontend_flutter/data/models/user_model.dart';
@@ -8,6 +9,10 @@ import '../../helpers/test_helpers.dart';
 import '../../test_config.dart';
 
 void main() {
+  // CRITICAL: Mock FlutterSecureStorage BEFORE any other initialization
+  TestWidgetsFlutterBinding.ensureInitialized();
+  FlutterSecureStorage.setMockInitialValues({});
+
   setUpAll(() async {
     await TestHelpers.initializeTestEnvironment();
   });
