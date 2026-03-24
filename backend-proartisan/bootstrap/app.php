@@ -38,6 +38,9 @@ return Application::configure(basePath: dirname(__DIR__))
                     'message' => 'Non authentifié.',
                 ], 401);
             }
+
+            // Fallback for web requests: redirect to home instead of undefined 'login' route
+            return redirect('/');
         });
 
         $exceptions->render(function (\Illuminate\Validation\ValidationException $e, Request $request) {
