@@ -21,7 +21,7 @@ class ArtisanRepository {
         if (radiusMeters != null) 'radius': radiusMeters,
         if (sectorId != null) 'sector': sectorId,
         if (tradeId != null) 'trade': tradeId,
-        if (interventionNuit != null) 'intervention_nuit': interventionNuit,
+        if (interventionNuit == true) 'intervention_nuit': 1,
       },
     );
     final list = res.data['data'] as List<dynamic>;

@@ -281,19 +281,21 @@ class _MapView extends StatelessWidget {
             Positioned(
               bottom: 16,
               right: 16,
-              child: ElevatedButton.icon(
-                onPressed: () => Get.toNamed(Routes.artisanMap),
-                icon: const Icon(Icons.fullscreen, size: 18),
-                label: const Text('Carte complète'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _C.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+              child: IntrinsicWidth(
+                child: ElevatedButton.icon(
+                  onPressed: () => Get.toNamed(Routes.artisanMap),
+                  icon: const Icon(Icons.fullscreen, size: 18),
+                  label: const Text('Carte complète'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _C.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
               ),
