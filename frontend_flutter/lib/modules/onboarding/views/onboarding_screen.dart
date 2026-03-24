@@ -295,7 +295,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Widget _buildProfileCard() {
     return Padding(
-      padding: const EdgeInsets.all(32),
+      padding: const EdgeInsets.all(20),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -303,15 +303,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           Stack(
             children: [
               Container(
-                width: 200,
-                height: 200,
+                width: 120,
+                height: 120,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
                   color: Colors.grey[300],
                 ),
                 child: Icon(
                   Icons.person,
-                  size: 100,
+                  size: 60,
                   color: Colors.grey[600],
                 ),
               ),
@@ -349,9 +349,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
           // Profile info card
-          Container(
+          Flexible(child: Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: Colors.white,
@@ -441,7 +441,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
               ],
             ),
-          ),
+          )),
         ],
       ),
     );
