@@ -1,3 +1,4 @@
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend_flutter/core/network/api_client.dart';
 import 'package:frontend_flutter/core/storage/storage_service.dart';
@@ -5,6 +6,10 @@ import 'package:frontend_flutter/core/storage/storage_service.dart';
 import '../../helpers/test_helpers.dart';
 
 void main() {
+  // CRITICAL: Mock FlutterSecureStorage BEFORE any other initialization
+  TestWidgetsFlutterBinding.ensureInitialized();
+  FlutterSecureStorage.setMockInitialValues({});
+
   setUpAll(() async {
     await TestHelpers.initializeTestEnvironment();
   });
