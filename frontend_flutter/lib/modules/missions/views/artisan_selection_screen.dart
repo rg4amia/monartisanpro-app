@@ -5,6 +5,7 @@ import '../../../app/routes/app_routes.dart';
 import '../../../data/models/artisan_model.dart';
 import '../../../shared/widgets/score_nzassa.dart';
 import '../controllers/artisan_selection_controller.dart';
+import '../widgets/artisan_selection_map.dart';
 
 // ─── Design Tokens ────────────────────────────────────────────────────────────
 abstract class _C {
@@ -238,72 +239,7 @@ class _MapView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: _C.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _C.subtle),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Stack(
-          children: [
-            // Placeholder pour la carte - remplacer par YandexMap
-            Container(
-              height: double.infinity,
-              color: _C.subtle,
-              child: const Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.map, size: 64, color: _C.muted),
-                    SizedBox(height: 16),
-                    Text(
-                      'Vue carte des artisans',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: _C.muted,
-                      ),
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      'Carte Yandex Maps intégrée ici',
-                      style: TextStyle(fontSize: 14, color: _C.muted),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // Bouton pour ouvrir la carte complète
-            Positioned(
-              bottom: 16,
-              right: 16,
-              child: IntrinsicWidth(
-                child: ElevatedButton.icon(
-                  onPressed: () => Get.toNamed(Routes.artisanMap),
-                  icon: const Icon(Icons.fullscreen, size: 18),
-                  label: const Text('Carte complète'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _C.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    return ArtisanSelectionMap(controller: controller);
   }
 }
 
