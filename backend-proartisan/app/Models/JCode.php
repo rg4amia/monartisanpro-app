@@ -76,7 +76,7 @@ class JCode extends Model
         }
 
         DB::statement(
-            'UPDATE jcodes SET position_scan = ST_SRID(POINT(?, ?), 4326) WHERE id = ?',
+            "UPDATE jcodes SET position_scan = ST_GeomFromText(CONCAT('POINT(', ?, ' ', ?, ')'), 4326) WHERE id = ?",
             [$lng, $lat, $this->id]
         );
     }

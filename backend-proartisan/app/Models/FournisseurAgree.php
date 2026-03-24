@@ -38,7 +38,7 @@ class FournisseurAgree extends Model
         }
 
         DB::statement(
-            'UPDATE fournisseurs_agrees SET position = ST_SRID(POINT(?, ?), 4326) WHERE id = ?',
+            "UPDATE fournisseurs_agrees SET position = ST_GeomFromText(CONCAT('POINT(', ?, ' ', ?, ')'), 4326) WHERE id = ?",
             [$lng, $lat, $this->id]
         );
     }
