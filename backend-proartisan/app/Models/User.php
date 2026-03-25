@@ -19,7 +19,7 @@ class User extends Authenticatable
         'commune_id',
     ];
 
-    protected $hidden = ['password', 'remember_token'];
+    protected $hidden = ['password', 'remember_token', 'position'];
 
     protected function casts(): array
     {
@@ -31,6 +31,8 @@ class User extends Authenticatable
             'score_nzassa'     => 'integer',
         ];
     }
+
+    protected $appends = ['coordinates'];
 
     // ── Scopes ──────────────────────────────────────────────────────────────
 
@@ -92,6 +94,11 @@ class User extends Authenticatable
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    public function getCoordinatesAttribute(): ?array
+    {
+        return $this->getPositionCoords();
+    }
 
     public function isKycActif(): bool
     {
