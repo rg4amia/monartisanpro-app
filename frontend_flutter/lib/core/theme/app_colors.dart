@@ -5,12 +5,19 @@ class AppColors {
   static const Color primary = Color(0xFF1A2C5B);
   static const Color primaryLight = Color(0xFF2A3F7A);
   static const Color primaryDark = Color(0xFF0F1A3A);
+  static const Color secondary = Color(0xFFE9EEF8);
+  static const Color secondaryDark = Color(0xFFD6DFF0);
 
   // Role accents
-  static const Color accent = Color(0xFFE67E22);       // artisan orange
+  static const Color accent = Color(0xFFE67E22); // artisan orange
   static const Color accentLight = Color(0xFFF39C12);
-  static const Color success = Color(0xFF27AE60);      // fournisseur green
+  static const Color success = Color(0xFF27AE60); // fournisseur green
   static const Color successLight = Color(0xFF2ECC71);
+  static const Color client = Color(0xFF2F6FED);
+  static const Color clientSoft = Color(0xFFEAF1FF);
+  static const Color artisanSoft = Color(0xFFFFF1E4);
+  static const Color supplierSoft = Color(0xFFEAF8F0);
+  static const Color gold = Color(0xFFD4A017);
 
   // States
   static const Color danger = Color(0xFFE74C3C);

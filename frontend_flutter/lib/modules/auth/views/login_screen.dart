@@ -3,22 +3,23 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../../app/routes/app_routes.dart';
-import '../../../core/utils/debug_helper.dart';
+import '../../../core/theme/app_colors.dart';
 import '../controllers/auth_controller.dart';
 
 // ─── Design Tokens ───────────────────────────────────────────────────────────
 
 class _Dt {
-  static const primary = Color(0xFF5B5FEF);
-  static const primaryLight = Color(0xFF7C80F2);
-  static const primaryDark = Color(0xFF4144D4);
-  static const bg = Color(0xFFF5F6FA);
-  static const surface = Colors.white;
-  static const ink = Color(0xFF1A1D2E);
-  static const muted = Color(0xFF6B7280);
-  static const border = Color(0xFFE8EAF0);
-  static const success = Color(0xFF10B981);
-  static const error = Color(0xFFEF4444);
+  static const primary = AppColors.primary;
+  static const primaryLight = AppColors.primaryLight;
+  static const bg = AppColors.background;
+  static const surface = AppColors.surface;
+  static const ink = AppColors.textPrimary;
+  static const muted = AppColors.textSecondary;
+  static const border = AppColors.border;
+  static const success = AppColors.success;
+  static const client = AppColors.client;
+  static const artisan = AppColors.accent;
+  static const fournisseur = AppColors.success;
 }
 
 // ─── Login Screen ────────────────────────────────────────────────────────────
@@ -107,43 +108,70 @@ class _LoginScreenState extends State<LoginScreen>
         //   },
         //   child: const Icon(Icons.bug_report, size: 20),
         // ),
-        body: FadeTransition(
-          opacity: _fadeAnim ?? const AlwaysStoppedAnimation(1.0),
-          child: SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const SizedBox(height: 8),
-                  _buildWelcomeSection(),
-                  const SizedBox(height: 28),
-                  _buildProfileSelection(),
-                  const SizedBox(height: 24),
-                  _buildPhoneInput(),
-                  const SizedBox(height: 18),
-                  _buildKycNotice(),
-                  const SizedBox(height: 24),
-
-                  // Error message with animation
-                  Obx(() {
-                    if (_c.errorMsg.value == null)
-                      return const SizedBox.shrink();
-                    return AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      margin: const EdgeInsets.only(bottom: 16),
-                      child: _buildError(_c.errorMsg.value!),
-                    );
-                  }),
-
-                  _buildContinueButton(),
-                  const SizedBox(height: 20),
-                  _buildFooter(),
-                  const SizedBox(height: 12),
-                ],
+        body: Stack(
+          children: [
+            Positioned(
+              top: -80,
+              left: -40,
+              child: _GlowBubble(
+                size: 180,
+                color: AppColors.client.withValues(alpha: 0.12),
               ),
             ),
-          ),
+            Positioned(
+              top: 110,
+              right: -70,
+              child: _GlowBubble(
+                size: 220,
+                color: AppColors.accent.withValues(alpha: 0.10),
+              ),
+            ),
+            Positioned(
+              bottom: -90,
+              left: 30,
+              child: _GlowBubble(
+                size: 200,
+                color: AppColors.success.withValues(alpha: 0.10),
+              ),
+            ),
+            FadeTransition(
+              opacity: _fadeAnim ?? const AlwaysStoppedAnimation(1.0),
+              child: SafeArea(
+                child: SingleChildScrollView(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const SizedBox(height: 8),
+                      _buildWelcomeSection(),
+                      const SizedBox(height: 28),
+                      _buildProfileSelection(),
+                      const SizedBox(height: 24),
+                      _buildPhoneInput(),
+                      const SizedBox(height: 18),
+                      _buildKycNotice(),
+                      const SizedBox(height: 24),
+                      Obx(() {
+                        if (_c.errorMsg.value == null) {
+                          return const SizedBox.shrink();
+                        }
+                        return AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          margin: const EdgeInsets.only(bottom: 16),
+                          child: _buildError(_c.errorMsg.value!),
+                        );
+                      }),
+                      _buildContinueButton(),
+                      const SizedBox(height: 20),
+                      _buildFooter(),
+                      const SizedBox(height: 12),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -165,29 +193,38 @@ class _LoginScreenState extends State<LoginScreen>
         ),
         const SizedBox(height: 16),
 
-        // Title with gradient
-        ShaderMask(
-          shaderCallback: (bounds) => const LinearGradient(
-            colors: [_Dt.primary, _Dt.primaryLight],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ).createShader(bounds),
-          child: const Text(
-            'Bienvenue sur ProsArtisan',
-            style: TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-              letterSpacing: -0.5,
-            ),
-            textAlign: TextAlign.center,
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          decoration: BoxDecoration(
+            color: AppColors.secondary,
+            borderRadius: BorderRadius.circular(999),
           ),
+          child: const Text(
+            'Client, artisan ou fournisseur',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: _Dt.primary,
+              letterSpacing: 0.2,
+            ),
+          ),
+        ),
+        const SizedBox(height: 14),
+        const Text(
+          'Bienvenue sur ProsArtisan',
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.w900,
+            color: _Dt.ink,
+            letterSpacing: -0.8,
+            height: 1.1,
+          ),
+          textAlign: TextAlign.center,
         ),
         const SizedBox(height: 10),
 
-        // Subtitle - more concise
         Text(
-          'Connectez-vous pour accéder à vos services',
+          'Accédez à votre espace sécurisé pour gérer vos missions, vos paiements et votre suivi KYC.',
           style: TextStyle(
             fontSize: 14.5,
             color: _Dt.muted,
@@ -257,6 +294,7 @@ class _LoginScreenState extends State<LoginScreen>
     bool isSelected,
     VoidCallback onTap,
   ) {
+    final accent = _roleColor(label);
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -264,16 +302,16 @@ class _LoginScreenState extends State<LoginScreen>
         curve: Curves.easeOutCubic,
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
         decoration: BoxDecoration(
-          color: isSelected ? _Dt.primary.withValues(alpha: 0.08) : _Dt.surface,
+          color: isSelected ? accent.withValues(alpha: 0.10) : _Dt.surface,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isSelected ? _Dt.primary : _Dt.border,
+            color: isSelected ? accent : _Dt.border,
             width: isSelected ? 2.5 : 1.5,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: _Dt.primary.withValues(alpha: 0.2),
+                    color: accent.withValues(alpha: 0.20),
                     blurRadius: 16,
                     offset: const Offset(0, 6),
                   ),
@@ -299,8 +337,8 @@ class _LoginScreenState extends State<LoginScreen>
                   height: 56,
                   decoration: BoxDecoration(
                     gradient: isSelected
-                        ? const LinearGradient(
-                            colors: [_Dt.primary, _Dt.primaryLight],
+                        ? LinearGradient(
+                            colors: [accent, accent.withValues(alpha: 0.82)],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           )
@@ -322,13 +360,11 @@ class _LoginScreenState extends State<LoginScreen>
                     child: Container(
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [_Dt.primary, _Dt.primaryDark],
-                        ),
+                        color: accent,
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: _Dt.primary.withValues(alpha: 0.4),
+                            color: accent.withValues(alpha: 0.35),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -349,7 +385,7 @@ class _LoginScreenState extends State<LoginScreen>
               style: TextStyle(
                 fontSize: 11.5,
                 fontWeight: FontWeight.w800,
-                color: isSelected ? _Dt.primary : _Dt.ink,
+                color: isSelected ? accent : _Dt.ink,
                 letterSpacing: 0.4,
               ),
               textAlign: TextAlign.center,
@@ -373,10 +409,14 @@ class _LoginScreenState extends State<LoginScreen>
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: _Dt.primary.withValues(alpha: 0.1),
+                color: AppColors.clientSoft,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.phone_outlined, color: _Dt.primary, size: 18),
+              child: const Icon(
+                Icons.phone_outlined,
+                color: _Dt.primary,
+                size: 18,
+              ),
             ),
             const SizedBox(width: 10),
             const Text(
@@ -404,7 +444,8 @@ class _LoginScreenState extends State<LoginScreen>
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
                 decoration: BoxDecoration(
                   color: _Dt.surface,
                   borderRadius: const BorderRadius.only(
@@ -430,7 +471,8 @@ class _LoginScreenState extends State<LoginScreen>
               ),
               Expanded(
                 child: Obx(() {
-                  final hasContent = _c.phone.value.length > 4; // Use observable instead
+                  final hasContent =
+                      _c.phone.value.length > 4; // Use observable instead
                   return TextFormField(
                     controller: _phoneCtrl,
                     onChanged: (v) => _c.phone.value = '+225$v',
@@ -453,7 +495,7 @@ class _LoginScreenState extends State<LoginScreen>
                       suffixIcon: hasContent
                           ? const Icon(
                               Icons.check_circle,
-                              color: Color(0xFF10B981), // success color
+                              color: _Dt.success,
                               size: 20,
                             )
                           : null,
@@ -500,19 +542,19 @@ class _LoginScreenState extends State<LoginScreen>
 
   Widget _buildKycNotice() {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            _Dt.primary.withValues(alpha: 0.06),
-            _Dt.primary.withValues(alpha: 0.03),
+            AppColors.clientSoft,
+            AppColors.secondary,
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: _Dt.primary.withValues(alpha: 0.15),
+          color: _Dt.primary.withValues(alpha: 0.12),
           width: 1.5,
         ),
       ),
@@ -524,8 +566,8 @@ class _LoginScreenState extends State<LoginScreen>
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  _Dt.primary.withValues(alpha: 0.15),
-                  _Dt.primary.withValues(alpha: 0.08),
+                  AppColors.client.withValues(alpha: 0.18),
+                  AppColors.client.withValues(alpha: 0.10),
                 ],
               ),
               shape: BoxShape.circle,
@@ -605,7 +647,7 @@ class _LoginScreenState extends State<LoginScreen>
           borderRadius: BorderRadius.circular(14),
           gradient: canContinue
               ? const LinearGradient(
-                  colors: [_Dt.primary, _Dt.primaryLight],
+                  colors: [_Dt.primary, AppColors.client],
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                 )
@@ -831,6 +873,47 @@ class _LoginScreenState extends State<LoginScreen>
           ),
         ),
       ],
+    );
+  }
+
+  Color _roleColor(String label) {
+    switch (label) {
+      case 'ARTISAN':
+        return _Dt.artisan;
+      case 'FOURNISSEUR':
+        return _Dt.fournisseur;
+      case 'CLIENT':
+      default:
+        return _Dt.client;
+    }
+  }
+}
+
+class _GlowBubble extends StatelessWidget {
+  const _GlowBubble({
+    required this.size,
+    required this.color,
+  });
+
+  final double size;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: RadialGradient(
+            colors: [
+              color,
+              color.withValues(alpha: 0),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

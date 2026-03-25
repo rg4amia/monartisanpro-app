@@ -2,535 +2,608 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../app/routes/app_routes.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../data/models/mission_model.dart';
+import '../../../shared/widgets/loading_shimmer.dart';
 import '../controllers/home_controller.dart';
 
-class SupplierHomeScreen extends StatefulWidget {
+class SupplierHomeScreen extends StatelessWidget {
   const SupplierHomeScreen({super.key});
 
   @override
-  State<SupplierHomeScreen> createState() => _SupplierHomeScreenState();
-}
-
-class _SupplierHomeScreenState extends State<SupplierHomeScreen> {
-  @override
   Widget build(BuildContext context) {
-    final c = Get.find<HomeController>();
+    final controller = Get.find<HomeController>();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: AppColors.background,
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Container(
+        child: RefreshIndicator(
+          onRefresh: controller.refresh,
+          color: AppColors.success,
+          child: Obx(() {
+            if (controller.isLoading.value &&
+                controller.activeMissions.isEmpty) {
+              return ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(20),
-                color: Colors.white,
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF4F46E5),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.store,
-                        color: Colors.white,
-                        size: 24,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'N\'Zassa',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF1F2937),
-                            ),
-                          ),
-                          Text(
-                            'QUINCAILLERIE PARTENAIRE',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                              color: Color(0xFF9CA3AF),
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () {},
-                      icon: const Icon(Icons.notifications_outlined),
-                      color: const Color(0xFF6B7280),
-                    ),
-                    const CircleAvatar(
-                      radius: 20,
-                      backgroundColor: Color(0xFFE5E7EB),
-                      child: Icon(Icons.person, color: Color(0xFF6B7280)),
-                    ),
-                  ],
-                ),
-              ),
+                children: [LoadingShimmer.list(count: 4)],
+              );
+            }
 
-              const SizedBox(height: 16),
+            final missions = controller.activeMissions;
+            final payableTomorrow = missions.fold<int>(
+              0,
+              (sum, mission) => sum + mission.montantMateriaux,
+            );
 
-              // Stats Cards
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _StatCard(
-                        title: 'Total Matériaux',
-                        value: '1,240',
-                        change: '+12%',
-                        subtitle: 'Unités livrées ce mois-ci',
-                        isPositive: true,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _StatCard(
-                        title: 'En attente (J+1)',
-                        value: '450k',
-                        change: '+5%',
-                        subtitle: 'FCFA attendus demain',
-                        isPositive: true,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // Scanner Button
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Material(
-                  color: const Color(0xFF4F46E5),
-                  borderRadius: BorderRadius.circular(16),
-                  child: InkWell(
-                    onTap: () => Get.toNamed(Routes.scanner),
-                    borderRadius: BorderRadius.circular(16),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 20),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Icon(
-                              Icons.qr_code_scanner,
-                              color: Colors.white,
-                              size: 24,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          const Text(
-                            'Scanner J-Code',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+            return CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                SliverToBoxAdapter(
+                  child: _SupplierHero(
+                    controller: controller,
+                    missionCount: missions.length,
                   ),
                 ),
-              ),
-
-              const SizedBox(height: 8),
-
-              // Scanner subtitle
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                child: Text(
-                  'Scannez le J-Code d\'un artisan pour confirmer la remise des matériaux',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF9CA3AF),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: OutlinedButton.icon(
-                  onPressed: () => Get.toNamed(Routes.supplierCatalog),
-                  icon: const Icon(Icons.inventory_2_outlined),
-                  label: const Text('Gérer mon catalogue'),
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(52),
-                    foregroundColor: const Color(0xFF4F46E5),
-                    side: const BorderSide(color: Color(0xFF4F46E5)),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Recent Orders Header
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Commandes Récentes',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF1F2937),
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () {},
-                      child: const Text(
-                        'Voir Tout',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF4F46E5),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              // Recent Orders List
-              Obx(() {
-                if (c.activeMissions.isEmpty) {
-                  return Padding(
-                    padding: const EdgeInsets.all(32),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF3F4F6),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.receipt_long_outlined,
-                            size: 48,
-                            color: Color(0xFF9CA3AF),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _MetricCard(
+                                title: 'Collectes actives',
+                                value: '${missions.length}',
+                                subtitle: 'J-Codes à traiter',
+                                color: AppColors.success,
+                                background: AppColors.supplierSoft,
+                                icon: Icons.local_shipping_outlined,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _MetricCard(
+                                title: 'Paiements J+1',
+                                value: Formatters.fcfa(payableTomorrow),
+                                subtitle: 'Montants matériaux',
+                                color: AppColors.accent,
+                                background: AppColors.artisanSoft,
+                                icon: Icons.payments_outlined,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                        const _SectionTitle(title: 'Actions prioritaires'),
+                        const SizedBox(height: 12),
+                        _PrimaryScannerCard(missionCount: missions.length),
+                        const SizedBox(height: 12),
+                        OutlinedButton.icon(
+                          onPressed: () => Get.toNamed(Routes.supplierCatalog),
+                          icon: const Icon(Icons.inventory_2_outlined),
+                          label: const Text('Mettre à jour mon catalogue'),
+                        ),
+                        const SizedBox(height: 24),
+                        _SectionTitle(
+                          title: 'Flux de commandes',
+                          trailing: TextButton(
+                            onPressed: () => Get.toNamed(Routes.notifications),
+                            child: const Text('Historique'),
                           ),
                         ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'Aucune commande pour le moment',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF1F2937),
+                        const SizedBox(height: 12),
+                        if (missions.isEmpty)
+                          const _SupplierEmptyState()
+                        else
+                          Column(
+                            children: missions
+                                .map(
+                                  (mission) => Padding(
+                                    padding: const EdgeInsets.only(bottom: 12),
+                                    child:
+                                        _SupplierMissionCard(mission: mission),
+                                  ),
+                                )
+                                .toList(),
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          'Vos commandes récentes apparaîtront ici',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Color(0xFF9CA3AF),
-                          ),
-                        ),
+                        const SizedBox(height: 24),
+                        const _SectionTitle(title: 'Rappel conformité'),
+                        const SizedBox(height: 12),
+                        const _ComplianceCard(),
                       ],
                     ),
-                  );
-                }
-
-                return ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: c.activeMissions.length,
-                  itemBuilder: (_, i) {
-                    final m = c.activeMissions[i];
-                    final status = _getOrderStatus(m);
-
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.04),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: () {},
-                          borderRadius: BorderRadius.circular(16),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: status.color.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Icon(
-                                    status.icon,
-                                    color: status.color,
-                                    size: 24,
-                                  ),
-                                ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Kouassi Ibrahim',
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w700,
-                                          color: Color(0xFF1F2937),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'ID: MS-${m.id.toString().padLeft(5, '0')} • ${Formatters.timeAgo(m.createdAt)}',
-                                        style: const TextStyle(
-                                          fontSize: 13,
-                                          color: Color(0xFF9CA3AF),
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 6,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: status.color.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    status.label,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w700,
-                                      color: status.color,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                );
-              }),
-
-              const SizedBox(height: 20),
-
-              // Map Section
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Container(
-                  height: 160,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE5E7EB),
-                    borderRadius: BorderRadius.circular(16),
-                    image: const DecorationImage(
-                      image: AssetImage('assets/images/map_placeholder.png'),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  child: Stack(
-                    children: [
-                      Positioned(
-                        bottom: 16,
-                        left: 16,
-                        right: 16,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.1),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 8,
-                                height: 8,
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFF4F46E5),
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              const Text(
-                                '12 collectes actives dans votre zone',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF1F2937),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
                   ),
                 ),
-              ),
-
-              const SizedBox(height: 24),
-            ],
-          ),
+              ],
+            );
+          }),
         ),
       ),
     );
   }
+}
 
-  _OrderStatus _getOrderStatus(dynamic mission) {
-    // Simplified status logic
-    return _OrderStatus(
-      label: 'En attente',
-      color: const Color(0xFFF59E0B),
-      icon: Icons.schedule,
+class _SupplierHero extends StatelessWidget {
+  const _SupplierHero({
+    required this.controller,
+    required this.missionCount,
+  });
+
+  final HomeController controller;
+  final int missionCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final firstName = controller.userName.value.isNotEmpty
+        ? controller.userName.value.split(' ').first
+        : 'Partenaire';
+
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        20,
+        MediaQuery.of(context).padding.top + 10,
+        20,
+        24,
+      ),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.primary,
+            AppColors.success,
+          ],
+        ),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child:
+                    const Icon(Icons.storefront_rounded, color: Colors.white),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Espace fournisseur',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    Text(
+                      'Bonjour, $firstName',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              _HeroAction(
+                icon: Icons.notifications_outlined,
+                onTap: () => Get.toNamed(Routes.notifications),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
+            ),
+            child: Row(
+              children: [
+                const Expanded(
+                  child: _HeroMetric(
+                    label: 'Position validée',
+                    value: 'GPS < 100 m',
+                  ),
+                ),
+                Container(
+                  width: 1,
+                  height: 42,
+                  color: Colors.white.withValues(alpha: 0.18),
+                ),
+                Expanded(
+                  child: _HeroMetric(
+                    label: 'Collectes en attente',
+                    value: '$missionCount',
+                    alignEnd: true,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
-class _StatCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final String change;
-  final String subtitle;
-  final bool isPositive;
+class _PrimaryScannerCard extends StatelessWidget {
+  const _PrimaryScannerCard({required this.missionCount});
 
-  const _StatCard({
+  final int missionCount;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Get.toNamed(Routes.scanner),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [AppColors.success, AppColors.primary],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(22),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.success.withValues(alpha: 0.24),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            const _IconBadge(icon: Icons.qr_code_scanner_rounded),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Scanner un J-Code',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    missionCount == 0
+                        ? 'Utilisez le scan pour enregistrer une remise de matériaux sécurisée.'
+                        : '$missionCount retrait(s) actif(s) à confirmer avec contrôle GPS.',
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 13,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_forward_rounded, color: Colors.white),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SupplierMissionCard extends StatelessWidget {
+  const _SupplierMissionCard({required this.mission});
+
+  final MissionModel mission;
+
+  @override
+  Widget build(BuildContext context) {
+    final badge = _statusBadge(mission.status);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: badge.background,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(badge.icon, color: badge.color),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Mission #${mission.id}',
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      mission.description ?? 'Retrait matériaux en attente',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        height: 1.35,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              _StatusTag(
+                label: badge.label,
+                color: badge.color,
+                background: badge.background,
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _MiniInfo(
+                icon: Icons.payments_outlined,
+                label: Formatters.fcfa(mission.montantMateriaux),
+              ),
+              _MiniInfo(
+                icon: Icons.category_outlined,
+                label: mission.category ?? 'Matériaux',
+              ),
+              _MiniInfo(
+                icon: Icons.schedule_outlined,
+                label: Formatters.timeAgo(mission.createdAt),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  ({String label, Color color, Color background, IconData icon}) _statusBadge(
+    String status,
+  ) {
+    switch (status) {
+      case 'financee':
+        return (
+          label: 'À préparer',
+          color: AppColors.accent,
+          background: AppColors.artisanSoft,
+          icon: Icons.inventory_2_outlined,
+        );
+      case 'en_cours':
+        return (
+          label: 'En collecte',
+          color: AppColors.success,
+          background: AppColors.supplierSoft,
+          icon: Icons.local_shipping_outlined,
+        );
+      case 'litige':
+        return (
+          label: 'Contrôle',
+          color: AppColors.danger,
+          background: const Color(0xFFFDEDEC),
+          icon: Icons.gpp_bad_outlined,
+        );
+      default:
+        return (
+          label: 'En attente',
+          color: AppColors.warning,
+          background: const Color(0xFFFFF6E5),
+          icon: Icons.schedule_outlined,
+        );
+    }
+  }
+}
+
+class _SupplierEmptyState extends StatelessWidget {
+  const _SupplierEmptyState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: const Column(
+        children: [
+          _IconBadge(
+            icon: Icons.inventory_outlined,
+            color: AppColors.success,
+            background: AppColors.supplierSoft,
+          ),
+          SizedBox(height: 14),
+          Text(
+            'Aucune commande active',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          SizedBox(height: 6),
+          Text(
+            'Les J-Codes validés par les artisans apparaîtront ici dès qu’un retrait sera prêt.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13,
+              height: 1.45,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ComplianceCard extends StatelessWidget {
+  const _ComplianceCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppColors.supplierSoft,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.success.withValues(alpha: 0.14)),
+      ),
+      child: const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Avant chaque validation',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            'Vérifiez le scan J-Code, confirmez votre position GPS et remettez uniquement les matériaux prévus pour éviter le blocage automatique.',
+            style: TextStyle(
+              fontSize: 13,
+              height: 1.45,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle({
+    required this.title,
+    this.trailing,
+  });
+
+  final String title;
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            title,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ),
+        if (trailing != null) trailing!,
+      ],
+    );
+  }
+}
+
+class _MetricCard extends StatelessWidget {
+  const _MetricCard({
     required this.title,
     required this.value,
-    required this.change,
     required this.subtitle,
-    required this.isPositive,
+    required this.color,
+    required this.background,
+    required this.icon,
   });
+
+  final String title;
+  final String value;
+  final String subtitle;
+  final Color color;
+  final Color background;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF9CA3AF),
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: background,
+              borderRadius: BorderRadius.circular(12),
             ),
+            child: Icon(icon, color: color, size: 18),
           ),
-          const SizedBox(height: 8),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF1F2937),
-                  height: 1,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 6,
-                  vertical: 2,
-                ),
-                decoration: BoxDecoration(
-                  color: isPositive
-                      ? const Color(0xFF10B981).withValues(alpha: 0.1)
-                      : const Color(0xFFEF4444).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  change,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: isPositive
-                        ? const Color(0xFF10B981)
-                        : const Color(0xFFEF4444),
-                  ),
-                ),
-              ),
-            ],
+          const SizedBox(height: 14),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              color: color,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
+            title,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
             subtitle,
             style: const TextStyle(
-              fontSize: 11,
-              color: Color(0xFF9CA3AF),
-              fontWeight: FontWeight.w500,
+              fontSize: 12,
+              color: AppColors.textSecondary,
             ),
           ),
         ],
@@ -539,14 +612,159 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-class _OrderStatus {
-  final String label;
-  final Color color;
-  final IconData icon;
+class _HeroMetric extends StatelessWidget {
+  const _HeroMetric({
+    required this.label,
+    required this.value,
+    this.alignEnd = false,
+  });
 
-  _OrderStatus({
+  final String label;
+  final String value;
+  final bool alignEnd;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment:
+          alignEnd ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white70,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _HeroAction extends StatelessWidget {
+  const _HeroAction({
+    required this.icon,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Icon(icon, color: Colors.white),
+      ),
+    );
+  }
+}
+
+class _IconBadge extends StatelessWidget {
+  const _IconBadge({
+    required this.icon,
+    this.color = Colors.white,
+    this.background = const Color(0x33FFFFFF),
+  });
+
+  final IconData icon;
+  final Color color;
+  final Color background;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Icon(icon, color: color),
+    );
+  }
+}
+
+class _StatusTag extends StatelessWidget {
+  const _StatusTag({
     required this.label,
     required this.color,
-    required this.icon,
+    required this.background,
   });
+
+  final String label;
+  final Color color;
+  final Color background;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          color: color,
+        ),
+      ),
+    );
+  }
+}
+
+class _MiniInfo extends StatelessWidget {
+  const _MiniInfo({
+    required this.icon,
+    required this.label,
+  });
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: AppColors.textSecondary),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../app/routes/app_routes.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../data/models/artisan_model.dart';
 import '../../../shared/widgets/score_nzassa.dart';
 import '../controllers/artisan_selection_controller.dart';
@@ -9,15 +10,15 @@ import '../widgets/artisan_selection_map.dart';
 
 // ─── Design Tokens ────────────────────────────────────────────────────────────
 abstract class _C {
-  static const bg = Color(0xFFF8F9FA);
-  static const surface = Colors.white;
-  static const primary = Color(0xFF4F46E5);
-  static const primaryLight = Color(0xFFEEF2FF);
-  static const ink = Color(0xFF111827);
-  static const muted = Color(0xFF6B7280);
-  static const subtle = Color(0xFFE5E7EB);
-  static const success = Color(0xFF10B981);
-  static const warning = Color(0xFFF59E0B);
+  static const bg = AppColors.background;
+  static const surface = AppColors.surface;
+  static const primary = AppColors.primary;
+  static const primaryLight = AppColors.secondary;
+  static const ink = AppColors.textPrimary;
+  static const muted = AppColors.textSecondary;
+  static const subtle = AppColors.border;
+  static const success = AppColors.success;
+  static const warning = AppColors.accent;
 }
 
 class ArtisanSelectionScreen extends StatelessWidget {

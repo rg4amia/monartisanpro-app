@@ -3,18 +3,19 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../../app/routes/app_routes.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/storage/storage_service.dart';
 import '../controllers/auth_controller.dart';
 
 // ─── Design Tokens ───────────────────────────────────────────────────────────
 
 class _Dt {
-  static const primary = Color(0xFF5B5FEF);
-  static const bg = Color(0xFFF5F6FA);
-  static const surface = Colors.white;
-  static const ink = Color(0xFF1A1D2E);
-  static const muted = Color(0xFF6B7280);
-  static const border = Color(0xFFE8EAF0);
+  static const primary = AppColors.primary;
+  static const bg = AppColors.background;
+  static const surface = AppColors.surface;
+  static const ink = AppColors.textPrimary;
+  static const muted = AppColors.textSecondary;
+  static const border = AppColors.border;
 }
 
 // ─── Register Screen ─────────────────────────────────────────────────────────
@@ -445,7 +446,7 @@ class _RegisterScreenState extends State<RegisterScreen>
     if (_c.errorMsg.value == null) {
       // Verify token is saved before navigation
       final token = await StorageService.getToken();
-      
+
       if (token != null) {
         Get.offAllNamed(Routes.kycCni);
       } else {

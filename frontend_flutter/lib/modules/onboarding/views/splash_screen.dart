@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../core/storage/storage_service.dart';
 import '../../../app/routes/app_routes.dart';
+import '../../../core/storage/storage_service.dart';
+import '../../../core/theme/app_colors.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -36,7 +37,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -46,7 +47,7 @@ class _SplashScreenState extends State<SplashScreen> {
               width: 160,
               height: 160,
               decoration: BoxDecoration(
-                color: const Color(0xFF5B5FEF).withOpacity(0.1),
+                color: AppColors.client.withValues(alpha: 0.10),
                 shape: BoxShape.circle,
               ),
               child: Center(
@@ -54,7 +55,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   width: 80,
                   height: 80,
                   decoration: const BoxDecoration(
-                    color: Color(0xFF5B5FEF),
+                    color: AppColors.primary,
                     borderRadius: BorderRadius.only(
                       topLeft: Radius.circular(8),
                       topRight: Radius.circular(8),
@@ -77,7 +78,7 @@ class _SplashScreenState extends State<SplashScreen> {
               style: TextStyle(
                 fontSize: 36,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF1A1A1A),
+                color: AppColors.textPrimary,
                 letterSpacing: -0.5,
               ),
             ),
@@ -87,7 +88,7 @@ class _SplashScreenState extends State<SplashScreen> {
               'Fiable & Professionnel',
               style: TextStyle(
                 fontSize: 16,
-                color: Color(0xFF9E9E9E),
+                color: AppColors.textSecondary,
                 letterSpacing: 0.2,
               ),
             ),
@@ -98,7 +99,7 @@ class _SplashScreenState extends State<SplashScreen> {
               height: 40,
               child: CircularProgressIndicator(
                 strokeWidth: 3,
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF5B5FEF)),
+                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
               ),
             ),
             const SizedBox(height: 80),

@@ -2,81 +2,255 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../app/routes/app_routes.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/artisan_card.dart';
 import '../../../shared/widgets/loading_shimmer.dart';
 import '../controllers/home_controller.dart';
 
-// ─── Local design tokens (screen-scoped) ──────────────────────────────────────
-abstract class _C {
-  // Backgrounds
-  static const bg = Color(0xFFF8F9FA); // light neutral
-  static const surface = Colors.white;
-  static const primary = Color(0xFF4F46E5); // indigo
-  static const primaryLight = Color(0xFFEEF2FF);
-
-  // Text
-  static const ink = Color(0xFF111827);
-  static const inkMid = Color(0xFF374151);
-  static const muted = Color(0xFF6B7280);
-  static const subtle = Color(0xFFE5E7EB);
-}
-
-// ─── Categories data ──────────────────────────────────────────────────────────
 const _kCategories = [
-  {
-    'label': 'Plomberie',
-    'icon': Icons.plumbing_outlined,
-    'color': Color(0xFF3B82F6)
-  },
-  {
-    'label': 'Électricité',
-    'icon': Icons.electric_bolt_outlined,
-    'color': Color(0xFFF59E0B)
-  },
-  {
-    'label': 'Maçonnerie',
-    'icon': Icons.foundation_outlined,
-    'color': Color(0xFF78716C)
-  },
-  {
-    'label': 'Peinture',
-    'icon': Icons.format_paint_outlined,
-    'color': Color(0xFF10B981)
-  },
+  (
+    label: 'Plomberie',
+    icon: Icons.plumbing_outlined,
+    color: AppColors.client,
+  ),
+  (
+    label: 'Électricité',
+    icon: Icons.electric_bolt_outlined,
+    color: AppColors.warning,
+  ),
+  (
+    label: 'Maçonnerie',
+    icon: Icons.foundation_outlined,
+    color: AppColors.primary,
+  ),
+  (
+    label: 'Peinture',
+    icon: Icons.format_paint_outlined,
+    color: AppColors.success,
+  ),
 ];
 
-// ─── Screen ───────────────────────────────────────────────────────────────────
 class ClientHomeScreen extends StatelessWidget {
   const ClientHomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final c = Get.find<HomeController>();
+    final controller = Get.find<HomeController>();
 
     return Scaffold(
-      backgroundColor: _C.bg,
+      backgroundColor: AppColors.background,
       body: SafeArea(
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            _AppBar(controller: c),
-            SliverToBoxAdapter(child: _SearchBar()),
-            SliverToBoxAdapter(child: _QuickRequestCard()),
-            _SectionTitle(
-                title: 'Catégories de services',
-                trailing: TextButton(
-                  onPressed: () => Get.toNamed(Routes.services),
-                  child: const Text('Voir tout',
-                      style: TextStyle(color: _C.primary)),
-                )),
-            SliverToBoxAdapter(child: _CategoriesGrid()),
-            _SectionTitle(
-              title: 'Artisans à proximité',
-              trailing: Obx(
-                  () => _LocationChip(location: c.nearbyArtisansCount.value)),
+        child: RefreshIndicator(
+          onRefresh: controller.refresh,
+          color: AppColors.client,
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              SliverToBoxAdapter(child: _ClientHero(controller: controller)),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const _MissionSearchCard(),
+                      const SizedBox(height: 20),
+                      Obx(() => _ClientStats(controller: controller)),
+                      const SizedBox(height: 24),
+                      _SectionHeader(
+                        title: 'Demande rapide',
+                        trailing: TextButton(
+                          onPressed: () => Get.toNamed(Routes.services),
+                          child: const Text('Voir tout'),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      const _QuickRequestCard(),
+                      const SizedBox(height: 24),
+                      const _SectionHeader(title: 'Catégories populaires'),
+                      const SizedBox(height: 12),
+                      const _CategoriesGrid(),
+                      const SizedBox(height: 24),
+                      _SectionHeader(
+                        title: 'Artisans à proximité',
+                        trailing: Obx(
+                          () => _InfoPill(
+                            icon: Icons.location_on_outlined,
+                            label:
+                                '${controller.nearbyArtisansCount.value} autour de vous',
+                            color: AppColors.client,
+                            background: AppColors.clientSoft,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      _ArtisansList(controller: controller),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ClientHero extends StatelessWidget {
+  const _ClientHero({required this.controller});
+
+  final HomeController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final firstName = controller.userName.value.isNotEmpty
+        ? controller.userName.value.split(' ').first
+        : 'Client';
+
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        20,
+        MediaQuery.of(context).padding.top + 10,
+        20,
+        24,
+      ),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.primary,
+            AppColors.client,
+          ],
+        ),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Icon(
+                  Icons.home_repair_service_rounded,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Espace client',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    Text(
+                      'Bonjour, $firstName',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              _HeroIconButton(
+                icon: Icons.notifications_outlined,
+                onTap: () => Get.toNamed(Routes.notifications),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.14),
+              ),
             ),
-            _ArtisansList(controller: c),
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            child: const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Décrivez votre besoin et trouvez un artisan vérifié dans votre zone.',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    height: 1.25,
+                  ),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'Paiement sécurisé, jalons validés par OTP et suivi en temps réel.',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 13,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MissionSearchCard extends StatelessWidget {
+  const _MissionSearchCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Get.toNamed(Routes.missionRequest),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.border),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.shadowColor,
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: const Row(
+          children: [
+            Icon(Icons.search_rounded, color: AppColors.client),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Quel service recherchez-vous aujourd’hui ?',
+                style: TextStyle(
+                  fontSize: 15,
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            Icon(Icons.arrow_forward_ios_rounded,
+                size: 16, color: AppColors.textMuted),
           ],
         ),
       ),
@@ -84,97 +258,92 @@ class ClientHomeScreen extends StatelessWidget {
   }
 }
 
-// ─── App Bar ──────────────────────────────────────────────────────────────────
-class _AppBar extends StatelessWidget {
+class _ClientStats extends StatelessWidget {
+  const _ClientStats({required this.controller});
+
   final HomeController controller;
-  const _AppBar({required this.controller});
 
   @override
   Widget build(BuildContext context) {
-    return SliverToBoxAdapter(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-        child: Row(
-          children: [
-            // Profile avatar
-            GestureDetector(
-              onTap: () => Get.toNamed(Routes.settings),
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: _C.primary,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: _C.primary.withValues(alpha: 0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: const Icon(Icons.person, color: Colors.white, size: 22),
-              ),
+    return Row(
+      children: [
+        Expanded(
+          child: _StatCard(
+            title: 'Artisans disponibles',
+            value: '${controller.nearbyArtisansCount.value}',
+            subtitle: 'Autour de votre position',
+            color: AppColors.client,
+            background: AppColors.clientSoft,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _StatCard(
+            title: 'Missions actives',
+            value: '${controller.activeMissionsCount.value}',
+            subtitle: 'Suivies en temps réel',
+            color: AppColors.accent,
+            background: AppColors.artisanSoft,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _QuickRequestCard extends StatelessWidget {
+  const _QuickRequestCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Get.toNamed(Routes.missionRequest),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [AppColors.client, AppColors.primary],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(22),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.client.withValues(alpha: 0.22),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
             ),
-            const SizedBox(width: 12),
-            // Title
+          ],
+        ),
+        child: const Row(
+          children: [
+            _FeatureIcon(icon: Icons.auto_awesome_rounded),
+            SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "N'Zassa Home",
-                    style: const TextStyle(
-                      fontSize: 20,
+                    'Diagnostic assisté par IA',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
                       fontWeight: FontWeight.w800,
-                      color: _C.ink,
-                      letterSpacing: -0.5,
                     ),
                   ),
-                  Obx(() => Text(
-                        controller.userName.value.isNotEmpty
-                            ? 'Bienvenue, ${controller.userName.value}'
-                            : 'Bon retour',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: _C.muted,
-                        ),
-                      )),
+                  SizedBox(height: 6),
+                  Text(
+                    'Décrivez le problème, ajoutez des photos et obtenez une mise en relation plus rapide.',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 13,
+                      height: 1.4,
+                    ),
+                  ),
                 ],
               ),
             ),
-            // Notification button
-            GestureDetector(
-              onTap: () => Get.toNamed(Routes.notifications),
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: _C.surface,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: _C.subtle),
-                ),
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    const Icon(Icons.notifications_outlined,
-                        color: _C.ink, size: 22),
-                    Positioned(
-                      top: 10,
-                      right: 10,
-                      child: Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFEF4444),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            Icon(Icons.arrow_forward_rounded, color: Colors.white),
           ],
         ),
       ),
@@ -182,192 +351,263 @@ class _AppBar extends StatelessWidget {
   }
 }
 
-// ─── Search Bar ───────────────────────────────────────────────────────────────
-class _SearchBar extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: GestureDetector(
-        onTap: () => Get.toNamed(Routes.missionRequest),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: BoxDecoration(
-            color: _C.surface,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: _C.subtle),
-            boxShadow: [
-              BoxShadow(
-                color: _C.ink.withValues(alpha: 0.04),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Icon(Icons.search, color: _C.muted, size: 22),
-              const SizedBox(width: 12),
-              const Text(
-                'Besoin d\'aide pour quoi ?',
-                style: TextStyle(
-                  color: _C.muted,
-                  fontSize: 15,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
+class _CategoriesGrid extends StatelessWidget {
+  const _CategoriesGrid();
 
-// ─── Quick Request Card ───────────────────────────────────────────────────────
-class _QuickRequestCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-      child: GestureDetector(
-        onTap: () => Get.toNamed(Routes.missionRequest),
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [_C.primary, Color(0xFF6366F1)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 1.55,
+      ),
+      itemCount: _kCategories.length,
+      itemBuilder: (_, index) {
+        final category = _kCategories[index];
+        return GestureDetector(
+          onTap: () => Get.toNamed(
+            Routes.missionRequest,
+            arguments: {'category': category.label},
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.border),
             ),
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: _C.primary.withValues(alpha: 0.3),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: category.color.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(category.icon, color: category.color),
                 ),
-                child: const Icon(Icons.auto_awesome,
-                    color: Colors.white, size: 24),
-              ),
-              const SizedBox(width: 16),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.stars, color: Colors.white, size: 16),
-                        SizedBox(width: 6),
-                        Text(
-                          'ASSISTANT IA',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      'Demande Rapide',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    SizedBox(height: 2),
-                    Text(
-                      'Décrivez votre besoin en texte simple pour une mise en relation instantanée.',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
+                Text(
+                  category.label,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
-              ),
-              const Icon(Icons.arrow_forward_ios,
-                  color: Colors.white, size: 18),
-            ],
+              ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
 
-// ─── Section Title ────────────────────────────────────────────────────────────
-class _SectionTitle extends StatelessWidget {
-  final String title;
-  final Widget? trailing;
+class _ArtisansList extends StatelessWidget {
+  const _ArtisansList({required this.controller});
 
-  const _SectionTitle({
+  final HomeController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      if (controller.isLoading.value) {
+        return LoadingShimmer.list(count: 3);
+      }
+
+      if (controller.artisans.isEmpty) {
+        return Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: const Column(
+            children: [
+              _FeatureIcon(
+                icon: Icons.search_off_rounded,
+                color: AppColors.client,
+                background: AppColors.clientSoft,
+              ),
+              SizedBox(height: 14),
+              Text(
+                'Aucun artisan trouvé pour le moment',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 6),
+              Text(
+                'Activez votre position ou relancez la recherche pour voir les profils vérifiés près de vous.',
+                style: TextStyle(
+                  fontSize: 13,
+                  height: 1.45,
+                  color: AppColors.textSecondary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        );
+      }
+
+      return Column(
+        children: controller.artisans
+            .map(
+              (artisan) => ArtisanCard(
+                artisan: artisan,
+                onTap: () => Get.toNamed(
+                  Routes.artisanProfile,
+                  arguments: artisan,
+                ),
+              ),
+            )
+            .toList(),
+      );
+    });
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({
     required this.title,
     this.trailing,
   });
 
+  final String title;
+  final Widget? trailing;
+
   @override
   Widget build(BuildContext context) {
-    return SliverToBoxAdapter(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: _C.ink,
-                letterSpacing: -0.3,
-              ),
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            title,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textPrimary,
             ),
-            if (trailing != null) trailing!,
-          ],
+          ),
         ),
+        if (trailing != null) trailing!,
+      ],
+    );
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  const _StatCard({
+    required this.title,
+    required this.value,
+    required this.subtitle,
+    required this.color,
+    required this.background,
+  });
+
+  final String title;
+  final String value;
+  final String subtitle;
+  final Color color;
+  final Color background;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: background,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(Icons.insights_outlined, color: color, size: 18),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+              color: color,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            subtitle,
+            style: const TextStyle(
+              fontSize: 12,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _LocationChip extends StatelessWidget {
-  final int location;
-  const _LocationChip({required this.location});
+class _InfoPill extends StatelessWidget {
+  const _InfoPill({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.background,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+  final Color background;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: _C.primaryLight,
-        borderRadius: BorderRadius.circular(20),
+        color: background,
+        borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.location_on, size: 14, color: _C.primary),
-          const SizedBox(width: 4),
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 5),
           Text(
-            'Abidjan',
-            style: const TextStyle(
+            label,
+            style: TextStyle(
               fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: _C.primary,
+              fontWeight: FontWeight.w700,
+              color: color,
             ),
           ),
         ],
@@ -376,166 +616,52 @@ class _LocationChip extends StatelessWidget {
   }
 }
 
-// ─── Categories Grid ──────────────────────────────────────────────────────────
-class _CategoriesGrid extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 4,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: 0.85,
-        ),
-        itemCount: _kCategories.length,
-        itemBuilder: (_, i) {
-          final cat = _kCategories[i];
-          final color = cat['color'] as Color;
-          return GestureDetector(
-            onTap: () => Get.toNamed(
-              Routes.missionRequest,
-              arguments: {'category': cat['label']},
-            ),
-            child: Container(
-              decoration: BoxDecoration(
-                color: _C.surface,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: _C.subtle),
-                boxShadow: [
-                  BoxShadow(
-                    color: _C.ink.withValues(alpha: 0.04),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child:
-                        Icon(cat['icon'] as IconData, color: color, size: 22),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    cat['label'] as String,
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: _C.inkMid,
-                      height: 1.2,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
+class _FeatureIcon extends StatelessWidget {
+  const _FeatureIcon({
+    required this.icon,
+    this.color = Colors.white,
+    this.background = const Color(0x33FFFFFF),
+  });
 
-// ─── Artisans List (sliver) ───────────────────────────────────────────────────
-class _ArtisansList extends StatelessWidget {
-  final HomeController controller;
-  const _ArtisansList({required this.controller});
+  final IconData icon;
+  final Color color;
+  final Color background;
 
-  @override
-  Widget build(BuildContext context) {
-    return Obx(() {
-      if (controller.isLoading.value) {
-        return SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: LoadingShimmer.list(count: 3),
-          ),
-        );
-      }
-      if (controller.artisans.isEmpty) {
-        return SliverToBoxAdapter(child: _EmptyState());
-      }
-      return SliverPadding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        sliver: SliverList(
-          delegate: SliverChildBuilderDelegate(
-            (_, i) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: ArtisanCard(
-                artisan: controller.artisans[i],
-                onTap: () => Get.toNamed(
-                  Routes.artisanProfile,
-                  arguments: controller.artisans[i],
-                ),
-              ),
-            ),
-            childCount: controller.artisans.length,
-          ),
-        ),
-      );
-    });
-  }
-}
-
-// ─── Empty State ──────────────────────────────────────────────────────────────
-class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
+      width: 48,
+      height: 48,
       decoration: BoxDecoration(
-        color: _C.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _C.subtle),
+        color: background,
+        borderRadius: BorderRadius.circular(14),
       ),
-      child: Column(
-        children: [
-          Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              color: _C.primaryLight,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Icon(
-              Icons.search_off_rounded,
-              size: 32,
-              color: _C.primary,
-            ),
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'Aucun artisan trouvé',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: _C.ink,
-            ),
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            'Essayez d\'ajuster vos critères de recherche\nou élargissez votre zone de recherche',
-            style: TextStyle(
-              fontSize: 13,
-              color: _C.muted,
-              height: 1.5,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
+      child: Icon(icon, color: color),
+    );
+  }
+}
+
+class _HeroIconButton extends StatelessWidget {
+  const _HeroIconButton({
+    required this.icon,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Icon(icon, color: Colors.white),
       ),
     );
   }

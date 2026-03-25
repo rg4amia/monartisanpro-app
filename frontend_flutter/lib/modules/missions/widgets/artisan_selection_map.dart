@@ -9,19 +9,20 @@ import 'package:yandex_maps_mapkit/mapkit.dart' as mk;
 import 'package:yandex_maps_mapkit/yandex_map.dart';
 
 import '../../../app/routes/app_routes.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../data/models/artisan_model.dart';
 import '../../../shared/widgets/score_nzassa.dart';
 import '../controllers/artisan_selection_controller.dart';
 
 abstract class _Palette {
-  static const bg = Color(0xFFF8F9FA);
-  static const surface = Colors.white;
-  static const primary = Color(0xFF4F46E5);
-  static const primaryLight = Color(0xFFEEF2FF);
-  static const ink = Color(0xFF111827);
-  static const muted = Color(0xFF6B7280);
-  static const subtle = Color(0xFFE5E7EB);
-  static const warning = Color(0xFFF59E0B);
+  static const bg = AppColors.background;
+  static const surface = AppColors.surface;
+  static const primary = AppColors.primary;
+  static const primaryLight = AppColors.secondary;
+  static const ink = AppColors.textPrimary;
+  static const muted = AppColors.textSecondary;
+  static const subtle = AppColors.border;
+  static const warning = AppColors.accent;
 }
 
 const double _kAbidjanLat = 5.3484;

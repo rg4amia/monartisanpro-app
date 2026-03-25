@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/theme/app_colors.dart';
 import '../../../data/models/devis_model.dart';
 import '../../../data/models/mission_model.dart';
 import '../../../data/models/supplier_model.dart';
@@ -11,18 +12,18 @@ import '../controllers/devis_controller.dart';
 
 // ─── Design Tokens ────────────────────────────────────────────────────────────
 abstract class _C {
-  static const bg = Color(0xFFF8F9FA);
-  static const surface = Colors.white;
-  static const primary = Color(0xFF4F46E5);
-  static const primaryLight = Color(0xFFEEF2FF);
-  static const ink = Color(0xFF111827);
-  static const muted = Color(0xFF6B7280);
-  static const subtle = Color(0xFFE5E7EB);
-  static const success = Color(0xFF10B981);
-  static const successLight = Color(0xFFD1FAE5);
-  static const warning = Color(0xFFF59E0B);
-  static const warningLight = Color(0xFFFEF3C7);
-  static const danger = Color(0xFFEF4444);
+  static const bg = AppColors.background;
+  static const surface = AppColors.surface;
+  static const primary = AppColors.primary;
+  static const primaryLight = AppColors.secondary;
+  static const ink = AppColors.textPrimary;
+  static const muted = AppColors.textSecondary;
+  static const subtle = AppColors.border;
+  static const success = AppColors.success;
+  static const successLight = AppColors.supplierSoft;
+  static const warning = AppColors.accent;
+  static const warningLight = AppColors.artisanSoft;
+  static const danger = AppColors.danger;
 }
 
 /// Vue de création de devis pour l'artisan

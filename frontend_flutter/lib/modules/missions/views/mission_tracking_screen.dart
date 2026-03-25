@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../app/routes/app_routes.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/storage/storage_service.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../data/models/devis_model.dart';
@@ -11,17 +12,17 @@ import '../controllers/missions_controller.dart';
 import 'jalon_submit_screen.dart';
 
 abstract class _Palette {
-  static const bg = Color(0xFFF8F9FA);
-  static const surface = Colors.white;
-  static const primary = Color(0xFF4F46E5);
-  static const primaryLight = Color(0xFFEEF2FF);
-  static const success = Color(0xFF10B981);
-  static const successLight = Color(0xFFD1FAE5);
-  static const warning = Color(0xFFF59E0B);
-  static const warningLight = Color(0xFFFEF3C7);
-  static const danger = Color(0xFFEF4444);
-  static const ink = Color(0xFF111827);
-  static const muted = Color(0xFF6B7280);
+  static const bg = AppColors.background;
+  static const surface = AppColors.surface;
+  static const primary = AppColors.primary;
+  static const primaryLight = AppColors.secondary;
+  static const success = AppColors.success;
+  static const successLight = AppColors.supplierSoft;
+  static const warning = AppColors.accent;
+  static const warningLight = AppColors.artisanSoft;
+  static const danger = AppColors.danger;
+  static const ink = AppColors.textPrimary;
+  static const muted = AppColors.textSecondary;
 }
 
 class MissionTrackingScreen extends StatefulWidget {

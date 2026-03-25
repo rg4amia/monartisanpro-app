@@ -5,17 +5,18 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../app/routes/app_routes.dart';
+import '../../../core/theme/app_colors.dart';
 import '../controllers/auth_controller.dart';
 
 // ─── Design Tokens ───────────────────────────────────────────────────────────
 
 class _Dt {
-  static const primary = Color(0xFF5B5FEF);
-  static const bg = Color(0xFFF5F6FA);
-  static const surface = Colors.white;
-  static const ink = Color(0xFF1A1D2E);
-  static const muted = Color(0xFF6B7280);
-  static const border = Color(0xFFE8EAF0);
+  static const primary = AppColors.primary;
+  static const bg = AppColors.background;
+  static const surface = AppColors.surface;
+  static const ink = AppColors.textPrimary;
+  static const muted = AppColors.textSecondary;
+  static const border = AppColors.border;
 }
 
 // ─── Selfie Liveness Screen ──────────────────────────────────────────────────
@@ -35,7 +36,7 @@ class _KycSelfieLivenessScreenState extends State<KycSelfieLivenessScreen>
 
   AnimationController? _pulseCtrl;
   Animation<double>? _pulseAnim;
-  bool _isReady = false;
+  final bool _isReady = false;
 
   @override
   void initState() {
