@@ -39,7 +39,10 @@ return Application::configure(basePath: dirname(__DIR__))
                 ], 401);
             }
 
-            // Fallback for web requests: redirect to home instead of undefined 'login' route
+            if ($request->is('admin') || $request->is('admin/*')) {
+                return redirect()->route('admin.login');
+            }
+
             return redirect('/');
         });
 
