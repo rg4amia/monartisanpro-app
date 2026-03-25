@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../app/routes/app_routes.dart';
 import '../../../core/storage/storage_service.dart';
+import '../controllers/missions_controller.dart';
 
 // ─── Design Tokens ────────────────────────────────────────────────────────────
 abstract class _C {
@@ -24,6 +25,7 @@ class MissionRequestScreen extends StatefulWidget {
 }
 
 class _MissionRequestScreenState extends State<MissionRequestScreen> {
+  final MissionsController _missionsController = Get.find<MissionsController>();
   final _descCtrl = TextEditingController();
   final _selectedCategory = ''.obs;
   final _selectedCategoryId = 0.obs;
@@ -90,6 +92,23 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
     }
   }
 
+  Future<void> _runGeminiEstimate() async {
+    if (_selectedCategory.value.isEmpty) {
+      Get.snackbar('Erreur', 'Veuillez sélectionner une catégorie');
+      return;
+    }
+
+    if (_descCtrl.text.trim().length < 10) {
+      Get.snackbar('Erreur', 'Veuillez fournir plus de détails');
+      return;
+    }
+
+    await _missionsController.estimate(
+      _descCtrl.text.trim(),
+      _selectedCategory.value,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -149,14 +168,21 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
                     ),
                     const SizedBox(height: 12),
                     _DescriptionField(controller: _descCtrl),
+                    const SizedBox(height: 16),
+                    Obx(
+                      () => _GeminiEstimateCard(
+                        isLoading: _missionsController.isEstimating.value,
+                        estimate: _missionsController.estimateResult.value,
+                        onAnalyze: _runGeminiEstimate,
+                      ),
+                    ),
                     const SizedBox(height: 24),
                     _SectionTitle(title: 'Options d\'intervention'),
                     const SizedBox(height: 12),
                     Obx(
                       () => _NightInterventionCard(
                         enabled: _nightIntervention.value,
-                        onChanged: (value) =>
-                            _nightIntervention.value = value,
+                        onChanged: (value) => _nightIntervention.value = value,
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -234,6 +260,164 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
       ),
     );
   }
+}
+
+class _GeminiEstimateCard extends StatelessWidget {
+  final bool isLoading;
+  final Map<String, dynamic>? estimate;
+  final VoidCallback onAnalyze;
+
+  const _GeminiEstimateCard({
+    required this.isLoading,
+    required this.estimate,
+    required this.onAnalyze,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final category = estimate?['category']?.toString();
+    final urgency = estimate?['urgency']?.toString();
+    final explanation = estimate?['explanation']?.toString();
+    final priceMin = estimate?['price_min'];
+    final priceMax = estimate?['price_max'];
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _C.primaryLight,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFC7D2FE)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: _C.primary,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.auto_awesome_rounded,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'Pré-analyse Gemini',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: _C.ink,
+                  ),
+                ),
+              ),
+              FilledButton(
+                onPressed: isLoading ? null : onAnalyze,
+                style: FilledButton.styleFrom(
+                  backgroundColor: _C.primary,
+                  foregroundColor: Colors.white,
+                ),
+                child: Text(isLoading ? 'Analyse...' : 'Analyser'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            estimate == null
+                ? 'Lance une estimation IA pour obtenir une catégorie, un niveau d’urgence et une fourchette de prix avant de choisir un artisan.'
+                : 'Analyse disponible. Tu peux maintenant comparer les artisans avec une meilleure vision du besoin.',
+            style: const TextStyle(fontSize: 13, color: _C.muted, height: 1.4),
+          ),
+          if (estimate != null) ...[
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _EstimateBadge(
+                  label: 'Catégorie',
+                  value: category ?? 'Non définie',
+                ),
+                _EstimateBadge(
+                  label: 'Urgence',
+                  value: urgency ?? 'Non définie',
+                ),
+                _EstimateBadge(
+                  label: 'Budget',
+                  value: '${_formatFcfa(priceMin)} - ${_formatFcfa(priceMax)}',
+                ),
+              ],
+            ),
+            if (explanation != null && explanation.trim().isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text(
+                explanation,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: _C.ink,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _EstimateBadge extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _EstimateBadge({
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: RichText(
+        text: TextSpan(
+          style: const TextStyle(fontSize: 12, color: _C.muted),
+          children: [
+            TextSpan(text: '$label\n'),
+            TextSpan(
+              text: value,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: _C.ink,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+String _formatFcfa(dynamic amount) {
+  final value =
+      amount is int ? amount : int.tryParse(amount?.toString() ?? '') ?? 0;
+
+  final formatted = value.toString().replaceAllMapped(
+        RegExp(r'\B(?=(\d{3})+(?!\d))'),
+        (_) => ' ',
+      );
+
+  return '$formatted FCFA';
 }
 
 class _NightInterventionCard extends StatelessWidget {

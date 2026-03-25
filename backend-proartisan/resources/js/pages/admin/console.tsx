@@ -1,7 +1,7 @@
 import { Head } from '@inertiajs/react';
 import { FormEvent, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 
-type AdminTab = 'dashboard' | 'kyc' | 'litiges' | 'users' | 'transactions' | 'settings';
+type AdminTab = 'dashboard' | 'kyc' | 'missions' | 'litiges' | 'users' | 'transactions' | 'settings';
 
 interface ApiError {
     message?: string;
@@ -55,6 +55,26 @@ interface LitigeItem {
     mission: LitigeMission;
 }
 
+interface AdminMissionParty {
+    name: string;
+    phone?: string;
+}
+
+interface AdminMission {
+    id: number;
+    description: string;
+    status: string;
+    gemini_category?: string | null;
+    gemini_urgency?: string | null;
+    gemini_estimation_min?: number | null;
+    gemini_estimation_max?: number | null;
+    montant_total?: number | null;
+    client_address?: string | null;
+    created_at: string;
+    client?: AdminMissionParty | null;
+    artisan?: AdminMissionParty | null;
+}
+
 interface FournisseurUser {
     name: string;
     phone: string;
@@ -93,10 +113,6 @@ interface AdminTransaction {
     };
 }
 
-interface PagedResponse<T> {
-    data: T[];
-}
-
 interface ChartPoint {
     label: string;
     value: number;
@@ -123,6 +139,7 @@ const shortDate = (value: string): string =>
 const tabRoutes: Record<AdminTab, string> = {
     dashboard: '/admin/dashboard',
     kyc: '/admin/kyc',
+    missions: '/admin/missions',
     litiges: '/admin/litiges',
     users: '/admin/users',
     transactions: '/admin/transactions',
@@ -169,6 +186,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
 
     const [dashboard, setDashboard] = useState<DashboardData | null>(null);
     const [kycUsers, setKycUsers] = useState<KycUser[]>([]);
+    const [missions, setMissions] = useState<AdminMission[]>([]);
     const [litiges, setLitiges] = useState<LitigeItem[]>([]);
     const [fournisseurs, setFournisseurs] = useState<FournisseurItem[]>([]);
     const [users, setUsers] = useState<AdminUser[]>([]);
@@ -250,21 +268,23 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         setError('');
 
         try {
-            const [dash, kyc, lit, four, usersRes, txs] = await Promise.all([
+            const [dash, kyc, missionsRes, lit, four, usersRes, txs] = await Promise.all([
                 apiFetch<DashboardData>('/admin/dashboard'),
-                apiFetch<PagedResponse<KycUser>>('/admin/kyc/pending?per_page=60'),
-                apiFetch<PagedResponse<LitigeItem>>('/admin/litiges?per_page=60'),
-                apiFetch<PagedResponse<FournisseurItem>>('/admin/fournisseurs/pending?per_page=60'),
-                apiFetch<PagedResponse<AdminUser>>('/admin/users?per_page=100'),
-                apiFetch<PagedResponse<AdminTransaction>>('/admin/transactions?per_page=100'),
+                apiFetch<KycUser[]>('/admin/kyc/pending?per_page=60'),
+                apiFetch<AdminMission[]>('/admin/missions?per_page=100'),
+                apiFetch<LitigeItem[]>('/admin/litiges?per_page=60'),
+                apiFetch<FournisseurItem[]>('/admin/fournisseurs/pending?per_page=60'),
+                apiFetch<AdminUser[]>('/admin/users?per_page=100'),
+                apiFetch<AdminTransaction[]>('/admin/transactions?per_page=100'),
             ]);
 
             setDashboard(dash);
-            setKycUsers(kyc.data ?? []);
-            setLitiges(lit.data ?? []);
-            setFournisseurs(four.data ?? []);
-            setUsers(usersRes.data ?? []);
-            setTransactions(txs.data ?? []);
+            setKycUsers(kyc ?? []);
+            setMissions(missionsRes ?? []);
+            setLitiges(lit ?? []);
+            setFournisseurs(four ?? []);
+            setUsers(usersRes ?? []);
+            setTransactions(txs ?? []);
         } catch (e) {
             setError(e instanceof Error ? e.message : 'Impossible de charger les données.');
         } finally {
@@ -347,6 +367,19 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
 
     const q = search.toLowerCase();
     const filteredKyc = kycUsers.filter((user) => [user.name, user.phone, user.role].join(' ').toLowerCase().includes(q));
+    const filteredMissions = missions.filter((mission) =>
+        [
+            mission.id,
+            mission.description,
+            mission.status,
+            mission.gemini_category,
+            mission.client?.name,
+            mission.artisan?.name,
+        ]
+            .join(' ')
+            .toLowerCase()
+            .includes(q),
+    );
     const filteredLitiges = litiges.filter((litige) => [litige.id, litige.description, litige.mission_id].join(' ').toLowerCase().includes(q));
     const filteredUsers = users.filter((user) => [user.id, user.name, user.phone, user.role].join(' ').toLowerCase().includes(q));
     const filteredTransactions = transactions.filter((tx) => [tx.id, tx.type, tx.provider, tx.statut, tx.user?.name].join(' ').toLowerCase().includes(q));
@@ -455,6 +488,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
     const sections: Array<{ id: AdminTab; label: string }> = [
         { id: 'dashboard', label: 'Dashboard' },
         { id: 'kyc', label: 'KYC Verification' },
+        { id: 'missions', label: 'Mission Intelligence' },
         { id: 'litiges', label: 'Disputes' },
         { id: 'users', label: 'User Management' },
         { id: 'transactions', label: 'Transactions' },
@@ -698,6 +732,55 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                             </Card>
                         ) : null}
 
+                        {!loading && activeTab === 'missions' ? (
+                            <Card title="Missions et enrichissement Gemini">
+                                <Table>
+                                    <thead className="text-slate-500">
+                                        <tr>
+                                            <th className="px-3 py-2">Mission</th>
+                                            <th className="px-3 py-2">Client / Artisan</th>
+                                            <th className="px-3 py-2">Gemini</th>
+                                            <th className="px-3 py-2">Montant</th>
+                                            <th className="px-3 py-2">Localisation</th>
+                                            <th className="px-3 py-2">Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {filteredMissions.map((mission) => (
+                                            <tr key={mission.id} className="border-t border-slate-100 align-top">
+                                                <td className="px-3 py-3">
+                                                    <div className="font-semibold">#{mission.id}</div>
+                                                    <div className="mt-1 text-xs text-slate-600">{mission.description}</div>
+                                                    <div className="mt-2">
+                                                        <MissionStatusBadge status={mission.status} />
+                                                    </div>
+                                                </td>
+                                                <td className="px-3 py-3 text-xs text-slate-700">
+                                                    <div>Client: {mission.client?.name ?? '-'}</div>
+                                                    <div>Artisan: {mission.artisan?.name ?? 'Non affecté'}</div>
+                                                </td>
+                                                <td className="px-3 py-3 text-xs text-slate-700">
+                                                    <div className="font-semibold text-slate-900">{mission.gemini_category ?? 'Non classée'}</div>
+                                                    <div>Urgence: {mission.gemini_urgency ?? '-'}</div>
+                                                    <div>
+                                                        Estimation:{' '}
+                                                        {mission.gemini_estimation_min && mission.gemini_estimation_max
+                                                            ? `${money(mission.gemini_estimation_min)} - ${money(mission.gemini_estimation_max)}`
+                                                            : 'Non disponible'}
+                                                    </div>
+                                                </td>
+                                                <td className="px-3 py-3 text-xs font-semibold text-slate-900">
+                                                    {mission.montant_total ? money(mission.montant_total) : '-'}
+                                                </td>
+                                                <td className="px-3 py-3 text-xs text-slate-600">{mission.client_address ?? '-'}</td>
+                                                <td className="px-3 py-3 text-xs text-slate-600">{shortDate(mission.created_at)}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </Table>
+                            </Card>
+                        ) : null}
+
                         {!loading && activeTab === 'litiges' ? (
                             <section className="grid gap-4 xl:grid-cols-2">
                                 {filteredLitiges.map((litige) => (
@@ -874,6 +957,21 @@ function RoleBadge({ role }: { role: KycUser['role'] }) {
 
     const cls = palette[role] ?? 'bg-slate-100 text-slate-700';
     return <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${cls}`}>{role}</span>;
+}
+
+function MissionStatusBadge({ status }: { status: string }) {
+    const palette: Record<string, string> = {
+        en_attente: 'bg-amber-100 text-amber-800',
+        financee: 'bg-blue-100 text-blue-800',
+        en_cours: 'bg-emerald-100 text-emerald-800',
+        terminee: 'bg-slate-200 text-slate-800',
+        litige: 'bg-rose-100 text-rose-800',
+        annulee: 'bg-slate-100 text-slate-500',
+    };
+
+    const cls = palette[status] ?? 'bg-slate-100 text-slate-700';
+
+    return <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${cls}`}>{status}</span>;
 }
 
 function MapBadge({ city, count }: { city: string; count: number }) {
