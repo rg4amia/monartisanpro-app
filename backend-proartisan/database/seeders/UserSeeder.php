@@ -17,6 +17,7 @@ class UserSeeder extends Seeder
         // Numéros au format CI 10 chiffres : +225 + 10 chiffres
         // ── Admin ─────────────────────────────────────────────────────────────
         User::create([
+            'email'      => 'admin@prosartisan.ci',
             'phone'      => '+2250000000000',
             'name'       => 'Administrateur ProsArtisan',
             'password'   => bcrypt('admin123'),
@@ -29,6 +30,7 @@ class UserSeeder extends Seeder
         $yopougon = Commune::where('slug', 'yopougon')->first();
 
         $client = User::create([
+            'email'      => 'adjoua.kouassi@prosartisan.ci',
             'phone'      => '+2250100000001',
             'name'       => 'Adjoua Kouassi',
             'password'   => bcrypt('client123'),
@@ -44,6 +46,7 @@ class UserSeeder extends Seeder
         $electricienTrade  = Trade::where('name', 'Électricien bâtiment')->first();
 
         $artisan1 = User::create([
+            'email'          => 'kouame.bah@prosartisan.ci',
             'phone'          => '+2250200000001',
             'name'           => 'Kouamé Bah',
             'password'       => bcrypt('artisan123'),
@@ -66,6 +69,7 @@ class UserSeeder extends Seeder
         $plombierTrade   = Trade::where('name', 'Plombier sanitaire')->first();
 
         $artisan2 = User::create([
+            'email'          => 'issa.traore@prosartisan.ci',
             'phone'          => '+2250200000002',
             'name'           => 'Issa Traoré',
             'password'       => bcrypt('artisan123'),
@@ -86,6 +90,7 @@ class UserSeeder extends Seeder
 
         // ── Fournisseur test ──────────────────────────────────────────────────
         $fournisseur = User::create([
+            'email'      => 'yao.koffi@prosartisan.ci',
             'phone'      => '+2250300000001',
             'name'       => 'Yao Koffi',
             'password'   => bcrypt('fourn123'),
@@ -104,6 +109,7 @@ class UserSeeder extends Seeder
 
         // ── Référent de zone ───────────────────────────────────────────────────
         User::create([
+            'email'      => 'seraphin.dioulo@prosartisan.ci',
             'phone'      => '+2250400000001',
             'name'       => 'Séraphin Dioulo',
             'password'   => bcrypt('referent123'),

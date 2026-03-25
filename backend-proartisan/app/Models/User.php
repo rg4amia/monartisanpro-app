@@ -13,7 +13,7 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory, Notifiable;
 
     protected $fillable = [
-        'phone', 'name', 'password', 'role', 'kyc_status',
+        'email', 'phone', 'name', 'password', 'role', 'kyc_status',
         'account_status', 'account_status_reason', 'blocked_at',
         'score_nzassa', 'wallet_materiaux', 'wallet_mo', 'fcm_token',
         'commune_id',
