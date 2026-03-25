@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:yandex_maps_mapkit/yandex_map.dart';
 
+import '../../../core/theme/app_colors.dart';
 import '../controllers/location_picker_controller.dart';
 
 class LocationPickerScreen extends GetView<LocationPickerController> {
@@ -20,12 +21,12 @@ class LocationPickerScreen extends GetView<LocationPickerController> {
                 Icon(
                   Icons.location_on,
                   size: 48,
-                  color: Color(0xFF4F46E5),
+                  color: AppColors.primary,
                 ),
                 SizedBox(height: 2),
                 DecoratedBox(
                   decoration: BoxDecoration(
-                    color: Color(0xFF4F46E5),
+                    color: AppColors.primary,
                     shape: BoxShape.circle,
                   ),
                   child: SizedBox(width: 5, height: 5),
@@ -76,7 +77,7 @@ class LocationPickerScreen extends GetView<LocationPickerController> {
                           ),
                           child: const Icon(
                             Icons.arrow_back,
-                            color: Color(0xFF4F46E5),
+                            color: AppColors.primary,
                             size: 22,
                           ),
                         ),
@@ -239,7 +240,7 @@ class LocationPickerScreen extends GetView<LocationPickerController> {
                           ),
                           child: const Icon(
                             Icons.location_on,
-                            color: Color(0xFF4F46E5),
+                            color: AppColors.primary,
                             size: 20,
                           ),
                         ),
@@ -277,7 +278,7 @@ class LocationPickerScreen extends GetView<LocationPickerController> {
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               side: const BorderSide(
-                                color: Color(0xFF4F46E5),
+                                color: AppColors.primary,
                               ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -289,7 +290,7 @@ class LocationPickerScreen extends GetView<LocationPickerController> {
                                 Icon(
                                   Icons.my_location,
                                   size: 18,
-                                  color: Color(0xFF4F46E5),
+                                  color: AppColors.primary,
                                 ),
                                 SizedBox(width: 8),
                                 Text(

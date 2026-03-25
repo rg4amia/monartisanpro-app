@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../app/routes/app_routes.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../data/models/mission_model.dart';
 import '../../../shared/widgets/loading_shimmer.dart';
@@ -9,15 +10,15 @@ import '../../main_tab/controllers/main_tab_controller.dart';
 import '../controllers/home_controller.dart';
 
 abstract class _Palette {
-  static const bg = Color(0xFFF8FAFC);
-  static const surface = Colors.white;
-  static const ink = Color(0xFF0F172A);
-  static const muted = Color(0xFF64748B);
-  static const subtle = Color(0xFFE2E8F0);
-  static const primary = Color(0xFF4F46E5);
-  static const success = Color(0xFF10B981);
-  static const warning = Color(0xFFF59E0B);
-  static const danger = Color(0xFFEF4444);
+  static const bg = AppColors.background;
+  static const surface = AppColors.surface;
+  static const ink = AppColors.textPrimary;
+  static const muted = AppColors.textSecondary;
+  static const subtle = AppColors.border;
+  static const primary = AppColors.primary;
+  static const success = AppColors.success;
+  static const warning = AppColors.accent;
+  static const danger = AppColors.danger;
 }
 
 class ArtisanHomeScreen extends StatelessWidget {
@@ -95,8 +96,8 @@ class _HeroHeader extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Color(0xFF0F172A),
-            Color(0xFF1E293B),
+            AppColors.primary,
+            AppColors.accent,
           ],
         ),
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
@@ -110,7 +111,7 @@ class _HeroHeader extends StatelessWidget {
                 width: 52,
                 height: 52,
                 decoration: BoxDecoration(
-                  color: _Palette.warning,
+                  color: Colors.white.withValues(alpha: 0.16),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 alignment: Alignment.center,
@@ -169,7 +170,7 @@ class _HeroHeader extends StatelessWidget {
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
             ),
             child: Row(
               children: [
@@ -323,6 +324,7 @@ class _StatCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: _Palette.surface,
         borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: _Palette.subtle),
         boxShadow: [
           BoxShadow(
             color: _Palette.ink.withValues(alpha: 0.04),
@@ -575,7 +577,7 @@ class _WorkflowReminder extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: _Palette.primary.withValues(alpha: 0.06),
+        color: AppColors.artisanSoft,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: _Palette.primary.withValues(alpha: 0.14)),
       ),
@@ -586,7 +588,7 @@ class _WorkflowReminder extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: _Palette.primary.withValues(alpha: 0.12),
+              color: Colors.white,
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(
@@ -733,6 +735,7 @@ class _MissionQueueCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: _Palette.surface,
         borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: _Palette.subtle),
         boxShadow: [
           BoxShadow(
             color: _Palette.ink.withValues(alpha: 0.04),
