@@ -1,531 +1,1123 @@
 import { Head, Link } from '@inertiajs/react';
+import type { CSSProperties, ReactNode } from 'react';
+
+const landingTheme: CSSProperties = {
+    '--landing-bg': '#f6efe5',
+    '--landing-panel': 'rgba(255, 251, 245, 0.8)',
+    '--landing-panel-strong': '#fffaf2',
+    '--landing-border': 'rgba(182, 144, 92, 0.24)',
+    '--landing-ink': '#201712',
+    '--landing-copy': '#6f5d50',
+    '--landing-copy-soft': '#8a7766',
+    '--landing-gold': '#d8a84e',
+    '--landing-gold-deep': '#ad6f1d',
+    '--landing-clay': '#cc6a45',
+    '--landing-green': '#1f7a55',
+    '--landing-night': '#1f1a17',
+    '--landing-cream': '#fff4e3',
+    '--landing-surface': '#f0e4d0',
+} as CSSProperties;
+
+const heroSignals = [
+    {
+        eyebrow: 'Matching',
+        title: 'Artisans trouves a moins de 2 km',
+        text: 'Le client trouve vite, mais la position exacte reste protegee cote public.',
+        tone: 'gold' as const,
+    },
+    {
+        eyebrow: 'Paiement',
+        title: 'Sequestre fragmente des le devis',
+        text: "Materiaux et main d'oeuvre sont separes, puis verrouilles sur tout le cycle.",
+        tone: 'green' as const,
+    },
+    {
+        eyebrow: 'Execution',
+        title: 'J-Code, GPS et preuves terrain',
+        text: 'Le fournisseur doit etre sur site boutique, puis la mission garde ses preuves.',
+        tone: 'clay' as const,
+    },
+    {
+        eyebrow: 'Validation',
+        title: 'OTP client avant tout decaissement',
+        text: 'Aucun jalon ne libere de fonds sans confirmation SMS ou validation prevue.',
+        tone: 'night' as const,
+    },
+];
+
+const keyStats = [
+    { label: 'Acteurs relies', value: 'Clients, artisans, fournisseurs, referents' },
+    { label: 'Paiements CI', value: 'Wave CI et Orange Money CI' },
+    { label: 'Preuves mission', value: 'OTP, photos geo, logs et litiges' },
+    { label: 'Pilotage admin', value: 'KYC, paiements, fraudes et arbitrages' },
+];
+
+const audienceCards = [
+    {
+        badge: 'Client',
+        title: 'Commander un chantier sans payer a l aveugle',
+        text: "Le client decrit son besoin, obtient un parcours lisible et garde la main sur chaque validation de mission.",
+        points: ['Diagnostic assiste et estimation initiale', 'Devis lisible avec jalons et FCFA entiers', 'OTP obligatoire avant liberation de fonds'],
+        icon: 'client' as const,
+        tone: 'gold' as const,
+    },
+    {
+        badge: 'Artisan',
+        title: 'Recevoir des missions, etre paye proprement et monter en confiance',
+        text: "L artisan ne depend plus seulement du bouche-a-oreille. Il gere devis, execution, jalons et capital reputation.",
+        points: ['Matching local base sur la proximite', 'J-Code materiaux pour les achats chantier', "Score N'Zassa archive pour la solvabilite"],
+        icon: 'artisan' as const,
+        tone: 'green' as const,
+    },
+    {
+        badge: 'Fournisseur',
+        title: 'Livrer les materiaux avec une verification claire et un reglement cadree',
+        text: "La quincaillerie agreee valide les jetons chantier, prouve sa presence boutique et securise sa livraison.",
+        points: ['Scan J-Code ou code USSD', 'Blocage automatique si GPS hors zone', 'Paiement fournisseur garanti selon le flux'],
+        icon: 'store' as const,
+        tone: 'clay' as const,
+    },
+];
+
+const flowSteps = [
+    {
+        phase: 'Phase 0',
+        title: 'Onboarding OTP et KYC',
+        text: "Inscription par telephone, OTP, choix du role et verification KYC avant toute transaction.",
+        points: ['Photo CNI et selfie', 'Activation admin requise', 'Aucun contournement du KYC'],
+        tone: 'gold' as const,
+    },
+    {
+        phase: 'Phase 1',
+        title: 'Diagnostic et matching local',
+        text: 'Le besoin est qualifie, puis les artisans actifs sont proposes dans un rayon court autour du client.',
+        points: ['Estimation assistee', 'Rayon de 2 km', 'Position artisan floutee cote client'],
+        tone: 'blue' as const,
+    },
+    {
+        phase: 'Phase 2',
+        title: 'Devis et sequestre intelligent',
+        text: "Le devis separe clairement materiaux et main d'oeuvre, puis le ratio est fige des acceptation.",
+        points: ['Lignes de cout distinctes', 'Wallet materiaux / wallet MO', 'Ratio immuable apres accord'],
+        tone: 'green' as const,
+    },
+    {
+        phase: 'Phase 3',
+        title: 'J-Code materiaux',
+        text: "L artisan cree le jeton chantier. Le fournisseur doit etre physiquement proche de sa boutique pour valider.",
+        points: ['Code PA-XXXX ou QR', 'Controle GPS < 100 m', 'Alerte admin si anomalie'],
+        tone: 'clay' as const,
+    },
+    {
+        phase: 'Phase 4',
+        title: 'Jalons, preuves et OTP',
+        text: "Chaque jalon embarque checklist, photos geolocalisees et validation client avant liberation de fonds.",
+        points: ['OTP 4 chiffres par SMS', 'Photos chantier', 'Referent obligatoire au-dessus de 2 000 000 FCFA'],
+        tone: 'night' as const,
+    },
+    {
+        phase: 'Phase 5',
+        title: "Cloture, note et score N'Zassa",
+        text: "La mission se ferme avec signature, evaluation, archivage du score et lecture solvabilite.",
+        points: ['Notation client', "Score N'Zassa 40 / 30 / 20 / 10", "Base utile pour micro-credit d'urgence"],
+        tone: 'gold' as const,
+    },
+];
+
+const safeguardCards = [
+    {
+        title: 'KYC actif obligatoire',
+        text: 'Client et artisan doivent etre actifs avant mission, devis finance ou paiement.',
+        icon: 'shield' as const,
+    },
+    {
+        title: 'GPS artisan protege',
+        text: 'Le client ne recoit jamais la position exacte de l artisan. La localisation est volontairement brouillee.',
+        icon: 'gps' as const,
+    },
+    {
+        title: 'GPS fournisseur verrouille',
+        text: 'Si le scan J-Code se fait hors rayon boutique, la transaction est bloquee automatiquement.',
+        icon: 'pin' as const,
+    },
+    {
+        title: 'OTP avant decaissement',
+        text: 'Le wallet MO ne se debloque pas sans validation jalon cote client.',
+        icon: 'otp' as const,
+    },
+    {
+        title: 'Seuil referent',
+        text: 'Au-dessus de 2 000 000 FCFA, une visite physique est requise avant liberation.',
+        icon: 'alert' as const,
+    },
+    {
+        title: 'Litige trace et arbitrable',
+        text: 'Photos, chat, journaux et decision admin restent centralises dans le dossier.',
+        icon: 'scale' as const,
+    },
+];
+
+const adminModules = [
+    {
+        title: 'Validation KYC',
+        text: 'Activer ou rejeter les dossiers, filtrer les comptes et prioriser les validations en attente.',
+        icon: 'shield' as const,
+    },
+    {
+        title: 'Suivi des missions',
+        text: 'Visualiser les missions financees, les jalons, les preuves et les projets a superviser.',
+        icon: 'dashboard' as const,
+    },
+    {
+        title: 'Paiements et wallets',
+        text: 'Suivre sequestres, decaissements, collectes et anomalies de paiement mobile.',
+        icon: 'wallet' as const,
+    },
+    {
+        title: 'Litiges et fraude',
+        text: 'Ouvrir un dossier, arbitrer, geler une operation ou demander une verification terrain.',
+        icon: 'scale' as const,
+    },
+];
+
+const terrainCards = [
+    {
+        title: 'Wave CI et Orange Money CI',
+        text: 'Le parcours reste pense pour les usages mobile money dominants sur le terrain.',
+        icon: 'wallet' as const,
+    },
+    {
+        title: 'Android prioritaire',
+        text: 'La premiere experience produit est concue pour les telephones les plus utilises localement.',
+        icon: 'mobile' as const,
+    },
+    {
+        title: 'Faible connectivite et USSD',
+        text: 'Le flux anticipe les zones ou la data est instable et les usages restent tres pratiques.',
+        icon: 'signal' as const,
+    },
+    {
+        title: 'FCFA entiers',
+        text: 'Les montants restent lisibles, sans decimales ni confusion sur les sommes financieres.',
+        icon: 'score' as const,
+    },
+];
+
+const scoreParts = [
+    { label: 'Fiabilite', value: 40 },
+    { label: 'Integrite', value: 30 },
+    { label: 'Qualite', value: 20 },
+    { label: 'Reactivite', value: 10 },
+];
+
+const adminHighlights = [
+    { label: 'Vue admin', value: 'KYC, missions, paiements, litiges' },
+    { label: 'Dossiers critiques', value: 'Fraude, blocage GPS, referent terrain' },
+    { label: 'Collecte de preuves', value: 'OTP, checklist, photos geolocalisees' },
+];
 
 export default function Welcome() {
+    const currentYear = new Date().getFullYear();
+
     return (
         <>
-            <Head title="ProsArtisan - Plateforme de confiance">
+            <Head title="ProsArtisan - Travaux securises en Cote d'Ivoire">
                 <link rel="preconnect" href="https://fonts.bunny.net" />
-                <link
-                    href="https://fonts.bunny.net/css?family=inter:400,500,600,700"
-                    rel="stylesheet"
-                />
+                <link href="https://fonts.bunny.net/css?family=manrope:400,500,600,700,800|sora:500,600,700,800" rel="stylesheet" />
             </Head>
 
-            <div className="min-h-screen bg-gray-50 font-sans antialiased">
-                {/* Header / Navigation */}
-                <header className="bg-white border-b border-gray-200">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="flex justify-between items-center h-16">
-                            {/* Logo */}
-                            <div className="flex items-center space-x-2">
-                                <div className="flex items-center space-x-3">
-                                    <img
-                                        src="/img/prosartisan-logo.png"
-                                        alt="ProsArtisan Logo"
-                                        className="h-10 w-auto"
-                                    />
+            <div className="min-h-screen bg-[var(--landing-bg)] text-[var(--landing-ink)] antialiased" style={landingTheme}>
+                <div className="relative overflow-hidden">
+                    <div className="pointer-events-none absolute inset-0">
+                        <div className="absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(circle_at_top,rgba(216,168,78,0.18),rgba(246,239,229,0)_58%)]" />
+                        <div className="absolute left-[-8rem] top-[-5rem] h-72 w-72 rounded-full bg-[var(--landing-gold)]/18 blur-3xl" />
+                        <div className="absolute right-[-10rem] top-20 h-[26rem] w-[26rem] rounded-full bg-[var(--landing-clay)]/16 blur-3xl" />
+                        <div className="absolute bottom-20 left-1/3 h-72 w-72 rounded-full bg-[var(--landing-green)]/10 blur-3xl" />
+                    </div>
+
+                    <header className="sticky top-0 z-20 border-b border-[var(--landing-border)] bg-[rgba(246,239,229,0.84)] backdrop-blur-xl">
+                        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
+                            <div className="flex items-center gap-3">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--landing-gold)] shadow-[0_16px_30px_rgba(202,154,72,0.28)]">
+                                    <img src="/img/prosartisan-logo.png" alt="ProsArtisan" className="h-8 w-8 object-contain" />
+                                </div>
+                                <div>
+                                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--landing-copy)]">Cote d'Ivoire</p>
+                                    <p className="text-xl font-semibold" style={{ fontFamily: '"Sora", sans-serif' }}>
+                                        ProsArtisan
+                                    </p>
                                 </div>
                             </div>
 
-                            {/* Navigation */}
-                            <nav className="hidden md:flex items-center space-x-8">
-                                <a href="#how-it-works" className="text-sm font-medium text-gray-700 hover:text-indigo-600 transition">
-                                    Comment ça marche
+                            <nav className="hidden items-center gap-7 text-sm font-medium text-[var(--landing-copy)] lg:flex">
+                                <a href="#roles" className="transition hover:text-[var(--landing-ink)]">
+                                    Acteurs
                                 </a>
-                                <a href="#features" className="text-sm font-medium text-gray-700 hover:text-indigo-600 transition">
-                                    Fonctionnalités
+                                <a href="#flux" className="transition hover:text-[var(--landing-ink)]">
+                                    Flux
                                 </a>
-                                <a href="#artisans" className="text-sm font-medium text-gray-700 hover:text-indigo-600 transition">
-                                    Pour les Artisans
+                                <a href="#backoffice" className="transition hover:text-[var(--landing-ink)]">
+                                    Backoffice
                                 </a>
-                                <a href="#suppliers" className="text-sm font-medium text-gray-700 hover:text-indigo-600 transition">
-                                    Pour les Fournisseurs
+                                <a href="#terrain" className="transition hover:text-[var(--landing-ink)]">
+                                    Terrain
                                 </a>
                             </nav>
 
-                            {/* CTA Buttons */}
-                            <div className="flex items-center space-x-4">
+                            <div className="flex items-center gap-3">
+                                <a
+                                    href="mailto:contact@prosartisan.ci"
+                                    className="hidden rounded-full border border-[var(--landing-border)] bg-white/70 px-4 py-2 text-sm font-semibold text-[var(--landing-ink)] transition hover:bg-white sm:inline-flex"
+                                >
+                                    Nous contacter
+                                </a>
                                 <Link
-                                    href="/login"
-                                    className="text-sm font-medium text-gray-700 hover:text-indigo-600 transition"
+                                    href="/admin/login"
+                                    className="inline-flex items-center rounded-full bg-[var(--landing-ink)] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--landing-night)]"
                                 >
-                                    Se connecter
-                                </Link>
-                                <Link
-                                    href="/register"
-                                    className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition shadow-sm"
-                                >
-                                    Commencer
+                                    Acceder au backoffice
                                 </Link>
                             </div>
                         </div>
-                    </div>
-                </header>
+                    </header>
 
-                {/* Hero Section */}
-                <section className="relative bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 overflow-hidden">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
-                        <div className="grid lg:grid-cols-2 gap-12 items-center">
-                            {/* Left Content */}
-                            <div className="space-y-8">
-                                <div className="inline-flex items-center space-x-2 px-3 py-1.5 bg-indigo-100 rounded-full">
-                                    <div className="w-2 h-2 bg-indigo-600 rounded-full animate-pulse" />
-                                    <span className="text-sm font-semibold text-indigo-700">
-                                        PLATEFORME SÉCURISÉE & VÉRIFIÉE
-                                    </span>
-                                </div>
+                    <main>
+                        <section className="relative">
+                            <div className="mx-auto grid max-w-7xl gap-12 px-4 pb-16 pt-14 sm:px-6 lg:grid-cols-[1.02fr_0.98fr] lg:px-8 lg:pb-24 lg:pt-20">
+                                <div className="max-w-3xl">
+                                    <div className="inline-flex items-center gap-2 rounded-full border border-[var(--landing-border)] bg-white/72 px-4 py-2 text-sm font-semibold text-[var(--landing-gold-deep)]">
+                                        <span className="h-2.5 w-2.5 rounded-full bg-[var(--landing-green)]" />
+                                        Marketplace travaux securisee pour la realite ivoirienne
+                                    </div>
 
-                                <h1 className="text-5xl lg:text-6xl font-bold leading-tight">
-                                    <span className="text-gray-900">Trouvez des Artisans</span>
-                                    <br />
-                                    <span className="text-gray-900">de Confiance,</span>
-                                    <br />
-                                    <span className="text-indigo-600">Paiements Sécurisés</span>
-                                </h1>
-
-                                <p className="text-lg text-gray-600 leading-relaxed max-w-xl">
-                                    La plateforme qui connecte clients, artisans et quincailleries en Côte d'Ivoire.
-                                    Système de notation N'Zassa, paiement par jalons et protection complète de vos projets.
-                                </p>
-
-                                <div className="flex flex-col sm:flex-row gap-4">
-                                    <Link
-                                        href="/register"
-                                        className="inline-flex items-center justify-center px-8 py-4 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition shadow-lg hover:shadow-xl"
+                                    <h1
+                                        className="mt-7 text-5xl font-semibold leading-[1.02] tracking-[-0.04em] sm:text-6xl lg:text-7xl"
+                                        style={{ fontFamily: '"Sora", sans-serif' }}
                                     >
-                                        Commencer maintenant
-                                    </Link>
-                                    <a
-                                        href="#how-it-works"
-                                        className="inline-flex items-center justify-center px-8 py-4 bg-white text-gray-900 font-semibold rounded-xl hover:bg-gray-50 transition border border-gray-200 shadow-sm"
-                                    >
-                                        En savoir plus
-                                    </a>
-                                </div>
-                            </div>
+                                        Le chantier reste visible, finance et controle du debut a la fin.
+                                    </h1>
 
-                            {/* Right Image */}
-                            <div className="relative">
-                                <div className="relative rounded-2xl overflow-hidden shadow-2xl aspect-[4/3] bg-gradient-to-br from-indigo-400 to-purple-600">
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                        <svg className="w-32 h-32 text-white opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                        </svg>
-                                    </div>
-                                </div>
-                                {/* Decorative elements */}
-                                <div className="absolute -top-6 -right-6 w-24 h-24 bg-yellow-400 rounded-full blur-2xl opacity-50" />
-                                <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-indigo-400 rounded-full blur-2xl opacity-50" />
-                            </div>
-                        </div>
-                    </div>
-                </section>
+                                    <p className="mt-6 max-w-2xl text-lg leading-8 text-[var(--landing-copy)]">
+                                        ProsArtisan connecte clients, artisans, fournisseurs et administrateurs dans un seul flux:
+                                        onboarding OTP, KYC, matching local, devis, sequestre, J-Code, validation jalon et arbitrage.
+                                    </p>
 
-                {/* Tailored for Your Growth Section */}
-                <section id="features" className="py-20 bg-white">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="text-center mb-16">
-                            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-                                Adapté à Votre Croissance
-                            </h2>
-                            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                                Une plateforme unique pour tous les acteurs de l'industrie de la construction et des services domestiques.
-                            </p>
-                        </div>
-
-                        <div className="grid md:grid-cols-3 gap-8">
-                            {/* For Clients */}
-                            <div className="group bg-gray-50 rounded-2xl p-8 hover:bg-white hover:shadow-xl transition-all duration-300 border border-gray-100">
-                                <div className="w-14 h-14 bg-indigo-100 rounded-xl flex items-center justify-center mb-6 group-hover:bg-indigo-600 transition">
-                                    <svg className="w-7 h-7 text-indigo-600 group-hover:text-white transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                                    </svg>
-                                </div>
-                                <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                                    Pour les Clients
-                                </h3>
-                                <p className="text-gray-600 mb-6 leading-relaxed">
-                                    Accédez à des experts vérifiés et gérez vos projets de maison avec une totale tranquillité d'esprit grâce aux paiements protégés.
-                                </p>
-                                <a
-                                    href="#clients"
-                                    className="inline-flex items-center text-indigo-600 font-semibold hover:text-indigo-700 transition"
-                                >
-                                    Trouver un artisan
-                                    <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                    </svg>
-                                </a>
-                            </div>
-
-                            {/* For Artisans */}
-                            <div className="group bg-gray-50 rounded-2xl p-8 hover:bg-white hover:shadow-xl transition-all duration-300 border border-gray-100">
-                                <div className="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center mb-6 group-hover:bg-blue-600 transition">
-                                    <svg className="w-7 h-7 text-blue-600 group-hover:text-white transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </div>
-                                <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                                    Pour les Artisans
-                                </h3>
-                                <p className="text-gray-600 mb-6 leading-relaxed">
-                                    Recevez des paiements instantanés dès l'achèvement, accédez à du matériel en crédit, et construisez une réputation professionnelle digitale.
-                                </p>
-                                <a
-                                    href="#artisans"
-                                    className="inline-flex items-center text-blue-600 font-semibold hover:text-blue-700 transition"
-                                >
-                                    Devenir artisan
-                                    <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                    </svg>
-                                </a>
-                            </div>
-
-                            {/* For Suppliers */}
-                            <div className="group bg-gray-50 rounded-2xl p-8 hover:bg-white hover:shadow-xl transition-all duration-300 border border-gray-100">
-                                <div className="w-14 h-14 bg-green-100 rounded-xl flex items-center justify-center mb-6 group-hover:bg-green-600 transition">
-                                    <svg className="w-7 h-7 text-green-600 group-hover:text-white transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                                    </svg>
-                                </div>
-                                <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                                    Pour les Fournisseurs
-                                </h3>
-                                <p className="text-gray-600 mb-6 leading-relaxed">
-                                    Profitez de ventes garanties et d'un flux constant de commandes de professionnels de confiance dans notre réseau.
-                                </p>
-                                <a
-                                    href="#suppliers"
-                                    className="inline-flex items-center text-green-600 font-semibold hover:text-green-700 transition"
-                                >
-                                    Devenir partenaire
-                                    <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                    </svg>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                {/* N'Zassa Score Section */}
-                <section className="py-20 bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-700 relative overflow-hidden">
-                    {/* Background decorations */}
-                    <div className="absolute inset-0 opacity-10">
-                        <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl" />
-                        <div className="absolute bottom-0 left-0 w-96 h-96 bg-purple-300 rounded-full blur-3xl" />
-                    </div>
-
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-                        <div className="grid lg:grid-cols-2 gap-12 items-center">
-                            {/* Left Content */}
-                            <div className="text-white space-y-6">
-                                <h2 className="text-4xl lg:text-5xl font-bold leading-tight">
-                                    Le Score N'Zassa
-                                </h2>
-                                <p className="text-lg text-indigo-100 leading-relaxed">
-                                    Notre système de notation propriétaire est la fondation de la confiance. Il évalue la performance, la fiabilité et la solvabilité pour garantir des résultats de haute qualité pour tous.
-                                </p>
-
-                                <div className="space-y-4">
-                                    <div className="flex items-start space-x-3">
-                                        <div className="flex-shrink-0 w-6 h-6 bg-indigo-400 rounded-full flex items-center justify-center mt-1">
-                                            <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                            </svg>
-                                        </div>
-                                        <div>
-                                            <h4 className="font-semibold mb-1">Historique vérifié de travail de qualité</h4>
-                                            <p className="text-indigo-100 text-sm">Suivi de chaque projet terminé avec succès</p>
-                                        </div>
+                                    <div className="mt-8 flex flex-col gap-4 sm:flex-row">
+                                        <a
+                                            href="#flux"
+                                            className="inline-flex items-center justify-center rounded-full bg-[var(--landing-gold)] px-7 py-4 text-base font-semibold text-[var(--landing-ink)] shadow-[0_18px_36px_rgba(213,160,73,0.28)] transition hover:-translate-y-0.5 hover:bg-[#e2b35b]"
+                                        >
+                                            Comprendre le parcours
+                                        </a>
+                                        <Link
+                                            href="/admin/login"
+                                            className="inline-flex items-center justify-center rounded-full border border-[var(--landing-border)] bg-white/72 px-7 py-4 text-base font-semibold text-[var(--landing-ink)] transition hover:bg-white"
+                                        >
+                                            Ouvrir le backoffice admin
+                                        </Link>
                                     </div>
 
-                                    <div className="flex items-start space-x-3">
-                                        <div className="flex-shrink-0 w-6 h-6 bg-indigo-400 rounded-full flex items-center justify-center mt-1">
-                                            <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                            </svg>
-                                        </div>
-                                        <div>
-                                            <h4 className="font-semibold mb-1">Fiabilité financière et historique de paiement</h4>
-                                            <p className="text-indigo-100 text-sm">Transactions transparentes et ponctuelles</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-start space-x-3">
-                                        <div className="flex-shrink-0 w-6 h-6 bg-indigo-400 rounded-full flex items-center justify-center mt-1">
-                                            <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                            </svg>
-                                        </div>
-                                        <div>
-                                            <h4 className="font-semibold mb-1">Indices de satisfaction client</h4>
-                                            <p className="text-indigo-100 text-sm">Évaluations et retours réels des clients</p>
-                                        </div>
+                                    <div className="mt-10 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                                        {keyStats.map((stat) => (
+                                            <StatChip key={stat.label} label={stat.label} value={stat.value} />
+                                        ))}
                                     </div>
                                 </div>
 
-                                <div className="pt-4">
-                                    <a
-                                        href="#score"
-                                        className="inline-flex items-center px-6 py-3 bg-white text-indigo-600 font-semibold rounded-xl hover:bg-gray-50 transition shadow-lg"
-                                    >
-                                        Découvrez votre score
-                                    </a>
-                                </div>
-                            </div>
-
-                            {/* Right - Score Gauge */}
-                            <div className="flex justify-center">
                                 <div className="relative">
-                                    {/* Score Circle */}
-                                    <div className="relative w-80 h-80 flex items-center justify-center">
-                                        {/* Background circle */}
-                                        <svg className="absolute inset-0 w-full h-full transform -rotate-90" viewBox="0 0 200 200">
-                                            <circle
-                                                cx="100"
-                                                cy="100"
-                                                r="80"
-                                                fill="none"
-                                                stroke="rgba(255, 255, 255, 0.2)"
-                                                strokeWidth="12"
-                                            />
-                                            {/* Progress circle */}
-                                            <circle
-                                                cx="100"
-                                                cy="100"
-                                                r="80"
-                                                fill="none"
-                                                stroke="white"
-                                                strokeWidth="12"
-                                                strokeLinecap="round"
-                                                strokeDasharray={`${(820 / 1000) * 502} 502`}
-                                                className="transition-all duration-1000"
-                                            />
-                                        </svg>
+                                    <div className="absolute -left-8 top-12 hidden h-28 w-28 rounded-full border border-[var(--landing-border)] bg-white/30 blur-2xl lg:block" />
+                                    <LandingPanel className="relative rounded-[36px] p-5 shadow-[0_30px_76px_rgba(128,95,58,0.14)]">
+                                        <div className="rounded-[30px] bg-[linear-gradient(145deg,#fff8ee_0%,#f3e3cf_100%)] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
+                                            <div className="flex items-center justify-between gap-4">
+                                                <div>
+                                                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--landing-copy)]">
+                                                        Orchestration mission
+                                                    </p>
+                                                    <h2 className="mt-3 text-3xl font-semibold leading-tight text-[var(--landing-ink)]" style={{ fontFamily: '"Sora", sans-serif' }}>
+                                                        Un produit lisible pour le terrain et pour l admin
+                                                    </h2>
+                                                </div>
+                                                <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-[var(--landing-gold-deep)]">
+                                                    Cocody • 480 000 FCFA
+                                                </span>
+                                            </div>
 
-                                        {/* Score Number */}
-                                        <div className="text-center z-10">
-                                            <div className="text-7xl font-bold text-white mb-2">820</div>
-                                            <div className="text-sm text-indigo-200 font-medium">SUR 1000</div>
+                                            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                                                {heroSignals.map((signal) => (
+                                                    <SignalCard key={signal.title} {...signal} />
+                                                ))}
+                                            </div>
+
+                                            <div className="mt-5 rounded-[28px] bg-[var(--landing-night)] p-5 text-white">
+                                                <div className="flex items-start justify-between gap-4">
+                                                    <div>
+                                                        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/55">Flux de confiance</p>
+                                                        <p className="mt-2 text-2xl font-semibold" style={{ fontFamily: '"Sora", sans-serif' }}>
+                                                            Quatre verrous critiques
+                                                        </p>
+                                                    </div>
+                                                    <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-white/70">
+                                                        Backoffice connecte
+                                                    </span>
+                                                </div>
+
+                                                <div className="mt-6 space-y-3">
+                                                    <DarkRow label="Avant financement" text="KYC actif, role valide et matching local controle." />
+                                                    <DarkRow
+                                                        label="Pendant execution"
+                                                        text="Sequestre separe, J-Code materiaux, preuves terrain et supervision admin."
+                                                    />
+                                                    <DarkRow
+                                                        label="Avant paiement"
+                                                        text="OTP jalon, visite referent si seuil critique et historique exploitable."
+                                                    />
+                                                </div>
+
+                                                <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                                                    {adminHighlights.map((item) => (
+                                                        <MiniDarkTile key={item.label} label={item.label} value={item.value} />
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </LandingPanel>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section id="roles" className="border-y border-[var(--landing-border)] bg-white/42 py-20">
+                            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                                <SectionHeading
+                                    eyebrow="Acteurs relies"
+                                    title="Une experience differente pour chaque role, mais un seul cadre de confiance"
+                                    text="ProsArtisan ne vend pas seulement de la mise en relation. La plateforme structure les droits, les preuves et les paiements pour tous les intervenants."
+                                />
+
+                                <div className="mt-10 grid gap-6 lg:grid-cols-3">
+                                    {audienceCards.map((card) => (
+                                        <AudienceCard key={card.badge} {...card} />
+                                    ))}
+                                </div>
+                            </div>
+                        </section>
+
+                        <section id="flux" className="py-20">
+                            <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[0.88fr_1.12fr] lg:px-8">
+                                <div>
+                                    <SectionHeading
+                                        eyebrow="Flux metier"
+                                        title="Le parcours complet est enfin raconte comme un produit, pas comme une documentation"
+                                        text="De l inscription jusqu au score final, chaque etape a une fonction precise et des regles non negociables."
+                                    />
+
+                                    <LandingPanel className="mt-8 rounded-[32px] p-6">
+                                        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--landing-copy)]">Ce que le systeme verrouille</p>
+                                        <div className="mt-5 space-y-3">
+                                            <LockLine title="Ratio materiaux / MO immuable" text="Le sequestre est fige a l acceptation du devis et ne change plus ensuite." />
+                                            <LockLine title="Blocage GPS fournisseur" text="Une livraison hors zone boutique declenche une alerte et stoppe le flux." />
+                                            <LockLine title="OTP obligatoire sur jalon" text="Le paiement artisan ne part pas tant que le client ne valide pas." />
+                                        </div>
+                                    </LandingPanel>
+
+                                    <LandingPanel className="mt-5 rounded-[32px] p-6">
+                                        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--landing-copy)]">Score N'Zassa</p>
+                                        <h3 className="mt-3 text-2xl font-semibold text-[var(--landing-ink)]" style={{ fontFamily: '"Sora", sans-serif' }}>
+                                            Un score qui sert l execution et la confiance
+                                        </h3>
+                                        <div className="mt-6 space-y-4">
+                                            {scoreParts.map((item) => (
+                                                <ScoreBar key={item.label} label={item.label} value={item.value} />
+                                            ))}
+                                        </div>
+                                    </LandingPanel>
+                                </div>
+
+                                <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                                    {flowSteps.map((step, index) => (
+                                        <FlowCard key={step.title} index={index} {...step} />
+                                    ))}
+                                </div>
+                            </div>
+                        </section>
+
+                        <section className="bg-[linear-gradient(180deg,#fcf5e9_0%,#f3e8d7_100%)] py-20">
+                            <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[1.04fr_0.96fr] lg:px-8">
+                                <div>
+                                    <SectionHeading
+                                        eyebrow="Confiance et controle"
+                                        title="Les regles critiques sont visibles tout de suite, pas cachees dans le code"
+                                        text="La landing assume ce qui fait la difference: des preuves, des seuils, des blocages automatiques et un vrai arbitrage."
+                                    />
+
+                                    <div className="mt-8 grid gap-4 sm:grid-cols-2">
+                                        {safeguardCards.map((card) => (
+                                            <SafeguardCard key={card.title} {...card} />
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="rounded-[36px] bg-[linear-gradient(145deg,#201b18_0%,#2c221c_100%)] p-6 text-white shadow-[0_34px_80px_rgba(43,31,24,0.22)]">
+                                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/55">Lecture backoffice</p>
+                                    <h3 className="mt-4 text-3xl font-semibold leading-tight" style={{ fontFamily: '"Sora", sans-serif' }}>
+                                        Un poste d operation pour piloter KYC, missions, paiements et litiges
+                                    </h3>
+
+                                    <div className="mt-8 space-y-4">
+                                        <DarkRow
+                                            label="Validation quotidienne"
+                                            text="Comptes en attente, demandes KYC, activation des partenaires et dossiers sensibles."
+                                        />
+                                        <DarkRow
+                                            label="Surveillance mission"
+                                            text="Jalons soumis, alertes GPS, projets au-dessus du seuil referent et suivis terrains."
+                                        />
+                                        <DarkRow
+                                            label="Arbitrage et paiement"
+                                            text="Litiges ouverts, gel des flux, paiements fournisseurs et historique de decaissement."
+                                        />
+                                    </div>
+
+                                    <div className="mt-8 rounded-[28px] border border-white/10 bg-white/5 p-5">
+                                        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/50">Vue synthese admin</p>
+                                        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                                            <MiniDarkTile label="Comptes a activer" value="KYC et roles a valider" />
+                                            <MiniDarkTile label="Missions a suivre" value="Financees, en cours, litiges" />
+                                            <MiniDarkTile label="Paiements mobiles" value="Collecte, decaissement, anomalies" />
+                                            <MiniDarkTile label="Referents terrain" value="Visites et missions critiques" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section id="backoffice" className="py-20">
+                            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                                <SectionHeading
+                                    eyebrow="Backoffice"
+                                    title="Le poste admin est pense pour travailler, pas pour exposer des details techniques"
+                                    text="La plateforme doit aider a prendre des decisions vite: verifier, filtrer, arbitrer, payer, tracer et relancer."
+                                />
+
+                                <div className="mt-10 grid gap-6 lg:grid-cols-[0.96fr_1.04fr]">
+                                    <div className="grid gap-5 sm:grid-cols-2">
+                                        {adminModules.map((module) => (
+                                            <AdminModuleCard key={module.title} {...module} />
+                                        ))}
+                                    </div>
+
+                                    <LandingPanel className="rounded-[34px] p-5">
+                                        <div className="rounded-[28px] bg-[linear-gradient(160deg,#fff8ef_0%,#f2e1c7_100%)] p-5">
+                                            <div className="flex flex-wrap items-center gap-3">
+                                                <span className="rounded-full bg-white/80 px-4 py-2 text-sm font-semibold text-[var(--landing-ink)]">Vue d'ensemble</span>
+                                                <span className="rounded-full border border-[var(--landing-border)] bg-white/55 px-4 py-2 text-sm font-semibold text-[var(--landing-copy)]">
+                                                    Utilisateurs
+                                                </span>
+                                                <span className="rounded-full border border-[var(--landing-border)] bg-white/55 px-4 py-2 text-sm font-semibold text-[var(--landing-copy)]">
+                                                    Paiements
+                                                </span>
+                                                <span className="rounded-full border border-[var(--landing-border)] bg-white/55 px-4 py-2 text-sm font-semibold text-[var(--landing-copy)]">
+                                                    Parametres
+                                                </span>
+                                            </div>
+
+                                            <div className="mt-6 grid gap-4 md:grid-cols-2">
+                                                <BackofficeMetric title="Comptes en attente" value="12" detail="KYC, activation et pieces manquantes" />
+                                                <BackofficeMetric title="Missions en cours" value="28" detail="Suivi jalons, OTP et preuves terrain" />
+                                                <BackofficeMetric title="Litiges ouverts" value="3" detail="Arbitrages clients / artisans en attente" />
+                                                <BackofficeMetric title="Collecte mobile money" value="14,2M FCFA" detail="Wave CI et Orange Money CI consolides" />
+                                            </div>
+
+                                            <div className="mt-5 rounded-[26px] border border-[var(--landing-border)] bg-white/78 p-4">
+                                                <div className="grid gap-3 md:grid-cols-[1.05fr_0.95fr]">
+                                                    <div>
+                                                        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--landing-copy)]">Liste operable</p>
+                                                        <div className="mt-4 space-y-3">
+                                                            <ListRow label="Admin Baobab" status="KYC valide" detail="Role: admin • Activite recente" />
+                                                            <ListRow label="Mission plomberie Riviera" status="OTP requis" detail="Phase 4 • 850 000 FCFA" />
+                                                            <ListRow label="Fournisseur agrees" status="GPS controle" detail="Boutiques, scans et anomalies" />
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="rounded-[22px] bg-[var(--landing-night)] p-4 text-white">
+                                                        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/55">Focus du jour</p>
+                                                        <div className="mt-4 space-y-3">
+                                                            <DarkRow label="A traiter" text="Valider les comptes critiques et purger les faux positifs KYC." />
+                                                            <DarkRow label="A surveiller" text="Alertes GPS fournisseurs et missions proches du seuil referent." />
+                                                            <DarkRow label="A conclure" text="Arbitrages ouverts, remboursements ou paiements artisan." />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </LandingPanel>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section id="terrain" className="py-20">
+                            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                                <SectionHeading
+                                    eyebrow="Concu pour le terrain"
+                                    title="Pas une vitrine abstraite: une plateforme faite pour les conditions reelles"
+                                    text="Connectivite limitee, paiements mobiles, preuves chantier, coordination locale et parcours clairs depuis le telephone."
+                                />
+
+                                <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+                                    {terrainCards.map((card) => (
+                                        <TerrainCard key={card.title} {...card} />
+                                    ))}
+                                </div>
+                            </div>
+                        </section>
+
+                        <section className="pb-20">
+                            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                                <div className="rounded-[40px] border border-[var(--landing-border)] bg-[linear-gradient(145deg,#fff6e7_0%,#f2dfc2_100%)] p-8 shadow-[0_28px_70px_rgba(141,109,68,0.14)] lg:p-10">
+                                    <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
+                                        <div>
+                                            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--landing-copy)]">Pret a operer</p>
+                                            <h2 className="mt-4 text-4xl font-semibold leading-tight text-[var(--landing-ink)]" style={{ fontFamily: '"Sora", sans-serif' }}>
+                                                Une page d accueil qui explique enfin le vrai produit ProsArtisan.
+                                            </h2>
+                                            <p className="mt-4 max-w-3xl text-base leading-7 text-[var(--landing-copy)]">
+                                                Le public comprend les roles, les verrous et les flux. L equipe admin retrouve un acces propre vers son backoffice, sans console technique ni faux ecrans publics.
+                                            </p>
+                                        </div>
+
+                                        <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
+                                            <Link
+                                                href="/admin/login"
+                                                className="inline-flex items-center justify-center rounded-full bg-[var(--landing-ink)] px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-[var(--landing-night)]"
+                                            >
+                                                Acceder au backoffice
+                                            </Link>
+                                            <a
+                                                href="mailto:contact@prosartisan.ci"
+                                                className="inline-flex items-center justify-center rounded-full border border-[var(--landing-border)] bg-white/70 px-6 py-3.5 text-sm font-semibold text-[var(--landing-ink)] transition hover:bg-white"
+                                            >
+                                                Parler a l equipe
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </main>
+
+                    <footer id="contact" className="bg-[var(--landing-night)] text-white">
+                        <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+                            <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr_0.8fr_0.8fr]">
+                                <div>
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--landing-gold)] text-[var(--landing-ink)]">
+                                            <img src="/img/prosartisan-logo.png" alt="ProsArtisan" className="h-8 w-8 object-contain" />
+                                        </div>
+                                        <div>
+                                            <p className="text-lg font-semibold" style={{ fontFamily: '"Sora", sans-serif' }}>
+                                                ProsArtisan
+                                            </p>
+                                            <p className="text-sm text-white/55">Marketplace travaux securisee</p>
                                         </div>
                                     </div>
 
-                                    {/* Label */}
-                                    <div className="text-center mt-6">
-                                        <div className="text-white font-semibold text-lg">Excellente Fiabilité</div>
-                                        <div className="text-indigo-200 text-sm mt-1">Top 5% de tous les artisans</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                {/* Secure Project Flow Section */}
-                <section id="how-it-works" className="py-20 bg-gray-50">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="text-center mb-16">
-                            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-                                Flux de Projet Sécurisé
-                            </h2>
-                            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                                Comment nous protégeons vos intérêts du début à la fin.
-                            </p>
-                        </div>
-
-                        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-                            {/* Step 1 */}
-                            <div className="relative">
-                                <div className="bg-white rounded-2xl p-8 shadow-sm hover:shadow-md transition h-full">
-                                    <div className="flex items-center justify-center w-16 h-16 bg-indigo-100 rounded-2xl mb-6">
-                                        <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                        </svg>
-                                    </div>
-                                    <div className="mb-3">
-                                        <span className="inline-block px-3 py-1 bg-indigo-50 text-indigo-600 text-xs font-bold rounded-full mb-2">
-                                            ÉTAPE 1
-                                        </span>
-                                        <h3 className="text-xl font-semibold text-gray-900">Accord</h3>
-                                    </div>
-                                    <p className="text-gray-600 text-sm leading-relaxed">
-                                        Les parties s'accordent sur le scope, le budget et la timeline.
+                                    <p className="mt-5 max-w-md text-sm leading-7 text-white/68">
+                                        ProsArtisan connecte les bons acteurs autour d un cadre clair: verification, execution, paiement, preuves et arbitrage.
                                     </p>
                                 </div>
-                                {/* Connector line */}
-                                <div className="hidden lg:block absolute top-12 left-full w-full h-0.5 bg-gradient-to-r from-indigo-200 to-transparent -z-10" />
-                            </div>
 
-                            {/* Step 2 */}
-                            <div className="relative">
-                                <div className="bg-white rounded-2xl p-8 shadow-sm hover:shadow-md transition h-full">
-                                    <div className="flex items-center justify-center w-16 h-16 bg-blue-100 rounded-2xl mb-6">
-                                        <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                        </svg>
-                                    </div>
-                                    <div className="mb-3">
-                                        <span className="inline-block px-3 py-1 bg-blue-50 text-blue-600 text-xs font-bold rounded-full mb-2">
-                                            ÉTAPE 2
-                                        </span>
-                                        <h3 className="text-xl font-semibold text-gray-900">Dépôt en Séquestre</h3>
-                                    </div>
-                                    <p className="text-gray-600 text-sm leading-relaxed">
-                                        Le client sécurise les fonds dans le portefeuille N'Zassa protégé.
-                                    </p>
-                                </div>
-                                <div className="hidden lg:block absolute top-12 left-full w-full h-0.5 bg-gradient-to-r from-blue-200 to-transparent -z-10" />
-                            </div>
-
-                            {/* Step 3 */}
-                            <div className="relative">
-                                <div className="bg-white rounded-2xl p-8 shadow-sm hover:shadow-md transition h-full">
-                                    <div className="flex items-center justify-center w-16 h-16 bg-purple-100 rounded-2xl mb-6">
-                                        <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
-                                        </svg>
-                                    </div>
-                                    <div className="mb-3">
-                                        <span className="inline-block px-3 py-1 bg-purple-50 text-purple-600 text-xs font-bold rounded-full mb-2">
-                                            ÉTAPE 3
-                                        </span>
-                                        <h3 className="text-xl font-semibold text-gray-900">Achèvement du Travail</h3>
-                                    </div>
-                                    <p className="text-gray-600 text-sm leading-relaxed">
-                                        L'artisan effectue le service selon les normes convenues.
-                                    </p>
-                                </div>
-                                <div className="hidden lg:block absolute top-12 left-full w-full h-0.5 bg-gradient-to-r from-purple-200 to-transparent -z-10" />
-                            </div>
-
-                            {/* Step 4 */}
-                            <div className="relative">
-                                <div className="bg-white rounded-2xl p-8 shadow-sm hover:shadow-md transition h-full border-2 border-indigo-100">
-                                    <div className="flex items-center justify-center w-16 h-16 bg-indigo-600 rounded-2xl mb-6">
-                                        <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                                        </svg>
-                                    </div>
-                                    <div className="mb-3">
-                                        <span className="inline-block px-3 py-1 bg-indigo-600 text-white text-xs font-bold rounded-full mb-2">
-                                            ÉTAPE 4
-                                        </span>
-                                        <h3 className="text-xl font-semibold text-gray-900">Livraison Sécurisée</h3>
-                                    </div>
-                                    <p className="text-gray-600 text-sm leading-relaxed">
-                                        Le paiement sécurisé est instantanément transféré à l'artisan.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                {/* Footer */}
-                <footer className="bg-gray-900 text-gray-300">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-                        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
-                            {/* Company Info */}
-                            <div className="space-y-4">
-                                <div className="flex items-center space-x-2">
-                                    <img
-                                        src="/img/prosartisan-logo.png"
-                                        alt="ProsArtisan Logo"
-                                        className="h-10 w-auto"
-                                    />
-                                </div>
-                                <p className="text-sm text-gray-400 leading-relaxed">
-                                    ProsArtisan - La marketplace qui connecte clients, artisans et quincailleries en Côte d'Ivoire.
-                                    Paiements sécurisés, notation transparente, protection garantie.
-                                </p>
-                                <div className="flex space-x-4">
-                                    <a href="#" className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-indigo-600 transition">
-                                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                                        </svg>
+                                <FooterGroup title="Produit">
+                                    <a href="#roles" className="transition hover:text-white">
+                                        Acteurs
                                     </a>
-                                    <a href="#" className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-indigo-600 transition">
-                                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
-                                        </svg>
+                                    <a href="#flux" className="transition hover:text-white">
+                                        Flux metier
                                     </a>
-                                    <a href="#" className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-indigo-600 transition">
-                                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                                        </svg>
+                                    <a href="#backoffice" className="transition hover:text-white">
+                                        Backoffice
                                     </a>
-                                </div>
+                                    <a href="#terrain" className="transition hover:text-white">
+                                        Terrain
+                                    </a>
+                                </FooterGroup>
+
+                                <FooterGroup title="Acces">
+                                    <Link href="/admin/login" className="transition hover:text-white">
+                                        Backoffice admin
+                                    </Link>
+                                    <a href="mailto:contact@prosartisan.ci" className="transition hover:text-white">
+                                        contact@prosartisan.ci
+                                    </a>
+                                    <a href="tel:+2250123456789" className="transition hover:text-white">
+                                        +225 01 23 45 67 89
+                                    </a>
+                                </FooterGroup>
+
+                                <FooterGroup title="Terrain">
+                                    <span>Cote d'Ivoire</span>
+                                    <span>Wave CI</span>
+                                    <span>Orange Money CI</span>
+                                    <span>Android prioritaire</span>
+                                </FooterGroup>
                             </div>
 
-                            {/* Platform */}
-                            <div>
-                                <h4 className="text-white font-semibold mb-4">Plateforme</h4>
-                                <ul className="space-y-2">
-                                    <li><a href="#how-it-works" className="text-sm hover:text-white transition">Comment ça marche</a></li>
-                                    <li><a href="#security" className="text-sm hover:text-white transition">Sécurité & Confiance</a></li>
-                                    <li><a href="#score" className="text-sm hover:text-white transition">Le Score N'Zassa</a></li>
-                                    <li><a href="#pricing" className="text-sm hover:text-white transition">Tarification</a></li>
-                                </ul>
-                            </div>
-
-                            {/* Partners */}
-                            <div>
-                                <h4 className="text-white font-semibold mb-4">Partenaires</h4>
-                                <ul className="space-y-2">
-                                    <li><Link href="/register?role=artisan" className="text-sm hover:text-white transition">Pour les Artisans</Link></li>
-                                    <li><Link href="/register?role=fournisseur" className="text-sm hover:text-white transition">Pour les Fournisseurs</Link></li>
-                                    <li><a href="#corporate" className="text-sm hover:text-white transition">Comptes Entreprises</a></li>
-                                    <li><a href="#directory" className="text-sm hover:text-white transition">Annuaire Partenaires</a></li>
-                                </ul>
-                            </div>
-
-                            {/* Contact */}
-                            <div>
-                                <h4 className="text-white font-semibold mb-4">Contact</h4>
-                                <ul className="space-y-2">
-                                    <li>
-                                        <a href="mailto:contact@prosartisan.ci" className="text-sm hover:text-white transition flex items-center">
-                                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                            </svg>
-                                            contact@prosartisan.ci
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a href="tel:+22501234567" className="text-sm hover:text-white transition flex items-center">
-                                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                            </svg>
-                                            +225 01 23 45 67 89
-                                        </a>
-                                    </li>
-                                    <li className="text-sm flex items-start">
-                                        <svg className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        </svg>
-                                        <span>Abidjan, Côte d'Ivoire</span>
-                                    </li>
-                                </ul>
+                            <div className="mt-10 border-t border-white/10 pt-6 text-sm text-white/55">
+                                © {currentYear} ProsArtisan. Tous droits reserves.
                             </div>
                         </div>
-
-                        {/* Bottom Bar */}
-                        <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-                            <p className="text-sm text-gray-400">
-                                © 2024 ProsArtisan. Tous droits réservés.
-                            </p>
-                            <div className="flex flex-wrap justify-center gap-6 text-sm">
-                                <a href="#privacy" className="hover:text-white transition">Politique de confidentialité</a>
-                                <a href="#terms" className="hover:text-white transition">Conditions d'utilisation</a>
-                                <a href="#cookies" className="hover:text-white transition">Politique de cookies</a>
-                            </div>
-                        </div>
-                    </div>
-                </footer>
+                    </footer>
+                </div>
             </div>
         </>
     );
+}
+
+function SectionHeading({ eyebrow, text, title }: { eyebrow: string; text: string; title: string }) {
+    return (
+        <div className="max-w-3xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--landing-gold-deep)]">{eyebrow}</p>
+            <h2 className="mt-4 text-4xl font-semibold leading-tight text-[var(--landing-ink)] sm:text-5xl" style={{ fontFamily: '"Sora", sans-serif' }}>
+                {title}
+            </h2>
+            <p className="mt-4 text-base leading-7 text-[var(--landing-copy)]">{text}</p>
+        </div>
+    );
+}
+
+function LandingPanel({ children, className = '' }: { children: ReactNode; className?: string }) {
+    return (
+        <section
+            className={cn(
+                'border border-[var(--landing-border)] bg-[var(--landing-panel)] backdrop-blur-xl shadow-[0_20px_44px_rgba(135,103,65,0.08)]',
+                className,
+            )}
+        >
+            {children}
+        </section>
+    );
+}
+
+function StatChip({ label, value }: { label: string; value: string }) {
+    return (
+        <div className="rounded-[26px] border border-[var(--landing-border)] bg-[var(--landing-panel)] p-4 backdrop-blur-xl">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--landing-copy)]">{label}</p>
+            <p className="mt-2 text-sm font-semibold leading-6 text-[var(--landing-ink)]">{value}</p>
+        </div>
+    );
+}
+
+function SignalCard({
+    eyebrow,
+    text,
+    title,
+    tone,
+}: {
+    eyebrow: string;
+    text: string;
+    title: string;
+    tone: 'gold' | 'green' | 'clay' | 'night';
+}) {
+    return (
+        <div className="rounded-[24px] border border-[var(--landing-border)] bg-white/78 p-4">
+            <div className="flex items-center gap-3">
+                <span className={cn('h-3 w-3 rounded-full', signalDotTone(tone))} />
+                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--landing-copy)]">{eyebrow}</p>
+            </div>
+            <p className="mt-3 text-base font-semibold text-[var(--landing-ink)]">{title}</p>
+            <p className="mt-2 text-sm leading-6 text-[var(--landing-copy)]">{text}</p>
+        </div>
+    );
+}
+
+function AudienceCard({
+    badge,
+    icon,
+    points,
+    text,
+    title,
+    tone,
+}: {
+    badge: string;
+    icon: IconName;
+    points: string[];
+    text: string;
+    title: string;
+    tone: 'gold' | 'green' | 'clay';
+}) {
+    return (
+        <LandingPanel className="h-full rounded-[32px] p-7">
+            <div className="flex items-center justify-between gap-4">
+                <span className={cn('rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em]', badgeTone(tone))}>{badge}</span>
+                <div className={cn('flex h-12 w-12 items-center justify-center rounded-2xl', iconPanelTone(tone))}>
+                    <FeatureIcon kind={icon} className="h-5 w-5" />
+                </div>
+            </div>
+
+            <h3 className="mt-5 text-2xl font-semibold leading-tight text-[var(--landing-ink)]" style={{ fontFamily: '"Sora", sans-serif' }}>
+                {title}
+            </h3>
+            <p className="mt-4 text-base leading-7 text-[var(--landing-copy)]">{text}</p>
+
+            <div className="mt-6 space-y-3">
+                {points.map((point) => (
+                    <FeatureBullet key={point}>{point}</FeatureBullet>
+                ))}
+            </div>
+        </LandingPanel>
+    );
+}
+
+function FlowCard({
+    index,
+    phase,
+    points,
+    text,
+    title,
+    tone,
+}: {
+    index: number;
+    phase: string;
+    points: string[];
+    text: string;
+    title: string;
+    tone: 'gold' | 'blue' | 'green' | 'clay' | 'night';
+}) {
+    return (
+        <LandingPanel className="rounded-[30px] p-6">
+            <div className="flex items-center justify-between gap-3">
+                <span className={cn('flex h-11 w-11 items-center justify-center rounded-2xl text-sm font-semibold text-white', flowTone(tone))}>
+                    0{index + 1}
+                </span>
+                <span className={cn('rounded-full px-3 py-1 text-xs font-semibold', flowPillTone(tone))}>{phase}</span>
+            </div>
+
+            <h3 className="mt-5 text-2xl font-semibold text-[var(--landing-ink)]" style={{ fontFamily: '"Sora", sans-serif' }}>
+                {title}
+            </h3>
+            <p className="mt-3 text-base leading-7 text-[var(--landing-copy)]">{text}</p>
+
+            <div className="mt-5 space-y-3">
+                {points.map((point) => (
+                    <FeatureBullet key={point}>{point}</FeatureBullet>
+                ))}
+            </div>
+        </LandingPanel>
+    );
+}
+
+function SafeguardCard({ icon, text, title }: { icon: IconName; text: string; title: string }) {
+    return (
+        <LandingPanel className="rounded-[28px] p-5">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--landing-cream)] text-[var(--landing-gold-deep)]">
+                <FeatureIcon kind={icon} className="h-5 w-5" />
+            </div>
+            <h3 className="mt-4 text-lg font-semibold text-[var(--landing-ink)]">{title}</h3>
+            <p className="mt-2 text-sm leading-6 text-[var(--landing-copy)]">{text}</p>
+        </LandingPanel>
+    );
+}
+
+function AdminModuleCard({ icon, text, title }: { icon: IconName; text: string; title: string }) {
+    return (
+        <LandingPanel className="rounded-[30px] p-6">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--landing-cream)] text-[var(--landing-gold-deep)]">
+                <FeatureIcon kind={icon} className="h-5 w-5" />
+            </div>
+            <h3 className="mt-5 text-xl font-semibold text-[var(--landing-ink)]" style={{ fontFamily: '"Sora", sans-serif' }}>
+                {title}
+            </h3>
+            <p className="mt-3 text-sm leading-6 text-[var(--landing-copy)]">{text}</p>
+        </LandingPanel>
+    );
+}
+
+function TerrainCard({ icon, text, title }: { icon: IconName; text: string; title: string }) {
+    return (
+        <LandingPanel className="rounded-[28px] p-6">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--landing-cream)] text-[var(--landing-gold-deep)]">
+                <FeatureIcon kind={icon} className="h-5 w-5" />
+            </div>
+            <h3 className="mt-5 text-lg font-semibold text-[var(--landing-ink)]">{title}</h3>
+            <p className="mt-2 text-sm leading-6 text-[var(--landing-copy)]">{text}</p>
+        </LandingPanel>
+    );
+}
+
+function FeatureBullet({ children }: { children: ReactNode }) {
+    return (
+        <div className="flex items-start gap-3">
+            <span className="mt-1 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--landing-surface)] text-[var(--landing-gold-deep)]">
+                <CheckStroke className="h-3 w-3" />
+            </span>
+            <p className="text-sm leading-6 text-[var(--landing-copy)]">{children}</p>
+        </div>
+    );
+}
+
+function LockLine({ text, title }: { text: string; title: string }) {
+    return (
+        <div className="rounded-[24px] border border-[var(--landing-border)] bg-white/72 p-4">
+            <p className="text-sm font-semibold text-[var(--landing-ink)]">{title}</p>
+            <p className="mt-2 text-sm leading-6 text-[var(--landing-copy)]">{text}</p>
+        </div>
+    );
+}
+
+function ScoreBar({ label, value }: { label: string; value: number }) {
+    return (
+        <div>
+            <div className="mb-2 flex items-center justify-between text-sm">
+                <span className="font-semibold text-[var(--landing-ink)]">{label}</span>
+                <span className="text-[var(--landing-copy)]">{value}%</span>
+            </div>
+            <div className="h-3 rounded-full bg-[#ead8bc]">
+                <div className="h-3 rounded-full bg-[linear-gradient(90deg,#d8a84e_0%,#c97749_100%)]" style={{ width: `${value}%` }} />
+            </div>
+        </div>
+    );
+}
+
+function DarkRow({ label, text }: { label: string; text: string }) {
+    return (
+        <div className="rounded-[24px] border border-white/10 bg-white/5 p-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/50">{label}</p>
+            <p className="mt-2 text-sm leading-6 text-white/82">{text}</p>
+        </div>
+    );
+}
+
+function MiniDarkTile({ label, value }: { label: string; value: string }) {
+    return (
+        <div className="rounded-[20px] border border-white/10 bg-white/5 px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.2em] text-white/50">{label}</p>
+            <p className="mt-2 text-sm font-semibold text-white">{value}</p>
+        </div>
+    );
+}
+
+function BackofficeMetric({ detail, title, value }: { detail: string; title: string; value: string }) {
+    return (
+        <div className="rounded-[24px] border border-[var(--landing-border)] bg-white/78 p-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--landing-copy)]">{title}</p>
+            <p className="mt-3 text-3xl font-semibold text-[var(--landing-ink)]" style={{ fontFamily: '"Sora", sans-serif' }}>
+                {value}
+            </p>
+            <p className="mt-2 text-sm leading-6 text-[var(--landing-copy)]">{detail}</p>
+        </div>
+    );
+}
+
+function ListRow({ detail, label, status }: { detail: string; label: string; status: string }) {
+    return (
+        <div className="rounded-[18px] border border-[var(--landing-border)] bg-[var(--landing-panel)] p-3">
+            <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-semibold text-[var(--landing-ink)]">{label}</p>
+                <span className="rounded-full bg-[var(--landing-cream)] px-3 py-1 text-[11px] font-semibold text-[var(--landing-gold-deep)]">
+                    {status}
+                </span>
+            </div>
+            <p className="mt-2 text-sm leading-6 text-[var(--landing-copy)]">{detail}</p>
+        </div>
+    );
+}
+
+function FooterGroup({ children, title }: { children: ReactNode; title: string }) {
+    return (
+        <div className="space-y-3 text-sm text-white/68">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/45">{title}</p>
+            <div className="flex flex-col gap-2">{children}</div>
+        </div>
+    );
+}
+
+type IconName = 'alert' | 'artisan' | 'client' | 'dashboard' | 'gps' | 'mobile' | 'otp' | 'pin' | 'scale' | 'score' | 'shield' | 'signal' | 'store' | 'wallet';
+
+function FeatureIcon({ className, kind }: { className?: string; kind: IconName }) {
+    switch (kind) {
+        case 'client':
+            return (
+                <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                    <circle cx="12" cy="8" r="3.2" />
+                    <path d="M5.5 19c0-3.4 2.9-5.7 6.5-5.7s6.5 2.3 6.5 5.7" strokeLinecap="round" />
+                </svg>
+            );
+        case 'artisan':
+            return (
+                <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                    <path d="m8 5 11 11" strokeLinecap="round" />
+                    <path d="m13.5 4.5 6 6-2.1 2.1-6-6Z" strokeLinejoin="round" />
+                    <path d="m4.8 14.6 4.6 4.6-2.2 1.1a2.8 2.8 0 0 1-3.7-3.7Z" strokeLinejoin="round" />
+                </svg>
+            );
+        case 'store':
+            return (
+                <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                    <path d="M4 9.5 5.3 5h13.4L20 9.5" strokeLinejoin="round" />
+                    <path d="M5 9.5h14V19H5Z" strokeLinejoin="round" />
+                    <path d="M9 13.5h6" strokeLinecap="round" />
+                </svg>
+            );
+        case 'shield':
+            return (
+                <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                    <path d="M12 3s5 2 7 3v5c0 5-3.4 8-7 10-3.6-2-7-5-7-10V6c2-1 7-3 7-3Z" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="m9.5 12 1.6 1.8 3.4-3.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+            );
+        case 'gps':
+            return (
+                <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="6" />
+                    <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
+                    <path d="M12 3v3" strokeLinecap="round" />
+                    <path d="M12 18v3" strokeLinecap="round" />
+                    <path d="M3 12h3" strokeLinecap="round" />
+                    <path d="M18 12h3" strokeLinecap="round" />
+                </svg>
+            );
+        case 'pin':
+            return (
+                <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                    <path d="M12 20s6-5.4 6-10a6 6 0 1 0-12 0c0 4.6 6 10 6 10Z" strokeLinecap="round" strokeLinejoin="round" />
+                    <circle cx="12" cy="10" r="2.2" />
+                </svg>
+            );
+        case 'otp':
+            return (
+                <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                    <rect x="5" y="3.5" width="14" height="17" rx="2.5" />
+                    <path d="M8.5 8.5h7" strokeLinecap="round" />
+                    <path d="M8.5 12h7" strokeLinecap="round" />
+                    <path d="M9 16h1.2" strokeLinecap="round" />
+                    <path d="M12 16h1.2" strokeLinecap="round" />
+                    <path d="M15 16h1.2" strokeLinecap="round" />
+                </svg>
+            );
+        case 'alert':
+            return (
+                <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                    <path d="m12 4 8 14H4Z" strokeLinejoin="round" />
+                    <path d="M12 9v4.5" strokeLinecap="round" />
+                    <circle cx="12" cy="17.2" r="1" fill="currentColor" stroke="none" />
+                </svg>
+            );
+        case 'scale':
+            return (
+                <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                    <path d="M12 5v14" strokeLinecap="round" />
+                    <path d="M6 8h12" strokeLinecap="round" />
+                    <path d="m7 8-3 5h6Z" strokeLinejoin="round" />
+                    <path d="m17 8-3 5h6Z" strokeLinejoin="round" />
+                    <path d="M9.5 20h5" strokeLinecap="round" />
+                </svg>
+            );
+        case 'dashboard':
+            return (
+                <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                    <rect x="4" y="4" width="6.5" height="6.5" rx="1.5" />
+                    <rect x="13.5" y="4" width="6.5" height="10.5" rx="1.5" />
+                    <rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5" />
+                    <rect x="13.5" y="17.5" width="6.5" height="2.5" rx="1.2" />
+                </svg>
+            );
+        case 'wallet':
+            return (
+                <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                    <path d="M5 7.5A2.5 2.5 0 0 1 7.5 5H18a1 1 0 0 1 0 2H7.5A.5.5 0 0 0 7 7.5v.5h12a1 1 0 0 1 1 1v7.5a2.5 2.5 0 0 1-2.5 2.5h-10A2.5 2.5 0 0 1 5 16.5Z" strokeLinejoin="round" />
+                    <path d="M16 13h4" strokeLinecap="round" />
+                </svg>
+            );
+        case 'mobile':
+            return (
+                <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                    <rect x="7" y="3" width="10" height="18" rx="2.5" />
+                    <path d="M10.5 6h3" strokeLinecap="round" />
+                    <circle cx="12" cy="17" r="1" fill="currentColor" stroke="none" />
+                </svg>
+            );
+        case 'signal':
+            return (
+                <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                    <path d="M4 18h16" strokeLinecap="round" />
+                    <path d="M6.5 14.5a8.5 8.5 0 0 1 11 0" strokeLinecap="round" />
+                    <path d="M9.5 11.5a4.5 4.5 0 0 1 5 0" strokeLinecap="round" />
+                    <circle cx="12" cy="18" r="1.4" fill="currentColor" stroke="none" />
+                </svg>
+            );
+        case 'score':
+            return (
+                <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                    <path d="M5 18h14" strokeLinecap="round" />
+                    <path d="M8 18v-5" strokeLinecap="round" />
+                    <path d="M12 18V8" strokeLinecap="round" />
+                    <path d="M16 18v-8" strokeLinecap="round" />
+                </svg>
+            );
+    }
+}
+
+function CheckStroke({ className }: { className?: string }) {
+    return (
+        <svg className={className} fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+            <path d="m5 12.5 4.2 4L19 7.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+    );
+}
+
+function badgeTone(tone: 'gold' | 'green' | 'clay') {
+    const classes = {
+        gold: 'bg-[#f7e7c9] text-[var(--landing-gold-deep)]',
+        green: 'bg-[#e6f5ee] text-[var(--landing-green)]',
+        clay: 'bg-[#fbe7e0] text-[var(--landing-clay)]',
+    };
+
+    return classes[tone];
+}
+
+function iconPanelTone(tone: 'gold' | 'green' | 'clay') {
+    const classes = {
+        gold: 'bg-[#fff0d9] text-[var(--landing-gold-deep)]',
+        green: 'bg-[#e9f6f0] text-[var(--landing-green)]',
+        clay: 'bg-[#fde9e3] text-[var(--landing-clay)]',
+    };
+
+    return classes[tone];
+}
+
+function signalDotTone(tone: 'gold' | 'green' | 'clay' | 'night') {
+    const classes = {
+        gold: 'bg-[var(--landing-gold)]',
+        green: 'bg-[var(--landing-green)]',
+        clay: 'bg-[var(--landing-clay)]',
+        night: 'bg-[var(--landing-night)]',
+    };
+
+    return classes[tone];
+}
+
+function flowTone(tone: 'gold' | 'blue' | 'green' | 'clay' | 'night') {
+    const classes = {
+        gold: 'bg-[var(--landing-gold)]',
+        blue: 'bg-[#397eb5]',
+        green: 'bg-[var(--landing-green)]',
+        clay: 'bg-[var(--landing-clay)]',
+        night: 'bg-[var(--landing-night)]',
+    };
+
+    return classes[tone];
+}
+
+function flowPillTone(tone: 'gold' | 'blue' | 'green' | 'clay' | 'night') {
+    const classes = {
+        gold: 'bg-[#f7e8cb] text-[var(--landing-gold-deep)]',
+        blue: 'bg-[#e8f2fb] text-[#397eb5]',
+        green: 'bg-[#e8f5ef] text-[var(--landing-green)]',
+        clay: 'bg-[#fde8e2] text-[var(--landing-clay)]',
+        night: 'bg-[#ede8e2] text-[var(--landing-night)]',
+    };
+
+    return classes[tone];
+}
+
+function cn(...values: Array<string | false | null | undefined>) {
+    return values.filter(Boolean).join(' ');
 }

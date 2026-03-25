@@ -16,6 +16,8 @@ class JCode extends Model
         'paiement_status', 'paye_at'
     ];
 
+    protected $hidden = ['position_scan'];
+
     protected $casts = [
         'montant'    => 'integer',
         'expires_at' => 'datetime',

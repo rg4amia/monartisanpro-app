@@ -1,22 +1,12 @@
-import { Head, Link } from '@inertiajs/react';
-import { startTransition, useDeferredValue, useEffect, useMemo, useState } from 'react';
-import type { FormEvent, ReactNode } from 'react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { useDeferredValue, useEffect, useMemo, useState } from 'react';
+import type { ReactNode } from 'react';
 
 import { cn } from '@/lib/utils';
 
 type AdminTab = 'dashboard' | 'kyc' | 'missions' | 'litiges' | 'users' | 'transactions' | 'settings';
 type ThemeMode = 'light' | 'dark';
 type Tone = 'amber' | 'green' | 'rose' | 'blue' | 'slate';
-
-interface ApiError {
-    message?: string;
-    errors?: Record<string, string[]>;
-}
-
-interface AccessConfig {
-    apiUrl: string;
-    token: string;
-}
 
 interface DashboardData {
     users_total: number;
@@ -102,6 +92,7 @@ interface FournisseurItem {
 interface AdminUser {
     id: number;
     name: string;
+    email?: string | null;
     phone: string;
     role: string;
     kyc_status: string;
@@ -123,6 +114,13 @@ interface AdminTransaction {
     user?: {
         name: string;
     };
+}
+
+interface AuthUser {
+    email?: string | null;
+    name: string;
+    phone?: string | null;
+    role?: string | null;
 }
 
 interface ChartPoint {
@@ -157,6 +155,27 @@ interface NavigationItem {
 interface NavigationGroup {
     items: NavigationItem[];
     label: string;
+}
+
+interface FlashMessages {
+    error?: string | null;
+    success?: string | null;
+}
+
+interface AdminPageProps {
+    [key: string]: unknown;
+    auth: {
+        user?: AuthUser | null;
+    };
+    dashboard: DashboardData;
+    errors: Record<string, string>;
+    flash?: FlashMessages;
+    fournisseurs: FournisseurItem[];
+    kycUsers: KycUser[];
+    litiges: LitigeItem[];
+    missions: AdminMission[];
+    transactions: AdminTransaction[];
+    users: AdminUser[];
 }
 
 const tabRoutes: Record<AdminTab, string> = {
@@ -218,7 +237,6 @@ const searchPlaceholders: Record<AdminTab, string> = {
 };
 
 const quickDockTabs: AdminTab[] = ['dashboard', 'missions', 'users', 'settings'];
-
 const numberFormat = new Intl.NumberFormat('fr-FR');
 
 const money = (amount: number): string => `${numberFormat.format(amount)} FCFA`;
@@ -349,121 +367,21 @@ function sumAmount(items: AdminTransaction[]): number {
 
 export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
     const activeTab = initialTab;
+    const { props } = usePage<AdminPageProps>();
+    const { auth, dashboard, errors, flash, fournisseurs, kycUsers, litiges, missions, transactions, users } = props;
 
-    const [token, setToken] = useState<string>('');
-    const [apiUrl, setApiUrl] = useState<string>('/api/v1');
-    const [draftToken, setDraftToken] = useState<string>('');
-    const [draftApiUrl, setDraftApiUrl] = useState<string>('/api/v1');
     const [themeMode, setThemeMode] = useState<ThemeMode>('light');
-
-    const [loading, setLoading] = useState<boolean>(false);
-    const [actionLoading, setActionLoading] = useState<boolean>(false);
-    const [error, setError] = useState<string>('');
     const [search, setSearch] = useState<string>('');
-
-    const [dashboard, setDashboard] = useState<DashboardData | null>(null);
-    const [kycUsers, setKycUsers] = useState<KycUser[]>([]);
-    const [missions, setMissions] = useState<AdminMission[]>([]);
-    const [litiges, setLitiges] = useState<LitigeItem[]>([]);
-    const [fournisseurs, setFournisseurs] = useState<FournisseurItem[]>([]);
-    const [users, setUsers] = useState<AdminUser[]>([]);
-    const [transactions, setTransactions] = useState<AdminTransaction[]>([]);
-
+    const [actionLoading, setActionLoading] = useState<boolean>(false);
+    const [refreshing, setRefreshing] = useState<boolean>(false);
     const deferredSearch = useDeferredValue(search.trim().toLowerCase());
-
-    const apiFetch = async <T,>(path: string, access: AccessConfig, options?: RequestInit): Promise<T> => {
-        if (!access.apiUrl.trim()) {
-            throw new Error('Renseignez l’URL de l’API.');
-        }
-
-        if (!access.token.trim()) {
-            throw new Error('Renseignez un token Sanctum administrateur.');
-        }
-
-        const response = await fetch(`${access.apiUrl}${path}`, {
-            ...options,
-            headers: {
-                Accept: 'application/json',
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${access.token}`,
-                ...(options?.headers ?? {}),
-            },
-        });
-
-        const json = (await response.json()) as {
-            success: boolean;
-            message?: string;
-            data?: T;
-            errors?: Record<string, string[]>;
-        };
-
-        if (!response.ok || !json.success) {
-            const problem = json as ApiError;
-            const firstFieldError = problem.errors ? Object.values(problem.errors)[0]?.[0] : undefined;
-            throw new Error(problem.message ?? firstFieldError ?? 'Erreur API.');
-        }
-
-        return json.data as T;
-    };
-
-    const loadAll = async (override?: Partial<AccessConfig>): Promise<void> => {
-        const access: AccessConfig = {
-            apiUrl: override?.apiUrl ?? apiUrl,
-            token: override?.token ?? token,
-        };
-
-        if (!access.token.trim()) {
-            return;
-        }
-
-        setLoading(true);
-        setError('');
-
-        try {
-            const [dash, kyc, missionsRes, lit, four, usersRes, txs] = await Promise.all([
-                apiFetch<DashboardData>('/admin/dashboard', access),
-                apiFetch<KycUser[]>('/admin/kyc/pending?per_page=60', access),
-                apiFetch<AdminMission[]>('/admin/missions?per_page=100', access),
-                apiFetch<LitigeItem[]>('/admin/litiges?per_page=60', access),
-                apiFetch<FournisseurItem[]>('/admin/fournisseurs/pending?per_page=60', access),
-                apiFetch<AdminUser[]>('/admin/users?per_page=100', access),
-                apiFetch<AdminTransaction[]>('/admin/transactions?per_page=100', access),
-            ]);
-
-            startTransition(() => {
-                setDashboard(dash);
-                setKycUsers(kyc ?? []);
-                setMissions(missionsRes ?? []);
-                setLitiges(lit ?? []);
-                setFournisseurs(four ?? []);
-                setUsers(usersRes ?? []);
-                setTransactions(txs ?? []);
-            });
-        } catch (exception) {
-            setError(exception instanceof Error ? exception.message : 'Impossible de charger les données.');
-        } finally {
-            setLoading(false);
-        }
-    };
 
     useEffect(() => {
         if (typeof window === 'undefined') {
             return;
         }
 
-        const savedToken = localStorage.getItem('prosartisan_admin_token') ?? '';
-        const savedApiUrl = localStorage.getItem('prosartisan_api_url') ?? '/api/v1';
-        const savedTheme = localStorage.getItem('prosartisan_admin_theme');
-
-        setToken(savedToken);
-        setApiUrl(savedApiUrl);
-        setDraftToken(savedToken);
-        setDraftApiUrl(savedApiUrl);
-        setThemeMode(savedTheme === 'dark' ? 'dark' : 'light');
-
-        if (savedToken.trim()) {
-            void loadAll({ apiUrl: savedApiUrl, token: savedToken });
-        }
+        setThemeMode(localStorage.getItem('prosartisan_admin_theme') === 'dark' ? 'dark' : 'light');
     }, []);
 
     useEffect(() => {
@@ -473,122 +391,6 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
 
         localStorage.setItem('prosartisan_admin_theme', themeMode);
     }, [themeMode]);
-
-    const persistAccess = (nextAccess: AccessConfig): void => {
-        setToken(nextAccess.token);
-        setApiUrl(nextAccess.apiUrl);
-        setDraftToken(nextAccess.token);
-        setDraftApiUrl(nextAccess.apiUrl);
-
-        if (typeof window !== 'undefined') {
-            localStorage.setItem('prosartisan_admin_token', nextAccess.token);
-            localStorage.setItem('prosartisan_api_url', nextAccess.apiUrl);
-        }
-    };
-
-    const clearAccess = (): void => {
-        setToken('');
-        setDraftToken('');
-        setDashboard(null);
-        setKycUsers([]);
-        setMissions([]);
-        setLitiges([]);
-        setFournisseurs([]);
-        setUsers([]);
-        setTransactions([]);
-        setSearch('');
-        setError('');
-
-        if (typeof window !== 'undefined') {
-            localStorage.removeItem('prosartisan_admin_token');
-        }
-    };
-
-    const submitAccess = (event: FormEvent<HTMLFormElement>): void => {
-        event.preventDefault();
-
-        const nextAccess: AccessConfig = {
-            apiUrl: draftApiUrl.trim() || '/api/v1',
-            token: draftToken.trim(),
-        };
-
-        if (!nextAccess.token) {
-            setError('Ajoutez un token Sanctum administrateur pour ouvrir le backoffice.');
-            return;
-        }
-
-        persistAccess(nextAccess);
-        void loadAll(nextAccess);
-    };
-
-    const refreshData = (): void => {
-        void loadAll();
-    };
-
-    const handleKycDecision = async (user: KycUser, decision: 'approuve' | 'rejete'): Promise<void> => {
-        let rejectionReason: string | undefined;
-
-        if (decision === 'rejete') {
-            rejectionReason = window.prompt('Motif de rejet KYC (minimum 10 caractères) :') ?? '';
-
-            if (rejectionReason.trim().length < 10) {
-                window.alert('Motif trop court.');
-                return;
-            }
-        }
-
-        setActionLoading(true);
-
-        try {
-            await apiFetch(`/admin/kyc/${user.id}/review`, { apiUrl, token }, {
-                method: 'POST',
-                body: JSON.stringify({ decision, rejection_reason: rejectionReason }),
-            });
-
-            await loadAll();
-        } catch (exception) {
-            setError(exception instanceof Error ? exception.message : 'Action impossible.');
-        } finally {
-            setActionLoading(false);
-        }
-    };
-
-    const handleLitigeDecision = async (litige: LitigeItem, decision: 'client' | 'artisan' | 'gel'): Promise<void> => {
-        setActionLoading(true);
-
-        try {
-            await apiFetch(`/admin/litiges/${litige.id}/resolve`, { apiUrl, token }, {
-                method: 'POST',
-                body: JSON.stringify({ decision }),
-            });
-
-            await loadAll();
-        } catch (exception) {
-            setError(exception instanceof Error ? exception.message : 'Action impossible.');
-        } finally {
-            setActionLoading(false);
-        }
-    };
-
-    const handleFournisseurDecision = async (
-        fournisseur: FournisseurItem,
-        decision: 'agree' | 'suspendu',
-    ): Promise<void> => {
-        setActionLoading(true);
-
-        try {
-            await apiFetch(`/admin/fournisseurs/${fournisseur.id}/review`, { apiUrl, token }, {
-                method: 'POST',
-                body: JSON.stringify({ decision }),
-            });
-
-            await loadAll();
-        } catch (exception) {
-            setError(exception instanceof Error ? exception.message : 'Action impossible.');
-        } finally {
-            setActionLoading(false);
-        }
-    };
 
     const analytics = useMemo(() => {
         const filteredKyc = kycUsers.filter((user) =>
@@ -629,14 +431,9 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         const filteredUsers = users.filter((user) =>
             deferredSearch === ''
                 ? true
-                : normalizeSearch([
-                      user.id,
-                      user.name,
-                      user.phone,
-                      user.role,
-                      user.kyc_status,
-                      user.score_nzassa,
-                  ]).includes(deferredSearch),
+                : normalizeSearch([user.id, user.name, user.email, user.phone, user.role, user.kyc_status, user.score_nzassa]).includes(
+                      deferredSearch,
+                  ),
         );
 
         const filteredTransactions = transactions.filter((transaction) =>
@@ -687,9 +484,6 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
             .slice(0, 5);
         const urgentKyc = [...filteredKyc]
             .sort((left, right) => new Date(left.created_at).getTime() - new Date(right.created_at).getTime())
-            .slice(0, 6);
-        const recentTransactions = [...filteredTransactions]
-            .sort((left, right) => new Date(right.created_at).getTime() - new Date(left.created_at).getTime())
             .slice(0, 6);
         const recentActivity = [
             ...kycUsers.map((user) => ({
@@ -758,19 +552,19 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                 description: 'Missions financées et terrain',
                 title: 'Missions en cours',
                 tone: 'green',
-                value: numberFormat.format(dashboard?.missions_en_cours ?? filteredMissions.filter((mission) => mission.status === 'en_cours').length),
+                value: numberFormat.format(dashboard.missions_en_cours ?? filteredMissions.filter((mission) => mission.status === 'en_cours').length),
             },
             {
                 description: 'Escalade Référent nécessaire',
                 title: 'Seuil > 2M FCFA',
                 tone: 'amber',
-                value: numberFormat.format(dashboard?.referent_required_open ?? 0),
+                value: numberFormat.format(dashboard.referent_required_open ?? 0),
             },
             {
                 description: 'Missions avec arbitrage',
                 title: 'Missions en litige',
                 tone: 'rose',
-                value: numberFormat.format(dashboard?.missions_en_litige ?? filteredMissions.filter((mission) => mission.status === 'litige').length),
+                value: numberFormat.format(dashboard.missions_en_litige ?? filteredMissions.filter((mission) => mission.status === 'litige').length),
             },
             {
                 description: 'Analyses Gemini disponibles',
@@ -797,7 +591,6 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
             monthlyUserCount,
             pendingTransactions,
             recentActivity,
-            recentTransactions,
             registrationTrend,
             releaseTrend,
             releasedAmount: sumAmount(releasedTransactions),
@@ -807,16 +600,18 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         };
     }, [dashboard, deferredSearch, fournisseurs, kycUsers, litiges, missions, transactions, users]);
 
-    const totalUsers = dashboard?.users_total ?? users.length;
-    const artisansActifs = dashboard?.artisans_actifs ?? users.filter((user) => user.role === 'artisan' && user.kyc_status === 'actif').length;
-    const clientsActifs = dashboard?.clients_actifs ?? users.filter((user) => user.role === 'client' && user.kyc_status === 'actif').length;
-    const fournisseursAgrees = dashboard?.fournisseurs_agrees ?? 0;
-    const kycPending = dashboard?.kyc_en_attente ?? kycUsers.length;
-    const openDisputes = dashboard?.litiges_ouverts ?? litiges.filter((litige) => litige.statut !== 'resolu').length;
-    const missionsInProgress = dashboard?.missions_en_cours ?? missions.filter((mission) => mission.status === 'en_cours').length;
-    const referentRequired = dashboard?.referent_required_open ?? 0;
-    const fraudAlerts = dashboard?.recent_fraud_alerts ?? 0;
-    const volume24h = dashboard?.volume_transactions_24h ?? 0;
+    const totalUsers = dashboard.users_total ?? users.length;
+    const artisansActifs = dashboard.artisans_actifs ?? users.filter((user) => user.role === 'artisan' && user.kyc_status === 'actif').length;
+    const clientsActifs = dashboard.clients_actifs ?? users.filter((user) => user.role === 'client' && user.kyc_status === 'actif').length;
+    const fournisseursAgrees = dashboard.fournisseurs_agrees ?? 0;
+    const kycPending = dashboard.kyc_en_attente ?? kycUsers.length;
+    const openDisputes = dashboard.litiges_ouverts ?? litiges.filter((litige) => litige.statut !== 'resolu').length;
+    const missionsInProgress = dashboard.missions_en_cours ?? missions.filter((mission) => mission.status === 'en_cours').length;
+    const referentRequired = dashboard.referent_required_open ?? 0;
+    const fraudAlerts = dashboard.recent_fraud_alerts ?? 0;
+    const volume24h = dashboard.volume_transactions_24h ?? 0;
+    const firstError = Object.values(errors ?? {})[0];
+    const bannerError = flash?.error ?? firstError;
 
     const navigation: NavigationGroup[] = [
         {
@@ -858,11 +653,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                         tone: 'green' as const,
                         value: numberFormat.format(kycUsers.filter((user) => user.role === 'artisan').length),
                     },
-                    {
-                        label: 'Fournisseurs à valider',
-                        tone: 'blue' as const,
-                        value: numberFormat.format(fournisseurs.length),
-                    },
+                    { label: 'Fournisseurs à valider', tone: 'blue' as const, value: numberFormat.format(fournisseurs.length) },
                     {
                         label: 'Rejets récents',
                         tone: 'rose' as const,
@@ -872,28 +663,18 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
             case 'missions':
                 return [
                     { label: 'Missions en cours', tone: 'green' as const, value: numberFormat.format(missionsInProgress) },
-                    {
-                        label: 'En litige',
-                        tone: 'rose' as const,
-                        value: numberFormat.format(dashboard?.missions_en_litige ?? 0),
-                    },
+                    { label: 'En litige', tone: 'rose' as const, value: numberFormat.format(dashboard.missions_en_litige ?? 0) },
                     { label: 'Référent requis', tone: 'amber' as const, value: numberFormat.format(referentRequired) },
                     {
                         label: 'Montant piloté',
                         tone: 'slate' as const,
-                        value: money(
-                            analytics.filteredMissions.reduce((sum, mission) => sum + (mission.montant_total ?? 0), 0),
-                        ),
+                        value: money(analytics.filteredMissions.reduce((sum, mission) => sum + (mission.montant_total ?? 0), 0)),
                     },
                 ];
             case 'litiges':
                 return [
                     { label: 'Litiges ouverts', tone: 'rose' as const, value: numberFormat.format(openDisputes) },
-                    {
-                        label: 'Haute priorité',
-                        tone: 'amber' as const,
-                        value: numberFormat.format(analytics.highRiskDisputes.length),
-                    },
+                    { label: 'Haute priorité', tone: 'amber' as const, value: numberFormat.format(analytics.highRiskDisputes.length) },
                     { label: 'Référent requis', tone: 'blue' as const, value: numberFormat.format(referentRequired) },
                     { label: 'Alertes fraude', tone: 'slate' as const, value: numberFormat.format(fraudAlerts) },
                 ];
@@ -907,16 +688,8 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
             case 'transactions':
                 return [
                     { label: 'Volume 24h', tone: 'amber' as const, value: money(volume24h) },
-                    {
-                        label: 'En attente',
-                        tone: 'blue' as const,
-                        value: numberFormat.format(analytics.pendingTransactions.length),
-                    },
-                    {
-                        label: 'Échouées',
-                        tone: 'rose' as const,
-                        value: numberFormat.format(analytics.failedTransactions.length),
-                    },
+                    { label: 'En attente', tone: 'blue' as const, value: numberFormat.format(analytics.pendingTransactions.length) },
+                    { label: 'Échouées', tone: 'rose' as const, value: numberFormat.format(analytics.failedTransactions.length) },
                     { label: 'Fonds libérés', tone: 'green' as const, value: money(analytics.releasedAmount) },
                 ];
             case 'settings':
@@ -932,12 +705,13 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
     }, [
         activeTab,
         analytics.failedTransactions.length,
+        analytics.filteredMissions,
         analytics.highRiskDisputes.length,
         analytics.pendingTransactions.length,
         analytics.releasedAmount,
-        analytics.filteredMissions,
         artisansActifs,
         clientsActifs,
+        dashboard.missions_en_litige,
         fournisseurs.length,
         fournisseursAgrees,
         fraudAlerts,
@@ -947,9 +721,8 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         openDisputes,
         referentRequired,
         totalUsers,
-        volume24h,
         users,
-        dashboard?.missions_en_litige,
+        volume24h,
     ]);
 
     const summaryCards = [
@@ -983,34 +756,53 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         },
     ];
 
-    const isConfigured = token.trim().length > 0;
-    const isInitialLoading =
-        loading &&
-        dashboard === null &&
-        kycUsers.length === 0 &&
-        missions.length === 0 &&
-        litiges.length === 0 &&
-        users.length === 0 &&
-        transactions.length === 0;
+    const submitAction = (url: string, payload: Record<string, string>) => {
+        setActionLoading(true);
 
-    if (!isConfigured) {
-        return (
-            <>
-                <Head title="ProsArtisan Backoffice" />
+        router.post(url, payload, {
+            preserveScroll: true,
+            onFinish: () => setActionLoading(false),
+        });
+    };
 
-                <AdminAccessScreen
-                    apiUrl={draftApiUrl}
-                    error={error}
-                    onApiUrlChange={setDraftApiUrl}
-                    onSubmit={submitAccess}
-                    onThemeToggle={() => setThemeMode((current) => (current === 'light' ? 'dark' : 'light'))}
-                    onTokenChange={setDraftToken}
-                    themeMode={themeMode}
-                    token={draftToken}
-                />
-            </>
-        );
-    }
+    const refreshData = (): void => {
+        setRefreshing(true);
+
+        router.visit(tabRoutes[activeTab], {
+            preserveScroll: true,
+            preserveState: true,
+            onFinish: () => setRefreshing(false),
+        });
+    };
+
+    const handleKycDecision = (user: KycUser, decision: 'approuve' | 'rejete'): void => {
+        let rejectionReason = '';
+
+        if (decision === 'rejete') {
+            rejectionReason = window.prompt('Motif de rejet KYC (minimum 10 caractères) :') ?? '';
+
+            if (rejectionReason.trim().length < 10) {
+                window.alert('Motif trop court.');
+                return;
+            }
+        }
+
+        submitAction(`/admin/kyc/${user.id}/review`, {
+            decision,
+            rejection_reason: rejectionReason,
+        });
+    };
+
+    const handleLitigeDecision = (litige: LitigeItem, decision: 'client' | 'artisan' | 'gel'): void => {
+        submitAction(`/admin/litiges/${litige.id}/resolve`, { decision });
+    };
+
+    const handleFournisseurDecision = (fournisseur: FournisseurItem, decision: 'agree' | 'suspendu'): void => {
+        submitAction(`/admin/fournisseurs/${fournisseur.id}/review`, { decision });
+    };
+
+    const adminName = auth.user?.name ?? 'Admin ProsArtisan';
+    const adminContact = auth.user?.email ?? auth.user?.phone ?? 'Administrateur';
 
     return (
         <>
@@ -1024,14 +816,10 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                 <img src="/img/prosartisan-logo.png" alt="ProsArtisan" className="h-8 w-8 object-contain" />
                             </div>
                             <div className="min-w-0">
-                                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--admin-muted)]">
-                                    ProsArtisan
-                                </p>
+                                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--admin-muted)]">ProsArtisan</p>
                                 <div className="flex items-center gap-2">
                                     <h1 className="truncate text-xl font-semibold text-[var(--admin-text)]">Backoffice</h1>
-                                    <span className={cn('rounded-full border px-2 py-0.5 text-[11px] font-semibold', toneBadgeClasses('amber'))}>
-                                        ADMIN
-                                    </span>
+                                    <span className={cn('rounded-full border px-2 py-0.5 text-[11px] font-semibold', toneBadgeClasses('amber'))}>ADMIN</span>
                                 </div>
                             </div>
                         </div>
@@ -1082,9 +870,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
 
                         <div className="mt-auto space-y-4">
                             <Surface className="rounded-[28px] p-4">
-                                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--admin-muted)]">
-                                    Contexte marché
-                                </p>
+                                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--admin-muted)]">Contexte marché</p>
                                 <div className="mt-3 space-y-3 text-sm text-[var(--admin-text-soft)]">
                                     <InfoRow label="Pays" value="Côte d’Ivoire" />
                                     <InfoRow label="Devise" value="FCFA" />
@@ -1125,7 +911,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                             Rafraîchir
                                         </button>
                                         <span className={cn('rounded-full border px-3 py-2 text-xs font-semibold', toneBadgeClasses('slate'))}>
-                                            API {apiUrl.replace(/^https?:\/\//, '')}
+                                            Session web active
                                         </span>
                                     </div>
                                 </div>
@@ -1147,15 +933,19 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
 
                                     <div className="hidden items-center gap-3 rounded-3xl bg-white/50 px-3 py-2 sm:flex">
                                         <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#ebb95e] text-sm font-bold text-[#241b16]">
-                                            A
+                                            {getInitials(adminName)}
                                         </div>
                                         <div className="min-w-0">
-                                            <p className="truncate text-sm font-semibold text-[var(--admin-text)]">Admin ProsArtisan</p>
-                                            <p className="text-xs text-[var(--admin-muted)]">Sanctum admin</p>
+                                            <p className="truncate text-sm font-semibold text-[var(--admin-text)]">{adminName}</p>
+                                            <p className="truncate text-xs text-[var(--admin-muted)]">{adminContact}</p>
                                         </div>
                                     </div>
 
-                                    <button type="button" className="rounded-2xl p-3 text-[var(--admin-muted)] transition hover:bg-white/55" onClick={clearAccess}>
+                                    <button
+                                        type="button"
+                                        className="rounded-2xl p-3 text-[var(--admin-muted)] transition hover:bg-white/55"
+                                        onClick={() => router.post('/admin/logout')}
+                                    >
                                         <LogoutIcon className="h-5 w-5" />
                                     </button>
                                 </div>
@@ -1209,28 +999,25 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                 </div>
                             </Surface>
 
-                            {error ? (
+                            {flash?.success ? (
+                                <div className="mt-4 rounded-[24px] border border-[#c5dfca] bg-[#eef8f0] px-4 py-3 text-sm text-[#24734f]">
+                                    {flash.success}
+                                </div>
+                            ) : null}
+
+                            {bannerError ? (
                                 <div className="mt-4 rounded-[24px] border border-[#efc1b9] bg-[#fff3ef] px-4 py-3 text-sm text-[#b24f43]">
-                                    {error}
+                                    {bannerError}
                                 </div>
                             ) : null}
 
-                            {loading && !isInitialLoading ? (
+                            {refreshing || actionLoading ? (
                                 <div className="mt-4 rounded-[24px] border border-[#e2d5c2] bg-white/70 px-4 py-3 text-sm text-[var(--admin-text-soft)]">
-                                    Rafraîchissement des données en cours...
+                                    Mise à jour du backoffice en cours...
                                 </div>
                             ) : null}
 
-                            {isInitialLoading ? (
-                                <Surface className="mt-5 rounded-[32px] p-12 text-center">
-                                    <p className="text-base font-medium text-[var(--admin-text)]">Chargement du poste d’administration...</p>
-                                    <p className="mt-2 text-sm text-[var(--admin-muted)]">
-                                        Synchronisation des missions, validations, litiges et flux financiers.
-                                    </p>
-                                </Surface>
-                            ) : null}
-
-                            {!isInitialLoading && activeTab === 'dashboard' ? (
+                            {activeTab === 'dashboard' ? (
                                 <section className="mt-5 space-y-5">
                                     <div className="grid gap-4 xl:grid-cols-4">
                                         {summaryCards.map((card) => (
@@ -1283,10 +1070,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
 
                                             <div className="mt-5 space-y-3">
                                                 {analytics.urgentKyc.length === 0 ? (
-                                                    <EmptyState
-                                                        description="Aucun dossier urgent en attente de revue."
-                                                        title="File KYC vide"
-                                                    />
+                                                    <EmptyState description="Aucun dossier urgent en attente de revue." title="File KYC vide" />
                                                 ) : (
                                                     analytics.urgentKyc.map((user) => (
                                                         <div key={user.id} className="rounded-[24px] border border-[var(--admin-border)] bg-white/60 p-4">
@@ -1355,17 +1139,13 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                         <Surface className="rounded-[32px] p-5 lg:p-6">
                                             <SectionTitle description="Vue sur les fonds sous séquestre actuellement confirmés." title="Séquestre" />
                                             <p className="mt-5 text-4xl font-semibold text-[var(--admin-text)]">{money(analytics.escrowAmount)}</p>
-                                            <p className="mt-2 text-sm text-[var(--admin-text-soft)]">
-                                                Acomptes clients confirmés et immobilisés pour les missions.
-                                            </p>
+                                            <p className="mt-2 text-sm text-[var(--admin-text-soft)]">Acomptes clients confirmés et immobilisés pour les missions.</p>
                                         </Surface>
 
                                         <Surface className="rounded-[32px] p-5 lg:p-6">
                                             <SectionTitle description="Montants déjà distribués selon OTP et règlements fournisseurs." title="Fonds libérés" />
                                             <p className="mt-5 text-4xl font-semibold text-[var(--admin-text)]">{money(analytics.releasedAmount)}</p>
-                                            <p className="mt-2 text-sm text-[var(--admin-text-soft)]">
-                                                Jalons validés et règlements matériaux exécutés.
-                                            </p>
+                                            <p className="mt-2 text-sm text-[var(--admin-text-soft)]">Jalons validés et règlements matériaux exécutés.</p>
                                         </Surface>
 
                                         <Surface className="rounded-[32px] p-5 lg:p-6">
@@ -1392,7 +1172,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                 </section>
                             ) : null}
 
-                            {!isInitialLoading && activeTab === 'kyc' ? (
+                            {activeTab === 'kyc' ? (
                                 <section className="mt-5 space-y-5">
                                     <div className="grid gap-4 xl:grid-cols-4">
                                         <MetricCard description="Clients, artisans et fournisseurs en attente" tone="amber" trend="À traiter sans friction" value={numberFormat.format(kycPending)}>
@@ -1445,10 +1225,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                                     {analytics.filteredKyc.length === 0 ? (
                                                         <tr>
                                                             <td colSpan={5}>
-                                                                <EmptyState
-                                                                    description="Aucun dossier ne correspond à votre recherche."
-                                                                    title="Rien à afficher"
-                                                                />
+                                                                <EmptyState description="Aucun dossier ne correspond à votre recherche." title="Rien à afficher" />
                                                             </td>
                                                         </tr>
                                                     ) : (
@@ -1487,7 +1264,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                                                         <button
                                                                             type="button"
                                                                             disabled={actionLoading}
-                                                                            onClick={() => void handleKycDecision(user, 'approuve')}
+                                                                            onClick={() => handleKycDecision(user, 'approuve')}
                                                                             className={actionButtonClass('success')}
                                                                         >
                                                                             Approuver
@@ -1495,7 +1272,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                                                         <button
                                                                             type="button"
                                                                             disabled={actionLoading}
-                                                                            onClick={() => void handleKycDecision(user, 'rejete')}
+                                                                            onClick={() => handleKycDecision(user, 'rejete')}
                                                                             className={actionButtonClass('danger')}
                                                                         >
                                                                             Rejeter
@@ -1523,9 +1300,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                                         analytics.filteredFournisseurs.map((fournisseur) => (
                                                             <div key={fournisseur.id} className="rounded-[24px] border border-[var(--admin-border)] bg-white/60 p-4">
                                                                 <p className="text-sm font-semibold text-[var(--admin-text)]">{fournisseur.nom_boutique}</p>
-                                                                <p className="mt-1 text-sm text-[var(--admin-text-soft)]">
-                                                                    {fournisseur.user?.name ?? 'Contact inconnu'}
-                                                                </p>
+                                                                <p className="mt-1 text-sm text-[var(--admin-text-soft)]">{fournisseur.user?.name ?? 'Contact inconnu'}</p>
                                                                 <p className="text-xs text-[var(--admin-muted)]">
                                                                     {fournisseur.user?.phone ?? 'Téléphone non renseigné'} • {shortDate(fournisseur.created_at)}
                                                                 </p>
@@ -1533,7 +1308,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                                                     <button
                                                                         type="button"
                                                                         disabled={actionLoading}
-                                                                        onClick={() => void handleFournisseurDecision(fournisseur, 'agree')}
+                                                                        onClick={() => handleFournisseurDecision(fournisseur, 'agree')}
                                                                         className={actionButtonClass('success')}
                                                                     >
                                                                         Agréer
@@ -1541,7 +1316,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                                                     <button
                                                                         type="button"
                                                                         disabled={actionLoading}
-                                                                        onClick={() => void handleFournisseurDecision(fournisseur, 'suspendu')}
+                                                                        onClick={() => handleFournisseurDecision(fournisseur, 'suspendu')}
                                                                         className={actionButtonClass('danger')}
                                                                     >
                                                                         Suspendre
@@ -1562,7 +1337,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                 </section>
                             ) : null}
 
-                            {!isInitialLoading && activeTab === 'missions' ? (
+                            {activeTab === 'missions' ? (
                                 <section className="mt-5 space-y-5">
                                     <div className="grid gap-4 xl:grid-cols-4">
                                         {analytics.missionStatusMetrics.map((metric) => (
@@ -1650,7 +1425,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                 </section>
                             ) : null}
 
-                            {!isInitialLoading && activeTab === 'litiges' ? (
+                            {activeTab === 'litiges' ? (
                                 <section className="mt-5 space-y-5">
                                     <div className="grid gap-4 xl:grid-cols-4">
                                         <MetricCard description="Dossiers non résolus" tone="rose" trend="À arbitrer" value={numberFormat.format(openDisputes)}>
@@ -1664,7 +1439,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                         >
                                             Haute priorité
                                         </MetricCard>
-                                        <MetricCard description="Missions au statut litige" tone="blue" trend="Impact opérationnel" value={numberFormat.format(dashboard?.missions_en_litige ?? 0)}>
+                                        <MetricCard description="Missions au statut litige" tone="blue" trend="Impact opérationnel" value={numberFormat.format(dashboard.missions_en_litige ?? 0)}>
                                             Missions bloquées
                                         </MetricCard>
                                         <MetricCard description="Signaux potentiels de fraude" tone="slate" trend="Surveillance J-Code" value={numberFormat.format(fraudAlerts)}>
@@ -1707,7 +1482,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                                             <button
                                                                 type="button"
                                                                 disabled={actionLoading}
-                                                                onClick={() => void handleLitigeDecision(litige, 'client')}
+                                                                onClick={() => handleLitigeDecision(litige, 'client')}
                                                                 className={actionButtonClass('danger')}
                                                             >
                                                                 Rembourser client
@@ -1715,7 +1490,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                                             <button
                                                                 type="button"
                                                                 disabled={actionLoading}
-                                                                onClick={() => void handleLitigeDecision(litige, 'artisan')}
+                                                                onClick={() => handleLitigeDecision(litige, 'artisan')}
                                                                 className={actionButtonClass('success')}
                                                             >
                                                                 Payer artisan
@@ -1723,7 +1498,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                                             <button
                                                                 type="button"
                                                                 disabled={actionLoading}
-                                                                onClick={() => void handleLitigeDecision(litige, 'gel')}
+                                                                onClick={() => handleLitigeDecision(litige, 'gel')}
                                                                 className={actionButtonClass('secondary')}
                                                             >
                                                                 Geler et envoyer Référent
@@ -1741,7 +1516,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                 </section>
                             ) : null}
 
-                            {!isInitialLoading && activeTab === 'users' ? (
+                            {activeTab === 'users' ? (
                                 <section className="mt-5 space-y-5">
                                     <div className="grid gap-4 xl:grid-cols-4">
                                         <MetricCard description="Base complète des comptes connectés à la plateforme" tone="amber" trend="Communauté totale" value={numberFormat.format(totalUsers)}>
@@ -1792,7 +1567,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                                                         <div className="min-w-0">
                                                                             <p className="truncate font-semibold text-[var(--admin-text)]">{user.name}</p>
                                                                             <p className="text-xs text-[var(--admin-muted)]">
-                                                                                #{user.id} • {user.phone}
+                                                                                #{user.id} • {user.email ?? user.phone}
                                                                             </p>
                                                                         </div>
                                                                     </div>
@@ -1835,7 +1610,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                                                     <button
                                                                         type="button"
                                                                         disabled={actionLoading}
-                                                                        onClick={() => void handleFournisseurDecision(fournisseur, 'agree')}
+                                                                        onClick={() => handleFournisseurDecision(fournisseur, 'agree')}
                                                                         className={actionButtonClass('success')}
                                                                     >
                                                                         Agréer
@@ -1843,7 +1618,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                                                     <button
                                                                         type="button"
                                                                         disabled={actionLoading}
-                                                                        onClick={() => void handleFournisseurDecision(fournisseur, 'suspendu')}
+                                                                        onClick={() => handleFournisseurDecision(fournisseur, 'suspendu')}
                                                                         className={actionButtonClass('danger')}
                                                                     >
                                                                         Suspendre
@@ -1876,7 +1651,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                 </section>
                             ) : null}
 
-                            {!isInitialLoading && activeTab === 'transactions' ? (
+                            {activeTab === 'transactions' ? (
                                 <section className="mt-5 space-y-5">
                                     <div className="grid gap-4 xl:grid-cols-4">
                                         <MetricCard description="Acomptes clients confirmés" tone="amber" trend="Argent séquestré" value={money(analytics.escrowAmount)}>
@@ -1922,9 +1697,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                                     analytics.filteredTransactions.map((transaction) => (
                                                         <tr key={transaction.id}>
                                                             <td className="font-semibold text-[var(--admin-text)]">#{transaction.id}</td>
-                                                            <td className="text-sm text-[var(--admin-text-soft)]">
-                                                                {transactionTypeLabels[transaction.type] ?? transaction.type}
-                                                            </td>
+                                                            <td className="text-sm text-[var(--admin-text-soft)]">{transactionTypeLabels[transaction.type] ?? transaction.type}</td>
                                                             <td className="text-sm font-semibold text-[var(--admin-text)]">{money(transaction.montant)}</td>
                                                             <td>
                                                                 <ProviderBadge provider={transaction.provider} />
@@ -1943,7 +1716,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                 </section>
                             ) : null}
 
-                            {!isInitialLoading && activeTab === 'settings' ? (
+                            {activeTab === 'settings' ? (
                                 <section className="mt-5 grid gap-5 xl:grid-cols-2">
                                     <Surface className="rounded-[32px] p-5 lg:p-6">
                                         <SectionTitle
@@ -1962,47 +1735,24 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
 
                                     <Surface className="rounded-[32px] p-5 lg:p-6">
                                         <SectionTitle
-                                            description="Configuration de session du poste d’administration courant."
-                                            title="Connexion backoffice"
+                                            description="Configuration métier et accès du poste administrateur courant."
+                                            title="Session backoffice"
                                         />
-
-                                        <form className="mt-5 space-y-4" onSubmit={submitAccess}>
-                                            <label className="block space-y-2">
-                                                <span className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--admin-muted)]">
-                                                    URL API
-                                                </span>
-                                                <input
-                                                    value={draftApiUrl}
-                                                    onChange={(event) => setDraftApiUrl(event.target.value)}
-                                                    className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none"
-                                                />
-                                            </label>
-                                            <label className="block space-y-2">
-                                                <span className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--admin-muted)]">
-                                                    Token Sanctum
-                                                </span>
-                                                <input
-                                                    type="password"
-                                                    value={draftToken}
-                                                    onChange={(event) => setDraftToken(event.target.value)}
-                                                    className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none"
-                                                />
-                                            </label>
-                                            <div className="flex flex-wrap gap-3">
-                                                <button type="submit" className="admin-button admin-button--primary">
-                                                    Mettre à jour l’accès
-                                                </button>
-                                                <button type="button" className="admin-button admin-button--ghost" onClick={refreshData}>
-                                                    Rafraîchir les données
-                                                </button>
-                                            </div>
-                                        </form>
-
                                         <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                                            <InfoPill label="Admin" value={adminName} />
+                                            <InfoPill label="Contact" value={adminContact} />
                                             <InfoPill label="Langue" value="Français" />
                                             <InfoPill label="Paiements" value="Wave CI / Orange Money CI" />
                                             <InfoPill label="Mobile" value="Android prioritaire" />
                                             <InfoPill label="Connectivité" value="Hors-ligne + USSD" />
+                                        </div>
+                                        <div className="mt-5 flex flex-wrap gap-3">
+                                            <button type="button" className="admin-button admin-button--primary" onClick={refreshData}>
+                                                Rafraîchir les données
+                                            </button>
+                                            <button type="button" className="admin-button admin-button--ghost" onClick={() => router.post('/admin/logout')}>
+                                                Se déconnecter
+                                            </button>
                                         </div>
                                     </Surface>
                                 </section>
@@ -2014,7 +1764,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                 <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--admin-muted)]">Administration</p>
                                 <p className="mt-2 text-xl font-semibold text-[var(--admin-text)]">ProsArtisan Backoffice</p>
                                 <p className="mt-1 max-w-3xl">
-                                    Pilotage des contenus, des validations, des opérations terrain et des flux financiers dans une seule interface.
+                                    Pilotage des validations, des opérations terrain, des litiges et des flux financiers dans une seule interface.
                                 </p>
                             </div>
                         </footer>
@@ -2024,139 +1774,6 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                 <BottomDock activeTab={activeTab} />
             </div>
         </>
-    );
-}
-
-function AdminAccessScreen({
-    apiUrl,
-    error,
-    onApiUrlChange,
-    onSubmit,
-    onThemeToggle,
-    onTokenChange,
-    themeMode,
-    token,
-}: {
-    apiUrl: string;
-    error: string;
-    onApiUrlChange: (value: string) => void;
-    onSubmit: (event: FormEvent<HTMLFormElement>) => void;
-    onThemeToggle: () => void;
-    onTokenChange: (value: string) => void;
-    themeMode: ThemeMode;
-    token: string;
-}) {
-    return (
-        <div className={cn('admin-shell min-h-screen', themeMode === 'dark' && 'admin-shell--dark')}>
-            <div className="relative z-10 flex min-h-screen flex-col px-4 py-5 lg:px-5">
-                <div className="flex justify-end">
-                    <button type="button" className="admin-button admin-button--ghost" onClick={onThemeToggle}>
-                        {themeMode === 'light' ? <MoonIcon className="h-4 w-4" /> : <SunIcon className="h-4 w-4" />}
-                        {themeMode === 'light' ? 'Sombre' : 'Clair'}
-                    </button>
-                </div>
-
-                <div className="mx-auto flex w-full max-w-[1180px] flex-1 items-center justify-center py-10">
-                    <div className="grid w-full items-center gap-10 lg:grid-cols-[0.9fr_0.8fr]">
-                        <div className="hidden lg:block">
-                            <div className="flex items-center gap-4">
-                                <div className="flex h-16 w-16 items-center justify-center rounded-[22px] bg-[#ebb95e] text-[#241b16] shadow-[0_20px_50px_rgba(210,152,52,0.24)]">
-                                    <img src="/img/prosartisan-logo.png" alt="ProsArtisan" className="h-10 w-10 object-contain" />
-                                </div>
-                                <div>
-                                    <p className="text-sm font-semibold uppercase tracking-[0.26em] text-[var(--admin-muted)]">ProsArtisan</p>
-                                    <h1 className="mt-1 text-4xl font-semibold text-[var(--admin-text)]">Backoffice</h1>
-                                </div>
-                            </div>
-
-                            <div className="mt-10 max-w-xl space-y-4">
-                                <p className="text-5xl font-semibold leading-tight text-[var(--admin-text)]">
-                                    Un vrai poste de pilotage pour les validations, les missions et les flux terrain.
-                                </p>
-                                <p className="max-w-lg text-base leading-7 text-[var(--admin-text-soft)]">
-                                    Connectez un token Sanctum administrateur existant et travaillez dans une interface pensée pour l’exploitation, pas pour lire une API.
-                                </p>
-                            </div>
-
-                            <div className="mt-10 grid gap-4 sm:grid-cols-2">
-                                <Surface className="rounded-[28px] p-5">
-                                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--admin-muted)]">Opérations</p>
-                                    <p className="mt-3 text-lg font-semibold text-[var(--admin-text)]">KYC, missions, litiges</p>
-                                    <p className="mt-2 text-sm leading-6 text-[var(--admin-text-soft)]">
-                                        Tout l’essentiel pour traiter les urgences du jour sans quitter l’écran.
-                                    </p>
-                                </Surface>
-                                <Surface className="rounded-[28px] p-5">
-                                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--admin-muted)]">Finance</p>
-                                    <p className="mt-3 text-lg font-semibold text-[var(--admin-text)]">Wave, Orange, séquestre</p>
-                                    <p className="mt-2 text-sm leading-6 text-[var(--admin-text-soft)]">
-                                        Lecture claire des paiements, déblocages OTP et règlements fournisseurs.
-                                    </p>
-                                </Surface>
-                            </div>
-                        </div>
-
-                        <Surface className="mx-auto w-full max-w-[520px] rounded-[34px] p-7 lg:p-10">
-                            <div className="mx-auto mb-7 flex w-fit items-center gap-3 lg:hidden">
-                                <div className="flex h-14 w-14 items-center justify-center rounded-[20px] bg-[#ebb95e] text-[#241b16] shadow-[0_18px_40px_rgba(210,152,52,0.24)]">
-                                    <img src="/img/prosartisan-logo.png" alt="ProsArtisan" className="h-8 w-8 object-contain" />
-                                </div>
-                                <div>
-                                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--admin-muted)]">ProsArtisan</p>
-                                    <h2 className="text-2xl font-semibold text-[var(--admin-text)]">Backoffice</h2>
-                                </div>
-                            </div>
-
-                            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[var(--admin-muted)]">Accès privé</p>
-                            <h2 className="mt-3 text-4xl font-semibold text-[var(--admin-text)]">Accès BackOffice</h2>
-                            <p className="mt-3 text-sm leading-6 text-[var(--admin-text-soft)]">
-                                Réservé aux administrateurs disposant déjà d’un token Sanctum valide.
-                            </p>
-
-                            <form className="mt-8 space-y-5" onSubmit={onSubmit}>
-                                <label className="block space-y-2">
-                                    <span className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--admin-muted)]">URL API</span>
-                                    <input
-                                        value={apiUrl}
-                                        onChange={(event) => onApiUrlChange(event.target.value)}
-                                        className="admin-input w-full rounded-2xl px-4 py-4 text-sm outline-none"
-                                        placeholder="/api/v1"
-                                    />
-                                </label>
-
-                                <label className="block space-y-2">
-                                    <span className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--admin-muted)]">Token Sanctum</span>
-                                    <input
-                                        type="password"
-                                        value={token}
-                                        onChange={(event) => onTokenChange(event.target.value)}
-                                        className="admin-input w-full rounded-2xl px-4 py-4 text-sm outline-none"
-                                        placeholder="Collez ici le token admin"
-                                    />
-                                </label>
-
-                                <button type="submit" className="admin-button admin-button--primary w-full justify-center">
-                                    Ouvrir le poste d’administration
-                                </button>
-                            </form>
-
-                            {error ? (
-                                <div className="mt-4 rounded-[22px] border border-[#efc1b9] bg-[#fff3ef] px-4 py-3 text-sm text-[#b24f43]">
-                                    {error}
-                                </div>
-                            ) : null}
-
-                            <p className="mt-6 text-center text-sm text-[var(--admin-text-soft)]">
-                                Besoin du front public ?{' '}
-                                <Link href="/" className="font-medium text-[#b77918] transition hover:text-[#8a5d16]">
-                                    Retour à l’application
-                                </Link>
-                            </p>
-                        </Surface>
-                    </div>
-                </div>
-            </div>
-        </div>
     );
 }
 

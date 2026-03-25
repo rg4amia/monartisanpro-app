@@ -13,6 +13,10 @@ class FournisseurAgree extends Model
         'user_id', 'nom_boutique', 'position', 'statut', 'approuve_at',
     ];
 
+    protected $hidden = ['position'];
+
+    protected $appends = ['coordinates'];
+
     protected function casts(): array
     {
         return [
@@ -28,6 +32,11 @@ class FournisseurAgree extends Model
     public function products()
     {
         return $this->hasMany(SupplierProduct::class, 'supplier_id', 'user_id');
+    }
+
+    public function getCoordinatesAttribute(): ?array
+    {
+        return $this->getPositionCoords();
     }
 
     public function setPosition(float $lat, float $lng): void
