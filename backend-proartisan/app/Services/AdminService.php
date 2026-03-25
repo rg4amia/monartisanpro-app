@@ -105,6 +105,28 @@ class AdminService
             ->paginate($perPage);
     }
 
+    public function listMissions(?string $status = null, ?string $query = null, int $perPage = 20): LengthAwarePaginator
+    {
+        return Mission::query()
+            ->with(['client:id,name,phone', 'artisan:id,name,phone'])
+            ->when($status, fn ($q) => $q->where('status', $status))
+            ->when($query, function ($q) use ($query) {
+                $q->where(function ($sub) use ($query): void {
+                    $sub->where('id', $query)
+                        ->orWhere('description', 'like', "%{$query}%")
+                        ->orWhere('gemini_category', 'like', "%{$query}%")
+                        ->orWhereHas('client', fn ($client) => $client
+                            ->where('name', 'like', "%{$query}%")
+                            ->orWhere('phone', 'like', "%{$query}%"))
+                        ->orWhereHas('artisan', fn ($artisan) => $artisan
+                            ->where('name', 'like', "%{$query}%")
+                            ->orWhere('phone', 'like', "%{$query}%"));
+                });
+            })
+            ->orderByDesc('created_at')
+            ->paginate($perPage);
+    }
+
     public function resolveLitige(User $admin, Litige $litige, array $payload): Litige
     {
         return $this->litigeService->arbitrate($admin, $litige, $payload);

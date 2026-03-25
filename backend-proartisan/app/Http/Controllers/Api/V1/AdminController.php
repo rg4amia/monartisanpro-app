@@ -62,6 +62,27 @@ class AdminController extends Controller
         ]);
     }
 
+    public function missions(Request $request): JsonResponse
+    {
+        $perPage = max(1, min((int) $request->query('per_page', 20), 100));
+
+        $missions = $this->adminService->listMissions(
+            $request->query('status'),
+            $request->query('q'),
+            $perPage
+        );
+
+        return response()->json([
+            'success' => true,
+            'data' => $missions->items(),
+            'meta' => [
+                'total' => $missions->total(),
+                'current_page' => $missions->currentPage(),
+                'last_page' => $missions->lastPage(),
+            ],
+        ]);
+    }
+
     public function litiges(Request $request): JsonResponse
     {
         $perPage = max(1, min((int) $request->query('per_page', 20), 100));

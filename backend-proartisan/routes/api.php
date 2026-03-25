@@ -158,6 +158,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/kyc/pending', [AdminController::class, 'pendingKyc']);
             Route::post('/kyc/{user}/review', [AdminController::class, 'reviewKyc']);
 
+            Route::get('/missions', [AdminController::class, 'missions']);
             Route::get('/litiges', [AdminController::class, 'litiges']);
             Route::post('/litiges/{litige}/resolve', [AdminController::class, 'resolveLitige']);
 
