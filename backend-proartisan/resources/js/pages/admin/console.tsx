@@ -989,7 +989,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                                 <p className="text-xs uppercase tracking-[0.22em] text-[var(--admin-muted)]">{stat.label}</p>
                                                 <div className="mt-2 flex items-center gap-2">
                                                     <span className={cn('inline-flex h-8 w-8 items-center justify-center rounded-xl', toneIconClasses(stat.tone))}>
-                                                        <PulseDot />
+                                                        <ToneIcon tone={stat.tone} className="h-4 w-4" />
                                                     </span>
                                                     <p className="text-lg font-semibold text-[var(--admin-text)]">{stat.value}</p>
                                                 </div>
@@ -1121,7 +1121,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                                     analytics.recentActivity.map((activity) => (
                                                         <div key={activity.id} className="flex items-start gap-3 rounded-[24px] border border-[var(--admin-border)] bg-white/60 p-4">
                                                             <div className={cn('mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl', toneIconClasses(activity.tone))}>
-                                                                <PulseDot />
+                                                                <ActivityToneIcon tone={activity.tone} />
                                                             </div>
                                                             <div className="min-w-0">
                                                                 <p className="text-sm font-semibold text-[var(--admin-text)]">{activity.title}</p>
@@ -1723,13 +1723,20 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                             description="Garde-fous fonctionnels à ne jamais contourner dans ProsArtisan."
                                             title="Règles métier critiques"
                                         />
-                                        <ul className="mt-5 space-y-3 text-sm leading-6 text-[var(--admin-text-soft)]">
-                                            <li>Client et artisan doivent être KYC actifs avant toute mission ou transaction.</li>
-                                            <li>Le ratio de fragmentation matériaux / main d’œuvre reste figé après acceptation du devis.</li>
-                                            <li>Le scan J-Code doit toujours vérifier une distance fournisseur inférieure ou égale à 100 m.</li>
-                                            <li>Aucune libération de fonds sans OTP jalon validé côté client.</li>
-                                            <li>Toute mission au-delà de 2 000 000 FCFA exige une validation physique Référent.</li>
-                                            <li>Les montants financiers restent en BIGINT FCFA, sans float ni double.</li>
+                                        <ul className="mt-5 space-y-2.5">
+                                            {[
+                                                { icon: ShieldIcon, text: ‘Client et artisan doivent être KYC actifs avant toute mission ou transaction.’ },
+                                                { icon: WalletIcon, text: ‘Le ratio de fragmentation matériaux / main d\’œuvre reste figé après acceptation du devis.’ },
+                                                { icon: AlertIcon, text: ‘Le scan J-Code doit toujours vérifier une distance fournisseur ≤ 100 m.’ },
+                                                { icon: ClipboardIcon, text: ‘Aucune libération de fonds sans OTP jalon validé côté client.’ },
+                                                { icon: UsersIcon, text: ‘Toute mission au-delà de 2 000 000 FCFA exige une validation physique Référent.’ },
+                                                { icon: SettingsIcon, text: ‘Les montants financiers restent en BIGINT FCFA, sans float ni double.’ },
+                                            ].map((rule, index) => (
+                                                <li key={index} className="flex items-start gap-3 rounded-[18px] border border-[var(--admin-border)] bg-white/55 px-4 py-3">
+                                                    <rule.icon className="mt-0.5 h-4 w-4 shrink-0 text-[var(--admin-muted)]" />
+                                                    <span className="text-sm leading-6 text-[var(--admin-text-soft)]">{rule.text}</span>
+                                                </li>
+                                            ))}
                                         </ul>
                                     </Surface>
 
@@ -1795,12 +1802,12 @@ function MetricCard({
     value: string;
 }) {
     return (
-        <Surface className="rounded-[30px] p-5 lg:p-6">
+        <Surface className="admin-metric-card rounded-[30px] p-5 lg:p-6">
             <div className={cn('flex h-12 w-12 items-center justify-center rounded-2xl', toneIconClasses(tone))}>
-                <PulseDot />
+                <ToneIcon tone={tone} className="h-5 w-5" />
             </div>
-            <p className="mt-6 text-sm text-[var(--admin-text-soft)]">{children}</p>
-            <p className="mt-2 text-4xl font-semibold tracking-tight text-[var(--admin-text)]">{value}</p>
+            <p className="mt-5 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--admin-muted)]">{children}</p>
+            <p className="mt-1.5 text-4xl font-semibold tracking-tight text-[var(--admin-text)]">{value}</p>
             <p className="mt-2 text-sm text-[var(--admin-text-soft)]">{description}</p>
             <p className="mt-3 text-xs font-medium text-[var(--admin-muted)]">{trend}</p>
         </Surface>
@@ -1827,6 +1834,9 @@ function DataTable({ children, className = '' }: { children: ReactNode; classNam
 function EmptyState({ description, title }: { description: string; title: string }) {
     return (
         <div className="rounded-[24px] border border-dashed border-[var(--admin-border)] bg-white/45 px-5 py-8 text-center">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-[var(--admin-border)] bg-white/60 text-[var(--admin-muted)]">
+                <InboxIcon className="h-5 w-5" />
+            </div>
             <p className="text-base font-semibold text-[var(--admin-text)]">{title}</p>
             <p className="mt-2 text-sm text-[var(--admin-text-soft)]">{description}</p>
         </div>
@@ -1835,7 +1845,7 @@ function EmptyState({ description, title }: { description: string; title: string
 
 function AvatarBubble({ label }: { label: string }) {
     return (
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#ebb95e] text-sm font-bold text-[#241b16]">
+        <span className="admin-avatar flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#ebb95e] text-sm font-bold text-[#241b16]">
             {getInitials(label)}
         </span>
     );
@@ -1966,6 +1976,15 @@ function DualLineChart({ series }: { series: DualSeries[] }) {
     return (
         <div className="mt-5 rounded-[28px] border border-[var(--admin-border)] bg-white/60 p-4">
             <svg viewBox={`0 0 ${width} ${height}`} className="h-64 w-full overflow-visible">
+                <defs>
+                    {series.map((entry, seriesIndex) => (
+                        <linearGradient key={entry.label} id={`chart-grad-${seriesIndex}`} x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor={entry.color} stopOpacity="0.22" />
+                            <stop offset="100%" stopColor={entry.color} stopOpacity="0" />
+                        </linearGradient>
+                    ))}
+                </defs>
+
                 {Array.from({ length: 5 }, (_, index) => {
                     const ratio = index / 4;
                     const y = paddingTop + graphHeight * ratio;
@@ -1977,8 +1996,28 @@ function DualLineChart({ series }: { series: DualSeries[] }) {
                             y1={y}
                             x2={width - paddingX}
                             y2={y}
-                            stroke="rgba(194, 170, 136, 0.45)"
-                            strokeDasharray="4 6"
+                            stroke="rgba(194, 170, 136, 0.35)"
+                            strokeDasharray="4 7"
+                        />
+                    );
+                })}
+
+                {series.map((entry, seriesIndex) => {
+                    if (entry.points.length < 2) return null;
+                    const firstX = paddingX;
+                    const lastX = paddingX + (entry.points.length - 1) * xStep;
+                    const bottom = paddingTop + graphHeight;
+                    const polygonPoints = [
+                        ...entry.points.map((point, index) => `${paddingX + index * xStep},${toY(point.value)}`),
+                        `${lastX},${bottom}`,
+                        `${firstX},${bottom}`,
+                    ].join(' ');
+
+                    return (
+                        <polygon
+                            key={`fill-${entry.label}`}
+                            points={polygonPoints}
+                            fill={`url(#chart-grad-${seriesIndex})`}
                         />
                     );
                 })}
@@ -1986,24 +2025,38 @@ function DualLineChart({ series }: { series: DualSeries[] }) {
                 {series.map((entry) => {
                     const polyline = entry.points.map((point, index) => `${paddingX + index * xStep},${toY(point.value)}`).join(' ');
 
-                    return <polyline key={entry.label} fill="none" points={polyline} stroke={entry.color} strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />;
+                    return <polyline key={entry.label} fill="none" points={polyline} stroke={entry.color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />;
                 })}
+
+                {series.map((entry) =>
+                    entry.points.map((point, index) => (
+                        <circle
+                            key={`${entry.label}-dot-${index}`}
+                            cx={paddingX + index * xStep}
+                            cy={toY(point.value)}
+                            r="4"
+                            fill="white"
+                            stroke={entry.color}
+                            strokeWidth="2.5"
+                        />
+                    )),
+                )}
 
                 {points.map((point, index) => {
                     const x = paddingX + index * xStep;
 
                     return (
-                        <text key={point.label} x={x} y={height - 14} textAnchor="middle" fontSize="11" fill="rgba(110, 91, 66, 0.78)">
+                        <text key={point.label} x={x} y={height - 12} textAnchor="middle" fontSize="11" fill="rgba(110, 91, 66, 0.72)">
                             {point.label}
                         </text>
                     );
                 })}
             </svg>
 
-            <div className="mt-3 flex flex-wrap gap-4">
+            <div className="mt-3 flex flex-wrap gap-5">
                 {series.map((entry) => (
                     <div key={entry.label} className="flex items-center gap-2 text-sm text-[var(--admin-text-soft)]">
-                        <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: entry.color }} />
+                        <span className="h-3 w-3 rounded-full border-2 border-white shadow-sm" style={{ backgroundColor: entry.color }} />
                         {entry.label}
                     </div>
                 ))}
@@ -2017,14 +2070,24 @@ function VolumeBarChart({ bars, color }: { bars: ChartPoint[]; color: string }) 
 
     return (
         <div className="mt-5 rounded-[28px] border border-[var(--admin-border)] bg-white/60 p-4">
-            <div className="flex h-64 items-end gap-2 overflow-hidden rounded-[20px] bg-[rgba(255,255,255,0.55)] p-4">
+            <div className="mb-2 flex items-center justify-end gap-1">
+                <span className="text-[11px] text-[var(--admin-muted)]">max</span>
+                <span className="text-[11px] font-semibold text-[var(--admin-text)]">{maxValue}</span>
+            </div>
+            <div className="flex h-52 items-end gap-1.5 overflow-hidden rounded-[20px] bg-[rgba(255,255,255,0.55)] p-3">
                 {bars.map((bar) => {
-                    const heightPercent = Math.max((bar.value / maxValue) * 100, bar.value > 0 ? 10 : 4);
+                    const heightPercent = Math.max((bar.value / maxValue) * 100, bar.value > 0 ? 8 : 3);
 
                     return (
-                        <div key={bar.label} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-2">
-                            <div className="w-full rounded-t-[16px]" style={{ backgroundColor: color, height: `${heightPercent}%`, opacity: 0.88 }} />
-                            <span className="text-[11px] text-[var(--admin-muted)]">{bar.label}</span>
+                        <div key={bar.label} className="group flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1.5">
+                            <span className="text-[10px] font-medium text-[var(--admin-text)] opacity-0 transition-opacity group-hover:opacity-100">
+                                {bar.value > 0 ? bar.value : ''}
+                            </span>
+                            <div
+                                className="w-full rounded-t-[10px] transition-all duration-500 group-hover:opacity-100"
+                                style={{ backgroundColor: color, height: `${heightPercent}%`, opacity: 0.82 }}
+                            />
+                            <span className="text-[10px] text-[var(--admin-muted)]">{bar.label}</span>
                         </div>
                     );
                 })}
@@ -2077,6 +2140,86 @@ function TabIcon({ className = 'h-5 w-5', tab }: { className?: string; tab: Admi
 
 function PulseDot() {
     return <span className="h-3 w-3 rounded-full bg-current" />;
+}
+
+function ToneIcon({ className = 'h-5 w-5', tone }: { className?: string; tone: Tone }) {
+    switch (tone) {
+        case 'amber':
+            return <StarIcon className={className} />;
+        case 'green':
+            return <TrendUpIcon className={className} />;
+        case 'rose':
+            return <AlertIcon className={className} />;
+        case 'blue':
+            return <ClockIcon className={className} />;
+        case 'slate':
+            return <ArchiveIcon className={className} />;
+    }
+}
+
+function ActivityToneIcon({ tone }: { tone: Tone }) {
+    const cls = 'h-5 w-5';
+    switch (tone) {
+        case 'amber': return <ShieldIcon className={cls} />;
+        case 'green': return <CheckCircleIcon className={cls} />;
+        case 'rose':  return <AlertIcon className={cls} />;
+        case 'blue':  return <WalletIcon className={cls} />;
+        case 'slate': return <ArchiveIcon className={cls} />;
+    }
+}
+
+function TrendUpIcon({ className }: { className?: string }) {
+    return (
+        <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+            <path d="M3 17 9 11l4 4 8-9" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M21 8h-5v5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+    );
+}
+
+function StarIcon({ className }: { className?: string }) {
+    return (
+        <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+            <path d="m12 2 2.68 5.44L21 8.6l-4.5 4.38 1.06 6.18L12 16.26l-5.56 2.9 1.06-6.18L3 8.6l6.32-.92L12 2Z" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+    );
+}
+
+function ClockIcon({ className }: { className?: string }) {
+    return (
+        <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 7v5l3 3" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+    );
+}
+
+function ArchiveIcon({ className }: { className?: string }) {
+    return (
+        <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+            <rect x="3" y="4" width="18" height="4" rx="1.5" />
+            <path d="M5 8v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8" strokeLinecap="round" />
+            <path d="M10 13h4" strokeLinecap="round" />
+        </svg>
+    );
+}
+
+function CheckCircleIcon({ className }: { className?: string }) {
+    return (
+        <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9" />
+            <path d="m8.5 12.5 2 2 5-5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+    );
+}
+
+function InboxIcon({ className }: { className?: string }) {
+    return (
+        <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+            <path d="M4 4h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z" strokeLinecap="round" />
+            <path d="M3 14h4l2 3h6l2-3h4" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+    );
 }
 
 function actionButtonClass(variant: 'danger' | 'secondary' | 'success'): string {

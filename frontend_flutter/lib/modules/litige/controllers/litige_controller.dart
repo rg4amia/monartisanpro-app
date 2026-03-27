@@ -1,7 +1,8 @@
 import 'package:get/get.dart';
+import '../../../app/routes/app_routes.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_endpoints.dart';
-import '../../../app/routes/app_routes.dart';
+import '../../../core/storage/storage_service.dart';
 
 class LitigeController extends GetxController {
   final ApiClient _client = ApiClient();
@@ -35,10 +36,15 @@ class LitigeController extends GetxController {
     }
     isLoading.value = true;
     try {
+      // `type` indique qui déclenche le litige ('client' ou 'artisan')
+      final role = StorageService.getRole() ?? 'client';
+      final type = (role == 'artisan') ? 'artisan' : 'client';
+      final fullDescription = '${selectedMotif.value} — ${description.value.trim()}';
+
       final response = await _client.post(ApiEndpoints.litiges, data: {
         'mission_id': missionId,
-        'motif': selectedMotif.value,
-        'description': description.value.trim(),
+        'type': type,
+        'description': fullDescription,
       });
 
       final litigeId = response.data['data']?['id'];

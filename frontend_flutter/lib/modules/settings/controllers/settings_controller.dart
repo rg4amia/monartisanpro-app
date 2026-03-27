@@ -1,10 +1,12 @@
 import 'package:get/get.dart';
-import '../../../core/storage/storage_service.dart';
 import '../../../app/routes/app_routes.dart';
-import '../../../data/repositories/wallet_repository.dart';
+import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/mission_repository.dart';
+import '../../../data/repositories/wallet_repository.dart';
+import '../../../core/storage/storage_service.dart';
 
 class SettingsController extends GetxController {
+  final AuthRepository _authRepo = AuthRepository();
   final WalletRepository _walletRepo = WalletRepository();
   final MissionRepository _missionRepo = MissionRepository();
 
@@ -44,7 +46,12 @@ class SettingsController extends GetxController {
   }
 
   Future<void> logout() async {
-    await StorageService.clearAll();
-    Get.offAllNamed(Routes.login);
+    isLoading.value = true;
+    try {
+      await _authRepo.logout(); // révoque le token côté serveur puis vide le stockage
+    } finally {
+      isLoading.value = false;
+      Get.offAllNamed(Routes.login);
+    }
   }
 }
