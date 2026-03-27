@@ -34,16 +34,17 @@ class UserModel {
         id: json['id'] as int,
         phone: json['phone'] as String,
         role: json['role'] as String,
-        kycStatus: json['kycStatus'] as String? ?? 'en_attente',
-        scoreNzassa: json['scoreNzassa'] as int? ?? 0,
-        walletMateriaux: json['walletMateriaux'] as int? ?? 0,
-        walletMo: json['walletMo'] as int? ?? 0,
+        kycStatus: (json['kycStatus'] ?? json['kyc_status']) as String? ?? 'en_attente',
+        scoreNzassa: (json['scoreNzassa'] ?? json['score_nzassa']) as int? ?? 0,
+        walletMateriaux: (json['walletMateriaux'] ?? json['wallet_materiaux']) as int? ?? 0,
+        walletMo: (json['walletMo'] ?? json['wallet_mo']) as int? ?? 0,
         name: json['name'] as String?,
-        photoUrl: json['photoUrl'] as String?,
+        photoUrl: (json['photoUrl'] ?? json['photo_url']) as String?,
         lat: (json['lat'] as num?)?.toDouble(),
         lng: (json['lng'] as num?)?.toDouble(),
         nightInterventionAvailable: _parseBool(
           json['nightInterventionAvailable'] ??
+              json['night_intervention_available'] ??
               (json['artisanProfile'] is Map<String, dynamic>
                   ? (json['artisanProfile']
                           as Map<String, dynamic>)['nightInterventionAvailable']

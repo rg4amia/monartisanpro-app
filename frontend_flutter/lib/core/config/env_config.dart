@@ -1,12 +1,12 @@
 class EnvConfig {
   // Configuration pour différents environnements
 
-  // Pour émulateur Android
-  //static const String emulatorBaseUrl = 'http://10.0.2.2:8000/api/v1';
-  static const String emulatorBaseUrl = 'https://prosartisan.net/api/v1';
+  // Pour émulateur Android (10.0.2.2 = localhost de la machine hôte)
+  static const String emulatorBaseUrl = 'http://10.0.2.2:8000/api/v1';
 
-  // Pour appareil physique (remplacez par votre IP locale)
+  // Pour appareil physique : remplacez par l'IP de votre machine sur le réseau local.
   // Trouvez votre IP avec: ifconfig (Mac/Linux) ou ipconfig (Windows)
+  // Exemple: 'http://192.168.1.42:8000/api/v1'
   static const String deviceBaseUrl = 'http://192.168.1.x:8000/api/v1';
 
   // Pour iOS Simulator
@@ -30,19 +30,16 @@ class EnvConfig {
   }
 
   // ── Telegram Logger Configuration ──────────────────────────────────────────
-  // 1. Créez un bot via @BotFather sur Telegram
-  // 2. Récupérez le token du bot
-  // 3. Envoyez un message à votre bot
-  // 4. Récupérez votre chat_id via: https://api.telegram.org/bot<TOKEN>/getUpdates
-  //8715763356:AAFPM6f1DALdYxn5gU6_DLX_-wZl6ZRtEJE
+  // Passez ces valeurs via dart-define au build :
+  //   flutter run --dart-define=TELEGRAM_BOT_TOKEN=xxx --dart-define=TELEGRAM_CHAT_ID=yyy
   static const String telegramBotToken = String.fromEnvironment(
-    '8715763356:AAFPM6f1DALdYxn5gU6_DLX_-wZl6ZRtEJE',
-    defaultValue: '8715763356:AAFPM6f1DALdYxn5gU6_DLX_-wZl6ZRtEJE',
+    'TELEGRAM_BOT_TOKEN',
+    defaultValue: '',
   );
-  
+
   static const String telegramChatId = String.fromEnvironment(
-    '422674168',
-    defaultValue: '422674168',
+    'TELEGRAM_CHAT_ID',
+    defaultValue: '',
   );
   
   // Active les logs Telegram en debug/release
