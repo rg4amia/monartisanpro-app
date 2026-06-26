@@ -89,7 +89,9 @@ jobs:
             echo "Server: $(hostname)"
             echo "User: $(whoami)"
             echo "Home: $HOME"
-            echo "PHP: $(php -v | head      - name: Deploy Git & PHP dependencies
+            echo "PHP: $(php -v | head -n 1)"
+
+      - name: Deploy Git & PHP dependencies
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOST }}
