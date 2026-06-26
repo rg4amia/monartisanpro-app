@@ -124,6 +124,9 @@ jobs:
               echo "🔄 Updating existing repository..."
               cd "$DEPLOY_PATH"
               
+              # Ensure the remote URL matches the current repository
+              git remote set-url origin https://github.com/${{ github.repository }}.git
+              
               # Stash any local changes
               git stash
               
