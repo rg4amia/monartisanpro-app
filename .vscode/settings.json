@@ -1,4 +1,5 @@
 {
-"claudeCode.useTerminal": true,
-"kiroAgent.configureMCP": "Disabled"
+  "claudeCode.useTerminal": true,
+  "kiroAgent.configureMCP": "Disabled",
+  "vscode-edge-devtools.webhint": false
 }

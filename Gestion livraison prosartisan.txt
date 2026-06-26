@@ -1,0 +1,34 @@
+Initiateur : Client | Destinataire : Fournisseur
+Le client sait exactement ce qu'il veut et l'achète directement depuis la boutique d'un fournisseur.
+Workflow (Cycle de vie) :
+1. Création Panier : Le client ajoute des articles. Il choisit entre Retrait Magasin ou Livraison Domicile. Le système ajoute 3% de frais de plateforme.
+2. paid (Payé) : Le client effectue le paiement. La commande apparaît chez le fournisseur. La commission fournisseur (ex: 5%) est calculée.
+3. prepared (Prêt) : Le fournisseur emballe la commande et signale qu'elle est prête.
+4. Logistique :
+o Si Retrait : Le client vient chercher le colis avec son code de retrait (RETRAIT-XXXX).
+o Si Livraison : Génération automatique d'une demande de TYPE 5 pour les livreurs.
+TYPE 3 : Demande de Devis Matériaux (Sur-Mesure)
+Initiateur : Client | Destinataire : Fournisseur
+Le client a besoin de matériaux qui ne figurent pas dans le catalogue rapide du fournisseur (ex: gros volume, article spécifique).
+Workflow (Cycle de vie) :
+1. pending_quote (À deviser) : Le client envoie une liste textuelle de ses besoins.
+2. quote_provided (Devis Fournisseur) : Le fournisseur évalue le besoin et propose un tarif global.
+3. paid (Validé par le client) : Le client paie le devis proposé.
+4. prepared (Prêt) : Le fournisseur prépare la commande pour la remise au client ou au livreur.
+TYPE 4 : (Inclus dans l'Étape 4 du TYPE 1)
+Note : Les commandes automatisées inter-entreprises (B2B) sont désormais nativement englobées dans le cycle de vie du compte séquestre du Chantier (Type 1).
+TYPE 5 : Demande de Course (Livraison)
+Initiateur : Système (Suite au TYPE 2 en mode Livraison) | Destinataire : Livreur
+Un client a commandé du matériel et a payé les frais de livraison dynamique calculés par le système (Distance x Temps).
+Workflow (Cycle de vie) :
+1. searching_driver (Recherche Livreur) : La course apparaît chez les livreurs de la zone.
+2. accepted (Course Acceptée) : Un livreur prend la course. Il se dirige vers le fournisseur.
+3. picked_up (Colis Récupéré) : Le livreur arrive chez le fournisseur, scanne le Code Livreur (LIVREUR-XXXX), récupère le colis. Le statut de la commande côté client passe à "En route".
+4. completed / delivered (Livraison Terminée) : Le livreur arrive chez le client, demande le Code Réception (RECEPTION-XXXX), le scanne dans son application. La course est terminée, le livreur perçoit son Gain Net.
+Résumé Matériel de la Répartition Financière et Décaissement
+Cette table illustre les flux monétaires exacts selon l'utilisation du compte Séquestre (Escrow).
+Cas d'usageCe que paie le ClientVentilation & Décaissement (Timing)Devis Artisan (Chantier complet)Main d'œuvre + Matériaux (Bloqué en Séquestre)- Au retrait (Scan QR) : Gain Net Fournisseur libéré + Com. Plateforme (Matériaux).
+- À la validation fin chantier : Gain Net Artisan libéré + Com. Plateforme (M.O.).Achat Catalogue RetraitMatériaux + Frais Service (3%)- Immédiat : Gain Net Fournisseur crédité.
+- Immédiat : Com. Plateforme (Matériaux + Service) prélevée.Achat Catalogue LivraisonMatériaux + Frais Service (3%) + Livraison- Immédiat : Gain Net Fournisseur crédité.
+- À la livraison (Scan Client) : Gain Net Livreur crédité.
+- Com. Plateforme prélevée à chaque étape.

@@ -41,6 +41,8 @@ class MissionModel {
 
   bool get needsReferent => montantTotal > 2000000;
 
+  String get rawStatus => statusGemini ?? status;
+
   String get statusLabel {
     switch (status) {
       case 'en_attente':

@@ -301,7 +301,8 @@ class _RegisterScreenState extends State<RegisterScreen>
   }
 
   Map<String, String> _getRoleInfo(String role) {
-    switch (role) {
+    final norm = role.toUpperCase();
+    switch (norm) {
       case 'ARTISAN':
         return {
           'emoji': '👨‍🔧',
@@ -313,6 +314,13 @@ class _RegisterScreenState extends State<RegisterScreen>
           'emoji': '🏭',
           'label': 'Fournisseur',
           'description': 'Fournissez des matériaux aux artisans via J-Code',
+        };
+      case 'DRIVER':
+      case 'LIVREUR':
+        return {
+          'emoji': '🚚',
+          'label': 'Livreur',
+          'description': 'Enlevez et livrez les colis de matériaux en toute sécurité',
         };
       default:
         return {

@@ -29,6 +29,7 @@ class JcodeController extends GetxController {
   final isSuppliersLoading = false.obs;
   final isCatalogLoading = false.obs;
   final isSavingProduct = false.obs;
+  final isUploadingProductImage = false.obs;
   final isImportingDevis = false.obs;
 
   String? get role => StorageService.getRole();
@@ -275,6 +276,19 @@ class JcodeController extends GetxController {
       _showError('Impossible de charger votre catalogue', e);
     } finally {
       isCatalogLoading.value = false;
+    }
+  }
+
+  Future<String?> uploadProductImage(String filePath) async {
+    isUploadingProductImage.value = true;
+    try {
+      final url = await _catalogRepo.uploadProductImage(filePath);
+      return url;
+    } catch (e) {
+      _showError("Erreur de téléchargement de l'image", e);
+      return null;
+    } finally {
+      isUploadingProductImage.value = false;
     }
   }
 

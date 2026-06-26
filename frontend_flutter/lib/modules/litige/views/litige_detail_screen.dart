@@ -56,23 +56,21 @@ class LitigeDetailScreen extends GetView<LitigeDetailController> {
               if (controller.canUploadEvidence) ...[
                 SizedBox(
                   width: double.infinity,
-                  child: Obx(
-                    () => ElevatedButton.icon(
-                      onPressed: controller.isUploadingEvidence.value
-                          ? null
-                          : controller.uploadEvidence,
-                      icon: controller.isUploadingEvidence.value
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.camera_alt_outlined),
-                      label: Text(
-                        controller.isUploadingEvidence.value
-                            ? 'Envoi en cours...'
-                            : 'Ajouter une preuve photo',
-                      ),
+                  child: ElevatedButton.icon(
+                    onPressed: controller.isUploadingEvidence.value
+                        ? null
+                        : controller.uploadEvidence,
+                    icon: controller.isUploadingEvidence.value
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.camera_alt_outlined),
+                    label: Text(
+                      controller.isUploadingEvidence.value
+                          ? 'Envoi en cours...'
+                          : 'Ajouter une preuve photo',
                     ),
                   ),
                 ),

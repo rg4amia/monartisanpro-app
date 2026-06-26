@@ -24,3 +24,6 @@ plugins {
 }
 
 include(":app")
+
+rootProject.name = "monartisanpro-app-android-nested"
+

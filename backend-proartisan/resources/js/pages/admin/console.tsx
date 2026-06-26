@@ -1,4 +1,4 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage, useForm } from '@inertiajs/react';
 import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
@@ -100,6 +100,8 @@ interface AdminUser {
     created_at: string;
     missions_client_count: number;
     missions_artisan_count: number;
+    account_status?: string | null;
+    account_status_reason?: string | null;
 }
 
 interface AdminTransaction {
@@ -190,14 +192,14 @@ const tabRoutes: Record<AdminTab, string> = {
 
 const tabMeta: Record<AdminTab, { description: string; label: string; section: string }> = {
     dashboard: {
-        label: 'Vue d’ensemble',
+        label: "Vue d'ensemble",
         section: 'PILOTAGE',
         description: 'Lecture rapide de la santé opérationnelle, financière et terrain de ProsArtisan.',
     },
     kyc: {
         label: 'KYC & Vérifications',
         section: 'VALIDATIONS',
-        description: 'Traitez les dossiers sensibles avant qu’ils ne bloquent les missions et paiements.',
+        description: "Traitez les dossiers sensibles avant qu'ils ne bloquent les missions et paiements.",
     },
     missions: {
         label: 'Missions',
@@ -222,7 +224,7 @@ const tabMeta: Record<AdminTab, { description: string; label: string; section: s
     settings: {
         label: 'Paramètres',
         section: 'PLATEFORME',
-        description: 'Règles métier, configuration d’accès et garde-fous du backoffice.',
+        description: "Règles métier, configuration d'accès et garde-fous du backoffice.",
     },
 };
 
@@ -376,6 +378,132 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
     const [refreshing, setRefreshing] = useState<boolean>(false);
     const deferredSearch = useDeferredValue(search.trim().toLowerCase());
 
+    const [userModalOpen, setUserModalOpen] = useState<boolean>(false);
+    const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
+    const [statusModalOpen, setStatusModalOpen] = useState<boolean>(false);
+    const [statusTargetUser, setStatusTargetUser] = useState<AdminUser | null>(null);
+
+    const userForm = useForm({
+        name: '',
+        phone: '',
+        email: '',
+        role: 'client',
+        password: '',
+        kyc_status: 'en_attente',
+        account_status: 'actif',
+    });
+
+    const statusForm = useForm({
+        account_status: 'actif',
+        account_status_reason: '',
+    });
+
+    const openCreateUserModal = (): void => {
+        setEditingUser(null);
+        userForm.reset();
+        userForm.clearErrors();
+        userForm.setData({
+            name: '',
+            phone: '',
+            email: '',
+            role: 'client',
+            password: '',
+            kyc_status: 'en_attente',
+            account_status: 'actif',
+        });
+        setUserModalOpen(true);
+    };
+
+    const openEditUserModal = (user: AdminUser): void => {
+        setEditingUser(user);
+        userForm.clearErrors();
+        userForm.setData({
+            name: user.name,
+            phone: user.phone,
+            email: user.email ?? '',
+            role: user.role as any,
+            password: '',
+            kyc_status: user.kyc_status as any,
+            account_status: (user.account_status ?? 'actif') as any,
+        });
+        setUserModalOpen(true);
+    };
+
+    const handleUserFormSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
+        event.preventDefault();
+        if (editingUser) {
+            userForm.put(`/admin/users/${editingUser.id}`, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setUserModalOpen(false);
+                    userForm.reset();
+                },
+            });
+        } else {
+            userForm.post('/admin/users', {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setUserModalOpen(false);
+                    userForm.reset();
+                },
+            });
+        }
+    };
+
+    const handleToggleUserStatus = (user: AdminUser): void => {
+        if (auth.user?.phone === user.phone || auth.user?.email === user.email) {
+            window.alert('Vous ne pouvez pas modifier votre propre statut.');
+            return;
+        }
+
+        const isActif = (user.account_status ?? 'actif') === 'actif';
+        if (isActif) {
+            setStatusTargetUser(user);
+            statusForm.reset();
+            statusForm.clearErrors();
+            statusForm.setData({
+                account_status: 'suspendu',
+                account_status_reason: '',
+            });
+            setStatusModalOpen(true);
+        } else {
+            if (window.confirm(`Voulez-vous réactiver le compte de ${user.name} ?`)) {
+                router.post(`/admin/users/${user.id}/toggle-status`, {
+                    account_status: 'actif',
+                    account_status_reason: '',
+                }, {
+                    preserveScroll: true,
+                });
+            }
+        }
+    };
+
+    const handleStatusSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
+        event.preventDefault();
+        if (!statusTargetUser) return;
+
+        statusForm.post(`/admin/users/${statusTargetUser.id}/toggle-status`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setStatusModalOpen(false);
+                statusForm.reset();
+            },
+        });
+    };
+
+    const handleDeleteUser = (user: AdminUser): void => {
+        if (auth.user?.phone === user.phone || auth.user?.email === user.email) {
+            window.alert('Vous ne pouvez pas supprimer votre propre compte.');
+            return;
+        }
+
+        if (window.confirm(`Êtes-vous sûr de vouloir supprimer définitivement l'utilisateur ${user.name} ? Cette action est irréversible.`)) {
+            router.delete(`/admin/users/${user.id}`, {
+                preserveScroll: true,
+            });
+        }
+    };
+
     useEffect(() => {
         if (typeof window === 'undefined') {
             return;
@@ -403,62 +531,62 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
             deferredSearch === ''
                 ? true
                 : normalizeSearch([
-                      mission.id,
-                      mission.description,
-                      mission.status,
-                      mission.gemini_category,
-                      mission.gemini_urgency,
-                      mission.client?.name,
-                      mission.artisan?.name,
-                      mission.client_address,
-                  ]).includes(deferredSearch),
+                    mission.id,
+                    mission.description,
+                    mission.status,
+                    mission.gemini_category,
+                    mission.gemini_urgency,
+                    mission.client?.name,
+                    mission.artisan?.name,
+                    mission.client_address,
+                ]).includes(deferredSearch),
         );
 
         const filteredLitiges = litiges.filter((litige) =>
             deferredSearch === ''
                 ? true
                 : normalizeSearch([
-                      litige.id,
-                      litige.mission_id,
-                      litige.description,
-                      litige.statut,
-                      litige.decision,
-                      litige.mission.client?.name,
-                      litige.mission.artisan?.name,
-                  ]).includes(deferredSearch),
+                    litige.id,
+                    litige.mission_id,
+                    litige.description,
+                    litige.statut,
+                    litige.decision,
+                    litige.mission.client?.name,
+                    litige.mission.artisan?.name,
+                ]).includes(deferredSearch),
         );
 
         const filteredUsers = users.filter((user) =>
             deferredSearch === ''
                 ? true
                 : normalizeSearch([user.id, user.name, user.email, user.phone, user.role, user.kyc_status, user.score_nzassa]).includes(
-                      deferredSearch,
-                  ),
+                    deferredSearch,
+                ),
         );
 
         const filteredTransactions = transactions.filter((transaction) =>
             deferredSearch === ''
                 ? true
                 : normalizeSearch([
-                      transaction.id,
-                      transaction.type,
-                      transaction.provider,
-                      transaction.statut,
-                      transaction.wallet_source,
-                      transaction.wallet_dest,
-                      transaction.user?.name,
-                  ]).includes(deferredSearch),
+                    transaction.id,
+                    transaction.type,
+                    transaction.provider,
+                    transaction.statut,
+                    transaction.wallet_source,
+                    transaction.wallet_dest,
+                    transaction.user?.name,
+                ]).includes(deferredSearch),
         );
 
         const filteredFournisseurs = fournisseurs.filter((fournisseur) =>
             deferredSearch === ''
                 ? true
                 : normalizeSearch([
-                      fournisseur.id,
-                      fournisseur.nom_boutique,
-                      fournisseur.user?.name,
-                      fournisseur.user?.phone,
-                  ]).includes(deferredSearch),
+                    fournisseur.id,
+                    fournisseur.nom_boutique,
+                    fournisseur.user?.name,
+                    fournisseur.user?.phone,
+                ]).includes(deferredSearch),
         );
 
         const confirmedTransactions = transactions.filter((transaction) => transaction.statut === 'confirme');
@@ -509,8 +637,8 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                     transaction.statut === 'confirme'
                         ? ('green' as const)
                         : transaction.statut === 'echoue'
-                          ? ('rose' as const)
-                          : ('blue' as const),
+                            ? ('rose' as const)
+                            : ('blue' as const),
             })),
         ]
             .sort((left, right) => new Date(right.date).getTime() - new Date(left.date).getTime())
@@ -694,7 +822,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                 ];
             case 'settings':
                 return [
-                    { label: 'Pays', tone: 'amber' as const, value: 'Côte d’Ivoire' },
+                    { label: 'Pays', tone: 'amber' as const, value: "Côte d'Ivoire" },
                     { label: 'Devise', tone: 'green' as const, value: 'FCFA' },
                     { label: 'Paiements', tone: 'blue' as const, value: 'Wave / Orange' },
                     { label: 'Mode mobile', tone: 'slate' as const, value: 'Hors-ligne' },
@@ -926,7 +1054,12 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                         {themeMode === 'light' ? 'Sombre' : 'Clair'}
                                     </button>
 
-                                    <button type="button" className="relative rounded-2xl border border-transparent p-3 text-[var(--admin-muted)] transition hover:bg-white/55">
+                                    <button
+                                        type="button"
+                                        className="relative rounded-2xl border border-transparent p-3 text-[var(--admin-muted)] transition hover:bg-white/55"
+                                        title="Notifications"
+                                        aria-label="Notifications"
+                                    >
                                         <BellIcon className="h-5 w-5" />
                                         <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-[#f15f57]" />
                                     </button>
@@ -945,6 +1078,8 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                         type="button"
                                         className="rounded-2xl p-3 text-[var(--admin-muted)] transition hover:bg-white/55"
                                         onClick={() => router.post('/admin/logout')}
+                                        title="Se déconnecter"
+                                        aria-label="Se déconnecter"
                                     >
                                         <LogoutIcon className="h-5 w-5" />
                                     </button>
@@ -1535,10 +1670,19 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
 
                                     <div className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
                                         <Surface className="rounded-[32px] p-5 lg:p-6">
-                                            <SectionTitle
-                                                description="Vue consolidée des comptes, rôles, KYC et activité mission."
-                                                title="Répertoire utilisateurs"
-                                            />
+                                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                                <SectionTitle
+                                                    description="Vue consolidée des comptes, rôles, KYC et activité mission."
+                                                    title="Répertoire utilisateurs"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={openCreateUserModal}
+                                                    className="admin-button admin-button--primary self-start sm:self-auto"
+                                                >
+                                                    Ajouter un utilisateur
+                                                </button>
+                                            </div>
 
                                             <DataTable className="mt-5">
                                                 <thead>
@@ -1546,9 +1690,9 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                                         <th>Utilisateur</th>
                                                         <th>Rôle</th>
                                                         <th>KYC</th>
-                                                        <th>Score</th>
+                                                        <th>Compte</th>
                                                         <th>Missions</th>
-                                                        <th>Inscrit</th>
+                                                        <th className="text-right">Actions</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -1578,11 +1722,40 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                                                 <td>
                                                                     <KycStatusBadge status={user.kyc_status} />
                                                                 </td>
-                                                                <td className="text-sm font-semibold text-[var(--admin-text)]">{user.score_nzassa}/100</td>
+                                                                <td>
+                                                                    <AccountStatusBadge status={user.account_status} />
+                                                                </td>
                                                                 <td className="text-sm text-[var(--admin-text-soft)]">
                                                                     Client: {user.missions_client_count} • Artisan: {user.missions_artisan_count}
                                                                 </td>
-                                                                <td className="text-sm text-[var(--admin-text-soft)]">{shortDate(user.created_at)}</td>
+                                                                <td>
+                                                                    <div className="flex justify-end gap-2">
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => openEditUserModal(user)}
+                                                                            className={actionButtonClass('secondary')}
+                                                                            title="Modifier"
+                                                                        >
+                                                                            Modifier
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleToggleUserStatus(user)}
+                                                                            className={actionButtonClass((user.account_status ?? 'actif') === 'actif' ? 'danger' : 'success')}
+                                                                            title={(user.account_status ?? 'actif') === 'actif' ? 'Suspendre' : 'Activer'}
+                                                                        >
+                                                                            {(user.account_status ?? 'actif') === 'actif' ? 'Suspendre' : 'Activer'}
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleDeleteUser(user)}
+                                                                            className={actionButtonClass('danger')}
+                                                                            title="Supprimer"
+                                                                        >
+                                                                            Supprimer
+                                                                        </button>
+                                                                    </div>
+                                                                </td>
                                                             </tr>
                                                         ))
                                                     )}
@@ -1725,12 +1898,12 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                         />
                                         <ul className="mt-5 space-y-2.5">
                                             {[
-                                                { icon: ShieldIcon, text: ‘Client et artisan doivent être KYC actifs avant toute mission ou transaction.’ },
-                                                { icon: WalletIcon, text: ‘Le ratio de fragmentation matériaux / main d\’œuvre reste figé après acceptation du devis.’ },
-                                                { icon: AlertIcon, text: ‘Le scan J-Code doit toujours vérifier une distance fournisseur ≤ 100 m.’ },
-                                                { icon: ClipboardIcon, text: ‘Aucune libération de fonds sans OTP jalon validé côté client.’ },
-                                                { icon: UsersIcon, text: ‘Toute mission au-delà de 2 000 000 FCFA exige une validation physique Référent.’ },
-                                                { icon: SettingsIcon, text: ‘Les montants financiers restent en BIGINT FCFA, sans float ni double.’ },
+                                                { icon: ShieldIcon, text: 'Client et artisan doivent être KYC actifs avant toute mission ou transaction.' },
+                                                { icon: WalletIcon, text: "Le ratio de fragmentation matériaux / main d'œuvre reste figé après acceptation du devis." },
+                                                { icon: AlertIcon, text: 'Le scan J-Code doit toujours vérifier une distance fournisseur ≤ 100 m.' },
+                                                { icon: ClipboardIcon, text: 'Aucune libération de fonds sans OTP jalon validé côté client.' },
+                                                { icon: UsersIcon, text: 'Toute mission au-delà de 2 000 000 FCFA exige une validation physique Référent.' },
+                                                { icon: SettingsIcon, text: 'Les montants financiers restent en BIGINT FCFA, sans float ni double.' },
                                             ].map((rule, index) => (
                                                 <li key={index} className="flex items-start gap-3 rounded-[18px] border border-[var(--admin-border)] bg-white/55 px-4 py-3">
                                                     <rule.icon className="mt-0.5 h-4 w-4 shrink-0 text-[var(--admin-muted)]" />
@@ -1777,6 +1950,206 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                         </footer>
                     </div>
                 </div>
+
+                {userModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                        <div className="admin-panel admin-surface w-full max-w-[550px] rounded-[32px] border p-6 lg:p-8 shadow-2xl relative">
+                            <div className="flex items-center justify-between border-b border-[var(--admin-border)] pb-4">
+                                <h2 className="text-xl font-bold text-[var(--admin-text)]">
+                                    {editingUser ? 'Modifier l’utilisateur' : 'Créer un utilisateur'}
+                                </h2>
+                                <button
+                                    type="button"
+                                    onClick={() => setUserModalOpen(false)}
+                                    className="rounded-full p-2 text-[var(--admin-muted)] hover:bg-white/10 hover:text-[var(--admin-text)] transition"
+                                    title="Fermer"
+                                    aria-label="Fermer"
+                                >
+                                    <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                        <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleUserFormSubmit} className="mt-6 space-y-4">
+                                <label className="block space-y-1">
+                                    <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Nom complet</span>
+                                    <input
+                                        type="text"
+                                        value={userForm.data.name}
+                                        onChange={(e) => userForm.setData('name', e.target.value)}
+                                        className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none"
+                                        required
+                                    />
+                                    {userForm.errors.name && <p className="text-xs text-[#b24f43]">{userForm.errors.name}</p>}
+                                </label>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <label className="block space-y-1">
+                                        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Téléphone</span>
+                                        <input
+                                            type="text"
+                                            value={userForm.data.phone}
+                                            onChange={(e) => userForm.setData('phone', e.target.value)}
+                                            className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none"
+                                            required
+                                            placeholder="+225..."
+                                        />
+                                        {userForm.errors.phone && <p className="text-xs text-[#b24f43]">{userForm.errors.phone}</p>}
+                                    </label>
+
+                                    <label className="block space-y-1">
+                                        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">E-mail</span>
+                                        <input
+                                            type="email"
+                                            value={userForm.data.email}
+                                            onChange={(e) => userForm.setData('email', e.target.value)}
+                                            className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none"
+                                            placeholder="exemple@email.com"
+                                        />
+                                        {userForm.errors.email && <p className="text-xs text-[#b24f43]">{userForm.errors.email}</p>}
+                                    </label>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <label className="block space-y-1">
+                                        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Rôle</span>
+                                        <select
+                                            value={userForm.data.role}
+                                            onChange={(e) => userForm.setData('role', e.target.value as any)}
+                                            className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none bg-transparent"
+                                        >
+                                            <option value="client">Client</option>
+                                            <option value="artisan">Artisan</option>
+                                            <option value="fournisseur">Fournisseur</option>
+                                            <option value="referent">Référent</option>
+                                            <option value="admin">Administrateur</option>
+                                        </select>
+                                        {userForm.errors.role && <p className="text-xs text-[#b24f43]">{userForm.errors.role}</p>}
+                                    </label>
+
+                                    <label className="block space-y-1">
+                                        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Mot de passe</span>
+                                        <input
+                                            type="password"
+                                            value={userForm.data.password}
+                                            onChange={(e) => userForm.setData('password', e.target.value)}
+                                            className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none"
+                                            required={!editingUser}
+                                            placeholder={editingUser ? 'Laisser vide pour ne pas changer' : 'Minimum 6 caractères'}
+                                        />
+                                        {userForm.errors.password && <p className="text-xs text-[#b24f43]">{userForm.errors.password}</p>}
+                                    </label>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <label className="block space-y-1">
+                                        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Statut KYC</span>
+                                        <select
+                                            value={userForm.data.kyc_status}
+                                            onChange={(e) => userForm.setData('kyc_status', e.target.value as any)}
+                                            className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none bg-transparent"
+                                        >
+                                            <option value="en_attente">En attente</option>
+                                            <option value="actif">Actif (Approuvé)</option>
+                                            <option value="rejete">Rejeté</option>
+                                        </select>
+                                        {userForm.errors.kyc_status && <p className="text-xs text-[#b24f43]">{userForm.errors.kyc_status}</p>}
+                                    </label>
+
+                                    <label className="block space-y-1">
+                                        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Statut du compte</span>
+                                        <select
+                                            value={userForm.data.account_status}
+                                            onChange={(e) => userForm.setData('account_status', e.target.value as any)}
+                                            className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none bg-transparent"
+                                        >
+                                            <option value="actif">Actif</option>
+                                            <option value="suspendu">Suspendu</option>
+                                        </select>
+                                        {userForm.errors.account_status && <p className="text-xs text-[#b24f43]">{userForm.errors.account_status}</p>}
+                                    </label>
+                                </div>
+
+                                <div className="flex justify-end gap-3 pt-4 border-t border-[var(--admin-border)]">
+                                    <button
+                                        type="button"
+                                        onClick={() => setUserModalOpen(false)}
+                                        className="admin-button admin-button--ghost"
+                                    >
+                                        Annuler
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={userForm.processing}
+                                        className="admin-button admin-button--primary"
+                                    >
+                                        {userForm.processing ? 'Enregistrement...' : 'Enregistrer'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
+
+                {statusModalOpen && statusTargetUser && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                        <div className="admin-panel admin-surface w-full max-w-[450px] rounded-[32px] border p-6 shadow-2xl relative">
+                            <div className="flex items-center justify-between border-b border-[var(--admin-border)] pb-4">
+                                <h2 className="text-lg font-bold text-[var(--admin-text)]">
+                                    Suspendre le compte de {statusTargetUser.name}
+                                </h2>
+                                <button
+                                    type="button"
+                                    onClick={() => setStatusModalOpen(false)}
+                                    className="rounded-full p-2 text-[var(--admin-muted)] hover:bg-white/10 hover:text-[var(--admin-text)] transition"
+                                    title="Fermer"
+                                    aria-label="Fermer"
+                                >
+                                    <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                        <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleStatusSubmit} className="mt-5 space-y-4">
+                                <p className="text-sm text-[var(--admin-text-soft)]">
+                                    Veuillez indiquer le motif de suspension du compte. Ce motif sera visible pour l'utilisateur.
+                                </p>
+                                <label className="block space-y-1">
+                                    <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Motif de suspension</span>
+                                    <textarea
+                                        value={statusForm.data.account_status_reason}
+                                        onChange={(e) => statusForm.setData('account_status_reason', e.target.value)}
+                                        className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none h-24 resize-none"
+                                        required
+                                        placeholder="Ex: Documents non conformes ou comportement abusif signalé..."
+                                    />
+                                    {statusForm.errors.account_status_reason && (
+                                        <p className="text-xs text-[#b24f43]">{statusForm.errors.account_status_reason}</p>
+                                    )}
+                                </label>
+
+                                <div className="flex justify-end gap-3 pt-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setStatusModalOpen(false)}
+                                        className="admin-button admin-button--ghost"
+                                    >
+                                        Annuler
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={statusForm.processing}
+                                        className="admin-button bg-[#f15f57] text-white hover:bg-[#dd4d45]"
+                                    >
+                                        {statusForm.processing ? 'Suspension...' : 'Suspendre le compte'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
 
                 <BottomDock activeTab={activeTab} />
             </div>
@@ -1889,6 +2262,15 @@ function KycStatusBadge({ status }: { status: string }) {
     };
 
     return <span className={cn('rounded-full border px-3 py-1 text-xs font-semibold', toneBadgeClasses(toneMap[status] ?? 'slate'))}>{kycStatusLabels[status] ?? status}</span>;
+}
+
+function AccountStatusBadge({ status }: { status?: string | null }) {
+    const isActif = (status ?? 'actif') === 'actif';
+    return (
+        <span className={cn('rounded-full border px-3 py-1 text-xs font-semibold', toneBadgeClasses(isActif ? 'green' : 'rose'))}>
+            {isActif ? 'Actif' : 'Suspendu'}
+        </span>
+    );
 }
 
 function MissionStatusBadge({ status }: { status: string }) {
@@ -2056,7 +2438,12 @@ function DualLineChart({ series }: { series: DualSeries[] }) {
             <div className="mt-3 flex flex-wrap gap-5">
                 {series.map((entry) => (
                     <div key={entry.label} className="flex items-center gap-2 text-sm text-[var(--admin-text-soft)]">
-                        <span className="h-3 w-3 rounded-full border-2 border-white shadow-sm" style={{ backgroundColor: entry.color }} />
+                        <span
+                            className="h-3 w-3 rounded-full border-2 border-white shadow-sm"
+                            ref={(el) => {
+                                if (el) el.style.backgroundColor = entry.color;
+                            }}
+                        />
                         {entry.label}
                     </div>
                 ))}
@@ -2085,7 +2472,13 @@ function VolumeBarChart({ bars, color }: { bars: ChartPoint[]; color: string }) 
                             </span>
                             <div
                                 className="w-full rounded-t-[10px] transition-all duration-500 group-hover:opacity-100"
-                                style={{ backgroundColor: color, height: `${heightPercent}%`, opacity: 0.82 }}
+                                ref={(el) => {
+                                    if (el) {
+                                        el.style.backgroundColor = color;
+                                        el.style.height = `${heightPercent}%`;
+                                        el.style.opacity = '0.82';
+                                    }
+                                }}
                             />
                             <span className="text-[10px] text-[var(--admin-muted)]">{bar.label}</span>
                         </div>
@@ -2162,8 +2555,8 @@ function ActivityToneIcon({ tone }: { tone: Tone }) {
     switch (tone) {
         case 'amber': return <ShieldIcon className={cls} />;
         case 'green': return <CheckCircleIcon className={cls} />;
-        case 'rose':  return <AlertIcon className={cls} />;
-        case 'blue':  return <WalletIcon className={cls} />;
+        case 'rose': return <AlertIcon className={cls} />;
+        case 'blue': return <WalletIcon className={cls} />;
         case 'slate': return <ArchiveIcon className={cls} />;
     }
 }

@@ -20,6 +20,7 @@ class _Dt {
   static const client = AppColors.client;
   static const artisan = AppColors.accent;
   static const fournisseur = AppColors.success;
+  static const driver = AppColors.driver;
 }
 
 // ─── Login Screen ────────────────────────────────────────────────────────────
@@ -163,7 +164,9 @@ class _LoginScreenState extends State<LoginScreen>
                         );
                       }),
                       _buildContinueButton(),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 12),
+                      _buildResetLink(),
+                      const SizedBox(height: 12),
                       _buildFooter(),
                       const SizedBox(height: 12),
                     ],
@@ -240,48 +243,57 @@ class _LoginScreenState extends State<LoginScreen>
   // ── Profile Selection ─────────────────────────────────────────────────────
 
   Widget _buildProfileSelection() {
-    return Obx(() => Row(
+    return Obx(() => GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: 2,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          childAspectRatio: 1.25,
           children: [
-            Expanded(
-              child: _buildProfileCard(
-                'CLIENT',
-                Icons.person_outline_rounded,
-                '👩‍💼',
-                _selectedProfile.value == 'CLIENT',
-                () {
-                  _selectedProfile.value = 'CLIENT';
-                  _c.role.value = 'client';
-                  HapticFeedback.mediumImpact();
-                },
-              ),
+            _buildProfileCard(
+              'CLIENT',
+              Icons.person_outline_rounded,
+              '👩‍💼',
+              _selectedProfile.value == 'CLIENT',
+              () {
+                _selectedProfile.value = 'CLIENT';
+                _c.role.value = 'client';
+                HapticFeedback.mediumImpact();
+              },
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildProfileCard(
-                'ARTISAN',
-                Icons.construction_outlined,
-                '👨‍🔧',
-                _selectedProfile.value == 'ARTISAN',
-                () {
-                  _selectedProfile.value = 'ARTISAN';
-                  _c.role.value = 'artisan';
-                  HapticFeedback.mediumImpact();
-                },
-              ),
+            _buildProfileCard(
+              'ARTISAN',
+              Icons.construction_outlined,
+              '👨‍🔧',
+              _selectedProfile.value == 'ARTISAN',
+              () {
+                _selectedProfile.value = 'ARTISAN';
+                _c.role.value = 'artisan';
+                HapticFeedback.mediumImpact();
+              },
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildProfileCard(
-                'FOURNISSEUR',
-                Icons.warehouse_outlined,
-                '🏭',
-                _selectedProfile.value == 'FOURNISSEUR',
-                () {
-                  _selectedProfile.value = 'FOURNISSEUR';
-                  _c.role.value = 'fournisseur';
-                  HapticFeedback.mediumImpact();
-                },
-              ),
+            _buildProfileCard(
+              'FOURNISSEUR',
+              Icons.warehouse_outlined,
+              '🏭',
+              _selectedProfile.value == 'FOURNISSEUR',
+              () {
+                _selectedProfile.value = 'FOURNISSEUR';
+                _c.role.value = 'fournisseur';
+                HapticFeedback.mediumImpact();
+              },
+            ),
+            _buildProfileCard(
+              'LIVREUR',
+              Icons.local_shipping_outlined,
+              '🚚',
+              _selectedProfile.value == 'LIVREUR',
+              () {
+                _selectedProfile.value = 'LIVREUR';
+                _c.role.value = 'driver';
+                HapticFeedback.mediumImpact();
+              },
             ),
           ],
         ));
@@ -882,10 +894,286 @@ class _LoginScreenState extends State<LoginScreen>
         return _Dt.artisan;
       case 'FOURNISSEUR':
         return _Dt.fournisseur;
+      case 'LIVREUR':
+        return _Dt.driver;
       case 'CLIENT':
       default:
         return _Dt.client;
     }
+  }
+
+  Widget _buildResetLink() {
+    return Center(
+      child: TextButton(
+        onPressed: _showResetOptionsDialog,
+        child: const Text(
+          'Paramètres perdus ? Réinitialiser',
+          style: TextStyle(
+            color: _Dt.muted,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            decoration: TextDecoration.underline,
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showResetOptionsDialog() {
+    Get.dialog(
+      AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Réinitialisation de connexion',
+          style: TextStyle(fontWeight: FontWeight.w800),
+        ),
+        content: const Text(
+          'Choisissez l\'action de réinitialisation appropriée pour votre situation :',
+          style: TextStyle(color: _Dt.muted),
+        ),
+        actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        actions: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              OutlinedButton.icon(
+                onPressed: () async {
+                  Get.back();
+                  await _c.resetLocalSession();
+                  Get.snackbar(
+                    'Session réinitialisée',
+                    'Le cache local a été vidé. Vous pouvez à présent vous reconnecter.',
+                    backgroundColor: _Dt.success,
+                    colorText: Colors.white,
+                    snackPosition: SnackPosition.TOP,
+                  );
+                },
+                icon: const Icon(Icons.refresh_rounded),
+                label: const Text('Réinitialiser l\'application (local)'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: _Dt.primary,
+                  side: const BorderSide(color: _Dt.primary),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
+              const SizedBox(height: 8),
+              ElevatedButton.icon(
+                onPressed: () {
+                  Get.back();
+                  _showRecoverAccountDialog();
+                },
+                icon: const Icon(Icons.swap_calls_rounded),
+                label: const Text('Changement de numéro de téléphone'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _Dt.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () => Get.back(),
+                child: const Text('Fermer'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showRecoverAccountDialog() {
+    final oldPhoneCtrl = TextEditingController(text: '+225');
+    final newPhoneCtrl = TextEditingController(text: '+225');
+    final nameCtrl = TextEditingController();
+    final otpCtrl = TextEditingController();
+
+    // Reset controller states
+    _c.resetOldPhone.value = '+225';
+    _c.resetNewPhone.value = '+225';
+    _c.resetName.value = '';
+    _c.resetRole.value = null;
+    _c.resetOtp.value = '';
+    _c.isResetOtpSent.value = false;
+    _c.errorMsg.value = null;
+
+    Get.dialog(
+      Obx(() => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: const Text(
+              'Récupération de compte',
+              style: TextStyle(fontWeight: FontWeight.w800),
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Rattachez votre ancien compte à votre nouveau numéro de téléphone.',
+                    style: TextStyle(color: _Dt.muted, fontSize: 13),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Role Selector
+                  DropdownButtonFormField<String>(
+                    value: _c.resetRole.value,
+                    decoration: const InputDecoration(
+                      labelText: 'Votre espace / rôle',
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'client', child: Text('Client')),
+                      DropdownMenuItem(value: 'artisan', child: Text('Artisan')),
+                      DropdownMenuItem(value: 'fournisseur', child: Text('Fournisseur')),
+                      DropdownMenuItem(value: 'driver', child: Text('Livreur')),
+                    ],
+                    onChanged: _c.isResetOtpSent.value ? null : (val) {
+                      _c.resetRole.value = val;
+                    },
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Name
+                  TextField(
+                    controller: nameCtrl,
+                    enabled: !_c.isResetOtpSent.value,
+                    decoration: const InputDecoration(
+                      labelText: 'Nom complet exact',
+                      border: OutlineInputBorder(),
+                      hintText: 'Ex: Jean Dupont',
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
+                    onChanged: (val) => _c.resetName.value = val,
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Old Phone
+                  TextField(
+                    controller: oldPhoneCtrl,
+                    enabled: !_c.isResetOtpSent.value,
+                    keyboardType: TextInputType.phone,
+                    decoration: const InputDecoration(
+                      labelText: 'Ancien numéro (+225)',
+                      border: OutlineInputBorder(),
+                      hintText: '+2250707000000',
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
+                    onChanged: (val) => _c.resetOldPhone.value = val,
+                  ),
+                  const SizedBox(height: 12),
+
+                  // New Phone
+                  TextField(
+                    controller: newPhoneCtrl,
+                    enabled: !_c.isResetOtpSent.value,
+                    keyboardType: TextInputType.phone,
+                    decoration: const InputDecoration(
+                      labelText: 'Nouveau numéro (+225)',
+                      border: OutlineInputBorder(),
+                      hintText: '+2250707000000',
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
+                    onChanged: (val) => _c.resetNewPhone.value = val,
+                  ),
+
+                  if (_c.isResetOtpSent.value) ...[
+                    const SizedBox(height: 16),
+                    const Divider(),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Entrez le code OTP reçu sur votre nouveau numéro :',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: otpCtrl,
+                      keyboardType: TextInputType.number,
+                      maxLength: 4,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, letterSpacing: 8),
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        counterText: '',
+                        hintText: '0000',
+                        contentPadding: EdgeInsets.symmetric(vertical: 8),
+                      ),
+                      onChanged: (val) => _c.resetOtp.value = val,
+                    ),
+                  ],
+
+                  if (_c.errorMsg.value != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      _c.errorMsg.value!,
+                      style: const TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Get.back(),
+                child: const Text('Annuler'),
+              ),
+              ElevatedButton(
+                onPressed: _c.isResetting.value
+                    ? null
+                    : () async {
+                        if (!_c.isResetOtpSent.value) {
+                          // Envoyer OTP
+                          await _c.requestResetPhone();
+                          if (_c.errorMsg.value != null) {
+                            Get.snackbar(
+                              'Erreur',
+                              _c.errorMsg.value!,
+                              backgroundColor: Colors.red,
+                              colorText: Colors.white,
+                            );
+                          } else {
+                            Get.snackbar(
+                              'OTP envoyé',
+                              'Un code de validation a été envoyé sur votre nouveau numéro.',
+                              backgroundColor: _Dt.success,
+                              colorText: Colors.white,
+                            );
+                          }
+                        } else {
+                          // Confirmer la récupération
+                          final success = await _c.confirmResetPhone();
+                          if (success) {
+                            Get.back();
+                            Get.snackbar(
+                              'Compte récupéré',
+                              'Votre compte a été associé à votre nouveau numéro avec succès.',
+                              backgroundColor: _Dt.success,
+                              colorText: Colors.white,
+                            );
+                            Get.offAllNamed(Routes.mainTab);
+                          } else {
+                            Get.snackbar(
+                              'Code OTP erroné',
+                              _c.errorMsg.value ?? 'Le code saisi est invalide.',
+                              backgroundColor: Colors.red,
+                              colorText: Colors.white,
+                            );
+                          }
+                        }
+                      },
+                child: _c.isResetting.value
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : Text(_c.isResetOtpSent.value ? 'Confirmer' : 'Suivant'),
+              ),
+            ],
+          )),
+    );
   }
 }
 

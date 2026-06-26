@@ -363,17 +363,17 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
             ),
 
           // ── Indicateur de chargement ──
-          Obx(() {
-            final loading = Get.find<HomeController>().isMapLoading.value;
-            return loading
-                ? const Positioned.fill(
-                    child: ColoredBox(
+          Positioned.fill(
+            child: Obx(() {
+              final loading = Get.find<HomeController>().isMapLoading.value;
+              return loading
+                  ? const ColoredBox(
                       color: Colors.black26,
                       child: Center(child: CircularProgressIndicator()),
-                    ),
-                  )
-                : const SizedBox.shrink();
-          }),
+                    )
+                  : const SizedBox.shrink();
+            }),
+          ),
 
           // ── Bottom panel artisan sélectionné ──
           AnimatedPositioned(

@@ -310,12 +310,14 @@ class _KycCniCaptureScreenState extends State<KycCniCaptureScreen> {
                       size: 18,
                     ),
                     const SizedBox(width: 8),
-                    const Text(
-                      'Conseil : Évitez les reflets et utilisez un bon éclairage',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                    const Expanded(
+                      child: Text(
+                        'Conseil : Évitez les reflets et utilisez un bon éclairage',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ],

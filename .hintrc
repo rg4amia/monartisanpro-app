@@ -1,0 +1,8 @@
+{
+  "rules": {
+    "axe/text-alternatives": "off",
+    "axe/name-role-value": "off",
+    "axe/forms": "off",
+    "no-inline-styles": "off"
+  }
+}

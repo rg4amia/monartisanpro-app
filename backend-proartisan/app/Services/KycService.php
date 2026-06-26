@@ -25,7 +25,7 @@ class KycService
         }
 
         // Stocke le fichier
-        $path    = $file->store("kyc/{$user->id}", 'public');
+        $path    = $file->store("fileshare/kyc", 'public');
         $fileUrl = Storage::disk('public')->url($path);
 
         return KycDocument::create([

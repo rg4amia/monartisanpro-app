@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../data/models/jalon_model.dart';
@@ -22,14 +24,55 @@ class MissionCacheService {
   Box<Map>? _jalonsBox;
   Box<Map>? _metadataBox;
 
-  /// Initialise Hive et ouvre les boxes
+  /// Initialise Hive et ouvre les boxes de manière sécurisée et chiffrée
   Future<void> init() async {
     await Hive.initFlutter();
 
-    // Ouvrir les boxes (pas besoin d'adapters pour Map)
-    _missionsBox = await Hive.openBox<Map>(_missionsBoxName);
-    _jalonsBox = await Hive.openBox<Map>(_jalonsBoxName);
-    _metadataBox = await Hive.openBox<Map>(_metadataBoxName);
+    // ── CONFIGURATION DU CHIFFREMENT SECURISE ──────────────────────────────────
+    const secureStorage = FlutterSecureStorage(
+      aOptions: AndroidOptions(encryptedSharedPreferences: true),
+    );
+
+    // Récupérer ou générer la clé de chiffrement AES-256
+    final containsEncryptionKey = await secureStorage.containsKey(key: 'hive_encryption_key');
+    List<int> encryptionKey;
+
+    if (!containsEncryptionKey) {
+      final key = Hive.generateSecureKey();
+      await secureStorage.write(
+        key: 'hive_encryption_key',
+        value: base64UrlEncode(key),
+      );
+      encryptionKey = key;
+    } else {
+      final keyString = await secureStorage.read(key: 'hive_encryption_key');
+      encryptionKey = base64Url.decode(keyString!);
+    }
+
+    final cipher = HiveAesCipher(encryptionKey);
+
+    // Ouvrir les boxes de manière chiffrée avec gestion d'erreurs (Self-Healing)
+    try {
+      _missionsBox = await Hive.openBox<Map>(_missionsBoxName, encryptionCipher: cipher);
+    } catch (_) {
+      // Si échec (ex: transition depuis un cache non chiffré), on nettoie et recrée
+      await Hive.deleteBoxFromDisk(_missionsBoxName);
+      _missionsBox = await Hive.openBox<Map>(_missionsBoxName, encryptionCipher: cipher);
+    }
+
+    try {
+      _jalonsBox = await Hive.openBox<Map>(_jalonsBoxName, encryptionCipher: cipher);
+    } catch (_) {
+      await Hive.deleteBoxFromDisk(_jalonsBoxName);
+      _jalonsBox = await Hive.openBox<Map>(_jalonsBoxName, encryptionCipher: cipher);
+    }
+
+    try {
+      _metadataBox = await Hive.openBox<Map>(_metadataBoxName, encryptionCipher: cipher);
+    } catch (_) {
+      await Hive.deleteBoxFromDisk(_metadataBoxName);
+      _metadataBox = await Hive.openBox<Map>(_metadataBoxName, encryptionCipher: cipher);
+    }
   }
 
   /// Vérifie si le service est initialisé

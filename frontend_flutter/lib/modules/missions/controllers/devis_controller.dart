@@ -35,6 +35,7 @@ class DevisController extends GetxController {
   final pendingPaymentUrl = RxnString();
   final pendingLaunchUrl = RxnString();
   final pendingProvider = RxnString();
+  final pendingVirementInstructions = Rxn<VirementInstructionsModel>();
 
   // Données pour la création de devis (artisan)
   final lignes = <DevisLigne>[].obs;
@@ -462,6 +463,17 @@ class DevisController extends GetxController {
       );
 
       _setPendingPayment(payment, devis.id);
+
+      if (provider == 'virement_bancaire') {
+        Get.snackbar(
+          'Virement initié',
+          'Veuillez effectuer le virement bancaire avec les instructions affichées.',
+          snackPosition: SnackPosition.TOP,
+          duration: const Duration(seconds: 4),
+        );
+        return false;
+      }
+
       final launchOpened = await reopenPendingPayment(showError: false);
 
       if (!launchOpened) {
@@ -628,6 +640,7 @@ class DevisController extends GetxController {
     pendingPaymentUrl.value = payment.paymentUrl;
     pendingLaunchUrl.value = payment.waveLaunchUrl;
     pendingProvider.value = payment.provider;
+    pendingVirementInstructions.value = payment.virementInstructions;
   }
 
   void _clearPendingPayment() {
@@ -636,6 +649,7 @@ class DevisController extends GetxController {
     pendingPaymentUrl.value = null;
     pendingLaunchUrl.value = null;
     pendingProvider.value = null;
+    pendingVirementInstructions.value = null;
   }
 
   /// Refuse un devis (client)

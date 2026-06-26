@@ -16,6 +16,15 @@ class AuthController extends GetxController {
   final otpSent = false.obs;
   final errorMsg = Rx<String?>(null);
 
+  // Reset Account / Lost phone
+  final resetOldPhone = ''.obs;
+  final resetNewPhone = ''.obs;
+  final resetName = ''.obs;
+  final resetRole = Rx<String?>(null);
+  final resetOtp = ''.obs;
+  final isResetOtpSent = false.obs;
+  final isResetting = false.obs;
+
   // KYC
   final cniPath = Rx<String?>(null);
   final selfiePath = Rx<String?>(null);
@@ -134,6 +143,90 @@ class AuthController extends GetxController {
       kycStep.value = 2;
     } catch (e) {
       errorMsg.value = _parseError(e);
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  bool get canSendResetOtp =>
+      resetOldPhone.value.length >= 14 &&
+      resetNewPhone.value.length >= 14 &&
+      resetName.value.trim().isNotEmpty &&
+      resetRole.value != null;
+
+  bool get canConfirmResetOtp => resetOtp.value.length == 4;
+
+  Future<void> requestResetPhone() async {
+    if (!canSendResetOtp) return;
+    isResetting.value = true;
+    errorMsg.value = null;
+    try {
+      await _repo.requestResetPhoneLost(
+        oldPhone: resetOldPhone.value,
+        newPhone: resetNewPhone.value,
+        name: resetName.value.trim(),
+        role: resetRole.value!,
+      );
+      isResetOtpSent.value = true;
+    } catch (e) {
+      errorMsg.value = _parseError(e);
+    } finally {
+      isResetting.value = false;
+    }
+  }
+
+  Future<bool> confirmResetPhone() async {
+    if (!canConfirmResetOtp) return false;
+    isResetting.value = true;
+    errorMsg.value = null;
+    try {
+      final result = await _repo.confirmResetPhoneLost(
+        oldPhone: resetOldPhone.value,
+        newPhone: resetNewPhone.value,
+        name: resetName.value.trim(),
+        role: resetRole.value!,
+        otp: resetOtp.value,
+      );
+
+      final userData = result['user'];
+      if (userData != null) {
+        final user = userData is UserModel
+            ? userData
+            : UserModel.fromJson(userData as Map<String, dynamic>);
+
+        StorageService.saveUserId(user.id);
+        StorageService.savePhone(resetNewPhone.value);
+        StorageService.saveName(user.name ?? '');
+        StorageService.saveRole(user.role);
+        StorageService.saveKycStatus(user.kycStatus);
+        StorageService.setOnboarded(true);
+      }
+      return true;
+    } catch (e) {
+      errorMsg.value = _parseError(e);
+      return false;
+    } finally {
+      isResetting.value = false;
+    }
+  }
+
+  Future<void> resetLocalSession() async {
+    isLoading.value = true;
+    try {
+      await StorageService.clearAll();
+      phone.value = '';
+      otp.value = '';
+      role.value = null;
+      name.value = '';
+      otpSent.value = false;
+      errorMsg.value = null;
+      
+      resetOldPhone.value = '';
+      resetNewPhone.value = '';
+      resetName.value = '';
+      resetRole.value = null;
+      resetOtp.value = '';
+      isResetOtpSent.value = false;
     } finally {
       isLoading.value = false;
     }

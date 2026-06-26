@@ -11,6 +11,10 @@ return [
         'referent_threshold' => env('REFERENT_THRESHOLD', 2000000), // FCFA
     ],
 
+    'night_mode' => [
+        'surge_multiplier' => env('NIGHT_SURGE_MULTIPLIER', 1.5),
+    ],
+
     'otp' => [
         'length' => 4,
         'ttl'    => 5, // minutes

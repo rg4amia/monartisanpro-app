@@ -5,6 +5,7 @@ import '../../home/views/artisan_home_screen.dart';
 import '../../home/views/artisan_map_screen.dart';
 import '../../home/views/client_home_screen.dart';
 import '../../home/views/supplier_home_screen.dart';
+import '../../home/views/driver_home_screen.dart';
 import '../../jcode/views/jcode_screen.dart';
 import '../../missions/views/missions_screen.dart';
 import '../../settings/views/settings_screen.dart';
@@ -21,12 +22,15 @@ class MainTabScreen extends StatelessWidget {
       final role = c.role.value ?? 'client';
       final isFournisseur = role == 'fournisseur';
       final isArtisan = role == 'artisan';
+      final isDriver = role == 'driver' || role == 'LIVREUR';
 
       final tabs = isFournisseur
           ? _fournisseurTabs()
           : isArtisan
               ? _artisanTabs()
-              : _clientTabs();
+              : isDriver
+                  ? _driverTabs()
+                  : _clientTabs();
 
       return Scaffold(
         body: IndexedStack(
@@ -125,6 +129,31 @@ class MainTabScreen extends StatelessWidget {
             icon: Icons.person_outline_rounded,
             activeIcon: Icons.person_rounded,
             label: 'PROFIL',
+          ),
+        ],
+      );
+
+  _TabConfig _driverTabs() => _TabConfig(
+        screens: const [
+          DriverHomeScreen(),
+          MissionsScreen(),
+          SettingsScreen(),
+        ],
+        items: const [
+          _NavItem(
+            icon: Icons.home_outlined,
+            activeIcon: Icons.home,
+            label: 'Accueil',
+          ),
+          _NavItem(
+            icon: Icons.local_shipping_outlined,
+            activeIcon: Icons.local_shipping,
+            label: 'Livraison',
+          ),
+          _NavItem(
+            icon: Icons.person_outline_rounded,
+            activeIcon: Icons.person,
+            label: 'Profil',
           ),
         ],
       );

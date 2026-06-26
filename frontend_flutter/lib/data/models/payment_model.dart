@@ -1,3 +1,25 @@
+class VirementInstructionsModel {
+  final String bankName;
+  final String accountName;
+  final String iban;
+  final String reference;
+
+  const VirementInstructionsModel({
+    required this.bankName,
+    required this.accountName,
+    required this.iban,
+    required this.reference,
+  });
+
+  factory VirementInstructionsModel.fromJson(Map<String, dynamic> json) =>
+      VirementInstructionsModel(
+        bankName: (json['bank_name'] ?? json['bankName'] ?? '').toString(),
+        accountName: (json['account_name'] ?? json['accountName'] ?? '').toString(),
+        iban: (json['iban'] ?? '').toString(),
+        reference: (json['reference'] ?? '').toString(),
+      );
+}
+
 class PaymentInitiationModel {
   final int transactionId;
   final int? devisId;
@@ -5,6 +27,7 @@ class PaymentInitiationModel {
   final String? paymentUrl;
   final String? waveLaunchUrl;
   final String? orderId;
+  final VirementInstructionsModel? virementInstructions;
 
   const PaymentInitiationModel({
     required this.transactionId,
@@ -13,6 +36,7 @@ class PaymentInitiationModel {
     this.paymentUrl,
     this.waveLaunchUrl,
     this.orderId,
+    this.virementInstructions,
   });
 
   String? get launchUrl => waveLaunchUrl ?? paymentUrl;
@@ -28,6 +52,13 @@ class PaymentInitiationModel {
         waveLaunchUrl: json['wave_launch_url']?.toString() ??
             json['waveLaunchUrl']?.toString(),
         orderId: json['order_id']?.toString() ?? json['orderId']?.toString(),
+        virementInstructions: json['virement_instructions'] != null
+            ? VirementInstructionsModel.fromJson(
+                json['virement_instructions'] as Map<String, dynamic>)
+            : json['virementInstructions'] != null
+                ? VirementInstructionsModel.fromJson(
+                    json['virementInstructions'] as Map<String, dynamic>)
+                : null,
       );
 }
 

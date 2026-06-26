@@ -312,6 +312,15 @@ class _MenuList extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           _MenuItem(
+            icon: Icons.phone_android_outlined,
+            iconBg: _C.primaryLight,
+            iconColor: _C.primary,
+            title: 'Modifier le numéro de téléphone',
+            subtitle: 'Mettre à jour vos paramètres de connexion',
+            onTap: () => _showChangePhoneDialog(context, controller),
+          ),
+          const SizedBox(height: 12),
+          _MenuItem(
             icon: Icons.logout,
             iconBg: _C.dangerLight,
             iconColor: _C.danger,
@@ -350,6 +359,152 @@ class _MenuList extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  void _showChangePhoneDialog(BuildContext context, SettingsController controller) {
+    final phoneCtrl = TextEditingController(text: controller.userPhone.value);
+    final otpCtrl = TextEditingController();
+
+    controller.isChangePhoneOtpSent.value = false;
+    controller.changePhoneError.value = null;
+
+    Get.dialog(
+      Obx(() => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: const Text(
+              'Modifier le numéro',
+              style: TextStyle(fontWeight: FontWeight.w800),
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Entrez votre nouveau numéro de téléphone (+225). Un code de validation OTP vous sera envoyé.',
+                    style: TextStyle(color: _C.muted, fontSize: 13),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: phoneCtrl,
+                    enabled: !controller.isChangePhoneOtpSent.value,
+                    keyboardType: TextInputType.phone,
+                    decoration: const InputDecoration(
+                      labelText: 'Nouveau numéro (+225)',
+                      border: OutlineInputBorder(),
+                      hintText: '+2250707000000',
+                    ),
+                  ),
+                  if (controller.isChangePhoneOtpSent.value) ...[
+                    const SizedBox(height: 16),
+                    const Divider(),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Saisissez le code OTP reçu :',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: otpCtrl,
+                      keyboardType: TextInputType.number,
+                      maxLength: 4,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: 8),
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        counterText: '',
+                        hintText: '0000',
+                      ),
+                    ),
+                  ],
+                  if (controller.changePhoneError.value != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      controller.changePhoneError.value!,
+                      style: const TextStyle(color: _C.danger, fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Get.back(),
+                child: const Text('Annuler'),
+              ),
+              ElevatedButton(
+                onPressed: controller.isChangingPhone.value
+                    ? null
+                    : () async {
+                        final newPhone = phoneCtrl.text.trim();
+                        if (newPhone.isEmpty || !newPhone.startsWith('+225') || newPhone.length < 14) {
+                          Get.snackbar(
+                            'Numéro invalide',
+                            'Veuillez entrer un numéro valide au format +225XXXXXXXXXX',
+                            backgroundColor: _C.danger,
+                            colorText: Colors.white,
+                          );
+                          return;
+                        }
+
+                        if (!controller.isChangePhoneOtpSent.value) {
+                          final success = await controller.requestChangePhone(newPhone);
+                          if (success) {
+                            Get.snackbar(
+                              'OTP envoyé',
+                              'Un code OTP a été envoyé sur le nouveau numéro.',
+                              backgroundColor: _C.success,
+                              colorText: Colors.white,
+                            );
+                          } else {
+                            Get.snackbar(
+                              'Erreur',
+                              controller.changePhoneError.value ?? 'Impossible d\'envoyer le code.',
+                              backgroundColor: _C.danger,
+                              colorText: Colors.white,
+                            );
+                          }
+                        } else {
+                          final otp = otpCtrl.text.trim();
+                          if (otp.length != 4) {
+                            Get.snackbar(
+                              'OTP requis',
+                              'Veuillez saisir le code OTP à 4 chiffres.',
+                              backgroundColor: _C.danger,
+                              colorText: Colors.white,
+                            );
+                            return;
+                          }
+
+                          final success = await controller.confirmChangePhone(newPhone, otp);
+                          if (success) {
+                            Get.back();
+                            Get.snackbar(
+                              'Numéro modifié',
+                              'Votre numéro de téléphone de connexion a été mis à jour.',
+                              backgroundColor: _C.success,
+                              colorText: Colors.white,
+                            );
+                          } else {
+                            Get.snackbar(
+                              'Code OTP erroné',
+                              controller.changePhoneError.value ?? 'Le code saisi est invalide.',
+                              backgroundColor: _C.danger,
+                              colorText: Colors.white,
+                            );
+                          }
+                        }
+                      },
+                child: controller.isChangingPhone.value
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : Text(controller.isChangePhoneOtpSent.value ? 'Confirmer' : 'Suivant'),
+              ),
+            ],
+          )),
     );
   }
 }

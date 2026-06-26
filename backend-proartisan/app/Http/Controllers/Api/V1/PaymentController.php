@@ -32,8 +32,8 @@ class PaymentController extends Controller
             'mission_id' => 'required|exists:missions,id',
             'devis_id' => 'required|exists:devis,id',
             'montant' => 'required|integer|min:100',
-            'provider' => 'required|in:wave,orange_money',
-            'phone' => 'required|string|max:20',
+            'provider' => 'required|in:wave,orange_money,virement_bancaire',
+            'phone' => 'required_if:provider,wave,orange_money|nullable|string|max:20',
         ]);
 
         if ($validator->fails()) {
@@ -41,6 +41,16 @@ class PaymentController extends Controller
                 'success' => false,
                 'message' => 'Données de validation invalides',
                 'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        // RÈGLE SÉCURITÉ GRANDS COMPTES: Enforcer virement_bancaire si montant >= 2 000 000 FCFA
+        $seuil = config('prosartisan.mission.referent_threshold', 2000000);
+        $montant = (int) $request->montant;
+        if ($montant >= $seuil && in_array($request->provider, ['wave', 'orange_money'], true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Les paiements Mobile Money sont limités à ' . number_format($seuil, 0, ',', ' ') . ' FCFA. Veuillez effectuer un virement bancaire.',
             ], 422);
         }
 
@@ -81,14 +91,14 @@ class PaymentController extends Controller
             }
 
             $provider = PaymentProvider::from($request->provider);
-            $phone = (string) $request->phone;
+            $phone = (string) ($request->phone ?? $client->phone ?? '');
 
             $transaction = Transaction::create([
                 'mission_id' => $mission->id,
                 'user_id' => $client->id,
                 'type' => 'acompte',
                 'montant' => $montant,
-                'wallet_source' => 'client_mobile_money_' . $client->id,
+                'wallet_source' => $provider === PaymentProvider::VIREMENT_BANCAIRE ? 'client_bank_' . $client->id : 'client_mobile_money_' . $client->id,
                 'wallet_dest' => 'escrow_mission_' . $mission->id,
                 'provider' => $provider,
                 'statut' => PaymentStatus::EN_ATTENTE,
@@ -158,6 +168,37 @@ class PaymentController extends Controller
                         'payment_url' => $result['payment_url'],
                         'order_id' => $result['order_id'],
                         'provider' => 'orange_money',
+                    ],
+                ]);
+            }
+
+            if ($provider === PaymentProvider::VIREMENT_BANCAIRE) {
+                $reference = 'REF-' . str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+
+                $transaction->update([
+                    'reference_externe' => $reference,
+                    'metadata' => array_merge($transaction->metadata ?? [], [
+                        'bank_name' => 'ECOBANK CI',
+                        'bank_account_name' => 'PROSARTISAN ESCROW',
+                        'bank_iban' => 'CI59 CI05 9012 3456 7890 12',
+                        'bank_reference' => $reference,
+                        'description' => 'Instructions de virement bancaire pour acompte',
+                    ]),
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Paiement par Virement Bancaire initié avec succès',
+                    'data' => [
+                        'transaction_id' => $transaction->id,
+                        'devis_id' => $devis->id,
+                        'provider' => 'virement_bancaire',
+                        'virement_instructions' => [
+                            'bank_name' => 'ECOBANK CI',
+                            'account_name' => 'PROSARTISAN ESCROW',
+                            'iban' => 'CI59 CI05 9012 3456 7890 12',
+                            'reference' => $reference,
+                        ],
                     ],
                 ]);
             }

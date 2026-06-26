@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../data/models/devis_model.dart';
+import '../../../data/models/payment_model.dart';
 import '../controllers/devis_controller.dart';
 
 // ─── Design Tokens ────────────────────────────────────────────────────────────
@@ -73,6 +75,17 @@ class DevisReviewScreen extends StatelessWidget {
                           devis.id,
                         ),
                       ),
+                      if (controller.hasPendingPaymentFor(devis.id) &&
+                          controller.pendingProvider.value == 'virement_bancaire') ...[
+                        const SizedBox(height: 24),
+                        _PendingVirementInstructionsCard(
+                          instructions: controller.pendingVirementInstructions.value,
+                        ),
+                      ] else if (devis.totalGeneral >= 2000000 &&
+                          devis.statut == 'soumis') ...[
+                        const SizedBox(height: 24),
+                        _GrandsComptesWarningCard(),
+                      ],
                       const SizedBox(height: 24),
                       _ArtisanInfoCard(devis: devis),
                       const SizedBox(height: 24),
@@ -612,7 +625,11 @@ class _ActionButtons extends StatelessWidget {
   }
 
   void _showAcceptDialog(BuildContext context) {
-    String selectedProvider = 'wave';
+    final devis = controller.currentDevis.value;
+    if (devis == null) return;
+
+    final isGrandsComptes = devis.totalGeneral >= 2000000;
+    String selectedProvider = isGrandsComptes ? 'virement_bancaire' : 'wave';
 
     Get.dialog(
       Dialog(
@@ -653,11 +670,39 @@ class _ActionButtons extends StatelessWidget {
               StatefulBuilder(
                 builder: (context, setState) => Column(
                   children: [
+                    if (isGrandsComptes) ...[
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        margin: const EdgeInsets.only(bottom: 16),
+                        decoration: BoxDecoration(
+                          color: _C.dangerLight,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: _C.danger.withValues(alpha: 0.3)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.warning, color: _C.danger, size: 20),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Les paiements >= 2 000 000 FCFA doivent être réglés par Virement Bancaire.',
+                                style: TextStyle(
+                                  color: _C.danger,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                     _PaymentOption(
                       label: 'Wave CI',
                       value: 'wave',
                       groupValue: selectedProvider,
                       icon: Icons.waves,
+                      disabled: isGrandsComptes,
                       onChanged: (v) => setState(() => selectedProvider = v!),
                     ),
                     const SizedBox(height: 12),
@@ -666,6 +711,15 @@ class _ActionButtons extends StatelessWidget {
                       value: 'orange_money',
                       groupValue: selectedProvider,
                       icon: Icons.phone_android,
+                      disabled: isGrandsComptes,
+                      onChanged: (v) => setState(() => selectedProvider = v!),
+                    ),
+                    const SizedBox(height: 12),
+                    _PaymentOption(
+                      label: 'Virement Bancaire',
+                      value: 'virement_bancaire',
+                      groupValue: selectedProvider,
+                      icon: Icons.account_balance,
                       onChanged: (v) => setState(() => selectedProvider = v!),
                     ),
                   ],
@@ -829,39 +883,41 @@ class _PendingPaymentButtons extends StatelessWidget {
           () => Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: controller.isSubmitting.value ||
-                          controller.isCheckingPayment.value ||
-                          !controller.canReopenPendingPayment
-                      ? null
-                      : () => controller.reopenPendingPayment(),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _C.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+              if (controller.pendingProvider.value != 'virement_bancaire') ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: controller.isSubmitting.value ||
+                            controller.isCheckingPayment.value ||
+                            !controller.canReopenPendingPayment
+                        ? null
+                        : () => controller.reopenPendingPayment(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _C.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.open_in_new, size: 20),
+                        SizedBox(width: 8),
+                        Text(
+                          'Ouvrir le paiement',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.open_in_new, size: 20),
-                      SizedBox(width: 8),
-                      Text(
-                        'Ouvrir le paiement',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
+                const SizedBox(height: 12),
+              ],
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton(
@@ -1203,6 +1259,7 @@ class _PaymentOption extends StatelessWidget {
   final String groupValue;
   final IconData icon;
   final ValueChanged<String?> onChanged;
+  final bool disabled;
 
   const _PaymentOption({
     required this.label,
@@ -1210,60 +1267,64 @@ class _PaymentOption extends StatelessWidget {
     required this.groupValue,
     required this.icon,
     required this.onChanged,
+    this.disabled = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final isSelected = value == groupValue;
     return GestureDetector(
-      onTap: () => onChanged(value),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isSelected ? _C.primaryLight : _C.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected ? _C.primary : _C.subtle,
-            width: isSelected ? 2 : 1,
+      onTap: disabled ? null : () => onChanged(value),
+      child: Opacity(
+        opacity: disabled ? 0.45 : 1.0,
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: isSelected ? _C.primaryLight : _C.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected ? _C.primary : _C.subtle,
+              width: isSelected ? 2 : 1,
+            ),
           ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 20,
-              height: 20,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isSelected ? _C.primary : _C.muted,
-                  width: 2,
+          child: Row(
+            children: [
+              Container(
+                width: 20,
+                height: 20,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: isSelected ? _C.primary : _C.muted,
+                    width: 2,
+                  ),
+                  color: isSelected ? _C.primary : _C.surface,
                 ),
-                color: isSelected ? _C.primary : _C.surface,
+                child: isSelected
+                    ? const Center(
+                        child: Icon(
+                          Icons.check,
+                          size: 12,
+                          color: Colors.white,
+                        ),
+                      )
+                    : null,
               ),
-              child: isSelected
-                  ? const Center(
-                      child: Icon(
-                        Icons.check,
-                        size: 12,
-                        color: Colors.white,
-                      ),
-                    )
-                  : null,
-            ),
-            const SizedBox(width: 12),
-            Icon(icon, color: isSelected ? _C.primary : _C.muted, size: 20),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                  color: isSelected ? _C.primary : _C.ink,
+              const SizedBox(width: 12),
+              Icon(icon, color: isSelected ? _C.primary : _C.muted, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                    color: isSelected ? _C.primary : _C.ink,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -1326,6 +1387,233 @@ class _ErrorState extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _GrandsComptesWarningCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _C.warningLight,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _C.warning.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.warning_amber_rounded, color: _C.warning, size: 24),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Limite Grands Comptes Active',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: _C.ink,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Ce devis dépasse 2 000 000 FCFA. Conformément à la réglementation de sécurité de ProsArtisan, le paiement par Mobile Money est désactivé. Veuillez choisir le Virement Bancaire.',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: _C.muted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PendingVirementInstructionsCard extends StatelessWidget {
+  final VirementInstructionsModel? instructions;
+
+  const _PendingVirementInstructionsCard({required this.instructions});
+
+  @override
+  Widget build(BuildContext context) {
+    if (instructions == null) return const SizedBox.shrink();
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: _C.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _C.primary.withValues(alpha: 0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: _C.ink.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: _C.primaryLight,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.account_balance, color: _C.primary, size: 20),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Instructions de Virement',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: _C.ink,
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 24),
+          const Text(
+            'Veuillez effectuer un virement bancaire sur le compte séquestre ProsArtisan :',
+            style: TextStyle(
+              fontSize: 13,
+              color: _C.muted,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _InstructionDetail(
+            label: 'Banque',
+            value: instructions!.bankName,
+          ),
+          const SizedBox(height: 12),
+          _InstructionDetail(
+            label: 'Titulaire du compte',
+            value: instructions!.accountName,
+          ),
+          const SizedBox(height: 12),
+          _InstructionDetail(
+            label: 'IBAN',
+            value: instructions!.iban,
+            canCopy: true,
+          ),
+          const SizedBox(height: 12),
+          _InstructionDetail(
+            label: 'Référence du virement (à indiquer obligatoirement)',
+            value: instructions!.reference,
+            canCopy: true,
+            highlighted: true,
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: _C.primaryLight,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.info, color: _C.primary, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Le traitement d\'un virement bancaire peut prendre de 24h à 48h ouvrables. Cliquez sur "Vérifier le paiement" une fois le virement émis.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: _C.primary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InstructionDetail extends StatelessWidget {
+  final String label;
+  final String value;
+  final bool canCopy;
+  final bool highlighted;
+
+  const _InstructionDetail({
+    required this.label,
+    required this.value,
+    this.canCopy = false,
+    this.highlighted = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: _C.muted,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: highlighted ? _C.primaryLight : _C.bg,
+            borderRadius: BorderRadius.circular(8),
+            border: highlighted
+                ? Border.all(color: _C.primary.withValues(alpha: 0.3))
+                : null,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: SelectableText(
+                  value,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: highlighted ? FontWeight.w700 : FontWeight.w600,
+                    color: highlighted ? _C.primary : _C.ink,
+                  ),
+                ),
+              ),
+              if (canCopy) ...[
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () {
+                    Clipboard.setData(ClipboardData(text: value));
+                    Get.snackbar(
+                      'Copié !',
+                      '$value copié dans le presse-papiers.',
+                      snackPosition: SnackPosition.TOP,
+                      duration: const Duration(seconds: 2),
+                    );
+                  },
+                  child: Icon(
+                    Icons.copy,
+                    size: 16,
+                    color: highlighted ? _C.primary : _C.muted,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

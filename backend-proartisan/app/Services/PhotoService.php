@@ -8,13 +8,13 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
- * Service de gestion des photos géolocalisées
- * Utilisé pour les preuves de travail (jalons) et les matériaux (J-Codes)
+ * Service de gestion des photos gÃ©olocalisÃ©es
+ * UtilisÃ© pour les preuves de travail (jalons) et les matÃ©riaux (J-Codes)
  */
 class PhotoService
 {
     /**
-     * Upload une photo avec métadonnées GPS
+     * Upload une photo avec mÃ©tadonnÃ©es GPS
      *
      * @param UploadedFile $photo
      * @param float $latitude
@@ -35,10 +35,10 @@ class PhotoService
             // Validation du fichier
             $this->validatePhotoFile($photo);
 
-            // Validation des coordonnées GPS
+            // Validation des coordonnÃ©es GPS
             $this->validateCoordinates($latitude, $longitude);
 
-            // Génération du nom de fichier unique
+            // GÃ©nÃ©ration du nom de fichier unique
             $filename = $this->generatePhotoFilename($type, $relatedId);
             $extension = $photo->getClientOriginalExtension();
             $fullFilename = $filename . '.' . $extension;
@@ -55,13 +55,13 @@ class PhotoService
             );
 
             if (!$storedPath) {
-                throw new \Exception('Échec de l\'upload de la photo');
+                throw new \Exception('Ã‰chec de l\'upload de la photo');
             }
 
             // URL publique
             $url = Storage::disk('public')->url($storedPath);
 
-            Log::info('Photo géolocalisée uploadée', [
+            Log::info('Photo gÃ©olocalisÃ©e uploadÃ©e', [
                 'type' => $type,
                 'related_id' => $relatedId,
                 'path' => $storedPath,
@@ -78,7 +78,7 @@ class PhotoService
             ];
 
         } catch (\Exception $e) {
-            Log::error('Erreur upload photo géolocalisée', [
+            Log::error('Erreur upload photo gÃ©olocalisÃ©e', [
                 'type' => $type,
                 'related_id' => $relatedId,
                 'message' => $e->getMessage(),
@@ -89,7 +89,7 @@ class PhotoService
     }
 
     /**
-     * Upload plusieurs photos géolocalisées (pour jalons)
+     * Upload plusieurs photos gÃ©olocalisÃ©es (pour jalons)
      *
      * @param array $photos Array of ['photo' => UploadedFile, 'latitude' => float, 'longitude' => float]
      * @param string $type
@@ -115,7 +115,7 @@ class PhotoService
 
                 $uploadedPhotos[] = $uploaded;
             } catch (\Exception $e) {
-                Log::warning('Échec upload d\'une photo dans le lot', [
+                Log::warning('Ã‰chec upload d\'une photo dans le lot', [
                     'error' => $e->getMessage(),
                 ]);
                 // Continue avec les autres photos
@@ -138,24 +138,24 @@ class PhotoService
         $maxSize = 10 * 1024 * 1024;
 
         if ($photo->getSize() > $maxSize) {
-            throw new \Exception('La photo dépasse la taille maximale de 10 MB');
+            throw new \Exception('La photo dÃ©passe la taille maximale de 10 MB');
         }
 
-        // Types MIME autorisés
+        // Types MIME autorisÃ©s
         $allowedMimes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 
         if (!in_array($photo->getMimeType(), $allowedMimes)) {
-            throw new \Exception('Format de photo non supporté. Utilisez JPEG, PNG ou WebP');
+            throw new \Exception('Format de photo non supportÃ©. Utilisez JPEG, PNG ou WebP');
         }
 
-        // Vérifier que c'est bien une image
+        // VÃ©rifier que c'est bien une image
         if (!@getimagesize($photo->getRealPath())) {
             throw new \Exception('Le fichier n\'est pas une image valide');
         }
     }
 
     /**
-     * Valider des coordonnées GPS
+     * Valider des coordonnÃ©es GPS
      *
      * @param float $latitude
      * @param float $longitude
@@ -164,24 +164,24 @@ class PhotoService
      */
     protected function validateCoordinates(float $latitude, float $longitude): void
     {
-        // Latitude: -90 à +90
+        // Latitude: -90 Ã  +90
         if ($latitude < -90 || $latitude > 90) {
-            throw new \Exception('Latitude invalide (doit être entre -90 et 90)');
+            throw new \Exception('Latitude invalide (doit Ãªtre entre -90 et 90)');
         }
 
-        // Longitude: -180 à +180
+        // Longitude: -180 Ã  +180
         if ($longitude < -180 || $longitude > 180) {
-            throw new \Exception('Longitude invalide (doit être entre -180 et 180)');
+            throw new \Exception('Longitude invalide (doit Ãªtre entre -180 et 180)');
         }
 
-        // Vérifier que ce n'est pas 0,0 (centre océan Atlantique - souvent erreur GPS)
+        // VÃ©rifier que ce n'est pas 0,0 (centre ocÃ©an Atlantique - souvent erreur GPS)
         if ($latitude === 0.0 && $longitude === 0.0) {
-            throw new \Exception('Coordonnées GPS invalides (0,0)');
+            throw new \Exception('CoordonnÃ©es GPS invalides (0,0)');
         }
     }
 
     /**
-     * Générer un nom de fichier unique pour la photo
+     * GÃ©nÃ©rer un nom de fichier unique pour la photo
      *
      * @param string $type
      * @param int|null $relatedId
@@ -200,7 +200,7 @@ class PhotoService
     }
 
     /**
-     * Obtenir le répertoire de stockage selon le type
+     * Obtenir le rÃ©pertoire de stockage selon le type
      *
      * @param string $type
      * @return string
@@ -208,10 +208,10 @@ class PhotoService
     protected function getStorageDirectory(string $type): string
     {
         return match ($type) {
-            'jalon' => 'photos/jalons',
-            'jcode' => 'photos/jcodes',
-            'materiau' => 'photos/materiaux',
-            default => 'photos/autres',
+            'jalon' => 'fileshare/jalons',
+            'jcode' => 'fileshare/jcodes',
+            'materiau' => 'fileshare/materiaux',
+            default => 'fileshare/autres',
         };
     }
 
@@ -240,18 +240,18 @@ class PhotoService
     }
 
     /**
-     * Vérifier la distance entre deux points GPS (en mètres)
-     * Utile pour valider que la photo a bien été prise au bon endroit
+     * VÃ©rifier la distance entre deux points GPS (en mÃ¨tres)
+     * Utile pour valider que la photo a bien Ã©tÃ© prise au bon endroit
      *
      * @param float $lat1 Latitude point 1
      * @param float $lon1 Longitude point 1
      * @param float $lat2 Latitude point 2
      * @param float $lon2 Longitude point 2
-     * @return float Distance en mètres
+     * @return float Distance en mÃ¨tres
      */
     public function calculateDistance(float $lat1, float $lon1, float $lat2, float $lon2): float
     {
-        $earthRadius = 6371000; // Rayon de la Terre en mètres
+        $earthRadius = 6371000; // Rayon de la Terre en mÃ¨tres
 
         $latFrom = deg2rad($lat1);
         $lonFrom = deg2rad($lon1);
@@ -271,13 +271,13 @@ class PhotoService
     }
 
     /**
-     * Valider que la photo a été prise dans le périmètre autorisé
+     * Valider que la photo a Ã©tÃ© prise dans le pÃ©rimÃ¨tre autorisÃ©
      *
      * @param float $photoLat Latitude de la photo
      * @param float $photoLon Longitude de la photo
-     * @param float $referenceLat Latitude de référence (ex: mission, fournisseur)
-     * @param float $referenceLon Longitude de référence
-     * @param float $maxDistanceMeters Distance maximale autorisée en mètres
+     * @param float $referenceLat Latitude de rÃ©fÃ©rence (ex: mission, fournisseur)
+     * @param float $referenceLon Longitude de rÃ©fÃ©rence
+     * @param float $maxDistanceMeters Distance maximale autorisÃ©e en mÃ¨tres
      * @return bool
      */
     public function validatePhotoLocation(

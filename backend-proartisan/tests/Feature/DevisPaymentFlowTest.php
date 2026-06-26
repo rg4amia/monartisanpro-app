@@ -93,4 +93,76 @@ class DevisPaymentFlowTest extends TestCase
         $this->assertSame(35000, $artisan->wallet_mo);
         $this->assertCount(2, $mission->jalons);
     }
+
+    public function test_payment_above_limit_blocks_mobile_money(): void
+    {
+        $client = User::factory()->create([
+            'role' => 'client',
+            'kyc_status' => 'actif',
+        ]);
+
+        $artisan = User::factory()->create([
+            'role' => 'artisan',
+            'kyc_status' => 'actif',
+        ]);
+
+        $mission = Mission::create([
+            'client_id' => $client->id,
+            'artisan_id' => null,
+            'description' => 'Gros Oeuvre Villa',
+            'status' => 'en_attente',
+        ]);
+
+        $devis = Devis::create([
+            'mission_id' => $mission->id,
+            'artisan_id' => $artisan->id,
+            'statut' => 'soumis',
+            'lignes_json' => [
+                ['type' => 'mat', 'description' => 'Béton', 'montant' => 1500000],
+                ['type' => 'mo', 'description' => 'Main d\'oeuvre', 'montant' => 1000000],
+            ],
+            'jalons_json' => [
+                ['ordre' => 1, 'description' => 'Total', 'montant' => 2500000, 'date_cible' => '2026-03-25'],
+            ],
+        ]);
+
+        // Attempt Wave payment -> should fail
+        $this->actingAs($client)
+            ->postJson('/api/v1/payments/initiate', [
+                'mission_id' => $mission->id,
+                'devis_id' => $devis->id,
+                'montant' => 2500000,
+                'provider' => 'wave',
+                'phone' => $client->phone,
+            ])
+            ->assertStatus(422)
+            ->assertJsonPath('success', false);
+
+        // Attempt Bank Transfer -> should succeed and return instructions
+        $response = $this->actingAs($client)
+            ->postJson('/api/v1/payments/initiate', [
+                'mission_id' => $mission->id,
+                'devis_id' => $devis->id,
+                'montant' => 2500000,
+                'provider' => 'virement_bancaire',
+            ])
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonStructure([
+                'success',
+                'message',
+                'data' => [
+                    'transaction_id',
+                    'devis_id',
+                    'provider',
+                    'virement_instructions' => [
+                        'bank_name',
+                        'account_name',
+                        'iban',
+                        'reference',
+                    ],
+                ],
+            ]);
+    }
 }
+

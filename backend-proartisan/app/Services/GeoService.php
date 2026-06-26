@@ -61,7 +61,7 @@ class GeoService
                 u.score_nzassa,
                 ST_X(u.position) AS lng,
                 ST_Y(u.position) AS lat,
-                ST_Distance_Sphere(u.position, ST_GeomFromText(CONCAT('POINT(', ?, ' ', ?, ')'), 4326)) AS distance_metres,
+                ST_Distance_Sphere(u.position, ST_GeomFromText(CONCAT('POINT(', ?, ' ', ?, ')'))) AS distance_metres,
                 ap.photo_url,
                 ap.bio,
                 ap.experience_years,
@@ -74,7 +74,7 @@ class GeoService
             WHERE u.role = 'artisan'
               AND u.kyc_status = 'actif'
               AND u.position IS NOT NULL
-              AND ST_Distance_Sphere(u.position, ST_GeomFromText(CONCAT('POINT(', ?, ' ', ?, ')'), 4326)) <= ?
+              AND ST_Distance_Sphere(u.position, ST_GeomFromText(CONCAT('POINT(', ?, ' ', ?, ')'))) <= ?
         ";
 
         $bindings = [$lng, $lat, $lng, $lat, $radiusMeters];
@@ -127,7 +127,7 @@ class GeoService
 
         $row = DB::selectOne("
             SELECT ST_Distance_Sphere(
-                ST_GeomFromText(CONCAT('POINT(', ?, ' ', ?, ')'), 4326),
+                ST_GeomFromText(CONCAT('POINT(', ?, ' ', ?, ')')),
                 fa.position
             ) AS distance_metres
             FROM fournisseurs_agrees fa
@@ -183,8 +183,8 @@ class GeoService
 
         $row = DB::selectOne("
             SELECT ST_Distance_Sphere(
-                ST_GeomFromText(CONCAT('POINT(', ?, ' ', ?, ')'), 4326),
-                ST_GeomFromText(CONCAT('POINT(', ?, ' ', ?, ')'), 4326)
+                ST_GeomFromText(CONCAT('POINT(', ?, ' ', ?, ')')),
+                ST_GeomFromText(CONCAT('POINT(', ?, ' ', ?, ')'))
             ) AS distance_metres
         ", [
             $referentLng,

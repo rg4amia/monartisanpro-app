@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
@@ -120,7 +121,7 @@ class _SupplierCatalogScreenState extends State<SupplierCatalogScreen> {
     final stockCtrl = TextEditingController(
       text: product == null ? '0' : product.stockQuantity.toString(),
     );
-    final imageCtrl = TextEditingController(text: product?.imageUrl ?? '');
+    final imagePath = (product?.imageUrl ?? '').obs;
     final isActive = (product?.isActive ?? true).obs;
 
     await Get.dialog(
@@ -163,13 +164,149 @@ class _SupplierCatalogScreenState extends State<SupplierCatalogScreen> {
                     labelText: 'Stock disponible',
                   ),
                 ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: imageCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'URL image (optionnel)',
+                const SizedBox(height: 16),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Image de l\'article',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ),
+                const SizedBox(height: 8),
+                Obx(() {
+                  if (controller.isUploadingProductImage.value) {
+                    return Container(
+                      height: 120,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[50],
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey[200]!),
+                      ),
+                      child: const Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              'Téléchargement...',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
+                  if (imagePath.value.isNotEmpty) {
+                    return Stack(
+                      children: [
+                        Container(
+                          height: 120,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey[200]!),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.network(
+                              imagePath.value,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Center(
+                                  child: Icon(
+                                    Icons.broken_image_outlined,
+                                    size: 40,
+                                    color: Colors.grey,
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: GestureDetector(
+                            onTap: () => imagePath.value = '',
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: Colors.red,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.delete_outline,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  }
+
+                  return GestureDetector(
+                    onTap: () async {
+                      final picker = ImagePicker();
+                      final XFile? image = await picker.pickImage(
+                        source: ImageSource.gallery,
+                        imageQuality: 80,
+                        maxWidth: 1024,
+                      );
+                      if (image != null) {
+                        final url =
+                            await controller.uploadProductImage(image.path);
+                        if (url != null) {
+                          imagePath.value = url;
+                        }
+                      }
+                    },
+                    child: Container(
+                      height: 120,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[50],
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppColors.primary.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: const Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.add_photo_alternate_outlined,
+                            size: 40,
+                            color: AppColors.primary,
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'Ajouter une image',
+                            style: TextStyle(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
                 const SizedBox(height: 12),
                 SwitchListTile.adaptive(
                   value: isActive.value,
@@ -213,7 +350,7 @@ class _SupplierCatalogScreenState extends State<SupplierCatalogScreen> {
                           description: descriptionCtrl.text,
                           unitPrice: unitPrice,
                           stockQuantity: stockQuantity,
-                          imageUrl: imageCtrl.text,
+                          imageUrl: imagePath.value,
                           isActive: isActive.value,
                         );
                         Get.back();
@@ -237,7 +374,6 @@ class _SupplierCatalogScreenState extends State<SupplierCatalogScreen> {
     descriptionCtrl.dispose();
     priceCtrl.dispose();
     stockCtrl.dispose();
-    imageCtrl.dispose();
   }
 
   Future<void> _confirmArchive(SupplierProductModel product) async {
@@ -284,6 +420,7 @@ class _CatalogProductCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final stockColor =
         product.stockQuantity > 0 ? AppColors.success : AppColors.danger;
+    final hasImage = product.imageUrl != null && product.imageUrl!.trim().isNotEmpty;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -298,66 +435,100 @@ class _CatalogProductCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  product.name,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
+          if (hasImage) ...[
+            Container(
+              width: 80,
+              height: 80,
+              margin: const EdgeInsets.only(right: 16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey[200]!),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.network(
+                  product.imageUrl!,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Center(
+                      child: Icon(
+                        Icons.broken_image_outlined,
+                        size: 30,
+                        color: Colors.grey,
+                      ),
+                    );
+                  },
                 ),
-              ),
-              PopupMenuButton<String>(
-                onSelected: (value) {
-                  if (value == 'edit') {
-                    onEdit();
-                  } else if (value == 'archive') {
-                    onArchive();
-                  }
-                },
-                itemBuilder: (_) => const [
-                  PopupMenuItem(value: 'edit', child: Text('Modifier')),
-                  PopupMenuItem(value: 'archive', child: Text('Retirer')),
-                ],
-              ),
-            ],
-          ),
-          if ((product.description ?? '').isNotEmpty) ...[
-            const SizedBox(height: 6),
-            Text(
-              product.description!,
-              style: const TextStyle(
-                color: AppColors.textSecondary,
-                height: 1.4,
               ),
             ),
           ],
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _CatalogChip(
-                label: Formatters.fcfa(product.unitPrice),
-                color: AppColors.primary,
-              ),
-              _CatalogChip(
-                label: 'Stock: ${product.stockQuantity}',
-                color: stockColor,
-              ),
-              _CatalogChip(
-                label: product.isActive ? 'Actif' : 'Inactif',
-                color: product.isActive ? AppColors.info : AppColors.textMuted,
-              ),
-              if ((product.sku ?? '').isNotEmpty)
-                _CatalogChip(label: product.sku!, color: AppColors.warning),
-            ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        product.name,
+                        style: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    PopupMenuButton<String>(
+                      onSelected: (value) {
+                        if (value == 'edit') {
+                          onEdit();
+                        } else if (value == 'archive') {
+                          onArchive();
+                        }
+                      },
+                      itemBuilder: (_) => const [
+                        PopupMenuItem(value: 'edit', child: Text('Modifier')),
+                        PopupMenuItem(value: 'archive', child: Text('Retirer')),
+                      ],
+                    ),
+                  ],
+                ),
+                if ((product.description ?? '').isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    product.description!,
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _CatalogChip(
+                      label: Formatters.fcfa(product.unitPrice),
+                      color: AppColors.primary,
+                    ),
+                    _CatalogChip(
+                      label: 'Stock: ${product.stockQuantity}',
+                      color: stockColor,
+                    ),
+                    _CatalogChip(
+                      label: product.isActive ? 'Actif' : 'Inactif',
+                      color: product.isActive ? AppColors.info : AppColors.textMuted,
+                    ),
+                    if ((product.sku ?? '').isNotEmpty)
+                      _CatalogChip(label: product.sku!, color: AppColors.warning),
+                  ],
+                ),
+              ],
+            ),
           ),
         ],
       ),

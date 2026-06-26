@@ -1,3 +1,6 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
+
 class EnvConfig {
   // Configuration pour différents environnements
 
@@ -17,16 +20,17 @@ class EnvConfig {
 
   // Détection automatique de l'environnement
   static String get baseUrl {
-    // En développement, utilisez l'URL de l'émulateur
-    // En production, utilisez l'URL de production
-    const bool isProduction = bool.fromEnvironment('dart.vm.product');
-
-    if (isProduction) {
-      return productionBaseUrl;
+    // Si on est dans un environnement de test unitaire/d'intégration
+    if (!kIsWeb && Platform.environment.containsKey('FLUTTER_TEST')) {
+      return 'http://127.0.0.1:8000/api/v1';
     }
 
-    // Pour le développement, utilisez l'émulateur par défaut
-    return emulatorBaseUrl;
+    // En production réelle, décommentez la ligne suivante :
+    // const bool isProduction = bool.fromEnvironment('dart.vm.product');
+    // if (isProduction) return productionBaseUrl;
+
+    // Pour le développement local (émulateur et appareil physique) :
+    return 'http://192.168.1.7:8000/api/v1';
   }
 
   // ── Telegram Logger Configuration ──────────────────────────────────────────

@@ -1,0 +1,13 @@
+ Le volume dans le lecteur C n’a pas de nom.
+ Le numéro de série du volume est 944C-45B5
+
+ Répertoire de C:\Users\Utilisateur\Documents\GitHub\monartisanpro-app\frontend_flutter\build\app\outputs\flutter-apk
+
+17/06/2026  20:54    <DIR>          .
+17/06/2026  20:52    <DIR>          ..
+18/06/2026  09:38       292 715 146 app-debug.apk
+18/06/2026  09:38                40 app-debug.apk.sha1
+17/06/2026  20:54       173 353 457 app-release.apk
+17/06/2026  20:54                40 app-release.apk.sha1
+               4 fichier(s)      466 068 683 octets
+               2 Rép(s)  199 099 969 536 octets libres
