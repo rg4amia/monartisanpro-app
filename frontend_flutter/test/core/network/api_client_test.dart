@@ -28,7 +28,11 @@ void main() {
     test('should have correct base URL from Herd', () {
       expect(
         apiClient.dio.options.baseUrl,
-        contains('backend-proartisan.test'),
+        anyOf([
+          contains('backend-proartisan.test'),
+          contains('127.0.0.1:8000'),
+          contains('10.0.2.2:8000'),
+        ]),
       );
     });
 

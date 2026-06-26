@@ -11,6 +11,7 @@ use App\Models\Litige;
 use App\Models\User;
 use App\Services\AdminService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -85,6 +86,96 @@ class BackofficeController extends Controller
         );
 
         return back()->with('success', 'Décision fournisseur enregistrée.');
+    }
+
+    public function storeUser(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'phone' => 'required|string|max:20|unique:users,phone',
+            'email' => 'nullable|string|email|max:255|unique:users,email',
+            'role' => 'required|string|in:client,artisan,fournisseur,referent,admin',
+            'password' => 'required|string|min:6',
+            'kyc_status' => 'required|string|in:en_attente,actif,rejete',
+            'account_status' => 'required|string|in:actif,suspendu',
+        ], [
+            'name.required' => 'Le nom complet est obligatoire.',
+            'phone.required' => 'Le numéro de téléphone est obligatoire.',
+            'phone.unique' => 'Ce numéro de téléphone est déjà utilisé.',
+            'email.email' => 'L’adresse e-mail doit être valide.',
+            'email.unique' => 'Cette adresse e-mail est déjà utilisée.',
+            'role.required' => 'Le rôle est obligatoire.',
+            'password.required' => 'Le mot de passe est obligatoire.',
+            'password.min' => 'Le mot de passe doit contenir au moins 6 caractères.',
+        ]);
+
+        $validated['password'] = bcrypt($validated['password']);
+
+        User::create($validated);
+
+        return back()->with('success', 'Utilisateur créé avec succès.');
+    }
+
+    public function updateUser(Request $request, User $user): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'phone' => 'required|string|max:20|unique:users,phone,' . $user->id,
+            'email' => 'nullable|string|email|max:255|unique:users,email,' . $user->id,
+            'role' => 'required|string|in:client,artisan,fournisseur,referent,admin',
+            'password' => 'nullable|string|min:6',
+            'kyc_status' => 'required|string|in:en_attente,actif,rejete',
+            'account_status' => 'required|string|in:actif,suspendu',
+        ], [
+            'name.required' => 'Le nom complet est obligatoire.',
+            'phone.required' => 'Le numéro de téléphone est obligatoire.',
+            'phone.unique' => 'Ce numéro de téléphone est déjà utilisé.',
+            'email.email' => 'L’adresse e-mail doit être valide.',
+            'email.unique' => 'Cette adresse e-mail est déjà utilisée.',
+            'role.required' => 'Le rôle est obligatoire.',
+            'password.min' => 'Le mot de passe doit contenir au moins 6 caractères.',
+        ]);
+
+        if (!empty($validated['password'])) {
+            $validated['password'] = bcrypt($validated['password']);
+        } else {
+            unset($validated['password']);
+        }
+
+        $user->update($validated);
+
+        return back()->with('success', 'Utilisateur modifié avec succès.');
+    }
+
+    public function destroyUser(User $user): RedirectResponse
+    {
+        if (auth()->id() === $user->id) {
+            return back()->with('error', 'Vous ne pouvez pas supprimer votre propre compte administrateur.');
+        }
+
+        $user->delete();
+
+        return back()->with('success', 'Utilisateur supprimé avec succès.');
+    }
+
+    public function toggleUserStatus(Request $request, User $user): RedirectResponse
+    {
+        if (auth()->id() === $user->id) {
+            return back()->with('error', 'Vous ne pouvez pas désactiver votre propre compte administrateur.');
+        }
+
+        $validated = $request->validate([
+            'account_status' => 'required|string|in:actif,suspendu',
+            'account_status_reason' => 'nullable|string|max:255',
+        ]);
+
+        $user->update([
+            'account_status' => $validated['account_status'],
+            'account_status_reason' => $validated['account_status_reason'] ?? null,
+            'blocked_at' => $validated['account_status'] === 'suspendu' ? now() : null,
+        ]);
+
+        return back()->with('success', 'Statut de l’utilisateur mis à jour.');
     }
 
     private function renderPage(string $component): Response

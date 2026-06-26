@@ -203,8 +203,6 @@ class OrangeMoneyService
             Log::info('Orange Money: Traitement notification', ['data' => $notificationData]);
 
             $orderId = $notificationData['order_id'] ?? null;
-            $status = $notificationData['status'] ?? null;
-            $txReference = $notificationData['txnid'] ?? $notificationData['tx_reference'] ?? null;
 
             if (!$orderId) {
                 Log::warning('Orange Money: Notification sans order_id');
@@ -219,7 +217,28 @@ class OrangeMoneyService
                 return null;
             }
 
-            // Mise à jour selon le statut
+            // MESURE DE SÉCURITÉ CRITIQUE : Contrecarrer le spoofing de webhook.
+            // On vérifie le statut de la transaction directement auprès d'Orange Money.
+            if ($transaction->orange_payment_token) {
+                try {
+                    $verification = $this->checkPaymentStatus($orderId, $transaction->orange_payment_token);
+                    $status = $verification['status'];
+                    $txReference = $verification['tx_reference'] ?? ($notificationData['txnid'] ?? $notificationData['tx_reference'] ?? null);
+                } catch (\Exception $e) {
+                    Log::error('Orange Money: Échec de la double validation de sécurité de la notification', [
+                        'order_id' => $orderId,
+                        'message' => $e->getMessage(),
+                    ]);
+                    return null;
+                }
+            } else {
+                Log::warning('Orange Money: Aucun orange_payment_token associé à la transaction. Rejet de la notification par mesure de sécurité.', [
+                    'order_id' => $orderId
+                ]);
+                return null;
+            }
+
+            // Mise à jour selon le statut vérifié de manière sécurisée
             if ($status === 'SUCCESS' || $status === 'SUCCESSFUL' || $status === 'INITIATED') {
                 $transaction->update([
                     'statut' => PaymentStatus::CONFIRME,
@@ -228,7 +247,7 @@ class OrangeMoneyService
                     'paid_at' => now(),
                 ]);
 
-                Log::info('Orange Money: Paiement confirmé', [
+                Log::info('Orange Money: Paiement confirmé (statut vérifié)', [
                     'transaction_id' => $transaction->id,
                     'tx_reference' => $txReference,
                 ]);
@@ -240,7 +259,7 @@ class OrangeMoneyService
                     'error_message' => $notificationData['error_message'] ?? 'Paiement échoué, annulé ou expiré',
                 ]);
 
-                Log::info('Orange Money: Paiement échoué', [
+                Log::info('Orange Money: Paiement échoué (statut vérifié)', [
                     'transaction_id' => $transaction->id,
                     'status' => $status,
                 ]);

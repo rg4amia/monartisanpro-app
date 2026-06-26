@@ -4,6 +4,8 @@ use App\Http\Controllers\Api\V1\ArtisanController;
 use App\Http\Controllers\Api\V1\AdminController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\DevisController;
+use App\Http\Controllers\Api\V1\DeliveryController;
+use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\EvaluationController;
 use App\Http\Controllers\Api\V1\JalonController;
 use App\Http\Controllers\Api\V1\JCodeController;
@@ -18,6 +20,7 @@ use App\Http\Controllers\Api\V1\SmsController;
 use App\Http\Controllers\Api\V1\SupplierCatalogController;
 use App\Http\Controllers\Api\V1\TransactionController;
 use App\Http\Controllers\Api\V1\UserController;
+use App\Http\Controllers\Api\V1\UploadController;
 use App\Http\Controllers\Api\V1\WebhookController;
 use Illuminate\Support\Facades\Route;
 
@@ -27,14 +30,16 @@ Route::prefix('v1')->group(function () {
     // ROUTES PUBLIQUES (sans authentification)
     // ─────────────────────────────────────────────────────────────────────────
 
-    Route::prefix('auth')->group(function () {
+    Route::prefix('auth')->middleware('throttle:auth')->group(function () {
         Route::post('/send-otp',   [AuthController::class, 'sendOtp']);
         Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
         Route::post('/register',   [AuthController::class, 'register']);
+        Route::post('/reset-phone-request', [AuthController::class, 'requestResetPhoneLost']);
+        Route::post('/reset-phone-confirm', [AuthController::class, 'confirmResetPhoneLost']);
     });
 
     // ── Webhooks (sans authentification pour les callbacks externes) ─────────
-    Route::prefix('webhooks')->group(function () {
+    Route::prefix('webhooks')->middleware('throttle:webhook')->group(function () {
         Route::post('/wave',         [WebhookController::class, 'wave']);
         Route::post('/orange-money', [WebhookController::class, 'orangeMoney']);
     });
@@ -43,13 +48,17 @@ Route::prefix('v1')->group(function () {
     // ROUTES PROTÉGÉES (Sanctum token)
     // ─────────────────────────────────────────────────────────────────────────
 
-    Route::middleware(['auth:sanctum', 'account.active'])->group(function () {
+    Route::middleware(['auth:sanctum', 'account.active', 'throttle:api'])->group(function () {
 
         // ── Auth ─────────────────────────────────────────────────────────────
         Route::prefix('auth')->group(function () {
             Route::get('/me',      [AuthController::class, 'me']);
             Route::post('/logout', [AuthController::class, 'logout']);
+            Route::post('/change-phone', [AuthController::class, 'changePhoneConnected']);
         });
+
+        // ── Upload générique fileshare ──────────────────────────────────────────
+        Route::post('/upload', [UploadController::class, 'upload']);
 
         // ── KYC ──────────────────────────────────────────────────────────────
         Route::prefix('kyc')->group(function () {
@@ -57,6 +66,16 @@ Route::prefix('v1')->group(function () {
             Route::post('/upload-selfie', [KycController::class, 'uploadSelfie']);
             Route::get('/status',         [KycController::class, 'status']);
         });
+
+        // ── Commandes Catalogue E-Commerce ───────────────────────────────────
+        Route::apiResource('orders', OrderController::class)->only(['index', 'store', 'show']);
+        Route::post('/orders/{order}/prepared', [OrderController::class, 'markPrepared']);
+        Route::post('/orders/{order}/verify-pickup', [OrderController::class, 'verifyPickup']);
+        Route::post('/orders/{order}/verify-delivery', [OrderController::class, 'verifyDelivery']);
+
+        // ── Logistique & Livraisons (Courses) ──────────────────────────────────
+        Route::get('/deliveries/available', [DeliveryController::class, 'available']);
+        Route::post('/deliveries/{order}/accept', [DeliveryController::class, 'accept']);
 
         // ── Utilisateurs ─────────────────────────────────────────────────────
         Route::put('/users/{user}',          [UserController::class, 'update']);

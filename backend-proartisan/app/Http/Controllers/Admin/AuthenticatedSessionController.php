@@ -52,12 +52,6 @@ class AuthenticatedSessionController extends Controller
             ]);
         }
 
-        if ($user->role !== 'admin') {
-            throw ValidationException::withMessages([
-                'identifier' => 'Accès réservé aux administrateurs.',
-            ]);
-        }
-
         Auth::guard('web')->login($user, (bool) ($credentials['remember'] ?? false));
         $request->session()->regenerate();
 

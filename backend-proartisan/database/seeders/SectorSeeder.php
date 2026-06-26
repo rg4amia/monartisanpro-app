@@ -138,10 +138,13 @@ class SectorSeeder extends Seeder
             $trades = $sectorData['trades'];
             unset($sectorData['trades']);
 
-            $sector = Sector::create($sectorData);
+            $sector = Sector::updateOrCreate(
+                ['name' => $sectorData['name']],
+                $sectorData
+            );
 
             foreach ($trades as $tradeName) {
-                Trade::create([
+                Trade::updateOrCreate([
                     'sector_id' => $sector->id,
                     'name'      => $tradeName,
                 ]);

@@ -54,8 +54,12 @@ class ClientHomeScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       const _MissionSearchCard(),
+                      if (controller.isNightModeActive) ...[
+                        const SizedBox(height: 16),
+                        _NightModeBanner(),
+                      ],
                       const SizedBox(height: 20),
-                      Obx(() => _ClientStats(controller: controller)),
+                      _ClientStats(controller: controller),
                       const SizedBox(height: 24),
                       _SectionHeader(
                         title: 'Demande rapide',
@@ -77,7 +81,7 @@ class ClientHomeScreen extends StatelessWidget {
                           () => _InfoPill(
                             icon: Icons.location_on_outlined,
                             label:
-                                '${controller.nearbyArtisansCount.value} autour de vous',
+                                '${controller.displayedNearbyArtisansCount} autour de vous',
                             color: AppColors.client,
                             background: AppColors.clientSoft,
                           ),
@@ -265,29 +269,31 @@ class _ClientStats extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _StatCard(
-            title: 'Artisans disponibles',
-            value: '${controller.nearbyArtisansCount.value}',
-            subtitle: 'Autour de votre position',
-            color: AppColors.client,
-            background: AppColors.clientSoft,
+    return Obx(() {
+      return Row(
+        children: [
+          Expanded(
+            child: _StatCard(
+              title: 'Artisans disponibles',
+              value: '${controller.displayedNearbyArtisansCount}',
+              subtitle: 'Autour de votre position',
+              color: AppColors.client,
+              background: AppColors.clientSoft,
+            ),
           ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _StatCard(
-            title: 'Missions actives',
-            value: '${controller.activeMissionsCount.value}',
-            subtitle: 'Suivies en temps réel',
-            color: AppColors.accent,
-            background: AppColors.artisanSoft,
+          const SizedBox(width: 12),
+          Expanded(
+            child: _StatCard(
+              title: 'Missions actives',
+              value: '${controller.activeMissionsCount.value}',
+              subtitle: 'Suivies en temps réel',
+              color: AppColors.accent,
+              background: AppColors.artisanSoft,
+            ),
           ),
-        ),
-      ],
-    );
+        ],
+      );
+    });
   }
 }
 
@@ -422,7 +428,9 @@ class _ArtisansList extends StatelessWidget {
         return LoadingShimmer.list(count: 3);
       }
 
-      if (controller.artisans.isEmpty) {
+      final list = controller.displayedArtisans;
+
+      if (list.isEmpty) {
         return Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
@@ -430,27 +438,33 @@ class _ArtisansList extends StatelessWidget {
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: AppColors.border),
           ),
-          child: const Column(
+          child: Column(
             children: [
               _FeatureIcon(
-                icon: Icons.search_off_rounded,
+                icon: controller.isNightModeActive
+                    ? Icons.dark_mode_outlined
+                    : Icons.search_off_rounded,
                 color: AppColors.client,
                 background: AppColors.clientSoft,
               ),
-              SizedBox(height: 14),
+              const SizedBox(height: 14),
               Text(
-                'Aucun artisan trouvé pour le moment',
-                style: TextStyle(
+                controller.isNightModeActive
+                    ? 'Aucun artisan disponible cette nuit'
+                    : 'Aucun artisan trouvé pour le moment',
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary,
                 ),
                 textAlign: TextAlign.center,
               ),
-              SizedBox(height: 6),
+              const SizedBox(height: 6),
               Text(
-                'Activez votre position ou relancez la recherche pour voir les profils vérifiés près de vous.',
-                style: TextStyle(
+                controller.isNightModeActive
+                    ? 'Les interventions de nuit sont réservées aux urgences. Repassez en journée pour plus de choix.'
+                    : 'Activez votre position ou relancez la recherche pour voir les profils vérifiés près de vous.',
+                style: const TextStyle(
                   fontSize: 13,
                   height: 1.45,
                   color: AppColors.textSecondary,
@@ -463,7 +477,7 @@ class _ArtisansList extends StatelessWidget {
       }
 
       return Column(
-        children: controller.artisans
+        children: list
             .map(
               (artisan) => ArtisanCard(
                 artisan: artisan,
@@ -662,6 +676,71 @@ class _HeroIconButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
         ),
         child: Icon(icon, color: Colors.white),
+      ),
+    );
+  }
+}
+
+class _NightModeBanner extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF1E1E2F), Color(0xFF0F0C1B)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.indigo.withValues(alpha: 0.4)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.indigo.withValues(alpha: 0.15),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.indigo.withValues(alpha: 0.2),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.dark_mode_rounded,
+              color: Colors.indigoAccent,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 14),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Mode Nuit Actif (18h - 7h)',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Seuls les artisans équipés pour les interventions de nuit sont affichés.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.white70,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

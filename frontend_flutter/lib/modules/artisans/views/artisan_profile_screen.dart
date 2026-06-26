@@ -189,61 +189,7 @@ class ArtisanProfileScreen extends StatelessWidget {
                     const SizedBox(height: 20),
 
                     // Score breakdown
-                    Obx(() {
-                      final scoreData = c.score.value;
-                      if (scoreData == null) return const SizedBox.shrink();
-                      final rootData =
-                          (scoreData['data'] as Map<String, dynamic>?) ??
-                              scoreData;
-                      final breakdown = rootData['breakdown'] is Map
-                          ? Map<String, dynamic>.from(
-                              rootData['breakdown'] as Map,
-                            )
-                          : const <String, dynamic>{};
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Score N\'Zassa',
-                              style: TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.textPrimary)),
-                          const SizedBox(height: 12),
-                          _ScoreDimension(
-                              label: 'Fiabilité',
-                              pct: 40,
-                              value: _weightedBreakdownValue(
-                                breakdown['fiabilite'],
-                                40,
-                              ),
-                              color: AppColors.primary),
-                          _ScoreDimension(
-                              label: 'Intégrité',
-                              pct: 30,
-                              value: _weightedBreakdownValue(
-                                breakdown['integrite'],
-                                30,
-                              ),
-                              color: AppColors.accent),
-                          _ScoreDimension(
-                              label: 'Qualité',
-                              pct: 20,
-                              value: _weightedBreakdownValue(
-                                breakdown['qualite'],
-                                20,
-                              ),
-                              color: AppColors.success),
-                          _ScoreDimension(
-                              label: 'Réactivité',
-                              pct: 10,
-                              value: _weightedBreakdownValue(
-                                breakdown['reactivite'],
-                                10,
-                              ),
-                              color: AppColors.warning),
-                        ],
-                      );
-                    }),
+                    _buildScoreBreakdown(c),
                   ],
                 ),
               ),
@@ -251,6 +197,61 @@ class ArtisanProfileScreen extends StatelessWidget {
           ],
         );
       }),
+    );
+  }
+
+  Widget _buildScoreBreakdown(ArtisanController c) {
+    final scoreData = c.score.value;
+    if (scoreData == null) return const SizedBox.shrink();
+    final rootData =
+        (scoreData['data'] as Map<String, dynamic>?) ?? scoreData;
+    final breakdown = rootData['breakdown'] is Map
+        ? Map<String, dynamic>.from(
+            rootData['breakdown'] as Map,
+          )
+        : const <String, dynamic>{};
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Score N\'Zassa',
+            style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary)),
+        const SizedBox(height: 12),
+        _ScoreDimension(
+            label: 'Fiabilité',
+            pct: 40,
+            value: _weightedBreakdownValue(
+              breakdown['fiabilite'],
+              40,
+            ),
+            color: AppColors.primary),
+        _ScoreDimension(
+            label: 'Intégrité',
+            pct: 30,
+            value: _weightedBreakdownValue(
+              breakdown['integrite'],
+              30,
+            ),
+            color: AppColors.accent),
+        _ScoreDimension(
+            label: 'Qualité',
+            pct: 20,
+            value: _weightedBreakdownValue(
+              breakdown['qualite'],
+              20,
+            ),
+            color: AppColors.success),
+        _ScoreDimension(
+            label: 'Réactivité',
+            pct: 10,
+            value: _weightedBreakdownValue(
+              breakdown['reactivite'],
+              10,
+            ),
+            color: AppColors.warning),
+      ],
     );
   }
 

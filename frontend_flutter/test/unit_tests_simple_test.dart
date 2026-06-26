@@ -15,6 +15,7 @@ void main() {
         anyOf(
           'http://backend-proartisan.test/api/v1',
           'http://10.0.2.2:8000/api/v1',
+          'http://127.0.0.1:8000/api/v1',
         ),
       );
     });
@@ -393,6 +394,35 @@ void main() {
 
       expect(user.walletMateriaux, greaterThanOrEqualTo(0));
       expect(user.walletMo, greaterThanOrEqualTo(0));
+    });
+  });
+
+  group('Driver Role Tests', () {
+    test('UserModel should parse driver role', () {
+      final json = {
+        'id': 100,
+        'phone': '+2250700000005',
+        'role': 'driver',
+        'kycStatus': 'actif',
+      };
+      final user = UserModel.fromJson(json);
+      expect(user.role, 'driver');
+    });
+
+    test('MissionModel should expose rawStatus', () {
+      const mission = MissionModel(
+        id: 301,
+        clientId: 1,
+        artisanId: 2,
+        status: 'en_cours',
+        statusGemini: 'driver_assigned',
+        montantTotal: 10000,
+        montantMateriaux: 8000,
+        montantMo: 2000,
+        ratioMateriaux: 0.8,
+        createdAt: '2026-03-01T12:00:00Z',
+      );
+      expect(mission.rawStatus, 'driver_assigned');
     });
   });
 }

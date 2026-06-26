@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_storage/get_storage.dart';
@@ -7,8 +9,28 @@ import '../test_config.dart';
 
 /// Helper pour initialiser les dépendances de test
 class TestHelpers {
+  static Directory? _tempDir;
+
   static Future<void> initializeTestEnvironment() async {
     TestWidgetsFlutterBinding.ensureInitialized();
+    
+    // Bypasses the Flutter test mock HttpClient to allow real HTTP requests
+    HttpOverrides.global = null;
+    
+    // Create a unique temporary directory for this test isolate to prevent file lock conflicts
+    _tempDir ??= Directory.systemTemp.createTempSync('monartisanpro_test_');
+    
+    // Mock path_provider MethodChannel
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      const MethodChannel('plugins.flutter.io/path_provider'),
+      (MethodCall methodCall) async {
+        if (methodCall.method == 'getApplicationDocumentsDirectory') {
+          return _tempDir!.path;
+        }
+        return null;
+      },
+    );
     
     // Mock FlutterSecureStorage for tests
     FlutterSecureStorage.setMockInitialValues({});

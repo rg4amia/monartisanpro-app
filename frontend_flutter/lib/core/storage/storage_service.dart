@@ -43,6 +43,28 @@ class StorageService {
   static void setOnboarded(bool value) => _box.write(_onboardedKey, value);
   static bool isOnboarded() => _box.read<bool>(_onboardedKey) ?? false;
 
+  // ── Driver Vehicle Settings ──────────────────────────────────────────────────
+  static void saveDriverVehicle(String v) => _box.write('drv_veh', v);
+  static String? getDriverVehicle() => _box.read<String>('drv_veh');
+
+  static void saveDriverPlate(String p) => _box.write('drv_plate', p);
+  static String? getDriverPlate() => _box.read<String>('drv_plate');
+
+  static void saveDriverBasePrice(int val) => _box.write('drv_base', val);
+  static int? getDriverBasePrice() => _box.read<int>('drv_base');
+
+  static void saveDriverPriceKm(int val) => _box.write('drv_km', val);
+  static int? getDriverPriceKm() => _box.read<int>('drv_km');
+
+  static void saveDriverGps(String g) => _box.write('drv_gps', g);
+  static String? getDriverGps() => _box.read<String>('drv_gps');
+
+  static void saveDriverAddress(String a) => _box.write('drv_addr', a);
+  static String? getDriverAddress() => _box.read<String>('drv_addr');
+
+  static void saveDriverWalletBalance(int val) => _box.write('drv_wallet', val);
+  static int? getDriverWalletBalance() => _box.read<int>('drv_wallet');
+
   // ── Clear all ───────────────────────────────────────────────────────────────
   static Future<void> clearAll() async {
     await clearToken();

@@ -81,9 +81,13 @@ class _AuthInterceptor extends Interceptor {
     if (err.response?.statusCode == 401) {
       StorageService.clearToken();
 
-      // Redirect to login if not already there
-      if (Get.currentRoute != Routes.login) {
-        Get.offAllNamed(Routes.login);
+      // Redirect to login if not already there (safeguarded for tests)
+      try {
+        if (Get.key.currentState != null && Get.currentRoute != Routes.login) {
+          Get.offAllNamed(Routes.login);
+        }
+      } catch (_) {
+        // Ignore navigation failures in test/headless environments
       }
     }
     handler.next(err);

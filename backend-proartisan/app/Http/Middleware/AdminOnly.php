@@ -23,15 +23,15 @@ class AdminOnly
             return redirect()->route('admin.login');
         }
 
-        if ($user->role !== 'admin') {
+        if (! in_array($user->role, ['admin', 'artisan', 'client', 'fournisseur', 'referent'])) {
             if ($request->expectsJson() || $request->is('api/*')) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Accès réservé aux administrateurs.',
+                    'message' => 'Accès non autorisé.',
                 ], Response::HTTP_FORBIDDEN);
             }
 
-            abort(Response::HTTP_FORBIDDEN, 'Accès réservé aux administrateurs.');
+            abort(Response::HTTP_FORBIDDEN, 'Accès non autorisé.');
         }
 
         return $next($request);

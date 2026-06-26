@@ -18,6 +18,8 @@ class AppColors {
   static const Color artisanSoft = Color(0xFFFFF1E4);
   static const Color supplierSoft = Color(0xFFEAF8F0);
   static const Color gold = Color(0xFFD4A017);
+  static const Color driver = Color(0xFF1ABC9C); // livreur teal
+  static const Color driverSoft = Color(0xFFE8F8F5);
 
   // States
   static const Color danger = Color(0xFFE74C3C);

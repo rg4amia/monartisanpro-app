@@ -54,4 +54,43 @@ class SettingsController extends GetxController {
       Get.offAllNamed(Routes.login);
     }
   }
+
+  final isChangingPhone = false.obs;
+  final changePhoneError = Rx<String?>(null);
+  final isChangePhoneOtpSent = false.obs;
+
+  Future<bool> requestChangePhone(String newPhone) async {
+    isChangingPhone.value = true;
+    changePhoneError.value = null;
+    try {
+      await _authRepo.changePhoneConnected(newPhone: newPhone);
+      isChangePhoneOtpSent.value = true;
+      return true;
+    } catch (e) {
+      changePhoneError.value = e.toString().replaceAll('Exception: ', '');
+      return false;
+    } finally {
+      isChangingPhone.value = false;
+    }
+  }
+
+  Future<bool> confirmChangePhone(String newPhone, String otp) async {
+    isChangingPhone.value = true;
+    changePhoneError.value = null;
+    try {
+      final res = await _authRepo.changePhoneConnected(newPhone: newPhone, otp: otp);
+      if (res['success'] == true) {
+        userPhone.value = newPhone;
+        StorageService.savePhone(newPhone);
+        isChangePhoneOtpSent.value = false;
+        return true;
+      }
+      return false;
+    } catch (e) {
+      changePhoneError.value = e.toString().replaceAll('Exception: ', '');
+      return false;
+    } finally {
+      isChangingPhone.value = false;
+    }
+  }
 }

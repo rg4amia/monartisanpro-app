@@ -2,7 +2,8 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Cache;
+use App\Models\Otp;
+use App\Models\User;
 use Illuminate\Support\Facades\Log;
 
 class OtpService
@@ -21,11 +22,19 @@ class OtpService
     /**
      * Génère et envoie un OTP par SMS via SMS Pro Africa.
      */
-    public function sendOtp(string $phone): string
+    public function sendOtp(string $phone, ?string $action = null): string
     {
         $otp = $this->generate();
 
-        Cache::put($this->cacheKey($phone), $otp, now()->addMinutes($this->ttlMinutes));
+        $user = User::where('phone', $phone)->first();
+
+        Otp::create([
+            'phone'      => $phone,
+            'user_id'    => $user?->id,
+            'code'       => $otp,
+            'action'     => $action,
+            'expires_at' => now()->addMinutes($this->ttlMinutes),
+        ]);
 
         // Send via SMS Pro Africa
         $result = $this->smsService->sendOtp($phone, $otp);
@@ -43,16 +52,24 @@ class OtpService
     /**
      * Vérifie l'OTP et l'invalide s'il est correct.
      */
-    public function verifyOtp(string $phone, string $code): bool
+    public function verifyOtp(string $phone, string $code, ?string $action = null): bool
     {
-        $key   = $this->cacheKey($phone);
-        $stored = Cache::get($key);
+        $query = Otp::where('phone', $phone)
+            ->where('code', $code)
+            ->where('expires_at', '>', now())
+            ->whereNull('used_at');
 
-        if ($stored === null || $stored !== $code) {
+        if ($action !== null) {
+            $query->where('action', $action);
+        }
+
+        $otpRecord = $query->latest()->first();
+
+        if (!$otpRecord) {
             return false;
         }
 
-        Cache::forget($key);
+        $otpRecord->update(['used_at' => now()]);
 
         return true;
     }
@@ -68,10 +85,5 @@ class OtpService
     private function generate(): string
     {
         return str_pad((string) random_int(0, (int) str_repeat('9', $this->length)), $this->length, '0', STR_PAD_LEFT);
-    }
-
-    private function cacheKey(string $phone): string
-    {
-        return 'otp:' . $phone;
     }
 }

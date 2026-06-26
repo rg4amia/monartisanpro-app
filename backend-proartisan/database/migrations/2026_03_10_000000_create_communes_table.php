@@ -10,9 +10,9 @@ return new class extends Migration
     {
         Schema::create('communes', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('slug')->unique();
-            $table->string('city')->default('Abidjan');
+            $table->string('name', 100);
+            $table->string('slug', 100)->unique();
+            $table->string('city', 100)->default('Abidjan');
             $table->char('country_code', 2)->default('CI');
             $table->unsignedTinyInteger('sort_order')->default(0);
             $table->timestamps();

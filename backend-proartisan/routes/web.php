@@ -20,6 +20,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/missions', [BackofficeController::class, 'missions'])->name('missions');
         Route::get('/litiges', [BackofficeController::class, 'litiges'])->name('litiges');
         Route::get('/users', [BackofficeController::class, 'users'])->name('users');
+        Route::post('/users', [BackofficeController::class, 'storeUser'])->name('users.store');
+        Route::put('/users/{user}', [BackofficeController::class, 'updateUser'])->name('users.update');
+        Route::delete('/users/{user}', [BackofficeController::class, 'destroyUser'])->name('users.destroy');
+        Route::post('/users/{user}/toggle-status', [BackofficeController::class, 'toggleUserStatus'])->name('users.toggle-status');
         Route::get('/transactions', [BackofficeController::class, 'transactions'])->name('transactions');
         Route::get('/settings', [BackofficeController::class, 'settings'])->name('settings');
 
