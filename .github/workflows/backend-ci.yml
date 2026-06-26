@@ -89,23 +89,20 @@ jobs:
             echo "Server: $(hostname)"
             echo "User: $(whoami)"
             echo "Home: $HOME"
-            echo "PHP: $(php -v | head -n 1)"
-
-      - name: Deploy via Git and configure Laravel
+            echo "PHP: $(php -v | head      - name: Deploy Git & PHP dependencies
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOST }}
           port: ${{ secrets.PORT }}
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.SERVER_PASSWORD }}
-          command_timeout: 30m
+          command_timeout: 15m
           timeout: 60s
           script: |
-            echo "� Starting Git-based deployment..."
-
+            set -e
+            echo "🚀 Starting Git-based deployment..."
             DEPLOY_PATH="/home/${{ secrets.USERNAME }}/domains/prosartisan.net/public_html/monartisanpro-app"
             BACKEND_PATH="$DEPLOY_PATH/backend-proartisan"
-            PUBLIC_HTML="/home/${{ secrets.USERNAME }}/domains/prosartisan.net/public_html"
             BRANCH="${{ github.ref_name }}"
 
             # Backup current .env
@@ -123,23 +120,12 @@ jobs:
             else
               echo "🔄 Updating existing repository..."
               cd "$DEPLOY_PATH"
-              
-              # Ensure the remote URL matches the current repository
               git remote set-url origin https://github.com/${{ github.repository }}.git
-              
-              # Stash any local changes
               git stash
-              
-              # Fetch latest changes
               git fetch origin
-              
-              # Reset to latest commit
               git reset --hard origin/$BRANCH
-              
-              # Pull latest changes
               git pull origin $BRANCH
             fi
-
             echo "✅ Git update completed"
 
             # Navigate to backend
@@ -150,22 +136,42 @@ jobs:
               cp /home/${{ secrets.USERNAME }}/.env.backup "$BACKEND_PATH/.env"
               rm /home/${{ secrets.USERNAME }}/.env.backup
               echo "✅ .env restored"
-            elif [ -f "/home/${{ secrets.USERNAME }}/.env.prod" ]; then
-              cp /home/${{ secrets.USERNAME }}/.env.prod "$BACKEND_PATH/.env"
+            elif [ -f "$BACKEND_PATH/.env.prod" ]; then
+              cp "$BACKEND_PATH/.env.prod" "$BACKEND_PATH/.env"
               echo "✅ Production .env copied"
-            else
-              echo "⚠️  No .env file found - please configure manually"
             fi
 
             # Install dependencies
             echo "📦 Installing Composer dependencies..."
             composer install --no-dev --optimize-autoloader --no-interaction
 
-            echo "📦 Installing Node dependencies..."
-            npm ci
+      - name: Copy built assets via SCP
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          port: ${{ secrets.PORT }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          source: "backend-proartisan/public/build"
+          target: "/home/${{ secrets.USERNAME }}/domains/prosartisan.net/public_html/monartisanpro-app"
 
-            echo "🔨 Building assets..."
-            npm run build
+      - name: Finalize Laravel configuration
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          port: ${{ secrets.PORT }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          command_timeout: 15m
+          timeout: 60s
+          script: |
+            set -e
+            DEPLOY_PATH="/home/${{ secrets.USERNAME }}/domains/prosartisan.net/public_html/monartisanpro-app"
+            BACKEND_PATH="$DEPLOY_PATH/backend-proartisan"
+            PUBLIC_HTML="/home/${{ secrets.USERNAME }}/domains/prosartisan.net/public_html"
+            BRANCH="${{ github.ref_name }}"
+
+            cd "$BACKEND_PATH"
 
             # Setup Laravel directories and permissions
             mkdir -p storage/{app/{public,private},framework/{cache/data,sessions,views,testing},logs}
@@ -174,25 +180,21 @@ jobs:
             # Set proper permissions
             chmod -R 755 storage bootstrap/cache
             chmod -R 775 storage/logs
-
-            # Ensure storage directories are writable
             find storage -type d -exec chmod 775 {} \;
             find storage -type f -exec chmod 664 {} \;
 
             # Laravel artisan commands
-            php artisan key:generate --force 2>/dev/null || echo "⚠️  Key already exists"
-            php artisan storage:link --force 2>/dev/null || echo "⚠️  Storage link exists"
+            php artisan key:generate --force 2>/dev/null || echo "⚠️ Key already exists"
+            php artisan storage:link --force 2>/dev/null || echo "⚠️ Storage link exists"
 
             # Run migrations
-            php artisan migrate --force || echo "⚠️  Migration issues - check manually"
+            php artisan migrate --force || echo "⚠️ Migration issues - check manually"
 
             # Cache optimization
             php artisan config:clear
             php artisan route:clear
             php artisan view:clear
             php artisan cache:clear
-
-            # Rebuild caches
             php artisan config:cache
             php artisan route:cache
             php artisan view:cache
@@ -201,15 +203,13 @@ jobs:
             echo "🔧 Configuring root .htaccess..."
             cat > "$PUBLIC_HTML/.htaccess" << 'EOF'
             <IfModule mod_rewrite.c>
-                RewriteEngine On
-                
-                # Redirect all requests to Laravel public folder
-                RewriteCond %{REQUEST_URI} !^/monartisanpro-app/backend-proartisan/public
-                RewriteRule ^(.*)$ /monartisanpro-app/backend-proartisan/public/$1 [L]
+            RewriteEngine On
+            # Redirect all requests to Laravel public folder
+            RewriteCond %{REQUEST_URI} !^/monartisanpro-app/backend-proartisan/public
+            RewriteRule ^(.*)$ /monartisanpro-app/backend-proartisan/public/$1 [L]
             </IfModule>
             EOF
             echo "✅ Root .htaccess configured"
-
             echo "✅ Deployment completed successfully!"
             echo "🌐 Site available at: https://prosartisan.net"
             echo "📌 Deployed branch: $BRANCH"
