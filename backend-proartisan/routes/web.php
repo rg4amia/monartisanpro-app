@@ -33,3 +33,6 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/fournisseurs/{fournisseur}/review', [BackofficeController::class, 'reviewFournisseur'])->name('fournisseurs.review');
     });
 });
+
+// Trigger deploy: SSH test
+
