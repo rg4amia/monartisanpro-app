@@ -34,5 +34,5 @@ Route::prefix('admin')->name('admin.')->group(function () {
     });
 });
 
-// Trigger deploy: SSH test 6
+// Trigger deploy: SSH test 7
 
