@@ -15,11 +15,13 @@ class DevisPaymentFlowTest extends TestCase
 
     public function test_client_must_confirm_payment_before_financing_a_devis(): void
     {
+        /** @var \App\Models\User $client */
         $client = User::factory()->create([
             'role' => 'client',
             'kyc_status' => 'actif',
         ]);
 
+        /** @var \App\Models\User $artisan */
         $artisan = User::factory()->create([
             'role' => 'artisan',
             'kyc_status' => 'actif',
@@ -96,11 +98,13 @@ class DevisPaymentFlowTest extends TestCase
 
     public function test_payment_above_limit_blocks_mobile_money(): void
     {
+        /** @var \App\Models\User $client */
         $client = User::factory()->create([
             'role' => 'client',
             'kyc_status' => 'actif',
         ]);
 
+        /** @var \App\Models\User $artisan */
         $artisan = User::factory()->create([
             'role' => 'artisan',
             'kyc_status' => 'actif',
