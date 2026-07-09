@@ -40,8 +40,14 @@ class UserModel {
         walletMo: (json['walletMo'] ?? json['wallet_mo']) as int? ?? 0,
         name: json['name'] as String?,
         photoUrl: (json['photoUrl'] ?? json['photo_url']) as String?,
-        lat: (json['lat'] as num?)?.toDouble(),
-        lng: (json['lng'] as num?)?.toDouble(),
+        lat: (json['lat'] as num?)?.toDouble() ??
+            (json['position'] is Map<String, dynamic>
+                ? (json['position'] as Map<String, dynamic>)['lat'] as num?
+                : null)?.toDouble(),
+        lng: (json['lng'] as num?)?.toDouble() ??
+            (json['position'] is Map<String, dynamic>
+                ? (json['position'] as Map<String, dynamic>)['lng'] as num?
+                : null)?.toDouble(),
         nightInterventionAvailable: _parseBool(
           json['nightInterventionAvailable'] ??
               json['night_intervention_available'] ??

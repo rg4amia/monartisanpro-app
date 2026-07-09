@@ -65,6 +65,13 @@ class UserController extends Controller
 
         $user->setPosition((float) $data['lat'], (float) $data['lng']);
 
+        if ($user->role === 'fournisseur') {
+            $fournisseur = $user->fournisseurAgree;
+            if ($fournisseur) {
+                $fournisseur->setPosition((float) $data['lat'], (float) $data['lng']);
+            }
+        }
+
         return response()->json([
             'success'  => true,
             'message'  => 'Position mise à jour.',

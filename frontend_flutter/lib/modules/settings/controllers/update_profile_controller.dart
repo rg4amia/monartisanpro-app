@@ -5,6 +5,8 @@ import '../../../data/repositories/auth_repository.dart';
 import '../../../core/storage/storage_service.dart';
 import '../../../data/repositories/user_repository.dart';
 
+import '../../../app/routes/app_routes.dart';
+
 class UpdateProfileController extends GetxController {
   final UserRepository _userRepo = UserRepository();
   final AuthRepository _authRepo = AuthRepository();
@@ -20,6 +22,12 @@ class UpdateProfileController extends GetxController {
   final nightInterventionsEnabled = false.obs;
   final profileImagePath = Rx<String?>(null);
 
+  // Localisation
+  final selectedLatitude = Rxn<double>();
+  final selectedLongitude = Rxn<double>();
+  final selectedAddress = 'Aucun emplacement défini'.obs;
+  final canEditLocation = false.obs;
+
   @override
   void onInit() {
     super.onInit();
@@ -31,6 +39,8 @@ class UpdateProfileController extends GetxController {
     nameController.text = StorageService.getName() ?? '';
     phoneController.text = StorageService.getPhone() ?? '';
     isArtisan.value = StorageService.getRole() == 'artisan';
+    final role = StorageService.getRole();
+    canEditLocation.value = role == 'artisan' || role == 'fournisseur' || role == 'driver' || role == 'LIVREUR';
   }
 
   Future<void> _loadCurrentProfile() async {
@@ -44,6 +54,14 @@ class UpdateProfileController extends GetxController {
       }
 
       isArtisan.value = user.role == 'artisan';
+      canEditLocation.value = user.role == 'artisan' || user.role == 'fournisseur' || user.role == 'driver' || user.role == 'LIVREUR';
+      
+      if (user.lat != null && user.lng != null) {
+        selectedLatitude.value = user.lat;
+        selectedLongitude.value = user.lng;
+        selectedAddress.value = "Position configurée (${user.lat!.toStringAsFixed(4)}, ${user.lng!.toStringAsFixed(4)})";
+      }
+
       nightInterventionsEnabled.value = user.nightInterventionAvailable;
 
       StorageService.saveRole(user.role);
@@ -53,6 +71,15 @@ class UpdateProfileController extends GetxController {
       // Conserver les valeurs locales si l'API n'est pas joignable.
     } finally {
       isProfileLoading.value = false;
+    }
+  }
+
+  Future<void> selectLocationOnMap() async {
+    final result = await Get.toNamed(Routes.locationPicker);
+    if (result != null && result is Map) {
+      selectedLatitude.value = result['latitude'] as double?;
+      selectedLongitude.value = result['longitude'] as double?;
+      selectedAddress.value = result['address'] as String? ?? 'Position sélectionnée';
     }
   }
 
@@ -176,6 +203,15 @@ class UpdateProfileController extends GetxController {
             ? nightInterventionsEnabled.value
             : null,
       );
+
+      // Si une localisation a été spécifiée sur la carte, on la met à jour
+      if (selectedLatitude.value != null && selectedLongitude.value != null) {
+        await _userRepo.updateLocation(
+          userId: userId,
+          lat: selectedLatitude.value!,
+          lng: selectedLongitude.value!,
+        );
+      }
 
       // Update local storage
       StorageService.saveName(nameController.text.trim());

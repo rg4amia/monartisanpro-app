@@ -194,6 +194,28 @@ class _FormSection extends StatelessWidget {
           keyboardType: TextInputType.emailAddress,
         ),
         Obx(() {
+          if (!controller.canEditLocation.value) {
+            return const SizedBox.shrink();
+          }
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 24),
+              const Text(
+                'Localisation géographique',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: _C.ink,
+                ),
+              ),
+              const SizedBox(height: 12),
+              _LocationCard(controller: controller),
+            ],
+          );
+        }),
+        Obx(() {
           if (!controller.isArtisan.value) {
             return const SizedBox.shrink();
           }
@@ -207,6 +229,91 @@ class _FormSection extends StatelessWidget {
         }),
       ],
     );
+  }
+}
+
+class _LocationCard extends StatelessWidget {
+  final UpdateProfileController controller;
+
+  const _LocationCard({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final isSet = controller.selectedLatitude.value != null &&
+          controller.selectedLongitude.value != null;
+
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: _C.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: _C.subtle),
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: isSet ? const Color(0xFFEEF2FF) : const Color(0xFFF9FAFB),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.my_location,
+                    color: isSet ? _C.primary : _C.muted,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isSet ? 'Position configurée' : 'Emplacement non défini',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: _C.ink,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        controller.selectedAddress.value,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: _C.muted,
+                          height: 1.35,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
+              onPressed: controller.selectLocationOnMap,
+              icon: const Icon(Icons.map_outlined, size: 18),
+              label: Text(isSet ? 'Modifier ma position' : 'Définir ma position sur la carte'),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 48),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                side: const BorderSide(color: _C.primary),
+                foregroundColor: _C.primary,
+              ),
+            ),
+          ],
+        ),
+      );
+    });
   }
 }
 
