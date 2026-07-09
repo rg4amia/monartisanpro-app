@@ -402,6 +402,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
     const [refreshing, setRefreshing] = useState<boolean>(false);
     const deferredSearch = useDeferredValue(search.trim().toLowerCase());
     const [now] = useState(() => Date.now());
+    const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState<boolean>(false);
 
     const [userModalOpen, setUserModalOpen] = useState<boolean>(false);
     const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
@@ -963,18 +964,46 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
 
             <div className={cn('admin-shell min-h-screen', themeMode === 'dark' && 'admin-shell--dark')}>
                 <div className="relative z-10 flex min-h-screen">
-                    <aside className="admin-panel hidden w-[310px] shrink-0 border-r px-5 py-6 lg:flex lg:flex-col">
-                        <div className="flex items-center gap-3">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#ebb95e] text-[#241b16] shadow-[0_16px_35px_rgba(210,152,52,0.24)]">
-                                <img src="/img/prosartisan-logo.png" alt="ProsArtisan" className="h-8 w-8 object-contain" />
-                            </div>
-                            <div className="min-w-0">
-                                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--admin-muted)]">ProsArtisan</p>
-                                <div className="flex items-center gap-2">
-                                    <h1 className="truncate text-xl font-semibold text-[var(--admin-text)]">Backoffice</h1>
-                                    <span className={cn('rounded-full border px-2 py-0.5 text-[11px] font-semibold', toneBadgeClasses('amber'))}>ADMIN</span>
+                    {/* Sidebar Mobile Overlay Backdrop */}
+                    {isMobileSidebarOpen && (
+                        <div 
+                            className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
+                            onClick={() => setIsMobileSidebarOpen(false)}
+                        />
+                    )}
+
+                    {/* Sidebar */}
+                    <aside className={cn(
+                        "admin-panel shrink-0 border-r px-5 py-6 bg-[var(--admin-bg)] transition-all duration-300",
+                        // Classes de positionnement mobile
+                        "fixed inset-y-0 left-0 z-50 w-[310px] flex flex-col lg:static lg:h-auto lg:translate-x-0",
+                        isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
+                        // Classes de positionnement desktop
+                        "lg:flex lg:flex-col"
+                    )}>
+                        <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-3">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#ebb95e] text-[#241b16] shadow-[0_16px_35px_rgba(210,152,52,0.24)]">
+                                    <img src="/img/prosartisan-logo.png" alt="ProsArtisan" className="h-8 w-8 object-contain" />
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--admin-muted)]">ProsArtisan</p>
+                                    <div className="flex items-center gap-2">
+                                        <h1 className="truncate text-xl font-semibold text-[var(--admin-text)]">Backoffice</h1>
+                                        <span className={cn('rounded-full border px-2 py-0.5 text-[11px] font-semibold', toneBadgeClasses('amber'))}>ADMIN</span>
+                                    </div>
                                 </div>
                             </div>
+                            
+                            {/* Bouton fermeture sur mobile */}
+                            <button 
+                                type="button" 
+                                className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--admin-border)] bg-white/50 text-[var(--admin-text)] lg:hidden hover:bg-white/80 transition"
+                                onClick={() => setIsMobileSidebarOpen(false)}
+                                aria-label="Fermer le menu"
+                            >
+                                <CloseIcon className="h-5 w-5" />
+                            </button>
                         </div>
 
                         <div className="mt-8 space-y-7">
@@ -1048,6 +1077,16 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                         <header className="admin-panel sticky top-0 z-20 border-b px-4 py-4 lg:px-7">
                             <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
                                 <div className="flex min-w-0 flex-1 items-center gap-3">
+                                    {/* Bouton Hamburger sur mobile */}
+                                    <button
+                                        type="button"
+                                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[var(--admin-border)] bg-white/50 text-[var(--admin-text)] lg:hidden hover:bg-white/80 transition"
+                                        onClick={() => setIsMobileSidebarOpen(true)}
+                                        aria-label="Ouvrir le menu"
+                                    >
+                                        <MenuIcon className="h-6 w-6" />
+                                    </button>
+
                                     <div className="admin-input flex w-full items-center gap-3 rounded-2xl px-4 py-3 xl:max-w-[420px]">
                                         <SearchIcon className="h-5 w-5 text-[var(--admin-muted)]" />
                                         <input
@@ -2869,6 +2908,22 @@ function SettingsIcon({ className }: { className?: string }) {
         <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
             <path d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z" />
             <path d="m19.4 15 .9 1.6-1.7 3-1.8-.3a7.9 7.9 0 0 1-1.7 1l-.5 1.8H9.4l-.5-1.8a7.9 7.9 0 0 1-1.7-1l-1.8.3-1.7-3 .9-1.6a8.6 8.6 0 0 1 0-2l-.9-1.6 1.7-3 1.8.3c.5-.4 1.1-.7 1.7-1l.5-1.8h4.2l.5 1.8c.6.3 1.2.6 1.7 1l1.8-.3 1.7 3-.9 1.6c.2.7.2 1.3 0 2Z" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+    );
+}
+
+function MenuIcon({ className }: { className?: string }) {
+    return (
+        <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+            <path d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+    );
+}
+
+function CloseIcon({ className }: { className?: string }) {
+    return (
+        <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+            <path d="M6 18 18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
     );
 }

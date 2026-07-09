@@ -39,102 +39,109 @@ class ParrainageScreen extends StatelessWidget {
 
         return Padding(
           padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Info Card
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.secondary,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
-                ),
-                child: Row(
+          child: CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Icon(Icons.shield, color: AppColors.primary, size: 40),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Text(
-                        'En tant que Maître Artisan, vous pouvez parrainer des apprentis. Attention : en cas de litige perdu par votre filleul, votre Score N\'Zassa subira une pénalité de caution.',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: AppColors.primary.withValues(alpha: 0.9),
-                          fontWeight: FontWeight.w500,
-                        ),
+                    // Info Card
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.secondary,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.shield, color: AppColors.primary, size: 40),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Text(
+                              'En tant que Maître Artisan, vous pouvez parrainer des apprentis. Attention : en cas de litige perdu par votre filleul, votre Score N\'Zassa subira une pénalité de caution.',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: AppColors.primary.withValues(alpha: 0.9),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
+                    const SizedBox(height: 24),
+                    
+                    // Formulaire d'ajout
+                    Text(
+                      'Nouveau Filleul',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _phoneController,
+                            keyboardType: TextInputType.phone,
+                            decoration: InputDecoration(
+                              hintText: 'Numéro de téléphone (ex: 0700000000)',
+                              filled: true,
+                              fillColor: Colors.white,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: AppColors.border),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: AppColors.border),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        SizedBox(
+                          height: 56,
+                          child: ElevatedButton(
+                            onPressed: controller.isSubmitting.value ? null : _submit,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: controller.isSubmitting.value 
+                                ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                : const Icon(Icons.add),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 32),
+                    Text(
+                      'Vos Filleuls Actifs',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                    ),
+                    const SizedBox(height: 12),
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
-              
-              // Formulaire d'ajout
-              Text(
-                'Nouveau Filleul',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _phoneController,
-                      keyboardType: TextInputType.phone,
-                      decoration: InputDecoration(
-                        hintText: 'Numéro de téléphone (ex: 0700000000)',
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: AppColors.border),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: AppColors.border),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  SizedBox(
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed: controller.isSubmitting.value ? null : _submit,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: controller.isSubmitting.value 
-                          ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                          : const Icon(Icons.add),
-                    ),
-                  ),
-                ],
-              ),
-              
-              const SizedBox(height: 32),
-              Text(
-                'Vos Filleuls Actifs',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
-              ),
-              const SizedBox(height: 12),
               
               // Liste
-              Expanded(
-                child: controller.filleuls.isEmpty 
-                    ? Center(
+              controller.filleuls.isEmpty 
+                  ? const SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Center(
                         child: Text(
                           'Aucun filleul parrainé pour le moment.',
                           style: TextStyle(color: AppColors.textSecondary),
                         ),
-                      )
-                    : ListView.builder(
-                        itemCount: controller.filleuls.length,
-                        itemBuilder: (context, index) {
+                      ),
+                    )
+                  : SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
                           final f = controller.filleuls[index];
                           final filleul = f['filleul'];
                           return Container(
@@ -187,8 +194,9 @@ class ParrainageScreen extends StatelessWidget {
                             ),
                           );
                         },
+                        childCount: controller.filleuls.length,
                       ),
-              ),
+                    ),
             ],
           ),
         );
