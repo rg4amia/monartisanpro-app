@@ -10,5 +10,5 @@ namespace App\States\Mission;
  */
 class FundedLockedState extends MissionState
 {
-    public static string $name = 'financee';
+    public static string $name = 'funded_locked';
 }

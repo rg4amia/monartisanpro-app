@@ -9,5 +9,5 @@ namespace App\States\Mission;
  */
 class CompletedState extends MissionState
 {
-    public static string $name = 'terminee';
+    public static string $name = 'completed';
 }

@@ -9,5 +9,5 @@ namespace App\States\Mission;
  */
 class InProgressState extends MissionState
 {
-    public static string $name = 'en_cours';
+    public static string $name = 'in_progress';
 }

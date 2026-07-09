@@ -66,7 +66,7 @@ class PaymentController extends Controller
                 ], 403);
             }
 
-            if ((string) $mission->status !== 'en_attente') {
+            if ((string) $mission->status !== 'draft') {
                 return response()->json([
                     'success' => false,
                     'message' => 'Cette mission n\'est pas en attente de paiement',

@@ -35,7 +35,7 @@ class WalletServiceComplianceTest extends TestCase
             'client_id' => $client->id,
             'artisan_id' => $artisan->id,
             'description' => 'Test Mission',
-            'status' => 'en_cours',
+            'status' => 'in_progress',
             'montant_total' => 100000,
             'montant_materiaux' => 65000,
             'montant_mo' => 35000,

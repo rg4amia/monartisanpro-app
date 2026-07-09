@@ -73,7 +73,7 @@ class DevisService
                 throw new \InvalidArgumentException('Le paiement doit être confirmé avant d\'accepter le devis.');
             }
 
-            if ($devis->statut === 'accepte' && $devis->mission->status === 'financee') {
+            if ($devis->statut === 'accepte' && (string) $devis->mission->status === 'funded_locked') {
                 return;
             }
 

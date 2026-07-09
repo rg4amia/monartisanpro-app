@@ -26,7 +26,7 @@ class ArtisanResource extends JsonResource
     public function toArray(Request $request): array
     {
         $profile          = $this->artisanProfile;
-        $missionsCount    = $this->missionsArtisan()->where('status', 'terminee')->count();
+        $missionsCount    = $this->missionsArtisan()->where('status', 'completed')->count();
         $avgRating        = $this->evaluationsRecues()->avg('note') ?? 0;
 
         return [

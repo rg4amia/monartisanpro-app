@@ -191,31 +191,31 @@ describe('état initial', function () {
 
 describe('noms de statuts ($name)', function () {
 
-    it('DraftState::$name = "en_attente"', function () {
-        expect(DraftState::$name)->toBe('en_attente');
+    it('DraftState::$name = "draft"', function () {
+        expect(DraftState::$name)->toBe('draft');
     });
 
     it('PendingFundingState::$name = "pending_funding"', function () {
         expect(PendingFundingState::$name)->toBe('pending_funding');
     });
 
-    it('FundedLockedState::$name = "financee"', function () {
-        expect(FundedLockedState::$name)->toBe('financee');
+    it('FundedLockedState::$name = "funded_locked"', function () {
+        expect(FundedLockedState::$name)->toBe('funded_locked');
     });
 
-    it('InProgressState::$name = "en_cours"', function () {
-        expect(InProgressState::$name)->toBe('en_cours');
+    it('InProgressState::$name = "in_progress"', function () {
+        expect(InProgressState::$name)->toBe('in_progress');
     });
 
     it('PendingApprovalState::$name = "pending_approval"', function () {
         expect(PendingApprovalState::$name)->toBe('pending_approval');
     });
 
-    it('CompletedState::$name = "terminee"', function () {
-        expect(CompletedState::$name)->toBe('terminee');
+    it('CompletedState::$name = "completed"', function () {
+        expect(CompletedState::$name)->toBe('completed');
     });
 
-    it('DisputedState::$name = "litige"', function () {
-        expect(DisputedState::$name)->toBe('litige');
+    it('DisputedState::$name = "disputed"', function () {
+        expect(DisputedState::$name)->toBe('disputed');
     });
 })->group('fsm', 'names');

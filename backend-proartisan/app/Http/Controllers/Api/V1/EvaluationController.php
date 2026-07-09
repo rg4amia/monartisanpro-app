@@ -18,7 +18,7 @@ class EvaluationController extends Controller
         $user    = $request->user();
         $mission = Mission::findOrFail($request->mission_id);
 
-        if ((string) $mission->status !== 'terminee') {
+        if ((string) $mission->status !== 'completed') {
             return response()->json([
                 'success' => false,
                 'message' => 'La mission doit être terminée pour pouvoir évaluer.',

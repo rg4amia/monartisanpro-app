@@ -69,7 +69,7 @@ class FullMissionWorkflowTest extends TestCase
                 'location_address' => 'Abidjan Plateau',
             ])
             ->assertCreated()
-            ->assertJsonPath('data.status', 'en_attente');
+            ->assertJsonPath('data.status', 'draft');
 
         $missionId = $missionResponse->json('data.id');
         $mission = Mission::findOrFail($missionId);
@@ -130,12 +130,12 @@ class FullMissionWorkflowTest extends TestCase
                 'transaction_id' => $transactionId,
             ])
             ->assertOk()
-            ->assertJsonPath('data.missionStatus', 'financee');
+            ->assertJsonPath('data.missionStatus', 'funded_locked');
 
         $mission->refresh();
         $artisan->refresh();
 
-        $this->assertSame('financee', (string) $mission->status);
+        $this->assertSame('funded_locked', (string) $mission->status);
         $this->assertSame(65000, $artisan->wallet_materiaux);
         $this->assertSame(35000, $artisan->wallet_mo);
         $this->assertCount(2, $mission->jalons);
@@ -221,7 +221,7 @@ class FullMissionWorkflowTest extends TestCase
         $mission->refresh();
         $artisan->refresh();
 
-        $this->assertSame('terminee', (string) $mission->status);
+        $this->assertSame('completed', (string) $mission->status);
         $this->assertSame(0, $artisan->wallet_mo);
         $this->assertTrue($mission->jalons()->where('statut', 'paye')->count() === 2);
 

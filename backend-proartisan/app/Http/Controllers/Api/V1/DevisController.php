@@ -127,7 +127,7 @@ class DevisController extends Controller
             ], 422);
         }
 
-        if ($devis->statut === 'accepte' && $devis->mission->status === 'financee') {
+        if ($devis->statut === 'accepte' && (string) $devis->mission->status === 'funded_locked') {
             return response()->json([
                 'success' => true,
                 'message' => 'Ce devis est déjà accepté et financé.',

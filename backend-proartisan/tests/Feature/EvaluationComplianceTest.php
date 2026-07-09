@@ -29,7 +29,7 @@ class EvaluationComplianceTest extends TestCase
             'client_id' => $client->id,
             'artisan_id' => $artisan->id,
             'description' => 'Réparation toiture',
-            'status' => 'terminee',
+            'status' => 'completed',
             'montant_total' => 100000,
             'montant_materiaux' => 65000,
             'montant_mo' => 35000,

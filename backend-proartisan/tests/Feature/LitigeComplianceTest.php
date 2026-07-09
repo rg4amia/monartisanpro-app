@@ -31,7 +31,7 @@ class LitigeComplianceTest extends TestCase
 
         $mission->refresh();
 
-        $this->assertSame('litige', (string) $mission->status);
+        $this->assertSame('disputed', (string) $mission->status);
         $this->assertTrue($mission->funds_frozen);
         $this->assertDatabaseCount('litiges', 1);
     }
@@ -155,7 +155,7 @@ class LitigeComplianceTest extends TestCase
             ->assertJsonPath('data.decision', 'client')
             ->assertJsonPath('data.resolutionReason', 'absence_preuves_artisan');
 
-        $this->assertSame('annulee', (string) $mission->fresh()->status);
+        $this->assertSame('cancelled', (string) $mission->fresh()->status);
         $this->assertFalse((bool) $mission->fresh()->funds_frozen);
         $this->assertSame(0, $artisan->fresh()->wallet_materiaux);
         $this->assertSame(0, $artisan->fresh()->wallet_mo);
@@ -201,7 +201,7 @@ class LitigeComplianceTest extends TestCase
         $mission->refresh();
         $artisan->refresh();
 
-        $this->assertSame('terminee', (string) $mission->status);
+        $this->assertSame('completed', (string) $mission->status);
         $this->assertFalse((bool) $mission->funds_frozen);
         $this->assertSame(0, $artisan->wallet_materiaux);
         $this->assertSame(0, $artisan->wallet_mo);
@@ -239,7 +239,7 @@ class LitigeComplianceTest extends TestCase
                 'client_id' => $client->id,
                 'artisan_id' => $artisan->id,
                 'description' => "Mission passee {$i}",
-                'status' => 'annulee',
+                'status' => 'cancelled',
                 'montant_total' => 10000,
                 'montant_materiaux' => 5000,
                 'montant_mo' => 5000,
@@ -263,7 +263,7 @@ class LitigeComplianceTest extends TestCase
             'client_id' => $client->id,
             'artisan_id' => $artisan->id,
             'description' => 'Mission courante',
-            'status' => 'litige',
+            'status' => 'disputed',
             'montant_total' => 100000,
             'montant_materiaux' => 65000,
             'montant_mo' => 35000,
@@ -317,7 +317,7 @@ class LitigeComplianceTest extends TestCase
             'client_id' => $client->id,
             'artisan_id' => $artisan->id,
             'description' => 'Mission test litige',
-            'status' => 'en_cours',
+            'status' => 'in_progress',
             'montant_total' => 100000,
             'montant_materiaux' => 65000,
             'montant_mo' => 35000,
