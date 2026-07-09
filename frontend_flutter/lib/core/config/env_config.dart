@@ -10,7 +10,7 @@ class EnvConfig {
   // Pour appareil physique : remplacez par l'IP de votre machine sur le réseau local.
   // Trouvez votre IP avec: ifconfig (Mac/Linux) ou ipconfig (Windows)
   // Exemple: 'http://192.168.1.42:8000/api/v1'
-  static const String deviceBaseUrl = 'http://192.168.1.x:8000/api/v1';
+  static const String deviceBaseUrl = 'http://192.168.1.10:8000/api/v1';
 
   // Pour iOS Simulator
   static const String iosSimulatorBaseUrl = 'http://localhost:8000/api/v1';
@@ -22,15 +22,26 @@ class EnvConfig {
   static String get baseUrl {
     // Si on est dans un environnement de test unitaire/d'intégration
     if (!kIsWeb && Platform.environment.containsKey('FLUTTER_TEST')) {
-      return 'http://127.0.0.1:8000/api/v1';
+      return 'http://192.168.1.10:8000/api/v1';
     }
 
     // En production réelle, décommentez la ligne suivante :
     // const bool isProduction = bool.fromEnvironment('dart.vm.product');
     // if (isProduction) return productionBaseUrl;
 
-    // Pour le développement local (émulateur et appareil physique) :
-    return 'http://192.168.1.7:8000/api/v1';
+    // Pour le développement local (détection dynamique) :
+    if (kIsWeb) {
+      return 'http://localhost:8000/api/v1';
+    }
+    if (Platform.isAndroid) {
+      // Retourner deviceBaseUrl pour tester avec un APK sur le réseau local
+      return deviceBaseUrl;
+    }
+    if (Platform.isIOS) {
+      return iosSimulatorBaseUrl;
+    }
+
+    return 'http://localhost:8000/api/v1';
   }
 
   // ── Telegram Logger Configuration ──────────────────────────────────────────

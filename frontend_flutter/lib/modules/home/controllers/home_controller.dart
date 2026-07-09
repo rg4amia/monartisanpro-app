@@ -28,6 +28,15 @@ class HomeController extends GetxController {
   final walletMo = 0.obs;
   final selectedCategory = Rx<String?>(null);
 
+  // ── Client Dashboard Statistics ────────────────────────────────────────────
+  final acceptedDevisCount = 14.obs;
+  final refusedDevisCount = 3.obs;
+  final disputesCount = 1.obs;
+  final topSuppliers = <Map<String, dynamic>>[].obs;
+  final topDrivers = <Map<String, dynamic>>[].obs;
+  final expensesByCategory = <String, int>{}.obs;
+  final dashboardTab = 0.obs; // 0 = Exploration, 1 = Tableau de Bord
+
   // ── Driver State ───────────────────────────────────────────────────────────
   final driverVehicle = 'Moto'.obs;
   final driverPlate = ''.obs;
@@ -84,6 +93,57 @@ class HomeController extends GetxController {
     super.onInit();
     role.value = StorageService.getRole();
     userName.value = StorageService.getName() ?? '';
+    
+    // Initialisation des données statistiques pour le tableau de bord client
+    expensesByCategory.value = {
+      'Maçonnerie': 320000,
+      'Électricité': 145000,
+      'Plomberie': 88000,
+      'Peinture': 54000,
+    };
+    
+    topSuppliers.value = [
+      {
+        'name': 'Dépôt Sodemi Marcory',
+        'rating': 4.9,
+        'deliveries': 142,
+        'location': 'Marcory, Zone 4',
+      },
+      {
+        'name': 'Quincaillerie Angré Nouveau Horizon',
+        'rating': 4.8,
+        'deliveries': 98,
+        'location': 'Angré, 8ème Tranche',
+      },
+      {
+        'name': 'Sanitaire & Co Cocody',
+        'rating': 4.7,
+        'deliveries': 76,
+        'location': 'Cocody, Mermoz',
+      },
+    ];
+
+    topDrivers.value = [
+      {
+        'name': 'Konan Koffi Jerome',
+        'rating': 4.95,
+        'trips': 214,
+        'vehicle': 'Moto (Sécurisée)',
+      },
+      {
+        'name': 'Bakayoko Issouf',
+        'rating': 4.82,
+        'trips': 180,
+        'vehicle': 'Tricycle (Gros volumes)',
+      },
+      {
+        'name': 'Yao Kouakou F.',
+        'rating': 4.78,
+        'trips': 145,
+        'vehicle': 'Camionnette (Sécurisée)',
+      },
+    ];
+
     _loadData();
   }
 

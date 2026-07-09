@@ -47,6 +47,8 @@ import '../../modules/missions/views/artisan_selection_screen.dart';
 import '../../modules/missions/views/devis_creation_screen.dart';
 import '../../modules/missions/views/devis_review_screen.dart';
 import '../../modules/missions/views/referent_validation_screen.dart';
+import '../../modules/artisans/views/parrainage_screen.dart';
+import '../../modules/orders/views/order_checkout_screen.dart';
 import 'app_routes.dart';
 
 class AppPages {
@@ -242,6 +244,14 @@ class AppPages {
       name: Routes.referentValidation,
       page: () => const ReferentValidationScreen(),
       binding: BindingsBuilder.put(() => ReferentValidationController()),
+    ),
+    GetPage(
+      name: Routes.parrainage,
+      page: () => ParrainageScreen(),
+    ),
+    GetPage(
+      name: Routes.orderCheckout,
+      page: () => const OrderCheckoutScreen(),
     ),
   ];
 }

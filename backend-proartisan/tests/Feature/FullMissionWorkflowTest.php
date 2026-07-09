@@ -135,7 +135,7 @@ class FullMissionWorkflowTest extends TestCase
         $mission->refresh();
         $artisan->refresh();
 
-        $this->assertSame('financee', $mission->status);
+        $this->assertSame('financee', (string) $mission->status);
         $this->assertSame(65000, $artisan->wallet_materiaux);
         $this->assertSame(35000, $artisan->wallet_mo);
         $this->assertCount(2, $mission->jalons);
@@ -221,7 +221,7 @@ class FullMissionWorkflowTest extends TestCase
         $mission->refresh();
         $artisan->refresh();
 
-        $this->assertSame('terminee', $mission->status);
+        $this->assertSame('terminee', (string) $mission->status);
         $this->assertSame(0, $artisan->wallet_mo);
         $this->assertTrue($mission->jalons()->where('statut', 'paye')->count() === 2);
 
@@ -237,7 +237,7 @@ class FullMissionWorkflowTest extends TestCase
                 'reactivite' => 5,
             ])
             ->assertCreated()
-            ->assertJsonPath('data.scoreNzassa', 100);
+            ->assertJsonPath('data.scoreNzassa', 300);
 
         $this->assertDatabaseHas('transactions', [
             'mission_id' => $mission->id,
@@ -269,7 +269,7 @@ class FullMissionWorkflowTest extends TestCase
             'statut' => 'confirme',
         ]);
 
-        $this->assertSame(100, $artisan->fresh()->score_nzassa);
+        $this->assertSame(300, $artisan->fresh()->score_nzassa);
     }
 
     private function runSupplierPaymentJob(JCode $jcode): void

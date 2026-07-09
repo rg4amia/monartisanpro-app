@@ -16,6 +16,7 @@ class VerifyOtpRequest extends FormRequest
         return [
             'phone' => ['required', 'string', 'regex:/^\+225[0-9]{10}$/'],
             'otp'   => ['required', 'string', 'digits:4'],
+            'device_fingerprint' => ['nullable', 'string'],
         ];
     }
 

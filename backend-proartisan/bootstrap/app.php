@@ -42,6 +42,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin.only' => \App\Http\Middleware\AdminOnly::class,
             'account.active' => \App\Http\Middleware\AccountActive::class,
         ]);
+
+        $middleware->validateCsrfTokens(except: [
+            'admin/api/llm/*',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, Request $request) {

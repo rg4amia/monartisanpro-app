@@ -66,7 +66,7 @@ class DevisPaymentFlowTest extends TestCase
         $transaction = Transaction::findOrFail($transactionId);
 
         $this->assertTrue($transaction->statut->isSuccessful());
-        $this->assertSame('en_attente', $mission->fresh()->status);
+        $this->assertSame('en_attente', (string) $mission->fresh()->status);
         $this->assertSame('soumis', $devis->fresh()->statut);
         $this->assertSame(0, $artisan->fresh()->wallet_materiaux);
         $this->assertSame(0, $artisan->fresh()->wallet_mo);
@@ -84,7 +84,7 @@ class DevisPaymentFlowTest extends TestCase
         $artisan->refresh();
 
         $this->assertSame('accepte', $devis->statut);
-        $this->assertSame('financee', $mission->status);
+        $this->assertSame('financee', (string) $mission->status);
         $this->assertSame($artisan->id, $mission->artisan_id);
         $this->assertSame(100000, $mission->montant_total);
         $this->assertSame(65000, $mission->montant_materiaux);
@@ -165,4 +165,3 @@ class DevisPaymentFlowTest extends TestCase
             ]);
     }
 }
-

@@ -17,6 +17,7 @@ class RegisterRequest extends FormRequest
             'phone' => ['required', 'string', 'regex:/^\+225[0-9]{10}$/'],
             'name'  => ['required', 'string', 'min:2', 'max:100'],
             'role'  => ['required', 'string', 'in:client,artisan,fournisseur'],
+            'device_fingerprint' => ['nullable', 'string'],
         ];
     }
 

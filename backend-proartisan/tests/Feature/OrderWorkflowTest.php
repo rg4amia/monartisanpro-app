@@ -26,7 +26,7 @@ beforeEach(function () {
 test('client can create order in pickup mode and pay it', function () {
     $client = User::factory()->create(['role' => 'client', 'phone' => '+2250101010101']);
     $supplier = User::factory()->create(['role' => 'fournisseur', 'phone' => '+2250202020202']);
-    
+
     FournisseurAgree::create([
         'user_id' => $supplier->id,
         'nom_boutique' => 'Boutique Test',
@@ -55,7 +55,7 @@ test('client can create order in pickup mode and pay it', function () {
 
     $response->assertStatus(201);
     $response->assertJsonPath('success', true);
-    
+
     $this->assertDatabaseHas('orders', [
         'client_id' => $client->id,
         'supplier_id' => $supplier->id,
@@ -112,7 +112,7 @@ test('client can create order in delivery mode with dynamic maps calculation', f
         ]);
 
     $response->assertStatus(201);
-    
+
     // Calcul de livraison attendu : (5 km * 150 FCFA) + (10 min * 50 FCFA) = 750 + 500 = 1250 FCFA
     $this->assertDatabaseHas('orders', [
         'client_id' => $client->id,
@@ -134,7 +134,7 @@ test('full pickup order validation workflow', function () {
 
     // 1. Passer commande
     $order = app(\App\Services\OrderService::class)->createOrder($client, $supplier, [['supplier_product_id' => $product->id, 'quantity' => 1]], 'pickup');
-    
+
     // 2. Le fournisseur prépare la commande
     $this->actingAs($supplier)
         ->postJson("/api/v1/orders/{$order->id}/prepared")
@@ -150,7 +150,7 @@ test('full pickup order validation workflow', function () {
         ]);
 
     $response->assertStatus(200);
-    
+
     $order->refresh();
     expect($order->status)->toBe('delivered');
 
@@ -163,18 +163,18 @@ test('full pickup order validation workflow', function () {
 test('full delivery order validation workflow', function () {
     $client = User::factory()->create(['role' => 'client']);
     $client->setPosition(5.35, -4.02);
-    
+
     $supplier = User::factory()->create(['role' => 'fournisseur']);
     $agree = FournisseurAgree::create(['user_id' => $supplier->id, 'nom_boutique' => 'Boutique Test', 'statut' => 'agree']);
     $agree->setPosition(5.36, -4.01);
-    
+
     $driver = User::factory()->create(['role' => 'driver']);
-    
+
     $product = SupplierProduct::create(['supplier_id' => $supplier->id, 'sku' => 'P1', 'name' => 'P', 'unit_price' => 1000, 'stock_quantity' => 5]);
 
     // 1. Passer commande
     $order = app(\App\Services\OrderService::class)->createOrder($client, $supplier, [['supplier_product_id' => $product->id, 'quantity' => 1]], 'delivery');
-    
+
     // 2. Le fournisseur prépare la commande -> Passe à searching_driver
     $this->actingAs($supplier)
         ->postJson("/api/v1/orders/{$order->id}/prepared")
@@ -226,8 +226,8 @@ test('full delivery order validation workflow', function () {
     $order->refresh();
     expect($order->status)->toBe('delivered');
 
-    // Le livreur reçoit son gain de livraison (1250 FCFA)
+    // Le livreur reçoit son gain de livraison (1250 FCFA - 10% com = 1125 FCFA)
     $driver->refresh();
     $driverBalance = app(\App\Services\WalletService::class)->getBalance($driver, WalletType::WALLET_MO);
-    expect($driverBalance)->toBe(1250);
+    expect($driverBalance)->toBe(1125);
 });

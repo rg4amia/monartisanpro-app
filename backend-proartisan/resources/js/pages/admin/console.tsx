@@ -3,8 +3,9 @@ import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
 import { cn } from '@/lib/utils';
+import LlmAdminPanel from './llm-admin-panel';
 
-type AdminTab = 'dashboard' | 'kyc' | 'missions' | 'litiges' | 'users' | 'transactions' | 'settings';
+type AdminTab = 'dashboard' | 'kyc' | 'missions' | 'litiges' | 'users' | 'transactions' | 'settings' | 'llm_admin';
 type ThemeMode = 'light' | 'dark';
 type Tone = 'amber' | 'green' | 'rose' | 'blue' | 'slate';
 
@@ -102,6 +103,8 @@ interface AdminUser {
     missions_artisan_count: number;
     account_status?: string | null;
     account_status_reason?: string | null;
+    score_frozen?: boolean;
+    device_fingerprint?: string | null;
 }
 
 interface AdminTransaction {
@@ -178,6 +181,15 @@ interface AdminPageProps {
     missions: AdminMission[];
     transactions: AdminTransaction[];
     users: AdminUser[];
+    settingsList?: Array<{
+        id: number;
+        key: string;
+        value: string;
+        type: string;
+        group: string;
+        label: string;
+        description: string;
+    }>;
 }
 
 const tabRoutes: Record<AdminTab, string> = {
@@ -188,6 +200,7 @@ const tabRoutes: Record<AdminTab, string> = {
     users: '/admin/users',
     transactions: '/admin/transactions',
     settings: '/admin/settings',
+    llm_admin: '/admin/llm-admin',
 };
 
 const tabMeta: Record<AdminTab, { description: string; label: string; section: string }> = {
@@ -226,6 +239,11 @@ const tabMeta: Record<AdminTab, { description: string; label: string; section: s
         section: 'PLATEFORME',
         description: "Règles métier, configuration d'accès et garde-fous du backoffice.",
     },
+    llm_admin: {
+        label: 'Administration LLM ProsArtisan',
+        section: 'INTELLIGENCE',
+        description: "Supervision de l'ingestion sémantique des documents et du pipeline RAG local.",
+    },
 };
 
 const searchPlaceholders: Record<AdminTab, string> = {
@@ -236,6 +254,7 @@ const searchPlaceholders: Record<AdminTab, string> = {
     users: 'Nom, téléphone, ID ou rôle...',
     transactions: 'Type, provider, statut ou bénéficiaire...',
     settings: 'Rechercher une règle ou un paramètre...',
+    llm_admin: 'Rechercher une règle ou un document...',
 };
 
 const quickDockTabs: AdminTab[] = ['dashboard', 'missions', 'users', 'settings'];
@@ -349,8 +368,8 @@ function getInitials(value: string): string {
     return initials || 'PA';
 }
 
-function buildTimeline(days: number): TimelinePoint[] {
-    const today = new Date();
+function buildTimeline(days: number, now: number): TimelinePoint[] {
+    const today = new Date(now);
 
     return Array.from({ length: days }, (_, index) => {
         const date = new Date(today);
@@ -370,13 +389,19 @@ function sumAmount(items: AdminTransaction[]): number {
 export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
     const activeTab = initialTab;
     const { props } = usePage<AdminPageProps>();
-    const { auth, dashboard, errors, flash, fournisseurs, kycUsers, litiges, missions, transactions, users } = props;
+    const { auth, dashboard, errors, flash, fournisseurs, kycUsers, litiges, missions, transactions, users, settingsList } = props;
 
-    const [themeMode, setThemeMode] = useState<ThemeMode>('light');
+    const [themeMode, setThemeMode] = useState<ThemeMode>(() => {
+        if (typeof window !== 'undefined' && window.localStorage) {
+            return (localStorage.getItem('prosartisan_admin_theme') as ThemeMode) || 'light';
+        }
+        return 'light';
+    });
     const [search, setSearch] = useState<string>('');
     const [actionLoading, setActionLoading] = useState<boolean>(false);
     const [refreshing, setRefreshing] = useState<boolean>(false);
     const deferredSearch = useDeferredValue(search.trim().toLowerCase());
+    const [now] = useState(() => Date.now());
 
     const [userModalOpen, setUserModalOpen] = useState<boolean>(false);
     const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
@@ -391,6 +416,8 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         password: '',
         kyc_status: 'en_attente',
         account_status: 'actif',
+        score_frozen: false,
+        device_fingerprint: '',
     });
 
     const statusForm = useForm({
@@ -410,6 +437,8 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
             password: '',
             kyc_status: 'en_attente',
             account_status: 'actif',
+            score_frozen: false,
+            device_fingerprint: '',
         });
         setUserModalOpen(true);
     };
@@ -425,6 +454,8 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
             password: '',
             kyc_status: user.kyc_status as any,
             account_status: (user.account_status ?? 'actif') as any,
+            score_frozen: Boolean(user.score_frozen),
+            device_fingerprint: user.device_fingerprint ?? '',
         });
         setUserModalOpen(true);
     };
@@ -503,14 +534,6 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
             });
         }
     };
-
-    useEffect(() => {
-        if (typeof window === 'undefined') {
-            return;
-        }
-
-        setThemeMode(localStorage.getItem('prosartisan_admin_theme') === 'dark' ? 'dark' : 'light');
-    }, []);
 
     useEffect(() => {
         if (typeof window === 'undefined') {
@@ -596,15 +619,15 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         const releasedTransactions = confirmedTransactions.filter((transaction) =>
             ['liberation_jalon', 'paiement_fournisseur'].includes(transaction.type),
         );
-        const todayTimeline = buildTimeline(7);
-        const activityTimeline = buildTimeline(15);
+        const todayTimeline = buildTimeline(7, now);
+        const activityTimeline = buildTimeline(15, now);
         const monthlyUserCount = users.filter((user) => {
             const createdAt = new Date(user.created_at);
-            const today = new Date();
+            const today = new Date(now);
 
             return createdAt.getMonth() === today.getMonth() && createdAt.getFullYear() === today.getFullYear();
         }).length;
-        const weeklyUserCount = users.filter((user) => new Date(user.created_at) >= new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length;
+        const weeklyUserCount = users.filter((user) => new Date(user.created_at) >= new Date(now - 7 * 24 * 60 * 60 * 1000)).length;
         const highRiskDisputes = filteredLitiges.filter((litige) => (litige.mission.montant_total ?? 0) >= 2_000_000);
         const topArtisans = [...users]
             .filter((user) => user.role === 'artisan')
@@ -726,18 +749,19 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
             urgentKyc,
             weeklyUserCount,
         };
-    }, [dashboard, deferredSearch, fournisseurs, kycUsers, litiges, missions, transactions, users]);
+    }, [dashboard, deferredSearch, fournisseurs, kycUsers, litiges, missions, transactions, users, now]);
 
     const totalUsers = dashboard.users_total ?? users.length;
-    const artisansActifs = dashboard.artisans_actifs ?? users.filter((user) => user.role === 'artisan' && user.kyc_status === 'actif').length;
-    const clientsActifs = dashboard.clients_actifs ?? users.filter((user) => user.role === 'client' && user.kyc_status === 'actif').length;
-    const fournisseursAgrees = dashboard.fournisseurs_agrees ?? 0;
-    const kycPending = dashboard.kyc_en_attente ?? kycUsers.length;
-    const openDisputes = dashboard.litiges_ouverts ?? litiges.filter((litige) => litige.statut !== 'resolu').length;
-    const missionsInProgress = dashboard.missions_en_cours ?? missions.filter((mission) => mission.status === 'en_cours').length;
-    const referentRequired = dashboard.referent_required_open ?? 0;
-    const fraudAlerts = dashboard.recent_fraud_alerts ?? 0;
-    const volume24h = dashboard.volume_transactions_24h ?? 0;
+    const artisansActifs = useMemo(() => dashboard.artisans_actifs ?? users.filter((user) => user.role === 'artisan' && user.kyc_status === 'actif').length, [dashboard.artisans_actifs, users]);
+    const clientsActifs = useMemo(() => dashboard.clients_actifs ?? users.filter((user) => user.role === 'client' && user.kyc_status === 'actif').length, [dashboard.clients_actifs, users]);
+    const fournisseursAgrees = dashboard.fournisseurs_agrees ?? 0; // Already a primitive or stable
+    const kycPending = useMemo(() => dashboard.kyc_en_attente ?? kycUsers.length, [dashboard.kyc_en_attente, kycUsers]);
+    const openDisputes = useMemo(() => dashboard.litiges_ouverts ?? litiges.filter((litige) => litige.statut !== 'resolu').length, [dashboard.litiges_ouverts, litiges]);
+    const missionsInProgress = useMemo(() => dashboard.missions_en_cours ?? missions.filter((mission) => mission.status === 'en_cours').length, [dashboard.missions_en_cours, missions]);
+    const referentRequired = dashboard.referent_required_open ?? 0; // Already a primitive or stable
+    const fraudAlerts = dashboard.recent_fraud_alerts ?? 0; // Already a primitive or stable
+    const volume24h = dashboard.volume_transactions_24h ?? 0; // Already a primitive or stable
+
     const firstError = Object.values(errors ?? {})[0];
     const bannerError = flash?.error ?? firstError;
 
@@ -749,6 +773,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                 { count: kycPending, id: 'kyc', label: tabMeta.kyc.label },
                 { count: missionsInProgress, id: 'missions', label: tabMeta.missions.label },
                 { count: openDisputes, id: 'litiges', label: tabMeta.litiges.label },
+                { id: 'llm_admin', label: 'Administration LLM' },
             ],
         },
         {
@@ -1691,6 +1716,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                                         <th>Rôle</th>
                                                         <th>KYC</th>
                                                         <th>Compte</th>
+                                                        <th>Score / Sécurité</th>
                                                         <th>Missions</th>
                                                         <th className="text-right">Actions</th>
                                                     </tr>
@@ -1698,7 +1724,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                                 <tbody>
                                                     {analytics.filteredUsers.length === 0 ? (
                                                         <tr>
-                                                            <td colSpan={6}>
+                                                            <td colSpan={7}>
                                                                 <EmptyState description="Aucun compte ne correspond à votre recherche." title="Liste vide" />
                                                             </td>
                                                         </tr>
@@ -1724,6 +1750,33 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                                                 </td>
                                                                 <td>
                                                                     <AccountStatusBadge status={user.account_status} />
+                                                                </td>
+                                                                <td className="text-sm">
+                                                                    <div className="flex flex-col gap-1">
+                                                                        <div className="flex items-center gap-1.5">
+                                                                            <span className="font-semibold text-[var(--admin-text)]">
+                                                                                {user.score_nzassa} pts
+                                                                            </span>
+                                                                            {user.score_frozen ? (
+                                                                                <span className="rounded-full bg-[#fbe0da] px-1.5 py-0.5 text-[10px] font-semibold text-[#c55e50] border border-[#f2c1ba]">
+                                                                                    Gelé
+                                                                                </span>
+                                                                            ) : (
+                                                                                <span className="rounded-full bg-[#eef8f0] px-1.5 py-0.5 text-[10px] font-semibold text-[#24734f] border border-[#bfe0c8]">
+                                                                                    Actif
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                        {user.device_fingerprint ? (
+                                                                            <span className="text-[10px] text-[var(--admin-muted)] truncate max-w-[120px]" title={user.device_fingerprint}>
+                                                                                IMEI: {user.device_fingerprint.slice(0, 10)}...
+                                                                            </span>
+                                                                        ) : (
+                                                                            <span className="text-[10px] text-[var(--admin-muted)]">
+                                                                                Aucun device lié
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
                                                                 </td>
                                                                 <td className="text-sm text-[var(--admin-text-soft)]">
                                                                     Client: {user.missions_client_count} • Artisan: {user.missions_artisan_count}
@@ -1935,6 +1988,50 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                             </button>
                                         </div>
                                     </Surface>
+
+                                    <Surface className="rounded-[32px] p-5 lg:p-6 xl:col-span-2">
+                                        <SectionTitle
+                                            description="Modifiez en temps réel les pourcentages de commission, frais de service et configurations métier."
+                                            title="Gestion des Commissions & Paramètres"
+                                        />
+                                        <div className="mt-6 space-y-6">
+                                            {settingsList && settingsList.length > 0 ? (
+                                                settingsList.map((setting) => (
+                                                    <div key={setting.id} className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-2xl border border-[var(--admin-border)] bg-white/60">
+                                                        <div className="min-w-0 flex-1">
+                                                            <h4 className="font-semibold text-sm text-[var(--admin-text)]">{setting.label ?? setting.key}</h4>
+                                                            <p className="text-xs text-[var(--admin-muted)] mt-1">{setting.description}</p>
+                                                        </div>
+                                                        <div className="flex items-center gap-3 shrink-0">
+                                                            <input
+                                                                type="text"
+                                                                defaultValue={setting.value}
+                                                                onBlur={(e) => {
+                                                                    if (e.target.value !== setting.value) {
+                                                                        router.put(`/admin/settings/${setting.id}`, {
+                                                                            value: e.target.value,
+                                                                        }, { preserveScroll: true });
+                                                                    }
+                                                                }}
+                                                                className="admin-input w-48 rounded-xl px-3 py-2 text-sm text-center outline-none"
+                                                            />
+                                                            <span className="text-xs text-[var(--admin-muted)] uppercase tracking-wider font-semibold">
+                                                                {setting.type}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <p className="text-sm text-[var(--admin-muted)]">Aucun paramètre trouvé.</p>
+                                            )}
+                                        </div>
+                                    </Surface>
+                                </section>
+                            ) : null}
+
+                            {activeTab === 'llm_admin' ? (
+                                <section className="mt-5">
+                                    <LlmAdminPanel />
                                 </section>
                             ) : null}
                         </main>
@@ -2068,6 +2165,33 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                             <option value="suspendu">Suspendu</option>
                                         </select>
                                         {userForm.errors.account_status && <p className="text-xs text-[#b24f43]">{userForm.errors.account_status}</p>}
+                                    </label>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <label className="block space-y-1">
+                                        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Gel de Score N'Zassa</span>
+                                        <select
+                                            value={userForm.data.score_frozen ? 'oui' : 'non'}
+                                            onChange={(e) => userForm.setData('score_frozen', e.target.value === 'oui')}
+                                            className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none bg-transparent"
+                                        >
+                                            <option value="non">Actif (Non gelé)</option>
+                                            <option value="oui">Gelé (Bloqué)</option>
+                                        </select>
+                                        {userForm.errors.score_frozen && <p className="text-xs text-[#b24f43]">{userForm.errors.score_frozen}</p>}
+                                    </label>
+
+                                    <label className="block space-y-1">
+                                        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Empreinte de l'appareil (IMEI)</span>
+                                        <input
+                                            type="text"
+                                            value={userForm.data.device_fingerprint}
+                                            onChange={(e) => userForm.setData('device_fingerprint', e.target.value)}
+                                            className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none"
+                                            placeholder="Empreinte IMEI / Appareil"
+                                        />
+                                        {userForm.errors.device_fingerprint && <p className="text-xs text-[#b24f43]">{userForm.errors.device_fingerprint}</p>}
                                     </label>
                                 </div>
 
@@ -2512,6 +2636,8 @@ function BottomDock({ activeTab }: { activeTab: AdminTab }) {
 
 function TabIcon({ className = 'h-5 w-5', tab }: { className?: string; tab: AdminTab }) {
     switch (tab) {
+        case 'llm_admin':
+            return <InboxIcon className={className} />;
         case 'dashboard':
             return <DashboardIcon className={className} />;
         case 'kyc':
@@ -2531,9 +2657,6 @@ function TabIcon({ className = 'h-5 w-5', tab }: { className?: string; tab: Admi
     }
 }
 
-function PulseDot() {
-    return <span className="h-3 w-3 rounded-full bg-current" />;
-}
 
 function ToneIcon({ className = 'h-5 w-5', tone }: { className?: string; tone: Tone }) {
     switch (tone) {

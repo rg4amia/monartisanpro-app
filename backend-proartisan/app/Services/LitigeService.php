@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\WalletType;
+use App\Models\EvidenceVault;
 use App\Models\JCode;
 use App\Models\Litige;
 use App\Models\LitigeEvidence;
@@ -32,7 +33,7 @@ class LitigeService
                 'mission.artisan',
                 'preuves.user',
             ])
-            ->when($statut, fn ($q) => $q->where('statut', $statut))
+            ->when($statut, fn($q) => $q->where('statut', $statut))
             ->orderByDesc('created_at');
 
         if ($user->role !== 'admin') {
@@ -67,7 +68,7 @@ class LitigeService
 
         $litige = DB::transaction(function () use ($user, $mission, $data) {
             $mission->update([
-                'status' => 'litige',
+                'status' => \App\States\Mission\DisputedState::class,
                 'funds_frozen' => true,
             ]);
 
@@ -141,6 +142,28 @@ class LitigeService
                     'litige',
                     $litige->id
                 );
+
+                // ── Evidence Vault : intégrité SHA-256 ──
+                $fileHash = hash_file('sha256', $photoInput['photo']->getRealPath());
+
+                $existingVaultEntry = EvidenceVault::where('sha256_hash', $fileHash)
+                    ->where('litige_id', $litige->id)
+                    ->first();
+
+                if ($existingVaultEntry) {
+                    throw ValidationException::withMessages([
+                        'photos' => ["Doublon détecté : le fichier (index {$index}) a déjà été déposé pour ce litige."],
+                    ]);
+                }
+
+                EvidenceVault::create([
+                    'litige_id'   => $litige->id,
+                    'uploaded_by' => $user->id,
+                    'file_url'    => $uploaded['url'],
+                    'sha256_hash' => $fileHash,
+                    'ip_address'  => request()?->ip(),
+                    'uploaded_at' => now(),
+                ]);
 
                 LitigeEvidence::create([
                     'litige_id' => $litige->id,
@@ -264,7 +287,7 @@ class LitigeService
             ->whereNotNull('evidence_deadline_at')
             ->where('evidence_deadline_at', '<=', now())
             ->get()
-            ->each(fn (Litige $litige) => $this->evaluateSla($litige));
+            ->each(fn(Litige $litige) => $this->evaluateSla($litige));
     }
 
     public function arbitrate(?User $admin, Litige $litige, array $payload): Litige
@@ -309,14 +332,14 @@ class LitigeService
             if ($decision === 'client') {
                 $this->walletService->refundClientFromDispute($mission, $refundMateriaux, $refundMo, $litige);
                 $mission->update([
-                    'status' => 'annulee',
+                    'status' => \App\States\Mission\CancelledState::class,
                     'funds_frozen' => false,
                 ]);
             } elseif ($decision === 'artisan') {
                 $this->walletService->releaseLaborEscrowToArtisan($mission, $releaseMo, $litige, true);
                 $this->walletService->releaseMaterialEscrowToArtisan($mission, $releaseMateriaux, $litige);
                 $mission->update([
-                    'status' => 'terminee',
+                    'status' => \App\States\Mission\CompletedState::class,
                     'funds_frozen' => false,
                 ]);
             } elseif ($decision === 'mixte') {
@@ -329,12 +352,12 @@ class LitigeService
                 }
 
                 $mission->update([
-                    'status' => 'terminee',
+                    'status' => \App\States\Mission\CompletedState::class,
                     'funds_frozen' => false,
                 ]);
             } else {
                 $mission->update([
-                    'status' => 'litige',
+                    'status' => \App\States\Mission\DisputedState::class,
                     'funds_frozen' => true,
                 ]);
             }
@@ -437,8 +460,8 @@ class LitigeService
 
         $mission->jcodes
             ->where('statut', 'utilise')
-            ->filter(fn (JCode $jcode) => $jcode->paiement_status !== 'paye')
-            ->each(fn (JCode $jcode) => $this->jCodeService->settleSupplierPayment($jcode, true));
+            ->filter(fn(JCode $jcode) => $jcode->paiement_status !== 'paye')
+            ->each(fn(JCode $jcode) => $this->jCodeService->settleSupplierPayment($jcode, true));
     }
 
     private function applySanctions(Litige $litige): array
@@ -456,11 +479,70 @@ class LitigeService
 
         $losers
             ->filter()
-            ->each(function (User $user) use (&$sanctions): void {
+            ->each(function (User $user) use (&$sanctions, $litige): void {
                 $previousScore = $user->score_nzassa;
-                $user->update([
-                    'score_nzassa' => max(0, $previousScore - 1),
-                ]);
+                // Création d'une entrée de Ledger pour litige perdu
+                // Décision client = perte totale de l'artisan. Si la mission a été commencée et le client remboursé,
+                // c'est soit un abandon (-300 pts), soit une malfaçon/fraude (-150 pts).
+                // Utilisons la fraude (-150 pts) comme pénalité standard de litige perdu,
+                // et abandon (-300 pts) si c'est spécifié ou si c'est le 3ème litige.
+                $lostCount = Litige::query()
+                    ->where('statut', 'resolu')
+                    ->where('resolu_at', '>=', now()->subMonths(6))
+                    ->where(function ($query) use ($user): void {
+                        $query
+                            ->where(function ($clientQuery) use ($user): void {
+                                $clientQuery->where('decision', 'client')
+                                    ->whereHas('mission', fn($missionQuery) => $missionQuery->where('artisan_id', $user->id));
+                            })
+                            ->orWhere(function ($artisanQuery) use ($user): void {
+                                $artisanQuery->where('decision', 'artisan')
+                                    ->whereHas('mission', fn($missionQuery) => $missionQuery->where('client_id', $user->id));
+                            })
+                            ->orWhere(function ($mixedQuery) use ($user): void {
+                                $mixedQuery->where('decision', 'mixte')
+                                    ->whereHas('mission', fn($missionQuery) => $missionQuery->where('artisan_id', $user->id));
+                            });
+                    })
+                    ->count();
+
+                $penaltyPoints = ($lostCount >= 2) ? -300 : -150;
+                $eventType = ($lostCount >= 2) ? 'dispute_abandon' : 'dispute_fraud';
+
+                if ($user->role === 'artisan') {
+                    \App\Models\ScoreLedgerEntry::create([
+                        'user_id' => $user->id,
+                        'event_type' => $eventType,
+                        'points' => $penaltyPoints,
+                        'credibility_factor' => 1.00,
+                        'evaluation_id' => null,
+                        'mission_id' => $litige->mission_id,
+                        'description' => "Pénalité litige perdu (Décision: {$litige->decision})",
+                    ]);
+                    app(ScoreService::class)->recalculateFromLedger($user);
+
+                    // Caution penalty for sponsor (parrain)
+                    $parrainage = \App\Models\Parrainage::where('filleul_id', $user->id)->first();
+                    if ($parrainage) {
+                        $parrain = $parrainage->parrain;
+                        if ($parrain) {
+                            \App\Models\ScoreLedgerEntry::create([
+                                'user_id' => $parrain->id,
+                                'event_type' => 'dispute_fraud',
+                                'points' => -50,
+                                'credibility_factor' => 1.00,
+                                'evaluation_id' => null,
+                                'mission_id' => $litige->mission_id,
+                                'description' => "Pénalité parrainage : Filleul #{$user->id} a perdu un litige.",
+                            ]);
+                            app(ScoreService::class)->recalculateFromLedger($parrain);
+                        }
+                    }
+                } else {
+                    $user->update([
+                        'score_nzassa' => max(0, $previousScore - 1),
+                    ]);
+                }
 
                 $lostCount = Litige::query()
                     ->where('statut', 'resolu')
@@ -469,15 +551,15 @@ class LitigeService
                         $query
                             ->where(function ($clientQuery) use ($user): void {
                                 $clientQuery->where('decision', 'client')
-                                    ->whereHas('mission', fn ($missionQuery) => $missionQuery->where('artisan_id', $user->id));
+                                    ->whereHas('mission', fn($missionQuery) => $missionQuery->where('artisan_id', $user->id));
                             })
                             ->orWhere(function ($artisanQuery) use ($user): void {
                                 $artisanQuery->where('decision', 'artisan')
-                                    ->whereHas('mission', fn ($missionQuery) => $missionQuery->where('client_id', $user->id));
+                                    ->whereHas('mission', fn($missionQuery) => $missionQuery->where('client_id', $user->id));
                             })
                             ->orWhere(function ($mixedQuery) use ($user): void {
                                 $mixedQuery->where('decision', 'mixte')
-                                    ->whereHas('mission', fn ($missionQuery) => $missionQuery->where('artisan_id', $user->id));
+                                    ->whereHas('mission', fn($missionQuery) => $missionQuery->where('artisan_id', $user->id));
                             });
                     })
                     ->count();
@@ -553,6 +635,112 @@ class LitigeService
             "Le litige #{$litige->id} est désormais au statut {$litige->statut}.",
             ['litige_id' => $litige->id, 'decision' => $litige->decision]
         );
+    }
+
+    public function assignJury(Litige $litige): void
+    {
+        $litige->loadMissing(['mission.artisan.artisanProfile']);
+
+        $artisanTradeId = $litige->mission->artisan->artisanProfile?->trade_id;
+
+        $jurorsQuery = User::query()
+            ->where('role', 'artisan')
+            ->where('kyc_status', 'actif')
+            ->where('id', '!=', $litige->mission->artisan_id)
+            ->where('score_nzassa', '>', 800);
+
+        if ($artisanTradeId) {
+            $jurorsQuery->whereHas('artisanProfile', function ($q) use ($artisanTradeId) {
+                $q->where('trade_id', $artisanTradeId);
+            });
+        }
+
+        $jurors = $jurorsQuery->inRandomOrder()->limit(3)->get();
+
+        if ($jurors->count() < 3) {
+            $jurors = User::query()
+                ->where('role', 'artisan')
+                ->where('kyc_status', 'actif')
+                ->where('id', '!=', $litige->mission->artisan_id)
+                ->where('score_nzassa', '>', 800)
+                ->inRandomOrder()
+                ->limit(3)
+                ->get();
+        }
+
+        if ($jurors->count() < 3) {
+            $jurors = User::query()
+                ->where('role', 'artisan')
+                ->where('kyc_status', 'actif')
+                ->where('id', '!=', $litige->mission->artisan_id)
+                ->inRandomOrder()
+                ->limit(3)
+                ->get();
+        }
+
+        foreach ($jurors as $juror) {
+            \App\Models\JuryReview::create([
+                'litige_id' => $litige->id,
+                'jure_id' => $juror->id,
+                'compensation' => 1500,
+            ]);
+
+            $this->notificationService->send(
+                $juror,
+                'jury_assignment',
+                'Arbitrage N\'Zassa requis',
+                "Vous avez été sélectionné comme juré pour évaluer de manière anonyme le litige #{$litige->id}.",
+                ['litige_id' => $litige->id]
+            );
+        }
+
+        $litige->update([
+            'workflow_step' => 'jury',
+            'statut' => 'en_cours',
+        ]);
+    }
+
+    public function submitJuryVote(Litige $litige, User $jure, string $verdict): void
+    {
+        $review = \App\Models\JuryReview::where('litige_id', $litige->id)
+            ->where('jure_id', $jure->id)
+            ->first();
+
+        if (!$review) {
+            throw ValidationException::withMessages([
+                'jury' => ['Vous n\'êtes pas assigné comme juré pour ce litige.'],
+            ]);
+        }
+
+        if ($review->voted_at !== null) {
+            throw ValidationException::withMessages([
+                'jury' => ['Vous avez déjà voté pour ce litige.'],
+            ]);
+        }
+
+        $review->update([
+            'verdict' => $verdict,
+            'voted_at' => now(),
+        ]);
+
+        $jure->increment('wallet_mo', $review->compensation);
+
+        $votes = \App\Models\JuryReview::where('litige_id', $litige->id)
+            ->whereNotNull('verdict')
+            ->get();
+
+        if ($votes->count() === 3) {
+            $conformeCount = $votes->where('verdict', 'CONFORME')->count();
+            $nonConformeCount = $votes->where('verdict', 'NON_CONFORME')->count();
+
+            $decision = $conformeCount >= 2 ? 'artisan' : 'client';
+
+            $this->arbitrate(null, $litige, [
+                'decision' => $decision,
+                'notes' => 'Résolution automatique par consensus du Jury N\'Zassa (Votes: ' . $conformeCount . ' CONFORME, ' . $nonConformeCount . ' NON_CONFORME).',
+                'resolution_reason' => $decision === 'artisan' ? 'jury_consensual_conforme' : 'jury_consensual_non_conforme',
+            ]);
+        }
     }
 
     private function notifyReferents(Litige $litige): void

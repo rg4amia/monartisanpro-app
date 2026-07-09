@@ -1,3 +1,4 @@
 *.apk
 *.zip
 .DS_Store
+.idea/

@@ -34,7 +34,7 @@ class AuthService
     /**
      * Crée un token Sanctum pour l'utilisateur.
      */
-    public function createToken(User $user): string
+    public function createToken(User $user, ?string $deviceFingerprint = null): string
     {
         if (! $user->isAccountActive()) {
             throw ValidationException::withMessages([
@@ -42,6 +42,24 @@ class AuthService
                     ? 'Votre compte a ete banni suite a des litiges repetes.'
                     : 'Votre compte est temporairement bloque en raison de litiges abusifs.'],
             ]);
+        }
+
+        if ($user->isArtisan() && $deviceFingerprint) {
+            if ($user->device_fingerprint === null) {
+                $user->update(['device_fingerprint' => $deviceFingerprint]);
+            } elseif ($user->device_fingerprint !== $deviceFingerprint) {
+                \App\Models\Notification::create([
+                    'user_id' => $user->id,
+                    'title'   => 'Alerte sécurité : Changement d\'appareil suspect',
+                    'body'    => 'Un changement suspect d\'appareil (IMEI) a été détecté. Votre Score N\'Zassa est gelé par mesure de sécurité.',
+                    'type'    => 'security_alert',
+                ]);
+
+                $user->update([
+                    'score_frozen' => true,
+                    'device_fingerprint' => $deviceFingerprint,
+                ]);
+            }
         }
 
         return $user->createToken('prosartisan-mobile')->plainTextToken;

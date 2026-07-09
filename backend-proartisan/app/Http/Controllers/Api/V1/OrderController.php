@@ -26,6 +26,8 @@ class OrderController extends Controller
             'items' => 'required|array|min:1',
             'items.*.supplier_product_id' => 'required|exists:supplier_products,id',
             'items.*.quantity' => 'required|integer|min:1',
+            'vehicle_class' => 'nullable|string|in:moto,voiture,cargo',
+            'surge_multiplier' => 'nullable|numeric|min:1.0|max:3.0',
         ]);
 
         if ($validator->fails()) {
@@ -51,7 +53,9 @@ class OrderController extends Controller
                 $client,
                 $supplier,
                 $request->items,
-                $request->delivery_mode
+                $request->delivery_mode,
+                $request->input('vehicle_class', 'moto'),
+                (float) $request->input('surge_multiplier', 1.0)
             );
 
             return response()->json([
@@ -94,7 +98,7 @@ class OrderController extends Controller
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
-        
+
         $query = Order::query()->with('items.product');
 
         if ($user->role === 'client') {

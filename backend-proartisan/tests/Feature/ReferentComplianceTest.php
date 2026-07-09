@@ -15,6 +15,7 @@ class ReferentComplianceTest extends TestCase
 
     public function test_referent_validation_is_blocked_if_outside_mission_zone(): void
     {
+        /** @var User $referent */
         $referent = User::factory()->create([
             'role' => 'referent',
             'kyc_status' => 'actif',
@@ -68,6 +69,7 @@ class ReferentComplianceTest extends TestCase
 
     public function test_referent_validation_releases_waiting_jalons_when_within_zone(): void
     {
+        /** @var User $referent */
         $referent = User::factory()->create([
             'role' => 'referent',
             'kyc_status' => 'actif',

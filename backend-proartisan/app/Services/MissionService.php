@@ -22,7 +22,7 @@ class MissionService
             'requested_trade_id'  => $data['trade_id'] ?? null,
             'description'         => $data['description'],
             'photos_json'         => $data['photos'] ?? null,
-            'status'              => 'en_attente',
+            'status'              => \App\States\Mission\DraftState::class,
             'client_latitude'     => $data['lat'] ?? null,
             'client_longitude'    => $data['lng'] ?? null,
             'client_address'      => $data['location_address'] ?? null,

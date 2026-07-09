@@ -2,12 +2,21 @@
 
 namespace App\Models;
 
+use App\States\Mission\CompletedState;
+use App\States\Mission\DisputedState;
+use App\States\Mission\DraftState;
+use App\States\Mission\FundedLockedState;
+use App\States\Mission\InProgressState;
+use App\States\Mission\MissionState;
+use App\States\Mission\PendingApprovalState;
+use App\States\Mission\PendingFundingState;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\ModelStates\HasStates;
 
 class Mission extends Model
 {
-    use HasFactory;
+    use HasFactory, HasStates;
 
     protected $fillable = [
         'client_id', 'artisan_id', 'description', 'photos_json',
@@ -22,6 +31,7 @@ class Mission extends Model
     protected function casts(): array
     {
         return [
+            'status'              => MissionState::class,
             'photos_json'         => 'array',
             'montant_total'       => 'integer',
             'montant_materiaux'   => 'integer',
@@ -37,9 +47,34 @@ class Mission extends Model
         ];
     }
 
+    // ──────────────────────────────────────────────
+    // Guards métier (utilisés par les services)
+    // ──────────────────────────────────────────────
+
     public function isFundsFrozen(): bool
     {
-        return (bool) $this->funds_frozen;
+        return (bool) $this->funds_frozen || $this->status instanceof DisputedState;
+    }
+
+    public function isCompleted(): bool
+    {
+        return $this->status instanceof CompletedState;
+    }
+
+    public function isDisputed(): bool
+    {
+        return $this->status instanceof DisputedState;
+    }
+
+    public function canGenerateJCode(): bool
+    {
+        return $this->status instanceof FundedLockedState
+            || $this->status instanceof InProgressState;
+    }
+
+    public function canSubmitJalon(): bool
+    {
+        return $this->status instanceof InProgressState;
     }
 
     public function client()

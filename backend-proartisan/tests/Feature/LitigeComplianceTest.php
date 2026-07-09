@@ -31,7 +31,7 @@ class LitigeComplianceTest extends TestCase
 
         $mission->refresh();
 
-        $this->assertSame('litige', $mission->status);
+        $this->assertSame('litige', (string) $mission->status);
         $this->assertTrue($mission->funds_frozen);
         $this->assertDatabaseCount('litiges', 1);
     }
@@ -60,13 +60,13 @@ class LitigeComplianceTest extends TestCase
             [
                 'photos' => [
                     [
-                        'photo' => UploadedFile::fake()->image('client-1.jpg'),
+                        'photo' => UploadedFile::fake()->image('client-1.jpg', 100, 100),
                         'latitude' => 5.348,
                         'longitude' => -4.027,
                         'description' => 'Fuite visible',
                     ],
                     [
-                        'photo' => UploadedFile::fake()->image('client-2.jpg'),
+                        'photo' => UploadedFile::fake()->image('client-2.jpg', 200, 200),
                         'latitude' => 5.349,
                         'longitude' => -4.028,
                         'description' => 'Mauvaise finition',
@@ -85,7 +85,7 @@ class LitigeComplianceTest extends TestCase
             [
                 'photos' => [
                     [
-                        'photo' => UploadedFile::fake()->image('artisan-1.jpg'),
+                        'photo' => UploadedFile::fake()->image('artisan-1.jpg', 300, 300),
                         'latitude' => 5.35,
                         'longitude' => -4.03,
                         'description' => 'Photo de fin de chantier',
@@ -107,6 +107,7 @@ class LitigeComplianceTest extends TestCase
     {
         Storage::fake('public');
 
+        /** @var User $admin */
         $admin = User::factory()->create(['role' => 'admin', 'kyc_status' => 'actif']);
         [$client, $artisan, $mission] = $this->makeMission(walletMateriaux: 65000, walletMo: 35000);
 
@@ -154,7 +155,7 @@ class LitigeComplianceTest extends TestCase
             ->assertJsonPath('data.decision', 'client')
             ->assertJsonPath('data.resolutionReason', 'absence_preuves_artisan');
 
-        $this->assertSame('annulee', $mission->fresh()->status);
+        $this->assertSame('annulee', (string) $mission->fresh()->status);
         $this->assertFalse((bool) $mission->fresh()->funds_frozen);
         $this->assertSame(0, $artisan->fresh()->wallet_materiaux);
         $this->assertSame(0, $artisan->fresh()->wallet_mo);
@@ -170,6 +171,7 @@ class LitigeComplianceTest extends TestCase
 
     public function test_admin_can_apply_mixed_decision_refunding_only_labor(): void
     {
+        /** @var User $admin */
         $admin = User::factory()->create(['role' => 'admin', 'kyc_status' => 'actif']);
         [$client, $artisan, $mission] = $this->makeMission(walletMateriaux: 65000, walletMo: 35000);
 
@@ -199,7 +201,7 @@ class LitigeComplianceTest extends TestCase
         $mission->refresh();
         $artisan->refresh();
 
-        $this->assertSame('terminee', $mission->status);
+        $this->assertSame('terminee', (string) $mission->status);
         $this->assertFalse((bool) $mission->funds_frozen);
         $this->assertSame(0, $artisan->wallet_materiaux);
         $this->assertSame(0, $artisan->wallet_mo);
@@ -221,6 +223,7 @@ class LitigeComplianceTest extends TestCase
 
     public function test_artisan_is_banned_after_three_lost_disputes_in_six_months(): void
     {
+        /** @var User $admin */
         $admin = User::factory()->create(['role' => 'admin', 'kyc_status' => 'actif']);
         $artisan = User::factory()->create([
             'role' => 'artisan',
@@ -292,7 +295,7 @@ class LitigeComplianceTest extends TestCase
         $artisan->refresh();
 
         $this->assertSame('banni', $artisan->account_status);
-        $this->assertSame(4, $artisan->score_nzassa);
+        $this->assertSame(0, $artisan->score_nzassa);
         $this->assertNotNull($artisan->blocked_at);
     }
 

@@ -11,6 +11,8 @@ use App\Http\Controllers\Api\V1\JalonController;
 use App\Http\Controllers\Api\V1\JCodeController;
 use App\Http\Controllers\Api\V1\KycController;
 use App\Http\Controllers\Api\V1\LitigeController;
+use App\Http\Controllers\Api\V1\LitigeJuryController;
+use App\Http\Controllers\Api\V1\ParrainageController;
 use App\Http\Controllers\Api\V1\MissionController;
 use App\Http\Controllers\Api\V1\MicroCreditController;
 use App\Http\Controllers\Api\V1\NotificationController;
@@ -22,9 +24,14 @@ use App\Http\Controllers\Api\V1\TransactionController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\UploadController;
 use App\Http\Controllers\Api\V1\WebhookController;
+use App\Http\Controllers\Admin\LlmAdminController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
+
+    // LLM Assistant Public routes
+    Route::post('/chat', [LlmAdminController::class, 'chat']);
+    Route::post('/search', [LlmAdminController::class, 'search']);
 
     // ─────────────────────────────────────────────────────────────────────────
     // ROUTES PUBLIQUES (sans authentification)
@@ -154,9 +161,16 @@ Route::prefix('v1')->group(function () {
         Route::post('/litiges/{litige}/preuves', [LitigeController::class, 'storeEvidence']);
         Route::post('/litiges/{litige}/evaluate-sla', [LitigeController::class, 'evaluateSla']);
         Route::put('/litiges/{litige}/arbitrage', [LitigeController::class, 'arbitrage']);
+        Route::post('/litiges/{litige}/jury/assign', [LitigeJuryController::class, 'assign']);
+        Route::post('/litiges/{litige}/jury/vote', [LitigeJuryController::class, 'vote']);
+        Route::post('/litiges/{litige}/llm-mediation', [LlmAdminController::class, 'llmMediation']);
 
         // ── Évaluations ───────────────────────────────────────────────────────
         Route::post('/evaluations', [EvaluationController::class, 'store']);
+
+        // ── Parrainages ────────────────────────────────────────────────────────
+        Route::post('/parrainages', [ParrainageController::class, 'store']);
+        Route::get('/parrainages', [ParrainageController::class, 'index']);
 
         // ── Notifications ─────────────────────────────────────────────────────
         Route::get('/notifications',                     [NotificationController::class, 'index']);

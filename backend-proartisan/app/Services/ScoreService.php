@@ -2,53 +2,268 @@
 
 namespace App\Services;
 
+use App\Models\Evaluation;
+use App\Models\Mission;
+use App\Models\ScoreLedgerEntry;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 class ScoreService
 {
     /**
-     * Recalcule le Score N'Zassa d'un artisan.
-     * Fiabilité 40% + Intégrité 30% + Qualité 20% + Réactivité 10%.
+     * Poids des événements du Score N'Zassa (échelle 0–1000, base 300).
+     */
+    private const EVENT_POINTS = [
+        'success_mission'       =>   5,
+        'jalon_on_time'         =>   2,
+        'jalon_delay'           => -15,
+        'dispute_fraud'         => -150,
+        'dispute_abandon'       => -300,
+        'evaluation_negative'   => -15,
+        'inactivity_decay'      =>  -5,
+    ];
+
+    private const BASE_SCORE = 300;
+    private const MIN_SCORE  = 0;
+    private const MAX_SCORE  = 1000;
+
+    // ──────────────────────────────────────────────
+    //  Recalcul principal (appelé après évaluations)
+    // ──────────────────────────────────────────────
+
+    /**
+     * Recalcule le Score N'Zassa d'un artisan à partir de la dernière évaluation
+     * reçue et de l'ensemble du Ledger.
      */
     public function recalculate(User $artisan): int
     {
-        $weights = config('prosartisan.score_nzassa.weights', [
-            'fiabilite'  => 40,
-            'integrite'  => 30,
-            'qualite'    => 20,
-            'reactivite' => 10,
-        ]);
-
-        $row = DB::selectOne("
-            SELECT
-                AVG(fiabilite)  AS avg_fiabilite,
-                AVG(integrite)  AS avg_integrite,
-                AVG(qualite)    AS avg_qualite,
-                AVG(reactivite) AS avg_reactivite,
-                AVG(note)       AS avg_note,
-                COUNT(*)        AS total
-            FROM evaluations
-            WHERE evalue_id = ?
-        ", [$artisan->id]);
-
-        if (! $row || $row->total == 0) {
+        if ($artisan->score_frozen) {
             return $artisan->score_nzassa;
         }
 
-        $score = (
-            ($row->avg_fiabilite  ?? 3) * $weights['fiabilite'] +
-            ($row->avg_integrite  ?? 3) * $weights['integrite'] +
-            ($row->avg_qualite    ?? 3) * $weights['qualite'] +
-            ($row->avg_reactivite ?? 3) * $weights['reactivite']
-        ) / (5 * 100); // normalise 0-100
+        $lastEvaluation = Evaluation::where('evalue_id', $artisan->id)->latest('id')->first();
+        if (!$lastEvaluation) {
+            return $artisan->score_nzassa;
+        }
 
-        $score = (int) min(100, max(0, round($score * 100)));
+        $credibility = $this->resolveCredibility($lastEvaluation->evaluateur);
 
-        $artisan->update(['score_nzassa' => $score]);
+        // Fiabilité 40% + Intégrité 30% + Qualité 20% + Réactivité 10%
+        $avgScore = (
+            $lastEvaluation->fiabilite * 0.40 +
+            $lastEvaluation->integrite * 0.30 +
+            $lastEvaluation->qualite * 0.20 +
+            $lastEvaluation->reactivite * 0.10
+        );
 
-        return $score;
+        $points = 0;
+        $eventType = 'evaluation';
+        $desc = "Évaluation reçue pour la mission #{$lastEvaluation->mission_id}";
+
+        if ($avgScore >= 4.0) {
+            $points = self::EVENT_POINTS['success_mission'];
+            $eventType = 'success_mission';
+        } elseif ($avgScore < 2.0) {
+            $points = self::EVENT_POINTS['evaluation_negative'];
+            $eventType = 'evaluation_negative';
+        }
+
+        if ($points !== 0) {
+            ScoreLedgerEntry::create([
+                'user_id'            => $artisan->id,
+                'event_type'         => $eventType,
+                'points'             => $points,
+                'credibility_factor' => $credibility,
+                'evaluation_id'      => $lastEvaluation->id,
+                'mission_id'         => $lastEvaluation->mission_id,
+                'description'        => $desc,
+            ]);
+        }
+
+        return $this->recalculateFromLedger($artisan);
     }
+
+    // ──────────────────────────────────────────────
+    //  Méthodes événementielles spécifiques
+    // ──────────────────────────────────────────────
+
+    /**
+     * Enregistre un événement générique dans le Ledger et recalcule.
+     */
+    public function recordEvent(
+        User $artisan,
+        string $eventType,
+        ?int $missionId = null,
+        ?int $evaluationId = null,
+        ?string $description = null,
+        float $credibilityFactor = 1.00,
+    ): int {
+        $points = self::EVENT_POINTS[$eventType] ?? 0;
+        if ($points === 0) {
+            return $artisan->score_nzassa;
+        }
+
+        ScoreLedgerEntry::create([
+            'user_id'            => $artisan->id,
+            'event_type'         => $eventType,
+            'points'             => $points,
+            'credibility_factor' => $credibilityFactor,
+            'evaluation_id'      => $evaluationId,
+            'mission_id'         => $missionId,
+            'description'        => $description ?? "Événement: {$eventType}",
+        ]);
+
+        return $this->recalculateFromLedger($artisan);
+    }
+
+    /**
+     * Jalon soumis dans les temps → +2 pts.
+     */
+    public function recordJalonOnTime(User $artisan, int $missionId): int
+    {
+        return $this->recordEvent(
+            $artisan,
+            'jalon_on_time',
+            $missionId,
+            description: "Jalon soumis dans les temps (mission #{$missionId})",
+        );
+    }
+
+    /**
+     * Retard de jalon > 48h → −15 pts.
+     */
+    public function recordJalonDelay(User $artisan, int $missionId): int
+    {
+        return $this->recordEvent(
+            $artisan,
+            'jalon_delay',
+            $missionId,
+            description: "Retard de jalon > 48h (mission #{$missionId})",
+        );
+    }
+
+    // ──────────────────────────────────────────────
+    //  Dégradation temporelle (« La Rouille »)
+    // ──────────────────────────────────────────────
+
+    /**
+     * Applique la pénalité d'inactivité pour un artisan inactif ≥ 60 jours.
+     * Retourne le nombre de points retirés (positif) ou 0 si non-éligible.
+     */
+    public function applyInactivityDecay(User $artisan): int
+    {
+        $inactivityDays = $this->getInactivityDays($artisan);
+
+        if ($inactivityDays < 60) {
+            return 0;
+        }
+
+        // -5 pts par semaine d'inactivité au-delà de 60 jours
+        $weeksOver = (int) floor(($inactivityDays - 60) / 7);
+        if ($weeksOver < 1) {
+            $weeksOver = 1; // au moins 1 semaine de pénalité à ≥ 60 jours
+        }
+
+        $totalPenalty = self::EVENT_POINTS['inactivity_decay'] * $weeksOver;
+
+        ScoreLedgerEntry::create([
+            'user_id'            => $artisan->id,
+            'event_type'         => 'inactivity_decay',
+            'points'             => $totalPenalty,
+            'credibility_factor' => 1.00,
+            'description'        => "Dégradation inactivité: {$inactivityDays}j ({$weeksOver} sem. au-delà de 60j)",
+        ]);
+
+        $this->recalculateFromLedger($artisan);
+
+        return abs($totalPenalty);
+    }
+
+    /**
+     * Nombre de jours depuis la dernière activité significative.
+     */
+    public function getInactivityDays(User $artisan): int
+    {
+        $lastJalonValidated = DB::table('jalons')
+            ->join('missions', 'jalons.mission_id', '=', 'missions.id')
+            ->where('missions.artisan_id', $artisan->id)
+            ->where('jalons.statut', 'valide')
+            ->max('jalons.updated_at');
+
+        $lastMissionAccepted = Mission::where('artisan_id', $artisan->id)
+            ->whereNotNull('accepted_at')
+            ->max('accepted_at');
+
+        $lastActivity = collect([$lastJalonValidated, $lastMissionAccepted])
+            ->filter()
+            ->map(fn($d) => \Carbon\Carbon::parse($d))
+            ->max();
+
+        if (!$lastActivity) {
+            return (int) now()->diffInDays($artisan->created_at);
+        }
+
+        return (int) now()->diffInDays($lastActivity);
+    }
+
+    // ──────────────────────────────────────────────
+    //  Recalcul pur à partir du Ledger
+    // ──────────────────────────────────────────────
+
+    /**
+     * Somme toutes les entrées du Ledger et met à jour score_nzassa.
+     */
+    public function recalculateFromLedger(User $artisan): int
+    {
+        if ($artisan->score_frozen) {
+            return $artisan->score_nzassa;
+        }
+
+        $ledgerSum = (int) ScoreLedgerEntry::where('user_id', $artisan->id)
+            ->selectRaw('SUM(points * credibility_factor) as total')
+            ->value('total');
+
+        $newScore = min(self::MAX_SCORE, max(self::MIN_SCORE, self::BASE_SCORE + $ledgerSum));
+        $artisan->update(['score_nzassa' => $newScore]);
+
+        return $newScore;
+    }
+
+    // ──────────────────────────────────────────────
+    //  Indice de Crédibilité Ck
+    // ──────────────────────────────────────────────
+
+    /**
+     * Résout l'indice de crédibilité d'un évaluateur.
+     *   - Nouveau client (0 chantier) : 0.1
+     *   - Client KYC actif + > 3 chantiers : 1.0
+     *   - Client B2B (institutionnel) : 1.5
+     */
+    public function resolveCredibility(?User $evaluateur): float
+    {
+        if (!$evaluateur) {
+            return 0.1;
+        }
+
+        if ($evaluateur->role === 'client_b2b') {
+            return 1.5;
+        }
+
+        if ($evaluateur->isKycActif()) {
+            $completedMissionsCount = Mission::where('client_id', $evaluateur->id)
+                ->where('status', \App\States\Mission\CompletedState::class)
+                ->count();
+            if ($completedMissionsCount > 3) {
+                return 1.0;
+            }
+        }
+
+        return 0.1;
+    }
+
+    // ──────────────────────────────────────────────
+    //  Détail & éligibilité
+    // ──────────────────────────────────────────────
 
     /**
      * Retourne le détail du score.
@@ -67,7 +282,7 @@ class ScoreService
             WHERE evalue_id = ?
         ", [$artisan->id]);
 
-        $threshold = config('prosartisan.score_nzassa.credit_threshold', 70);
+        $threshold = config('prosartisan.score_nzassa.credit_threshold', 700);
 
         return [
             'score_nzassa'          => $artisan->score_nzassa,
@@ -85,6 +300,6 @@ class ScoreService
 
     public function isEligibleCredit(User $artisan): bool
     {
-        return $artisan->score_nzassa >= config('prosartisan.score_nzassa.credit_threshold', 70);
+        return $artisan->score_nzassa >= config('prosartisan.score_nzassa.credit_threshold', 700);
     }
 }

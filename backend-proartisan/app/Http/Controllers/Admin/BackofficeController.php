@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Services\AdminService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -52,6 +53,11 @@ class BackofficeController extends Controller
     public function settings(): Response
     {
         return $this->renderPage('admin/settings');
+    }
+
+    public function llmAdmin(): Response
+    {
+        return $this->renderPage('admin/llm-admin');
     }
 
     public function reviewKyc(ReviewKycRequest $request, User $user): RedirectResponse
@@ -98,6 +104,8 @@ class BackofficeController extends Controller
             'password' => 'required|string|min:6',
             'kyc_status' => 'required|string|in:en_attente,actif,rejete',
             'account_status' => 'required|string|in:actif,suspendu',
+            'score_frozen' => 'nullable|boolean',
+            'device_fingerprint' => 'nullable|string|max:255',
         ], [
             'name.required' => 'Le nom complet est obligatoire.',
             'phone.required' => 'Le numéro de téléphone est obligatoire.',
@@ -110,6 +118,7 @@ class BackofficeController extends Controller
         ]);
 
         $validated['password'] = bcrypt($validated['password']);
+        $validated['score_frozen'] = $request->boolean('score_frozen');
 
         User::create($validated);
 
@@ -126,6 +135,8 @@ class BackofficeController extends Controller
             'password' => 'nullable|string|min:6',
             'kyc_status' => 'required|string|in:en_attente,actif,rejete',
             'account_status' => 'required|string|in:actif,suspendu',
+            'score_frozen' => 'nullable|boolean',
+            'device_fingerprint' => 'nullable|string|max:255',
         ], [
             'name.required' => 'Le nom complet est obligatoire.',
             'phone.required' => 'Le numéro de téléphone est obligatoire.',
@@ -142,6 +153,8 @@ class BackofficeController extends Controller
             unset($validated['password']);
         }
 
+        $validated['score_frozen'] = $request->boolean('score_frozen');
+
         $user->update($validated);
 
         return back()->with('success', 'Utilisateur modifié avec succès.');
@@ -149,7 +162,7 @@ class BackofficeController extends Controller
 
     public function destroyUser(User $user): RedirectResponse
     {
-        if (auth()->id() === $user->id) {
+        if (Auth::id() === $user->id) {
             return back()->with('error', 'Vous ne pouvez pas supprimer votre propre compte administrateur.');
         }
 
@@ -160,7 +173,7 @@ class BackofficeController extends Controller
 
     public function toggleUserStatus(Request $request, User $user): RedirectResponse
     {
-        if (auth()->id() === $user->id) {
+        if (Auth::id() === $user->id) {
             return back()->with('error', 'Vous ne pouvez pas désactiver votre propre compte administrateur.');
         }
 
@@ -178,6 +191,19 @@ class BackofficeController extends Controller
         return back()->with('success', 'Statut de l’utilisateur mis à jour.');
     }
 
+    public function updateSetting(Request $request, \App\Models\Setting $setting): RedirectResponse
+    {
+        $validated = $request->validate([
+            'value' => 'nullable|string',
+        ]);
+
+        $setting->update([
+            'value' => $validated['value'],
+        ]);
+
+        return back()->with('success', 'Paramètre mis à jour.');
+    }
+
     private function renderPage(string $component): Response
     {
         return Inertia::render($component, [
@@ -188,6 +214,7 @@ class BackofficeController extends Controller
             'missions' => $this->adminService->listMissions(null, null, 100)->items(),
             'transactions' => $this->adminService->listTransactions(null, null, 100)->items(),
             'users' => $this->adminService->listUsers(null, null, null, 100)->items(),
+            'settingsList' => \App\Models\Setting::all(),
         ]);
     }
 }
