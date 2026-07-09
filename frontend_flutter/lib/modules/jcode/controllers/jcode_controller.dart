@@ -10,6 +10,7 @@ import '../../../data/models/supplier_model.dart';
 import '../../../data/models/supplier_product_model.dart';
 import '../../../data/repositories/devis_repository.dart';
 import '../../../data/repositories/jcode_repository.dart';
+import '../../../core/utils/error_handler.dart';
 import '../../../data/repositories/supplier_catalog_repository.dart';
 
 class JcodeController extends GetxController {
@@ -399,7 +400,7 @@ class JcodeController extends GetxController {
   void _showError(String title, Object error) {
     Get.snackbar(
       title,
-      error.toString().replaceAll('Exception:', '').trim(),
+      ErrorHandler.getErrorMessage(error),
       snackPosition: SnackPosition.TOP,
       backgroundColor: const Color(0xFFE74C3C),
       colorText: Colors.white,

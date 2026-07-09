@@ -29,7 +29,7 @@ class ErrorHandler {
 
     // Affiche un snackbar à l'utilisateur
     if (showSnackbar) {
-      _showErrorSnackbar(_getErrorMessage(error));
+      _showErrorSnackbar(getErrorMessage(error));
     }
   }
 
@@ -48,14 +48,14 @@ class ErrorHandler {
 
     // Affiche un snackbar à l'utilisateur
     if (showSnackbar) {
-      _showErrorSnackbar(_getDioErrorMessage(error));
+      _showErrorSnackbar(getDioErrorMessage(error));
     }
   }
 
   /// Extrait un message d'erreur lisible
-  static String _getErrorMessage(dynamic error) {
+  static String getErrorMessage(dynamic error) {
     if (error is DioException) {
-      return _getDioErrorMessage(error);
+      return getDioErrorMessage(error);
     }
     
     if (error is String) {
@@ -66,7 +66,7 @@ class ErrorHandler {
   }
 
   /// Extrait un message d'erreur Dio lisible
-  static String _getDioErrorMessage(DioException error) {
+  static String getDioErrorMessage(DioException error) {
     switch (error.type) {
       case DioExceptionType.connectionTimeout:
       case DioExceptionType.sendTimeout:
