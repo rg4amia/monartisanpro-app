@@ -76,7 +76,7 @@ jobs:
           echo "✅ Build artifacts ready for deployment"
 
       - name: Test SSH Connection
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.HOST }}
           port: ${{ secrets.PORT }}
@@ -92,7 +92,7 @@ jobs:
             echo "PHP: $(php -v | head -n 1)"
 
       - name: Deploy Git & PHP dependencies
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.HOST }}
           port: ${{ secrets.PORT }}
@@ -148,7 +148,7 @@ jobs:
             composer install --no-dev --optimize-autoloader --no-interaction
 
       - name: Copy built assets via SCP
-        uses: appleboy/scp-action@master
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.HOST }}
           port: ${{ secrets.PORT }}
@@ -158,7 +158,7 @@ jobs:
           target: "/home/${{ secrets.USERNAME }}/domains/prosartisan.net/public_html/monartisanpro-app"
 
       - name: Finalize Laravel configuration
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.HOST }}
           port: ${{ secrets.PORT }}
