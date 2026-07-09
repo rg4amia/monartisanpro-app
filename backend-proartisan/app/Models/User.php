@@ -151,7 +151,7 @@ class User extends Authenticatable
         }
 
         DB::statement(
-            "UPDATE users SET position = ST_GeomFromText(CONCAT('POINT(', ?, ' ', ?, ')')) WHERE id = ?",
+            "UPDATE users SET position = ST_SRID(POINT(?, ?), 4326) WHERE id = ?",
             [$lng, $lat, $this->id]
         );
     }
