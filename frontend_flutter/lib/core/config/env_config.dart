@@ -26,8 +26,8 @@ class EnvConfig {
     }
 
     // En production réelle, décommentez la ligne suivante :
-    // const bool isProduction = bool.fromEnvironment('dart.vm.product');
-    // if (isProduction) return productionBaseUrl;
+    const bool isProduction = bool.fromEnvironment('dart.vm.product');
+    if (isProduction) return productionBaseUrl;
 
     // Pour le développement local (détection dynamique) :
     if (kIsWeb) {
