@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../../../app/routes/app_routes.dart';
+import '../../../core/utils/error_handler.dart';
 import '../../../data/models/artisan_model.dart';
 import '../../../data/repositories/artisan_repository.dart';
 import 'missions_controller.dart';
@@ -149,7 +150,7 @@ class ArtisanSelectionController extends GetxController {
       artisans.clear();
       Get.snackbar(
         'Erreur',
-        'Impossible de charger les artisans: $e',
+        'Impossible de charger les artisans: ${ErrorHandler.getErrorMessage(e)}',
         snackPosition: SnackPosition.BOTTOM,
       );
     } finally {
