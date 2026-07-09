@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../core/storage/storage_service.dart';
 import '../../../data/repositories/user_repository.dart';
+import '../../../core/utils/error_handler.dart';
 
 import '../../../app/routes/app_routes.dart';
 
@@ -227,7 +228,7 @@ class UpdateProfileController extends GetxController {
     } catch (e) {
       Get.snackbar(
         'Erreur',
-        'Échec de la mise à jour du profil : ${e.toString()}',
+        'Échec de la mise à jour du profil : ${ErrorHandler.getErrorMessage(e)}',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: const Color(0xFFFEE2E2),
         colorText: const Color(0xFFEF4444),
