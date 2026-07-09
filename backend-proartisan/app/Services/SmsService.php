@@ -13,8 +13,8 @@ class SmsService
 
     public function __construct()
     {
-        $this->apiToken = config('services.sms.api_token');
-        $this->baseUrl = config('services.sms.base_url');
+        $this->apiToken = config('services.sms.api_token') ?? '';
+        $this->baseUrl = config('services.sms.base_url') ?? '';
         $this->provider = config('services.sms.provider', 'log');
     }
 
