@@ -8,5 +8,5 @@ namespace App\States\Mission;
  */
 class DraftState extends MissionState
 {
-    public static string $name = 'en_attente';
+    public static string $name = 'draft';
 }

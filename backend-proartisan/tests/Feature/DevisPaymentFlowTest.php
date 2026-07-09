@@ -29,7 +29,7 @@ class DevisPaymentFlowTest extends TestCase
             'client_id' => $client->id,
             'artisan_id' => null,
             'description' => 'Rénovation cuisine',
-            'status' => 'en_attente',
+            'status' => 'draft',
         ]);
 
         $devis = Devis::create([
@@ -66,7 +66,7 @@ class DevisPaymentFlowTest extends TestCase
         $transaction = Transaction::findOrFail($transactionId);
 
         $this->assertTrue($transaction->statut->isSuccessful());
-        $this->assertSame('en_attente', (string) $mission->fresh()->status);
+        $this->assertSame('draft', (string) $mission->fresh()->status);
         $this->assertSame('soumis', $devis->fresh()->statut);
         $this->assertSame(0, $artisan->fresh()->wallet_materiaux);
         $this->assertSame(0, $artisan->fresh()->wallet_mo);
@@ -77,14 +77,14 @@ class DevisPaymentFlowTest extends TestCase
             ])
             ->assertOk()
             ->assertJsonPath('data.statut', 'accepte')
-            ->assertJsonPath('data.missionStatus', 'financee');
+            ->assertJsonPath('data.missionStatus', 'funded_locked');
 
         $mission->refresh();
         $devis->refresh();
         $artisan->refresh();
 
         $this->assertSame('accepte', $devis->statut);
-        $this->assertSame('financee', (string) $mission->status);
+        $this->assertSame('funded_locked', (string) $mission->status);
         $this->assertSame($artisan->id, $mission->artisan_id);
         $this->assertSame(100000, $mission->montant_total);
         $this->assertSame(65000, $mission->montant_materiaux);
@@ -110,7 +110,7 @@ class DevisPaymentFlowTest extends TestCase
             'client_id' => $client->id,
             'artisan_id' => null,
             'description' => 'Gros Oeuvre Villa',
-            'status' => 'en_attente',
+            'status' => 'draft',
         ]);
 
         $devis = Devis::create([

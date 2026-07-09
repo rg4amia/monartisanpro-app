@@ -21,8 +21,8 @@ class PdfService
         $data = [
             'artisan' => $artisan,
             'score_detail' => $scoreDetail,
-            'missions_completed' => $artisan->missionsArtisan()->where('status', 'terminee')->count(),
-            'total_earnings' => $artisan->missionsArtisan()->where('status', 'terminee')->sum('montant_mo'),
+            'missions_completed' => $artisan->missionsArtisan()->where('status', 'completed')->count(),
+            'total_earnings' => $artisan->missionsArtisan()->where('status', 'completed')->sum('montant_mo'),
             'generated_at' => now()->format('d/m/Y H:i'),
         ];
 

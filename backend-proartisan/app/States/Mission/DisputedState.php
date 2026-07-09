@@ -9,5 +9,5 @@ namespace App\States\Mission;
  */
 class DisputedState extends MissionState
 {
-    public static string $name = 'litige';
+    public static string $name = 'disputed';
 }

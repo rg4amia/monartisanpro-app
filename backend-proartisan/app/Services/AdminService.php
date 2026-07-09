@@ -27,12 +27,12 @@ class AdminService
             'artisans_actifs'        => User::where('role', 'artisan')->where('kyc_status', 'actif')->count(),
             'clients_actifs'         => User::where('role', 'client')->where('kyc_status', 'actif')->count(),
             'fournisseurs_agrees'    => FournisseurAgree::where('statut', 'agree')->count(),
-            'missions_en_cours'      => Mission::where('status', 'en_cours')->count(),
-            'missions_en_litige'     => Mission::where('status', 'litige')->count(),
+            'missions_en_cours'      => Mission::where('status', 'in_progress')->count(),
+            'missions_en_litige'     => Mission::where('status', 'disputed')->count(),
             'litiges_ouverts'        => Litige::whereIn('statut', ['ouvert', 'en_cours'])->count(),
             'kyc_en_attente'         => User::where('kyc_status', 'en_attente')->count(),
             'referent_required_open' => Mission::where('referent_required', true)
-                ->whereIn('status', ['financee', 'en_cours', 'litige'])
+                ->whereIn('status', ['funded_locked', 'in_progress', 'disputed'])
                 ->count(),
             'recent_fraud_alerts'    => JCode::where('statut', 'actif')->count(), // Placeholder for actual fraud tracking
             'volume_transactions_24h' => Transaction::where('created_at', '>=', now()->subDay())->sum('montant'),

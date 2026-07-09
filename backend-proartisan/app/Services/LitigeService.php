@@ -51,7 +51,7 @@ class LitigeService
     {
         $this->ensureMissionParticipant($mission, $user);
 
-        if ($mission->status === 'en_attente') {
+        if ((string) $mission->status === 'draft') {
             throw ValidationException::withMessages([
                 'mission_id' => ['Un litige ne peut être ouvert qu’après financement ou exécution de la mission.'],
             ]);

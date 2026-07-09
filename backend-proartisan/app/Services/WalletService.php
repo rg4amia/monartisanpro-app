@@ -205,7 +205,7 @@ class WalletService
                 'montant_materiaux' => $montantMat,
                 'montant_mo'        => $montantMo,
                 'ratio_materiaux'   => $ratioMat,
-                'status'            => 'financee',
+                'status'            => 'funded_locked',
             ]);
 
             // Crédit du wallet_materiaux de l'artisan
@@ -361,7 +361,7 @@ class WalletService
         );
 
         $mission->update([
-            'status' => 'terminee',
+            'status' => 'completed',
             'funds_frozen' => false,
         ]);
     }
