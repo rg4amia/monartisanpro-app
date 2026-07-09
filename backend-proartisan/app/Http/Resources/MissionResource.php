@@ -92,11 +92,12 @@ class MissionResource extends JsonResource
     private function mapMissionStatusToGemini(string $status): string
     {
         return match ($status) {
-            'financee' => 'funded',
-            'en_cours' => 'work_done',
-            'terminee' => 'completed',
-            'litige' => 'disputed',
-            'annulee' => 'cancelled',
+            'pending_funding' => 'sent',
+            'funded_locked', 'financee' => 'funded',
+            'in_progress', 'en_cours' => 'work_done',
+            'completed', 'terminee' => 'completed',
+            'disputed', 'litige' => 'disputed',
+            'cancelled', 'annulee' => 'cancelled',
             default => 'sent',
         };
     }
@@ -113,9 +114,9 @@ class MissionResource extends JsonResource
     private function mapPaymentStatus(): string
     {
         return match ($this->status) {
-            'financee', 'en_cours', 'terminee' => 'funded',
-            'litige' => $this->funds_frozen ? 'blocked' : 'funded',
-            'annulee' => 'refunded',
+            'funded_locked', 'financee', 'in_progress', 'en_cours', 'completed', 'terminee' => 'funded',
+            'disputed', 'litige' => $this->funds_frozen ? 'blocked' : 'funded',
+            'cancelled', 'annulee' => 'refunded',
             default => 'pending',
         };
     }

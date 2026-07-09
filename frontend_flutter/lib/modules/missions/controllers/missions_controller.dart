@@ -451,10 +451,21 @@ class MissionsController extends GetxController {
         case 404:
           return 'Ressource introuvable';
         case 422:
-          // Erreurs de validation
+          // Erreurs de validation (ex: Rejet IA CV)
           final data = e.response!.data;
-          if (data is Map && data.containsKey('message')) {
-            return data['message'] as String;
+          if (data is Map) {
+            if (data.containsKey('errors')) {
+              final errors = data['errors'] as Map;
+              if (errors.isNotEmpty) {
+                final firstError = errors.values.first;
+                if (firstError is List && firstError.isNotEmpty) {
+                  return firstError.first.toString();
+                }
+              }
+            }
+            if (data.containsKey('message')) {
+              return data['message'] as String;
+            }
           }
           return 'Données invalides';
         case 500:

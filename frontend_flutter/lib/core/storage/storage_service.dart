@@ -1,5 +1,6 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:uuid/uuid.dart';
 
 class StorageService {
   static const FlutterSecureStorage _secure = FlutterSecureStorage(
@@ -42,6 +43,18 @@ class StorageService {
 
   static void setOnboarded(bool value) => _box.write(_onboardedKey, value);
   static bool isOnboarded() => _box.read<bool>(_onboardedKey) ?? false;
+
+  // ── Device Fingerprint ──────────────────────────────────────────────────────
+  static const String _fingerprintKey = 'device_fingerprint';
+  static String getDeviceFingerprint() {
+    String? fp = _box.read<String>(_fingerprintKey);
+    if (fp == null || fp.isEmpty) {
+      // Lazy load import of uuid
+      fp = const Uuid().v4();
+      _box.write(_fingerprintKey, fp);
+    }
+    return fp;
+  }
 
   // ── Driver Vehicle Settings ──────────────────────────────────────────────────
   static void saveDriverVehicle(String v) => _box.write('drv_veh', v);

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\PaymentProvider;
 use App\Enums\PaymentStatus;
+use App\Exceptions\CircuitOpenException;
 use App\Models\Transaction;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -22,8 +23,11 @@ class OrangeMoneyService
     protected string $merchantId;
     protected string $currency;
 
-    public function __construct()
-    {
+    private const CIRCUIT_PROVIDER = 'orange_money';
+
+    public function __construct(
+        private CircuitBreakerService $circuitBreaker = new CircuitBreakerService(),
+    ) {
         $this->apiUrl = config('services.orange_money.api_url') ?? '';
         $this->clientId = config('services.orange_money.client_id') ?? '';
         $this->clientSecret = config('services.orange_money.client_secret') ?? '';
@@ -82,6 +86,9 @@ class OrangeMoneyService
         string $description,
         array $metadata = []
     ): array {
+        // Circuit Breaker guard
+        $this->circuitBreaker->ensureAvailable(self::CIRCUIT_PROVIDER);
+
         try {
             $token = $this->getAccessToken();
 
@@ -113,19 +120,24 @@ class OrangeMoneyService
                     'body' => $response->body(),
                 ]);
 
+                $this->circuitBreaker->recordFailure(self::CIRCUIT_PROVIDER);
                 throw new \Exception('Erreur lors de la création du paiement Orange Money: ' . $response->body());
             }
 
             $data = $response->json();
 
             Log::info('Orange Money: Paiement créé avec succès', ['data' => $data]);
+            $this->circuitBreaker->recordSuccess(self::CIRCUIT_PROVIDER);
 
             return [
                 'payment_url' => $data['payment_url'] ?? null,
                 'order_id' => $orderId,
                 'payment_token' => $data['payment_token'] ?? $data['pay_token'] ?? null,
             ];
+        } catch (CircuitOpenException $e) {
+            throw $e;
         } catch (\Exception $e) {
+            $this->circuitBreaker->recordFailure(self::CIRCUIT_PROVIDER);
             Log::error('Orange Money: Exception création paiement', [
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
@@ -288,6 +300,9 @@ class OrangeMoneyService
      */
     public function sendMoney(string $phone, int $montant, string $description): array
     {
+        // Circuit Breaker guard
+        $this->circuitBreaker->ensureAvailable(self::CIRCUIT_PROVIDER);
+
         try {
             $token = $this->getAccessToken();
 
@@ -313,15 +328,20 @@ class OrangeMoneyService
                     'body' => $response->body(),
                 ]);
 
+                $this->circuitBreaker->recordFailure(self::CIRCUIT_PROVIDER);
                 throw new \Exception('Erreur lors de l\'envoi d\'argent Orange Money: ' . $response->body());
             }
 
             $data = $response->json();
 
             Log::info('Orange Money: Argent envoyé avec succès', ['data' => $data]);
+            $this->circuitBreaker->recordSuccess(self::CIRCUIT_PROVIDER);
 
             return $data;
+        } catch (CircuitOpenException $e) {
+            throw $e;
         } catch (\Exception $e) {
+            $this->circuitBreaker->recordFailure(self::CIRCUIT_PROVIDER);
             Log::error('Orange Money: Exception envoi argent', [
                 'message' => $e->getMessage(),
                 'phone' => $phone,

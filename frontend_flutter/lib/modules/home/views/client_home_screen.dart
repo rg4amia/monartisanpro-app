@@ -43,58 +43,103 @@ class ClientHomeScreen extends StatelessWidget {
         child: RefreshIndicator(
           onRefresh: controller.refresh,
           color: AppColors.client,
-          child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            slivers: [
-              SliverToBoxAdapter(child: _ClientHero(controller: controller)),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const _MissionSearchCard(),
-                      if (controller.isNightModeActive) ...[
-                        const SizedBox(height: 16),
-                        _NightModeBanner(),
-                      ],
-                      const SizedBox(height: 20),
-                      _ClientStats(controller: controller),
-                      const SizedBox(height: 24),
-                      _SectionHeader(
-                        title: 'Demande rapide',
-                        trailing: TextButton(
-                          onPressed: () => Get.toNamed(Routes.services),
-                          child: const Text('Voir tout'),
-                        ),
+          child: Obx(() {
+            return CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                SliverToBoxAdapter(child: _ClientHero(controller: controller)),
+                
+                // Tab Selection Bar
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.border),
                       ),
-                      const SizedBox(height: 12),
-                      const _QuickRequestCard(),
-                      const SizedBox(height: 24),
-                      const _SectionHeader(title: 'Catégories populaires'),
-                      const SizedBox(height: 12),
-                      const _CategoriesGrid(),
-                      const SizedBox(height: 24),
-                      _SectionHeader(
-                        title: 'Artisans à proximité',
-                        trailing: Obx(
-                          () => _InfoPill(
-                            icon: Icons.location_on_outlined,
-                            label:
-                                '${controller.displayedNearbyArtisansCount} autour de vous',
-                            color: AppColors.client,
-                            background: AppColors.clientSoft,
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _TabButton(
+                              label: 'Exploration',
+                              icon: Icons.explore_outlined,
+                              isActive: controller.dashboardTab.value == 0,
+                              onTap: () => controller.dashboardTab.value = 0,
+                            ),
                           ),
-                        ),
+                          Expanded(
+                            child: _TabButton(
+                              label: 'Tableau de Bord',
+                              icon: Icons.dashboard_customize_outlined,
+                              isActive: controller.dashboardTab.value == 1,
+                              onTap: () => controller.dashboardTab.value = 1,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 12),
-                      _ArtisansList(controller: controller),
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
+
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
+                    child: AnimatedCrossFade(
+                      duration: const Duration(milliseconds: 300),
+                      firstCurve: Curves.easeIn,
+                      secondCurve: Curves.easeIn,
+                      crossFadeState: controller.dashboardTab.value == 0
+                          ? CrossFadeState.showFirst
+                          : CrossFadeState.showSecond,
+                      firstChild: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const _MissionSearchCard(),
+                          if (controller.isNightModeActive) ...[
+                            const SizedBox(height: 16),
+                            _NightModeBanner(),
+                          ],
+                          const SizedBox(height: 20),
+                          _ClientStats(controller: controller),
+                          const SizedBox(height: 24),
+                          _SectionHeader(
+                            title: 'Demande rapide',
+                            trailing: TextButton(
+                              onPressed: () => Get.toNamed(Routes.services),
+                              child: const Text('Voir tout'),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          const _QuickRequestCard(),
+                          const SizedBox(height: 24),
+                          const _SectionHeader(title: 'Catégories populaires'),
+                          const SizedBox(height: 12),
+                          const _CategoriesGrid(),
+                          const SizedBox(height: 24),
+                          _SectionHeader(
+                            title: 'Artisans à proximité',
+                            trailing: _InfoPill(
+                              icon: Icons.location_on_outlined,
+                              label:
+                                  '${controller.displayedNearbyArtisansCount} autour de vous',
+                              color: AppColors.client,
+                              background: AppColors.clientSoft,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          _ArtisansList(controller: controller),
+                        ],
+                      ),
+                      secondChild: _ClientDashboardView(controller: controller),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }),
         ),
       ),
     );
@@ -742,6 +787,569 @@ class _NightModeBanner extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// ─── Tab Button for Dashboard Toggle ──────────────────────────────────────────
+class _TabButton extends StatelessWidget {
+  const _TabButton({
+    required this.label,
+    required this.icon,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: isActive ? AppColors.client : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: isActive
+              ? [
+                  BoxShadow(
+                    color: AppColors.client.withValues(alpha: 0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  )
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 18,
+              color: isActive ? Colors.white : AppColors.textSecondary,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: isActive ? Colors.white : AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Client Dashboard View ───────────────────────────────────────────────────
+class _ClientDashboardView extends StatelessWidget {
+  const _ClientDashboardView({required this.controller});
+
+  final HomeController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Quotes & Disputes Cards Row
+        Row(
+          children: [
+            Expanded(
+              child: _DashboardMiniCard(
+                title: 'Devis Acceptés',
+                value: '${controller.acceptedDevisCount.value}',
+                icon: Icons.assignment_turned_in_rounded,
+                color: AppColors.success,
+                bg: AppColors.success.withValues(alpha: 0.08),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _DashboardMiniCard(
+                title: 'Devis Refusés',
+                value: '${controller.refusedDevisCount.value}',
+                icon: Icons.assignment_late_rounded,
+                color: AppColors.danger,
+                bg: AppColors.danger.withValues(alpha: 0.08),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _DashboardMiniCard(
+                title: 'Litiges Actifs',
+                value: '${controller.disputesCount.value}',
+                icon: Icons.gavel_rounded,
+                color: AppColors.warning,
+                bg: AppColors.warning.withValues(alpha: 0.08),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+
+        // Expenses Section
+        const _SectionHeader(title: 'Dépenses par catégorie'),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            children: controller.expensesByCategory.entries.map((e) {
+              // Calculate percentages based on total
+              final total = controller.expensesByCategory.values.isEmpty ? 0 : controller.expensesByCategory.values.reduce((a, b) => a + b);
+              final pct = total > 0 ? e.value / total : 0.0;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 14),
+                child: _ExpenseProgress(
+                  category: e.key,
+                  amount: e.value,
+                  percentage: pct,
+                  color: _getCategoryColor(e.key),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+        const SizedBox(height: 24),
+
+        // Top Artisans Section
+        const _SectionHeader(title: 'Artisans les mieux notés'),
+        const SizedBox(height: 12),
+        _TopArtisansSection(controller: controller),
+        const SizedBox(height: 24),
+
+        // Top Suppliers Section
+        const _SectionHeader(title: 'Fournisseurs les mieux notés'),
+        const SizedBox(height: 12),
+        _TopSuppliersSection(controller: controller),
+        const SizedBox(height: 24),
+
+        // Top Drivers Section
+        const _SectionHeader(title: 'Livreurs les mieux notés'),
+        const SizedBox(height: 12),
+        _TopDriversSection(controller: controller),
+      ],
+    );
+  }
+
+  Color _getCategoryColor(String cat) {
+    switch (cat.toLowerCase()) {
+      case 'maçonnerie':
+        return AppColors.primary;
+      case 'électricité':
+        return AppColors.warning;
+      case 'plomberie':
+        return AppColors.client;
+      case 'peinture':
+        return AppColors.success;
+      default:
+        return AppColors.accent;
+    }
+  }
+}
+
+// ─── Dashboard Mini Card ─────────────────────────────────────────────────────
+class _DashboardMiniCard extends StatelessWidget {
+  const _DashboardMiniCard({
+    required this.title,
+    required this.value,
+    required this.icon,
+    required this.color,
+    required this.bg,
+  });
+
+  final String title;
+  final String value;
+  final IconData icon;
+  final Color color;
+  final Color bg;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: bg,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              color: color,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Expense Progress ────────────────────────────────────────────────────────
+class _ExpenseProgress extends StatelessWidget {
+  const _ExpenseProgress({
+    required this.category,
+    required this.amount,
+    required this.percentage,
+    required this.color,
+  });
+
+  final String category;
+  final int amount;
+  final double percentage;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final formattedAmount = '${(amount / 1000).toStringAsFixed(0)}K FCFA';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              category,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            Text(
+              formattedAmount,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(99),
+          child: LinearProgressIndicator(
+            value: percentage,
+            backgroundColor: AppColors.border,
+            color: color,
+            minHeight: 8,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─── Top Artisans Section ────────────────────────────────────────────────────
+class _TopArtisansSection extends StatelessWidget {
+  const _TopArtisansSection({required this.controller});
+
+  final HomeController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    // Sort nearby artisans by rating (descending)
+    final sortedArtisans = controller.artisans.toList()
+      ..sort((a, b) => b.rating.compareTo(a.rating));
+
+    final topList = sortedArtisans.take(3).toList();
+
+    if (topList.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: const Center(
+          child: Text(
+            'Recherche d\'artisans qualifiés en cours...',
+            style: TextStyle(color: AppColors.textSecondary),
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: topList.map((artisan) {
+        return Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            leading: CircleAvatar(
+              radius: 26,
+              backgroundColor: AppColors.clientSoft,
+              child: Text(
+                artisan.name?.substring(0, 1) ?? 'A',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.client,
+                  fontSize: 18,
+                ),
+              ),
+            ),
+            title: Text(
+              artisan.name ?? 'Artisan qualifié',
+              style: const TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 15,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 2),
+                Text(
+                  artisan.trade ?? 'Artisan',
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${artisan.rating.toStringAsFixed(1)}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '•  ${artisan.completedMissions} missions',
+                      style: const TextStyle(
+                        color: AppColors.textMuted,
+                        fontSize: 12.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textMuted),
+            onTap: () => Get.toNamed(Routes.artisanProfile, arguments: artisan),
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+// ─── Top Suppliers Section ───────────────────────────────────────────────────
+class _TopSuppliersSection extends StatelessWidget {
+  const _TopSuppliersSection({required this.controller});
+
+  final HomeController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: controller.topSuppliers.map((supplier) {
+        return Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.store_mall_directory_rounded,
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      supplier['name'] as String,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14.5,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${supplier['rating']}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '•  ${supplier['deliveries']} commandes livrées',
+                          style: const TextStyle(
+                            color: AppColors.textMuted,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+// ─── Top Drivers Section ─────────────────────────────────────────────────────
+class _TopDriversSection extends StatelessWidget {
+  const _TopDriversSection({required this.controller});
+
+  final HomeController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: controller.topDrivers.map((driver) {
+        return Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: AppColors.accent.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.local_shipping_rounded,
+                  color: AppColors.accent,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      driver['name'] as String,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14.5,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      driver['vehicle'] as String,
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${driver['rating']}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '•  ${driver['trips']} livraisons',
+                          style: const TextStyle(
+                            color: AppColors.textMuted,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
     );
   }
 }

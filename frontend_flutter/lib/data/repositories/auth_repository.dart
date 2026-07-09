@@ -16,6 +16,7 @@ class AuthRepository {
     final res = await _client.post(ApiEndpoints.verifyOtp, data: {
       'phone': phone,
       'otp': otp,
+      'device_fingerprint': StorageService.getDeviceFingerprint(),
     });
 
     final hasCompletedProfile = res.data['has_completed_profile'] as bool? ?? false;

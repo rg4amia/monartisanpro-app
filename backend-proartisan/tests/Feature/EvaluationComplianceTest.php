@@ -13,15 +13,16 @@ class EvaluationComplianceTest extends TestCase
 
     public function test_client_can_submit_evaluation_with_breakdown_scores(): void
     {
+        /** @var User $client */
         $client = User::factory()->create([
-            'role' => 'client',
+            'role' => 'client_b2b',
             'kyc_status' => 'actif',
         ]);
 
         $artisan = User::factory()->create([
             'role' => 'artisan',
             'kyc_status' => 'actif',
-            'score_nzassa' => 0,
+            'score_nzassa' => 300,
         ]);
 
         $mission = Mission::create([
@@ -47,7 +48,7 @@ class EvaluationComplianceTest extends TestCase
                 'reactivite' => 2,
             ])
             ->assertCreated()
-            ->assertJsonPath('data.scoreNzassa', 80);
+            ->assertJsonPath('data.scoreNzassa', 307);
 
         $this->assertDatabaseHas('evaluations', [
             'mission_id' => $mission->id,
@@ -60,6 +61,6 @@ class EvaluationComplianceTest extends TestCase
             'reactivite' => 2,
         ]);
 
-        $this->assertSame(80, $artisan->fresh()->score_nzassa);
+        $this->assertSame(307, $artisan->fresh()->score_nzassa);
     }
 }

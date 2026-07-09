@@ -21,6 +21,7 @@ class WalletTransaction extends Model
         'jalon_id',
         'transaction_id',
         'reference',
+        'cle_idempotence',
         'description',
         'metadata',
     ];

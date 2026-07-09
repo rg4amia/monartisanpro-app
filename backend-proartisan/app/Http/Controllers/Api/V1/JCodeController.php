@@ -41,7 +41,7 @@ class JCodeController extends Controller
             ], 403);
         }
 
-        if ($mission->status !== 'financee' && $mission->status !== 'en_cours') {
+        if ((string) $mission->status !== 'financee' && (string) $mission->status !== 'en_cours') {
             return response()->json([
                 'success' => false,
                 'message' => 'La mission doit être financée pour générer un J-Code.',

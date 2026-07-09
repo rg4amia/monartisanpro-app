@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <script src="config.js"></script>
+  <script>
+    // Bypass authentication for unified mobile app
+    localStorage.setItem("auth_token", "bypass-token");
+    localStorage.setItem("user_email", "admin@prosartisan.ci");
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ProsArtisan Mobile - Assistant Chantier</title>
+  <link rel="stylesheet" href="client.css">
+  <!-- Tailwind CDN uniquement pour les utilitaires de grille rapides de premier niveau -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body>
+
+  <!-- PHONE VIEWPORT WRAPPER -->
+  <div class="app-wrapper">
+
+    <!-- Phone Top Notch -->
+    <div class="phone-notch"></div>
+
+    <!-- Phone Status Bar -->
+    <div class="status-bar">
+      <div class="time">18:59</div>
+      <div class="status-icons">
+        <span id="badge-network" class="network-badge">WIFI</span>
+        <span>📶</span>
+        <span>🔋</span>
+      </div>
+    </div>
+
+    <!-- Application Header -->
+    <header class="app-header">
+      <div class="app-logo">
+        🛡️ Pros<span>Artisan</span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <select id="select-artisan-trade" title="Sélectionner le métier de l'artisan" class="bg-slate-900 border border-slate-700 text-[10px] text-white rounded px-2 py-1 font-bold outline-none cursor-pointer">
+          <option value="Maçon" selected>🏗️ Maçon</option>
+          <option value="Plombier">🚰 Plombier</option>
+          <option value="Électricien">⚡ Électricien</option>
+          <option value="Peintre">🎨 Peintre</option>
+        </select>
+        <button class="settings-btn" id="nav-settings" title="Paramètres Réseau">
+          <span>⚙️</span>
+        </button>
+        <button class="settings-btn" id="btn-client-logout" title="Déconnexion">
+          <span>🚪</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- APP MAIN CONTENT (SCROLLABLE) -->
+    <main class="app-content" id="main-content">
+
+      <!-- ==================== SCREEN 1 : HOME (INPUTS) ==================== -->
+      <div id="screen-home" class="space-y-4">
+
+        <!-- MODULE 1: IMAGE CAPTURE -->
+        <section class="glass-card neon-cyan-border">
+          <div class="card-title">
+            <span>📷</span> 1. Prendre une Photo de la Pathologie
+          </div>
+
+          <!-- Image selection area -->
+          <div class="upload-zone" id="upload-zone">
+            <span class="upload-icon">🧱</span>
+            <div class="upload-text">Prendre une Photo / Choisir Image</div>
+            <div class="upload-subtext">Glissez-déposez ou cliquez ici</div>
+            <input type="file" id="image-upload" class="hidden" accept="image/*" title="Choisir un fichier image">
+          </div>
+
+          <!-- Presets for easy demo testing -->
+          <div class="text-[10px] text-slate-400 font-semibold mt-3">OU CHOISIR UN CAS D'ÉTUDE DE CHANTIER :</div>
+          <div class="preset-grid" id="preset-container">
+            <!-- Rempli par client.js -->
+          </div>
+
+          <!-- Simulation size compression indicator -->
+          <div id="compress-indicator" class="compress-indicator hidden">
+            <div class="compress-header">
+              <span class="text-cyan-400">Compression d'image (3G Ready)</span>
+              <span id="compress-percentage" class="text-slate-400">100%</span>
+            </div>
+            <div class="compress-progress">
+              <div id="compress-bar" class="compress-bar"></div>
+            </div>
+            <div id="compress-text" class="compress-details">Optimisation du poids...</div>
+          </div>
+        </section>
+
+        <!-- MODULE 2: VOICE OR TEXT DICTATION -->
+        <section class="glass-card neon-purple-border">
+          <div class="card-title">
+            <span>🎙️</span> 2. Dictée Vocale du Chantier (Nouchi)
+          </div>
+          <p class="text-[10px] text-slate-400 mb-2 leading-relaxed">
+            Décrivez de vive voix ou par écrit le problème constaté au client ou pour la recherche :
+          </p>
+
+          <div class="dictation-container">
+            <div class="text-input-wrapper">
+              <textarea id="dictation-input" class="speech-textarea"
+                placeholder="Ex: Ciment a quitté sur le mur, salpêtre a gâté tout le bas..."></textarea>
+            </div>
+            <button class="mic-button" id="btn-mic" title="Parler">
+              <span>🎤</span>
+            </button>
+          </div>
+
+          <!-- Fake voice links -->
+          <span class="voice-simulation-link" id="btn-simulate-voice">
+            ⚡ Simuler la dictée vocale (Nouchi)
+          </span>
+        <!-- MODULE 3: DYNAMIC FILTERS -->
+        <section class="glass-card neon-cyan-border">
+          <div class="card-title">
+            <span>🎛️</span> 3. Ajuster les Filtres de Recherche RAG
+          </div>
+          <div class="grid grid-cols-2 gap-3 text-xs mt-2">
+            <div>
+              <label for="diag-filter-budget" class="block text-[10px] text-slate-400 font-bold uppercase mb-1">Budget Max</label>
+              <select id="diag-filter-budget" class="w-full bg-slate-900 border border-slate-700 text-white rounded p-1.5">
+                <option value="Faible">Faible (Eco)</option>
+                <option value="Moyen" selected>Moyen (Standard)</option>
+                <option value="Eleve">Élevé (Premium)</option>
+              </select>
+            </div>
+            <div>
+              <label for="diag-filter-type" class="block text-[10px] text-slate-400 font-bold uppercase mb-1">Type d'Ouvrage</label>
+              <select id="diag-filter-type" class="w-full bg-slate-900 border border-slate-700 text-white rounded p-1.5">
+                <option value="Tout" selected>Tout type</option>
+                <option value="Dallage">Dallage</option>
+                <option value="Enduit">Enduit</option>
+                <option value="Arase">Arase</option>
+              </select>
+            </div>
+          </div>
+          <div class="flex items-center justify-between mt-3 text-xs">
+            <span class="text-slate-300">Quincaillerie de quartier uniquement</span>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" id="diag-filter-hardware" title="Quincaillerie de quartier uniquement" class="sr-only peer">
+              <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyan-500"></div>
+            </label>
+          </div>
+        </section>
+        </section>
+
+        <!-- SUBMIT DIAGNOSTIC -->
+        <button class="action-btn btn-cyan" id="btn-diagnose" disabled>
+          🔍 Lancer le Diagnostic RAG
+        </button>
+        <!-- Link to Admin Portal (Hidden on mobile) -->
+        <div class="text-center pt-2 hidden">
+          <a href="index.html" class="text-[10px] text-slate-400 hover:text-cyan-400 underline">&larr; Retour au Portail
+            Expert (Admin)</a>
+        </div>
+      </div>
+
+      <!-- ==================== LOADING SCREEN ==================== -->
+      <div id="loader-panel" class="loader-panel hidden">
+        <div class="loader-spinner"></div>
+        <p class="text-xs text-slate-400 animate-pulse text-center">
+          Interrogation du pipeline RAG...<br>
+          Génération du Bouclier d'Autorité...
+        </p>
+      </div>
+
+      <!-- ==================== SCREEN 2 : RESULTS ==================== -->
+      <div id="screen-result" class="space-y-4 hidden">
+        <div class="flex justify-between items-center">
+          <button class="text-xs text-cyan-400 font-semibold hover:underline" id="btn-back-home">
+            &larr; Refaire un Diagnostic
+          </button>
+          <span class="text-[9px] text-slate-500 uppercase tracking-wider">Résultats</span>
+        </div>
+
+        <!-- Render RAG pitch and cards -->
+        <div id="result-area" class="space-y-4">
+          <!-- Rempli dynamiquement par client.js -->
+        </div>
+      </div>
+
+      <!-- ==================== SCREEN 3 : MAP VIEW ==================== -->
+      <div id="map-view" class="space-y-4 hidden">
+        <div class="flex justify-between items-center">
+          <button class="text-xs text-cyan-400 font-semibold hover:underline" id="btn-back-map">
+            &larr; Retour
+          </button>
+          <span class="text-[9px] text-slate-500 uppercase tracking-wider">Stocks locaux</span>
+        </div>
+
+        <section class="glass-card neon-cyan-border">
+          <div class="card-title">
+            <span>📍</span> Quincailleries Partenaires (Yopougon / Koumassi)
+          </div>
+          <p class="text-[10px] text-slate-400 mb-2 leading-relaxed">
+            Consultez les stocks locaux du dosage recommandé dans les quincailleries de quartier associées.
+          </p>
+
+          <div class="map-canvas-container">
+            <canvas id="quincaillerie-map"></canvas>
+          </div>
+        </section>
+      </div>
+
+      <!-- ==================== SCREEN 4 : CHAT BTP ==================== -->
+      <div id="chat-view" class="space-y-4 hidden">
+        <div class="flex justify-between items-center">
+          <button class="text-xs text-cyan-400 font-semibold hover:underline" id="btn-back-chat">
+            &larr; Retour
+          </button>
+          <span class="text-[9px] text-slate-500 uppercase tracking-wider">Chatbot BTP</span>
+        </div>
+
+        <section class="glass-card neon-purple-border flex flex-col h-[400px]">
+          <div class="card-title flex items-center justify-between pb-2 border-b border-white/10">
+            <span class="flex items-center gap-1">💬 Assistant BTP ProsArtisan</span>
+            <span class="text-[8px] bg-purple-500/20 text-purple-400 px-1.5 py-0.5 rounded-full uppercase font-bold">En
+              Ligne</span>
+          </div>
+
+          <!-- Message History -->
+          <div id="chat-messages" class="flex-grow overflow-y-auto p-2 space-y-2 text-xs custom-scrollbar">
+            <!-- Messages will be dynamically rendered here -->
+          </div>
+
+          <!-- Suggestion pills -->
+          <div class="p-2 border-t border-white/5 bg-slate-900/50">
+            <div class="text-[8px] text-slate-500 uppercase tracking-wider mb-1.5 font-bold">Suggestions :</div>
+            <div class="flex flex-wrap gap-1.5" id="chat-suggestions">
+              <!-- JS filled suggestions -->
+            </div>
+          </div>
+
+          <!-- Input message area -->
+          <div class="p-2 border-t border-white/10 bg-slate-950 flex items-center gap-2">
+            <button
+              class="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-xs hover:bg-white/10 transition shrink-0"
+              id="btn-chat-mic" title="Dicter votre question">
+              🎤
+            </button>
+            <input type="text" id="chat-input"
+              class="flex-grow bg-white/5 border border-white/10 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-purple-500"
+              placeholder="Posez votre question BTP (ex: dosage, ciment...)">
+            <button
+              class="w-8 h-8 rounded-lg bg-purple-600 hover:bg-purple-500 flex items-center justify-center text-xs text-white transition shrink-0"
+              id="btn-send-chat" title="Envoyer">
+              ➔
+            </button>
+          </div>
+        </section>
+      </div>
+
+      <!-- ==================== OFFLINE SYNC LOG CONSOLE ==================== -->
+      <section class="glass-card">
+        <div class="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-2">Logs & File de Synchronisation
+          locale</div>
+        <div class="console-panel" id="console-logs">
+          <!-- Logs client insérés en JS -->
+        </div>
+      </section>
+
+    </main>
+
+    <!-- SETTINGS MODAL (OVERLAY) -->
+    <div class="modal-overlay hidden" id="settings-modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="text-white font-bold text-sm">Paramètres Réseau du Simulateur</h3>
+          <button class="modal-close" id="btn-close-settings">×</button>
+        </div>
+
+        <div class="modal-option-group">
+          <label class="modal-option-label" for="setting-network">Qualité de connexion</label>
+          <select id="setting-network"
+            class="w-full bg-slate-900 border border-slate-700 text-xs text-white rounded p-2 focus:ring-1 focus:ring-cyan-500">
+            <option value="wifi" selected>Wifi (Fibre - Latence standard 400ms)</option>
+            <option value="3g">3G Restreinte (Latence dégradée 2400ms)</option>
+            <option value="offline">Hors-ligne (Réseau coupé - Fallback SQLite Local)</option>
+          </select>
+        </div>
+
+        <div class="mt-4 pt-3 border-t border-slate-800 flex justify-between items-center">
+          <span class="text-[10px] text-slate-400">Cache RAG Local (SQLite) :</span>
+          <button id="btn-clear-local-cache"
+            class="px-2.5 py-1 bg-red-950/40 text-red-400 hover:bg-red-900/50 hover:text-red-300 border border-red-500/20 text-[10px] font-bold rounded-lg transition">
+            🗑️ Vider le cache
+          </button>
+        </div>
+
+        <p class="text-[10px] text-slate-400 leading-relaxed mt-3">
+          Basculez en mode <strong>Hors-ligne</strong> pour simuler un chantier en zone blanche (ex: périphérie
+          d'Abidjan) et tester le modèle de vision ONNX local et la file d'attente SQLite locale.
+        </p>
+      </div>
+    </div>
+
+    <!-- BOTTOM TAB NAVIGATION -->
+    <nav class="bottom-nav">
+      <div class="nav-tab active" id="nav-diag">
+        <span class="nav-icon">🛡️</span>
+        <span>Diagnostic</span>
+      </div>
+      <div class="nav-tab" id="nav-chat">
+        <span class="nav-icon">💬</span>
+        <span>Chat BTP</span>
+      </div>
+      <div class="nav-tab" id="nav-map">
+        <span class="nav-icon">📍</span>
+        <span>Stocks Map</span>
+      </div>
+    </nav>
+
+  </div>
+
+  <script type="module" src="client.js"></script>
+</body>
+
+</html>

@@ -23,9 +23,9 @@ class OrderService
     /**
      * Crée une commande et calcule les coûts associés.
      */
-    public function createOrder(User $client, User $supplier, array $items, string $deliveryMode): Order
+    public function createOrder(User $client, User $supplier, array $items, string $deliveryMode, string $vehicleClass = 'moto', float $surgeMultiplier = 1.0): Order
     {
-        return DB::transaction(function () use ($client, $supplier, $items, $deliveryMode) {
+        return DB::transaction(function () use ($client, $supplier, $items, $deliveryMode, $vehicleClass, $surgeMultiplier) {
             $subtotal = 0;
             $itemsData = [];
 
@@ -48,8 +48,9 @@ class OrderService
                 ];
             }
 
-            // 2. Calcul des frais de service plateforme (3% sur matériaux)
-            $platformFee = (int) round($subtotal * 0.03);
+            // 2. Calcul des frais de service plateforme (dynamique depuis settings, default 3%)
+            $platformFeeRatio = \App\Models\Setting::getValueByKey('platform_fee_ratio', 0.03);
+            $platformFee = (int) round($subtotal * $platformFeeRatio);
 
             // 3. Calcul dynamique de livraison (Distance x Temps) via Google Maps
             $deliveryCost = 0;
@@ -62,16 +63,22 @@ class OrderService
                 $from = $supplierProfile->getPositionCoords();
                 $to = $client->getPositionCoords();
 
+                $vehicleMultiplier = match ($vehicleClass) {
+                    'voiture' => 1.5,
+                    'cargo'   => 2.5,
+                    default   => 1.0,
+                };
+
                 if (!$from || !$to) {
                     // Si coordonnées manquantes, on applique un tarif forfaitaire par défaut
-                    $deliveryCost = 2500; // 2500 FCFA
+                    $deliveryCost = (int) round(2500 * $vehicleMultiplier * $surgeMultiplier);
                 } else {
                     $directions = $this->mapsService->getDirections($from, $to);
                     $distanceKm = $directions['distance'] / 1000;
                     $durationMin = $directions['duration'] / 60;
 
                     // Formule de calcul : 150 FCFA / km + 50 FCFA / min, minimum 1000 FCFA
-                    $rawCost = ($distanceKm * 150) + ($durationMin * 50);
+                    $rawCost = (($distanceKm * 150) + ($durationMin * 50)) * $vehicleMultiplier * $surgeMultiplier;
                     $deliveryCost = (int) max(1000, round($rawCost));
                 }
             }
@@ -98,6 +105,8 @@ class OrderService
                 'total_amount' => $totalAmount,
                 'pickup_code' => $pickupCode,
                 'reception_code' => $receptionCode,
+                'vehicle_class' => $vehicleClass,
+                'surge_multiplier' => $surgeMultiplier,
             ]);
 
             // 6. Création des items de commande et décrémentation des stocks
@@ -237,8 +246,9 @@ class OrderService
     {
         $supplier = $order->supplier;
 
-        // Calcul de la commission fournisseur (5% sur matériaux)
-        $supplierCommission = (int) round($order->subtotal * 0.05);
+        // Calcul de la commission fournisseur dynamique (depuis settings, default 5%)
+        $supplierCommissionRatio = \App\Models\Setting::getValueByKey('commission_fournisseur', 0.05);
+        $supplierCommission = (int) round($order->subtotal * $supplierCommissionRatio);
         $gainNetSupplier = $order->subtotal - $supplierCommission;
 
         // Débiter le compte séquestre de la part matériaux
@@ -280,6 +290,11 @@ class OrderService
         $driver = $order->driver;
         if (!$driver) return;
 
+        // Calcul de la commission livreur dynamique (depuis settings, default 10%)
+        $driverCommissionRatio = \App\Models\Setting::getValueByKey('commission_livreur', 0.10);
+        $driverCommission = (int) round($order->delivery_cost * $driverCommissionRatio);
+        $gainNetDriver = $order->delivery_cost - $driverCommission;
+
         // Débiter le compte séquestre de la part livraison
         Transaction::create([
             'user_id' => $driver->id,
@@ -292,16 +307,17 @@ class OrderService
             'paid_at' => now(),
             'metadata' => [
                 'order_id' => $order->id,
-                'gain_net' => $order->delivery_cost,
+                'driver_commission' => $driverCommission,
+                'gain_net' => $gainNetDriver,
                 'description' => "Livraison finalisée - Libération part course du livreur pour la commande #{$order->id}",
             ],
         ]);
 
-        // Créditer le wallet_mo du livreur
+        // Créditer le wallet_mo du livreur avec le gain net
         $this->walletService->credit(
             $driver,
             WalletType::WALLET_MO,
-            $order->delivery_cost,
+            $gainNetDriver,
             "Gain course livraison commande #{$order->id}",
             [
                 'order_id' => $order->id,

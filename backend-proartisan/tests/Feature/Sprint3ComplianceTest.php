@@ -70,17 +70,23 @@ class Sprint3ComplianceTest extends TestCase
 
     public function test_jury_nzassa_assignment_voting_and_consensus(): void
     {
+        /** @var User $client */
         $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
+        /** @var User $artisan */
         $artisan = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif']);
+        /** @var User $admin */
         $admin = User::factory()->create(['role' => 'admin']);
 
         // Create 3 eligible jurors
+        /** @var User $jure1 */
         $jure1 = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif', 'score_nzassa' => 900]);
         $jure1->artisanProfile()->create(['experience_years' => 5]);
 
+        /** @var User $jure2 */
         $jure2 = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif', 'score_nzassa' => 950]);
         $jure2->artisanProfile()->create(['experience_years' => 8]);
 
+        /** @var User $jure3 */
         $jure3 = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif', 'score_nzassa' => 850]);
         $jure3->artisanProfile()->create(['experience_years' => 3]);
 
@@ -142,7 +148,9 @@ class Sprint3ComplianceTest extends TestCase
 
     public function test_llm_mediation_endpoint(): void
     {
+        /** @var User $client */
         $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
+        /** @var User $artisan */
         $artisan = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif']);
 
         $mission = Mission::create([

@@ -54,7 +54,7 @@ class AuthController extends Controller
 
         // Si le profil est déjà complet, on connecte directement
         if ($hasCompletedProfile) {
-            $token = $this->authService->createToken($user);
+            $token = $this->authService->createToken($user, $request->input('device_fingerprint'));
 
             return response()->json([
                 'success'               => true,
@@ -87,7 +87,7 @@ class AuthController extends Controller
         $user = $this->authService->register($user, $request->validated());
 
         // Génère un token d'authentification
-        $token = $this->authService->createToken($user);
+        $token = $this->authService->createToken($user, $request->input('device_fingerprint'));
 
         return response()->json([
             'success' => true,

@@ -56,6 +56,7 @@ class WalletService
                 'jalon_id' => $metadata['jalon_id'] ?? null,
                 'transaction_id' => $metadata['transaction_id'] ?? null,
                 'reference' => 'WTX-' . strtoupper(Str::random(12)),
+                'cle_idempotence'  => $metadata['idempotency_key'] ?? (string) Str::uuid(),
                 'solde_avant' => $soldeAvant,
                 'solde_apres' => $soldeApres,
                 'description' => $description ?? "Crédit wallet {$walletType->label()}",
@@ -102,23 +103,22 @@ class WalletService
 
             // Mise à jour de l'utilisateur
             $user->update([$columnName => $soldeApres]);
-
-            // Création de la transaction de wallet
+            // Création de la transaction de wallet avec clé d'idempotence
             $walletTransaction = WalletTransaction::create([
-                'user_id' => $user->id,
-                'wallet_type' => $walletType->value,
-                'operation' => WalletOperation::DEBIT,
-                'montant' => $montant,
-                'mission_id' => $metadata['mission_id'] ?? null,
-                'jalon_id' => $metadata['jalon_id'] ?? null,
-                'transaction_id' => $metadata['transaction_id'] ?? null,
-                'reference' => 'WTX-' . strtoupper(Str::random(12)),
-                'solde_avant' => $soldeAvant,
-                'solde_apres' => $soldeApres,
-                'description' => $description ?? "Débit wallet {$walletType->label()}",
-                'metadata' => $metadata,
+                'user_id'          => $user->id,
+                'wallet_type'      => $walletType->value,
+                'operation'        => WalletOperation::DEBIT,
+                'montant'          => $montant,
+                'mission_id'       => $metadata['mission_id'] ?? null,
+                'jalon_id'         => $metadata['jalon_id'] ?? null,
+                'transaction_id'   => $metadata['transaction_id'] ?? null,
+                'reference'        => 'WTX-' . strtoupper(Str::random(12)),
+                'cle_idempotence'  => $metadata['idempotency_key'] ?? (string) Str::uuid(),
+                'solde_avant'      => $soldeAvant,
+                'solde_apres'      => $soldeApres,
+                'description'      => $description ?? "Débit wallet {$walletType->label()}",
+                'metadata'         => $metadata,
             ]);
-
             Log::info('Wallet débité', [
                 'user_id' => $user->id,
                 'wallet_type' => $walletType->value,
@@ -315,11 +315,14 @@ class WalletService
             $remainingJalons = $mission->jalons()
                 ->whereIn('statut', ['en_attente', 'soumis', 'valide'])
                 ->count();
-
             if ($remainingJalons === 0) {
-                $mission->update(['status' => 'terminee']);
-            } elseif ($mission->status === 'financee') {
-                $mission->update(['status' => 'en_cours']);
+                if ($mission->status instanceof \App\States\Mission\PendingApprovalState) {
+                    $mission->status->transitionTo(\App\States\Mission\CompletedState::class);
+                } else {
+                    $mission->update(['status' => \App\States\Mission\CompletedState::class]);
+                }
+            } elseif ($mission->status instanceof \App\States\Mission\FundedLockedState) {
+                $mission->status->transitionTo(\App\States\Mission\InProgressState::class);
             }
         });
     }

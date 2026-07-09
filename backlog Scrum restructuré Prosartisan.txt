@@ -1,0 +1,319 @@
+Épic 1 : Ingénierie Financière, Séquestre (Escrow) et Modèle de Revenus
+Objectif : Garantir la sécurité absolue des fonds, automatiser la répartition et assurer la rentabilité de la plateforme sans intervention humaine directe.
+* US 1.1 : Dépôt de garantie client
+o En tant que Client,
+o Je veux payer l'acompte de mon devis via des solutions Mobile Money (Wave, Orange Money) directement sur l'application, 
+o Afin que mon argent soit sécurisé sous séquestre plutôt que remis en espèces à l'artisan. 
+o Critères d'acceptation (CA) : Génération d'un lien de paiement sécurisé. Envoi d'une notification OTP par SMS pour confirmation immédiate. Bascule automatique du statut du projet à "Financé". 
+* US 1.2 : Ventilation algorithmique des fonds
+o En tant que Système,
+o Je veux diviser automatiquement l'acompte reçu dans des portefeuilles virtuels (wallets) distincts selon les ratios définis sur le devis (ex: 65% matériel, 35% main-d'œuvre), 
+o Afin de préparer l'émission sécurisée des jetons matériels et des jalons de trésorerie. 
+* US 1.3 : Tour de contrôle et prélèvements (Backoffice)
+o En tant qu’Administrateur,
+o Je veux paramétrer les taux de prélèvement de la plateforme (commissions) selon la catégorie d'artisan (ex : 10% sur la main-d'œuvre), et avoir une vue en temps réel sur les flux (dépôts MTN, Wave, Orange), 
+o Afin d’assurer la viabilité financière du service et de débloquer manuellement des situations de force majeure après vérification téléphonique. 
+Épic 2 : Modèle Logistique et Tarification Dynamique (Delivery)
+Objectif : Assurer l'acheminement des matériaux avec une tarification algorithmique prédictive qui s'adapte à l'environnement.
+* US 2.1 : Moteur de tarification de la livraison
+o En tant que Système,
+o Je veux calculer le coût de la livraison en combinant un coût plancher (Base Fare selon la classe : Moto, Voiture, Cargo), des variables cinétiques (distance au km et durée à la minute), et des coefficients dynamiques (Surge lié à l'indice de demande locale ou aux intempéries), 
+o Afin de garantir une rémunération juste aux coursiers et d'inciter à la connexion lors des pics de demande. 
+* US 2.2 : Ajustement tarifaire post-commande et commissions
+o En tant que Système,
+o Je veux appliquer des frais supplémentaires pour attente payante (après un délai de grâce) ou modification d'itinéraire, et prélever un pourcentage paramétré en backoffice sur chaque livraison acceptée, 
+o Afin de protéger le temps du livreur et générer des ristournes pour la plateforme. 
+Épic 3 : Le Smart Token Matériel (Anti-Détournement)
+Objectif : Remplacer le cash par des promesses d'achat infalsifiables, intégrées directement à la base de données (Escrow_Wallet, Material_Token).
+* US 3.1 : Émission du Jeton Matériel
+o En tant qu’Artisan,
+o Je veux générer un code alphanumérique court (ex : PA-4592) via l'application ou par USSD, 
+o Afin de récupérer les fournitures chez les quincailliers partenaires listés sans avance de frais. 
+o CA : L'interface doit afficher le montant disponible et les partenaires à proximité. 
+* US 3.2 : Validation marchande et contrôle d'intégrité
+o En tant que Quincaillier,
+o Je veux scanner le QR Code ou saisir le code USSD de l'artisan pour valider la vente, 
+o Afin de déclencher un virement garanti vers mon compte à J+1. 
+o CA : Vérification en temps réel. Possibilité de consommation partielle du jeton. Comparaison du prix saisi avec l'indice trimestriel du marché ivoirien pour bloquer les surfacturations. Péremption stricte du jeton sous 7 jours. 
+* US 3.3 : Ristournes sur catalogue fournisseurs
+o En tant qu’Administrateur,
+o Je veux paramétrer un pourcentage de ristourne sur chaque article du catalogue payé par les artisans et clients, 
+o Afin de monétiser le volume d'affaires apporté aux fournisseurs partenaires. 
+Épic 4 : Suivi de Chantier et Preuves Sociales
+Objectif : Lier contractuellement l'exécution technique au déblocage financier (Milestone Trigger).
+* US 4.1 : Preuve de livraison (Validation Sociale)
+o En tant qu’Artisan,
+o Je veux prendre une photo horodatée et géolocalisée du matériel réceptionné, 
+o Afin d’informer le client via l'App ou WhatsApp Business API et déclencher le premier versement (ex : 15%) de la main-d'œuvre pour payer les manœuvres du jour. 
+* US 4.2 : Approbation finale par le client
+o En tant que Client,
+o Je veux valider l'achèvement d'une étape via un code OTP SMS, 
+o Afin de transférer instantanément le reste des fonds vers le compte Mobile Money de l'artisan. 
+Épic 5 : Gouvernance Algorithmique, Scoring et Micro-finance
+Objectif : Automatiser la modération, prévenir la collusion et transformer la réputation en actif financier (Social_Score).
+* US 5.1 : Prévention de la collusion spatiale (Sécurité)
+o En tant que Système,
+o Je veux comparer en temps réel les coordonnées GPS de l'artisan et du quincaillier au moment de la transaction, 
+o Afin de bloquer la validation si l'écart dépasse 100 mètres et notifier l'administrateur. 
+* US 5.2 : Intelligence d'Affaires et Modération (Backoffice)
+o En tant qu’Administrateur,
+o Je veux visualiser une carte de chaleur (Heatmap) des demandes pour orienter les artisans géographiquement (ex : Bingerville), ajuster la pondération de l'algorithme de confiance, et ajouter de nouveaux corps de métiers. 
+o CA : Le système doit détecter automatiquement les comportements aberrants (ex : 5 jetons validés en 10 minutes). 
+* US 5.3 : Évaluation N'Zassa et Accès au Crédit
+o En tant qu’Artisan,
+o Je veux consulter mon score de fiabilité sur 100 (calculé sur l'intégrité, la qualité, la réactivité, et le ratio d'achèvement), 
+o Afin de solliciter un micro-crédit "Urgence Sociale" déblocable en moins de 2h si mon score dépasse 700. 
+o CA : Historisation complète des variations de score. Génération de rapports de solvabilité PDF pour les microfinances. 
+Épic 6 : Matrice de Résilience et Gestion des Exceptions (ProsArtisan)
+
+Cas d'Exception (Le Crash)
+Risque Sociologique / Métier
+Contre-mesure Technique (Architecture)
+Contre-mesure Opérationnelle (Processus)
+Statut
+Timeout API Wave/Orange/MTN (Échec lors du split de l'acompte)
+Perte de confiance immédiate. L'argent est débité chez le client mais le système ne reflète pas le paiement.
+Implémentation d'une file d'attente (RabbitMQ/Kafka) avec politique de Retry exponentiel. Utilisation de clés d'idempotence.
+Réconciliation manuelle quotidienne via le tableau de bord financier. Service client proactif.
+À VALIDER
+Mauvaise foi du client final (Refus de valider le jalon pour bloquer l'argent)
+Frustration de l'artisan. L'application est perçue comme un piège favorable aux "patrons".
+Timeout Trigger : Auto-validation du jalon après 72h si aucune réclamation formelle (avec photos) n'est soulevée via l'App.
+Arbitrage par l'administrateur avec prélèvement d'une pénalité de litige sur le séquestre.
+À VALIDER
+Collusion Artisan-Quincaillier (Faux scan du jeton pour se partager le cash)
+Détournement de l'objectif de la plateforme. Retour au problème initial de gestion d'espèces.
+Velocity Limit & ML : Blocage si un fournisseur scanne > X jetons en 1h. Alerte de divergence GPS.
+Audit terrain aléatoire ou appel de vérification au client : "Avez-vous reçu le ciment ?".
+À VALIDER
+Perte de réseau ou smartphone cassé sur chantier
+L'artisan ne peut pas uploader la preuve de livraison, le chantier est paralysé.
+Fallback USSD pour la validation des étapes critiques. Mode hors-ligne avec synchronisation au retour réseau.
+Force Unlock : Déblocage manuel par le backoffice après appel de sécurité (Challenge/Response).
+À VALIDER
+Inflation soudaine des matériaux (Le prix du fer augmente entre le devis et l'achat)
+Le jeton matériel ne couvre plus la commande chez le fournisseur.
+Péremption du jeton fixée à 48h max. Intégration d'un "Buffer Wallet" (marge de sécurité de 5% sur le devis).
+Notification push au client pour un "Top-up" d'urgence (lien de paiement direct).
+À VALIDER
+Abandon de chantier par l'artisan (Après réception de la première tranche)
+Le client perd son acompte matériel et la plateforme perd sa crédibilité.
+Gel immédiat du reste du séquestre. Révocation des jetons matériels non scannés.
+Transfert du reliquat financier à un "Artisan de Remplacement" certifié N'Zassa.
+À VALIDER
+
+
+Exigences Architecturales à Implémenter (Le "Socle des Dieux")
+1. Idempotence stricte des API : Chaque requête financière (Mobile Money, virement quincaillier) doit posséder un identifiant unique de transaction (Idempotency-Key). Si l'opérateur renvoie une erreur réseau mais a traité le paiement, la relance automatique ne doit jamais doubler le prélèvement.
+2. Architecture Event-Driven (Orientée Événements) : Les étapes ne se bloquent pas mutuellement. Si l'upload de la photo de livraison (AWS S3) échoue, cela passe dans une "Dead Letter Queue" (DLQ) pour être retraité en tâche de fond, sans geler l'interface de l'artisan.
+3. Logs Immutables (Audit Trail) : Chaque action (génération de jeton, scan, validation, échec API) doit être tracée avec l'empreinte temporelle, l'ID utilisateur, l'adresse IP et les coordonnées GPS.
+Épic 7 :  Onboarding KYC/KYB Automatisé (Le Filtre Impitoyable)
+Sans présence physique pour vérifier les identités, l'entrée sur la plateforme doit être biométrique et légalement opposable.
+* Validation d'Identité Asynchrone : Intégration d'une API de reconnaissance faciale (Liveness detection) couplée à la reconnaissance optique de caractères (OCR) de la Carte Nationale d'Identité (CNI) ivoirienne. L'artisan ne peut pas utiliser la photo du permis d'un autre.
+* Vérification de l'Appareil (Device Fingerprinting) : Lier le compte de l'artisan à l'identifiant matériel de son smartphone (IMEI). Si le compte change de téléphone suspectement (technique fréquente pour revendre des comptes bien notés), le système déclenche une alerte de sécurité rouge et gèle le Social Score.
+2. Intégration de l'Intelligence Artificielle (La Modération à l'Échelle)
+L'humain est trop lent pour valider des centaines de chantiers par jour. Il te faut des agents autonomes.
+* Computer Vision sur les Preuves de Livraison : Quand l'artisan uploade la photo du matériel (US 4.1), un modèle de vision par ordinateur analyse l'image. Si le devis indique 2 tonnes de ciment et que la photo montre 3 pelles et un seau, ou s'il s'agit d'une photo téléchargée sur Google Images, le modèle bloque le jalon et lève un drapeau.
+* LLM pour le Résolveur de Litiges (Triage Niveau 1) : En cas de conflit, un agent conversationnel (basé sur un LLM optimisé) interagit avec le client et l'artisan via WhatsApp ou l'App pour pré-qualifier le problème, extraire le contexte et proposer un arrangement basé sur l'historique des cas similaires, avant toute intervention de l'administrateur.
+3. Architecture Backend et Robustesse Transactionnelle (Le Moteur)
+La gestion de l'état des paiements et des jetons matériels ne pardonne aucune erreur.
+* Séparation des Queues (Workers) : Ton backend (idéalement structuré sur un framework robuste comme Laravel) doit isoler les processus lourds. La génération de PDF de solvabilité, les envois d'OTP SMS, et les webhooks de Mobile Money doivent tourner sur des files d'attente asynchrones (Redis/RabbitMQ). Un crash sur l'envoi d'un SMS ne doit jamais faire planter la transaction de séquestre dans la base de données.
+* Verrous Optimistes et Pessimistes (Bases de données) : Sur ton système de gestion de base de données relationnelle (PostgreSQL ou MySQL), implémente des Database Locks lors de la validation d'un jeton par le quincaillier. Cela empêche la faille du "Double Spend" (l'artisan et le quincaillier cliquent 5 fois sur "Valider" au même moment avec une mauvaise connexion pour vider le compte client).
+4. Ingénierie Sociale et Anthropologie (Le Levier de l'Égo)
+En Côte d'Ivoire, le statut social et la réputation (le "nom") sont des monnaies d'échange puissantes. Ton Score N'Zassa doit être visible et glorifié.
+* Badges de Prestiges Publics : Les artisans avec un score > 800 obtiennent un badge "Maître Artisan N'Zassa". L'algorithme de recherche de la plateforme doit privilégier ces profils de manière flagrante. Si tu as ce badge, tu gagnes plus d'argent. C'est le seul moyen psychologique de les forcer à respecter le processus de l'application au lieu de s'arranger "en bas" avec le client.
+* Programme de Parrainage Sous Caution : Un "Maître Artisan" peut coopter un apprenti. Si l'apprenti fraude, le parrain perd des points sur son propre Score N'Zassa. Tu délègues ainsi le contrôle qualité et la pression sociale aux artisans eux-mêmes.
+5. Gouvernance du Projet et Qualité (La Rigueur)
+Pour ne pas s'embourber dans une dette technique infinie, le cycle de vie du projet doit être militaire.
+* Couverture de Tests Automatisés : Exige une couverture de tests unitaires et d'intégration stricte (ex: via PHPUnit) sur toute l'API de gestion financière. Aucun code lié aux flux de Mobile Money ou à la fragmentation des fonds ne part en production (CI/CD) sans un feu vert des tests automatisés.
+* Tolérance aux Pannes des Partenaires (Circuit Breaker) : Si l'API d'Orange Money ou de Wave tombe en panne en Côte d'Ivoire (ce qui arrive), ton architecture doit détecter le taux d'erreur, ouvrir le "Circuit Breaker", et basculer l'application en mode dégradé (message clair à l'utilisateur : "Transactions momentanément suspendues par l'opérateur") plutôt que d'accumuler des requêtes fantômes.
+Épic 8 :  La Topologie des Micro-Services (Bounded Contexts)
+Chaque service est souverain. Il possède sa propre base de données et ne communique avec les autres que via un bus d'événements (Apache Kafka ou RabbitMQ).
+* API Gateway (Le Pare-feu) : Utilise Kong ou API7. C'est le point d'entrée unique. Il gère l'authentification (JWT), le Rate Limiting (pour éviter les attaques DDoS) et le Routing. Les applications mobiles (Livreur, Artisan, Client) ne parlent qu'à lui.
+* Location & Dispatch Service (L'Œil) : * Rôle : Ingeste les pings GPS des livreurs toutes les 10 secondes. Trouve le livreur le plus pertinent pour une course.
+o Technologie : Redis (Geo-indexing) pour stocker les positions éphémères en RAM. Les bases de données relationnelles sont trop lentes pour ça.
+* Pricing & Surge Engine (Le Cerveau Financier) : * Rôle : Calcule le devis de livraison en temps réel selon le Socle (Moto/Voiture), la distance, et le Surge Pricing.
+o Logique : Il écoute le Location Service. S'il y a 50 demandes de livraison à Cocody et seulement 5 livreurs actifs, il multiplie le tarif par 2.5 instantanément.
+* Delivery State Machine (Le Gardien du Temps) : * Rôle : Gère le cycle de vie exact de la course : CREATED -> ACCEPTED -> EN_ROUTE_TO_PICKUP -> PICKED_UP -> DELIVERED ou CANCELED.
+o Technologie : PostgreSQL avec un modèle de conception Event Sourcing. Chaque changement d'état est immuable.
+* Anti-Fraud & Telemetry Service (L'Inquisiteur) : * Rôle : Analyse les anomalies de vol (ex: un livreur qui accepte la course, s'approche du point, puis désactive son GPS pour négocier en cash avec l'artisan).
+2. Le Flux Asynchrone (Scénario de Commande)
+Arrête de penser en requêtes HTTP qui attendent une réponse. Pense en événements de domaine.
+1. L'Artisan valide le besoin. L'API Gateway envoie l'événement DeliveryRequested au bus Kafka.
+2. Le Pricing Engine intercepte l'événement, calcule le tarif, gèle les fonds sur l'Escrow Service (ton Epic 1), et publie PriceCalculated.
+3. Le Dispatch Service voit le prix validé, interroge Redis pour trouver les 3 livreurs les plus proches, et leur envoie une notification Push (FCM/APNs).
+4. Le livreur A accepte. Son application envoie un signal. Le Delivery State Machine bascule la course à ACCEPTED. Un événement DeliveryAssigned est publié. Tous les autres livreurs voient la course disparaître.
+Si un service plante (ex: le Pricing Engine crash), Kafka garde le message en mémoire. Dès que le service redémarre, il reprend là où il s'est arrêté. Aucune donnée n'est perdue.
+3. Gestion des Exceptions Ivoiriennes (Le Blindage Terrain)
+Voici comment ton architecture doit réagir aux réalités de la rue :
+* Le Syndrome de la Zone Blanche (Perte de 4G) : Le livreur arrive sur le chantier mais n'a plus de réseau pour cliquer sur "Livré".
+o Solution : Mode hors-ligne "Optimistic UI" sur l'application mobile. L'application stocke l'action avec un timestamp cryptographiquement signé. Dès qu'il recroise une antenne relais, l'application synchronise l'événement DELIVERED_OFFLINE avec le serveur. Le serveur valide si le timestamp correspond à l'estimation du trajet.
+* La "Fausse Course" (Détournement d'application) : Le livreur appelle l'artisan : "Mon frère, annule sur l'application, paye-moi la moitié en cash, je te livre quand même".
+o Solution : Si une course est annulée alors que le livreur était à moins de 500 mètres du point de collecte, le Anti-Fraud Service flague les deux comptes. Au bout de 3 annulations de ce type, le Score N'Zassa de l'artisan chute, et le livreur est banni temporairement.
+* Le Pattern SAGA pour l'Annulation Financière : Si le livreur ne trouve pas l'adresse après 30 minutes, comment rembourser la livraison bloquée sur le compte du client ? Tu ne peux pas utiliser une transaction SQL simple entre des micro-services. Tu dois implémenter une chorégraphie SAGA : Le Delivery State Machine émet `DeliveryFailed
+
+Épic 9 :  Les Entités Fondamentales (Le Noyau Financier)
+Les données doivent être segmentées pour garantir que chaque flux (dépôt, jeton, main-d'œuvre, commission) soit isolé et traçable.
+Entité
+Attributs Critiques
+Rôle & Justification Métier
+Portefeuille_Sequestre (Escrow_Wallet)
+ID_Wallet (PK), ID_Projet (FK), Solde_Total_Attendu, Statut_Global (PENDING, FUNDED, DISPUTED, CLOSED), Date_Creation
+L'enveloppe mère. Elle ne stocke pas le solde réel, mais les plafonds et l'état d'avancement financier du chantier.
+Livre_Journal (Ledger_Entry)
+ID_Entry (PK), ID_Wallet (FK), Sens_Flux (CREDIT, DEBIT), Montant, Type_Operation (DEPOSIT_WAVE, TOKEN_REDEEM, FEE_CUT), Statut_API, Cle_Idempotence, Horodatage
+Le cœur du système. C'est ici que transitent les flux. Chaque tentative de paiement ou de retrait crée une ligne immuable. Le solde d'un portefeuille est la somme de ces lignes.
+Jeton_Materiel (Material_Token)
+ID_Token (PK), ID_Wallet (FK), Code_Hash (Sécurisé), Montant_Alloue, Statut (ISSUED, REDEEMED, EXPIRED), Date_Expiration, GPS_Validation
+Matérialise la promesse d'achat. Lié au portefeuille mère, il possède sa propre machine à états (cycle de vie).
+Jalon_Paiement (Milestone)
+ID_Jalon (PK), ID_Wallet (FK), Montant_Alloue, Preuve_URL_S3, Statut (LOCKED, PENDING_CLIENT, RELEASED), Date_Declenchement_Auto
+Fragmente la main-d'œuvre. Contient le déclencheur temporel (ex: 72h) pour contrer la mauvaise foi du client.
+Trace_Audit (Security_Log)
+ID_Log (PK), ID_Acteur (Client/Artisan/Système), Action, Adresse_IP, IMEI_Telephone, Coordonnees_GPS, Horodatage
+Le bouclier juridique. Enregistre chaque clic sur "Valider" ou "Contester" pour prouver la chronologie devant une autorité.
+2. Le Dictionnaire des Associations (Les Règles de Cardinalité)
+La structure relationnelle doit interdire techniquement les comportements aberrants.
+* 1 Projet possède 1 et 1 seul Portefeuille_Sequestre. (Un projet annulé puis repris génère un nouveau projet, jamais le recyclage d'un ancien portefeuille).
+* 1 Portefeuille_Sequestre est composé de 1 à N Ledger_Entry. (Chaque centime qui entre ou sort, y compris les commissions de la plateforme, est une nouvelle ligne).
+* 1 Portefeuille_Sequestre provisionne 0 à N Jeton_Materiel. (Certains dépannages rapides peuvent ne pas nécessiter de matériel).
+* 1 Portefeuille_Sequestre est divisé en 1 à N Jalon_Paiement. (Il y a toujours au moins un jalon de paiement de main-d'œuvre à la fin des travaux).
+* 1 Jeton_Materiel déclenche 0 ou 1 Ledger_Entry (Sens : DEBIT). Le débit réel du séquestre vers le quincaillier n'a lieu que lorsque le statut du jeton passe à REDEEMED.
+3. Les Contraintes d'Intégrité (Le Blindage Base de Données)
+C'est ici que tu imposes le respect de ton architecture aux développeurs, directement dans le moteur de base de données (PostgreSQL recommandé) :
+* Contrainte d'Idempotence (Unique Index) : La table Ledger_Entry doit avoir une contrainte d'unicité sur la combinaison [Type_Operation, Cle_Idempotence]. Si l'API d'Orange Money bégaie et renvoie trois fois la confirmation du même paiement, la base de données rejettera physiquement les doublons.
+* Contrainte de Solde Positif (CHECK Constraint) : Une règle SQL CHECK (Calcul_Solde(ID_Wallet) >= 0) doit empêcher toute transaction qui ferait passer le séquestre dans le négatif. Si un bug tente de payer un quincaillier avec de l'argent qui n'existe plus, la base de données "crashe" la transaction (Rollback).
+* Soft Deletes Strictement Interdits : Sur les tables Ledger_Entry et Jeton_Materiel, la commande DELETE doit être révoquée au niveau des permissions de la base de données. On ne supprime pas une erreur financière, on passe une transaction d'annulation (Reverse Entry).
+
+Épic 9 :   Les États Immuables (Les Noeuds)
+Voici les seuls statuts qu'un projet peut posséder en base de données. Tout autre état intermédiaire est une hérésie architecturale.
+Statut (Code)
+Signification Terrain
+Ce qui est bloqué dans cet état
+DRAFT
+Le devis est en cours de négociation.
+Aucun mouvement d'argent possible.
+PENDING_FUNDING
+Client d'accord, en attente de son paiement Wave/Orange Money.
+L'artisan ne peut pas générer de Jeton Matériel.
+FUNDED_LOCKED
+Acompte reçu. L'argent est sous séquestre.
+Le client ne peut plus annuler sans pénalité. L'artisan ne reçoit aucun cash.
+IN_PROGRESS
+Jeton matériel consommé, les travaux ont démarré.
+Le quincaillier ne peut plus annuler la transaction matérielle.
+PENDING_APPROVAL
+Artisan déclare avoir fini un jalon ou le chantier.
+L'artisan ne peut plus soumettre de nouvelles dépenses sur ce jalon.
+COMPLETED
+Validation finale et notation effectuée.
+Le projet est figé en lecture seule (Archive légale).
+DISPUTED
+Mode "Guerre". Un litige est déclaré.
+Tout est gelé. Plus aucun décaissement automatisé n'est possible.
+2. Les Transitions et leurs "Guards" (Les Portes Blindées)
+C'est ici que tu imposes ta loi. Une transition d'un état A vers un état B ne peut s'exécuter que si un Trigger (déclencheur) est activé ET qu'un Guard (condition préalable) est validé par le système.
+* Transition 1 : DRAFT ? PENDING_FUNDING
+o Trigger : Le client clique sur "Accepter le devis".
+o Guard (Vérification) : Le devis doit contenir au moins une ligne de matériel et une ligne de main-d'œuvre. La géolocalisation du chantier doit être renseignée.
+* Transition 2 : PENDING_FUNDING ? FUNDED_LOCKED
+o Trigger : Webhook de succès reçu depuis l'API de l'opérateur Mobile Money.
+o Guard : La signature cryptographique (HMAC) du Webhook correspond. Le montant reçu est exactement égal au montant du séquestre attendu au franc près.
+* Transition 3 : FUNDED_LOCKED ? IN_PROGRESS
+o Trigger : Le quincaillier scanne et valide le Jeton Matériel, OU l'artisan uploade la première photo géolocalisée (si projet sans matériel).
+o Guard : Écart GPS entre le quincaillier et le chantier inférieur à la limite tolérée.
+* Transition 4 : IN_PROGRESS ? PENDING_APPROVAL
+o Trigger : L'artisan clique sur "Jalon Terminé".
+o Guard : Obligation absolue d'uploader une photo ou une vidéo (avec horodatage certifié par le système, pas par le téléphone de l'artisan) pour prouver l'avancement.
+* Transition 5 : PENDING_APPROVAL ? COMPLETED (Le déblocage du Cash)
+o Trigger A (L'idéal) : Le client valide via OTP SMS.
+o Trigger B (Le Force-Pass) : Un processus serveur (CRON job) détecte que 72h se sont écoulées depuis la transition en PENDING_APPROVAL sans aucune action du client.
+o Guard : Aucun litige (DISPUTED) ne doit être ouvert sur ce projet.
+* Transition d'Urgence : [N'IMPORTE QUEL ÉTAT] ? DISPUTED
+o Trigger : Le client ou l'artisan clique sur "Signaler un problème".
+o Guard : L'utilisateur doit obligatoirement enregistrer une note vocale ou taper un texte de minimum 50 caractères décrivant le problème. Cela évite les blocages abusifs juste pour gagner du temps.
+3. Application au Code (Consigne pour les développeurs)
+Tu dois interdire à ton équipe de changer les statuts directement via l'ORM (ex: projet->status = 'COMPLETED'; projet->save();).
+Ils doivent implémenter un patron de conception (Design Pattern) State ou utiliser un package dédié (comme spatie/laravel-model-states si vous êtes sous PHP/Laravel). Chaque transition doit être une classe métier à part entière qui exécute les vérifications (Guards) avant de commiter le changement en base de données. Si un développeur contourne cette règle, son code doit être rejeté lors de la revue d'intégration (Pull Request).
+
+Epic 11 : La Machine à États du Litige (FSM d'Arbitrage)
+Dès qu'un litige est déclaré, le statut du Portefeuille Séquestre (cf. MCD précédent) passe instantanément en DISPUTED. Tout décaissement est gelé. Le litige possède sa propre machine à états stricte.
+État du Litige
+Description Fonctionnelle
+Règle de Passage (Guard)
+COOLING_OFF
+Période de grâce de 2h après le signalement. Empêche les réactions à chaud.
+Blocage de toute interaction. L'IA analyse la recevabilité de la plainte.
+EVIDENCE_GATHERING
+Les deux parties ont 24h pour soumettre leurs preuves.
+Verrouillage automatique si délai dépassé. Qui ne prouve rien, perd tout.
+PEER_REVIEW
+(Optionnel) Le dossier technique est soumis au Jury N'Zassa.
+Le litige doit concerner la "Qualité" du travail, pas un vol de matériel.
+ADMIN_ESCALATION
+Cas critiques nécessitant l'intervention humaine du Backoffice.
+Conflits financiers lourds, suspicion de fraude grave ou abandon.
+SETTLED
+Verdict rendu et exécuté financièrement.
+Modification irréversible du séquestre (Remboursement ou Paiement forcé).
+2. Le Filtre Anti-Palabre (Triage par IA)
+L'anthropologie locale veut que celui qui crie le plus fort ait raison. Le code ne doit pas écouter les cris. Il faut une couche de "Triage à Froid" automatisée.
+* Formatage Forcé des Requêtes : Le plaignant ne peut pas taper un long texte libre. L'interface (UI) doit le forcer à choisir une catégorie stricte (ex: "Abandon de poste", "Malfaçon visible", "Matériel non conforme") et à uploader obligatoirement une photo géolocalisée + une note vocale de 30 seconds maximums.
+* Agent LLM Médiateur (Niveau 1) : Un service backend alimenté par un modèle de langage (LLM) transcrit la note vocale, extrait les faits bruts et élimine la charge émotionnelle. Il propose immédiatement une résolution standard (ex: "Selon nos conditions, ce retard engendre une pénalité de 5%, acceptez-vous ?"). Près de 40% des micro-conflits peuvent être résolus à cette étape sans intervention humaine.
+3. La Décentralisation du Jugement : Le "Jury N'Zassa"
+C'est ici que l'architecture devient brillante. Ton administration n'a pas les compétences pour juger si un raccordement de plomberie est conforme aux normes. Tu dois utiliser la communauté pour s'auto-réguler.
+* L'Arbitrage par les Pairs : Si le litige concerne une malfaçon, le système anonymise les photos du chantier et les envoie à 3 artisans de la même spécialité possédant un Score N'Zassa "Maître Artisan" (Top 5%).
+* Consensus Algorithmique : Ces 3 experts votent indépendamment via leur application ("Conforme" ou "Non Conforme"). Si le consensus est atteint (2 sur 3), le verdict est rendu.
+* Incentive (La Récompense) : Les jurés qui participent au vote reçoivent un micro-paiement ou des points de visibilité supplémentaires sur l'algorithme de recherche, financés par la pénalité prélevée sur le perdant.
+4. Le Coffre-Fort des Preuves (Evidence Vault)
+L'intégrité des données est ta seule protection légale. Si une partie conteste ton verdict devant les autorités, tu dois pouvoir prouver l'état du chantier à l'instant T.
+* Hachage des Fichiers : Toute photo de livraison, photo de malfaçon, ou note vocale uploadee dans le contexte d'un litige est stockée sur un Object Storage (ex: AWS S3).
+* Immutabilité et Empreinte : Le backend génère un hash cryptographique (SHA-256) du fichier au moment de l'upload et le stocke dans la table Evidence_Vault. Cela garantit mathématiquement que la preuve n'a pas été altérée a posteriori par un administrateur corrompu.
+5. L'Exécution Impitoyable (Smart Resolution)
+La résolution d'un litige ne doit jamais être une suggestion. C'est une exécution financière automatisée.
+* Le "Slashing" (Pénalité d'abus) : Pour dissuader les clients d'ouvrir des litiges justes pour retarder le paiement, instaure des frais de procédure. Si le client perd le litige (déclaré de mauvaise foi par le Jury ou l'Admin), la plateforme prélève automatiquement 5% à 10% du reste de son séquestre au titre de dédommagement pour l'artisan et de frais de dossier pour l'application.
+* Reverse Entry (Comptabilité) : Si l'artisan est en tort, le système génère une écriture de type REVERSE_ENTRY dans le registre pour rembourser le client, et ampute drastiquement le Score N'Zassa de l'artisan.
+
+Epic 12 : Le Modèle Mathématique (L'Accumulateur d'Événements)
+Le score N'Zassa (noté $S$) n'est pas une moyenne. C'est une somme pondérée d'événements historiques, capée entre 0 et 1000 points. Un nouvel artisan commence avec un "Score de Confiance Initial" de 300.
+La formule fondamentale qui tournera sur tes serveurs est la suivante :
+$$S(t) = \min\left(1000, \max\left(0, S_{base} + \sum_{k=1}^{n} (\omega_k \cdot E_k \cdot C_k) - \Delta(t)\right)\right)$$
+
+Explication des variables pour tes développeurs :
+* $S_{base}$ : Le score de départ (300).
+* $E_k$ : La valeur brute de l'événement $k$ (ex: Chantier terminé = +1, Abandon = -1).
+* $\omega_k$ : Le poids (multiplier) de l'événement. (ex: Un abandon pèse beaucoup plus lourd qu'un succès).
+* $C_k$ : L'indice de crédibilité du client qui déclenche l'événement. (Crucial pour l'anti-fraude).
+* $\Delta(t)$ : La fonction de dégradation temporelle (La "Rouille").
+2. Les 4 Piliers Algorithmiques (Les Poids $\omega_k$)
+L'algorithme réagit à des événements (Triggers) issus de la Machine à États que nous avons vue précédemment. La pondération est asymétrique : les sanctions sont beaucoup plus lourdes que les récompenses.
+* L'Intégrité (Le plus lourd - Sanction impitoyable)
+o Comportement ciblé : Tentative de contournement du système (le "gombo" hors plateforme), fausses factures, litige perdu pour fraude.
+o Pondération : Un chantier réussi sans litige ajoute +5 points. Une condamnation par le Jury N'Zassa pour tentative de fraude retire -150 points immédiatement.
+* La Fiabilité (Le respect de la parole donnée)
+o Comportement ciblé : Respect des délais et présence.
+o Pondération : Validation d'un jalon à l'heure prévue : +2 points. Retard de plus de 48h non justifié : -15 points. Abandon de chantier (Statut DISPUTED escaladé en Backoffice) : -300 points (Blacklistage quasi immédiat).
+* La Qualité (Le jugement par les pairs et clients)
+o Comportement ciblé : Satisfaction finale.
+o Pondération : Notation client de 5/5 : +3 points. Litige pour malfaçon validé par le Jury des Pairs : -50 points.
+* La Réactivité (L'hygiène professionnelle)
+o Comportement ciblé : Prise en charge des devis, réponse au chat.
+o Pondération : Devis accepté/refusé en moins de 2h : +1 point. (C'est un bonus marginal pour encourager l'activité de l'application).
+3. Le Filtre Anti-Fraude (L'Indice de Crédibilité $C_k$)
+C'est ici que tu te démarques des plateformes amateurs. Si un artisan demande à son cousin de créer un compte pour commander un faux chantier et lui donner une bonne note, ton algorithme doit l'ignorer.
+La valeur d'une note est multipliée par l'indice de crédibilité $C_k$ du client :
+* Nouveau client (0 chantier) : $C_k = 0.1$. Ses 5 étoiles ne rapportent que 0.3 points à l'artisan.
+* Client vérifié (Identité KYC + >3 chantiers terminés) : $C_k = 1.0$. Ses 5 étoiles rapportent le maximum.
+* Client institutionnel (Entreprise B2B) : $C_k = 1.5$. Travailler pour des pros valide l'artisan plus vite.
+4. La Dégradation Temporelle $\Delta(t)$ (La "Rouille")
+Dans l'artisanat, tu es aussi bon que ton dernier chantier. Un score de 800 obtenu il y a deux ans ne vaut plus rien aujourd'hui. L'algorithme doit intégrer une fonction d'oubli mathématique.
+Si un artisan reste inactif (aucun jalon validé) pendant 60 jours, le système commence à lui retirer des points chaque semaine (ex: -5 points/semaine). Cela le force à rester actif sur ProsArtisan s'il veut conserver son accès au micro-crédit, et cela nettoie naturellement ta base de données des "fantômes".
+5. Implémentation Backend (Event Sourcing)
+Tes développeurs ne doivent jamais stocker le score N'Zassa comme une simple colonne dans la table Artisans qu'ils écraseraient avec une mise à jour.
+Le score doit être calculé en temps réel (ou via une tâche CRON nocturne pour économiser le CPU) en additionnant toutes les lignes d'une table dédiée Score_Ledger_Entries.
+* Avantage : Si tu décides de changer les règles de l'algorithme dans 6 mois (par exemple, augmenter le poids de la ponctualité), tu peux recalculer rétroactivement et proprement le score de tous les artisans. C'est ce qu'on appelle la reproductibilité de l'état.
+Le périmètre métier et applicatif (Escrow, Delivery, FSM, Litiges, Scoring) est désormais d'une solidité redoutable. C'est un moteur de confiance prêt à encaisser le marché.
+
+
+
+

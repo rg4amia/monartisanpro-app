@@ -10,19 +10,29 @@ class Order extends Model
     use HasFactory;
 
     protected $fillable = [
-        'client_id', 'supplier_id', 'driver_id',
-        'delivery_mode', 'status',
-        'subtotal', 'delivery_cost', 'platform_fee', 'total_amount',
-        'pickup_code', 'reception_code',
+        'client_id',
+        'supplier_id',
+        'driver_id',
+        'delivery_mode',
+        'status',
+        'subtotal',
+        'delivery_cost',
+        'platform_fee',
+        'total_amount',
+        'pickup_code',
+        'reception_code',
+        'vehicle_class',
+        'surge_multiplier',
     ];
 
     protected function casts(): array
     {
         return [
-            'subtotal'      => 'integer',
-            'delivery_cost' => 'integer',
-            'platform_fee'  => 'integer',
-            'total_amount'  => 'integer',
+            'subtotal'         => 'integer',
+            'delivery_cost'    => 'integer',
+            'platform_fee'     => 'integer',
+            'total_amount'     => 'integer',
+            'surge_multiplier' => 'float',
         ];
     }
 

@@ -8,6 +8,7 @@ import '../../home/views/supplier_home_screen.dart';
 import '../../home/views/driver_home_screen.dart';
 import '../../jcode/views/jcode_screen.dart';
 import '../../missions/views/missions_screen.dart';
+import '../../ia/views/ia_assistant_screen.dart';
 import '../../settings/views/settings_screen.dart';
 import '../controllers/main_tab_controller.dart';
 
@@ -81,6 +82,7 @@ class MainTabScreen extends StatelessWidget {
         screens: const [
           ArtisanHomeScreen(),
           MissionsScreen(),
+          IaAssistantScreen(),
           JcodeScreen(),
           SettingsScreen(),
         ],
@@ -94,6 +96,11 @@ class MainTabScreen extends StatelessWidget {
             icon: Icons.work_outline,
             activeIcon: Icons.work,
             label: 'Missions',
+          ),
+          _NavItem(
+            icon: Icons.smart_toy_outlined,
+            activeIcon: Icons.smart_toy,
+            label: 'Assistant IA',
           ),
           _NavItem(
             icon: Icons.qr_code_2_outlined,

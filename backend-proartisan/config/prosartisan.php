@@ -34,4 +34,10 @@ return [
         'prefix'    => 'PA-',
         'ttl_hours' => 48,
     ],
+
+    'jalon' => [
+        // Délai (en heures) avant libération automatique si le client ne valide pas
+        // Backlog Epic 9 — "Trigger B (Le Force-Pass)"
+        'force_release_delay_hours' => env('JALON_FORCE_RELEASE_HOURS', 72),
+    ],
 ];
