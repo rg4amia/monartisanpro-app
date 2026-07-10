@@ -29,9 +29,10 @@ class User extends Authenticatable
         'commune_id',
         'device_fingerprint',
         'score_frozen',
+        'google_2fa_secret',
     ];
 
-    protected $hidden = ['password', 'remember_token', 'position'];
+    protected $hidden = ['password', 'remember_token', 'position', 'google_2fa_secret'];
 
     protected function casts(): array
     {
