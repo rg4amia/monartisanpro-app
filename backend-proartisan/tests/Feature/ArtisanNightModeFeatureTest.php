@@ -76,4 +76,36 @@ class ArtisanNightModeFeatureTest extends TestCase
             ->assertJsonPath('data.0.name', 'Artisan Nuit')
             ->assertJsonPath('data.0.nightInterventionAvailable', true);
     }
+
+    public function test_client_falls_back_to_wider_radius_when_no_nearby_artisans(): void
+    {
+        if (config('database.default') === 'sqlite') {
+            $this->markTestSkipped('Requiert une base de données MySQL avec support géospatial.');
+        }
+
+        $client = User::factory()->create([
+            'role' => 'client',
+            'kyc_status' => 'actif',
+        ]);
+
+        $distantArtisan = User::factory()->create([
+            'role' => 'artisan',
+            'kyc_status' => 'actif',
+            'name' => 'Artisan Distant',
+            // Position éloignée de Abidjan Cocody (~12 km)
+            'position' => \Illuminate\Support\Facades\DB::raw("ST_SRID(POINT(-4.0200, 5.4500), 4326)"),
+        ]);
+
+        ArtisanProfile::create([
+            'user_id' => $distantArtisan->id,
+            'intervient_la_nuit' => false,
+        ]);
+
+        $this->actingAs($client)
+            ->getJson('/api/v1/artisans?lat=5.3484&lng=-4.0169&radius=2000')
+            ->assertOk()
+            ->assertJsonPath('meta.is_fallback', true)
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.name', 'Artisan Distant');
+    }
 }

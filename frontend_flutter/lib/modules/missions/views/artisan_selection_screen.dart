@@ -259,19 +259,61 @@ class _ListView extends StatelessWidget {
         return _EmptyState();
       }
 
+      final hasNoNearby = (artisans.first.distanceMetres ?? 0.0) > 5000;
+
       return RefreshIndicator(
         onRefresh: controller.refreshArtisans,
         child: ListView.separated(
           padding: const EdgeInsets.all(20),
-          itemCount: artisans.length,
+          itemCount: artisans.length + (hasNoNearby ? 1 : 0),
           separatorBuilder: (_, __) => const SizedBox(height: 16),
-          itemBuilder: (_, index) => _ArtisanCard(
-            artisan: artisans[index],
-            onTap: () => controller.selectArtisan(artisans[index]),
-          ),
+          itemBuilder: (_, index) {
+            if (hasNoNearby && index == 0) {
+              return const _FallbackZoneBanner();
+            }
+            final artisanIndex = hasNoNearby ? index - 1 : index;
+            return _ArtisanCard(
+              artisan: artisans[artisanIndex],
+              onTap: () => controller.selectArtisan(artisans[artisanIndex]),
+            );
+          },
         ),
       );
     });
+  }
+}
+
+class _FallbackZoneBanner extends StatelessWidget {
+  const _FallbackZoneBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: _C.warning.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _C.warning.withValues(alpha: 0.24)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline, color: _C.warning, size: 20),
+          const SizedBox(width: 10),
+          const Expanded(
+            child: Text(
+              'Aucun artisan disponible dans un rayon de 5 km. Nous vous proposons des artisans qualifiés situés dans d\'autres communes et zones.',
+              style: TextStyle(
+                fontSize: 13,
+                height: 1.45,
+                color: _C.ink,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

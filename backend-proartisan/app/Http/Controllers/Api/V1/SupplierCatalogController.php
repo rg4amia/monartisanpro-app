@@ -47,9 +47,13 @@ class SupplierCatalogController extends Controller
         ]);
     }
 
-    public function store(StoreSupplierProductRequest $request): JsonResponse
+    public function store(StoreSupplierProductRequest $request): JsonResponse|\Illuminate\Http\RedirectResponse
     {
         $product = $this->catalogService->createProduct($request->user(), $request->validated());
+
+        if ($request->header('X-Inertia')) {
+            return back();
+        }
 
         return response()->json([
             'success' => true,
@@ -58,13 +62,17 @@ class SupplierCatalogController extends Controller
         ], 201);
     }
 
-    public function update(UpdateSupplierProductRequest $request, SupplierProduct $supplierProduct): JsonResponse
+    public function update(UpdateSupplierProductRequest $request, SupplierProduct $supplierProduct): JsonResponse|\Illuminate\Http\RedirectResponse
     {
         $product = $this->catalogService->updateProduct(
             $request->user(),
             $supplierProduct,
             $request->validated(),
         );
+
+        if ($request->header('X-Inertia')) {
+            return back();
+        }
 
         return response()->json([
             'success' => true,
@@ -73,9 +81,13 @@ class SupplierCatalogController extends Controller
         ]);
     }
 
-    public function destroy(Request $request, SupplierProduct $supplierProduct): JsonResponse
+    public function destroy(Request $request, SupplierProduct $supplierProduct): JsonResponse|\Illuminate\Http\RedirectResponse
     {
         $product = $this->catalogService->archiveProduct($request->user(), $supplierProduct);
+
+        if ($request->header('X-Inertia')) {
+            return back();
+        }
 
         return response()->json([
             'success' => true,

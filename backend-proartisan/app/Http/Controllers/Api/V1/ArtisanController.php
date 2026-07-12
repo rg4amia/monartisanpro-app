@@ -38,6 +38,8 @@ class ArtisanController extends Controller
         ]);
 
         $radius   = $data['radius'] ?? config('prosartisan.gps.nearby_artisan_radius', 2000);
+        $isFallback = false;
+
         $artisans = $this->geoService->nearbyArtisans(
             (float) $data['lat'],
             (float) $data['lng'],
@@ -46,6 +48,21 @@ class ArtisanController extends Controller
             isset($data['trade']) ? (string) $data['trade'] : null,
             (bool) ($data['intervention_nuit'] ?? false),
         );
+
+        if ($artisans->isEmpty()) {
+            // Aucun artisan trouvé dans le rayon initial (ex: 2km).
+            // Élargissement de la recherche à 150 km pour proposer des artisans d'autres zones/communes (ex: plombier distant).
+            $isFallback = true;
+            $radius = 150000;
+            $artisans = $this->geoService->nearbyArtisans(
+                (float) $data['lat'],
+                (float) $data['lng'],
+                (int) $radius,
+                isset($data['sector']) ? (string) $data['sector'] : null,
+                isset($data['trade']) ? (string) $data['trade'] : null,
+                (bool) ($data['intervention_nuit'] ?? false),
+            );
+        }
 
         $blurRadius = config('prosartisan.gps.artisan_blur_radius', 50);
 
@@ -73,6 +90,7 @@ class ArtisanController extends Controller
             'meta'    => [
                 'total'       => $result->count(),
                 'radius'      => $radius,
+                'is_fallback' => $isFallback,
                 'intervention_nuit' => (bool) ($data['intervention_nuit'] ?? false),
                 'center'      => ['lat' => (float) $data['lat'], 'lng' => (float) $data['lng']],
             ],

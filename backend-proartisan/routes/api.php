@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\ArtisanController;
 use App\Http\Controllers\Api\V1\AdminController;
+use App\Http\Controllers\Api\V1\AdminRolePermissionController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\DevisController;
 use App\Http\Controllers\Api\V1\DeliveryController;
@@ -20,6 +21,7 @@ use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\SectorController;
 use App\Http\Controllers\Api\V1\SmsController;
 use App\Http\Controllers\Api\V1\SupplierCatalogController;
+use App\Http\Controllers\Api\V1\Supplier\SupplierDashboardController;
 use App\Http\Controllers\Api\V1\TransactionController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\UploadController;
@@ -103,39 +105,40 @@ Route::prefix('v1')->group(function () {
         Route::get('/fournisseurs', [SupplierCatalogController::class, 'suppliers']);
         Route::get('/fournisseurs/{user}/articles', [SupplierCatalogController::class, 'supplierProducts']);
         Route::get('/supplier-products', [SupplierCatalogController::class, 'myProducts']);
-        Route::post('/supplier-products', [SupplierCatalogController::class, 'store']);
-        Route::put('/supplier-products/{supplierProduct}', [SupplierCatalogController::class, 'update']);
-        Route::delete('/supplier-products/{supplierProduct}', [SupplierCatalogController::class, 'destroy']);
+        Route::post('/supplier-products', [SupplierCatalogController::class, 'store'])->middleware('can:supplier-products.manage');
+        Route::put('/supplier-products/{supplierProduct}', [SupplierCatalogController::class, 'update'])->middleware('can:supplier-products.manage');
+        Route::delete('/supplier-products/{supplierProduct}', [SupplierCatalogController::class, 'destroy'])->middleware('can:supplier-products.manage');
+        Route::get('/supplier/dashboard', [SupplierDashboardController::class, 'dashboard'])->middleware('supplier.only');
 
         // ── Missions ──────────────────────────────────────────────────────────
         Route::get('/missions',                      [MissionController::class, 'index']);
-        Route::post('/missions',                     [MissionController::class, 'store']);
+        Route::post('/missions',                     [MissionController::class, 'store'])->middleware('can:mission.create');
         Route::get('/missions/{mission}',            [MissionController::class, 'show']);
-        Route::post('/missions/estimate',            [MissionController::class, 'estimate']);
+        Route::post('/missions/estimate',            [MissionController::class, 'estimate'])->middleware('can:mission.estimate');
         Route::put('/missions/{mission}/status',     [MissionController::class, 'updateStatus']);
-        Route::post('/missions/{mission}/referent-validate', [\App\Http\Controllers\Api\V1\ReferentController::class, 'validateMission']);
+        Route::post('/missions/{mission}/referent-validate', [\App\Http\Controllers\Api\V1\ReferentController::class, 'validateMission'])->middleware('can:mission.referent-validate');
 
         // ── Devis ────────────────────────────────────────────────────────────
         Route::get('/missions/{mission}/devis',      [DevisController::class, 'index']);
-        Route::post('/missions/{mission}/devis',     [DevisController::class, 'store']);
+        Route::post('/missions/{mission}/devis',     [DevisController::class, 'store'])->middleware('can:devis.create');
         Route::get('/devis/{devis}',                 [DevisController::class, 'show']);
-        Route::put('/devis/{devis}',                 [DevisController::class, 'update']);
-        Route::post('/devis/{devis}/accept',         [DevisController::class, 'accept']);
-        Route::post('/devis/{devis}/refuse',         [DevisController::class, 'refuse']);
+        Route::put('/devis/{devis}',                 [DevisController::class, 'update'])->middleware('can:devis.update');
+        Route::post('/devis/{devis}/accept',         [DevisController::class, 'accept'])->middleware('can:devis.accept');
+        Route::post('/devis/{devis}/refuse',         [DevisController::class, 'refuse'])->middleware('can:devis.refuse');
 
         // ── Jalons ────────────────────────────────────────────────────────────
         Route::get('/missions/{mission}/jalons',     [JalonController::class, 'index']);
-        Route::put('/jalons/{jalon}/submit',         [JalonController::class, 'submit']);
-        Route::post('/jalons/{jalon}/photos',        [JalonController::class, 'uploadPhotos']);
-        Route::post('/jalons/{jalon}/request-otp',   [JalonController::class, 'requestOtp']);
-        Route::post('/jalons/{jalon}/validate-otp',  [JalonController::class, 'validateOtp']);
+        Route::put('/jalons/{jalon}/submit',         [JalonController::class, 'submit'])->middleware('can:jalon.submit');
+        Route::post('/jalons/{jalon}/photos',        [JalonController::class, 'uploadPhotos'])->middleware('can:jalon.upload-photos');
+        Route::post('/jalons/{jalon}/request-otp',   [JalonController::class, 'requestOtp'])->middleware('can:jalon.request-otp');
+        Route::post('/jalons/{jalon}/validate-otp',  [JalonController::class, 'validateOtp'])->middleware('can:jalon.validate-otp');
 
         // ── J-Codes ───────────────────────────────────────────────────────────
-        Route::post('/jcodes',                       [JCodeController::class, 'store']);
+        Route::post('/jcodes',                       [JCodeController::class, 'store'])->middleware('can:jcode.create');
         Route::get('/jcodes/active',                 [JCodeController::class, 'active']);
         Route::get('/jcodes/{jcode}',                [JCodeController::class, 'show']);
-        Route::post('/jcodes/{jcode}/scan',          [JCodeController::class, 'scan']);
-        Route::post('/jcodes/{jcode}/photo-materiaux', [JCodeController::class, 'uploadPhotoMateriaux']);
+        Route::post('/jcodes/{jcode}/scan',          [JCodeController::class, 'scan'])->middleware('can:jcode.scan');
+        Route::post('/jcodes/{jcode}/photo-materiaux', [JCodeController::class, 'uploadPhotoMateriaux'])->middleware('can:jcode.upload-photo-materials');
 
         // ── Paiements (Wave & Orange Money) ───────────────────────────────────
         Route::prefix('payments')->group(function () {
@@ -187,6 +190,12 @@ Route::prefix('v1')->group(function () {
         // ── Administration ─────────────────────────────────────────────────────
         Route::prefix('admin')->middleware('admin.only')->group(function () {
             Route::get('/dashboard', [AdminController::class, 'dashboard']);
+
+            // Gestion des Rôles & Permissions
+            Route::get('/roles-permissions', [AdminRolePermissionController::class, 'index']);
+            Route::get('/permissions', [AdminRolePermissionController::class, 'listPermissions']);
+            Route::post('/roles-permissions/assign', [AdminRolePermissionController::class, 'assign']);
+            Route::post('/roles-permissions/revoke', [AdminRolePermissionController::class, 'revoke']);
 
             Route::get('/kyc/pending', [AdminController::class, 'pendingKyc']);
             Route::post('/kyc/{user}/review', [AdminController::class, 'reviewKyc']);

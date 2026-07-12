@@ -4,8 +4,9 @@ import type { ReactNode } from 'react';
 
 import { cn } from '@/lib/utils';
 import LlmAdminPanel from './llm-admin-panel';
+import RolesPermissionsPanel from './roles-permissions-panel';
 
-type AdminTab = 'dashboard' | 'kyc' | 'missions' | 'litiges' | 'users' | 'transactions' | 'settings' | 'llm_admin';
+type AdminTab = 'dashboard' | 'kyc' | 'missions' | 'litiges' | 'users' | 'transactions' | 'settings' | 'llm_admin' | 'roles_permissions';
 type ThemeMode = 'light' | 'dark';
 type Tone = 'amber' | 'green' | 'rose' | 'blue' | 'slate';
 
@@ -190,6 +191,8 @@ interface AdminPageProps {
         label: string;
         description: string;
     }>;
+    rolesPermissions?: Record<string, string[]>;
+    allPermissions?: Array<{ id: number; name: string; description: string; category: string }>;
 }
 
 const tabRoutes: Record<AdminTab, string> = {
@@ -201,6 +204,7 @@ const tabRoutes: Record<AdminTab, string> = {
     transactions: '/admin/transactions',
     settings: '/admin/settings',
     llm_admin: '/admin/llm-admin',
+    roles_permissions: '/admin/roles-permissions',
 };
 
 const tabMeta: Record<AdminTab, { description: string; label: string; section: string }> = {
@@ -239,6 +243,11 @@ const tabMeta: Record<AdminTab, { description: string; label: string; section: s
         section: 'PLATEFORME',
         description: "Règles métier, configuration d'accès et garde-fous du backoffice.",
     },
+    roles_permissions: {
+        label: 'Rôles & Actions',
+        section: 'PLATEFORME',
+        description: 'Attribuez et révoquez dynamiquement les actions autorisées pour chaque rôle.',
+    },
     llm_admin: {
         label: 'Administration LLM ProsArtisan',
         section: 'INTELLIGENCE',
@@ -254,6 +263,7 @@ const searchPlaceholders: Record<AdminTab, string> = {
     users: 'Nom, téléphone, ID ou rôle...',
     transactions: 'Type, provider, statut ou bénéficiaire...',
     settings: 'Rechercher une règle ou un paramètre...',
+    roles_permissions: 'Rechercher une action ou un rôle...',
     llm_admin: 'Rechercher une règle ou un document...',
 };
 
@@ -786,7 +796,10 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         },
         {
             label: 'Plateforme',
-            items: [{ id: 'settings', label: tabMeta.settings.label }],
+            items: [
+                { id: 'settings', label: tabMeta.settings.label },
+                { id: 'roles_permissions', label: tabMeta.roles_permissions.label },
+            ],
         },
     ];
 
@@ -852,6 +865,13 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                     { label: 'Devise', tone: 'green' as const, value: 'FCFA' },
                     { label: 'Paiements', tone: 'blue' as const, value: 'Wave / Orange' },
                     { label: 'Mode mobile', tone: 'slate' as const, value: 'Hors-ligne' },
+                ];
+            case 'roles_permissions':
+                return [
+                    { label: 'Rôles gérés', tone: 'amber' as const, value: '5 Rôles' },
+                    { label: 'Actions système', tone: 'green' as const, value: `${props.allPermissions?.length ?? 0} Actions` },
+                    { label: 'Sécurité d\'accès', tone: 'blue' as const, value: 'RBAC Actif' },
+                    { label: 'Mode', tone: 'slate' as const, value: 'Cache Actif' },
                 ];
             default:
                 return [];
@@ -2065,6 +2085,15 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                             )}
                                         </div>
                                     </Surface>
+                                </section>
+                            ) : null}
+
+                            {activeTab === 'roles_permissions' ? (
+                                <section className="mt-5">
+                                    <RolesPermissionsPanel
+                                        allPermissions={props.allPermissions ?? []}
+                                        rolesPermissions={props.rolesPermissions ?? {}}
+                                    />
                                 </section>
                             ) : null}
 
