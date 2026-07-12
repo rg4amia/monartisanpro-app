@@ -25,6 +25,12 @@ return new class extends Migration
             $table->primary(['permission_id', 'role']);
             $table->timestamp('created_at')->useCurrent();
         });
+
+        // Seed permissions and roles mappings automatically
+        \Illuminate\Support\Facades\Artisan::call('db:seed', [
+            '--class' => \Database\Seeders\PermissionSeeder::class,
+            '--force' => true
+        ]);
     }
 
     /**
