@@ -20,15 +20,16 @@ class AuthController extends Controller
     ) {}
 
     /**
-     * Envoie un OTP par SMS au numéro indiqué.
+     * Envoie un OTP par SMS ou par WhatsApp au numéro indiqué.
      */
     public function sendOtp(SendOtpRequest $request): JsonResponse
     {
-        $this->otpService->sendOtp($request->phone);
+        $channel = $request->input('channel', 'sms');
+        $this->otpService->sendOtp($request->phone, null, $channel);
 
         return response()->json([
             'success'    => true,
-            'message'    => 'Code OTP envoyé par SMS.',
+            'message'    => $channel === 'whatsapp' ? 'Code OTP envoyé par WhatsApp.' : 'Code OTP envoyé par SMS.',
             'expires_in' => $this->otpService->ttlSeconds(),
         ]);
     }

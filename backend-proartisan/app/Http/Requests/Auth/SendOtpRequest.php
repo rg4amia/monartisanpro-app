@@ -14,7 +14,8 @@ class SendOtpRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'phone' => ['required', 'string', 'regex:/^\+225[0-9]{10}$/'],
+            'phone'   => ['required', 'string', 'regex:/^\+225[0-9]{10}$/'],
+            'channel' => ['nullable', 'string', 'in:sms,whatsapp'],
         ];
     }
 
@@ -23,6 +24,7 @@ class SendOtpRequest extends FormRequest
         return [
             'phone.required' => 'Le numéro de téléphone est obligatoire.',
             'phone.regex'    => 'Le numéro doit être au format +225XXXXXXXXXX.',
+            'channel.in'     => 'Le canal de communication doit être "sms" ou "whatsapp".',
         ];
     }
 }

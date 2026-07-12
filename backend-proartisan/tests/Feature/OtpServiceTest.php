@@ -107,3 +107,23 @@ test('it respects action parameter if provided', function () {
     // Vérification avec la bonne action : OK
     expect($this->otpService->verifyOtp($phone, $code, 'login'))->toBeTrue();
 });
+
+test('it can send OTP via WhatsApp channel', function () {
+    $phone = '2250707123456';
+
+    \Illuminate\Support\Facades\Log::shouldReceive('info')
+        ->once()
+        ->with('WhatsApp OTP (log mode)', Mockery::on(function ($data) use ($phone) {
+            return $data['recipient'] === $phone && str_contains($data['message'], 'code de vérification');
+        }));
+
+    $code = $this->otpService->sendOtp($phone, null, 'whatsapp');
+
+    expect($code)->not->toBeNull();
+
+    $this->assertDatabaseHas('otps', [
+        'phone'   => $phone,
+        'code'    => $code,
+        'used_at' => null,
+    ]);
+});

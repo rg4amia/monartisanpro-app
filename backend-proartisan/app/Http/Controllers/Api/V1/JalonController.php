@@ -54,7 +54,7 @@ class JalonController extends Controller
     }
 
     /**
-     * Demande d'OTP : envoie un code SMS au client.
+     * Demande d'OTP : envoie un code SMS ou WhatsApp au client.
      */
     public function requestOtp(Request $request, Jalon $jalon): JsonResponse
     {
@@ -65,11 +65,19 @@ class JalonController extends Controller
             ], 422);
         }
 
-        $this->jalonService->requestOtp($jalon);
+        $channel = $request->input('channel', 'sms');
+        if (!in_array($channel, ['sms', 'whatsapp'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Le canal de communication doit être "sms" ou "whatsapp".',
+            ], 422);
+        }
+
+        $this->jalonService->requestOtp($jalon, $channel);
 
         return response()->json([
             'success' => true,
-            'message' => 'Code OTP envoyé par SMS au client.',
+            'message' => $channel === 'whatsapp' ? 'Code OTP envoyé par WhatsApp au client.' : 'Code OTP envoyé par SMS au client.',
             'expires_in' => config('prosartisan.otp.ttl', 5) * 60,
         ]);
     }

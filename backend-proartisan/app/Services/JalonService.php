@@ -116,9 +116,9 @@ class JalonService
     }
 
     /**
-     * Envoie l'OTP de validation au client par SMS.
+     * Envoie l'OTP de validation au client par SMS ou WhatsApp.
      */
-    public function requestOtp(Jalon $jalon): void
+    public function requestOtp(Jalon $jalon, string $channel = 'sms'): void
     {
         if ($jalon->mission->isFundsFrozen()) {
             throw ValidationException::withMessages([
@@ -127,7 +127,7 @@ class JalonService
         }
 
         $client  = $jalon->mission->client;
-        $otp     = $this->otpService->sendOtp($client->phone);
+        $otp     = $this->otpService->sendOtp($client->phone, null, $channel);
         $expires = now()->addMinutes(config('prosartisan.otp.ttl', 5));
 
         $jalon->update([
