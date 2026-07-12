@@ -81,6 +81,12 @@ return [
         'sender_id' => env('SMS_SENDER_ID', 'ProsArtisan'),
     ],
 
+    'whatsapp' => [
+        'provider' => env('WHATSAPP_PROVIDER', 'log'), // 'log' or 'api'
+        'api_token' => env('WHATSAPP_API_TOKEN'),
+        'base_url' => env('WHATSAPP_BASE_URL', 'https://api.whatsapp.com/v1'),
+    ],
+
     'gemini' => [
         'api_key' => env('GEMINI_API_KEY'),
         'model' => env('GEMINI_MODEL', 'gemini-1.5-flash'),
