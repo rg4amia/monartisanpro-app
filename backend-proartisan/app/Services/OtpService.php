@@ -11,18 +11,20 @@ class OtpService
     private int $length;
     private int $ttlMinutes;
     private SmsService $smsService;
+    private WhatsAppService $whatsAppService;
 
-    public function __construct(SmsService $smsService)
+    public function __construct(SmsService $smsService, WhatsAppService $whatsAppService)
     {
-        $this->length     = config('prosartisan.otp.length', 4);
-        $this->ttlMinutes = config('prosartisan.otp.ttl', 5);
-        $this->smsService = $smsService;
+        $this->length          = config('prosartisan.otp.length', 4);
+        $this->ttlMinutes      = config('prosartisan.otp.ttl', 5);
+        $this->smsService      = $smsService;
+        $this->whatsAppService = $whatsAppService;
     }
 
     /**
-     * Génère et envoie un OTP par SMS via SMS Pro Africa.
+     * Génère et envoie un OTP par SMS ou WhatsApp.
      */
-    public function sendOtp(string $phone, ?string $action = null): string
+    public function sendOtp(string $phone, ?string $action = null, string $channel = 'sms'): string
     {
         $otp = $this->generate();
 
@@ -36,14 +38,26 @@ class OtpService
             'expires_at' => now()->addMinutes($this->ttlMinutes),
         ]);
 
-        // Send via SMS Pro Africa
-        $result = $this->smsService->sendOtp($phone, $otp);
+        if (strtolower($channel) === 'whatsapp') {
+            // Send via WhatsApp
+            $result = $this->whatsAppService->sendOtp($phone, $otp);
 
-        if ($result['status'] !== 'success') {
-            Log::error('[OTP] Failed to send SMS', [
-                'phone' => $phone,
-                'error' => $result['message'] ?? 'Unknown error',
-            ]);
+            if ($result['status'] !== 'success') {
+                Log::error('[OTP] Failed to send WhatsApp', [
+                    'phone' => $phone,
+                    'error' => $result['message'] ?? 'Unknown error',
+                ]);
+            }
+        } else {
+            // Send via SMS
+            $result = $this->smsService->sendOtp($phone, $otp);
+
+            if ($result['status'] !== 'success') {
+                Log::error('[OTP] Failed to send SMS', [
+                    'phone' => $phone,
+                    'error' => $result['message'] ?? 'Unknown error',
+                ]);
+            }
         }
 
         return $otp;
