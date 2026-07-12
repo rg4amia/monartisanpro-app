@@ -127,3 +127,35 @@ test('it can send OTP via WhatsApp channel', function () {
         'used_at' => null,
     ]);
 });
+
+test('it respects global otp_delivery_channel setting', function () {
+    $phone = '2250707123456';
+
+    // 1. WhatsApp only setting
+    \Illuminate\Support\Facades\DB::table('settings')->updateOrInsert(
+        ['key' => 'otp_delivery_channel'],
+        ['value' => 'whatsapp', 'type' => 'string']
+    );
+
+    \Illuminate\Support\Facades\Log::shouldReceive('info')
+        ->once()
+        ->with('WhatsApp OTP (log mode)', Mockery::any());
+
+    $this->otpService->sendOtp($phone);
+
+    // 2. Both setting
+    \Illuminate\Support\Facades\DB::table('settings')->updateOrInsert(
+        ['key' => 'otp_delivery_channel'],
+        ['value' => 'both', 'type' => 'string']
+    );
+
+    \Illuminate\Support\Facades\Log::shouldReceive('info')
+        ->once()
+        ->with('SMS (log mode)', Mockery::any());
+
+    \Illuminate\Support\Facades\Log::shouldReceive('info')
+        ->once()
+        ->with('WhatsApp OTP (log mode)', Mockery::any());
+
+    $this->otpService->sendOtp($phone);
+});

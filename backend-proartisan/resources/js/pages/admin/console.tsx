@@ -2062,18 +2062,34 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                                             <p className="text-xs text-[var(--admin-muted)] mt-1">{setting.description}</p>
                                                         </div>
                                                         <div className="flex items-center gap-3 shrink-0">
-                                                            <input
-                                                                type="text"
-                                                                defaultValue={setting.value}
-                                                                onBlur={(e) => {
-                                                                    if (e.target.value !== setting.value) {
+                                                            {setting.key === 'otp_delivery_channel' ? (
+                                                                <select
+                                                                    defaultValue={setting.value}
+                                                                    onChange={(e) => {
                                                                         router.put(`/admin/settings/${setting.id}`, {
                                                                             value: e.target.value,
                                                                         }, { preserveScroll: true });
-                                                                    }
-                                                                }}
-                                                                className="admin-input w-48 rounded-xl px-3 py-2 text-sm text-center outline-none"
-                                                            />
+                                                                    }}
+                                                                    className="admin-input w-48 rounded-xl px-3 py-2 text-sm text-center outline-none bg-white border border-[var(--admin-border)]"
+                                                                >
+                                                                    <option value="sms">SMS uniquement</option>
+                                                                    <option value="whatsapp">WhatsApp uniquement</option>
+                                                                    <option value="both">SMS & WhatsApp</option>
+                                                                </select>
+                                                            ) : (
+                                                                <input
+                                                                    type="text"
+                                                                    defaultValue={setting.value}
+                                                                    onBlur={(e) => {
+                                                                        if (e.target.value !== setting.value) {
+                                                                            router.put(`/admin/settings/${setting.id}`, {
+                                                                                value: e.target.value,
+                                                                            }, { preserveScroll: true });
+                                                                        }
+                                                                    }}
+                                                                    className="admin-input w-48 rounded-xl px-3 py-2 text-sm text-center outline-none"
+                                                                />
+                                                            )}
                                                             <span className="text-xs text-[var(--admin-muted)] uppercase tracking-wider font-semibold">
                                                                 {setting.type}
                                                             </span>
