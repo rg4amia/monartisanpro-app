@@ -12,6 +12,7 @@ class DatabaseSeeder extends Seeder
             CommuneSeeder::class, // Communes Abidjan (géographie)
             SectorSeeder::class, // Secteurs + Métiers en premier
             UserSeeder::class,   // Users de test
+            PermissionSeeder::class,
         ]);
     }
 }

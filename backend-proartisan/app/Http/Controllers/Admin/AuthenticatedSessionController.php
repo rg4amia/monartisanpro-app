@@ -24,8 +24,13 @@ class AuthenticatedSessionController extends Controller
 
     public function create(Request $request): Response|RedirectResponse
     {
-        if ($request->user()?->role === 'admin') {
-            return redirect()->route('admin.dashboard');
+        if ($request->user()) {
+            if ($request->user()->role === 'admin') {
+                return redirect()->route('admin.dashboard');
+            }
+            if ($request->user()->role === 'fournisseur') {
+                return redirect()->route('supplier.dashboard');
+            }
         }
 
         return Inertia::render('admin/auth/login');
@@ -136,7 +141,8 @@ class AuthenticatedSessionController extends Controller
         session()->forget(['admin_2fa_user_id', 'admin_2fa_remember', 'admin_2fa_temp_secret']);
         $request->session()->regenerate();
 
-        return redirect()->intended(route('admin.dashboard'))
+        $redirectRoute = $user->role === 'fournisseur' ? 'supplier.dashboard' : 'admin.dashboard';
+        return redirect()->intended(route($redirectRoute))
             ->with('success', 'Connexion réussie.');
     }
 

@@ -55,6 +55,11 @@ class BackofficeController extends Controller
         return $this->renderPage('admin/settings');
     }
 
+    public function rolesPermissions(): Response
+    {
+        return $this->renderPage('admin/roles-permissions');
+    }
+
     public function llmAdmin(): Response
     {
         return $this->renderPage('admin/llm-admin');
@@ -215,6 +220,34 @@ class BackofficeController extends Controller
             'transactions' => $this->adminService->listTransactions(null, null, 100)->items(),
             'users' => $this->adminService->listUsers(null, null, null, 100)->items(),
             'settingsList' => \App\Models\Setting::all(),
+            'allPermissions' => \App\Models\Permission::all(),
+            'rolesPermissions' => [
+                'client' => \Illuminate\Support\Facades\DB::table('permission_role')
+                    ->join('permissions', 'permission_role.permission_id', '=', 'permissions.id')
+                    ->where('permission_role.role', 'client')
+                    ->pluck('permissions.name')
+                    ->toArray(),
+                'artisan' => \Illuminate\Support\Facades\DB::table('permission_role')
+                    ->join('permissions', 'permission_role.permission_id', '=', 'permissions.id')
+                    ->where('permission_role.role', 'artisan')
+                    ->pluck('permissions.name')
+                    ->toArray(),
+                'fournisseur' => \Illuminate\Support\Facades\DB::table('permission_role')
+                    ->join('permissions', 'permission_role.permission_id', '=', 'permissions.id')
+                    ->where('permission_role.role', 'fournisseur')
+                    ->pluck('permissions.name')
+                    ->toArray(),
+                'referent' => \Illuminate\Support\Facades\DB::table('permission_role')
+                    ->join('permissions', 'permission_role.permission_id', '=', 'permissions.id')
+                    ->where('permission_role.role', 'referent')
+                    ->pluck('permissions.name')
+                    ->toArray(),
+                'admin' => \Illuminate\Support\Facades\DB::table('permission_role')
+                    ->join('permissions', 'permission_role.permission_id', '=', 'permissions.id')
+                    ->where('permission_role.role', 'admin')
+                    ->pluck('permissions.name')
+                    ->toArray(),
+            ],
         ]);
     }
 }

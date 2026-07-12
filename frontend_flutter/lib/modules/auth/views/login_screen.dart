@@ -185,13 +185,26 @@ class _LoginScreenState extends State<LoginScreen>
   Widget _buildWelcomeSection() {
     return Column(
       children: [
-        // Logo with subtle animation
+        // Logo with glow & subtle animation
         Hero(
           tag: 'app_logo',
-          child: Image.asset(
-            'assets/logo/logos.png',
-            width: 100,
-            height: 100,
+          child: Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withOpacity(0.15),
+                  blurRadius: 24,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Image.asset(
+              'assets/logo/logos.png',
+              width: 100,
+              height: 100,
+            ),
           ),
         ),
         const SizedBox(height: 16),
@@ -206,23 +219,30 @@ class _LoginScreenState extends State<LoginScreen>
             'Client, artisan ou fournisseur',
             style: TextStyle(
               fontSize: 12,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w800,
               color: _Dt.primary,
-              letterSpacing: 0.2,
+              letterSpacing: 0.4,
             ),
           ),
         ),
         const SizedBox(height: 14),
-        const Text(
-          'Bienvenue sur ProsArtisan',
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.w900,
-            color: _Dt.ink,
-            letterSpacing: -0.8,
-            height: 1.1,
+        ShaderMask(
+          shaderCallback: (bounds) => const LinearGradient(
+            colors: [Color(0xFF1E1E1E), Color(0xFFC0842C)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ).createShader(bounds),
+          child: const Text(
+            'Bienvenue sur ProsArtisan',
+            style: TextStyle(
+              fontSize: 30,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+              letterSpacing: -0.8,
+              height: 1.1,
+            ),
+            textAlign: TextAlign.center,
           ),
-          textAlign: TextAlign.center,
         ),
         const SizedBox(height: 10),
 
@@ -309,102 +329,110 @@ class _LoginScreenState extends State<LoginScreen>
     final accent = _roleColor(label);
     return GestureDetector(
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 280),
-        curve: Curves.easeOutCubic,
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? accent.withValues(alpha: 0.10) : _Dt.surface,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isSelected ? accent : _Dt.border,
-            width: isSelected ? 2.5 : 1.5,
+      child: AnimatedScale(
+        scale: isSelected ? 1.03 : 1.0,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutBack,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 280),
+          curve: Curves.easeOutCubic,
+          transform: isSelected
+              ? Matrix4.translationValues(0, -5, 0)
+              : Matrix4.identity(),
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+          decoration: BoxDecoration(
+            color: isSelected ? accent.withValues(alpha: 0.10) : _Dt.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isSelected ? accent : _Dt.border,
+              width: isSelected ? 2.5 : 1.5,
+            ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: accent.withValues(alpha: 0.20),
+                      blurRadius: 18,
+                      offset: const Offset(0, 8),
+                    ),
+                  ]
+                : [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.03),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
           ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: accent.withValues(alpha: 0.20),
-                    blurRadius: 16,
-                    offset: const Offset(0, 6),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Stack(
+                clipBehavior: Clip.none,
+                alignment: Alignment.center,
+                children: [
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 280),
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      gradient: isSelected
+                          ? LinearGradient(
+                              colors: [accent, accent.withValues(alpha: 0.82)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            )
+                          : null,
+                      color: isSelected ? null : _Dt.bg,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Center(
+                      child: Text(
+                        emoji,
+                        style: const TextStyle(fontSize: 28),
+                      ),
+                    ),
                   ),
-                ]
-              : [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
+                  if (isSelected)
+                    Positioned(
+                      top: -6,
+                      right: -6,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: accent,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: accent.withValues(alpha: 0.35),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.check_rounded,
+                          color: Colors.white,
+                          size: 12,
+                        ),
+                      ),
+                    ),
                 ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Stack(
-              clipBehavior: Clip.none,
-              alignment: Alignment.center,
-              children: [
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 280),
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    gradient: isSelected
-                        ? LinearGradient(
-                            colors: [accent, accent.withValues(alpha: 0.82)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          )
-                        : null,
-                    color: isSelected ? null : _Dt.bg,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Center(
-                    child: Text(
-                      emoji,
-                      style: const TextStyle(fontSize: 28),
-                    ),
-                  ),
-                ),
-                if (isSelected)
-                  Positioned(
-                    top: -6,
-                    right: -6,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: accent,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: accent.withValues(alpha: 0.35),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.check_rounded,
-                        color: Colors.white,
-                        size: 12,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11.5,
-                fontWeight: FontWeight.w800,
-                color: isSelected ? accent : _Dt.ink,
-                letterSpacing: 0.4,
               ),
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
+              const SizedBox(height: 10),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w900,
+                  color: isSelected ? accent : _Dt.ink,
+                  letterSpacing: 0.4,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -418,18 +446,21 @@ class _LoginScreenState extends State<LoginScreen>
       children: [
         Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: AppColors.clientSoft,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(
-                Icons.phone_outlined,
-                color: _Dt.primary,
-                size: 18,
-              ),
-            ),
+            Obx(() {
+              final activeColor = _roleColor(_selectedProfile.value);
+              return Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: activeColor.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.phone_outlined,
+                  color: activeColor,
+                  size: 18,
+                ),
+              );
+            }),
             const SizedBox(width: 10),
             const Text(
               'Numéro de téléphone',
@@ -442,50 +473,52 @@ class _LoginScreenState extends State<LoginScreen>
           ],
         ),
         const SizedBox(height: 12),
-        Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
-                decoration: BoxDecoration(
-                  color: _Dt.surface,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(12),
-                    bottomLeft: Radius.circular(12),
-                  ),
-                  border: Border.all(color: _Dt.border, width: 1.5),
+        Obx(() {
+          final activeColor = _roleColor(_selectedProfile.value);
+          final hasContent = _c.phone.value.length > 4;
+          return Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: activeColor.withOpacity(0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
                 ),
-                child: const Row(
-                  children: [
-                    Text('🇨🇮', style: TextStyle(fontSize: 20)),
-                    SizedBox(width: 8),
-                    Text(
-                      '+225',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 15,
-                        color: _Dt.ink,
-                      ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+                  decoration: BoxDecoration(
+                    color: _Dt.surface,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(16),
+                      bottomLeft: Radius.circular(16),
                     ),
-                  ],
+                    border: Border.all(
+                      color: _selectedProfile.value != null ? activeColor.withOpacity(0.6) : _Dt.border,
+                      width: 1.5,
+                    ),
+                  ),
+                  child: const Row(
+                    children: [
+                      Text('🇨🇮', style: TextStyle(fontSize: 20)),
+                      SizedBox(width: 8),
+                      Text(
+                        '+225',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 15,
+                          color: _Dt.ink,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              Expanded(
-                child: Obx(() {
-                  final hasContent =
-                      _c.phone.value.length > 4; // Use observable instead
-                  return TextFormField(
+                Expanded(
+                  child: TextFormField(
                     controller: _phoneCtrl,
                     onChanged: (v) => _c.phone.value = '+225$v',
                     keyboardType: TextInputType.phone,
@@ -505,9 +538,9 @@ class _LoginScreenState extends State<LoginScreen>
                         letterSpacing: 1.2,
                       ),
                       suffixIcon: hasContent
-                          ? const Icon(
+                          ? Icon(
                               Icons.check_circle,
-                              color: _Dt.success,
+                              color: _roleColor(_selectedProfile.value),
                               size: 20,
                             )
                           : null,
@@ -516,36 +549,42 @@ class _LoginScreenState extends State<LoginScreen>
                         horizontal: 16,
                         vertical: 16,
                       ),
-                      border: const OutlineInputBorder(
-                        borderRadius: BorderRadius.only(
-                          topRight: Radius.circular(12),
-                          bottomRight: Radius.circular(12),
+                      border: OutlineInputBorder(
+                        borderRadius: const BorderRadius.only(
+                          topRight: Radius.circular(16),
+                          bottomRight: Radius.circular(16),
                         ),
-                        borderSide: BorderSide(color: _Dt.border, width: 1.5),
+                        borderSide: BorderSide(
+                          color: _selectedProfile.value != null ? activeColor.withOpacity(0.6) : _Dt.border,
+                          width: 1.5,
+                        ),
                       ),
-                      enabledBorder: const OutlineInputBorder(
-                        borderRadius: BorderRadius.only(
-                          topRight: Radius.circular(12),
-                          bottomRight: Radius.circular(12),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: const BorderRadius.only(
+                          topRight: Radius.circular(16),
+                          bottomRight: Radius.circular(16),
                         ),
-                        borderSide: BorderSide(color: _Dt.border, width: 1.5),
+                        borderSide: BorderSide(
+                          color: _selectedProfile.value != null ? activeColor.withOpacity(0.6) : _Dt.border,
+                          width: 1.5,
+                        ),
                       ),
-                      focusedBorder: const OutlineInputBorder(
-                        borderRadius: BorderRadius.only(
-                          topRight: Radius.circular(12),
-                          bottomRight: Radius.circular(12),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: const BorderRadius.only(
+                          topRight: Radius.circular(16),
+                          bottomRight: Radius.circular(16),
                         ),
-                        borderSide: BorderSide(color: _Dt.primary, width: 2.5),
+                        borderSide: BorderSide(color: activeColor, width: 2.5),
                       ),
                       fillColor: _Dt.surface,
                       filled: true,
                     ),
-                  );
-                }),
-              ),
-            ],
-          ),
-        ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
       ],
     );
   }
@@ -553,96 +592,94 @@ class _LoginScreenState extends State<LoginScreen>
   // ── KYC Notice ────────────────────────────────────────────────────────────
 
   Widget _buildKycNotice() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.clientSoft,
-            AppColors.secondary,
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    return Obx(() {
+      final activeColor = _roleColor(_selectedProfile.value);
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              activeColor.withOpacity(0.06),
+              activeColor.withOpacity(0.02),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: activeColor.withOpacity(0.18),
+            width: 1.5,
+          ),
         ),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: _Dt.primary.withValues(alpha: 0.12),
-          width: 1.5,
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(7),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  AppColors.client.withValues(alpha: 0.18),
-                  AppColors.client.withValues(alpha: 0.10),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(7),
+              decoration: BoxDecoration(
+                color: activeColor.withOpacity(0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.verified_user_outlined,
+                color: activeColor,
+                size: 18,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Vérification KYC requise',
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w800,
+                      color: _Dt.ink,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  RichText(
+                    text: TextSpan(
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: _Dt.muted,
+                        fontWeight: FontWeight.w600,
+                        height: 1.5,
+                      ),
+                      children: [
+                        const TextSpan(
+                          text: 'Préparez votre ',
+                        ),
+                        TextSpan(
+                          text: 'CNI',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            color: activeColor,
+                          ),
+                        ),
+                        const TextSpan(text: ' et un '),
+                        TextSpan(
+                          text: 'selfie',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            color: activeColor,
+                          ),
+                        ),
+                        const TextSpan(
+                          text: ' pour validation.',
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
-              shape: BoxShape.circle,
             ),
-            child: const Icon(
-              Icons.verified_user_outlined,
-              color: _Dt.primary,
-              size: 18,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Vérification KYC requise',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                    color: _Dt.ink,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                RichText(
-                  text: const TextSpan(
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: _Dt.muted,
-                      fontWeight: FontWeight.w500,
-                      height: 1.5,
-                    ),
-                    children: [
-                      TextSpan(
-                        text: 'Préparez votre ',
-                      ),
-                      TextSpan(
-                        text: 'CNI',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w800,
-                          color: _Dt.primary,
-                        ),
-                      ),
-                      TextSpan(text: ' et un '),
-                      TextSpan(
-                        text: 'selfie',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w800,
-                          color: _Dt.primary,
-                        ),
-                      ),
-                      TextSpan(
-                        text: ' pour validation.',
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    });
   }
 
   // ── Continue Button ───────────────────────────────────────────────────────
@@ -651,25 +688,27 @@ class _LoginScreenState extends State<LoginScreen>
     return Obx(() {
       final canContinue =
           _selectedProfile.value != null && _c.phone.value.length >= 14;
+      final activeColor = _roleColor(_selectedProfile.value);
+      final darkActiveColor = Color.alphaBlend(Colors.black.withOpacity(0.15), activeColor);
 
       return AnimatedContainer(
         duration: const Duration(milliseconds: 300),
-        height: 54,
+        height: 56,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(28),
           gradient: canContinue
-              ? const LinearGradient(
-                  colors: [_Dt.primary, AppColors.client],
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
+              ? LinearGradient(
+                  colors: [activeColor, darkActiveColor],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 )
               : null,
-          color: canContinue ? null : _Dt.border,
+          color: canContinue ? null : const Color(0xFFE0E0E0),
           boxShadow: canContinue
               ? [
                   BoxShadow(
-                    color: _Dt.primary.withValues(alpha: 0.35),
-                    blurRadius: 20,
+                    color: activeColor.withOpacity(0.35),
+                    blurRadius: 16,
                     offset: const Offset(0, 8),
                   ),
                 ]
@@ -683,11 +722,11 @@ class _LoginScreenState extends State<LoginScreen>
             backgroundColor: Colors.transparent,
             foregroundColor: Colors.white,
             disabledBackgroundColor: Colors.transparent,
-            disabledForegroundColor: _Dt.muted,
+            disabledForegroundColor: const Color(0xFF9E9E9E),
             shadowColor: Colors.transparent,
             elevation: 0,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(28),
             ),
           ),
           child: _c.isLoading.value
@@ -706,13 +745,14 @@ class _LoginScreenState extends State<LoginScreen>
                       'Continuer',
                       style: TextStyle(
                         fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.3,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.5,
                       ),
                     ),
                     const SizedBox(width: 10),
                     AnimatedRotation(
-                      duration: const Duration(milliseconds: 300),
+                      duration: const Duration(milliseconds: 350),
+                      curve: Curves.easeOutBack,
                       turns: canContinue ? 0 : -0.25,
                       child: const Icon(Icons.arrow_forward_rounded, size: 20),
                     ),
@@ -888,7 +928,8 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  Color _roleColor(String label) {
+  Color _roleColor(String? label) {
+    if (label == null) return _Dt.primary;
     switch (label) {
       case 'ARTISAN':
         return _Dt.artisan;

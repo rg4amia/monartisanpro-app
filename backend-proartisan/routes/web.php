@@ -3,9 +3,29 @@
 use App\Http\Controllers\Admin\AuthenticatedSessionController;
 use App\Http\Controllers\Admin\BackofficeController;
 use App\Http\Controllers\Admin\LlmAdminController;
+use App\Http\Controllers\Supplier\SupplierBackofficeController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
+
+Route::prefix('supplier')->name('supplier.')->group(function () {
+    Route::middleware(['auth', 'supplier.only'])->group(function () {
+        Route::get('/', fn() => redirect()->route('supplier.dashboard'))->name('index');
+        Route::get('/dashboard', [SupplierBackofficeController::class, 'dashboard'])->name('dashboard');
+        Route::get('/catalog', [SupplierBackofficeController::class, 'catalog'])->name('catalog');
+        Route::get('/orders', [SupplierBackofficeController::class, 'orders'])->name('orders');
+        Route::get('/litiges', [SupplierBackofficeController::class, 'litiges'])->name('litiges');
+
+        // Web Actions to bypass Sanctum on Web Backoffice
+        Route::post('/upload', [\App\Http\Controllers\Api\V1\UploadController::class, 'upload'])->name('upload');
+        Route::post('/products', [\App\Http\Controllers\Api\V1\SupplierCatalogController::class, 'store'])->name('products.store');
+        Route::put('/products/{supplierProduct}', [\App\Http\Controllers\Api\V1\SupplierCatalogController::class, 'update'])->name('products.update');
+        Route::delete('/products/{supplierProduct}', [\App\Http\Controllers\Api\V1\SupplierCatalogController::class, 'destroy'])->name('products.destroy');
+        Route::post('/orders/{order}/prepared', [\App\Http\Controllers\Api\V1\OrderController::class, 'markPrepared'])->name('orders.prepared');
+        Route::post('/orders/{order}/verify-pickup', [\App\Http\Controllers\Api\V1\OrderController::class, 'verifyPickup'])->name('orders.verify-pickup');
+        Route::post('/logout', [\App\Http\Controllers\Admin\AuthenticatedSessionController::class, 'destroy'])->name('logout');
+    });
+});
 
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::middleware('guest')->group(function () {
@@ -30,6 +50,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/transactions', [BackofficeController::class, 'transactions'])->name('transactions');
         Route::get('/llm-admin', [BackofficeController::class, 'llmAdmin'])->name('llm-admin');
         Route::get('/settings', [BackofficeController::class, 'settings'])->name('settings');
+        Route::get('/roles-permissions', [BackofficeController::class, 'rolesPermissions'])->name('roles-permissions');
         Route::put('/settings/{setting}', [BackofficeController::class, 'updateSetting'])->name('settings.update');
 
         Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');

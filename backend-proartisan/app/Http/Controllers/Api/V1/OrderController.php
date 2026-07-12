@@ -126,10 +126,13 @@ class OrderController extends Controller
      * Marquer la commande préparée par le fournisseur.
      * POST /api/v1/orders/{order}/prepared
      */
-    public function markPrepared(Order $order, Request $request): JsonResponse
+    public function markPrepared(Order $order, Request $request): JsonResponse|\Illuminate\Http\RedirectResponse
     {
         $user = $request->user();
         if ($order->supplier_id !== $user->id) {
+            if ($request->header('X-Inertia')) {
+                return back()->withErrors(['message' => 'Seul le fournisseur peut préparer cette commande.']);
+            }
             return response()->json([
                 'success' => false,
                 'message' => 'Seul le fournisseur peut préparer cette commande.',
@@ -139,12 +142,19 @@ class OrderController extends Controller
         try {
             $this->orderService->markAsPrepared($order);
 
+            if ($request->header('X-Inertia')) {
+                return back();
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Commande marquée comme préparée.',
                 'data' => $order->fresh(),
             ]);
         } catch (\Exception $e) {
+            if ($request->header('X-Inertia')) {
+                return back()->withErrors(['message' => $e->getMessage()]);
+            }
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
@@ -156,13 +166,16 @@ class OrderController extends Controller
      * Validation du code de retrait (chez le fournisseur).
      * POST /api/v1/orders/{order}/verify-pickup
      */
-    public function verifyPickup(Request $request, Order $order): JsonResponse
+    public function verifyPickup(Request $request, Order $order): JsonResponse|\Illuminate\Http\RedirectResponse
     {
         $validator = Validator::make($request->all(), [
             'code' => 'required|string',
         ]);
 
         if ($validator->fails()) {
+            if ($request->header('X-Inertia')) {
+                return back()->withErrors(['code' => 'Le code de validation est requis.']);
+            }
             return response()->json([
                 'success' => false,
                 'message' => 'Le code de validation est requis.',
@@ -172,6 +185,9 @@ class OrderController extends Controller
         // Vérification des droits d'appel (fournisseur ou livreur assigné)
         $user = $request->user();
         if ($order->supplier_id !== $user->id && $order->driver_id !== $user->id && $order->client_id !== $user->id) {
+            if ($request->header('X-Inertia')) {
+                return back()->withErrors(['message' => 'Non autorisé.']);
+            }
             return response()->json([
                 'success' => false,
                 'message' => 'Non autorisé.',
@@ -181,12 +197,19 @@ class OrderController extends Controller
         try {
             $this->orderService->verifyPickup($order, $request->code);
 
+            if ($request->header('X-Inertia')) {
+                return back();
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Prise en charge / Retrait validé avec succès. Fonds matériels libérés.',
                 'data' => $order->fresh(),
             ]);
         } catch (\Exception $e) {
+            if ($request->header('X-Inertia')) {
+                return back()->withErrors(['message' => $e->getMessage()]);
+            }
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),

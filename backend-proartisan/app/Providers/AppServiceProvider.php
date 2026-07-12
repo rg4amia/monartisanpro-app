@@ -10,6 +10,7 @@ use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Http\Request;
 
 class AppServiceProvider extends ServiceProvider
@@ -29,6 +30,16 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->configureRateLimiting();
+
+        // Enregistrement des rôles et permissions
+        Gate::before(function ($user, $ability) {
+            if ($user->role === 'admin') {
+                return true;
+            }
+            if (method_exists($user, 'hasPermissionTo')) {
+                return $user->hasPermissionTo($ability);
+            }
+        });
     }
 
     /**

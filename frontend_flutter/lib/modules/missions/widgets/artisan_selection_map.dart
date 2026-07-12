@@ -535,6 +535,7 @@ class _MapSummaryCard extends StatelessWidget {
             ? controller.locationDetail.value
             : 'Position du client';
     final artisansCount = controller.artisans.length;
+    final hasNoNearby = artisansCount > 0 && (controller.artisans.first.distanceMetres ?? 0.0) > 5000;
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -631,6 +632,33 @@ class _MapSummaryCard extends StatelessWidget {
               ),
             ],
           ),
+          if (hasNoNearby) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFC0842C).withOpacity(0.08),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFC0842C).withOpacity(0.2)),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.info_outline, color: Color(0xFFC0842C), size: 16),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Aucun artisan à moins de 5 km. Recherche élargie à d\'autres communes.',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
+                        color: _Palette.ink,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );

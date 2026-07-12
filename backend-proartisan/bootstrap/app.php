@@ -33,6 +33,14 @@ return Application::configure(basePath: dirname(__DIR__))
             return route('home');
         });
 
+        $middleware->redirectUsersTo(function (Request $request): string {
+            $user = $request->user();
+            if ($user && $user->role === 'fournisseur') {
+                return route('supplier.dashboard');
+            }
+            return route('admin.dashboard');
+        });
+
         $middleware->api(prepend: [
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
         ]);
@@ -41,6 +49,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'kyc.verified' => \App\Http\Middleware\KycVerified::class,
             'admin.only' => \App\Http\Middleware\AdminOnly::class,
             'account.active' => \App\Http\Middleware\AccountActive::class,
+            'supplier.only' => \App\Http\Middleware\SupplierOnly::class,
         ]);
 
         $middleware->validateCsrfTokens(except: [
