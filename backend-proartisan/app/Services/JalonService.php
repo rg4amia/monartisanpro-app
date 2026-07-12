@@ -118,7 +118,7 @@ class JalonService
     /**
      * Envoie l'OTP de validation au client par SMS ou WhatsApp.
      */
-    public function requestOtp(Jalon $jalon, string $channel = 'sms'): void
+    public function requestOtp(Jalon $jalon, ?string $channel = null): void
     {
         if ($jalon->mission->isFundsFrozen()) {
             throw ValidationException::withMessages([

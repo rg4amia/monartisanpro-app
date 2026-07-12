@@ -24,12 +24,24 @@ class AuthController extends Controller
      */
     public function sendOtp(SendOtpRequest $request): JsonResponse
     {
-        $channel = $request->input('channel', 'sms');
+        $channel = $request->input('channel');
         $this->otpService->sendOtp($request->phone, null, $channel);
+
+        $globalChannel = \App\Models\Setting::getValueByKey('otp_delivery_channel', 'sms');
+        $effectiveChannel = $channel ?: $globalChannel;
+
+        $msg = 'Code OTP envoyé.';
+        if ($effectiveChannel === 'both') {
+            $msg = 'Code OTP envoyé par SMS et WhatsApp.';
+        } elseif ($effectiveChannel === 'whatsapp') {
+            $msg = 'Code OTP envoyé par WhatsApp.';
+        } else {
+            $msg = 'Code OTP envoyé par SMS.';
+        }
 
         return response()->json([
             'success'    => true,
-            'message'    => $channel === 'whatsapp' ? 'Code OTP envoyé par WhatsApp.' : 'Code OTP envoyé par SMS.',
+            'message'    => $msg,
             'expires_in' => $this->otpService->ttlSeconds(),
         ]);
     }

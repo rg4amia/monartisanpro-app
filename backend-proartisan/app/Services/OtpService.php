@@ -24,7 +24,7 @@ class OtpService
     /**
      * Génère et envoie un OTP par SMS ou WhatsApp.
      */
-    public function sendOtp(string $phone, ?string $action = null, string $channel = 'sms'): string
+    public function sendOtp(string $phone, ?string $action = null, ?string $channel = null): string
     {
         $otp = $this->generate();
 
@@ -38,7 +38,28 @@ class OtpService
             'expires_at' => now()->addMinutes($this->ttlMinutes),
         ]);
 
-        if (strtolower($channel) === 'whatsapp') {
+        $globalChannel = \App\Models\Setting::getValueByKey('otp_delivery_channel', 'sms');
+        $resolvedChannel = $channel ?: $globalChannel;
+
+        if (strtolower($resolvedChannel) === 'both') {
+            // Envoi par SMS
+            $smsResult = $this->smsService->sendOtp($phone, $otp);
+            if ($smsResult['status'] !== 'success') {
+                Log::error('[OTP] Failed to send SMS (both)', [
+                    'phone' => $phone,
+                    'error' => $smsResult['message'] ?? 'Unknown error',
+                ]);
+            }
+
+            // Envoi par WhatsApp
+            $waResult = $this->whatsAppService->sendOtp($phone, $otp);
+            if ($waResult['status'] !== 'success') {
+                Log::error('[OTP] Failed to send WhatsApp (both)', [
+                    'phone' => $phone,
+                    'error' => $waResult['message'] ?? 'Unknown error',
+                ]);
+            }
+        } elseif (strtolower($resolvedChannel) === 'whatsapp') {
             // Send via WhatsApp
             $result = $this->whatsAppService->sendOtp($phone, $otp);
 

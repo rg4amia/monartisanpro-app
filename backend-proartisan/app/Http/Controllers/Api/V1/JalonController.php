@@ -65,8 +65,8 @@ class JalonController extends Controller
             ], 422);
         }
 
-        $channel = $request->input('channel', 'sms');
-        if (!in_array($channel, ['sms', 'whatsapp'])) {
+        $channel = $request->input('channel');
+        if ($channel && !in_array($channel, ['sms', 'whatsapp'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Le canal de communication doit être "sms" ou "whatsapp".',
@@ -75,9 +75,21 @@ class JalonController extends Controller
 
         $this->jalonService->requestOtp($jalon, $channel);
 
+        $globalChannel = \App\Models\Setting::getValueByKey('otp_delivery_channel', 'sms');
+        $effectiveChannel = $channel ?: $globalChannel;
+
+        $msg = 'Code OTP envoyé au client.';
+        if ($effectiveChannel === 'both') {
+            $msg = 'Code OTP envoyé par SMS et WhatsApp au client.';
+        } elseif ($effectiveChannel === 'whatsapp') {
+            $msg = 'Code OTP envoyé par WhatsApp au client.';
+        } else {
+            $msg = 'Code OTP envoyé par SMS au client.';
+        }
+
         return response()->json([
             'success' => true,
-            'message' => $channel === 'whatsapp' ? 'Code OTP envoyé par WhatsApp au client.' : 'Code OTP envoyé par SMS au client.',
+            'message' => $msg,
             'expires_in' => config('prosartisan.otp.ttl', 5) * 60,
         ]);
     }
