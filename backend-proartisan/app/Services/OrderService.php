@@ -138,6 +138,22 @@ class OrderService
                 ],
             ]);
 
+            // Notification Fournisseur
+            app(\App\Services\NotificationService::class)->send(
+                $supplier,
+                'payment',
+                'Nouvelle commande reçue',
+                "La commande #{$order->id} d'un montant de " . number_format($order->subtotal, 0, ',', ' ') . " FCFA a été payée et est en attente de préparation."
+            );
+
+            // Notification Client
+            app(\App\Services\NotificationService::class)->send(
+                $client,
+                'payment',
+                'Paiement commande confirmé',
+                "Votre paiement de " . number_format($order->total_amount, 0, ',', ' ') . " FCFA pour la commande #{$order->id} est sécurisé en compte séquestre."
+            );
+
             return $order;
         });
     }
@@ -153,6 +169,19 @@ class OrderService
 
         $nextStatus = $order->delivery_mode === 'delivery' ? 'searching_driver' : 'prepared';
         $order->update(['status' => $nextStatus]);
+
+        if ($nextStatus === 'prepared') {
+            // Retrait direct : Notifier le client de venir récupérer
+            app(\App\Services\NotificationService::class)->send(
+                $order->client,
+                'payment',
+                'Commande prête pour retrait',
+                "Votre commande #{$order->id} est prête. Code de retrait : {$order->pickup_code}."
+            );
+        } else {
+            // Livraison : Notifier les livreurs de la zone de couverture
+            $this->notifyDriversInArea($order);
+        }
 
         return $order;
     }
@@ -174,6 +203,25 @@ class OrderService
             'driver_id' => $driver->id,
             'status' => 'driver_assigned',
         ]);
+
+        $supplierProfile = $order->supplier->fournisseurAgree;
+        $supplierAddress = $supplierProfile ? $supplierProfile->nom_boutique : 'le fournisseur';
+
+        // Notification Livreur (reçoit la situation géographique pour récupérer)
+        app(\App\Services\NotificationService::class)->send(
+            $driver,
+            'payment',
+            'Course acceptée',
+            "Rendez-vous chez {$supplierAddress} pour récupérer la marchandise. Code de prise en charge : {$order->pickup_code}."
+        );
+
+        // Notification Client
+        app(\App\Services\NotificationService::class)->send(
+            $order->client,
+            'payment',
+            'Livreur en route',
+            "Le livreur {$driver->name} a accepté votre livraison et se rend chez le fournisseur."
+        );
 
         return $order;
     }
@@ -197,6 +245,22 @@ class OrderService
 
                 $order->update(['status' => 'delivered']);
                 $this->releaseSupplierFunds($order);
+
+                // Notification Client
+                app(\App\Services\NotificationService::class)->send(
+                    $order->client,
+                    'payment',
+                    'Commande récupérée',
+                    "Votre commande #{$order->id} a été retirée en magasin. Merci de votre confiance !"
+                );
+
+                // Notification Fournisseur
+                app(\App\Services\NotificationService::class)->send(
+                    $order->supplier,
+                    'payment',
+                    'Retrait validé',
+                    "Le retrait de la commande #{$order->id} a été validé. Votre compte a été crédité."
+                );
             } else {
                 // Prise en charge par le livreur
                 if ($order->status !== 'driver_assigned') {
@@ -205,6 +269,23 @@ class OrderService
 
                 $order->update(['status' => 'driver_picked_up']); // ou shipping
                 $this->releaseSupplierFunds($order);
+
+                // Notification Livreur (reçoit code de réception et localisation client)
+                $clientAddress = $order->client->commune ? $order->client->commune->name : 'adresse du client';
+                app(\App\Services\NotificationService::class)->send(
+                    $order->driver,
+                    'payment',
+                    'Colis récupéré',
+                    "Colis récupéré. Livrez à : {$clientAddress}. Code de réception à demander au client : {$order->reception_code}."
+                );
+
+                // Notification Client
+                app(\App\Services\NotificationService::class)->send(
+                    $order->client,
+                    'payment',
+                    'Colis récupéré par le livreur',
+                    "Le livreur {$order->driver->name} a récupéré votre colis chez le fournisseur. Code de réception secret : {$order->reception_code}."
+                );
             }
 
             return $order;
@@ -235,6 +316,22 @@ class OrderService
             // Libération des fonds au livreur
             $this->releaseDriverFunds($order);
 
+            // Notification Client
+            app(\App\Services\NotificationService::class)->send(
+                $order->client,
+                'payment',
+                'Livraison effectuée',
+                "Votre commande #{$order->id} a été livrée avec succès par {$order->driver->name}."
+            );
+
+            // Notification Livreur
+            app(\App\Services\NotificationService::class)->send(
+                $order->driver,
+                'payment',
+                'Course terminée',
+                "Livraison confirmée. Les fonds de livraison de la commande #{$order->id} ont été libérés."
+            );
+
             return $order;
         });
     }
@@ -251,11 +348,11 @@ class OrderService
         $supplierCommission = (int) round($order->subtotal * $supplierCommissionRatio);
         $gainNetSupplier = $order->subtotal - $supplierCommission;
 
-        // Débiter le compte séquestre de la part matériaux
+        // Débiter le compte séquestre de la part matériaux (net)
         Transaction::create([
             'user_id' => $supplier->id,
             'type' => 'paiement_fournisseur',
-            'montant' => $order->subtotal,
+            'montant' => $gainNetSupplier,
             'wallet_source' => 'escrow_order_' . $order->id,
             'wallet_dest' => 'supplier_wallet_' . $supplier->id,
             'provider' => PaymentProvider::WAVE,
@@ -269,7 +366,7 @@ class OrderService
             ],
         ]);
 
-        // Créditer le wallet_materiaux du fournisseur
+        // Créditer le wallet_materiaux du fournisseur avec le gain net
         $this->walletService->credit(
             $supplier,
             WalletType::WALLET_MATERIAUX,
@@ -278,6 +375,17 @@ class OrderService
             [
                 'order_id' => $order->id,
                 'type' => 'ecom_supplier_payout',
+            ]
+        );
+
+        // Reverser les commissions cumulées (frais de service payés par le client + commission quincaillerie)
+        $totalPlatformCommission = $order->platform_fee + $supplierCommission;
+        $this->walletService->creditPlatformFinancialAccount(
+            $totalPlatformCommission,
+            "Commission plateforme commande e-commerce #{$order->id} (part matériaux)",
+            [
+                'order_id' => $order->id,
+                'type' => 'ecom_supplier_commission',
             ]
         );
     }
@@ -299,7 +407,7 @@ class OrderService
         Transaction::create([
             'user_id' => $driver->id,
             'type' => 'liberation_jalon',
-            'montant' => $order->delivery_cost,
+            'montant' => $gainNetDriver,
             'wallet_source' => 'escrow_order_' . $order->id,
             'wallet_dest' => 'driver_wallet_' . $driver->id,
             'provider' => PaymentProvider::WAVE,
@@ -324,5 +432,58 @@ class OrderService
                 'type' => 'ecom_driver_payout',
             ]
         );
+
+        // Reverser la commission du livreur au compte ProsArtisan
+        $this->walletService->creditPlatformFinancialAccount(
+            $driverCommission,
+            "Commission plateforme commande e-commerce #{$order->id} (part livraison)",
+            [
+                'order_id' => $order->id,
+                'type' => 'ecom_driver_commission',
+            ]
+        );
+    }
+
+    /**
+     * Notifie les livreurs disponibles dans la zone de couverture du client et du fournisseur,
+     * ou étend à tous les livreurs si aucun n'est disponible localement.
+     */
+    public function notifyDriversInArea(Order $order): void
+    {
+        $supplierProfile = $order->supplier->fournisseurAgree;
+        $supplierCoords = $supplierProfile?->getPositionCoords();
+        $clientCoords = $order->client->getPositionCoords();
+
+        $drivers = collect();
+
+        if (config('database.default') !== 'sqlite' && $supplierCoords && $clientCoords) {
+            $slng = $supplierCoords['lng'];
+            $slat = $supplierCoords['lat'];
+            $clng = $clientCoords['lng'];
+            $clat = $clientCoords['lat'];
+
+            // Trouver les livreurs dans un rayon de 10 km du fournisseur ET du client
+            $drivers = User::where('role', 'driver')
+                ->where('kyc_status', 'actif')
+                ->whereRaw("ST_Distance_Sphere(position, POINT(?, ?)) <= 10000", [$slng, $slat])
+                ->whereRaw("ST_Distance_Sphere(position, POINT(?, ?)) <= 10000", [$clng, $clat])
+                ->get();
+        }
+
+        // Si aucun livreur n'est trouvé dans la zone, on étend à tous les livreurs de la plateforme
+        if ($drivers->isEmpty()) {
+            $drivers = User::where('role', 'driver')
+                ->where('kyc_status', 'actif')
+                ->get();
+        }
+
+        foreach ($drivers as $driver) {
+            app(\App\Services\NotificationService::class)->send(
+                $driver,
+                'payment',
+                'Course de livraison disponible',
+                "Une nouvelle livraison de " . number_format($order->delivery_cost, 0, ',', ' ') . " FCFA est à effectuer pour la commande #{$order->id}."
+            );
+        }
     }
 }

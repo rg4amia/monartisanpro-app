@@ -156,5 +156,39 @@ class UserSeeder extends Seeder
                 'kyc_status' => 'actif',
             ]
         );
+
+        // ── Articles du fournisseur de test ────────────────────────────────────
+        \App\Models\SupplierProduct::updateOrCreate(
+            ['supplier_id' => $fournisseur->id, 'sku' => 'MAT-CIMENT'],
+            [
+                'name' => 'Ciment Dangote 50kg CPJ42.5',
+                'description' => 'Ciment haute performance pour tous travaux de maçonnerie et bétonnage.',
+                'unit_price' => 4500,
+                'stock_quantity' => 150,
+                'is_active' => true,
+            ]
+        );
+
+        \App\Models\SupplierProduct::updateOrCreate(
+            ['supplier_id' => $fournisseur->id, 'sku' => 'MAT-TUBE'],
+            [
+                'name' => 'Tube PVC Pression Ø110 L4m',
+                'description' => 'Tube PVC évacuation de haute qualité, épaisseur renforcée.',
+                'unit_price' => 3200,
+                'stock_quantity' => 80,
+                'is_active' => true,
+            ]
+        );
+
+        \App\Models\SupplierProduct::updateOrCreate(
+            ['supplier_id' => $fournisseur->id, 'sku' => 'MAT-CABLE'],
+            [
+                'name' => 'Câble Électrique TH 2.5mm² (100m)',
+                'description' => 'Fil de cuivre isolé pour installations électriques intérieures.',
+                'unit_price' => 18500,
+                'stock_quantity' => 40,
+                'is_active' => true,
+            ]
+        );
     }
 }

@@ -1,4 +1,5 @@
 import 'jcode_item_model.dart';
+import 'mission_model.dart';
 
 class DevisLigne {
   final String type; // 'mo' | 'mat'
@@ -171,8 +172,9 @@ class DevisModel {
         statut: (json['statut'] ?? '').toString(),
         createdAt: (json['createdAt'] ?? '').toString(),
         artisanName: json['artisanName'] as String?,
-        missionStatus: json['missionStatus']?.toString() ??
-            json['mission_status']?.toString(),
+        missionStatus: MissionModel.normalizeStatus(
+          (json['missionStatus'] ?? json['mission_status'] ?? '').toString(),
+        ),
         ratioMateriaux: _parseNullableDouble(
           json['ratioMateriaux'] ?? json['ratio_materiaux'],
         ),

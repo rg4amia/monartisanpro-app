@@ -187,8 +187,17 @@ class WalletService
         float $ratioMat,
         Transaction $paiementTransaction
     ): void {
-        $montantMat = (int) round($montantTotal * $ratioMat);
-        $montantMo  = $montantTotal - $montantMat;
+        $devis = $mission->devis()->where('statut', 'accepte')->first();
+        if ($devis) {
+            $montantMat = $devis->montant_materiaux;
+            $montantMo  = $devis->montant_mo;
+            if ($montantMat + $montantMo !== $montantTotal) {
+                $montantMo = $montantTotal - $montantMat;
+            }
+        } else {
+            $montantMat = (int) round($montantTotal * $ratioMat);
+            $montantMo  = $montantTotal - $montantMat;
+        }
 
         DB::transaction(function () use (
             $mission,
@@ -264,7 +273,12 @@ class WalletService
                 'paye_at' => now(),
             ]);
 
-            // Débit du wallet_mo
+            // Calcul de la commission MO (TTC -> HT)
+            $commissionService = \App\Models\Setting::getValueByKey('commission_service', 0.10);
+            $commission = (int) round($jalon->montant * ($commissionService / (1 + $commissionService)));
+            $gainNetArtisan = $jalon->montant - $commission;
+
+            // Débit du wallet_mo de l'artisan du montant total TTC
             $this->debit(
                 $artisan,
                 WalletType::WALLET_MO,
@@ -277,23 +291,33 @@ class WalletService
                 ]
             );
 
-            // Transaction externe vers Mobile Money de l'artisan
+            // Créditer le compte financier de prosartisan (l'admin) de la commission MO
+            $this->creditPlatformFinancialAccount(
+                $commission,
+                "Commission plateforme jalon #{$jalon->ordre} - Mission #{$mission->id}",
+                [
+                    'mission_id' => $mission->id,
+                    'jalon_id' => $jalon->id,
+                ]
+            );
+
+            // Transaction externe vers Mobile Money de l'artisan (montant net HT)
             $transaction = Transaction::create([
                 'mission_id'    => $mission->id,
                 'user_id'       => $mission->artisan_id,
                 'type'          => 'liberation_jalon',
-                'montant'       => $jalon->montant,
+                'montant'       => $gainNetArtisan,
                 'wallet_source' => 'escrow_mission_' . $mission->id,
                 'wallet_dest'   => 'artisan_mobile_money_' . $mission->artisan_id,
                 'provider'      => $provider,
                 'statut'        => 'en_attente',
             ]);
 
-            // Virement réel vers Mobile Money
+            // Virement réel du montant net HT vers Mobile Money
             $description = "Paiement jalon #{$jalon->ordre} mission #{$mission->id}";
 
             try {
-                $result = $this->transferToMobileMoney($provider, $artisan->phone, $jalon->montant, $description);
+                $result = $this->transferToMobileMoney($provider, $artisan->phone, $gainNetArtisan, $description);
                 $transaction->update([
                     'reference_externe' => $result['id'] ?? $result['txnid'] ?? null,
                     'statut' => 'confirme',
@@ -647,5 +671,29 @@ class WalletService
         }
 
         return $this->waveService->transferToMobileMoney($phone, $montant, $description);
+    }
+
+    /**
+     * Crédite le compte financier de ProsArtisan (l'admin).
+     */
+    public function creditPlatformFinancialAccount(int $amount, string $description, array $metadata = []): void
+    {
+        if ($amount <= 0) {
+            return;
+        }
+
+        $admin = User::where('role', 'admin')->first();
+        if (!$admin) {
+            Log::warning("Impossible de créditer le compte financier ProsArtisan: aucun administrateur trouvé.");
+            return;
+        }
+
+        $this->credit(
+            $admin,
+            WalletType::WALLET_MO,
+            $amount,
+            $description,
+            array_merge($metadata, ['type' => 'platform_commission'])
+        );
     }
 }

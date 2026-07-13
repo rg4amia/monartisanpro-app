@@ -238,10 +238,19 @@ class JCodeService
             return;
         }
 
+        // Calculer les commissions basées sur le montant HT du J-Code
+        $platformFeeRatio = \App\Models\Setting::getValueByKey('platform_fee_ratio', 0.03);
+        $debitTtc = (int) round($jcode->montant * (1 + $platformFeeRatio));
+        $platformFee = $debitTtc - $jcode->montant;
+
+        $supplierCommissionRatio = \App\Models\Setting::getValueByKey('commission_fournisseur', 0.05);
+        $supplierCommission = (int) round($jcode->montant * $supplierCommissionRatio);
+        $gainNetSupplier = $jcode->montant - $supplierCommission;
+
         $this->walletService->debit(
             $jcode->artisan,
             \App\Enums\WalletType::WALLET_MATERIAUX,
-            $jcode->montant,
+            $debitTtc,
             "Paiement fournisseur J-Code {$jcode->code}",
             [
                 'mission_id' => $jcode->mission_id,
@@ -251,14 +260,25 @@ class JCodeService
             ]
         );
 
+        // Créditer le compte financier ProsArtisan
+        $totalPlatformCommission = $platformFee + $supplierCommission;
+        $this->walletService->creditPlatformFinancialAccount(
+            $totalPlatformCommission,
+            "Commission plateforme J-Code {$jcode->code} - Mission #{$jcode->mission_id}",
+            [
+                'mission_id' => $jcode->mission_id,
+                'jcode_id' => $jcode->id,
+            ]
+        );
+
         $provider = $jcode->fournisseur->preferred_payment_provider ?? 'wave';
         $description = "Paiement J-Code {$jcode->code} mission #{$jcode->mission_id}";
 
         if ($provider === 'orange_money') {
-            $result = app(OrangeMoneyService::class)->transferToMobileMoney($jcode->fournisseur->phone, $jcode->montant, $description);
+            $result = app(OrangeMoneyService::class)->transferToMobileMoney($jcode->fournisseur->phone, $gainNetSupplier, $description);
             $reference = $result['txnid'] ?? null;
         } else {
-            $result = app(WaveService::class)->transferToMobileMoney($jcode->fournisseur->phone, $jcode->montant, $description);
+            $result = app(WaveService::class)->transferToMobileMoney($jcode->fournisseur->phone, $gainNetSupplier, $description);
             $reference = $result['id'] ?? null;
         }
 
@@ -266,7 +286,7 @@ class JCodeService
             'mission_id' => $jcode->mission_id,
             'user_id' => $jcode->fournisseur_id,
             'type' => 'paiement_fournisseur',
-            'montant' => $jcode->montant,
+            'montant' => $gainNetSupplier,
             'wallet_source' => 'escrow_mission_' . $jcode->mission_id,
             'wallet_dest' => 'supplier_mobile_money_' . $jcode->fournisseur_id,
             'provider' => $provider,

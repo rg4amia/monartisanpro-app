@@ -1,12 +1,128 @@
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 import '../../../data/repositories/order_repository.dart';
+import '../../../data/repositories/supplier_catalog_repository.dart';
+import '../../../data/models/supplier_model.dart';
+import '../../../data/models/supplier_product_model.dart';
 
 class OrderController extends GetxController {
   final OrderRepository _repo = OrderRepository();
+  final SupplierCatalogRepository _catalogRepo = SupplierCatalogRepository();
 
   final isSubmitting = false.obs;
+  final isLoading = false.obs;
   final errorMsg = RxnString();
+
+  // Liste des fournisseurs agréés
+  final approvedSuppliers = <SupplierModel>[].obs;
+  
+  // Catalogue du fournisseur sélectionné
+  final supplierProducts = <SupplierProductModel>[].obs;
+  final selectedSupplier = Rxn<SupplierModel>();
+
+  // Panier réactif : product_id -> quantity
+  final cart = <int, int>{}.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    loadApprovedSuppliers();
+  }
+
+  // Charger les fournisseurs agréés
+  Future<void> loadApprovedSuppliers({String? search}) async {
+    isLoading.value = true;
+    errorMsg.value = null;
+    try {
+      final list = await _catalogRepo.getApprovedSuppliers(search: search);
+      approvedSuppliers.assignAll(list);
+    } catch (e) {
+      errorMsg.value = 'Erreur lors du chargement des fournisseurs';
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // Charger le catalogue d'un fournisseur
+  Future<void> loadSupplierProducts(int supplierId) async {
+    isLoading.value = true;
+    errorMsg.value = null;
+    try {
+      final list = await _catalogRepo.getSupplierProducts(supplierId);
+      supplierProducts.assignAll(list);
+    } catch (e) {
+      errorMsg.value = 'Erreur lors du chargement du catalogue';
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // Sélectionner un fournisseur (et vider le panier si changement)
+  void selectSupplier(SupplierModel supplier) {
+    if (selectedSupplier.value?.id != supplier.id) {
+      clearCart();
+    }
+    selectedSupplier.value = supplier;
+    loadSupplierProducts(supplier.id);
+  }
+
+  // Gestion du panier
+  void addToCart(SupplierProductModel product) {
+    final qty = cart[product.id] ?? 0;
+    if (qty < product.stockQuantity) {
+      cart[product.id] = qty + 1;
+    } else {
+      Get.snackbar('Stock limite', 'Quantité maximale disponible atteinte');
+    }
+  }
+
+  void removeFromCart(SupplierProductModel product) {
+    final qty = cart[product.id] ?? 0;
+    if (qty > 1) {
+      cart[product.id] = qty - 1;
+    } else {
+      cart.remove(product.id);
+    }
+  }
+
+  void clearCart() {
+    cart.clear();
+  }
+
+  int getProductQuantity(int productId) {
+    return cart[productId] ?? 0;
+  }
+
+  int get cartCount => cart.values.fold(0, (sum, val) => sum + val);
+
+  int get subtotal {
+    int total = 0;
+    for (var entry in cart.entries) {
+      final product = supplierProducts.firstWhereOrNull((p) => p.id == entry.key);
+      if (product != null) {
+        total += product.unitPrice * entry.value;
+      }
+    }
+    return total;
+  }
+
+  int get platformFee {
+    // 3% de frais plateforme
+    return (subtotal * 0.03).round();
+  }
+
+  int get totalTtc => subtotal + platformFee;
+
+  List<Map<String, dynamic>> getCartItemsPayload() {
+    final payload = <Map<String, dynamic>>[];
+    for (var entry in cart.entries) {
+      payload.add({
+        'supplier_product_id': entry.key,
+        'quantity': entry.value,
+      });
+    }
+    return payload;
+  }
 
   Future<bool> createOrder({
     required int supplierId,
@@ -27,6 +143,7 @@ class OrderController extends GetxController {
         surgeMultiplier: surgeMultiplier,
       );
       Get.snackbar('Succès', 'Commande e-commerce créée avec succès !');
+      clearCart();
       return true;
     } on DioException catch (e) {
       errorMsg.value = _handleDioError(e);

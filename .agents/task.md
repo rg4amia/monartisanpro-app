@@ -1,0 +1,20 @@
+- [x] **1. Modifications Backend Laravel**
+  - [x] Mettre à jour `UserSeeder.php` pour insérer des articles de test pour Yao Koffi
+  - [x] Mettre à jour `Devis.php` pour calculer dynamiquement les montants en TTC
+  - [x] Mettre à jour `DevisService.php` pour stocker des montants de jalons en TTC
+  - [x] Ajouter la méthode `creditPlatformFinancialAccount` dans `WalletService.php`
+  - [x] Adapter `releaseJalon` dans `WalletService.php` pour prélever la commission MO
+  - [x] Adapter `releaseSupplierFunds` et `releaseDriverFunds` dans `OrderService.php` pour reverser les commissions e-commerce
+  - [x] Adapter `settleSupplierPayment` dans `JCodeService.php` pour prélever les commissions sur matériaux
+  - [x] Ajouter `notifyDriversInArea` dans `OrderService.php` et appeler les notifications
+  - [x] Mettre à jour `DeliveryController.php` pour filtrer les courses par rayon géographique (10 km) avec repli
+- [x] **2. Modifications Frontend Flutter**
+  - [x] Adapter `order_controller.dart` (recherche des fournisseurs, articles, panier)
+  - [x] Créer `client_suppliers_list_screen.dart` (liste des fournisseurs partenaires)
+  - [x] Créer `client_catalog_screen.dart` (affichage catalogue + panier réactif)
+  - [x] Adapter `order_checkout_screen.dart` (récapitulatif et validation)
+  - [x] Rendre les fournisseurs cliquables et ajouter le "Voir tout" dans `client_home_screen.dart`
+  - [x] Mapper les nouvelles routes dans `app_routes.dart` et `app_pages.dart`
+- [x] **3. Validation & Tests**
+  - [x] Exécuter les tests unitaires et fonctionnels backend (`OrderWorkflowTest`, `DevisPaymentFlowTest`)
+  - [x] Compiler l'application mobile et s'assurer qu'il n'y a pas d'erreur de compilation

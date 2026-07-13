@@ -41,6 +41,7 @@ class ArtisanSelectionScreen extends StatelessWidget {
           children: [
             _AppBar(),
             _ViewToggle(controller: controller),
+            _ZoneToggle(controller: controller),
             Obx(() => controller.nightIntervention.value
                 ? const _NightFilterBanner()
                 : const SizedBox.shrink()),
@@ -639,6 +640,100 @@ class _EmptyState extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ZoneToggle extends StatelessWidget {
+  final ArtisanSelectionController controller;
+
+  const _ZoneToggle({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: _C.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _C.subtle),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Obx(
+              () => _ZoneButton(
+                icon: Icons.my_location,
+                label: 'Ma zone (locale)',
+                isSelected: !controller.searchDistant.value,
+                onTap: () {
+                  if (controller.searchDistant.value) {
+                    controller.toggleSearchDistant();
+                  }
+                },
+              ),
+            ),
+          ),
+          Expanded(
+            child: Obx(
+              () => _ZoneButton(
+                icon: Icons.public,
+                label: 'Artisans éloignés',
+                isSelected: controller.searchDistant.value,
+                onTap: () {
+                  if (!controller.searchDistant.value) {
+                    controller.toggleSearchDistant();
+                  }
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ZoneButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _ZoneButton({
+    required this.icon,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? _C.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 16, color: isSelected ? Colors.white : _C.muted),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+                color: isSelected ? Colors.white : _C.muted,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

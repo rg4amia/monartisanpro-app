@@ -26,16 +26,50 @@ class DeliveryController extends Controller
             ], 403);
         }
 
-        // Récupérer toutes les commandes au statut 'searching_driver'
-        $orders = Order::where('status', 'searching_driver')
-            ->where('delivery_mode', 'delivery')
-            ->with('items.product', 'supplier.fournisseurAgree', 'client')
-            ->orderBy('created_at', 'asc')
-            ->get();
+        $driverCoords = $user->getPositionCoords();
+        $isExtended = false;
+
+        if (config('database.default') === 'sqlite' || !$driverCoords) {
+            // SQLite ou livreur sans position -> pas de filtrage spatial
+            $orders = Order::where('status', 'searching_driver')
+                ->where('delivery_mode', 'delivery')
+                ->with('items.product', 'supplier.fournisseurAgree', 'client')
+                ->orderBy('created_at', 'asc')
+                ->get();
+        } else {
+            $lng = $driverCoords['lng'];
+            $lat = $driverCoords['lat'];
+
+            // 1. Recherche dans la zone locale (10 km du fournisseur ET du client)
+            $orders = Order::where('status', 'searching_driver')
+                ->where('delivery_mode', 'delivery')
+                ->whereHas('client', function ($q) use ($lng, $lat) {
+                    $q->whereRaw("ST_Distance_Sphere(position, POINT(?, ?)) <= 10000", [$lng, $lat]);
+                })
+                ->whereHas('supplier.fournisseurAgree', function ($q) use ($lng, $lat) {
+                    $q->whereRaw("ST_Distance_Sphere(position, POINT(?, ?)) <= 10000", [$lng, $lat]);
+                })
+                ->with('items.product', 'supplier.fournisseurAgree', 'client')
+                ->orderBy('created_at', 'asc')
+                ->get();
+
+            // 2. Si aucun résultat local, on étend la recherche à toutes les zones
+            if ($orders->isEmpty()) {
+                $isExtended = true;
+                $orders = Order::where('status', 'searching_driver')
+                    ->where('delivery_mode', 'delivery')
+                    ->with('items.product', 'supplier.fournisseurAgree', 'client')
+                    ->orderBy('created_at', 'asc')
+                    ->get();
+            }
+        }
 
         return response()->json([
             'success' => true,
             'data' => $orders,
+            'meta' => [
+                'is_extended' => $isExtended,
+            ],
         ]);
     }
 

@@ -104,7 +104,7 @@ class MissionModel {
       artisanId: _parseInt(
         json['artisan_id'] ?? json['artisanId'] ?? artisan?['id'],
       ),
-      status: _normalizeStatus((json['status'] ?? '').toString()),
+      status: normalizeStatus((json['status'] ?? '').toString()),
       montantTotal: montantTotal,
       montantMateriaux: montantMateriaux,
       montantMo: montantMo,
@@ -247,16 +247,21 @@ class MissionModel {
     return (materiaux / total).clamp(0.0, 1.0);
   }
 
-  static String _normalizeStatus(String rawStatus) {
+  static String normalizeStatus(String rawStatus) {
     switch (rawStatus) {
+      case 'draft':
+      case 'pending_funding':
       case 'sent':
       case 'quote_provided':
       case 'quote_rejected':
       case 'pending':
         return 'en_attente';
+      case 'funded_locked':
       case 'funded':
       case 'paid':
         return 'financee';
+      case 'in_progress':
+      case 'pending_approval':
       case 'materials_picked_up':
       case 'work_done':
       case 'shipping':

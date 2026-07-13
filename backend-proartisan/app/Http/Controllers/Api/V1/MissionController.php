@@ -29,7 +29,16 @@ class MissionController extends Controller
         };
 
         if ($status) {
-            $query->where('status', $status);
+            $mappedStatuses = match ($status) {
+                'en_attente' => ['draft', 'pending_funding'],
+                'financee'   => ['funded_locked'],
+                'en_cours'   => ['in_progress', 'pending_approval'],
+                'terminee'   => ['completed'],
+                'litige'     => ['disputed'],
+                'annulee'    => ['cancelled'],
+                default      => [$status],
+            };
+            $query->whereIn('status', $mappedStatuses);
         }
 
         $missions = $query->with(['client', 'artisan', 'jalons', 'requestedSector', 'requestedTrade'])
@@ -123,10 +132,26 @@ class MissionController extends Controller
     public function updateStatus(Request $request, Mission $mission): JsonResponse
     {
         $data = $request->validate([
-            'status' => ['required', 'in:en_attente,financee,en_cours,terminee,litige,annulee'],
+            'status' => [
+                'required',
+                'in:en_attente,financee,en_cours,terminee,litige,annulee,draft,pending_funding,funded_locked,in_progress,pending_approval,completed,disputed,cancelled'
+            ],
         ]);
 
-        $mission->update(['status' => $data['status']]);
+        $status = $data['status'];
+        $stateClass = match ($status) {
+            'draft', 'en_attente' => \App\States\Mission\DraftState::class,
+            'pending_funding' => \App\States\Mission\PendingFundingState::class,
+            'funded_locked', 'financee' => \App\States\Mission\FundedLockedState::class,
+            'in_progress', 'en_cours' => \App\States\Mission\InProgressState::class,
+            'pending_approval' => \App\States\Mission\PendingApprovalState::class,
+            'completed', 'terminee' => \App\States\Mission\CompletedState::class,
+            'disputed', 'litige' => \App\States\Mission\DisputedState::class,
+            'cancelled', 'annulee' => \App\States\Mission\CancelledState::class,
+            default => $status,
+        };
+
+        $mission->status->transitionTo($stateClass);
 
         return response()->json([
             'success' => true,
