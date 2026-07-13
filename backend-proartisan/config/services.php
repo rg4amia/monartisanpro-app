@@ -82,7 +82,7 @@ return [
     ],
 
     'whatsapp' => [
-        'provider' => env('WHATSAPP_PROVIDER', 'log'), // 'log' or 'api'
+        'provider' => env('WHATSAPP_PROVIDER', 'api'), // 'log' or 'api'
         'api_token' => env('WHATSAPP_API_TOKEN'),
         'base_url' => env('WHATSAPP_BASE_URL', 'https://api.whatsapp.com/v1'),
     ],
