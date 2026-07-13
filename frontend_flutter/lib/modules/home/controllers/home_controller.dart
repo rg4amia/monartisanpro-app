@@ -27,6 +27,12 @@ class HomeController extends GetxController {
   final walletMateriaux = 0.obs;
   final walletMo = 0.obs;
   final selectedCategory = Rx<String?>(null);
+  final searchDistant = false.obs;
+
+  void toggleSearchDistant() {
+    searchDistant.value = !searchDistant.value;
+    refresh();
+  }
 
   // ── Client Dashboard Statistics ────────────────────────────────────────────
   final acceptedDevisCount = 14.obs;
@@ -222,6 +228,7 @@ class HomeController extends GetxController {
         artisans.value = await _artisanRepo.getNearby(
           lat: _lat!,
           lng: _lng!,
+          radiusMeters: searchDistant.value ? 150000 : 5000,
         );
         nearbyArtisansCount.value = artisans.length;
       }
@@ -259,6 +266,7 @@ class HomeController extends GetxController {
         lat: _lat!,
         lng: _lng!,
         sectorId: category,
+        radiusMeters: searchDistant.value ? 150000 : 5000,
       );
       nearbyArtisansCount.value = artisans.length;
     } catch (_) {
@@ -284,6 +292,7 @@ class HomeController extends GetxController {
         lat: _lat!,
         lng: _lng!,
         sectorId: selectedCategory.value,
+        radiusMeters: searchDistant.value ? 150000 : 5000,
       );
 
       // Filtrer localement par nom ou métier
@@ -320,7 +329,11 @@ class HomeController extends GetxController {
       );
       _lat = pos.latitude;
       _lng = pos.longitude;
-    } catch (_) {}
+    } catch (_) {
+      // Fallback sur le Plateau, Abidjan si le GPS est inaccessible
+      _lat = 5.3543;
+      _lng = -4.0083;
+    }
   }
 
   int _statusRank(String status) {

@@ -49,6 +49,8 @@ import '../../modules/missions/views/devis_review_screen.dart';
 import '../../modules/missions/views/referent_validation_screen.dart';
 import '../../modules/artisans/views/parrainage_screen.dart';
 import '../../modules/orders/views/order_checkout_screen.dart';
+import '../../modules/orders/views/client_suppliers_list_screen.dart';
+import '../../modules/orders/views/client_catalog_screen.dart';
 import 'app_routes.dart';
 
 class AppPages {
@@ -252,6 +254,14 @@ class AppPages {
     GetPage(
       name: Routes.orderCheckout,
       page: () => const OrderCheckoutScreen(),
+    ),
+    GetPage(
+      name: Routes.clientSuppliers,
+      page: () => const ClientSuppliersListScreen(),
+    ),
+    GetPage(
+      name: Routes.clientCatalog,
+      page: () => const ClientCatalogScreen(),
     ),
   ];
 }

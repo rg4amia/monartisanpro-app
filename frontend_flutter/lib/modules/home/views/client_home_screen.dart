@@ -129,7 +129,102 @@ class ClientHomeScreen extends StatelessWidget {
                               background: AppColors.clientSoft,
                             ),
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 14),
+                          Obx(() => Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: AppColors.border),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      if (controller.searchDistant.value) {
+                                        controller.toggleSearchDistant();
+                                      }
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(vertical: 8),
+                                      decoration: BoxDecoration(
+                                        color: !controller.searchDistant.value
+                                            ? AppColors.client
+                                            : Colors.transparent,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.my_location,
+                                            size: 16,
+                                            color: !controller.searchDistant.value
+                                                ? Colors.white
+                                                : AppColors.textSecondary,
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            'Ma zone (local)',
+                                            style: TextStyle(
+                                              fontSize: 12.5,
+                                              fontWeight: FontWeight.w700,
+                                              color: !controller.searchDistant.value
+                                                  ? Colors.white
+                                                  : AppColors.textSecondary,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      if (!controller.searchDistant.value) {
+                                        controller.toggleSearchDistant();
+                                      }
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(vertical: 8),
+                                      decoration: BoxDecoration(
+                                        color: controller.searchDistant.value
+                                            ? AppColors.client
+                                            : Colors.transparent,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.public,
+                                            size: 16,
+                                            color: controller.searchDistant.value
+                                                ? Colors.white
+                                                : AppColors.textSecondary,
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            'Artisans éloignés',
+                                            style: TextStyle(
+                                              fontSize: 12.5,
+                                              fontWeight: FontWeight.w700,
+                                              color: controller.searchDistant.value
+                                                  ? Colors.white
+                                                  : AppColors.textSecondary,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )),
+                          const SizedBox(height: 16),
                           _ArtisansList(controller: controller),
                         ],
                       ),
@@ -933,7 +1028,13 @@ class _ClientDashboardView extends StatelessWidget {
         const SizedBox(height: 24),
 
         // Top Suppliers Section
-        const _SectionHeader(title: 'Fournisseurs les mieux notés'),
+        _SectionHeader(
+          title: 'Fournisseurs les mieux notés',
+          trailing: TextButton(
+            onPressed: () => Get.toNamed(Routes.clientSuppliers),
+            child: const Text('Voir tout'),
+          ),
+        ),
         const SizedBox(height: 12),
         _TopSuppliersSection(controller: controller),
         const SizedBox(height: 24),
@@ -1197,15 +1298,17 @@ class _TopSuppliersSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: controller.topSuppliers.map((supplier) {
-        return Container(
-          margin: const EdgeInsets.only(bottom: 10),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Row(
+        return GestureDetector(
+          onTap: () => Get.toNamed(Routes.clientSuppliers),
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Row(
             children: [
               Container(
                 width: 48,
@@ -1260,7 +1363,7 @@ class _TopSuppliersSection extends StatelessWidget {
               ),
             ],
           ),
-        );
+        ));
       }).toList(),
     );
   }

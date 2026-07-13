@@ -25,6 +25,7 @@ class FullMissionWorkflowTest extends TestCase
 
     public function test_client_to_completion_happy_path(): void
     {
+        User::factory()->create(['role' => 'admin', 'phone' => '+2250000000000']);
         Storage::fake('public');
 
         $client = User::factory()->create([
@@ -112,7 +113,7 @@ class FullMissionWorkflowTest extends TestCase
             ->postJson('/api/v1/payments/initiate', [
                 'mission_id' => $mission->id,
                 'devis_id' => $devisId,
-                'montant' => 100000,
+                'montant' => 101950,
                 'provider' => 'wave',
                 'phone' => $client->phone,
             ])
@@ -136,7 +137,7 @@ class FullMissionWorkflowTest extends TestCase
         $artisan->refresh();
 
         $this->assertSame('funded_locked', (string) $mission->status);
-        $this->assertSame(65000, $artisan->wallet_materiaux);
+        $this->assertSame(66950, $artisan->wallet_materiaux);
         $this->assertSame(35000, $artisan->wallet_mo);
         $this->assertCount(2, $mission->jalons);
 
@@ -242,14 +243,14 @@ class FullMissionWorkflowTest extends TestCase
         $this->assertDatabaseHas('transactions', [
             'mission_id' => $mission->id,
             'type' => 'acompte',
-            'montant' => 100000,
+            'montant' => 101950,
             'statut' => 'confirme',
         ]);
 
         $this->assertDatabaseHas('transactions', [
             'mission_id' => $mission->id,
             'type' => 'paiement_fournisseur',
-            'montant' => 65000,
+            'montant' => 61750,
             'statut' => 'confirme',
         ]);
 

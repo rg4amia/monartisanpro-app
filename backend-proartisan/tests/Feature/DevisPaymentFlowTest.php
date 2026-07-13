@@ -52,11 +52,11 @@ class DevisPaymentFlowTest extends TestCase
             ->postJson('/api/v1/payments/initiate', [
                 'mission_id' => $mission->id,
                 'devis_id' => $devis->id,
-                'montant' => 100000,
+                'montant' => 101950,
                 'provider' => 'wave',
                 'phone' => $client->phone,
-            ])
-            ->assertOk();
+            ]);
+        $paymentResponse->assertOk();
 
         $transactionId = $paymentResponse->json('data.transaction_id');
 
@@ -88,10 +88,10 @@ class DevisPaymentFlowTest extends TestCase
         $this->assertSame('accepte', $devis->statut);
         $this->assertSame('funded_locked', (string) $mission->status);
         $this->assertSame($artisan->id, $mission->artisan_id);
-        $this->assertSame(100000, $mission->montant_total);
-        $this->assertSame(65000, $mission->montant_materiaux);
+        $this->assertSame(101950, $mission->montant_total);
+        $this->assertSame(66950, $mission->montant_materiaux);
         $this->assertSame(35000, $mission->montant_mo);
-        $this->assertSame(65000, $artisan->wallet_materiaux);
+        $this->assertSame(66950, $artisan->wallet_materiaux);
         $this->assertSame(35000, $artisan->wallet_mo);
         $this->assertCount(2, $mission->jalons);
     }
@@ -135,7 +135,7 @@ class DevisPaymentFlowTest extends TestCase
             ->postJson('/api/v1/payments/initiate', [
                 'mission_id' => $mission->id,
                 'devis_id' => $devis->id,
-                'montant' => 2500000,
+                'montant' => 2545000,
                 'provider' => 'wave',
                 'phone' => $client->phone,
             ])
@@ -147,7 +147,7 @@ class DevisPaymentFlowTest extends TestCase
             ->postJson('/api/v1/payments/initiate', [
                 'mission_id' => $mission->id,
                 'devis_id' => $devis->id,
-                'montant' => 2500000,
+                'montant' => 2545000,
                 'provider' => 'virement_bancaire',
             ])
             ->assertOk()

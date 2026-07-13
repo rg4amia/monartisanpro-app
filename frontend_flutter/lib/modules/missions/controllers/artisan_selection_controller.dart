@@ -22,6 +22,12 @@ class ArtisanSelectionController extends GetxController {
   final locationDetail = ''.obs;
   final nightIntervention = false.obs;
   final artisans = <ArtisanModel>[].obs;
+  final searchDistant = false.obs;
+
+  void toggleSearchDistant() {
+    searchDistant.value = !searchDistant.value;
+    refreshArtisans();
+  }
 
   bool _initializedFromArgs = false;
 
@@ -136,7 +142,7 @@ class ArtisanSelectionController extends GetxController {
       final results = await _artisanRepository.getNearby(
         lat: clientLatitude.value,
         lng: clientLongitude.value,
-        radiusMeters: 5000,
+        radiusMeters: searchDistant.value ? 150000 : 5000,
         sectorId: selectedCategoryId.value > 0
             ? selectedCategoryId.value.toString()
             : null,
@@ -163,20 +169,26 @@ class ArtisanSelectionController extends GetxController {
       return;
     }
 
-    final permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      await Geolocator.requestPermission();
+    try {
+      final permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        await Geolocator.requestPermission();
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 5),
+        ),
+      );
+
+      clientLatitude.value = position.latitude;
+      clientLongitude.value = position.longitude;
+    } catch (_) {
+      // Fallback sur le Plateau, Abidjan si le GPS est inaccessible
+      clientLatitude.value = 5.3543;
+      clientLongitude.value = -4.0083;
     }
-
-    final position = await Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        timeLimit: Duration(seconds: 5),
-      ),
-    );
-
-    clientLatitude.value = position.latitude;
-    clientLongitude.value = position.longitude;
   }
 
   int _parseInt(dynamic value) {

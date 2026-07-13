@@ -81,10 +81,9 @@ class DevisService
                 throw new \InvalidArgumentException('Ce devis ne peut plus être accepté.');
             }
 
-            // 1. Calcul du ratio matériaux
-            $lignes         = collect($devis->lignes_json);
-            $montantTotal   = $lignes->sum('montant');
-            $montantMat     = $lignes->where('type', 'mat')->sum('montant');
+            // 1. Calcul du ratio matériaux (TTC)
+            $montantTotal   = $devis->montant_total;
+            $montantMat     = $devis->montant_materiaux;
             $ratioMat       = $montantTotal > 0 ? round($montantMat / $montantTotal, 4) : 0.6500;
 
             // 2. Mise à jour du devis
@@ -96,14 +95,16 @@ class DevisService
             // 3. Association artisan ↔ mission
             $devis->mission->update(['artisan_id' => $devis->artisan_id]);
 
-            // 4. Création des jalons depuis jalons_json
+            // 4. Création des jalons depuis jalons_json (convertis en TTC)
             if (! $devis->mission->jalons()->exists()) {
+                $commissionService = \App\Models\Setting::getValueByKey('commission_service', 0.10);
                 foreach ($devis->jalons_json as $jalonData) {
+                    $montantTtc = (int) round($jalonData['montant'] * (1 + $commissionService));
                     Jalon::create([
                         'mission_id'  => $devis->mission_id,
                         'ordre'       => $jalonData['ordre'],
                         'description' => $jalonData['description'],
-                        'montant'     => $jalonData['montant'],
+                        'montant'     => $montantTtc,
                         'statut'      => 'en_attente',
                     ]);
                 }
