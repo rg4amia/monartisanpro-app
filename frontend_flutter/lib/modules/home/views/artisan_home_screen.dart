@@ -460,6 +460,14 @@ class _QuickActions extends StatelessWidget {
             }
           },
         ),
+        const SizedBox(height: 10),
+        _ActionTile(
+          icon: Icons.storefront_outlined,
+          color: _Palette.primary,
+          title: 'Partenaires Fournisseurs',
+          subtitle: 'Consulter la liste des quincailleries agréées et leurs catalogues',
+          onTap: () => Get.toNamed(Routes.clientSuppliers),
+        ),
       ],
     );
   }
