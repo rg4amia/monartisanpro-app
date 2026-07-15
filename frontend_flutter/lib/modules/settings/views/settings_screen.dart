@@ -100,70 +100,74 @@ class _ProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        children: [
-          Stack(
-            children: [
-              Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: _C.subtle, width: 3),
-                  color: _C.primaryLight,
-                ),
-                child: Center(
-                  child: Text(
-                    Formatters.initial(controller.userName.value),
-                    style: const TextStyle(
-                      fontSize: 48,
-                      fontWeight: FontWeight.w700,
-                      color: _C.primary,
+    return GestureDetector(
+      onTap: () => Get.toNamed(Routes.updateProfile),
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Column(
+          children: [
+            Stack(
+              children: [
+                Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: _C.subtle, width: 3),
+                    color: _C.primaryLight,
+                  ),
+                  child: Center(
+                    child: Text(
+                      Formatters.initial(controller.userName.value),
+                      style: const TextStyle(
+                        fontSize: 48,
+                        fontWeight: FontWeight.w700,
+                        color: _C.primary,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              Positioned(
-                bottom: 0,
-                right: 0,
-                child: Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: _C.primary,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: _C.surface, width: 3),
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: _C.primary,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: _C.surface, width: 3),
+                    ),
+                    child: const Icon(Icons.edit, color: Colors.white, size: 16),
                   ),
-                  child: const Icon(Icons.edit, color: Colors.white, size: 16),
                 ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              controller.userName.value.isEmpty
+                  ? 'Profil Utilisateur'
+                  : controller.userName.value,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
+                color: _C.ink,
+                letterSpacing: -0.5,
               ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            controller.userName.value.isEmpty
-                ? 'Profil Utilisateur'
-                : controller.userName.value,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              color: _C.ink,
-              letterSpacing: -0.5,
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            controller.userPhone.value.isEmpty
-                ? 'Pas d\'email'
-                : '${controller.userPhone.value}@email.com',
-            style: const TextStyle(
-              fontSize: 14,
-              color: _C.muted,
+            const SizedBox(height: 4),
+            Text(
+              controller.userPhone.value.isEmpty
+                  ? 'Pas d\'email'
+                  : '${controller.userPhone.value}',
+              style: const TextStyle(
+                fontSize: 14,
+                color: _C.muted,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -276,8 +280,8 @@ class _MenuList extends StatelessWidget {
             icon: Icons.person_outline,
             iconBg: _C.primaryLight,
             iconColor: _C.primary,
-            title: 'Informations Personnelles',
-            subtitle: 'Gérez vos détails d\'identité',
+            title: 'Profil & Localisation',
+            subtitle: 'Nom, e-mail et adresse géographique',
             onTap: () => Get.toNamed(Routes.updateProfile),
           ),
           const SizedBox(height: 12),

@@ -72,7 +72,7 @@ class User extends Authenticatable
                 } else {
                     DB::statement(
                         "INSERT INTO fournisseurs_agrees (user_id, nom_boutique, statut, position, created_at, updated_at) 
-                         VALUES (?, ?, ?, POINT(?, ?), ?, ?)",
+                         VALUES (?, ?, ?, ST_SRID(POINT(?, ?), 4326), ?, ?)",
                         [
                             $user->id,
                             'Quincaillerie de ' . ($user->name ?? $user->phone),
@@ -192,7 +192,7 @@ class User extends Authenticatable
         }
 
         DB::statement(
-            "UPDATE users SET position = POINT(?, ?) WHERE id = ?",
+            "UPDATE users SET position = ST_SRID(POINT(?, ?), 4326) WHERE id = ?",
             [$lng, $lat, $this->id]
         );
     }

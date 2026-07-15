@@ -44,10 +44,10 @@ class DeliveryController extends Controller
             $orders = Order::where('status', 'searching_driver')
                 ->where('delivery_mode', 'delivery')
                 ->whereHas('client', function ($q) use ($lng, $lat) {
-                    $q->whereRaw("ST_Distance_Sphere(position, POINT(?, ?)) <= 10000", [$lng, $lat]);
+                    $q->whereRaw("ST_Distance_Sphere(position, ST_SRID(POINT(?, ?), 4326)) <= 10000", [$lng, $lat]);
                 })
                 ->whereHas('supplier.fournisseurAgree', function ($q) use ($lng, $lat) {
-                    $q->whereRaw("ST_Distance_Sphere(position, POINT(?, ?)) <= 10000", [$lng, $lat]);
+                    $q->whereRaw("ST_Distance_Sphere(position, ST_SRID(POINT(?, ?), 4326)) <= 10000", [$lng, $lat]);
                 })
                 ->with('items.product', 'supplier.fournisseurAgree', 'client')
                 ->orderBy('created_at', 'asc')
