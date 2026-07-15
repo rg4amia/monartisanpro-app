@@ -70,6 +70,13 @@ class AppServiceProvider extends ServiceProvider
      */
     protected function configureRateLimiting(): void
     {
+        if (app()->environment('testing', 'local')) {
+            RateLimiter::for('api', fn () => Limit::none());
+            RateLimiter::for('auth', fn () => Limit::none());
+            RateLimiter::for('webhook', fn () => Limit::none());
+            return;
+        }
+
         RateLimiter::for('api', function (Request $request) {
             return Limit::perMinute(100)->by($request->user()?->id ?: $request->ip());
         });

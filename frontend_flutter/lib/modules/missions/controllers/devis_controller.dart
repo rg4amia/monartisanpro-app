@@ -99,6 +99,23 @@ class DevisController extends GetxController {
     await loadSupplierProducts(supplier.id);
   }
 
+  void importArtisanCart(List<Map<String, dynamic>> cartLines) {
+    final List<DevisLigne> labor = laborLines;
+    lignes.assignAll(labor);
+
+    for (final line in cartLines) {
+      lignes.add(DevisLigne(
+        type: 'mat',
+        description: line['description'] as String,
+        montant: line['montant'] as int,
+        unitPrice: line['unit_price'] as int,
+        quantity: line['quantity'] as int,
+        source: 'catalog',
+        supplierProductId: line['supplier_product_id'] as int,
+      ));
+    }
+  }
+
   Future<void> loadSupplierProducts(int supplierId) async {
     isCatalogLoading.value = true;
     try {
@@ -431,7 +448,7 @@ class DevisController extends GetxController {
   }
 
   /// Initie le paiement puis finalise l'acceptation du devis si le paiement est confirmé.
-  Future<bool> acceptDevis(int devisId, {String provider = 'wave'}) async {
+  Future<bool> acceptDevis(int devisId, {String provider = 'wave', String paymentType = 'total'}) async {
     isSubmitting.value = true;
     errorMsg.value = null;
 
@@ -454,12 +471,15 @@ class DevisController extends GetxController {
         return false;
       }
 
+      final montantAcompte = paymentType == 'hybrid' ? devis.montantMateriaux : devis.totalGeneralTtc;
+
       final payment = await _paymentRepo.initiatePayment(
         missionId: devis.missionId,
         devisId: devis.id,
-        montant: devis.totalGeneral,
+        montant: montantAcompte,
         provider: provider,
         phone: phone,
+        paymentType: paymentType,
       );
 
       _setPendingPayment(payment, devis.id);
@@ -517,6 +537,77 @@ class DevisController extends GetxController {
     }
   }
 
+  Future<bool> payJalon(int jalonId, {String provider = 'wave'}) async {
+    isSubmitting.value = true;
+    errorMsg.value = null;
+
+    try {
+      final phone = StorageService.getPhone();
+      if (phone == null || phone.trim().isEmpty) {
+        _showErrorSnackbar(
+          'Numéro de téléphone introuvable. Reconnectez-vous puis réessayez.',
+        );
+        return false;
+      }
+
+      final payment = await _paymentRepo.initiateJalonPayment(
+        jalonId: jalonId,
+        provider: provider,
+        phone: phone,
+      );
+
+      _setPendingPayment(payment, 0);
+
+      if (provider == 'virement_bancaire') {
+        Get.snackbar(
+          'Virement initié',
+          'Veuillez effectuer le virement bancaire avec les instructions affichées.',
+          snackPosition: SnackPosition.TOP,
+          duration: const Duration(seconds: 4),
+        );
+        return false;
+      }
+
+      final launchOpened = await reopenPendingPayment(showError: false);
+
+      if (!launchOpened) {
+        Get.snackbar(
+          'Paiement prêt',
+          'Le lien de paiement est prêt. Utilisez "Ouvrir le paiement" pour continuer.',
+          snackPosition: SnackPosition.TOP,
+          duration: const Duration(seconds: 4),
+        );
+      }
+
+      final confirmed = await verifyPendingPayment(
+        0,
+        maxAttempts: 6,
+        delayBetweenChecks: const Duration(seconds: 2),
+        silentPending: true,
+      );
+
+      if (confirmed) {
+        Get.snackbar(
+          'Succès',
+          'Le jalon a été payé avec succès !',
+          duration: const Duration(seconds: 3),
+        );
+      }
+
+      return confirmed;
+    } on DioException catch (e) {
+      errorMsg.value = _handleDioError(e);
+      _showErrorSnackbar('Erreur lors du paiement du jalon: ${errorMsg.value}');
+      return false;
+    } catch (_) {
+      errorMsg.value = 'Impossible de payer le jalon';
+      _showErrorSnackbar(errorMsg.value!);
+      return false;
+    } finally {
+      isSubmitting.value = false;
+    }
+  }
+
   Future<bool> reopenPendingPayment({bool showError = true}) async {
     final rawUrl = pendingLaunchUrl.value ?? pendingPaymentUrl.value;
     if (rawUrl == null || rawUrl.isEmpty) {
@@ -564,7 +655,11 @@ class DevisController extends GetxController {
         final status = await _paymentRepo.checkStatus(transactionId);
 
         if (status.isConfirmed) {
-          await _finalizeAcceptedDevis(devisId, transactionId);
+          if (devisId > 0) {
+            await _finalizeAcceptedDevis(devisId, transactionId);
+          } else {
+            _clearPendingPayment();
+          }
           return true;
         }
 

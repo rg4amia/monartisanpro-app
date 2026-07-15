@@ -57,6 +57,10 @@ interface LitigeItem {
     decision: 'client' | 'artisan' | 'gel' | null;
     created_at: string;
     mission: LitigeMission;
+    resolution_payload?: {
+        invoice_path?: string;
+        [key: string]: any;
+    } | null;
 }
 
 interface AdminMissionParty {
@@ -1724,9 +1728,23 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                                             </button>
                                                         </div>
                                                     ) : (
-                                                        <p className="mt-5 text-sm text-[var(--admin-text-soft)]">
-                                                            Décision finale: {litige.decision ? litigeDecisionLabels[litige.decision] : 'Aucune'}
-                                                        </p>
+                                                        <div className="mt-5 space-y-2">
+                                                            <p className="text-sm text-[var(--admin-text-soft)]">
+                                                                Décision finale: {litige.decision ? litigeDecisionLabels[litige.decision] : 'Aucune'}
+                                                            </p>
+                                                            {litige.decision === 'artisan' && litige.resolution_payload?.invoice_path ? (
+                                                                <div className="mt-2">
+                                                                    <a
+                                                                        href={`/admin/litiges/${litige.id}/invoice`}
+                                                                        target="_blank"
+                                                                        rel="noreferrer"
+                                                                        className="inline-flex items-center gap-2 text-sm text-[#10B981] hover:underline font-semibold"
+                                                                    >
+                                                                        Télécharger la Facture de Décaissement
+                                                                    </a>
+                                                                </div>
+                                                            ) : null}
+                                                        </div>
                                                     )}
                                                 </Surface>
                                             ))

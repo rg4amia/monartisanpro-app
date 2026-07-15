@@ -299,6 +299,170 @@ class LitigeComplianceTest extends TestCase
         $this->assertNotNull($artisan->blocked_at);
     }
 
+    public function test_arbitrating_for_artisan_generates_disbursement_invoice(): void
+    {
+        /** @var User $admin */
+        $admin = User::factory()->create(['role' => 'admin', 'kyc_status' => 'actif']);
+        [$client, $artisan, $mission] = $this->makeMission(walletMateriaux: 65000, walletMo: 35000);
+
+        $litige = Litige::create([
+            'mission_id'               => $mission->id,
+            'declencheur_id'           => $client->id,
+            'type'                     => 'client',
+            'motif'                    => 'Facture test',
+            'description'              => 'Litige pour vérifier la génération de facture de décaissement.',
+            'statut'                   => 'en_cours',
+            'workflow_step'            => 'arbitrage',
+            'funds_locked_at'          => now(),
+            'evidence_deadline_at'     => now()->subHours(3),
+            'arbitration_started_at'   => now()->subHour(),
+            'arbitration_deadline_at'  => now()->addHours(20),
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->putJson("/api/v1/litiges/{$litige->id}/arbitrage", [
+                'decision' => 'artisan',
+            ]);
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('data.decision', 'artisan')
+            ->assertJsonPath('data.statut', 'resolu');
+
+        $litige->refresh();
+
+        // Verify the invoice path was stored in resolution_payload
+        $this->assertNotNull($litige->resolution_payload);
+        $payload = is_string($litige->resolution_payload)
+            ? json_decode($litige->resolution_payload, true)
+            : $litige->resolution_payload;
+        $this->assertArrayHasKey('invoice_path', $payload);
+        $this->assertNotNull($payload['invoice_path']);
+
+        // Verify the PDF file exists on disk
+        $this->assertFileExists($payload['invoice_path']);
+
+        // Verify mission status is completed
+        $mission->refresh();
+        $this->assertSame('completed', (string) $mission->status);
+        $this->assertFalse((bool) $mission->funds_frozen);
+
+        // Clean up generated file
+        if (file_exists($payload['invoice_path'])) {
+            @unlink($payload['invoice_path']);
+        }
+    }
+
+    public function test_admin_can_download_disbursement_invoice(): void
+    {
+        /** @var User $admin */
+        $admin = User::factory()->create(['role' => 'admin', 'kyc_status' => 'actif']);
+        [$client, $artisan, $mission] = $this->makeMission(walletMateriaux: 65000, walletMo: 35000);
+
+        // Create a dummy invoice file
+        $invoiceDir = storage_path('app/public/invoices');
+        if (!file_exists($invoiceDir)) {
+            mkdir($invoiceDir, 0755, true);
+        }
+        $invoicePath = $invoiceDir . "/test_invoice_{$mission->id}.pdf";
+        file_put_contents($invoicePath, 'dummy PDF content');
+
+        $litige = Litige::create([
+            'mission_id'             => $mission->id,
+            'declencheur_id'         => $client->id,
+            'type'                   => 'client',
+            'motif'                  => 'Download test',
+            'description'            => 'Test de téléchargement de facture.',
+            'statut'                 => 'resolu',
+            'workflow_step'          => 'resolu',
+            'decision'               => 'artisan',
+            'resolu_at'              => now(),
+            'resolution_payload'     => ['invoice_path' => $invoicePath],
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->get("/admin/litiges/{$litige->id}/invoice");
+
+        $response->assertOk();
+        $response->assertHeader('content-type', 'application/pdf');
+
+        // Clean up
+        if (file_exists($invoicePath)) {
+            @unlink($invoicePath);
+        }
+    }
+
+    public function test_disbursement_invoice_generated_when_arbitration_favors_artisan(): void
+    {
+        // Create a real temp file to simulate the generated PDF
+        $invoicesDir = storage_path('app/public/invoices');
+        if (!file_exists($invoicesDir)) {
+            mkdir($invoicesDir, 0755, true);
+        }
+        $fakePdfPath = $invoicesDir . '/test_disbursement_invoice.pdf';
+        file_put_contents($fakePdfPath, '%PDF-1.4 fake content');
+
+        // Mock PdfService to return the fake path without requiring DomPDF
+        $pdfMock = $this->mock(\App\Services\PdfService::class, function ($mock) use ($fakePdfPath) {
+            $mock->shouldReceive('generateDisbursementInvoice')
+                ->once()
+                ->andReturn($fakePdfPath);
+        });
+
+        /** @var User $admin */
+        $admin = User::factory()->create(['role' => 'admin', 'kyc_status' => 'actif']);
+        [$client, $artisan, $mission] = $this->makeMission(walletMateriaux: 65000, walletMo: 35000);
+
+        $litige = Litige::create([
+            'mission_id' => $mission->id,
+            'declencheur_id' => $client->id,
+            'type' => 'client',
+            'motif' => 'Travail conteste',
+            'description' => 'Le client conteste mais les preuves sont en faveur de l artisan.',
+            'statut' => 'en_cours',
+            'workflow_step' => 'arbitrage',
+            'funds_locked_at' => now(),
+            'evidence_deadline_at' => now()->subHours(2),
+            'arbitration_started_at' => now()->subHour(),
+            'arbitration_deadline_at' => now()->addHours(20),
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->putJson("/api/v1/litiges/{$litige->id}/arbitrage", [
+                'decision' => 'artisan',
+            ]);
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('data.decision', 'artisan')
+            ->assertJsonPath('data.statut', 'resolu');
+
+        // Mission should be completed with funds unfrozen
+        $mission->refresh();
+        $this->assertSame('completed', (string) $mission->status);
+        $this->assertFalse((bool) $mission->funds_frozen);
+
+        // Invoice path must be stored in resolution_payload
+        $litige->refresh();
+        $payload = $litige->resolution_payload;
+        $this->assertIsArray($payload);
+        $this->assertArrayHasKey('invoice_path', $payload);
+        $this->assertSame($fakePdfPath, $payload['invoice_path']);
+
+        // PDF file must exist on disk
+        $this->assertFileExists($payload['invoice_path']);
+
+        // Admin can download the invoice via the web route
+        $downloadResponse = $this->actingAs($admin)
+            ->get("/admin/litiges/{$litige->id}/invoice");
+
+        $downloadResponse->assertOk();
+        $downloadResponse->assertDownload();
+
+        // Cleanup
+        @unlink($fakePdfPath);
+    }
+
     private function makeMission(int $walletMateriaux = 0, int $walletMo = 0): array
     {
         $client = User::factory()->create([

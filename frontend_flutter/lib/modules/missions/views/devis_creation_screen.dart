@@ -9,6 +9,7 @@ import '../../../data/models/mission_model.dart';
 import '../../../data/models/supplier_model.dart';
 import '../../../data/models/supplier_product_model.dart';
 import '../controllers/devis_controller.dart';
+import '../../orders/controllers/artisan_cart_controller.dart';
 
 // ─── Design Tokens ────────────────────────────────────────────────────────────
 abstract class _C {
@@ -613,6 +614,35 @@ class _MaterialsSection extends StatelessWidget {
                     ),
                   ),
                 ),
+                TextButton.icon(
+                  onPressed: () {
+                    final ArtisanCartController artisanCart = Get.isRegistered<ArtisanCartController>()
+                        ? Get.find<ArtisanCartController>()
+                        : Get.put(ArtisanCartController());
+
+                    if (artisanCart.cart.isEmpty) {
+                      Get.snackbar(
+                        'Panier vide',
+                        'Votre panier ne contient aucun article à importer.',
+                        backgroundColor: _C.danger,
+                        colorText: Colors.white,
+                      );
+                      return;
+                    }
+
+                    controller.importArtisanCart(artisanCart.getCartLinesForDevis());
+                    Get.snackbar(
+                      'Panier importé',
+                      '${artisanCart.cartCount} articles ont été importés dans votre devis.',
+                      backgroundColor: _C.success,
+                      colorText: Colors.white,
+                    );
+                  },
+                  icon: const Icon(Icons.download_rounded, size: 18),
+                  label: const Text('Importer panier'),
+                  style: TextButton.styleFrom(foregroundColor: _C.success),
+                ),
+                const SizedBox(width: 8),
                 TextButton.icon(
                   onPressed: selectedSupplier == null
                       ? null

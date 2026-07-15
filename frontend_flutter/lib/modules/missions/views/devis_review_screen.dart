@@ -628,145 +628,279 @@ class _ActionButtons extends StatelessWidget {
     final devis = controller.currentDevis.value;
     if (devis == null) return;
 
-    final isGrandsComptes = devis.totalGeneral >= 2000000;
-    String selectedProvider = isGrandsComptes ? 'virement_bancaire' : 'wave';
+    final int totalGeneralTtc = devis.totalGeneralTtc;
+    final int montantMateriaux = devis.montantMateriaux;
+
+    String paymentType = totalGeneralTtc >= 2000000 ? 'hybrid' : 'total';
+    String selectedProvider = (paymentType == 'hybrid' ? montantMateriaux : totalGeneralTtc) >= 2000000
+        ? 'virement_bancaire'
+        : 'wave';
 
     Get.dialog(
       Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: _C.successLight,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Icon(Icons.payment, color: _C.success, size: 32),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Accepter le devis',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: _C.ink,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Choisissez votre méthode de paiement pour l\'acompte',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: _C.muted,
-                ),
-              ),
-              const SizedBox(height: 20),
-              StatefulBuilder(
-                builder: (context, setState) => Column(
-                  children: [
-                    if (isGrandsComptes) ...[
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        margin: const EdgeInsets.only(bottom: 16),
-                        decoration: BoxDecoration(
-                          color: _C.dangerLight,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: _C.danger.withValues(alpha: 0.3)),
+          padding: const EdgeInsets.all(20),
+          child: StatefulBuilder(
+            builder: (context, setState) {
+              final int amountToPay = paymentType == 'hybrid' ? montantMateriaux : totalGeneralTtc;
+              final bool isGrandsComptes = amountToPay >= 2000000;
+
+              if (isGrandsComptes && selectedProvider != 'virement_bancaire') {
+                selectedProvider = 'virement_bancaire';
+              }
+
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: _C.successLight,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.payment, color: _C.success, size: 28),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Accepter le devis',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: _C.ink,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Option de Financement',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: _C.muted),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  
+                  InkWell(
+                    onTap: () {
+                      setState(() {
+                        paymentType = 'total';
+                        if (totalGeneralTtc >= 2000000) {
+                          selectedProvider = 'virement_bancaire';
+                        }
+                      });
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: paymentType == 'total' ? _C.primary : _C.subtle,
+                          width: paymentType == 'total' ? 2 : 1,
                         ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.warning, color: _C.danger, size: 20),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                'Les paiements >= 2 000 000 FCFA doivent être réglés par Virement Bancaire.',
-                                style: TextStyle(
-                                  color: _C.danger,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          Radio<String>(
+                            value: 'total',
+                            groupValue: paymentType,
+                            onChanged: (v) {
+                              setState(() {
+                                paymentType = v!;
+                                if (totalGeneralTtc >= 2000000) {
+                                  selectedProvider = 'virement_bancaire';
+                                }
+                              });
+                            },
+                            activeColor: _C.primary,
+                          ),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Financement Intégral',
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                                 ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Préfinancez l\'intégralité (${totalGeneralTtc.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]} ')} FCFA).',
+                                  style: const TextStyle(fontSize: 11, color: _C.muted),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  
+                  InkWell(
+                    onTap: () {
+                      setState(() {
+                        paymentType = 'hybrid';
+                        if (montantMateriaux >= 2000000) {
+                          selectedProvider = 'virement_bancaire';
+                        }
+                      });
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: paymentType == 'hybrid' ? _C.primary : _C.subtle,
+                          width: paymentType == 'hybrid' ? 2 : 1,
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          Radio<String>(
+                            value: 'hybrid',
+                            groupValue: paymentType,
+                            onChanged: (v) {
+                              setState(() {
+                                paymentType = v!;
+                                if (montantMateriaux >= 2000000) {
+                                  selectedProvider = 'virement_bancaire';
+                                }
+                              });
+                            },
+                            activeColor: _C.primary,
+                          ),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Financement Hybride (Matériaux)',
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Payez les matériaux (${montantMateriaux.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]} ')} FCFA). MO par jalons.',
+                                  style: const TextStyle(fontSize: 11, color: _C.muted),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 20),
+                  
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Moyen de Paiement (${amountToPay.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]} ')} FCFA)',
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: _C.muted),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  
+                  if (isGrandsComptes) ...[
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: _C.dangerLight,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: _C.danger.withValues(alpha: 0.3)),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.warning, color: _C.danger, size: 18),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Les paiements >= 2 000 000 FCFA doivent être réglés par Virement Bancaire.',
+                              style: TextStyle(
+                                color: _C.danger,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
-                          ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  
+                  _PaymentOption(
+                    label: 'Wave CI',
+                    value: 'wave',
+                    groupValue: selectedProvider,
+                    icon: Icons.waves,
+                    disabled: isGrandsComptes,
+                    onChanged: (v) => setState(() => selectedProvider = v!),
+                  ),
+                  const SizedBox(height: 8),
+                  _PaymentOption(
+                    label: 'Orange Money CI',
+                    value: 'orange_money',
+                    groupValue: selectedProvider,
+                    icon: Icons.phone_android,
+                    disabled: isGrandsComptes,
+                    onChanged: (v) => setState(() => selectedProvider = v!),
+                  ),
+                  const SizedBox(height: 8),
+                  _PaymentOption(
+                    label: 'Virement Bancaire',
+                    value: 'virement_bancaire',
+                    groupValue: selectedProvider,
+                    icon: Icons.account_balance,
+                    onChanged: (v) => setState(() => selectedProvider = v!),
+                  ),
+                  
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Get.back(),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text('Annuler'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            Get.back();
+                            final success = await controller.acceptDevis(
+                              devis.id,
+                              provider: selectedProvider,
+                              paymentType: paymentType,
+                            );
+                            if (success) {
+                              Get.back(result: true);
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _C.success,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text('Confirmer'),
                         ),
                       ),
                     ],
-                    _PaymentOption(
-                      label: 'Wave CI',
-                      value: 'wave',
-                      groupValue: selectedProvider,
-                      icon: Icons.waves,
-                      disabled: isGrandsComptes,
-                      onChanged: (v) => setState(() => selectedProvider = v!),
-                    ),
-                    const SizedBox(height: 12),
-                    _PaymentOption(
-                      label: 'Orange Money CI',
-                      value: 'orange_money',
-                      groupValue: selectedProvider,
-                      icon: Icons.phone_android,
-                      disabled: isGrandsComptes,
-                      onChanged: (v) => setState(() => selectedProvider = v!),
-                    ),
-                    const SizedBox(height: 12),
-                    _PaymentOption(
-                      label: 'Virement Bancaire',
-                      value: 'virement_bancaire',
-                      groupValue: selectedProvider,
-                      icon: Icons.account_balance,
-                      onChanged: (v) => setState(() => selectedProvider = v!),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Get.back(),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text('Annuler'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        Get.back();
-                        final success = await controller.acceptDevis(
-                          devisId,
-                          provider: selectedProvider,
-                        );
-                        if (success) {
-                          Get.back(result: true);
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _C.success,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text('Confirmer'),
-                    ),
                   ),
                 ],
-              ),
-            ],
+              );
+            },
           ),
         ),
       ),

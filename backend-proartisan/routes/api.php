@@ -143,6 +143,7 @@ Route::prefix('v1')->group(function () {
         // ── Paiements (Wave & Orange Money) ───────────────────────────────────
         Route::prefix('payments')->group(function () {
             Route::post('/initiate',               [PaymentController::class, 'initiatePayment']);
+            Route::post('/jalons/{jalon}/pay',     [PaymentController::class, 'initiateJalonPayment']);
             Route::get('/{transaction}/status',    [PaymentController::class, 'checkStatus']);
             Route::get('/history',                 [PaymentController::class, 'history']);
         });

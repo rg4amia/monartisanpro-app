@@ -26,6 +26,7 @@ class Mission extends Model
         'ratio_materiaux', 'referent_required', 'funds_frozen',
         'referent_validated_at', 'referent_validated_by',
         'client_latitude', 'client_longitude', 'client_address',
+        'payment_type',
     ];
 
     protected function casts(): array

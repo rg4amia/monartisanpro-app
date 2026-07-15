@@ -11,6 +11,7 @@ class PaymentRepository {
     required int montant,
     required String provider,
     required String phone,
+    String? paymentType,
   }) async {
     final res = await _client.post(
       ApiEndpoints.paymentsInitiate,
@@ -18,6 +19,25 @@ class PaymentRepository {
         'mission_id': missionId,
         'devis_id': devisId,
         'montant': montant,
+        'provider': provider,
+        'phone': phone,
+        if (paymentType != null) 'payment_type': paymentType,
+      },
+    );
+
+    return PaymentInitiationModel.fromJson(
+      res.data['data'] as Map<String, dynamic>,
+    );
+  }
+
+  Future<PaymentInitiationModel> initiateJalonPayment({
+    required int jalonId,
+    required String provider,
+    required String phone,
+  }) async {
+    final res = await _client.post(
+      '/payments/jalons/$jalonId/pay',
+      data: {
         'provider': provider,
         'phone': phone,
       },

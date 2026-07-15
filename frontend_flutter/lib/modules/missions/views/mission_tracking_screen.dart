@@ -9,6 +9,7 @@ import '../../../data/models/devis_model.dart';
 import '../../../data/models/jalon_model.dart';
 import '../../../data/models/mission_model.dart';
 import '../controllers/missions_controller.dart';
+import '../controllers/devis_controller.dart';
 import 'jalon_submit_screen.dart';
 
 abstract class _Palette {
@@ -1040,7 +1041,200 @@ class _JalonCard extends StatelessWidget {
               ),
             ),
           ],
+          if (role == 'client' && (jalon.isSubmitted || jalon.isPending)) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                if (mission.paymentType == 'hybrid') ...[
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => _startJalonPaymentAndValidation(context, jalon),
+                      icon: const Icon(Icons.payment_rounded, size: 18),
+                      label: const Text('Financer'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _Palette.primary,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => _showOtpValidationDialog(context, jalon),
+                    icon: const Icon(Icons.check_circle_outline, size: 18),
+                    label: const Text('Valider OTP'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _Palette.success,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
+      ),
+    );
+  }
+
+  void _startJalonPaymentAndValidation(BuildContext context, JalonModel jalon) {
+    final DevisController devisController = Get.isRegistered<DevisController>()
+        ? Get.find<DevisController>()
+        : Get.put(DevisController());
+
+    String selectedProvider = 'wave';
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: StatefulBuilder(
+            builder: (context, setState) => Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.payment, color: _Palette.primary, size: 36),
+                const SizedBox(height: 12),
+                Text(
+                  'Financer le Jalon ${jalon.ordre}',
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Montant : ${Formatters.fcfa(jalon.montant)}\nLes fonds seront sécurisés sur le wallet de la mission.',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 12, color: _Palette.muted),
+                ),
+                const SizedBox(height: 16),
+                RadioListTile<String>(
+                  title: const Text('Wave CI', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                  secondary: const Icon(Icons.waves, color: _Palette.primary),
+                  value: 'wave',
+                  groupValue: selectedProvider,
+                  onChanged: (v) => setState(() => selectedProvider = v!),
+                  activeColor: _Palette.primary,
+                ),
+                RadioListTile<String>(
+                  title: const Text('Orange Money CI', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                  secondary: const Icon(Icons.phone_android, color: _Palette.primary),
+                  value: 'orange_money',
+                  groupValue: selectedProvider,
+                  onChanged: (v) => setState(() => selectedProvider = v!),
+                  activeColor: _Palette.primary,
+                ),
+                RadioListTile<String>(
+                  title: const Text('Virement Bancaire', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                  secondary: const Icon(Icons.account_balance, color: _Palette.primary),
+                  value: 'virement_bancaire',
+                  groupValue: selectedProvider,
+                  onChanged: (v) => setState(() => selectedProvider = v!),
+                  activeColor: _Palette.primary,
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Get.back(),
+                        child: const Text('Annuler'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          Get.back();
+                          final success = await devisController.payJalon(
+                            jalon.id,
+                            provider: selectedProvider,
+                          );
+                          if (success) {
+                            Get.find<MissionsController>().loadMission(jalon.missionId, forceRefresh: true);
+                            _showOtpValidationDialog(context, jalon);
+                          }
+                        },
+                        child: const Text('Payer'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showOtpValidationDialog(BuildContext context, JalonModel jalon) {
+    final MissionsController controller = Get.find<MissionsController>();
+    final TextEditingController otpController = TextEditingController();
+
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.sms_outlined, color: _Palette.success, size: 36),
+              const SizedBox(height: 12),
+              Text(
+                'Valider le Jalon ${jalon.ordre}',
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Saisissez le code de validation OTP à 4 chiffres envoyé par SMS.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 12, color: _Palette.muted),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: otpController,
+                keyboardType: TextInputType.number,
+                maxLength: 4,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 20, letterSpacing: 8, fontWeight: FontWeight.bold),
+                decoration: const InputDecoration(
+                  hintText: '0000',
+                  counterText: '',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Get.back(),
+                      child: const Text('Annuler'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        final otp = otpController.text.trim();
+                        if (otp.length != 4) {
+                          Get.snackbar('Code invalide', 'Le code doit contenir 4 chiffres');
+                          return;
+                        }
+                        Get.back();
+                        final success = await controller.validateOtp(jalon.id, otp);
+                        if (success) {
+                          controller.loadMission(jalon.missionId, forceRefresh: true);
+                        }
+                      },
+                      child: const Text('Valider'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -1268,24 +1462,33 @@ class _BottomActions extends StatelessWidget {
           color: _Palette.primary,
           onTap: () => Get.toNamed(Routes.devisReview, arguments: devis!.id),
         ),
-        secondary: _ActionButtonConfig(
-          label: 'Signaler',
+      );
+    }
+
+    if ((mission.status == 'financee' || mission.status == 'en_cours') &&
+        mission.status != 'litige') {
+      return _ActionRow(
+        primary: _ActionButtonConfig(
+          label: 'Signaler un litige',
           icon: Icons.warning_amber_outlined,
           color: _Palette.danger,
-          filled: false,
           onTap: () => Get.toNamed(Routes.litige, arguments: mission),
         ),
       );
     }
 
-    return _ActionRow(
-      primary: _ActionButtonConfig(
-        label: 'Signaler un litige',
-        icon: Icons.warning_amber_outlined,
-        color: _Palette.danger,
-        onTap: () => Get.toNamed(Routes.litige, arguments: mission),
-      ),
-    );
+    if (mission.status == 'litige') {
+      return _ActionRow(
+        primary: _ActionButtonConfig(
+          label: 'Litige en cours',
+          icon: Icons.gavel_outlined,
+          color: _Palette.warning,
+          onTap: null,
+        ),
+      );
+    }
+
+    return const SizedBox.shrink();
   }
 }
 

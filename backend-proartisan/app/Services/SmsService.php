@@ -13,9 +13,90 @@ class SmsService
 
     public function __construct()
     {
-        $this->apiToken = config('services.sms.api_token') ?? '';
-        $this->baseUrl = config('services.sms.base_url') ?? '';
+        $this->apiToken = trim(config('services.sms.api_token') ?? '');
+        $this->baseUrl = rtrim(trim(config('services.sms.base_url') ?? ''), '/');
         $this->provider = config('services.sms.provider', 'log');
+    }
+
+    /**
+     * Build HTTP client with auth headers (+ SSL bypass in local env)
+     */
+    private function httpClient(): \Illuminate\Http\Client\PendingRequest
+    {
+        $client = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $this->apiToken,
+            'Accept' => 'application/json',
+        ]);
+
+        // Bypass SSL verification in local/testing (Windows WAMP cURL error 60)
+        if (app()->environment('local', 'testing')) {
+            $client = $client->withoutVerifying();
+        }
+
+        return $client;
+    }
+
+    /**
+     * Normalise un numéro de téléphone au format international (225XXXXXXXXXX)
+     *
+     * Formats acceptés :
+     *   - 0141498409       → 2250141498409
+     *   - 0700000001       → 2250700000001
+     *   - +2250141498409   → 2250141498409
+     *   - 002250141498409  → 2250141498409
+     *   - 2250141498409    → 2250141498409 (déjà correct)
+     *
+     * @param string $phone Numéro brut
+     * @param string $countryCode Indicatif pays (défaut : 225 pour la Côte d'Ivoire)
+     * @return string Numéro normalisé
+     */
+    public function normalizePhone(string $phone, string $countryCode = '225'): string
+    {
+        // Supprimer espaces, tirets, points, parenthèses
+        $phone = preg_replace('/[\s\-\.\(\)]+/', '', $phone);
+
+        // Supprimer le préfixe "+"
+        $phone = ltrim($phone, '+');
+
+        // Supprimer le préfixe "00" international
+        if (str_starts_with($phone, '00' . $countryCode)) {
+            $phone = substr($phone, 2);
+        }
+
+        // Si le numéro commence déjà par l'indicatif pays, le retourner tel quel
+        if (str_starts_with($phone, $countryCode) && strlen($phone) >= 12) {
+            return $phone;
+        }
+
+        // Numéro local (commence par 0 ou directement par les chiffres)
+        // Formats CI : 01, 05, 07, 27, 21, 25, etc.
+        if (str_starts_with($phone, '0')) {
+            return $countryCode . $phone;
+        }
+
+        // Numéro court sans 0 initial (ex: 700000001) → ajouter indicatif
+        return $countryCode . $phone;
+    }
+
+    /**
+     * Normalise un ou plusieurs numéros de téléphone
+     *
+     * @param string|array $recipients Numéro(s) brut(s)
+     * @return string|array Numéro(s) normalisé(s)
+     */
+    private function normalizeRecipients(string|array $recipients): string|array
+    {
+        if (is_array($recipients)) {
+            return array_map(fn(string $phone) => $this->normalizePhone($phone), $recipients);
+        }
+
+        // Gère le cas d'une chaîne avec plusieurs numéros séparés par des virgules
+        if (str_contains($recipients, ',')) {
+            $phones = array_map('trim', explode(',', $recipients));
+            return implode(',', array_map(fn(string $phone) => $this->normalizePhone($phone), $phones));
+        }
+
+        return $this->normalizePhone($recipients);
     }
 
     /**
@@ -33,6 +114,9 @@ class SmsService
         string $senderId = 'ProsArtisan',
         ?string $scheduleTime = null
     ): array {
+        // Normaliser le(s) numéro(s) au format international
+        $recipient = $this->normalizeRecipients($recipient);
+
         // Log mode for development
         if ($this->provider === 'log') {
             Log::info('SMS (log mode)', [
@@ -68,10 +152,7 @@ class SmsService
         }
 
         try {
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->apiToken,
-                'Accept' => 'application/json',
-            ])->post($this->baseUrl . '/sms/send', $payload);
+            $response = $this->httpClient()->post($this->baseUrl . '/sms/send', $payload);
 
             if ($response->successful()) {
                 return $response->json();
@@ -85,6 +166,8 @@ class SmsService
             return [
                 'status' => 'error',
                 'message' => 'Failed to send SMS',
+                'http_status' => $response->status(),
+                'api_response' => $response->json() ?? $response->body(),
             ];
         } catch (\Exception $e) {
             Log::error('SMS Exception', [
@@ -128,10 +211,7 @@ class SmsService
         $contactListString = is_array($contactListId) ? implode(',', $contactListId) : $contactListId;
 
         try {
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->apiToken,
-                'Accept' => 'application/json',
-            ])->post($this->baseUrl . '/sms/campaign', [
+            $response = $this->httpClient()->post($this->baseUrl . '/sms/campaign', [
                 'contact_list_id' => $contactListString,
                 'sender_id' => $senderId,
                 'type' => 'plain',
@@ -161,10 +241,7 @@ class SmsService
         }
 
         try {
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->apiToken,
-                'Accept' => 'application/json',
-            ])->get($this->baseUrl . '/sms/' . $uid);
+            $response = $this->httpClient()->get($this->baseUrl . '/sms/' . $uid);
 
             return $response->successful() ? $response->json() : [
                 'status' => 'error',
@@ -187,10 +264,7 @@ class SmsService
         }
 
         try {
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->apiToken,
-                'Accept' => 'application/json',
-            ])->get($this->baseUrl . '/sms');
+            $response = $this->httpClient()->get($this->baseUrl . '/sms');
 
             return $response->successful() ? $response->json() : [
                 'status' => 'error',
@@ -214,10 +288,7 @@ class SmsService
         }
 
         try {
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->apiToken,
-                'Accept' => 'application/json',
-            ])->get($this->baseUrl . '/campaign/' . $uid);
+            $response = $this->httpClient()->get($this->baseUrl . '/campaign/' . $uid);
 
             return $response->successful() ? $response->json() : [
                 'status' => 'error',

@@ -20,6 +20,7 @@ class LitigeService
         private WalletService $walletService,
         private PhotoService $photoService,
         private JCodeService $jCodeService,
+        private PdfService $pdfService,
     ) {}
 
     public function paginateForUser(User $user, ?string $statut = null, int $perPage = 20): LengthAwarePaginator
@@ -317,6 +318,11 @@ class LitigeService
         $releaseMo = min((int) ($payload['release_mo'] ?? $this->defaultReleaseMo($decision, $remainingMo)), $remainingMo);
         $resolutionReason = $payload['resolution_reason'] ?? 'arbitrage_admin';
 
+        $invoicePath = null;
+        if ($decision === 'artisan') {
+            $invoicePath = $this->pdfService->generateDisbursementInvoice($mission, $releaseMo + $releaseMateriaux);
+        }
+
         DB::transaction(function () use (
             $litige,
             $mission,
@@ -327,7 +333,8 @@ class LitigeService
             $releaseMateriaux,
             $releaseMo,
             $payload,
-            $resolutionReason
+            $resolutionReason,
+            $invoicePath
         ): void {
             if ($decision === 'client') {
                 $this->walletService->refundClientFromDispute($mission, $refundMateriaux, $refundMo, $litige);
@@ -376,6 +383,7 @@ class LitigeService
                     'release_materiaux' => $releaseMateriaux,
                     'release_mo' => $releaseMo,
                     'decided_at' => now()->toIso8601String(),
+                    'invoice_path' => $invoicePath,
                 ],
             ]);
         });
