@@ -179,11 +179,11 @@ jobs:
             mkdir -p storage/{app/{public,private},framework/{cache/data,sessions,views,testing},logs}
             mkdir -p bootstrap/cache
 
-            # Set proper permissions
-            chmod -R 755 storage bootstrap/cache
-            chmod -R 775 storage/logs
-            find storage -type d -exec chmod 775 {} \;
-            find storage -type f -exec chmod 664 {} \;
+            # Set proper permissions (ignore failures on files owned by webserver user)
+            chmod -R 755 storage bootstrap/cache || true
+            chmod -R 775 storage/logs || true
+            find storage -type d -exec chmod 775 {} \; 2>/dev/null || true
+            find storage -type f -exec chmod 664 {} \; 2>/dev/null || true
 
             # Laravel artisan commands
             php artisan key:generate --force 2>/dev/null || echo "⚠️ Key already exists"
