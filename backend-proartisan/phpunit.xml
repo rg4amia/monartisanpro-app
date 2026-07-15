@@ -32,7 +32,7 @@
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
         <env name="WHATSAPP_PROVIDER" value="log"/>
-        <env name="SMS_PROVIDER" value="smspro"/>
+        <env name="SMS_PROVIDER" value="log"/>
         <env name="SMS_API_TOKEN" value="1227|Gjd4N2x6qRYdnwWybpkJfoA87LbCFAFnvpNK2NPwa4861d63 "/>
         <env name="SMS_BASE_URL" value="https://app.smspro.africa/api/v3    "/>
         <env name="SMS_SENDER_ID" value="ProsArtisan"/>
