@@ -208,6 +208,8 @@ class WalletService
             $ratioMat,
             $paiementTransaction
         ) {
+            $isHybrid = ($paiementTransaction->metadata['payment_type'] ?? 'total') === 'hybrid';
+
             // Mise à jour mission
             $mission->update([
                 'montant_total'     => $montantTotal,
@@ -215,6 +217,7 @@ class WalletService
                 'montant_mo'        => $montantMo,
                 'ratio_materiaux'   => $ratioMat,
                 'status'            => 'funded_locked',
+                'payment_type'      => $isHybrid ? 'hybrid' : 'total',
             ]);
 
             // Crédit du wallet_materiaux de l'artisan
@@ -230,18 +233,20 @@ class WalletService
                 ]
             );
 
-            // Crédit du wallet_mo de l'artisan
-            $this->credit(
-                $artisan,
-                WalletType::WALLET_MO,
-                $montantMo,
-                "Séquestre main d'œuvre - Mission #{$mission->id}",
-                [
-                    'mission_id' => $mission->id,
-                    'transaction_id' => $paiementTransaction->id,
-                    'type' => 'escrow_mo'
-                ]
-            );
+            if (!$isHybrid) {
+                // Crédit du wallet_mo de l'artisan
+                $this->credit(
+                    $artisan,
+                    WalletType::WALLET_MO,
+                    $montantMo,
+                    "Séquestre main d'œuvre - Mission #{$mission->id}",
+                    [
+                        'mission_id' => $mission->id,
+                        'transaction_id' => $paiementTransaction->id,
+                        'type' => 'escrow_mo'
+                    ]
+                );
+            }
 
             Log::info('Séquestre fragmenté', [
                 'mission_id' => $mission->id,

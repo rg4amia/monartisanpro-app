@@ -34,6 +34,7 @@ class PaymentController extends Controller
             'montant' => 'required|integer|min:100',
             'provider' => 'required|in:wave,orange_money,virement_bancaire',
             'phone' => 'required_if:provider,wave,orange_money|nullable|string|max:20',
+            'payment_type' => 'nullable|string|in:total,hybrid',
         ]);
 
         if ($validator->fails()) {
@@ -44,9 +45,11 @@ class PaymentController extends Controller
             ], 422);
         }
 
+        $paymentType = $request->input('payment_type', 'total');
+        $montant = (int) $request->montant;
+
         // RÈGLE SÉCURITÉ GRANDS COMPTES: Enforcer virement_bancaire si montant >= 2 000 000 FCFA
         $seuil = config('prosartisan.mission.referent_threshold', 2000000);
-        $montant = (int) $request->montant;
         if ($montant >= $seuil && in_array($request->provider, ['wave', 'orange_money'], true)) {
             return response()->json([
                 'success' => false,
@@ -81,12 +84,12 @@ class PaymentController extends Controller
             }
 
             $montant = (int) $request->montant;
-            $montantAttendu = $devis->montant_total;
+            $montantAttendu = $paymentType === 'hybrid' ? $devis->montant_materiaux : $devis->montant_total;
 
             if ($montant !== $montantAttendu) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Le montant du paiement doit correspondre exactement au montant du devis.',
+                    'message' => "Le montant du paiement ($montant FCFA) ne correspond pas au montant attendu ($montantAttendu FCFA).",
                 ], 422);
             }
 
@@ -106,7 +109,8 @@ class PaymentController extends Controller
                 'metadata' => [
                     'mission_id' => $mission->id,
                     'devis_id' => $devis->id,
-                    'description' => "Acompte mission #{$mission->id}",
+                    'payment_type' => $paymentType,
+                    'description' => $paymentType === 'hybrid' ? "Acompte matériaux mission #{$mission->id}" : "Acompte intégral mission #{$mission->id}",
                 ],
             ]);
 
@@ -115,7 +119,7 @@ class PaymentController extends Controller
                     $montant,
                     $phone,
                     "Acompte mission #{$mission->id}",
-                    ['transaction_id' => $transaction->id, 'devis_id' => $devis->id]
+                    ['transaction_id' => $transaction->id, 'devis_id' => $devis->id, 'payment_type' => $paymentType]
                 );
 
                 $transaction->update([
@@ -146,7 +150,7 @@ class PaymentController extends Controller
                     $montant,
                     $phone,
                     "Acompte mission #{$mission->id}",
-                    ['transaction_id' => $transaction->id, 'devis_id' => $devis->id]
+                    ['transaction_id' => $transaction->id, 'devis_id' => $devis->id, 'payment_type' => $paymentType]
                 );
 
                 $transaction->update([
@@ -252,6 +256,7 @@ class PaymentController extends Controller
                         'wave_payment_id' => $result['payment_id'],
                         'paid_at' => now(),
                     ]);
+                    $this->handleJalonPaymentConfirmed($transaction);
                 } elseif (in_array($result['status'], ['failed', 'cancelled'], true)) {
                     $transaction->update([
                         'statut' => PaymentStatus::ECHOUE,
@@ -271,6 +276,7 @@ class PaymentController extends Controller
                         'orange_tx_reference' => $result['tx_reference'],
                         'paid_at' => now(),
                     ]);
+                    $this->handleJalonPaymentConfirmed($transaction);
                 } elseif (in_array($result['status'], ['FAILED', 'CANCELLED'], true)) {
                     $transaction->update([
                         'statut' => PaymentStatus::ECHOUE,
@@ -351,5 +357,207 @@ class PaymentController extends Controller
             'paid_at' => $transaction->paid_at?->toIso8601String(),
             'failed_at' => $transaction->failed_at?->toIso8601String(),
         ];
+    }
+
+    /**
+     * Initier le paiement pour un jalon individuel (Gestion Hybride).
+     * POST /api/v1/payments/jalons/{jalon}/pay
+     */
+    public function initiateJalonPayment(Request $request, \App\Models\Jalon $jalon): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'provider' => 'required|in:wave,orange_money,virement_bancaire',
+            'phone' => 'required_if:provider,wave,orange_money|nullable|string|max:20',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Données de validation invalides',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $mission = $jalon->mission;
+        $client = $request->user();
+
+        if ($mission->client_id !== $client->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vous n\'êtes pas autorisé à payer pour ce jalon.',
+            ], 403);
+        }
+
+        if ($mission->payment_type !== 'hybrid') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ce jalon ne peut être payé individuellement que pour les projets hybrides.',
+            ], 400);
+        }
+
+        if ($jalon->statut !== 'en_attente' && $jalon->statut !== 'soumis') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ce jalon n\'est pas en attente de paiement.',
+            ], 422);
+        }
+
+        $montant = $jalon->montant;
+        $provider = PaymentProvider::from($request->provider);
+        $phone = (string) ($request->phone ?? $client->phone ?? '');
+
+        // RÈGLE SÉCURITÉ GRANDS COMPTES: Enforcer virement_bancaire si montant >= 2 000 000 FCFA
+        $seuil = config('prosartisan.mission.referent_threshold', 2000000);
+        if ($montant >= $seuil && in_array($request->provider, ['wave', 'orange_money'], true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Les paiements Mobile Money sont limités à ' . number_format($seuil, 0, ',', ' ') . ' FCFA. Veuillez effectuer un virement bancaire.',
+            ], 422);
+        }
+
+        try {
+            $transaction = Transaction::create([
+                'mission_id' => $mission->id,
+                'user_id' => $client->id,
+                'type' => 'acompte',
+                'montant' => $montant,
+                'wallet_source' => $provider === PaymentProvider::VIREMENT_BANCAIRE ? 'client_bank_' . $client->id : 'client_mobile_money_' . $client->id,
+                'wallet_dest' => 'escrow_mission_' . $mission->id,
+                'provider' => $provider,
+                'statut' => PaymentStatus::EN_ATTENTE,
+                'client_phone' => $phone,
+                'metadata' => [
+                    'mission_id' => $mission->id,
+                    'jalon_id' => $jalon->id,
+                    'payment_type' => 'jalon',
+                    'description' => "Paiement jalon #{$jalon->ordre} mission #{$mission->id}",
+                ],
+            ]);
+
+            if ($provider === PaymentProvider::WAVE) {
+                $result = $this->waveService->createCheckout(
+                    $montant,
+                    $phone,
+                    "Paiement jalon #{$jalon->ordre} mission #{$mission->id}",
+                    ['transaction_id' => $transaction->id, 'jalon_id' => $jalon->id, 'payment_type' => 'jalon']
+                );
+
+                $transaction->update([
+                    'wave_checkout_id' => $result['checkout_id'],
+                    'wave_client_reference' => $result['checkout_id'],
+                    'reference_externe' => $result['checkout_id'],
+                    'metadata' => array_merge($transaction->metadata ?? [], [
+                        'payment_url' => $result['checkout_url'],
+                        'wave_launch_url' => $result['wave_launch_url'],
+                    ]),
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Paiement du jalon Wave initié avec succès',
+                    'data' => [
+                        'transaction_id' => $transaction->id,
+                        'jalon_id' => $jalon->id,
+                        'payment_url' => $result['checkout_url'],
+                        'wave_launch_url' => $result['wave_launch_url'],
+                        'provider' => 'wave',
+                    ],
+                ]);
+            }
+
+            if ($provider === PaymentProvider::ORANGE_MONEY) {
+                $result = $this->orangeMoneyService->createPayment(
+                    $montant,
+                    $phone,
+                    "Paiement jalon #{$jalon->ordre} mission #{$mission->id}",
+                    ['transaction_id' => $transaction->id, 'jalon_id' => $jalon->id, 'payment_type' => 'jalon']
+                );
+
+                $transaction->update([
+                    'orange_order_id' => $result['order_id'],
+                    'orange_payment_token' => $result['payment_token'],
+                    'reference_externe' => $result['order_id'],
+                    'metadata' => array_merge($transaction->metadata ?? [], [
+                        'payment_url' => $result['payment_url'],
+                        'order_id' => $result['order_id'],
+                    ]),
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Paiement du jalon Orange Money initié avec succès',
+                    'data' => [
+                        'transaction_id' => $transaction->id,
+                        'jalon_id' => $jalon->id,
+                        'payment_url' => $result['payment_url'],
+                        'order_id' => $result['order_id'],
+                        'provider' => 'orange_money',
+                    ],
+                ]);
+            }
+
+            if ($provider === PaymentProvider::VIREMENT_BANCAIRE) {
+                $reference = 'REF-JL-' . $jalon->id . '-' . str_pad(random_int(0, 999), 3, '0', STR_PAD_LEFT);
+
+                $transaction->update([
+                    'reference_externe' => $reference,
+                    'metadata' => array_merge($transaction->metadata ?? [], [
+                        'bank_name' => 'ECOBANK CI',
+                        'bank_account_name' => 'PROSARTISAN ESCROW',
+                        'bank_iban' => 'CI59 CI05 9012 3456 7890 12',
+                        'bank_reference' => $reference,
+                        'description' => 'Instructions de virement bancaire pour jalon',
+                    ]),
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Paiement du jalon par Virement Bancaire initié avec succès',
+                    'data' => [
+                        'transaction_id' => $transaction->id,
+                        'jalon_id' => $jalon->id,
+                        'provider' => 'virement_bancaire',
+                        'virement_instructions' => [
+                            'bank_name' => 'ECOBANK CI',
+                            'account_name' => 'PROSARTISAN ESCROW',
+                            'iban' => 'CI59 CI05 9012 3456 7890 12',
+                            'reference' => $reference,
+                        ],
+                    ],
+                ]);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    protected function handleJalonPaymentConfirmed(Transaction $transaction): void
+    {
+        if (($transaction->metadata['payment_type'] ?? '') === 'jalon') {
+            $jalonId = $transaction->metadata['jalon_id'] ?? null;
+            if ($jalonId) {
+                $jalon = \App\Models\Jalon::find($jalonId);
+                if ($jalon && ($jalon->statut === 'en_attente' || $jalon->statut === 'soumis')) {
+                    $walletService = app(\App\Services\WalletService::class);
+                    $walletService->credit(
+                        $jalon->mission->artisan,
+                        \App\Enums\WalletType::WALLET_MO,
+                        $jalon->montant,
+                        "Financement jalon #{$jalon->ordre} - Mission #{$jalon->mission_id}",
+                        [
+                            'mission_id' => $jalon->mission_id,
+                            'jalon_id' => $jalon->id,
+                            'transaction_id' => $transaction->id,
+                            'type' => 'escrow_mo_jalon'
+                        ]
+                    );
+
+                    Log::info("[Jalon financé] Jalon #{$jalon->id} financé pour la mission #{$jalon->mission_id}");
+                }
+            }
+        }
     }
 }

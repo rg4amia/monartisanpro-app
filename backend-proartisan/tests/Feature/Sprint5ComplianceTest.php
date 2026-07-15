@@ -47,6 +47,8 @@ class Sprint5ComplianceTest extends TestCase
 
         // 1. Order with Moto and Surge = 1.0 (default)
         // Base cost: (10 km * 150) + (15 mins * 50) = 1500 + 750 = 2250 FCFA
+        $driver = User::factory()->create(['role' => 'driver', 'kyc_status' => 'actif']);
+
         $response1 = $this->actingAs($client)
             ->postJson('/api/v1/orders', [
                 'supplier_id' => $supplier->id,
@@ -63,7 +65,11 @@ class Sprint5ComplianceTest extends TestCase
 
         $response1->assertCreated();
         $order1 = Order::findOrFail($response1->json('data.id'));
-        $this->assertSame(2250, $order1->delivery_cost);
+        
+        // Préparer et accepter la commande pour déclencher le calcul de livraison
+        $this->actingAs($supplier)->postJson("/api/v1/orders/{$order1->id}/prepared")->assertOk();
+        $this->actingAs($driver)->postJson("/api/v1/deliveries/{$order1->id}/accept")->assertOk();
+        $this->assertSame(2250, $order1->fresh()->delivery_cost);
 
         // 2. Order with Voiture (1.5x) and Surge = 1.0
         // Expected: 2250 * 1.5 = 3375 FCFA
@@ -83,7 +89,10 @@ class Sprint5ComplianceTest extends TestCase
 
         $response2->assertCreated();
         $order2 = Order::findOrFail($response2->json('data.id'));
-        $this->assertSame(3375, $order2->delivery_cost);
+        
+        $this->actingAs($supplier)->postJson("/api/v1/orders/{$order2->id}/prepared")->assertOk();
+        $this->actingAs($driver)->postJson("/api/v1/deliveries/{$order2->id}/accept")->assertOk();
+        $this->assertSame(3375, $order2->fresh()->delivery_cost);
 
         // 3. Order with Cargo (2.5x) and Surge = 2.0
         // Expected: 2250 * 2.5 * 2.0 = 11250 FCFA
@@ -103,8 +112,11 @@ class Sprint5ComplianceTest extends TestCase
 
         $response3->assertCreated();
         $order3 = Order::findOrFail($response3->json('data.id'));
-        $this->assertSame(11250, $order3->delivery_cost);
-        $this->assertSame('cargo', $order3->vehicle_class);
-        $this->assertSame(2.0, $order3->surge_multiplier);
+        
+        $this->actingAs($supplier)->postJson("/api/v1/orders/{$order3->id}/prepared")->assertOk();
+        $this->actingAs($driver)->postJson("/api/v1/deliveries/{$order3->id}/accept")->assertOk();
+        $this->assertSame(11250, $order3->fresh()->delivery_cost);
+        $this->assertSame('cargo', $order3->fresh()->vehicle_class);
+        $this->assertSame(2.0, (float)$order3->fresh()->surge_multiplier);
     }
 }

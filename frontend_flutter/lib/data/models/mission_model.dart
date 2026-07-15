@@ -16,6 +16,7 @@ class MissionModel {
   final String createdAt;
   final String? updatedAt;
   final String? paymentStatus;
+  final String paymentType;
   final String? statusGemini;
 
   const MissionModel({
@@ -36,6 +37,7 @@ class MissionModel {
     this.location,
     this.updatedAt,
     this.paymentStatus,
+    this.paymentType = 'total',
     this.statusGemini,
   });
 
@@ -139,6 +141,8 @@ class MissionModel {
       paymentStatus:
           (json['paymentStatus'] as String?) ??
           _derivePaymentStatus((json['status'] ?? '').toString()),
+      paymentType:
+          (json['payment_type'] ?? json['paymentType'] ?? 'total').toString(),
       statusGemini:
           (json['statusGemini'] ?? json['status'] ?? '').toString().isEmpty
           ? null
@@ -164,6 +168,7 @@ class MissionModel {
     'urgency': urgency,
     'location': location,
     'paymentStatus': paymentStatus,
+    'payment_type': paymentType,
     'statusGemini': statusGemini,
   };
 
@@ -185,6 +190,7 @@ class MissionModel {
     String? createdAt,
     String? updatedAt,
     String? paymentStatus,
+    String? paymentType,
     String? statusGemini,
   }) {
     return MissionModel(
@@ -205,6 +211,7 @@ class MissionModel {
       urgency: urgency ?? this.urgency,
       location: location ?? this.location,
       paymentStatus: paymentStatus ?? this.paymentStatus,
+      paymentType: paymentType ?? this.paymentType,
       statusGemini: statusGemini ?? this.statusGemini,
     );
   }

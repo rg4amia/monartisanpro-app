@@ -154,6 +154,11 @@ class DevisModel {
       lignes.where((l) => l.type == 'mat').fold(0, (s, l) => s + l.montant);
 
   int get totalGeneral => totalMo + totalMat;
+
+  int get montantMateriaux => (totalMat * 1.03).round();
+  int get montantMo => (totalMo * 1.10).round();
+  int get totalGeneralTtc => montantMateriaux + montantMo;
+
   List<DevisLigne> get materialLines =>
       lignes.where((ligne) => ligne.isMaterial).toList();
 

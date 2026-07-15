@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/storage/storage_service.dart';
 import '../controllers/order_controller.dart';
+import '../controllers/artisan_cart_controller.dart';
 import 'order_checkout_screen.dart';
 
 class ClientCatalogScreen extends StatelessWidget {
@@ -10,6 +12,11 @@ class ClientCatalogScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final OrderController controller = Get.find<OrderController>();
+    final ArtisanCartController artisanCart = Get.isRegistered<ArtisanCartController>()
+        ? Get.find<ArtisanCartController>()
+        : Get.put(ArtisanCartController());
+
+    final bool isArtisan = StorageService.getRole() == 'artisan';
     final supplier = controller.selectedSupplier.value;
     final shopName = supplier?.shopName ?? 'Quincaillerie';
 
@@ -27,7 +34,11 @@ class ClientCatalogScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.delete_outline),
             onPressed: () {
-              controller.clearCart();
+              if (isArtisan) {
+                artisanCart.clearCart();
+              } else {
+                controller.clearCart();
+              }
               Get.snackbar('Panier vidé', 'Tous les articles ont été retirés');
             },
           ),
@@ -61,7 +72,8 @@ class ClientCatalogScreen extends StatelessWidget {
             final product = controller.supplierProducts[index];
             
             // Calcul du prix unitaire TTC pour l'affichage client (+3% de frais plateforme)
-            final int unitPriceTtc = (product.unitPrice * 1.03).round();
+            // L'artisan voit le prix HT/fournisseur car les taxes/commissions sont appliquées globalement dans le devis
+            final int displayPrice = isArtisan ? product.unitPrice : (product.unitPrice * 1.03).round();
             
             return Card(
               margin: const EdgeInsets.only(bottom: 16),
@@ -114,7 +126,7 @@ class ClientCatalogScreen extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                '${unitPriceTtc.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]} ')} FCFA',
+                                '${displayPrice.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]} ')} FCFA',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w800,
                                   fontSize: 16,
@@ -126,10 +138,18 @@ class ClientCatalogScreen extends StatelessWidget {
                                 children: [
                                   IconButton(
                                     icon: const Icon(Icons.remove_circle_outline, color: AppColors.textSecondary),
-                                    onPressed: () => controller.removeFromCart(product),
+                                    onPressed: () {
+                                      if (isArtisan) {
+                                        artisanCart.removeFromCart(product);
+                                      } else {
+                                        controller.removeFromCart(product);
+                                      }
+                                    },
                                   ),
                                   Obx(() {
-                                    final count = controller.getProductQuantity(product.id);
+                                    final count = isArtisan
+                                        ? artisanCart.getProductQuantity(product.id)
+                                        : controller.getProductQuantity(product.id);
                                     return Text(
                                       '$count',
                                       style: const TextStyle(
@@ -140,7 +160,13 @@ class ClientCatalogScreen extends StatelessWidget {
                                   }),
                                   IconButton(
                                     icon: const Icon(Icons.add_circle_outline, color: AppColors.primary),
-                                    onPressed: () => controller.addToCart(product),
+                                    onPressed: () {
+                                      if (isArtisan) {
+                                        artisanCart.addToCart(product);
+                                      } else {
+                                        controller.addToCart(product);
+                                      }
+                                    },
                                   ),
                                 ],
                               ),
@@ -157,8 +183,10 @@ class ClientCatalogScreen extends StatelessWidget {
         );
       }),
       bottomNavigationBar: Obx(() {
-        final count = controller.cartCount;
+        final count = isArtisan ? artisanCart.cartCount : controller.cartCount;
         if (count == 0) return const SizedBox.shrink();
+
+        final int totalDisplayPrice = isArtisan ? artisanCart.totalAmount : controller.totalTtc;
 
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
@@ -187,7 +215,7 @@ class ClientCatalogScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${controller.totalTtc.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]} ')} FCFA',
+                      '${totalDisplayPrice.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]} ')} FCFA',
                       style: const TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 20,
@@ -198,10 +226,20 @@ class ClientCatalogScreen extends StatelessWidget {
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    Get.to(() => const OrderCheckoutScreen(), arguments: {
-                      'supplier_id': supplier?.id,
-                      'items': controller.getCartItemsPayload(),
-                    });
+                    if (isArtisan) {
+                      Get.back();
+                      Get.snackbar(
+                        'Panier Devis mis à jour',
+                        'Vos articles ont été ajoutés à votre panier. Vous pouvez les importer lors de la création de votre devis.',
+                        backgroundColor: AppColors.success,
+                        colorText: Colors.white,
+                      );
+                    } else {
+                      Get.to(() => const OrderCheckoutScreen(), arguments: {
+                        'supplier_id': supplier?.id,
+                        'items': controller.getCartItemsPayload(),
+                      });
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
@@ -210,15 +248,15 @@ class ClientCatalogScreen extends StatelessWidget {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     elevation: 0,
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'Passer la commande',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                        isArtisan ? 'Terminer mes ajouts' : 'Passer la commande',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                       ),
-                      SizedBox(width: 8),
-                      Icon(Icons.arrow_forward, size: 16),
+                      const SizedBox(width: 8),
+                      const Icon(Icons.arrow_forward, size: 16),
                     ],
                   ),
                 ),

@@ -7,10 +7,10 @@ This document describes the SMS Pro Africa API integration for ProsArtisan.
 Add the following to your `.env` file:
 
 ```env
-SMS_PROVIDER=log                # Use 'log' for development, 'smspro' for production
-SMS_API_TOKEN=your_api_token_here
+SMS_PROVIDER=smspro # Use 'log' for development, 'smspro' for production
+SMS_API_TOKEN=1227|Gjd4N2x6qRYdnwWybpkJfoA87LbCFAFnvpNK2NPwa4861d63 
 SMS_BASE_URL=https://app.smspro.africa/api/v3
-SMS_SENDER_ID=ProsArtisan       # Max 11 characters
+SMS_SENDER_ID=ProsArtisan          # Max 11 characters
 ```
 
 ## Usage
@@ -62,6 +62,7 @@ $isValid = $otpService->verifyOtp('2250707123456', '1234');
 ### API Endpoints
 
 #### Send SMS
+
 ```bash
 POST /api/v1/sms/send
 Authorization: Bearer {token}
@@ -76,12 +77,14 @@ Content-Type: application/json
 ```
 
 #### View SMS
+
 ```bash
 GET /api/v1/sms/{uid}
 Authorization: Bearer {token}
 ```
 
 #### View All Messages
+
 ```bash
 GET /api/v1/sms
 Authorization: Bearer {token}
@@ -148,4 +151,3 @@ curl -X POST http://backend-proartisan.test/api/v1/sms/send \
 - Sender ID max length is 11 characters
 - Messages are logged in development mode for testing
 - OTP codes expire after 5 minutes (configurable in `config/prosartisan.php`)
-

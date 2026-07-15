@@ -113,16 +113,16 @@ test('client can create order in delivery mode with dynamic maps calculation', f
 
     $response->assertStatus(201);
 
-    // Calcul de livraison attendu : (5 km * 150 FCFA) + (10 min * 50 FCFA) = 750 + 500 = 1250 FCFA
+    // Le frais de livraison est initialement à 0 (calculé et payé lors de l'acceptation par le livreur)
     $this->assertDatabaseHas('orders', [
         'client_id' => $client->id,
         'supplier_id' => $supplier->id,
         'delivery_mode' => 'delivery',
         'status' => 'paid',
         'subtotal' => 10000,
-        'delivery_cost' => 1250,
+        'delivery_cost' => 0,
         'platform_fee' => 300,
-        'total_amount' => 11550, // 10000 + 1250 + 300
+        'total_amount' => 10300,
     ]);
 });
 

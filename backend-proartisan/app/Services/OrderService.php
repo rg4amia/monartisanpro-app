@@ -52,34 +52,12 @@ class OrderService
             $platformFeeRatio = \App\Models\Setting::getValueByKey('platform_fee_ratio', 0.03);
             $platformFee = (int) round($subtotal * $platformFeeRatio);
 
-            // 3. Calcul dynamique de livraison (Distance x Temps) via Google Maps
+            // 3. Calcul dynamique de livraison différé (Distance x Temps)
             $deliveryCost = 0;
             if ($deliveryMode === 'delivery') {
                 $supplierProfile = $supplier->fournisseurAgree;
                 if (!$supplierProfile) {
                     throw new \Exception("Profil fournisseur incomplet ou non agréé.");
-                }
-
-                $from = $supplierProfile->getPositionCoords();
-                $to = $client->getPositionCoords();
-
-                $vehicleMultiplier = match ($vehicleClass) {
-                    'voiture' => 1.5,
-                    'cargo'   => 2.5,
-                    default   => 1.0,
-                };
-
-                if (!$from || !$to) {
-                    // Si coordonnées manquantes, on applique un tarif forfaitaire par défaut
-                    $deliveryCost = (int) round(2500 * $vehicleMultiplier * $surgeMultiplier);
-                } else {
-                    $directions = $this->mapsService->getDirections($from, $to);
-                    $distanceKm = $directions['distance'] / 1000;
-                    $durationMin = $directions['duration'] / 60;
-
-                    // Formule de calcul : 150 FCFA / km + 50 FCFA / min, minimum 1000 FCFA
-                    $rawCost = (($distanceKm * 150) + ($durationMin * 50)) * $vehicleMultiplier * $surgeMultiplier;
-                    $deliveryCost = (int) max(1000, round($rawCost));
                 }
             }
 
@@ -199,12 +177,58 @@ class OrderService
             throw new \Exception("Seul un livreur peut accepter cette course.");
         }
 
+        // Calcul dynamique des frais de livraison (Distance x Temps) via Google Maps
+        $supplierProfile = $order->supplier->fournisseurAgree;
+        if (!$supplierProfile) {
+            throw new \Exception("Profil fournisseur incomplet ou non agréé.");
+        }
+
+        $from = $supplierProfile->getPositionCoords();
+        $to = $order->client->getPositionCoords();
+
+        $vehicleMultiplier = match ($order->vehicle_class) {
+            'voiture' => 1.5,
+            'cargo'   => 2.5,
+            default   => 1.0,
+        };
+        $surgeMultiplier = (float) ($order->surge_multiplier ?? 1.0);
+
+        if (!$from || !$to) {
+            // Si coordonnées manquantes, on applique un tarif forfaitaire par défaut
+            $deliveryCost = (int) round(2500 * $vehicleMultiplier * $surgeMultiplier);
+        } else {
+            $directions = $this->mapsService->getDirections($from, $to);
+            $distanceKm = $directions['distance'] / 1000;
+            $durationMin = $directions['duration'] / 60;
+
+            // Formule de calcul : 150 FCFA / km + 50 FCFA / min, minimum 1000 FCFA
+            $rawCost = (($distanceKm * 150) + ($durationMin * 50)) * $vehicleMultiplier * $surgeMultiplier;
+            $deliveryCost = (int) max(1000, round($rawCost));
+        }
+
         $order->update([
             'driver_id' => $driver->id,
             'status' => 'driver_assigned',
+            'delivery_cost' => $deliveryCost,
+            'total_amount' => $order->subtotal + $order->platform_fee + $deliveryCost,
         ]);
 
-        $supplierProfile = $order->supplier->fournisseurAgree;
+        // Créer la transaction Mobile Money pour le montant de la course
+        \App\Models\Transaction::create([
+            'user_id' => $order->client_id,
+            'type' => 'acompte',
+            'montant' => $deliveryCost,
+            'wallet_source' => 'client_mobile_money_' . $order->client_id,
+            'wallet_dest' => 'escrow_order_' . $order->id,
+            'provider' => \App\Enums\PaymentProvider::WAVE,
+            'statut' => \App\Enums\PaymentStatus::CONFIRME,
+            'paid_at' => now(),
+            'metadata' => [
+                'order_id' => $order->id,
+                'description' => "Paiement de la course de livraison #{$order->id} (ajouté après acceptation du livreur)",
+            ],
+        ]);
+
         $supplierAddress = $supplierProfile ? $supplierProfile->nom_boutique : 'le fournisseur';
 
         // Notification Livreur (reçoit la situation géographique pour récupérer)

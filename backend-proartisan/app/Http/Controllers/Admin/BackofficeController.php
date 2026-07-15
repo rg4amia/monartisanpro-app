@@ -209,6 +209,18 @@ class BackofficeController extends Controller
         return back()->with('success', 'Paramètre mis à jour.');
     }
 
+    public function downloadInvoice(Litige $litige)
+    {
+        $payload = $litige->resolution_payload ?? [];
+        $path = $payload['invoice_path'] ?? null;
+
+        if (!$path || !file_exists($path)) {
+            abort(404, "Facture de décaissement introuvable.");
+        }
+
+        return response()->download($path, "facture_decaissement_litige_{$litige->id}.pdf");
+    }
+
     private function renderPage(string $component): Response
     {
         return Inertia::render($component, [
