@@ -118,11 +118,11 @@ jobs:
               echo "📥 Cloning repository for first time..."
               mkdir -p "$DEPLOY_PATH"
               cd "$DEPLOY_PATH"
-              git clone --branch $BRANCH https://github.com/${{ github.repository }}.git .
+              git clone --branch $BRANCH https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git .
             else
               echo "🔄 Updating existing repository..."
               cd "$DEPLOY_PATH"
-              git remote set-url origin https://github.com/${{ github.repository }}.git
+              git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
               git stash
               git fetch origin
               git reset --hard origin/$BRANCH
