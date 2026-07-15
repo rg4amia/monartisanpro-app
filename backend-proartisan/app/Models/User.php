@@ -191,10 +191,17 @@ class User extends Authenticatable
             return;
         }
 
-        DB::statement(
-            "UPDATE users SET position = ST_SRID(POINT(?, ?), 4326) WHERE id = ?",
-            [$lng, $lat, $this->id]
-        );
+        try {
+            DB::statement(
+                "UPDATE users SET position = ST_SRID(POINT(?, ?), 4326) WHERE id = ?",
+                [$lng, $lat, $this->id]
+            );
+        } catch (\Throwable $e) {
+            DB::statement(
+                "UPDATE users SET position = ST_GeomFromText(?, 4326) WHERE id = ?",
+                ["POINT($lng $lat)", $this->id]
+            );
+        }
     }
 
     public function getPositionCoords(): ?array
