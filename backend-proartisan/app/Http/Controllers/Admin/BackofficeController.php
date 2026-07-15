@@ -218,7 +218,9 @@ class BackofficeController extends Controller
             abort(404, "Facture de décaissement introuvable.");
         }
 
-        return response()->download($path, "facture_decaissement_litige_{$litige->id}.pdf");
+        return response()->download($path, "facture_decaissement_litige_{$litige->id}.pdf", [
+            'Content-Type' => 'application/pdf',
+        ]);
     }
 
     private function renderPage(string $component): Response
