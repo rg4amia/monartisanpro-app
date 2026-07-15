@@ -53,7 +53,9 @@ class UserController extends Controller
 
     public function updateLocation(Request $request, User $user): JsonResponse
     {
-        $this->authorize('update', $user);
+        if ($request->user()->id !== $user->id && $request->user()->role !== 'admin') {
+            abort(403, 'Accès refusé.');
+        }
 
         $data = $request->validate([
             'lat' => ['required', 'numeric', 'between:-90,90'],
