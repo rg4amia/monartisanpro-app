@@ -143,6 +143,12 @@ jobs:
               echo "✅ Production .env copied"
             fi
 
+            # Force Hostinger DB_HOST optimization (localhost)
+            if [ -f "$BACKEND_PATH/.env" ]; then
+              sed -i 's/DB_HOST=127.0.0.1/DB_HOST=localhost/g' "$BACKEND_PATH/.env"
+              echo "✅ DB_HOST optimized to localhost"
+            fi
+
             # Install dependencies
             echo "📦 Installing Composer dependencies..."
             composer install --no-dev --optimize-autoloader --no-interaction
