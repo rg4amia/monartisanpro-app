@@ -255,6 +255,12 @@ class HomeController extends GetxController {
     }
   }
 
+  void refreshLocationAndArtisans(double lat, double lng) {
+    _lat = lat;
+    _lng = lng;
+    _loadData();
+  }
+
   /// Recherche par catégorie — utilisé par carte et chips home
   Future<void> searchByCategory(String? category) async {
     selectedCategory.value = category;

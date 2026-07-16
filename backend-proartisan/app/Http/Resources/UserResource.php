@@ -29,7 +29,9 @@ class UserResource extends JsonResource
                 $this->role === 'artisan' && $this->relationLoaded('artisanProfile'),
                 fn () => $artisanProfile ? [
                     'sector' => $artisanProfile->sector?->name,
+                    'sectorId' => $artisanProfile->sector_id,
                     'trade' => $artisanProfile->trade?->name,
+                    'tradeId' => $artisanProfile->trade_id,
                     'bio' => $artisanProfile->bio,
                     'experienceYears' => $artisanProfile->experience_years,
                     'photoUrl' => $artisanProfile->photo_url,

@@ -209,6 +209,36 @@ class BackofficeController extends Controller
         return back()->with('success', 'Paramètre mis à jour.');
     }
 
+    public function updateSector(Request $request, \App\Models\Sector $sector): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:100',
+        ], [
+            'name.required' => 'Le nom du secteur est obligatoire.',
+        ]);
+
+        $sector->update([
+            'name' => $validated['name'],
+        ]);
+
+        return back()->with('success', 'Secteur (catégorie) mis à jour.');
+    }
+
+    public function updateTrade(Request $request, \App\Models\Trade $trade): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:100',
+        ], [
+            'name.required' => 'Le nom du métier est obligatoire.',
+        ]);
+
+        $trade->update([
+            'name' => $validated['name'],
+        ]);
+
+        return back()->with('success', 'Métier (sous-catégorie) mis à jour.');
+    }
+
     public function downloadInvoice(Litige $litige)
     {
         $payload = $litige->resolution_payload ?? [];
@@ -234,6 +264,7 @@ class BackofficeController extends Controller
             'transactions' => $this->adminService->listTransactions(null, null, 100)->items(),
             'users' => $this->adminService->listUsers(null, null, null, 100)->items(),
             'settingsList' => \App\Models\Setting::all(),
+            'sectors' => \App\Models\Sector::with('trades')->get(),
             'allPermissions' => \App\Models\Permission::all(),
             'rolesPermissions' => [
                 'client' => \Illuminate\Support\Facades\DB::table('permission_role')

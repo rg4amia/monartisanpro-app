@@ -8,6 +8,8 @@ class UserRepository {
     required int userId,
     required String name,
     bool? nightInterventionAvailable,
+    int? sectorId,
+    int? tradeId,
   }) async {
     final response = await _client.put(
       ApiEndpoints.updateUser(userId),
@@ -15,6 +17,8 @@ class UserRepository {
         'name': name,
         if (nightInterventionAvailable != null)
           'intervention_nuit': nightInterventionAvailable,
+        if (sectorId != null) 'sector_id': sectorId,
+        if (tradeId != null) 'trade_id': tradeId,
       },
     );
     return response.data as Map<String, dynamic>;
