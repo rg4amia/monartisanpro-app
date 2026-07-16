@@ -46,17 +46,10 @@ class FournisseurAgree extends Model
             return;
         }
 
-        try {
-            DB::statement(
-                "UPDATE fournisseurs_agrees SET position = ST_SRID(POINT(?, ?), 4326) WHERE id = ?",
-                [$lng, $lat, $this->id]
-            );
-        } catch (\Throwable $e) {
-            DB::statement(
-                "UPDATE fournisseurs_agrees SET position = ST_GeomFromText(?, 4326) WHERE id = ?",
-                ["POINT($lng $lat)", $this->id]
-            );
-        }
+        DB::statement(
+            "UPDATE fournisseurs_agrees SET position = POINT(?, ?) WHERE id = ?",
+            [$lng, $lat, $this->id]
+        );
     }
 
     public function getPositionCoords(): ?array
