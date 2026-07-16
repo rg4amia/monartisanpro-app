@@ -18,6 +18,24 @@ class RegisterRequest extends FormRequest
             'name'  => ['required', 'string', 'min:2', 'max:100'],
             'role'  => ['required', 'string', 'in:client,artisan,fournisseur'],
             'device_fingerprint' => ['nullable', 'string'],
+            'sector_id' => ['sometimes', 'nullable', 'exists:sectors,id'],
+            'trade_id' => [
+                'sometimes', 'nullable', 'exists:trades,id',
+                function ($attribute, $value, $fail) {
+                    $sectorId = $this->input('sector_id');
+                    if ($value && $sectorId) {
+                        $exists = \DB::table('trades')
+                            ->where('id', $value)
+                            ->where('sector_id', $sectorId)
+                            ->exists();
+                        if (!$exists) {
+                            $fail('Le métier sélectionné doit appartenir au secteur d\'activité choisi.');
+                        }
+                    }
+                }
+            ],
+            'bio' => ['sometimes', 'nullable', 'string'],
+            'experience_years' => ['sometimes', 'integer', 'min:0', 'max:60'],
         ];
     }
 
