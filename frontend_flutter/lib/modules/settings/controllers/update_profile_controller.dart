@@ -29,6 +29,12 @@ class UpdateProfileController extends GetxController {
   final selectedAddress = 'Aucun emplacement défini'.obs;
   final canEditLocation = false.obs;
 
+  // Catégorie / Sous-catégorie
+  final selectedSectorId = Rxn<int>();
+  final selectedTradeId = Rxn<int>();
+  final selectedSectorName = Rxn<String>();
+  final selectedTradeName = Rxn<String>();
+
   @override
   void onInit() {
     super.onInit();
@@ -64,6 +70,11 @@ class UpdateProfileController extends GetxController {
       }
 
       nightInterventionsEnabled.value = user.nightInterventionAvailable;
+      
+      selectedSectorId.value = user.sectorId;
+      selectedTradeId.value = user.tradeId;
+      selectedSectorName.value = user.sectorName;
+      selectedTradeName.value = user.tradeName;
 
       StorageService.saveRole(user.role);
       StorageService.saveName(user.name ?? nameController.text.trim());
@@ -169,6 +180,20 @@ class UpdateProfileController extends GetxController {
     }
   }
 
+  Future<void> selectCategoryAndSubcategory() async {
+    final result = await Get.toNamed(Routes.services);
+    if (result != null && result is Map) {
+      final sector = result['sector'];
+      final trade = result['trade'];
+      if (sector != null && trade != null) {
+        selectedSectorId.value = sector.id as int?;
+        selectedTradeId.value = trade.id as int?;
+        selectedSectorName.value = sector.name as String?;
+        selectedTradeName.value = trade.name as String?;
+      }
+    }
+  }
+
   Future<void> updateProfile() async {
     if (nameController.text.trim().isEmpty) {
       Get.snackbar(
@@ -203,6 +228,8 @@ class UpdateProfileController extends GetxController {
         nightInterventionAvailable: isArtisan.value
             ? nightInterventionsEnabled.value
             : null,
+        sectorId: isArtisan.value ? selectedSectorId.value : null,
+        tradeId: isArtisan.value ? selectedTradeId.value : null,
       );
 
       // Si une localisation a été spécifiée sur la carte, on la met à jour
@@ -216,6 +243,18 @@ class UpdateProfileController extends GetxController {
 
       // Update local storage
       StorageService.saveName(nameController.text.trim());
+      
+      // Reload profile to synchronize local model coordinates & details
+      await _loadCurrentProfile();
+
+      try {
+        final homeCtrl = Get.find<HomeController>();
+        homeCtrl.userName.value = nameController.text.trim();
+        // Trigger reload of nearby artisans or self position
+        if (selectedLatitude.value != null && selectedLongitude.value != null) {
+          homeCtrl.refreshLocationAndArtisans(selectedLatitude.value!, selectedLongitude.value!);
+        }
+      } catch (_) {}
 
       Get.back();
       Get.snackbar(

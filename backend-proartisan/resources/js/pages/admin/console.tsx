@@ -195,6 +195,11 @@ interface AdminPageProps {
         label: string;
         description: string;
     }>;
+    sectors?: Array<{
+        id: number;
+        name: string;
+        trades?: Array<{ id: number; sector_id: number; name: string }>;
+    }>;
     rolesPermissions?: Record<string, string[]>;
     allPermissions?: Array<{ id: number; name: string; description: string; category: string }>;
 }
@@ -2116,6 +2121,66 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                                 ))
                                             ) : (
                                                 <p className="text-sm text-[var(--admin-muted)]">Aucun paramètre trouvé.</p>
+                                            )}
+                                        </div>
+                                    </Surface>
+
+                                    <Surface className="rounded-[32px] p-5 lg:p-6 xl:col-span-2">
+                                        <SectionTitle
+                                            description="Modifiez les noms des catégories (Secteurs) et sous-catégories (Métiers) de la plateforme."
+                                            title="Gestion des Catégories & Métiers"
+                                        />
+                                        <div className="mt-6 space-y-6">
+                                            {props.sectors && props.sectors.length > 0 ? (
+                                                props.sectors.map((sector) => (
+                                                    <div key={sector.id} className="p-5 rounded-2xl border border-[var(--admin-border)] bg-white/60 space-y-4">
+                                                        <div className="flex items-center justify-between gap-4">
+                                                            <div className="flex-1">
+                                                                <span className="text-[10px] font-bold text-amber-600 uppercase">Catégorie (Secteur)</span>
+                                                                <input
+                                                                    type="text"
+                                                                    defaultValue={sector.name}
+                                                                    onBlur={(e) => {
+                                                                        if (e.target.value !== sector.name && e.target.value.trim() !== '') {
+                                                                            router.put(`/admin/sectors/${sector.id}`, {
+                                                                                name: e.target.value,
+                                                                            }, { preserveScroll: true });
+                                                                        }
+                                                                    }}
+                                                                    className="admin-input mt-1 w-full rounded-xl px-3 py-2 text-sm font-semibold outline-none"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="pl-6 border-l-2 border-amber-200/50 space-y-3">
+                                                            <span className="text-[10px] font-bold text-slate-500 uppercase">Sous-catégories (Métiers)</span>
+                                                            <div className="grid gap-3 sm:grid-cols-2">
+                                                                {sector.trades && sector.trades.length > 0 ? (
+                                                                    sector.trades.map((trade) => (
+                                                                        <div key={trade.id} className="flex flex-col p-2 bg-white/40 border border-slate-100 rounded-xl">
+                                                                            <input
+                                                                                type="text"
+                                                                                defaultValue={trade.name}
+                                                                                onBlur={(e) => {
+                                                                                    if (e.target.value !== trade.name && e.target.value.trim() !== '') {
+                                                                                        router.put(`/admin/trades/${trade.id}`, {
+                                                                                            name: e.target.value,
+                                                                                        }, { preserveScroll: true });
+                                                                                    }
+                                                                                }}
+                                                                                className="admin-input w-full rounded-lg px-2 py-1 text-xs outline-none bg-transparent hover:bg-white focus:bg-white"
+                                                                            />
+                                                                        </div>
+                                                                    ))
+                                                                ) : (
+                                                                    <p className="text-xs text-[var(--admin-muted)]">Aucun métier associé.</p>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <p className="text-sm text-[var(--admin-muted)]">Aucune catégorie trouvée.</p>
                                             )}
                                         </div>
                                     </Surface>

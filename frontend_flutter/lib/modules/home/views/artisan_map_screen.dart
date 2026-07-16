@@ -21,10 +21,12 @@ const double _kAbidjanLng = -4.0169;
 const double _kDefaultZoom = 14.0;
 
 const List<Map<String, dynamic>> _kCategories = [
-  {'label': 'Mieux Notés', 'icon': Icons.stars},
-  {'label': 'Tailleurs', 'icon': null},
-  {'label': 'Charpentiers', 'icon': null},
-  {'label': 'Plombiers', 'icon': null},
+  {'label': 'Tous', 'icon': Icons.all_inclusive_outlined, 'value': null},
+  {'label': 'Plomberie', 'icon': Icons.plumbing_outlined, 'value': 'Plomberie'},
+  {'label': 'Électricité', 'icon': Icons.electric_bolt_outlined, 'value': 'Électricité'},
+  {'label': 'Maçonnerie', 'icon': Icons.foundation_outlined, 'value': 'Maçonnerie'},
+  {'label': 'Menuiserie', 'icon': Icons.carpenter_outlined, 'value': 'Menuiserie'},
+  {'label': 'Peinture', 'icon': Icons.format_paint_outlined, 'value': 'Peinture'},
 ];
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
@@ -549,6 +551,7 @@ class _MapHeaderState extends State<_MapHeader> {
                 final cat = _kCategories[i];
                 final label = cat['label'] as String;
                 final icon = cat['icon'] as IconData?;
+                final value = cat['value'] as String?;
                 final isSelected = _selected == label || (_selected == null && i == 0);
                 return _CategoryChip(
                   label: label,
@@ -556,7 +559,7 @@ class _MapHeaderState extends State<_MapHeader> {
                   isSelected: isSelected,
                   onTap: () {
                     setState(() => _selected = label);
-                    widget.onCategorySelected(label);
+                    widget.onCategorySelected(value);
                   },
                 );
               },

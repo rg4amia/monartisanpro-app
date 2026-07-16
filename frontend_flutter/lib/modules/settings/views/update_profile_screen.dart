@@ -223,12 +223,101 @@ class _FormSection extends StatelessWidget {
           return Column(
             children: [
               const SizedBox(height: 24),
+              _CategorySelectionCard(controller: controller),
+              const SizedBox(height: 24),
               _NightModeCard(controller: controller),
             ],
           );
         }),
       ],
     );
+  }
+}
+
+class _CategorySelectionCard extends StatelessWidget {
+  final UpdateProfileController controller;
+
+  const _CategorySelectionCard({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final hasCategory = controller.selectedSectorName.value != null;
+      final categoryText = hasCategory
+          ? "${controller.selectedSectorName.value} — ${controller.selectedTradeName.value ?? 'Non spécifié'}"
+          : "Aucune catégorie définie";
+
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: _C.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: _C.subtle),
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: hasCategory ? const Color(0xFFEEF2FF) : const Color(0xFFF9FAFB),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.build_circle_outlined,
+                    color: hasCategory ? _C.primary : _C.muted,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        hasCategory ? 'Catégorie active' : 'Catégorie non configurée',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: _C.ink,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        categoryText,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: _C.muted,
+                          height: 1.35,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
+              onPressed: controller.selectCategoryAndSubcategory,
+              icon: const Icon(Icons.category_outlined, size: 18),
+              label: Text(hasCategory ? 'Modifier ma catégorie' : 'Choisir ma catégorie'),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 48),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                side: const BorderSide(color: _C.primary),
+                foregroundColor: _C.primary,
+              ),
+            ),
+          ],
+        ),
+      );
+    });
   }
 }
 
