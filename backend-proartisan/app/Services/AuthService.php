@@ -28,6 +28,19 @@ class AuthService
             'role' => $data['role'],
         ]);
 
+        if ($data['role'] === 'artisan') {
+            $artisanData = [];
+            if (isset($data['sector_id'])) $artisanData['sector_id'] = $data['sector_id'];
+            if (isset($data['trade_id'])) $artisanData['trade_id'] = $data['trade_id'];
+            if (isset($data['bio'])) $artisanData['bio'] = $data['bio'];
+            if (isset($data['experience_years'])) $artisanData['experience_years'] = $data['experience_years'];
+
+            \App\Models\ArtisanProfile::updateOrCreate(
+                ['user_id' => $user->id],
+                $artisanData
+            );
+        }
+
         return $user->fresh();
     }
 

@@ -20,23 +20,64 @@ class UserController extends Controller
             'name' => ['sometimes', 'string', 'min:2', 'max:100'],
             'fcm_token' => ['sometimes', 'nullable', 'string'],
             'intervention_nuit' => ['sometimes', 'boolean'],
+            'sector_id' => ['sometimes', 'nullable', 'exists:sectors,id'],
+            'trade_id' => [
+                'sometimes', 'nullable', 'exists:trades,id',
+                function ($attribute, $value, $fail) use ($request, $user) {
+                    $sectorId = $request->input('sector_id') ?? ($user->artisanProfile?->sector_id);
+                    if ($value && $sectorId) {
+                        $exists = \DB::table('trades')
+                            ->where('id', $value)
+                            ->where('sector_id', $sectorId)
+                            ->exists();
+                        if (!$exists) {
+                            $fail('Le métier sélectionné doit appartenir au secteur d\'activité choisi.');
+                        }
+                    }
+                }
+            ],
+            'bio' => ['sometimes', 'nullable', 'string'],
+            'experience_years' => ['sometimes', 'integer', 'min:0', 'max:60'],
         ]);
 
-        if (array_key_exists('intervention_nuit', $data)) {
+        if (array_key_exists('intervention_nuit', $data) || 
+            array_key_exists('sector_id', $data) || 
+            array_key_exists('trade_id', $data) || 
+            array_key_exists('bio', $data) || 
+            array_key_exists('experience_years', $data)) {
+            
             if ($user->role !== 'artisan') {
                 throw ValidationException::withMessages([
-                    'intervention_nuit' => ['Seuls les artisans peuvent activer le mode intervention de nuit.'],
+                    'role' => ['Seuls les artisans possèdent un profil métier modifiable.'],
                 ]);
             }
 
-            ArtisanProfile::query()->firstOrCreate(
-                ['user_id' => $user->id],
-                ['intervient_la_nuit' => false]
-            )->update([
-                'intervient_la_nuit' => (bool) $data['intervention_nuit'],
-            ]);
+            $artisanData = [];
+            if (array_key_exists('intervention_nuit', $data)) {
+                $artisanData['intervient_la_nuit'] = (bool) $data['intervention_nuit'];
+                unset($data['intervention_nuit']);
+            }
+            if (array_key_exists('sector_id', $data)) {
+                $artisanData['sector_id'] = $data['sector_id'];
+                unset($data['sector_id']);
+            }
+            if (array_key_exists('trade_id', $data)) {
+                $artisanData['trade_id'] = $data['trade_id'];
+                unset($data['trade_id']);
+            }
+            if (array_key_exists('bio', $data)) {
+                $artisanData['bio'] = $data['bio'];
+                unset($data['bio']);
+            }
+            if (array_key_exists('experience_years', $data)) {
+                $artisanData['experience_years'] = $data['experience_years'];
+                unset($data['experience_years']);
+            }
 
-            unset($data['intervention_nuit']);
+            ArtisanProfile::query()->updateOrCreate(
+                ['user_id' => $user->id],
+                $artisanData
+            );
         }
 
         if ($data !== []) {
