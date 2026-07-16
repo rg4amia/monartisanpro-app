@@ -7,6 +7,7 @@ import '../../../data/repositories/user_repository.dart';
 import '../../../core/utils/error_handler.dart';
 
 import '../../../app/routes/app_routes.dart';
+import '../../home/controllers/home_controller.dart';
 
 class UpdateProfileController extends GetxController {
   final UserRepository _userRepo = UserRepository();
