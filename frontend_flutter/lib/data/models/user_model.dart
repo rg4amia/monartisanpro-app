@@ -14,6 +14,7 @@ class UserModel {
   final int? tradeId;
   final String? sectorName;
   final String? tradeName;
+  final bool nightInterventionAvailable;
 
   const UserModel({
     required this.id,
