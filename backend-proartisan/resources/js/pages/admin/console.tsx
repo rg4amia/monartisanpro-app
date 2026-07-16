@@ -2130,6 +2130,75 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                             description="Modifiez les noms des catégories (Secteurs) et sous-catégories (Métiers) de la plateforme."
                                             title="Gestion des Catégories & Métiers"
                                         />
+
+                                        {/* Nouvelles créations */}
+                                        <div className="mt-6 grid gap-6 md:grid-cols-2 p-5 rounded-2xl border border-[var(--admin-border)] bg-amber-50/20">
+                                            {/* Création Catégorie */}
+                                            <form onSubmit={(e) => {
+                                                e.preventDefault();
+                                                const form = e.currentTarget;
+                                                const input = form.querySelector('input') as HTMLInputElement;
+                                                if (input.value.trim() !== '') {
+                                                    router.post('/admin/sectors', { name: input.value }, {
+                                                        preserveScroll: true,
+                                                        onSuccess: () => { input.value = ''; }
+                                                    });
+                                                }
+                                            }} className="space-y-3">
+                                                <h4 className="font-semibold text-sm text-[var(--admin-text)]">Créer une catégorie</h4>
+                                                <div className="flex gap-2">
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Nom de la catégorie (ex: Électricité)"
+                                                        className="admin-input flex-1 rounded-xl px-3 py-2 text-sm outline-none bg-white border border-[var(--admin-border)]"
+                                                    />
+                                                    <button type="submit" className="admin-button admin-button--primary text-xs py-2 px-3">
+                                                        Ajouter
+                                                    </button>
+                                                </div>
+                                            </form>
+
+                                            {/* Création Sous-catégorie */}
+                                            <form onSubmit={(e) => {
+                                                e.preventDefault();
+                                                const form = e.currentTarget;
+                                                const select = form.querySelector('select') as HTMLSelectElement;
+                                                const input = form.querySelector('input') as HTMLInputElement;
+                                                if (select.value && input.value.trim() !== '') {
+                                                    router.post('/admin/trades', {
+                                                        sector_id: select.value,
+                                                        name: input.value
+                                                    }, {
+                                                        preserveScroll: true,
+                                                        onSuccess: () => { input.value = ''; }
+                                                    });
+                                                }
+                                            }} className="space-y-3">
+                                                <h4 className="font-semibold text-sm text-[var(--admin-text)]">Créer une sous-catégorie</h4>
+                                                <div className="flex gap-2">
+                                                    <select
+                                                        className="admin-input rounded-xl px-3 py-2 text-sm outline-none bg-white border border-[var(--admin-border)]"
+                                                        defaultValue=""
+                                                        required
+                                                    >
+                                                        <option value="" disabled>Sélectionner catégorie</option>
+                                                        {props.sectors?.map(s => (
+                                                            <option key={s.id} value={s.id}>{s.name}</option>
+                                                        ))}
+                                                    </select>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Nom du métier (ex: Bobineur)"
+                                                        className="admin-input flex-1 rounded-xl px-3 py-2 text-sm outline-none bg-white border border-[var(--admin-border)]"
+                                                        required
+                                                    />
+                                                    <button type="submit" className="admin-button admin-button--primary text-xs py-2 px-3">
+                                                        Ajouter
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+
                                         <div className="mt-6 space-y-6">
                                             {props.sectors && props.sectors.length > 0 ? (
                                                 props.sectors.map((sector) => (

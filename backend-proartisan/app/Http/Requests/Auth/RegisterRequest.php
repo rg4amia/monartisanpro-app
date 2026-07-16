@@ -14,7 +14,17 @@ class RegisterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'phone' => ['required', 'string', 'regex:/^\+225[0-9]{10}$/'],
+            'phone' => [
+                'required',
+                'string',
+                'regex:/^\+225[0-9]{10}$/',
+                function ($attribute, $value, $fail) {
+                    $existingUser = \App\Models\User::where('phone', $value)->first();
+                    if ($existingUser && $existingUser->name !== null && $existingUser->role !== null) {
+                        $fail('Ce numéro de téléphone est déjà associé à un compte.');
+                    }
+                }
+            ],
             'name'  => ['required', 'string', 'min:2', 'max:100'],
             'role'  => ['required', 'string', 'in:client,artisan,fournisseur'],
             'device_fingerprint' => ['nullable', 'string'],

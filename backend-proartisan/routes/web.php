@@ -52,7 +52,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/settings', [BackofficeController::class, 'settings'])->name('settings');
         Route::get('/roles-permissions', [BackofficeController::class, 'rolesPermissions'])->name('roles-permissions');
         Route::put('/settings/{setting}', [BackofficeController::class, 'updateSetting'])->name('settings.update');
+        Route::post('/sectors', [BackofficeController::class, 'storeSector'])->name('sectors.store');
         Route::put('/sectors/{sector}', [BackofficeController::class, 'updateSector'])->name('sectors.update');
+        Route::post('/trades', [BackofficeController::class, 'storeTrade'])->name('trades.store');
         Route::put('/trades/{trade}', [BackofficeController::class, 'updateTrade'])->name('trades.update');
 
         Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');

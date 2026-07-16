@@ -239,6 +239,50 @@ class BackofficeController extends Controller
         return back()->with('success', 'Métier (sous-catégorie) mis à jour.');
     }
 
+    public function storeSector(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:100|unique:sectors,name',
+        ], [
+            'name.required' => 'Le nom de la catégorie est obligatoire.',
+            'name.unique' => 'Cette catégorie existe déjà.',
+        ]);
+
+        \App\Models\Sector::create([
+            'name' => $validated['name'],
+        ]);
+
+        return back()->with('success', 'Nouvelle catégorie créée avec succès.');
+    }
+
+    public function storeTrade(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'sector_id' => 'required|exists:sectors,id',
+            'name' => 'required|string|max:100',
+        ], [
+            'sector_id.required' => 'La catégorie parente est obligatoire.',
+            'sector_id.exists' => 'La catégorie parente sélectionnée n\'existe pas.',
+            'name.required' => 'Le nom de la sous-catégorie est obligatoire.',
+        ]);
+
+        // Vérifie si la sous-catégorie existe déjà pour ce secteur
+        $exists = \App\Models\Trade::where('sector_id', $validated['sector_id'])
+            ->where('name', $validated['name'])
+            ->exists();
+
+        if ($exists) {
+            return back()->withErrors(['name' => 'Cette sous-catégorie existe déjà dans cette catégorie.']);
+        }
+
+        \App\Models\Trade::create([
+            'sector_id' => $validated['sector_id'],
+            'name' => $validated['name'],
+        ]);
+
+        return back()->with('success', 'Nouvelle sous-catégorie créée avec succès.');
+    }
+
     public function downloadInvoice(Litige $litige)
     {
         $payload = $litige->resolution_payload ?? [];
