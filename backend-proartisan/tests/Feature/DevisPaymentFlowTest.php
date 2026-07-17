@@ -168,4 +168,51 @@ class DevisPaymentFlowTest extends TestCase
                 ],
             ]);
     }
+
+    public function test_devis_refusal_notifies_artisan(): void
+    {
+        /** @var \App\Models\User $client */
+        $client = User::factory()->create([
+            'role' => 'client',
+            'kyc_status' => 'actif',
+        ]);
+
+        /** @var \App\Models\User $artisan */
+        $artisan = User::factory()->create([
+            'role' => 'artisan',
+            'kyc_status' => 'actif',
+        ]);
+
+        $mission = Mission::create([
+            'client_id' => $client->id,
+            'artisan_id' => null,
+            'description' => 'Rénovation toiture',
+            'status' => 'draft',
+        ]);
+
+        $devis = Devis::create([
+            'mission_id' => $mission->id,
+            'artisan_id' => $artisan->id,
+            'statut' => 'soumis',
+            'lignes_json' => [
+                ['type' => 'mo', 'description' => 'Pose de tuiles', 'montant' => 80000],
+            ],
+            'jalons_json' => [
+                ['ordre' => 1, 'description' => 'Finition', 'montant' => 80000, 'date_cible' => '2026-03-25'],
+            ],
+        ]);
+
+        $this->actingAs($client)
+            ->postJson("/api/v1/devis/{$devis->id}/refuse")
+            ->assertOk();
+
+        $this->assertSame('refuse', $devis->fresh()->statut);
+
+        // Verify notification exists in database
+        $this->assertDatabaseHas('notifications', [
+            'user_id' => $artisan->id,
+            'type' => 'devis',
+            'title' => 'Devis refusé',
+        ]);
+    }
 }
