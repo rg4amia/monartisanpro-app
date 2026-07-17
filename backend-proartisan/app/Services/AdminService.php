@@ -129,7 +129,15 @@ class AdminService
     public function listMissions(?string $status = null, ?string $query = null, int $perPage = 20): LengthAwarePaginator
     {
         return Mission::query()
-            ->with(['client:id,name,phone', 'artisan:id,name,phone'])
+            ->with([
+                'client:id,name,phone',
+                'artisan:id,name,phone',
+                'jalons',
+                'jcodes.fournisseur:id,nom_boutique',
+                'transactions',
+                'litiges',
+                'evaluations',
+            ])
             ->when($status, fn ($q) => $q->where('status', $status))
             ->when($query, function ($q) use ($query) {
                 $q->where(function ($sub) use ($query): void {
