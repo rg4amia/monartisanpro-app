@@ -39,11 +39,13 @@ class AuthRepository {
     required String phone,
     required String role,
     required String name,
+    required bool cguAccepted,
   }) async {
     final res = await _client.post(ApiEndpoints.register, data: {
       'phone': phone,
       'role': role,
       'name': name,
+      'cgu_accepted': cguAccepted,
     });
 
     final token = res.data['token'] as String?;
@@ -72,6 +74,11 @@ class AuthRepository {
     } finally {
       await StorageService.clearAll();
     }
+  }
+
+  Future<Map<String, dynamic>> acceptCgu() async {
+    final res = await _client.post('/auth/accept-cgu');
+    return res.data as Map<String, dynamic>;
   }
 
   Future<String> kycStatus() async {

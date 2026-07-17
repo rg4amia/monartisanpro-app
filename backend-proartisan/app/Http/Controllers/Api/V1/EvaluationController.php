@@ -49,10 +49,12 @@ class EvaluationController extends Controller
             'reactivite'   => $request->reactivite,
         ]);
 
-        // Recalcul Score N'Zassa de l'artisan évalué
+        // Recalcul Score N'Zassa
         $evalue = $evaluation->evalue;
         if ($evalue->isArtisan()) {
             $newScore = $this->scoreService->recalculate($evalue);
+        } elseif ($evalue->isFournisseur() || $evalue->isLivreur()) {
+            $newScore = $this->scoreService->recalculateLogistic($evalue);
         }
 
         return response()->json([

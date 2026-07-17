@@ -15,6 +15,7 @@ class UserModel {
   final String? sectorName;
   final String? tradeName;
   final bool nightInterventionAvailable;
+  final String? cguAcceptedAt;
 
   const UserModel({
     required this.id,
@@ -33,6 +34,7 @@ class UserModel {
     this.tradeId,
     this.sectorName,
     this.tradeName,
+    this.cguAcceptedAt,
   });
 
   bool get isKycActif => kycStatus == 'actif';
@@ -69,6 +71,7 @@ class UserModel {
       tradeId: artisanProfile != null ? artisanProfile['tradeId'] as int? : null,
       sectorName: artisanProfile != null ? artisanProfile['sector'] as String? : null,
       tradeName: artisanProfile != null ? artisanProfile['trade'] as String? : null,
+      cguAcceptedAt: json['cguAcceptedAt'] as String?,
     );
   }
 
@@ -89,6 +92,7 @@ class UserModel {
         'tradeId': tradeId,
         'sectorName': sectorName,
         'tradeName': tradeName,
+        'cguAcceptedAt': cguAcceptedAt,
       };
 
   static bool _parseBool(dynamic value) {

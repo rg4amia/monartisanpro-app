@@ -23,6 +23,7 @@ class UserResource extends JsonResource
             'scoreNzassa'      => $this->score_nzassa,
             'walletMateriaux'  => $this->wallet_materiaux,
             'walletMo'         => $this->wallet_mo,
+            'cguAcceptedAt'    => $this->cgu_accepted_at?->toISOString(),
             'position'         => $coords,
             'nightInterventionAvailable' => (bool) ($artisanProfile?->intervient_la_nuit ?? false),
             'artisanProfile'   => $this->when(

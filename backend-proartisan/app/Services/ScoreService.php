@@ -21,6 +21,14 @@ class ScoreService
         'dispute_abandon'       => -300,
         'evaluation_negative'   => -15,
         'inactivity_decay'      =>  -5,
+
+        // --- Événements Logistiques (Fournisseurs & Livreurs) ---
+        'jcode_scan_success'         =>   5,
+        'rupture_stock_non_signalee' => -20,
+        'fraude_gps_tentative'       => -50,
+        'livraison_on_time'          =>   5,
+        'livraison_retard'           => -15,
+        'casse_materiel'             => -100,
     ];
 
     private const BASE_SCORE = 10;
@@ -83,6 +91,60 @@ class ScoreService
         return $this->recalculateFromLedger($artisan);
     }
 
+    /**
+     * Recalcule le Score de Fluidité (Logistique) d'un fournisseur ou d'un livreur
+     * à partir de la dernière évaluation manuelle reçue.
+     * Pour la logistique, la fiabilité (ponctualité/stock) et la qualité (état matériel)
+     * sont prédominantes.
+     */
+    public function recalculateLogistic(User $logisticWorker): int
+    {
+        if ($logisticWorker->score_frozen) {
+            return $logisticWorker->score_nzassa;
+        }
+
+        $lastEvaluation = Evaluation::where('evalue_id', $logisticWorker->id)->latest('id')->first();
+        if (!$lastEvaluation) {
+            return $logisticWorker->score_nzassa;
+        }
+
+        $credibility = $this->resolveCredibility($lastEvaluation->evaluateur);
+
+        // Pour la logistique : Fiabilité/Ponctualité (50%) + Qualité (30%) + Réactivité (20%)
+        // L'intégrité est gérée de manière stricte par les règles métier (fraudes GPS).
+        $avgScore = (
+            $lastEvaluation->fiabilite * 0.50 +
+            $lastEvaluation->qualite * 0.30 +
+            $lastEvaluation->reactivite * 0.20
+        );
+
+        $points = 0;
+        $eventType = 'evaluation';
+        $desc = "Évaluation de prestation (mission #{$lastEvaluation->mission_id})";
+
+        if ($avgScore >= 4.0) {
+            $points = self::EVENT_POINTS['success_mission'];
+            $eventType = 'success_mission';
+        } elseif ($avgScore < 2.0) {
+            $points = self::EVENT_POINTS['evaluation_negative'];
+            $eventType = 'evaluation_negative';
+        }
+
+        if ($points !== 0) {
+            ScoreLedgerEntry::create([
+                'user_id'            => $logisticWorker->id,
+                'event_type'         => $eventType,
+                'points'             => $points,
+                'credibility_factor' => $credibility,
+                'evaluation_id'      => $lastEvaluation->id,
+                'mission_id'         => $lastEvaluation->mission_id,
+                'description'        => $desc,
+            ]);
+        }
+
+        return $this->recalculateFromLedger($logisticWorker);
+    }
+
     // ──────────────────────────────────────────────
     //  Méthodes événementielles spécifiques
     // ──────────────────────────────────────────────
@@ -139,6 +201,40 @@ class ScoreService
             'jalon_delay',
             $missionId,
             description: "Retard de jalon > 48h (mission #{$missionId})",
+        );
+    }
+
+    // ──────────────────────────────────────────────
+    //  Méthodes Logistiques (Fournisseurs & Livreurs)
+    // ──────────────────────────────────────────────
+
+    public function recordJCodeSuccess(User $fournisseur, int $missionId, string $jcodeCode): int
+    {
+        return $this->recordEvent(
+            $fournisseur,
+            'jcode_scan_success',
+            $missionId,
+            description: "J-Code scanné avec succès : {$jcodeCode}",
+        );
+    }
+
+    public function recordGpsFraudAttempt(User $fournisseur, ?int $missionId = null, ?string $jcodeCode = null): int
+    {
+        return $this->recordEvent(
+            $fournisseur,
+            'fraude_gps_tentative',
+            $missionId,
+            description: "Tentative de validation J-Code hors zone GPS (> 100m) " . ($jcodeCode ? "[{$jcodeCode}]" : ""),
+        );
+    }
+
+    public function recordDeliveryOnTime(User $livreur, int $missionId): int
+    {
+        return $this->recordEvent(
+            $livreur,
+            'livraison_on_time',
+            $missionId,
+            description: "Livraison ponctuelle validée (mission #{$missionId})",
         );
     }
 

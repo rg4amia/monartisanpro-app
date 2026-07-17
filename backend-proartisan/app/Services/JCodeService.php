@@ -17,6 +17,7 @@ class JCodeService
         private WalletService $walletService,
         private NotificationService $notificationService,
         private SupplierCatalogService $supplierCatalogService,
+        private ScoreService $scoreService,
     ) {}
 
     /**
@@ -171,6 +172,9 @@ class JCodeService
                 ['jcode_id' => $jcode->id, 'fournisseur_id' => $fournisseur->id]
             );
 
+            // Enregistrer la tentative de fraude dans le Score Logistique du fournisseur
+            $this->scoreService->recordGpsFraudAttempt($fournisseur, $jcode->mission_id, $jcode->code);
+
             throw ValidationException::withMessages([
                 'gps' => ["Position GPS invalide. Distance {$gpsCheck['distance']} m (maximum {$gpsCheck['max']} m). Transaction bloquée."],
             ]);
@@ -215,6 +219,9 @@ class JCodeService
             "Le fournisseur a validé votre J-Code {$jcode->code}. Paiement J+1 garanti.",
             ['jcode_id' => $jcode->id, 'mission_id' => $jcode->mission_id]
         );
+
+        // Enregistrer le succès du scan dans le Score Logistique du fournisseur
+        $this->scoreService->recordJCodeSuccess($fournisseur, $jcode->mission_id, $jcode->code);
 
         return [
             'valid'    => true,

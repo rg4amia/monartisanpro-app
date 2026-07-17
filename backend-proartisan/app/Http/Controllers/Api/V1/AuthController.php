@@ -276,4 +276,27 @@ class AuthController extends Controller
             'user'    => new UserResource($user),
         ]);
     }
+
+    /**
+     * Permet à un utilisateur existant d'accepter les CGU.
+     */
+    public function acceptCgu(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if ($user->cgu_accepted_at !== null) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vous avez déjà accepté les conditions générales d\'utilisation.',
+            ], 422);
+        }
+
+        $user->update(['cgu_accepted_at' => now()]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Conditions Générales d\'Utilisation acceptées avec succès.',
+            'user'    => new UserResource($user->fresh(['artisanProfile.sector', 'artisanProfile.trade', 'fournisseurAgree'])),
+        ]);
+    }
 }
