@@ -7,22 +7,22 @@
 
 ---
 
-## 📋 TABLE DES MATIÈRES
+## TABLE DES MATIERES
 
-1. [Résumé Exécutif](#résumé-exécutif)
-2. [Phase 0 — Onboarding & KYC](#phase-0--onboarding--kyc)
-3. [Phase 1 — Diagnostic & Matching](#phase-1--diagnostic--matching)
-4. [Phase 2 — Séquestre & Flux Financiers](#phase-2--séquestre--flux-financiers)
-5. [Phase 3 — J-Code & Anti-Fraude](#phase-3--j-code--anti-fraude)
-6. [Phase 4 — Jalons & Libération](#phase-4--jalons--libération)
-7. [Phase 5 — Clôture & Score N'Zassa](#phase-5--clôture--score-nzassa)
+1. [Résumé Exécutif](#resume-executif)
+2. [Phase 0 - Onboarding et KYC](#phase-0---onboarding-et-kyc)
+3. [Phase 1 - Diagnostic et Matching](#phase-1---diagnostic-et-matching)
+4. [Phase 2 - Séquestre et Flux Financiers](#phase-2---sequestre-et-flux-financiers)
+5. [Phase 3 - J-Code et Anti-Fraude](#phase-3---j-code-et-anti-fraude)
+6. [Phase 4 - Jalons et Libération](#phase-4---jalons-et-liberation)
+7. [Phase 5 - Clôture et Score N'Zassa](#phase-5---cloture-et-score-nzassa)
 8. [Flux Litiges](#flux-litiges)
 9. [Plan d'Action Prioritaire](#plan-daction-prioritaire)
-10. [Conclusion Générale](#conclusion-générale)
+10. [Conclusion Générale](#conclusion-generale)
 
 ---
 
-## 🎯 RÉSUMÉ EXÉCUTIF
+## RESUME EXECUTIF
 
 ### Verdict Global : ✅ **SYSTÈME OPÉRATIONNEL À 82%**
 
@@ -31,7 +31,7 @@
 ### Scores par Phase
 
 | Phase | Conformité | Statut | Blocants critiques |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | **Phase 0 — Onboarding & KYC** | 85% | ✅ Prêt | SMS production |
 | **Phase 1 — Diagnostic & Matching** | 75% | ⚠️ Partiel | Floutage GPS, Gemini API |
 | **Phase 2 — Séquestre & Financier** | 90% | ✅ Prêt | Job J+1 fournisseur |
@@ -42,7 +42,7 @@
 
 **Score global projet** : ✅ **82% CONFORME**
 
-### Points Forts Exceptionnels 🏆
+### Points Forts Exceptionnels (RESUME EXECUTIF)
 
 1. ✅ Fragmentation séquestre automatique et immuable
 2. ✅ Vérification GPS `ST_Distance_Sphere` anti-fraude (< 100 m)
@@ -65,21 +65,21 @@
 
 ---
 
-## 🚀 PHASE 0 — ONBOARDING & KYC
+## PHASE 0 - ONBOARDING ET KYC
 
 ### Conformité : ✅ **85%**
 
-### Éléments Conformes
+### Éléments Conformes (PHASE 0 — ONBOARDING & KYC)
 
 | Règle Métier | Implémentation | Fichier | Statut |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Inscription par téléphone + OTP | ✅ Endpoint `/api/v1/auth/send-otp` | `AuthController.php` | ✅ Complet |
 | Sélection de rôle (client/artisan/fournisseur) | ✅ Champ `role` obligatoire | `RegisterRequest.php` | ✅ Complet |
 | Vérification KYC : Photo CNI + Selfie liveness | ✅ Endpoints upload documents | `KycController.php` | ✅ Complet |
 | Admin valide KYC → `kyc_status = actif` | ✅ Endpoint `/api/v1/admin/kyc/review` | `AdminService.php:47-90` | ✅ Complet |
 | Blocage transactions sans KYC validé | ✅ Vérifications dans controllers | Multiples | ✅ Conforme |
 
-### Points Forts
+### Points Forts (PHASE 0 — ONBOARDING & KYC)
 
 #### 1. Workflow OTP complet
 
@@ -106,7 +106,7 @@ public function sendOtp(string $phone): string {
 // app/Services/AdminService.php:47-90
 public function reviewKyc(User $admin, User $user, string $decision, ?string $rejectionReason = null): User {
     // Vérification documents CNI + Selfie
-    if (! $documents->has('cni') || ! $documents->has('selfie')) {
+    if (! $documents->has('cni') | ! $documents->has('selfie')) {
         throw new \Exception('Documents KYC incomplets');
     }
 
@@ -125,10 +125,10 @@ public function reviewKyc(User $admin, User $user, string $decision, ?string $re
 
 ✅ **Parfait** : Workflow admin complet avec raisons de rejet.
 
-### Points à Améliorer
+### Points à Améliorer (PHASE 0 — ONBOARDING & KYC)
 
 | Élément | État actuel | Recommandation | Priorité |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | **SMS OTP production** | Stub log dev | Activer Infobip API | 🔴 **Critique** |
 | **Vérification liveness selfie** | Upload basique | Intégrer API ML (ex: AWS Rekognition) | 🟡 Important |
 | **Notifications KYC** | Partielles | Notifier artisan après validation/rejet | 🟡 Important |
@@ -198,14 +198,14 @@ class LivenessService {
 
 ---
 
-## 🔍 PHASE 1 — DIAGNOSTIC & MATCHING
+## PHASE 1 - DIAGNOSTIC ET MATCHING
 
 ### Conformité : ⚠️ **75%**
 
-### Éléments Conformes
+### Éléments Conformes (PHASE 1 — DIAGNOSTIC & MATCHING)
 
 | Règle Métier | Implémentation | Statut |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Client décrit besoin (texte + photos) | ✅ `MissionRequestScreen` | ✅ Complet |
 | Recherche artisans rayon ≤ 2 km | ✅ `ST_Distance_Sphere` MySQL | ✅ Conforme |
 | Tri par Score N'Zassa + distance | ✅ `ORDER BY score_nzassa DESC, distance_metres ASC` | ✅ Conforme |
@@ -213,7 +213,7 @@ class LivenessService {
 | Création devis avec jalons | ✅ `DevisCreationScreen` + validation backend | ✅ Complet |
 | Client accepte/refuse devis | ✅ `DevisReviewScreen` avec Wave/Orange Money | ✅ Complet |
 
-### Points Forts
+### Points Forts (PHASE 1 — DIAGNOSTIC & MATCHING)
 
 #### 1. Recherche géospatiale MySQL parfaite
 
@@ -281,10 +281,10 @@ public function accept(Devis $devis, string $provider = 'wave'): void {
 
 ✅ **Conforme règle critique** : Ratio calculé une seule fois à l'acceptation.
 
-### Points à Améliorer 🔴
+### Points à Améliorer (PHASE 1 — DIAGNOSTIC & MATCHING)
 
 | Élément | État actuel | Impact | Priorité |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | **Floutage GPS artisan** | ❌ Position exacte retournée | Sécurité artisans | 🔴 **CRITIQUE** |
 | **Badge "marqueur doré"** | ❌ Pas d'indicateur visuel Score ≥ 70 | UX client | 🟡 Important |
 | **Gemini API analyse besoin** | ❌ Pas d'estimation préliminaire | UX client | 🟡 Important |
@@ -429,14 +429,14 @@ GEMINI_API_KEY=your_gemini_api_key
 
 ---
 
-## 💰 PHASE 2 — SÉQUESTRE & FLUX FINANCIERS
+## PHASE 2 - SEQUESTRE ET FLUX FINANCIERS
 
 ### Conformité : ✅ **90%**
 
-### Éléments Conformes 🏆
+### Éléments Conformes (PHASE 2 — SÉQUESTRE & FLUX FINANCIERS)
 
 | Règle Métier | Implémentation | Fichier | Statut |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Client paie acompte (Wave/Orange Money) | ✅ `PaymentController::initiatePayment()` | `PaymentController.php:33-100` | ✅ Complet |
 | Fragmentation automatique séquestre | ✅ `WalletService::fragmentEscrow()` | `WalletService.php:207-264` | ✅ **PARFAIT** |
 | Wallet matériaux bloqué fournisseur | ✅ Crédit `wallet_materiaux` artisan | `WalletService.php:237-247` | ✅ Conforme |
@@ -445,7 +445,7 @@ GEMINI_API_KEY=your_gemini_api_key
 | Notification artisan mission financée | ✅ `NotificationService::send()` | `DevisService.php:74-80` | ✅ Complet |
 | Statut mission = Financée | ✅ `status → 'financee'` automatique | `WalletService.php:233` | ✅ Conforme |
 
-### Points Forts Exceptionnels 🏆
+### Points Forts Exceptionnels (PHASE 2 - SEQUESTRE ET FLUX FINANCIERS)
 
 #### 1. Fragmentation séquestre — Architecture parfaite
 
@@ -502,6 +502,7 @@ public function fragmentEscrow(
 ```
 
 ✅ **Points d'excellence** :
+
 - Transaction DB atomique
 - Ratio stocké et immuable
 - Montants FCFA en entiers (pas de décimales)
@@ -532,10 +533,10 @@ if ($provider === PaymentProvider::WAVE) {
 
 ✅ **Webhooks implémentés** : `WebhookController.php:161-168` pour callbacks paiements.
 
-### Points à Améliorer
+### Points à Améliorer (PHASE 2 — SÉQUESTRE & FLUX FINANCIERS)
 
 | Élément | État actuel | Impact | Priorité |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | **Virement J+1 fournisseur** | ❌ Job Laravel Queue manquant | Règle métier violée | 🔴 **CRITIQUE** |
 | **SMS confirmation paiement** | 🟡 Stub log dev | UX client | 🔴 **CRITIQUE** |
 | **Blocage wallet_materiaux** | ⚠️ Logique à vérifier | Anti-fraude | 🟡 Important |
@@ -678,14 +679,14 @@ public function send(User $user, string $type, string $title, string $body, arra
 
 ---
 
-## 🛒 PHASE 3 — J-CODE & ANTI-FRAUDE
+## PHASE 3 - J-CODE ET ANTI-FRAUDE
 
 ### Conformité : ✅ **95%** — Excellent
 
-### Éléments Conformes 🏆
+### Éléments Conformes (PHASE 3 — J-CODE & ANTI-FRAUDE)
 
 | Règle Métier | Implémentation | Fichier | Statut |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Génère J-Code PA-XXXX unique | ✅ `JCodeService::generateUniqueCode()` | `JCodeService.php:97-111` | ✅ **PARFAIT** |
 | QR Code + USSD `*555*XXXX#` | ✅ Champs `qr_url` et `ussd_code` | `JCode.php:14` | ✅ Conforme |
 | Fournisseur scanne avec GPS | ✅ `JCodeController::scan()` avec lat/lng | `JCodeController.php:85-108` | ✅ Complet |
@@ -694,7 +695,7 @@ public function send(User $user, string $type, string $title, string $body, arra
 | Upload photo géolocalisée matériaux | ✅ `uploadPhotoMateriaux()` complet | `JCodeController.php:114-191` | ✅ Complet |
 | Notification paiement J+1 garanti | ✅ `NotificationService::send()` | `JCodeService.php:78-84` | ✅ Conforme |
 
-### Points Forts Exceptionnels 🏆
+### Points Forts Exceptionnels (PHASE 3 - J-CODE ET ANTI-FRAUDE)
 
 #### 1. Vérification GPS anti-fraude — Architecture parfaite
 
@@ -727,6 +728,7 @@ public function validateJCodeGps(int $fournisseurId, float $scanLat, float $scan
 ```
 
 ✅ **Points d'excellence** :
+
 - Calcul exact distance en mètres avec `ST_Distance_Sphere`
 - Compare position scan vs. adresse fournisseur enregistrée
 - Seuil configurable (100 m par défaut)
@@ -756,6 +758,7 @@ if (! $gpsCheck['valid']) {
 ```
 
 ✅ **Triple protection** :
+
 1. Log warning pour audit
 2. Notification admin temps réel
 3. Exception bloque la transaction (aucun paiement)
@@ -781,15 +784,16 @@ private function generateUniqueCode(): string {
 ```
 
 ✅ **Points forts** :
+
 - Format `PA-XXXX` conforme
 - Exclut caractères ambigus (I/1, O/0)
 - Vérification unicité en base
 - Code USSD auto-généré : `*555*XXXX#` (ligne 31)
 
-### Points à Améliorer
+### Points à Améliorer (PHASE 3 — J-CODE & ANTI-FRAUDE)
 
 | Élément | État actuel | Impact | Priorité |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | **Notification client matériaux arrivés** | 🟡 TODO ligne 160 JCodeController | UX client | 🟡 Important |
 | **Liste fournisseurs agréés proches** | ⚠️ Non vérifié | UX artisan | 🟡 Important |
 | **Job paiement J+1 fournisseur** | ❌ Manquant (voir Phase 2) | Règle métier | 🔴 **CRITIQUE** |
@@ -826,14 +830,14 @@ Log::info('Notification client matériaux arrivés envoyée', [
 
 ---
 
-## 🏗️ PHASE 4 — JALONS & LIBÉRATION
+## PHASE 4 - JALONS ET LIBERATION
 
 ### Conformité : ✅ **90%** — Workflow quasi-parfait
 
-### Éléments Conformes
+### Éléments Conformes (PHASE 4 — JALONS & LIBÉRATION)
 
 | Règle Métier | Implémentation | Fichier | Statut |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Artisan soumet jalon + photos géolocalisées | ✅ `JalonController::submit()` + `uploadPhotos()` | `JalonController.php:38-205` | ✅ **COMPLET** |
 | OTP envoyé par SMS au client | ✅ `JalonService::requestOtp()` | `JalonService.php:39-49` | ✅ Conforme |
 | Client saisit OTP validation | ✅ `JalonController::validateOtp()` | `JalonController.php:81-109` | ✅ Complet |
@@ -841,7 +845,7 @@ Log::info('Notification client matériaux arrivés envoyée', [
 | Libération wallet_mo → Mobile Money | ✅ `WalletService::releaseJalon()` | `WalletService.php:278-310` | ✅ Conforme |
 | Cycle jalons successifs | ✅ Logique itérative | - | ✅ OK |
 
-### Points Forts Exceptionnels 🏆
+### Points Forts Exceptionnels (PHASE 4 - JALONS ET LIBERATION)
 
 #### 1. Validation OTP obligatoire — Règle critique respectée
 
@@ -886,6 +890,7 @@ public function validateOtp(Jalon $jalon, string $otp): bool {
 ```
 
 ✅ **Règles métier parfaitement implémentées** :
+
 - Double vérification OTP (service + jalon)
 - Seuil 2 000 000 FCFA exact
 - Flag `referent_required` posé automatiquement
@@ -940,15 +945,16 @@ public function releaseJalon(Jalon $jalon): void {
 ```
 
 ✅ **Points forts** :
+
 - Transaction DB atomique
 - Débit `wallet_mo` automatique
 - Transaction Mobile Money créée
 - Logs complets pour audit
 
-### Points à Améliorer
+### Points à Améliorer (PHASE 4 — JALONS & LIBÉRATION)
 
 | Élément | État actuel | Impact | Priorité |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | **Workflow validation référent** | 🟡 Flag posé, workflow incomplet | Règle > 2M FCFA | 🟡 Important |
 | **SDK Wave/OM virements sortants** | ❌ Transaction créée mais pas de virement réel | Paiement artisans | 🔴 **CRITIQUE** |
 | **OTP SMS production** | 🟡 Stub dev | UX client | 🔴 **CRITIQUE** |
@@ -1115,21 +1121,21 @@ if (config('app.env') === 'production') {
 
 ---
 
-## 📈 PHASE 5 — CLÔTURE & SCORE N'ZASSA
+## PHASE 5 - CLOTURE ET SCORE NZASSA
 
 ### Conformité : ⚠️ **70%**
 
-### Éléments Conformes
+### Éléments Conformes (PHASE 5 — CLÔTURE & SCORE N'ZASSA)
 
 | Règle Métier | Implémentation | Fichier | Statut |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Calcul Score N'Zassa (40/30/20/10%) | ✅ `ScoreService::recalculate()` | `ScoreService.php:14-51` | ✅ **PARFAIT** |
 | Journal score archivé audit bancaire | ✅ Table `evaluations` + `users.score_nzassa` | - | ✅ Conforme |
 | Éligibilité micro-crédit (score > 70) | ✅ `isEligibleCredit()` | `ScoreService.php:86-89` | ✅ Conforme |
 | Client note artisan (1-5★) | ✅ Table `evaluations` existe | - | ✅ Backend OK |
 | Mission clôturée (statut = terminée) | ✅ Logique métier | - | ✅ OK |
 
-### Points Forts Exceptionnels 🏆
+### Points Forts Exceptionnels (PHASE 5 - CLOTURE ET SCORE NZASSA)
 
 #### 1. Calcul Score N'Zassa — Formule exacte conforme
 
@@ -1154,7 +1160,7 @@ public function recalculate(User $artisan): int {
         WHERE evalue_id = ?
     ", [$artisan->id]);
 
-    if (! $row || $row->total == 0) {
+    if (! $row | $row->total == 0) {
         return $artisan->score_nzassa;
     }
 
@@ -1174,6 +1180,7 @@ public function recalculate(User $artisan): int {
 ```
 
 ✅ **PARFAITEMENT CONFORME** :
+
 - Pondération exacte : 40% + 30% + 20% + 10%
 - Échelle 0-100
 - Moyennes calculées sur toutes les évaluations
@@ -1215,10 +1222,10 @@ public function getScoreDetail(User $artisan): array {
 
 ✅ **Parfait pour audit** : Détail complet des sous-scores exportable pour microfinances.
 
-### Points à Améliorer
+### Points à Améliorer (PHASE 5 — CLÔTURE & SCORE N'ZASSA)
 
 | Élément | État actuel | Impact | Priorité |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | **Fiche d'intervention + signature digitale** | ❌ Non implémenté | Workflow clôture | 🟡 Important |
 | **Micro-crédit urgence < 2h** | ❌ Non implémenté | Valeur ajoutée artisans | 🔴 **CRITIQUE** |
 | **Rapport PDF solvabilité microfinances** | ❌ Non implémenté | Partenariats bancaires | 🟡 Important |
@@ -1483,23 +1490,23 @@ class PdfService
 
 ---
 
-## ⚠️ FLUX LITIGES
+## FLUX LITIGES
 
 ### Conformité : 🔴 **50%** — Base solide, arbitrage incomplet
 
-### Éléments Conformes
+### Éléments Conformes (FLUX LITIGES)
 
 | Règle Métier | Implémentation | Fichier | Statut |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Client/Artisan crée signalement | ✅ `LitigeController::store()` | `LitigeController.php:16-68` | ✅ Complet |
 | Notification admin automatique | ✅ `sendAdmin()` | `LitigeController.php:51-56` | ✅ Conforme |
 | Statut mission → litige | ✅ `mission->update(['status' => 'litige'])` | `LitigeController.php:48` | ✅ Conforme |
 | Consultation litige | ✅ `LitigeController::show()` | `LitigeController.php:70-95` | ✅ Complet |
 
-### Points à Améliorer 🔴
+### Points à Améliorer (️ FLUX LITIGES)
 
 | Élément | État actuel | Impact | Priorité |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | **Endpoint arbitrage** | ❌ Pas d'endpoint PUT décision | Workflow bloqué | 🔴 **CRITIQUE** |
 | **Remboursement client** | ❌ Logique manquante | Règle métier | 🔴 **CRITIQUE** |
 | **Paiement artisan** | ❌ Logique manquante | Règle métier | 🔴 **CRITIQUE** |
@@ -1652,31 +1659,36 @@ Schema::table('litiges', function (Blueprint $table) {
 
 ---
 
-## 🎯 PLAN D'ACTION PRIORITAIRE
+## PLAN DACTION PRIORITAIRE
 
 ### 🔴 CRITIQUE (Avant production — 2 semaines)
 
 #### 1. Job Laravel Queue paiement fournisseur J+1 ⏱️ **2 jours**
+
 - **Fichier** : `app/Jobs/PaySupplierJob.php`
 - **Action** : Voir recommandation Phase 2
 - **Impact** : Règle métier "Virement J+1 garanti" violée actuellement
 
 #### 2. Activer SMS Infobip/Twilio production ⏱️ **1 jour**
+
 - **Fichiers** : `OtpService.php`, `NotificationService.php`
 - **Action** : Voir recommandations Phase 0 & 2
 - **Impact** : OTP et confirmations paiement non envoyés
 
 #### 3. Intégrer SDK Wave CI + Orange Money CI virements sortants ⏱️ **3 jours**
+
 - **Fichiers** : `WaveService.php`, `OrangeMoneyService.php`
 - **Action** : Voir recommandation Phase 4
 - **Impact** : Paiements artisans et fournisseurs bloqués
 
 #### 4. Endpoint arbitrage litiges complet ⏱️ **2 jours**
+
 - **Fichier** : `LitigeController::arbitrage()`
 - **Action** : Voir recommandation Flux Litiges
 - **Impact** : Aucune gestion des conflits client/artisan
 
 #### 5. Floutage GPS artisan 50 m ⏱️ **1 jour**
+
 - **Fichier** : `ArtisanResource.php`
 - **Action** : Voir recommandation Phase 1
 - **Impact** : Sécurité artisans compromise
@@ -1688,35 +1700,42 @@ Schema::table('litiges', function (Blueprint $table) {
 ### 🟡 Important (Post-MVP — 1 mois)
 
 #### 6. Workflow validation référent missions > 2M FCFA ⏱️ **3 jours**
+
 - **Fichier** : `ReferentController.php` (à créer)
 - **Action** : Voir recommandation Phase 4
 - **Impact** : Règle métier non appliquée pour grosses missions
 
 #### 7. Service micro-crédit urgence < 2h ⏱️ **5 jours**
+
 - **Fichier** : `MicroCreditService.php` (à créer)
 - **Action** : Voir recommandation Phase 5
 - **Impact** : Valeur ajoutée artisans avec Score > 70 perdue
 
 #### 8. Badge "marqueur doré" Score ≥ 70 ⏱️ **1 jour**
+
 - **Fichier** : `artisan_card.dart` (Flutter)
 - **Action** : Voir recommandation Phase 1
 - **Impact** : UX client dégradée
 
 #### 9. Génération PDF rapport solvabilité ⏱️ **2 jours**
+
 - **Fichier** : `PdfService.php` (à créer)
 - **Action** : Voir recommandation Phase 5
 - **Impact** : Partenariats microfinances limités
 
 #### 10. Intégration Gemini API analyse besoin ⏱️ **3 jours**
+
 - **Fichier** : `GeminiService.php` (à créer)
 - **Action** : Voir recommandation Phase 1
 - **Impact** : UX client dégradée (pas d'estimation préliminaire)
 
 #### 11. Interface admin gestion litiges + chat ⏱️ **5 jours**
+
 - **Technologies** : Backend Laravel + Frontend admin (React/Vue)
 - **Impact** : Productivité admin réduite
 
 #### 12. Validation KYC avant création mission ⏱️ **0.5 jour**
+
 - **Fichier** : `mission_request_screen.dart` (Flutter)
 - **Action** : Voir recommandation Phase 1
 - **Impact** : Règle métier critique non appliquée côté frontend
@@ -1725,7 +1744,7 @@ Schema::table('litiges', function (Blueprint $table) {
 
 ---
 
-## 🏆 CONCLUSION GÉNÉRALE
+## CONCLUSION GENERALE
 
 ### Synthèse Globale
 
@@ -1761,7 +1780,7 @@ Le système **ProsArtisan** est **opérationnel à 82%** avec une **architecture
 ### Blocants Critiques Identifiés 🔴
 
 | Blocant | Impact | Durée correction |
-|---|---|---|
+| --- | --- | --- |
 | Job Laravel Queue paiement J+1 | Règle métier violée | 2 jours |
 | SMS Infobip/Twilio production | OTP et confirmations manquants | 1 jour |
 | SDK Wave/OM virements sortants | Paiements artisans/fournisseurs bloqués | 3 jours |
