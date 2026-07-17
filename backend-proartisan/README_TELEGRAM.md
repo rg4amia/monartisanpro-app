@@ -20,7 +20,7 @@ TELEGRAM_CHAT_ID='8715763356' ❌ (c'est l'ID du bot, pas du chat)
 ### 1️⃣ Ouvrez Telegram et trouvez votre bot
 
 - **Sur mobile** : Recherchez `@ProsArtisanBot` dans la barre de recherche
-- **Sur desktop** : Cliquez sur ce lien → https://t.me/ProsArtisanBot
+- **Sur desktop** : Cliquez sur ce lien → <https://t.me/ProsArtisanBot>
 
 ### 2️⃣ Démarrez la conversation
 
@@ -37,6 +37,7 @@ php get_chat_id.php
 ```
 
 Le script va :
+
 - ✅ Vérifier que le bot existe
 - ✅ Récupérer votre Chat ID
 - ✅ Vous donner la ligne exacte à ajouter dans `.env`
@@ -67,7 +68,7 @@ Vous devriez recevoir un message sur Telegram ! 🎉
 ## 🔧 Scripts disponibles
 
 | Script | Description |
-|--------|-------------|
+| -------- | ------------- |
 | `get_chat_id.php` | Récupère automatiquement votre Chat ID |
 | `test_telegram.php` | Tests complets d'envoi de messages |
 | `TELEGRAM_SETUP_INSTRUCTIONS.md` | Guide détaillé étape par étape |
@@ -204,6 +205,7 @@ Log::channel('telegram_bot')->warning('💰 Paiement important', [
 ### Aucun message reçu
 
 ➡️ Vérifiez que :
+
 1. Vous avez bien cliqué sur "Start" dans le chat avec le bot
 2. Le Chat ID dans `.env` est correct
 3. Le bot n'est pas bloqué

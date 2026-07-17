@@ -18,6 +18,7 @@ onboarding/
 ## Flux utilisateur
 
 ### 1. Splash Screen (`/splash`)
+
 - Affiche le logo N'Zassa avec shield et cœur
 - Indicateur de chargement
 - Badge "SECURE CONNECTION"
@@ -28,24 +29,28 @@ onboarding/
   - `/login` si onboarding complété mais non connecté
 
 ### 2. Onboarding Screen (`/onboarding`)
+
 - 4 pages avec PageView
 - Indicateurs de progression (dots)
 - Boutons "Skip" et "Next"
 - Compteur "Step X of 4"
 
-#### Pages :
+#### Pages
 
 **Page 1 : Find Verified Experts**
+
 - Fond jaune (`#FDB750`)
 - Illustration artisan
 - Description : connexion avec artisans qualifiés
 
 **Page 2 : Secure Escrow Payments**
+
 - Fond sombre (`#424242`)
 - Illustration cadenas/wallet
 - Description : paiements sécurisés en séquestre
 
 **Page 3 : Trust with N'Zassa Score**
+
 - Fond blanc
 - Card profile avec :
   - Badge "VERIFIED"
@@ -58,6 +63,7 @@ onboarding/
 - Description : système de notation
 
 **Page 4 : Ready to Begin?**
+
 - Fond jaune (`#FDB750`)
 - Illustration groupe d'artisans
 - Description : rejoindre l'écosystème
@@ -79,6 +85,7 @@ Le flag `onboarded` est sauvegardé dans `GetStorage` via `StorageService.setOnb
 ## Assets requis
 
 Les images suivantes doivent être ajoutées dans `assets/images/` :
+
 - `onboarding_1.png` - Illustration artisan avec outils
 - `onboarding_2.png` - Illustration cadenas/wallet doré
 - `onboarding_3.png` - Photo profil artisan (optionnel, généré en code)

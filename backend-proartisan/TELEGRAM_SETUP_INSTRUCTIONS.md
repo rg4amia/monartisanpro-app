@@ -3,6 +3,7 @@
 ## ⚠️ Problème actuel
 
 Votre configuration actuelle dans `.env` :
+
 ```env
 TELEGRAM_BOT_TOKEN='8715763356:AAFPM6f1DALdYxn5gU6_DLX_-wZl6ZRtEJE'
 TELEGRAM_CHAT_ID='8715763356'  ← INCORRECT
@@ -70,6 +71,7 @@ TELEGRAM_CHAT_ID='987654321'  # Remplacez par votre vrai Chat ID
 ```
 
 **Important** : Supprimez les guillemets si vous préférez :
+
 ```env
 TELEGRAM_CHAT_ID=987654321
 ```

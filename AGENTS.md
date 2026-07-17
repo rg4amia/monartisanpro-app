@@ -23,7 +23,7 @@ Tu m'assistes sur le développement de **ProsArtisan**, une plateforme marketpla
 ## 🏗️ Stack technique
 
 | Couche | Technologie |
-|---|---|
+| --- | --- |
 | Backend API | Laravel 11 (PHP 8.3) |
 | Base de données | **MySQL 8.0+ avec extension spatiale (InnoDB + SRID 4326)** |
 | App mobile | prosartisan-marketplace (Android prioritaire) |
@@ -39,7 +39,7 @@ Tu m'assistes sur le développement de **ProsArtisan**, une plateforme marketpla
 ## 👥 Acteurs du système
 
 | Acteur | Rôle |
-|---|---|
+| --- | --- |
 | **Client** | Passe des commandes, paie, valide les jalons via OTP, note l'artisan |
 | **Artisan** | Reçoit des missions, génère des J-Codes matériaux, soumet les jalons |
 | **Fournisseur** | Quincaillerie agréée, scanne les J-Codes pour livrer les matériaux |
@@ -51,12 +51,14 @@ Tu m'assistes sur le développement de **ProsArtisan**, une plateforme marketpla
 ## 🔄 Flux métier (6 phases)
 
 ### Phase 0 — Onboarding & KYC
+
 - Inscription par numéro de téléphone + OTP + sélection de rôle
 - Vérification KYC : photo CNI + selfie liveness
 - Admin valide → `kyc_status = actif`
 - Sans KYC validé : aucune transaction possible
 
 ### Phase 1 — Diagnostic & Matching
+
 - Client décrit son besoin (texte + photos)
 - **Gemini API** retourne : catégorie, urgence, estimation FCFA
 - Recherche artisans dans rayon ≤ 2 km via **ST_Distance_Sphere** (MySQL)
@@ -64,6 +66,7 @@ Tu m'assistes sur le développement de **ProsArtisan**, une plateforme marketpla
 - Tri par Score N'Zassa + badge "marqueur doré" pour artisans prioritaires
 
 ### Phase 2 — Devis & Séquestre
+
 - Artisan crée un devis : lignes main d'œuvre + lignes matériaux + jalons (montants + dates)
 - Client accepte le devis → paie l'acompte (Wave ou Orange Money)
 - **Fragmentation automatique du séquestre** en deux wallets :
@@ -73,6 +76,7 @@ Tu m'assistes sur le développement de **ProsArtisan**, une plateforme marketpla
 - Statut mission : `en_attente` → `financee` → `en_cours`
 
 ### Phase 3 — J-Code (Jeton Matériel) & Anti-Fraude
+
 - Artisan génère un **J-Code** (format `PA-XXXX` + QR Code + code USSD)
 - Fournisseur scanne le QR ou saisit le code USSD
 - **Vérification GPS obligatoire** : distance entre position du fournisseur au scan et son adresse enregistrée < 100 m
@@ -81,6 +85,7 @@ Tu m'assistes sur le développement de **ProsArtisan**, une plateforme marketpla
 - Artisan uploade photo géolocalisée des matériaux sur chantier → client notifié
 
 ### Phase 4 — Jalons & Libération des fonds
+
 - Artisan soumet chaque jalon : checklist + photos géolocalisées
 - Système envoie un **OTP 4 chiffres par SMS** au client
 - Client saisit l'OTP → jalon validé → `wallet_mo` libéré sur Mobile Money artisan
@@ -88,6 +93,7 @@ Tu m'assistes sur le développement de **ProsArtisan**, une plateforme marketpla
 - Cycle jusqu'au dernier jalon → statut `terminee`
 
 ### Phase 5 — Clôture & Score N'Zassa
+
 - Artisan soumet fiche d'intervention (checklist + récapitulatif)
 - Client signe digitalement (doigt ou OTP SMS)
 - Client note l'artisan (1 à 5 étoiles)
@@ -101,6 +107,7 @@ Tu m'assistes sur le développement de **ProsArtisan**, une plateforme marketpla
 - Génération PDF rapport de solvabilité pour microfinances partenaires
 
 ### Flux parallèle — Litiges
+
 - Client ou artisan déclenche un signalement à tout moment
 - Admin instruit le dossier (logs + photos + chat)
 - Décision d'arbitrage : remboursement client / paiement artisan / gel + visite Référent

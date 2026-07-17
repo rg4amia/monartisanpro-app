@@ -3,6 +3,7 @@
 ## Configuration
 
 Les tests sont configurés pour utiliser le backend Laravel Herd:
+
 - **URL Backend**: `http://backend-proartisan.test/api/v1`
 
 ## Structure des Tests
@@ -29,11 +30,13 @@ test/
 ## Exécution des Tests
 
 ### Tous les tests
+
 ```bash
 ./test_runner.sh
 ```
 
 Ou directement avec Flutter:
+
 ```bash
 cd frontend_flutter
 flutter test
@@ -67,6 +70,7 @@ open coverage/html/index.html
    - Vérifiez avec: `curl http://backend-proartisan.test/api/v1/sectors`
 
 2. **Dépendances Flutter installées**
+
    ```bash
    flutter pub get
    ```
@@ -78,16 +82,19 @@ open coverage/html/index.html
 ## Types de Tests
 
 ### Tests Unitaires
+
 - **Models**: Sérialisation/désérialisation JSON
 - **API Client**: Configuration et intercepteurs
 - **Token Storage**: Gestion sécurisée des tokens
 
 ### Tests d'Intégration
+
 - **Auth Repository**: Envoi OTP, vérification, inscription
 - **Mission Repository**: CRUD missions, jalons, estimations
 - **JCode Repository**: Création, scan, validation GPS
 
 ### Tests de Workflow Complet
+
 - Workflow client: Auth → Créer mission → Suivre
 - Workflow artisan: Auth → Accepter mission → Créer J-Code
 - Workflow fournisseur: Auth → Scanner J-Code
@@ -95,6 +102,7 @@ open coverage/html/index.html
 ## Gestion des Erreurs
 
 Les tests vérifient les codes HTTP suivants:
+
 - `200-299`: Succès
 - `401`: Non authentifié
 - `404`: Ressource non trouvée
@@ -103,6 +111,7 @@ Les tests vérifient les codes HTTP suivants:
 ## Données de Test
 
 Configurées dans `test_config.dart`:
+
 - Téléphone: `+2250700000001`
 - OTP: `123456`
 - Nom: `Test User`
@@ -118,6 +127,7 @@ Configurées dans `test_config.dart`:
 ## Dépannage
 
 ### Backend non accessible
+
 ```bash
 # Vérifier que Herd est démarré
 herd status
@@ -127,10 +137,12 @@ curl http://backend-proartisan.test/api/v1/sectors
 ```
 
 ### Tests échouent avec 401
+
 - Vérifiez que le token est valide
 - Vérifiez la configuration de Sanctum dans le backend
 
 ### Tests échouent avec timeout
+
 - Augmentez le timeout dans `test_config.dart`
 - Vérifiez la performance du backend
 
@@ -150,6 +162,7 @@ Pour intégrer dans un pipeline CI/CD:
 ## Contribution
 
 Lors de l'ajout de nouvelles fonctionnalités:
+
 1. Créer les tests unitaires correspondants
 2. Ajouter les tests d'intégration si nécessaire
 3. Mettre à jour ce README si besoin

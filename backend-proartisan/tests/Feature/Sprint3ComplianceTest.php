@@ -191,6 +191,11 @@ class Sprint3ComplianceTest extends TestCase
         $supplier = User::factory()->create(['role' => 'fournisseur', 'kyc_status' => 'en_attente']);
         $driver = User::factory()->create(['role' => 'driver', 'kyc_status' => 'en_attente']);
 
+        assert($client instanceof \Illuminate\Contracts\Auth\Authenticatable);
+        assert($artisan instanceof \Illuminate\Contracts\Auth\Authenticatable);
+        assert($supplier instanceof \Illuminate\Contracts\Auth\Authenticatable);
+        assert($driver instanceof \Illuminate\Contracts\Auth\Authenticatable);
+
         $mission = Mission::create([
             'client_id' => $client->id,
             'artisan_id' => $artisan->id,

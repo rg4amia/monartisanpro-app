@@ -13,16 +13,20 @@ Ce guide explique comment configurer les notifications Telegram pour recevoir le
 ## 🆔 Étape 2 : Récupérer votre Chat ID
 
 ### Option A : Via @userinfobot (le plus simple)
+
 1. Cherchez **@userinfobot** sur Telegram
 2. Envoyez `/start`
 3. Le bot vous donnera votre **Chat ID** (ex: `123456789`)
 
 ### Option B : Via l'API Telegram
+
 1. Envoyez un message à votre bot (n'importe quoi, ex: "Hello")
 2. Ouvrez cette URL dans votre navigateur :
+
    ```
    https://api.telegram.org/bot<VOTRE_TOKEN>/getUpdates
    ```
+
 3. Cherchez `"chat":{"id":123456789}` dans la réponse JSON
 4. Copiez ce nombre (votre Chat ID)
 
@@ -31,11 +35,13 @@ Ce guide explique comment configurer les notifications Telegram pour recevoir le
 ### Méthode 1 : Variables d'environnement (recommandé)
 
 Lancez l'app avec :
+
 ```bash
 flutter run --dart-define=TELEGRAM_BOT_TOKEN=votre_token --dart-define=TELEGRAM_CHAT_ID=votre_chat_id
 ```
 
 Ou dans `launch.json` (VS Code) :
+
 ```json
 {
   "configurations": [
@@ -56,6 +62,7 @@ Ou dans `launch.json` (VS Code) :
 ### Méthode 2 : Fichier de config (développement uniquement)
 
 Éditez `lib/core/config/env_config.dart` :
+
 ```dart
 static const String telegramBotToken = '123456789:ABCdefGHIjklMNOpqrsTUVwxyz';
 static const String telegramChatId = '123456789';
@@ -64,6 +71,7 @@ static const String telegramChatId = '123456789';
 ⚠️ **ATTENTION** : Ne commitez JAMAIS ces credentials sur Git !
 
 Ajoutez à `.gitignore` :
+
 ```
 # Telegram credentials
 lib/core/config/env_config.local.dart
@@ -72,6 +80,7 @@ lib/core/config/env_config.local.dart
 ## 🧪 Étape 4 : Tester
 
 ### Test manuel
+
 ```dart
 import 'package:frontend_flutter/core/utils/error_handler.dart';
 
@@ -80,7 +89,9 @@ ErrorHandler.logInfo('Test de notification Telegram');
 ```
 
 ### Test automatique
+
 L'app enverra automatiquement les notifications pour :
+
 - ❌ Erreurs Flutter (crashes, exceptions)
 - 🌐 Erreurs HTTP (API calls)
 - ⚠️ Warnings
@@ -89,6 +100,7 @@ L'app enverra automatiquement les notifications pour :
 ## 📋 Utilisation
 
 ### Log une erreur
+
 ```dart
 try {
   // Code qui peut échouer
@@ -102,6 +114,7 @@ try {
 ```
 
 ### Log une erreur HTTP
+
 ```dart
 try {
   await dio.get('/api/endpoint');
@@ -114,6 +127,7 @@ try {
 ```
 
 ### Log un warning
+
 ```dart
 await ErrorHandler.logWarning(
   'KYC non validé',
@@ -122,6 +136,7 @@ await ErrorHandler.logWarning(
 ```
 
 ### Log un événement
+
 ```dart
 await ErrorHandler.logEvent(
   'Mission créée',
@@ -137,6 +152,7 @@ await ErrorHandler.logEvent(
 ## 🎨 Format des notifications
 
 ### Erreur
+
 ```
 🔴 ERREUR
 
@@ -153,6 +169,7 @@ Exception: Invalid credentials
 ```
 
 ### Erreur HTTP
+
 ```
 🌐 ERREUR HTTP
 
@@ -168,6 +185,7 @@ Exception: Invalid credentials
 ```
 
 ### Warning
+
 ```
 ⚠️ WARNING
 
@@ -178,6 +196,7 @@ Exception: Invalid credentials
 ```
 
 ### Événement
+
 ```
 📊 EVENT: Mission créée
 
@@ -193,13 +212,16 @@ Exception: Invalid credentials
 ## ⚙️ Configuration avancée
 
 ### Désactiver en production
+
 Dans `lib/core/services/telegram_logger.dart` :
+
 ```dart
 static const bool _enableInDebug = true;
 static const bool _enableInRelease = false; // Désactivé en prod
 ```
 
 ### Activer en production (avec prudence)
+
 ```dart
 static const bool _enableInRelease = true;
 ```
@@ -207,7 +229,9 @@ static const bool _enableInRelease = true;
 ⚠️ Attention au volume de messages en production !
 
 ### Filtrer les logs
+
 Modifiez `ErrorHandler` pour ajouter des conditions :
+
 ```dart
 static Future<void> handle(
   dynamic error, {
@@ -238,19 +262,23 @@ static bool _shouldLog(dynamic error) {
 ## 🐛 Dépannage
 
 ### Le bot ne répond pas
+
 - Vérifiez que vous avez envoyé `/start` au bot
 - Vérifiez le token et chat_id
 - Testez l'URL manuellement :
+
   ```
   https://api.telegram.org/bot<TOKEN>/sendMessage?chat_id=<CHAT_ID>&text=Test
   ```
 
 ### Trop de notifications
+
 - Désactivez les logs info : `_enableInDebug = false`
 - Ajoutez des filtres dans `ErrorHandler`
 - Utilisez `showSnackbar: false` pour les erreurs silencieuses
 
 ### Messages tronqués
+
 - Les messages Telegram sont limités à 4096 caractères
 - Le logger tronque automatiquement les longs messages
 - Pour les stack traces complètes, consultez les logs locaux

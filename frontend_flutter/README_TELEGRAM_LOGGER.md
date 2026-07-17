@@ -37,6 +37,7 @@ frontend_flutter/
 ```
 
 Éditez `lib/core/config/env_config.dart` :
+
 ```dart
 static const String telegramBotToken = 'VOTRE_TOKEN';
 static const String telegramChatId = 'VOTRE_CHAT_ID';
@@ -220,6 +221,7 @@ Get.to(() => const TelegramTestScreen());
 ```
 
 Fonctionnalités :
+
 - ✅ Test Info
 - ⚠️ Test Warning
 - ❌ Test Error
@@ -313,6 +315,7 @@ Le système permet de tracker :
 1. Vérifiez le token et chat_id
 2. Envoyez `/start` au bot
 3. Testez manuellement :
+
    ```
    https://api.telegram.org/bot<TOKEN>/sendMessage?chat_id=<CHAT_ID>&text=Test
    ```
@@ -394,6 +397,7 @@ ListTile(
 ## 📝 Changelog
 
 ### v1.0.0 (2026-03-09)
+
 - ✅ Service TelegramLogger
 - ✅ ErrorHandler avec gestion Dio
 - ✅ AppLogger avec méthodes métier

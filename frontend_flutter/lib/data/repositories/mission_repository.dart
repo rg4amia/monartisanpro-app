@@ -1,9 +1,11 @@
+import 'package:get/get.dart';
 import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../core/cache/mission_cache_service.dart';
 import '../../core/network/api_client.dart';
 import '../../core/network/api_endpoints.dart';
+import '../../core/network/sync_service.dart';
 import '../models/jalon_model.dart';
 import '../models/mission_model.dart';
 
@@ -75,7 +77,7 @@ class MissionRepository {
       return missions;
     } catch (e) {
       // 4. En cas d'erreur, retourner le cache expiré si disponible
-      final fallbackCache = _cache.getCachedMissions(filter: status);
+      final fallbackCache = _cache.getCachedMissions(filter: status, ignoreExpiration: true);
       if (fallbackCache != null) {
         // Le cache existe mais est expiré, on le retourne quand même
         return fallbackCache;
@@ -123,7 +125,7 @@ class MissionRepository {
       return mission;
     } catch (e) {
       // 4. Fallback sur cache expiré
-      final fallbackCache = _cache.getCachedMission(id);
+      final fallbackCache = _cache.getCachedMission(id, ignoreExpiration: true);
       if (fallbackCache != null) {
         return fallbackCache;
       }
@@ -201,7 +203,29 @@ class MissionRepository {
 
   /// Met à jour le statut d'une mission
   Future<void> updateStatus(int id, String status) async {
-    await _client.put(ApiEndpoints.missionStatus(id), data: {'status': status});
+    try {
+      await _client.put(ApiEndpoints.missionStatus(id), data: {'status': status});
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionTimeout || 
+          e.type == DioExceptionType.receiveTimeout || 
+          e.type == DioExceptionType.connectionError) {
+        
+        final syncService = Get.find<SyncService>();
+        await syncService.enqueueRequest('PUT', ApiEndpoints.missionStatus(id), data: {'status': status});
+        
+        // Mettre à jour localement la mission en cache en attendant la synchro
+        final cached = _cache.getCachedMission(id, ignoreExpiration: true);
+        if (cached != null) {
+          // Astuce : on modifie le JSON et on recache (simplification)
+          final json = cached.toJson();
+          json['status'] = status;
+          await _cache.cacheMission(MissionModel.fromJson(json));
+          await _cache.invalidate('all'); // Pour forcer la vue liste à se rafraîchir localement
+        }
+      } else {
+        rethrow;
+      }
+    }
   }
 
   Future<Map<String, dynamic>> validateReferentMission({
@@ -276,7 +300,7 @@ class MissionRepository {
       return jalons;
     } catch (e) {
       // 4. Fallback sur cache expiré
-      final fallbackCache = _cache.getCachedJalons(missionId);
+      final fallbackCache = _cache.getCachedJalons(missionId, ignoreExpiration: true);
       if (fallbackCache != null) {
         return fallbackCache;
       }
@@ -300,7 +324,24 @@ class MissionRepository {
   }) async {
     final payload = photos != null ? {'photos': photos} : null;
 
-    await _client.put(ApiEndpoints.submitJalon(jalonId), data: payload);
+    try {
+      await _client.put(ApiEndpoints.submitJalon(jalonId), data: payload);
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionTimeout || 
+          e.type == DioExceptionType.receiveTimeout || 
+          e.type == DioExceptionType.connectionError) {
+        
+        final syncService = Get.find<SyncService>();
+        await syncService.enqueueRequest('PUT', ApiEndpoints.submitJalon(jalonId), data: payload);
+        
+        if (missionId != null) {
+          // On invalide le cache des jalons pour forcer un refresh local (ou on pourrait le modifier localement)
+          await _cache.invalidate('jalons_$missionId');
+        }
+      } else {
+        rethrow;
+      }
+    }
 
     // Invalider le cache des jalons pour forcer un refresh
     if (missionId != null) {

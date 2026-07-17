@@ -2,7 +2,8 @@
 
 ## 🎯 Par où commencer ?
 
-### Nouveau ? Commencez ici :
+### Nouveau ? Commencez ici
+
 👉 **[TELEGRAM_QUICK_START.md](TELEGRAM_QUICK_START.md)** - Configuration en 2 minutes
 
 ---
@@ -10,7 +11,7 @@
 ## 📚 Documentation
 
 | Fichier | Description | Quand l'utiliser |
-|---------|-------------|------------------|
+| --------- | ------------- | ------------------ |
 | **[TELEGRAM_QUICK_START.md](TELEGRAM_QUICK_START.md)** | Guide ultra-rapide (2 min) | ⭐ Commencez ici |
 | **[README_TELEGRAM.md](README_TELEGRAM.md)** | Documentation complète | Pour tout comprendre |
 | **[TELEGRAM_SETUP_INSTRUCTIONS.md](TELEGRAM_SETUP_INSTRUCTIONS.md)** | Instructions détaillées | Si vous avez des problèmes |
@@ -81,10 +82,10 @@ Log::channel('telegram_bot')->error('Exception capturée', [
 
 ## 🎯 Cas d'usage
 
-### Vous voulez...
+### Vous voulez
 
 | Objectif | Fichier à consulter |
-|----------|---------------------|
+| ---------- | --------------------- |
 | Configurer rapidement | [TELEGRAM_QUICK_START.md](TELEGRAM_QUICK_START.md) |
 | Comprendre en détail | [README_TELEGRAM.md](README_TELEGRAM.md) |
 | Résoudre un problème | [TELEGRAM_SETUP_INSTRUCTIONS.md](TELEGRAM_SETUP_INSTRUCTIONS.md) |
@@ -170,9 +171,9 @@ backend-proartisan/
 
 ## 🎓 Ressources supplémentaires
 
-- **Telegram Bot API** : https://core.telegram.org/bots/api
-- **Laravel Logging** : https://laravel.com/docs/11.x/logging
-- **Monolog** : https://github.com/Seldaek/monolog
+- **Telegram Bot API** : <https://core.telegram.org/bots/api>
+- **Laravel Logging** : <https://laravel.com/docs/11.x/logging>
+- **Monolog** : <https://github.com/Seldaek/monolog>
 
 ---
 

@@ -5,6 +5,7 @@
 ### 1. Diagnostic du problème
 
 Le test initial a révélé une erreur :
+
 ```
 Status: 403
 Body: {"ok":false,"error_code":403,"description":"Forbidden: bots can't send messages to bots"}
@@ -16,7 +17,7 @@ Body: {"ok":false,"error_code":403,"description":"Forbidden: bots can't send mes
 
 Le bot a été identifié : **@ProsArtisanBot**
 
-Lien direct : https://t.me/ProsArtisanBot
+Lien direct : <https://t.me/ProsArtisanBot>
 
 ### 3. Création de la documentation complète
 
@@ -65,7 +66,7 @@ TELEGRAM_CHAT_ID='8715763356' ❌ INCORRECT
 
 #### 1. Ouvrir Telegram
 
-Cliquez sur : https://t.me/ProsArtisanBot
+Cliquez sur : <https://t.me/ProsArtisanBot>
 
 Ou recherchez `@ProsArtisanBot` dans Telegram.
 
@@ -114,6 +115,7 @@ php test_telegram.php
 ```
 
 Vous devriez recevoir 3 messages de test sur Telegram :
+
 1. Test d'envoi direct
 2. Test via le logger Laravel
 3. Test avec exception simulée
@@ -275,16 +277,19 @@ Toute l'équipe recevra les alertes !
 ### Différents Chat ID par environnement
 
 Dans `.env.production` :
+
 ```env
 TELEGRAM_CHAT_ID=987654321  # Groupe production
 ```
 
 Dans `.env.staging` :
+
 ```env
 TELEGRAM_CHAT_ID=123456789  # Groupe staging
 ```
 
 Dans `.env.local` :
+
 ```env
 TELEGRAM_CHAT_ID=555555555  # Votre Chat ID personnel
 ```
@@ -318,6 +323,7 @@ Ou dans `config/logging.php`, commentez le channel `telegram_bot` dans le stack.
 ### Aucun message reçu
 
 ➡️ Vérifiez que :
+
 1. Vous avez cliqué sur "Start" dans le chat avec le bot
 2. Le Chat ID dans `.env` est correct
 3. Le bot n'est pas bloqué
@@ -335,7 +341,7 @@ Le script vous guidera automatiquement.
 ## 📚 Navigation dans la documentation
 
 | Besoin | Fichier |
-|--------|---------|
+| -------- | --------- |
 | Configuration rapide | [TELEGRAM_QUICK_START.md](TELEGRAM_QUICK_START.md) |
 | Documentation complète | [README_TELEGRAM.md](README_TELEGRAM.md) |
 | Instructions détaillées | [TELEGRAM_SETUP_INSTRUCTIONS.md](TELEGRAM_SETUP_INSTRUCTIONS.md) |

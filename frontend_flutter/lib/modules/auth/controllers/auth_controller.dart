@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../../core/storage/storage_service.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/models/user_model.dart';
+import 'package:onesignal_flutter/onesignal_flutter.dart';
 
 class AuthController extends GetxController {
   final AuthRepository _repo = AuthRepository();
@@ -77,6 +78,9 @@ class AuthController extends GetxController {
           StorageService.saveRole(user.role);
           StorageService.saveKycStatus(user.kycStatus);
           StorageService.setOnboarded(true);
+
+          // Lier l'ID utilisateur à OneSignal pour les Push ciblées
+          OneSignal.login(user.id.toString());
         }
       }
 
@@ -116,6 +120,9 @@ class AuthController extends GetxController {
       StorageService.saveKycStatus(user.kycStatus);
       StorageService.saveRole(user.role);
       StorageService.setOnboarded(true);
+
+      // Lier l'ID utilisateur à OneSignal
+      OneSignal.login(user.id.toString());
 
       // Token is already saved in repository
     } catch (e) {

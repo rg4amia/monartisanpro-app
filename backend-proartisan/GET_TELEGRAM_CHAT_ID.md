@@ -3,6 +3,7 @@
 ## Problème actuel
 
 Votre `.env` contient :
+
 ```
 TELEGRAM_BOT_TOKEN='8715763356:AAFPM6f1DALdYxn5gU6_DLX_-wZl6ZRtEJE'
 TELEGRAM_CHAT_ID='8715763356'  ← INCORRECT (c'est l'ID du bot, pas du chat)
@@ -161,7 +162,7 @@ if ($response->successful()) {
 ## Erreurs courantes
 
 | Erreur | Cause | Solution |
-|--------|-------|----------|
+| -------- | ------- | ---------- |
 | `Forbidden: bots can't send messages to bots` | Chat ID = Bot ID | Obtenir votre vrai Chat ID personnel |
 | `Bad Request: chat not found` | Chat ID incorrect | Vérifier le Chat ID avec `/getUpdates` |
 | `Forbidden: bot was blocked by the user` | Vous avez bloqué le bot | Débloquer le bot dans Telegram |

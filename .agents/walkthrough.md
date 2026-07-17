@@ -7,6 +7,7 @@ Toutes les modifications concernant la tarification TTC avec majoration, le reve
 ## 1. Modifications Backend (Laravel)
 
 ### Tarification TTC & Calculs de Commissions
+
 - **[Devis.php](file:///c:/Users/Utilisateur/Documents/GitHub/monartisanpro-app/backend-proartisan/app/Models/Devis.php)** : Les accesseurs (`montant_total`, `montant_materiaux`, `montant_mo`) ont été adaptés pour retourner les montants en **TTC** en appliquant les ratios de commission depuis la table `settings` (`platform_fee_ratio` = 3% sur les matériaux, `commission_service` = 10% sur la main d'œuvre).
 - **[DevisService.php](file:///c:/Users/Utilisateur/Documents/GitHub/monartisanpro-app/backend-proartisan/app/Services/DevisService.php)** : Lors de l'acceptation du devis, les jalons stockés en base sont automatiquement convertis en TTC. Le fractionnement du séquestre se base sur les valeurs TTC du devis pour éviter les écarts.
 - **[WalletService.php](file:///c:/Users/Utilisateur/Documents/GitHub/monartisanpro-app/backend-proartisan/app/Services/WalletService.php)** :
@@ -17,6 +18,7 @@ Toutes les modifications concernant la tarification TTC avec majoration, le reve
   - Au déblocage des commandes e-commerce (`releaseSupplierFunds` et `releaseDriverFunds`), le gain net est versé au fournisseur / livreur et la commission plateforme est transférée sur le compte ProsArtisan.
 
 ### Notifications & Logistique Géolocalisée
+
 - **[OrderService.php](file:///c:/Users/Utilisateur/Documents/GitHub/monartisanpro-app/backend-proartisan/app/Services/OrderService.php)** :
   - Intégration de notifications SMS/Push via `NotificationService` à chaque étape clé (confirmation de paiement client/fournisseur, commande prête pour retrait, livreur en route, colis récupéré, livraison finalisée).
   - Ajout de `notifyDriversInArea()` : recherche de livreurs disponibles dans un rayon de 10 km autour du client et du fournisseur (via `ST_Distance_Sphere`). En cas de résultat vide, extension automatique de la recherche à tous les livreurs de la plateforme.
@@ -27,6 +29,7 @@ Toutes les modifications concernant la tarification TTC avec majoration, le reve
 ## 2. Modifications Frontend (Flutter)
 
 ### Vues & Expérience Utilisateur Premium
+
 - **[client_suppliers_list_screen.dart](file:///c:/Users/Utilisateur/Documents/GitHub/monartisanpro-app/frontend_flutter/lib/modules/orders/views/client_suppliers_list_screen.dart)** : Liste complète des quincailleries partenaires agréées avec barre de recherche filtrante réactive et design premium.
 - **[client_catalog_screen.dart](file:///c:/Users/Utilisateur/Documents/GitHub/monartisanpro-app/frontend_flutter/lib/modules/orders/views/client_catalog_screen.dart)** : Catalogue dynamique des articles d'un fournisseur avec calcul en temps réel des prix en TTC (+3% frais plateforme) et gestion de panier (ajouter/retirer, indicateurs de stock, barre de commande inférieure).
 - **[order_checkout_screen.dart](file:///c:/Users/Utilisateur/Documents/GitHub/monartisanpro-app/frontend_flutter/lib/modules/orders/views/order_checkout_screen.dart)** : Écran de facturation détaillé listant les articles commandés, calculant les frais de livraison dynamique en fonction du véhicule et de la majoration (surge), affichant les frais plateforme et le montant total TTC.
@@ -39,6 +42,7 @@ Toutes les modifications concernant la tarification TTC avec majoration, le reve
 ## 3. Résultats de Validation
 
 ### Tests Automatisés Backend
+
 - Tous les tests de paiement et de workflow passent à 100% :
   - `php artisan test --filter=DevisPaymentFlowTest` : **OK** (35 assertions)
   - `php artisan test --filter=OrderWorkflowTest` : **OK** (28 assertions)

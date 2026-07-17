@@ -15,6 +15,7 @@ URL: http://backend-proartisan.test/api/v1
 ## Types de Tests
 
 ### 1. Tests Unitaires Simples ✅
+
 Tests des modèles et de la logique métier sans dépendances natives.
 
 ```bash
@@ -22,6 +23,7 @@ flutter test test/unit_tests_simple.dart
 ```
 
 **Couverture:**
+
 - Configuration API et endpoints
 - Modèles (UserModel, JcodeModel, MissionModel)
 - Sérialisation/désérialisation JSON
@@ -29,9 +31,11 @@ flutter test test/unit_tests_simple.dart
 - Validation des règles business
 
 ### 2. Tests d'Intégration (Nécessitent le backend)
+
 Tests avec appels réels au backend Laravel Herd.
 
 **Note:** Ces tests nécessitent:
+
 - Backend Laravel Herd démarré
 - Base de données migrée et seedée
 - Configuration des plugins natifs (FlutterSecureStorage)
@@ -48,6 +52,7 @@ flutter test test/integration/
 ## Résultats des Tests
 
 ### Tests Unitaires Simples
+
 ```
 ✅ API Configuration Tests (4 tests)
 ✅ UserModel Tests (5 tests)
@@ -80,12 +85,14 @@ test/
 ## Exécution des Tests
 
 ### Tous les tests unitaires simples
+
 ```bash
 cd frontend_flutter
 flutter test test/unit_tests_simple.dart
 ```
 
 ### Tests spécifiques
+
 ```bash
 # Tests d'un groupe spécifique
 flutter test test/unit_tests_simple.dart --name "UserModel"
@@ -95,6 +102,7 @@ flutter test test/unit_tests_simple.dart --verbose
 ```
 
 ### Avec couverture de code
+
 ```bash
 flutter test test/unit_tests_simple.dart --coverage
 genhtml coverage/lcov.info -o coverage/html
@@ -104,15 +112,18 @@ open coverage/html/index.html
 ## Tests Validés
 
 ### ✅ Configuration API
+
 - URL backend Herd correcte
 - Endpoints auth, missions, J-Codes configurés
 
 ### ✅ Modèles de Données
+
 - **UserModel**: Sérialisation, KYC, Score Nzassa, Golden Marker
 - **JcodeModel**: Statuts (actif, utilisé, expiré), format PA-XXXX
 - **MissionModel**: Montants, ratios, règle référent (>2M FCFA)
 
 ### ✅ Logique Métier
+
 - Score Nzassa > 65 = Golden Marker
 - Statuts KYC: en_attente, en_cours, actif, refuse
 - Format J-Code: PA-XXXX
@@ -124,13 +135,16 @@ open coverage/html/index.html
 Pour exécuter les tests d'intégration avec votre backend Herd:
 
 ### Prérequis
+
 1. **Backend démarré**
+
    ```bash
    # Vérifier Herd
    curl http://backend-proartisan.test/api/v1/sectors
    ```
 
 2. **Base de données**
+
    ```bash
    cd backend-proartisan
    php artisan migrate:fresh --seed
@@ -142,6 +156,7 @@ Pour exécuter les tests d'intégration avec votre backend Herd:
    - Créer des J-Codes actifs
 
 ### Exécution
+
 ```bash
 # Tests repositories
 flutter test test/data/repositories/auth_repository_test.dart
@@ -155,6 +170,7 @@ flutter test test/integration/full_workflow_test.dart
 ## Données de Test
 
 Configurées dans `test_config.dart`:
+
 ```dart
 baseUrl: 'http://backend-proartisan.test/api/v1'
 testPhone: '+2250700000001'
@@ -166,6 +182,7 @@ testRole: 'client'
 ## Dépannage
 
 ### Backend non accessible
+
 ```bash
 # Vérifier Herd
 herd status
@@ -175,12 +192,15 @@ curl http://backend-proartisan.test/api/v1/sectors
 ```
 
 ### Tests échouent avec MissingPluginException
+
 Les tests d'intégration nécessitent un émulateur ou appareil physique pour FlutterSecureStorage.
 
 Solution: Utiliser les tests unitaires simples qui ne dépendent pas des plugins natifs.
 
 ### Erreur 500 du backend
+
 Vérifier les logs Laravel:
+
 ```bash
 cd backend-proartisan
 tail -f storage/logs/laravel.log
@@ -210,6 +230,7 @@ Pour intégrer dans un pipeline:
 ## Contribution
 
 Lors de l'ajout de nouvelles fonctionnalités:
+
 1. Créer les tests unitaires dans `unit_tests_simple.dart`
 2. Ajouter les tests d'intégration si nécessaire
 3. Vérifier que tous les tests passent
@@ -218,6 +239,7 @@ Lors de l'ajout de nouvelles fonctionnalités:
 ## Support
 
 Pour toute question sur les tests:
+
 - Consulter `test/README.md`
 - Vérifier la configuration dans `test_config.dart`
 - Examiner les exemples dans `unit_tests_simple.dart`
