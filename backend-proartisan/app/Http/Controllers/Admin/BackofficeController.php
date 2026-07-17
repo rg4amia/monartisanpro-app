@@ -60,6 +60,25 @@ class BackofficeController extends Controller
         return $this->renderPage('admin/roles-permissions');
     }
 
+    public function evaluations(): Response
+    {
+        return $this->renderPage('admin/evaluations');
+    }
+
+    public function toggleScoreFreeze(Request $request, User $user): RedirectResponse
+    {
+        if ($user->role !== 'artisan') {
+            return back()->with('error', 'Seuls les scores des artisans peuvent être gelés/dégelés.');
+        }
+
+        $user->update([
+            'score_frozen' => !$user->score_frozen,
+        ]);
+
+        $status = $user->score_frozen ? 'gelé' : 'dégelé';
+        return back()->with('success', "Le score N'Zassa de l'artisan {$user->name} a été {$status} avec succès.");
+    }
+
     public function llmAdmin(): Response
     {
         return $this->renderPage('admin/llm-admin');
@@ -307,6 +326,9 @@ class BackofficeController extends Controller
             'missions' => $this->adminService->listMissions(null, null, 100)->items(),
             'transactions' => $this->adminService->listTransactions(null, null, 100)->items(),
             'users' => $this->adminService->listUsers(null, null, null, 100)->items(),
+            'evaluationsList' => $this->adminService->listEvaluations(100)->items(),
+            'artisansScores' => $this->adminService->listArtisansScores(),
+            'scoreLedger' => $this->adminService->listScoreLedger(),
             'settingsList' => \App\Models\Setting::all(),
             'sectors' => \App\Models\Sector::with('trades')->get(),
             'allPermissions' => \App\Models\Permission::all(),

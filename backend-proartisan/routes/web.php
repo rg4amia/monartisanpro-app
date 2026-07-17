@@ -43,6 +43,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/missions', [BackofficeController::class, 'missions'])->name('missions');
         Route::get('/litiges', [BackofficeController::class, 'litiges'])->name('litiges');
         Route::get('/users', [BackofficeController::class, 'users'])->name('users');
+        Route::get('/evaluations', [BackofficeController::class, 'evaluations'])->name('evaluations');
+        Route::post('/users/{user}/toggle-score-freeze', [BackofficeController::class, 'toggleScoreFreeze'])->name('users.toggle-score-freeze');
         Route::post('/users', [BackofficeController::class, 'storeUser'])->name('users.store');
         Route::put('/users/{user}', [BackofficeController::class, 'updateUser'])->name('users.update');
         Route::delete('/users/{user}', [BackofficeController::class, 'destroyUser'])->name('users.destroy');

@@ -9,6 +9,8 @@ use App\Models\Mission;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\JCode;
+use App\Models\Evaluation;
+use App\Models\ScoreLedgerEntry;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\DB;
@@ -212,5 +214,37 @@ class AdminService
             ->when($provider, fn ($q) => $q->where('provider', $provider))
             ->orderByDesc('created_at')
             ->paginate($perPage);
+    }
+
+    public function listEvaluations(?int $perPage = 100): LengthAwarePaginator
+    {
+        return Evaluation::query()
+            ->with(['mission', 'evaluateur', 'evalue'])
+            ->orderByDesc('created_at')
+            ->paginate($perPage);
+    }
+
+    public function listArtisansScores(): array
+    {
+        return User::query()
+            ->where('role', 'artisan')
+            ->withCount('evaluationsRecues')
+            ->withAvg('evaluationsRecues', 'fiabilite')
+            ->withAvg('evaluationsRecues', 'integrite')
+            ->withAvg('evaluationsRecues', 'qualite')
+            ->withAvg('evaluationsRecues', 'reactivite')
+            ->orderByDesc('score_nzassa')
+            ->get()
+            ->toArray();
+    }
+
+    public function listScoreLedger(): array
+    {
+        return ScoreLedgerEntry::query()
+            ->with(['user', 'mission', 'evaluation'])
+            ->orderByDesc('created_at')
+            ->limit(100)
+            ->get()
+            ->toArray();
     }
 }
