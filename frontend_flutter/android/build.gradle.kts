@@ -12,11 +12,7 @@ allprojects {
     }
 }
 
-val userHome = System.getProperty("user.home")
-val newBuildDir: Directory =
-    rootProject.layout.buildDirectory
-        .dir("$userHome/build_pa")
-        .get()
+val newBuildDir: Directory = rootProject.layout.buildDirectory.dir("../../build").get()
 rootProject.layout.buildDirectory.value(newBuildDir)
 
 subprojects {
