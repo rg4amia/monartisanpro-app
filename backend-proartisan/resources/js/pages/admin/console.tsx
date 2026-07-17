@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import LlmAdminPanel from './llm-admin-panel';
 import RolesPermissionsPanel from './roles-permissions-panel';
 
-type AdminTab = 'dashboard' | 'kyc' | 'missions' | 'litiges' | 'users' | 'transactions' | 'settings' | 'llm_admin' | 'roles_permissions';
+type AdminTab = 'dashboard' | 'kyc' | 'missions' | 'litiges' | 'users' | 'transactions' | 'settings' | 'llm_admin' | 'roles_permissions' | 'evaluations';
 type ThemeMode = 'light' | 'dark';
 type Tone = 'amber' | 'green' | 'rose' | 'blue' | 'slate';
 
@@ -126,6 +126,67 @@ interface AdminTransaction {
     };
 }
 
+interface AdminEvaluation {
+    id: number;
+    mission_id: number;
+    evaluateur_id: number;
+    evalue_id: number;
+    note: number;
+    fiabilite: number;
+    integrite: number;
+    qualite: number;
+    reactivite: number;
+    commentaire?: string | null;
+    created_at: string;
+    mission?: {
+        id: number;
+        description: string;
+    } | null;
+    evaluateur?: {
+        id: number;
+        name: string;
+        phone: string;
+    } | null;
+    evalue?: {
+        id: number;
+        name: string;
+        phone: string;
+        score_nzassa: number;
+        score_frozen: boolean;
+    } | null;
+}
+
+interface ArtisanScoreItem {
+    id: number;
+    name: string;
+    phone: string;
+    score_nzassa: number;
+    score_frozen: boolean;
+    evaluations_recues_count: number;
+    evaluations_recues_avg_fiabilite?: number | string | null;
+    evaluations_recues_avg_integrite?: number | string | null;
+    evaluations_recues_avg_qualite?: number | string | null;
+    evaluations_recues_avg_reactivite?: number | string | null;
+}
+
+interface ScoreLedgerEntryItem {
+    id: number;
+    user_id: number;
+    event_type: string;
+    points: number;
+    credibility_factor: number;
+    description: string;
+    created_at: string;
+    user?: {
+        name: string;
+        phone: string;
+    } | null;
+    mission?: {
+        id: number;
+        description: string;
+    } | null;
+}
+
 interface AuthUser {
     email?: string | null;
     name: string;
@@ -186,6 +247,9 @@ interface AdminPageProps {
     missions: AdminMission[];
     transactions: AdminTransaction[];
     users: AdminUser[];
+    evaluationsList: AdminEvaluation[];
+    artisansScores: ArtisanScoreItem[];
+    scoreLedger: ScoreLedgerEntryItem[];
     settingsList?: Array<{
         id: number;
         key: string;
@@ -214,6 +278,7 @@ const tabRoutes: Record<AdminTab, string> = {
     settings: '/admin/settings',
     llm_admin: '/admin/llm-admin',
     roles_permissions: '/admin/roles-permissions',
+    evaluations: '/admin/evaluations',
 };
 
 const tabMeta: Record<AdminTab, { description: string; label: string; section: string }> = {
@@ -262,6 +327,11 @@ const tabMeta: Record<AdminTab, { description: string; label: string; section: s
         section: 'INTELLIGENCE',
         description: "Supervision de l'ingestion sémantique des documents et du pipeline RAG local.",
     },
+    evaluations: {
+        label: 'Évaluations & Scores',
+        section: 'QUALITÉ',
+        description: 'Suivi de la réputation des artisans, calcul du score N\'Zassa et historiques des évaluations.',
+    },
 };
 
 const searchPlaceholders: Record<AdminTab, string> = {
@@ -274,6 +344,7 @@ const searchPlaceholders: Record<AdminTab, string> = {
     settings: 'Rechercher une règle ou un paramètre...',
     roles_permissions: 'Rechercher une action ou un rôle...',
     llm_admin: 'Rechercher une règle ou un document...',
+    evaluations: 'Rechercher une évaluation, un artisan ou un commentaire...',
 };
 
 const quickDockTabs: AdminTab[] = ['dashboard', 'missions', 'users', 'settings'];
@@ -408,7 +479,7 @@ function sumAmount(items: AdminTransaction[]): number {
 export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
     const activeTab = initialTab;
     const { props } = usePage<AdminPageProps>();
-    const { auth, dashboard, errors, flash, fournisseurs, kycUsers, litiges, missions, transactions, users, settingsList } = props;
+    const { auth, dashboard, errors, flash, fournisseurs, kycUsers, litiges, missions, transactions, users, settingsList, evaluationsList, artisansScores, scoreLedger } = props;
 
     const [themeMode, setThemeMode] = useState<ThemeMode>(() => {
         if (typeof window !== 'undefined' && window.localStorage) {
@@ -422,6 +493,8 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
     const deferredSearch = useDeferredValue(search.trim().toLowerCase());
     const [now] = useState(() => Date.now());
     const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState<boolean>(false);
+    const [evalSubTab, setEvalSubTab] = useState<'list' | 'artisans'>('list');
+    const [selectedArtisanForLedger, setSelectedArtisanForLedger] = useState<ArtisanScoreItem | null>(null);
 
     const [userModalOpen, setUserModalOpen] = useState<boolean>(false);
     const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
@@ -745,6 +818,30 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
             },
         ];
 
+        const filteredEvaluations = (evaluationsList || []).filter((evaluation) =>
+            deferredSearch === ''
+                ? true
+                : normalizeSearch([
+                    evaluation.id,
+                    evaluation.note,
+                    evaluation.commentaire,
+                    evaluation.evaluateur?.name,
+                    evaluation.evalue?.name,
+                    evaluation.mission?.description,
+                ]).includes(deferredSearch),
+        );
+
+        const filteredArtisansScores = (artisansScores || []).filter((artisan) =>
+            deferredSearch === ''
+                ? true
+                : normalizeSearch([
+                    artisan.id,
+                    artisan.name,
+                    artisan.phone,
+                    artisan.score_nzassa,
+                ]).includes(deferredSearch),
+        );
+
         return {
             acompteTrend,
             activityTrend: operationsTrend,
@@ -757,6 +854,8 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
             filteredMissions,
             filteredTransactions,
             filteredUsers,
+            filteredEvaluations,
+            filteredArtisansScores,
             highRiskDisputes,
             missionStatusMetrics,
             monthlyUserCount,
@@ -769,7 +868,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
             urgentKyc,
             weeklyUserCount,
         };
-    }, [dashboard, deferredSearch, fournisseurs, kycUsers, litiges, missions, transactions, users, now]);
+    }, [dashboard, deferredSearch, fournisseurs, kycUsers, litiges, missions, transactions, users, evaluationsList, artisansScores, now]);
 
     const totalUsers = dashboard.users_total ?? users.length;
     const artisansActifs = useMemo(() => dashboard.artisans_actifs ?? users.filter((user) => user.role === 'artisan' && user.kyc_status === 'actif').length, [dashboard.artisans_actifs, users]);
@@ -800,6 +899,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
             label: 'Réseau',
             items: [
                 { count: totalUsers, id: 'users', label: tabMeta.users.label },
+                { id: 'evaluations', label: tabMeta.evaluations.label },
                 { count: analytics.pendingTransactions.length, id: 'transactions', label: tabMeta.transactions.label },
             ],
         },
@@ -882,6 +982,23 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                     { label: 'Sécurité d\'accès', tone: 'blue' as const, value: 'RBAC Actif' },
                     { label: 'Mode', tone: 'slate' as const, value: 'Cache Actif' },
                 ];
+            case 'evaluations':
+                return [
+                    { label: 'Évaluations', tone: 'amber' as const, value: numberFormat.format(evaluationsList?.length ?? 0) },
+                    {
+                        label: 'Note moyenne',
+                        tone: 'green' as const,
+                        value: evaluationsList && evaluationsList.length > 0
+                            ? (evaluationsList.reduce((sum, e) => sum + e.note, 0) / evaluationsList.length).toFixed(1) + ' / 5'
+                            : 'N/A',
+                    },
+                    { label: 'Artisans suivis', tone: 'blue' as const, value: numberFormat.format(artisansScores?.length ?? 0) },
+                    {
+                        label: 'Scores gelés',
+                        tone: 'rose' as const,
+                        value: numberFormat.format(artisansScores?.filter((a) => a.score_frozen).length ?? 0),
+                    },
+                ];
             default:
                 return [];
         }
@@ -906,6 +1023,8 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         totalUsers,
         users,
         volume24h,
+        evaluationsList,
+        artisansScores,
     ]);
 
     const summaryCards = [
@@ -982,6 +1101,17 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
 
     const handleFournisseurDecision = (fournisseur: FournisseurItem, decision: 'agree' | 'suspendu'): void => {
         submitAction(`/admin/fournisseurs/${fournisseur.id}/review`, { decision });
+    };
+
+    const handleToggleScoreFreeze = (artisan: ArtisanScoreItem): void => {
+        const action = artisan.score_frozen ? 'dégeler' : 'geler';
+        if (window.confirm(`Voulez-vous vraiment ${action} le score de l'artisan ${artisan.name} ?`)) {
+            setActionLoading(true);
+            router.post(`/admin/users/${artisan.id}/toggle-score-freeze`, {}, {
+                preserveScroll: true,
+                onFinish: () => setActionLoading(false),
+            });
+        }
     };
 
     const adminName = auth.user?.name ?? 'Admin ProsArtisan';
@@ -2270,6 +2400,222 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                     <LlmAdminPanel />
                                 </section>
                             ) : null}
+
+                            {activeTab === 'evaluations' ? (
+                                <section className="mt-5 space-y-5">
+                                    <div className="flex gap-2 border-b border-[var(--admin-border)] pb-4">
+                                        <button
+                                            type="button"
+                                            onClick={() => setEvalSubTab('list')}
+                                            className={cn(
+                                                'rounded-xl px-4 py-2 text-sm font-semibold transition',
+                                                evalSubTab === 'list'
+                                                    ? 'bg-[#ebb95e] text-[#241b16]'
+                                                    : 'text-[var(--admin-text-soft)] hover:bg-white/40'
+                                            )}
+                                        >
+                                            Évaluations clients ({analytics.filteredEvaluations.length})
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setEvalSubTab('artisans')}
+                                            className={cn(
+                                                'rounded-xl px-4 py-2 text-sm font-semibold transition',
+                                                evalSubTab === 'artisans'
+                                                    ? 'bg-[#ebb95e] text-[#241b16]'
+                                                    : 'text-[var(--admin-text-soft)] hover:bg-white/40'
+                                            )}
+                                        >
+                                            Scores N'Zassa Artisans ({analytics.filteredArtisansScores.length})
+                                        </button>
+                                    </div>
+
+                                    {evalSubTab === 'list' ? (
+                                        <Surface className="rounded-[32px] p-5 lg:p-6">
+                                            <SectionTitle
+                                                description="Historique des évaluations des chantiers avec le détail des notes de fiabilité, intégrité, qualité et réactivité."
+                                                title="Liste des Évaluations"
+                                            />
+                                            <DataTable className="mt-5">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Mission</th>
+                                                        <th>Évaluateur (Client)</th>
+                                                        <th>Évalué (Artisan)</th>
+                                                        <th>Note Générale</th>
+                                                        <th>Critères N'Zassa (F / I / Q / R)</th>
+                                                        <th>Commentaire</th>
+                                                        <th>Date</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {analytics.filteredEvaluations.length === 0 ? (
+                                                        <tr>
+                                                            <td colSpan={7}>
+                                                                <EmptyState description="Aucune évaluation ne correspond à vos filtres." title="Aucune évaluation trouvée" />
+                                                            </td>
+                                                        </tr>
+                                                    ) : (
+                                                        analytics.filteredEvaluations.map((evaluation) => (
+                                                            <tr key={evaluation.id}>
+                                                                <td className="font-medium text-[var(--admin-text)]">
+                                                                    Mission #{evaluation.mission_id}
+                                                                    {evaluation.mission && (
+                                                                        <span className="block text-xs text-[var(--admin-muted)] truncate max-w-[150px]">
+                                                                            {evaluation.mission.description}
+                                                                        </span>
+                                                                    )}
+                                                                </td>
+                                                                <td>
+                                                                    <div className="font-semibold text-[var(--admin-text)]">
+                                                                        {evaluation.evaluateur?.name ?? 'Client inconnu'}
+                                                                    </div>
+                                                                    <div className="text-xs text-[var(--admin-muted)]">
+                                                                        {evaluation.evaluateur?.phone}
+                                                                    </div>
+                                                                </td>
+                                                                <td>
+                                                                    <div className="font-semibold text-[var(--admin-text)]">
+                                                                        {evaluation.evalue?.name ?? 'Artisan inconnu'}
+                                                                    </div>
+                                                                    <div className="text-xs text-[var(--admin-muted)]">
+                                                                        {evaluation.evalue?.phone}
+                                                                    </div>
+                                                                </td>
+                                                                <td>
+                                                                    <div className="flex items-center gap-1">
+                                                                        <span className="font-bold text-[#b77918]">{evaluation.note}</span>
+                                                                        <span className="text-xs text-[var(--admin-muted)]">/ 5</span>
+                                                                        <div className="flex text-amber-500">
+                                                                            {Array.from({ length: 5 }).map((_, idx) => (
+                                                                                <svg
+                                                                                    key={idx}
+                                                                                    className={cn("h-3.5 w-3.5", idx < evaluation.note ? "fill-current" : "stroke-current fill-none")}
+                                                                                    viewBox="0 0 24 24"
+                                                                                >
+                                                                                    <path d="m12 2 2.68 5.44L21 8.6l-4.5 4.38 1.06 6.18L12 16.26l-5.56 2.9 1.06-6.18L3 8.6l6.32-.92L12 2Z" />
+                                                                                </svg>
+                                                                            ))}
+                                                                        </div>
+                                                                    </div>
+                                                                </td>
+                                                                <td>
+                                                                    <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-[var(--admin-text-soft)]">
+                                                                        <span>Fiabilité (40%) : <strong className="text-[var(--admin-text)]">{evaluation.fiabilite}/5</strong></span>
+                                                                        <span>Intégrité (30%) : <strong className="text-[var(--admin-text)]">{evaluation.integrite}/5</strong></span>
+                                                                        <span>Qualité (20%) : <strong className="text-[var(--admin-text)]">{evaluation.qualite}/5</strong></span>
+                                                                        <span>Réactivité (10%) : <strong className="text-[var(--admin-text)]">{evaluation.reactivite}/5</strong></span>
+                                                                    </div>
+                                                                </td>
+                                                                <td className="max-w-[200px] truncate text-sm italic text-[var(--admin-text-soft)]" title={evaluation.commentaire ?? ''}>
+                                                                    {evaluation.commentaire ?? 'Aucun commentaire'}
+                                                                </td>
+                                                                <td className="text-xs text-[var(--admin-muted)]">
+                                                                    {shortDate(evaluation.created_at)}
+                                                                </td>
+                                                            </tr>
+                                                        ))
+                                                    )}
+                                                </tbody>
+                                            </DataTable>
+                                        </Surface>
+                                    ) : (
+                                        <Surface className="rounded-[32px] p-5 lg:p-6">
+                                            <SectionTitle
+                                                description="Administration des réputations d'artisans. Gelez les scores pour geler les droits au micro-crédit en cas de litige."
+                                                title="Scores N'Zassa des Artisans"
+                                            />
+                                            <DataTable className="mt-5">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Artisan</th>
+                                                        <th>Score N'Zassa</th>
+                                                        <th>Évaluations reçues</th>
+                                                        <th>Moyennes critères (F / I / Q / R)</th>
+                                                        <th>Statut du Score</th>
+                                                        <th className="text-right">Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {analytics.filteredArtisansScores.length === 0 ? (
+                                                        <tr>
+                                                            <td colSpan={6}>
+                                                                <EmptyState description="Aucun artisan ne correspond à votre recherche." title="Aucun résultat" />
+                                                            </td>
+                                                        </tr>
+                                                    ) : (
+                                                        analytics.filteredArtisansScores.map((artisan) => (
+                                                            <tr key={artisan.id}>
+                                                                <td>
+                                                                    <div className="font-semibold text-[var(--admin-text)]">{artisan.name}</div>
+                                                                    <div className="text-xs text-[var(--admin-muted)]">{artisan.phone}</div>
+                                                                </td>
+                                                                <td>
+                                                                    <span className={cn(
+                                                                        'rounded-full border px-3 py-1 text-xs font-bold',
+                                                                        artisan.score_nzassa >= 70
+                                                                            ? 'border-green-300 bg-green-50 text-green-700'
+                                                                            : artisan.score_nzassa >= 40
+                                                                                ? 'border-amber-300 bg-amber-50 text-amber-700'
+                                                                                : 'border-rose-300 bg-rose-50 text-rose-700'
+                                                                    )}>
+                                                                        {artisan.score_nzassa} / 100
+                                                                    </span>
+                                                                    {artisan.score_nzassa >= 70 && (
+                                                                        <span className="ml-2 inline-flex items-center rounded bg-yellow-100 px-2 py-0.5 text-[10px] font-semibold text-yellow-800">
+                                                                            Micro-crédit éligible
+                                                                        </span>
+                                                                    )}
+                                                                </td>
+                                                                <td>
+                                                                    <span className="text-sm font-semibold">{artisan.evaluations_recues_count}</span>
+                                                                </td>
+                                                                <td>
+                                                                    <div className="grid grid-cols-2 gap-x-2 text-xs text-[var(--admin-text-soft)]">
+                                                                        <span>F: <strong>{Number(artisan.evaluations_recues_avg_fiabilite ?? 0).toFixed(1)}/5</strong></span>
+                                                                        <span>I: <strong>{Number(artisan.evaluations_recues_avg_integrite ?? 0).toFixed(1)}/5</strong></span>
+                                                                        <span>Q: <strong>{Number(artisan.evaluations_recues_avg_qualite ?? 0).toFixed(1)}/5</strong></span>
+                                                                        <span>R: <strong>{Number(artisan.evaluations_recues_avg_reactivite ?? 0).toFixed(1)}/5</strong></span>
+                                                                    </div>
+                                                                </td>
+                                                                <td>
+                                                                    {artisan.score_frozen ? (
+                                                                        <span className="rounded-full border border-rose-300 bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-600">
+                                                                            Gelé (Bloqué)
+                                                                        </span>
+                                                                    ) : (
+                                                                        <span className="rounded-full border border-green-300 bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-600">
+                                                                            Actif (Calculé)
+                                                                        </span>
+                                                                    )}
+                                                                </td>
+                                                                <td className="text-right">
+                                                                    <div className="flex justify-end gap-2">
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => setSelectedArtisanForLedger(artisan)}
+                                                                            className="rounded-full border border-[var(--admin-border)] hover:bg-[#f7efe2] text-[#8a6b3d] px-3.5 py-1.5 text-xs font-semibold transition"
+                                                                        >
+                                                                            Historique
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleToggleScoreFreeze(artisan)}
+                                                                            className={actionButtonClass(artisan.score_frozen ? 'success' : 'danger')}
+                                                                        >
+                                                                            {artisan.score_frozen ? 'Dégeler' : 'Geler'}
+                                                                        </button>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        ))
+                                                    )}
+                                                </tbody>
+                                            </DataTable>
+                                        </Surface>
+                                    )}
+                                </section>
+                            ) : null}
                         </main>
 
                         <footer className="px-4 pb-6 lg:px-7">
@@ -2507,6 +2853,77 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                     </button>
                                 </div>
                             </form>
+                        </div>
+                    </div>
+                )}
+
+                {selectedArtisanForLedger && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                        <div className="admin-panel admin-surface w-full max-w-[700px] rounded-[32px] border p-6 lg:p-8 shadow-2xl relative">
+                            <div className="flex items-center justify-between border-b border-[var(--admin-border)] pb-4">
+                                <div>
+                                    <h2 className="text-xl font-bold text-[var(--admin-text)]">
+                                        Historique N'Zassa : {selectedArtisanForLedger.name}
+                                    </h2>
+                                    <p className="text-xs text-[var(--admin-muted)] mt-1">
+                                        Score actuel : {selectedArtisanForLedger.score_nzassa}/100 • {selectedArtisanForLedger.score_frozen ? 'Score Gelé' : 'Score Dynamique'}
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setSelectedArtisanForLedger(null)}
+                                    className="rounded-full p-2 text-[var(--admin-muted)] hover:bg-white/10 hover:text-[var(--admin-text)] transition"
+                                    title="Fermer"
+                                    aria-label="Fermer"
+                                >
+                                    <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                        <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <div className="mt-6 max-h-[400px] overflow-y-auto space-y-3 pr-1">
+                                {scoreLedger.filter(entry => entry.user_id === selectedArtisanForLedger.id).length === 0 ? (
+                                    <EmptyState description="Aucun événement enregistré dans le Ledger pour cet artisan." title="Historique vide" />
+                                ) : (
+                                    scoreLedger
+                                        .filter(entry => entry.user_id === selectedArtisanForLedger.id)
+                                        .map((entry) => (
+                                            <div key={entry.id} className="rounded-2xl border border-[var(--admin-border)] bg-white/60 p-4 flex items-start justify-between gap-4">
+                                                <div className="min-w-0">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={cn(
+                                                            'rounded-md px-2 py-0.5 text-[10px] font-bold uppercase',
+                                                            entry.points > 0
+                                                                ? 'bg-green-100 text-green-800'
+                                                                : 'bg-rose-100 text-rose-800'
+                                                        )}>
+                                                            {entry.points > 0 ? `+${entry.points}` : entry.points} points
+                                                        </span>
+                                                        <span className="text-xs text-[var(--admin-muted)]">
+                                                            Poids de crédibilité: {entry.credibility_factor}
+                                                        </span>
+                                                    </div>
+                                                    <p className="mt-2 text-sm font-semibold text-[var(--admin-text)]">{entry.description}</p>
+                                                    <span className="mt-1 block text-xs text-[var(--admin-muted)]">Type: {entry.event_type}</span>
+                                                </div>
+                                                <span className="text-xs text-[var(--admin-muted)] shrink-0">
+                                                    {shortDate(entry.created_at)}
+                                                </span>
+                                            </div>
+                                        ))
+                                )}
+                            </div>
+
+                            <div className="mt-6 flex justify-end">
+                                <button
+                                    type="button"
+                                    onClick={() => setSelectedArtisanForLedger(null)}
+                                    className="admin-button admin-button--ghost"
+                                >
+                                    Fermer
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -2888,6 +3305,8 @@ function TabIcon({ className = 'h-5 w-5', tab }: { className?: string; tab: Admi
             return <WalletIcon className={className} />;
         case 'settings':
             return <SettingsIcon className={className} />;
+        case 'evaluations':
+            return <StarIcon className={className} />;
         default:
             return <DashboardIcon className={className} />;
     }
