@@ -77,10 +77,18 @@ interface AdminMission {
     gemini_estimation_min?: number | null;
     gemini_estimation_max?: number | null;
     montant_total?: number | null;
+    montant_materiaux?: number | null;
+    montant_mo?: number | null;
+    ratio_materiaux?: string | number | null;
     client_address?: string | null;
     created_at: string;
     client?: AdminMissionParty | null;
     artisan?: AdminMissionParty | null;
+    jalons?: any[];
+    jcodes?: any[];
+    transactions?: any[];
+    litiges?: any[];
+    evaluations?: any[];
 }
 
 interface FournisseurUser {
@@ -121,8 +129,14 @@ interface AdminTransaction {
     wallet_source: string;
     wallet_dest: string;
     created_at: string;
+    reference_externe?: string | null;
     user?: {
         name: string;
+        phone?: string;
+    };
+    mission?: {
+        id: number;
+        description: string;
     };
 }
 
@@ -543,6 +557,8 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
     const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
     const [statusModalOpen, setStatusModalOpen] = useState<boolean>(false);
     const [statusTargetUser, setStatusTargetUser] = useState<AdminUser | null>(null);
+    const [selectedMissionForDetails, setSelectedMissionForDetails] = useState<AdminMission | null>(null);
+    const [selectedTransactionForDetails, setSelectedTransactionForDetails] = useState<AdminTransaction | null>(null);
 
     const userForm = useForm({
         name: '',
@@ -1805,7 +1821,11 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                                     </tr>
                                                 ) : (
                                                     analytics.filteredMissions.map((mission) => (
-                                                        <tr key={mission.id}>
+                                                        <tr 
+                                                            key={mission.id}
+                                                            onClick={() => setSelectedMissionForDetails(mission)}
+                                                            className="cursor-pointer hover:bg-black/[0.02] transition"
+                                                        >
                                                             <td>
                                                                 <div className="space-y-2">
                                                                     <div className="flex items-center gap-2">
@@ -2201,7 +2221,11 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                                     </tr>
                                                 ) : (
                                                     analytics.filteredTransactions.map((transaction) => (
-                                                        <tr key={transaction.id}>
+                                                        <tr 
+                                                            key={transaction.id}
+                                                            onClick={() => setSelectedTransactionForDetails(transaction)}
+                                                            className="cursor-pointer hover:bg-black/[0.02] transition"
+                                                        >
                                                             <td className="font-semibold text-[var(--admin-text)]">#{transaction.id}</td>
                                                             <td className="text-sm text-[var(--admin-text-soft)]">{transactionTypeLabels[transaction.type] ?? transaction.type}</td>
                                                             <td className="text-sm font-semibold text-[var(--admin-text)]">{money(transaction.montant)}</td>
@@ -3010,6 +3034,257 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                 >
                                     Fermer
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {selectedMissionForDetails && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                        <div className="admin-panel admin-surface w-full max-w-[850px] rounded-[32px] border p-6 lg:p-8 shadow-2xl relative max-h-[85vh] overflow-y-auto">
+                            <div className="flex items-center justify-between border-b border-[var(--admin-border)] pb-4">
+                                <div className="space-y-1">
+                                    <h2 className="text-xl font-bold text-[var(--admin-text)] flex items-center gap-3">
+                                        <span>Détails de la mission #{selectedMissionForDetails.id}</span>
+                                        <MissionStatusBadge status={selectedMissionForDetails.status} />
+                                    </h2>
+                                    <p className="text-xs text-[var(--admin-muted)]">Créée le {shortDate(selectedMissionForDetails.created_at)}</p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setSelectedMissionForDetails(null)}
+                                    className="rounded-full p-2 text-[var(--admin-muted)] hover:bg-white/10 hover:text-[var(--admin-text)] transition"
+                                    title="Fermer"
+                                >
+                                    <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                        <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <div className="mt-6 space-y-6">
+                                {/* Informations Générales */}
+                                <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+                                    <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-white/40">
+                                        <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Description</p>
+                                        <p className="mt-1 text-sm text-[var(--admin-text)] font-medium">{selectedMissionForDetails.description}</p>
+                                    </div>
+                                    <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-white/40">
+                                        <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Client</p>
+                                        <p className="mt-1 text-sm text-[var(--admin-text)] font-bold">{selectedMissionForDetails.client?.name ?? 'Non renseigné'}</p>
+                                        <p className="text-xs text-[var(--admin-muted)]">{selectedMissionForDetails.client?.phone}</p>
+                                    </div>
+                                    <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-white/40">
+                                        <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Artisan</p>
+                                        <p className="mt-1 text-sm text-[var(--admin-text)] font-bold">{selectedMissionForDetails.artisan?.name ?? 'Non affecté'}</p>
+                                        <p className="text-xs text-[var(--admin-muted)]">{selectedMissionForDetails.artisan?.phone}</p>
+                                    </div>
+                                </div>
+
+                                {/* Analyse IA & Finance */}
+                                <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+                                    <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-white/40">
+                                        <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Analyse Gemini IA</p>
+                                        <p className="mt-1 text-sm text-[var(--admin-text)] font-semibold">{selectedMissionForDetails.gemini_category ?? 'Non classée'}</p>
+                                        <p className="text-xs text-[var(--admin-text-soft)]">Urgence : {selectedMissionForDetails.gemini_urgency ?? 'N/A'}</p>
+                                    </div>
+                                    <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-white/40">
+                                        <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Financement total</p>
+                                        <p className="mt-1 text-base font-bold text-[#8a6b3d]">{selectedMissionForDetails.montant_total ? money(selectedMissionForDetails.montant_total) : 'Non défini'}</p>
+                                        {selectedMissionForDetails.montant_materiaux && (
+                                            <p className="text-xs text-[var(--admin-text-soft)]">Matériaux : {money(selectedMissionForDetails.montant_materiaux)}</p>
+                                        )}
+                                    </div>
+                                    <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-white/40">
+                                        <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Main d'œuvre & Ratio</p>
+                                        <p className="mt-1 text-sm font-semibold text-[var(--admin-text)]">
+                                            {selectedMissionForDetails.montant_mo ? money(selectedMissionForDetails.montant_mo) : 'Non défini'}
+                                        </p>
+                                        {selectedMissionForDetails.ratio_materiaux && (
+                                            <p className="text-xs text-[var(--admin-text-soft)]">Ratio Mat : {Number(selectedMissionForDetails.ratio_materiaux * 100).toFixed(0)}%</p>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Historique des Jalons (Milestones) */}
+                                <div className="space-y-2.5">
+                                    <h3 className="text-sm font-bold text-[var(--admin-text)] uppercase tracking-wider">Historique des Jalons</h3>
+                                    {selectedMissionForDetails.jalons && selectedMissionForDetails.jalons.length > 0 ? (
+                                        <div className="overflow-x-auto rounded-2xl border border-[var(--admin-border)] bg-white/30">
+                                            <table className="min-w-full divide-y divide-[var(--admin-border)] text-xs text-left">
+                                                <thead className="bg-[#fcf8f2] text-[var(--admin-muted)] font-semibold uppercase">
+                                                    <tr>
+                                                        <th className="px-4 py-2">Ordre</th>
+                                                        <th className="px-4 py-2">Description</th>
+                                                        <th className="px-4 py-2">Montant</th>
+                                                        <th className="px-4 py-2">Statut</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-[var(--admin-border)]">
+                                                    {selectedMissionForDetails.jalons.map((jalon: any) => (
+                                                        <tr key={jalon.id}>
+                                                            <td className="px-4 py-2 font-bold">#{jalon.ordre}</td>
+                                                            <td className="px-4 py-2">{jalon.description}</td>
+                                                            <td className="px-4 py-2 font-medium">{money(jalon.montant)}</td>
+                                                            <td className="px-4 py-2">
+                                                                <span className={cn('px-2 py-0.5 rounded-full border text-[10px] font-bold', 
+                                                                    jalon.statut === 'paye' || jalon.statut === 'valide' ? 'border-green-300 bg-green-50 text-green-700' : 'border-amber-300 bg-amber-50 text-amber-700'
+                                                                )}>
+                                                                    {jalon.statut}
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    ) : (
+                                        <p className="text-xs text-[var(--admin-muted)] italic">Aucun jalon défini.</p>
+                                    )}
+                                </div>
+
+                                {/* Historique des J-Codes */}
+                                <div className="space-y-2.5">
+                                    <h3 className="text-sm font-bold text-[var(--admin-text)] uppercase tracking-wider">Historique des J-Codes (Matériaux)</h3>
+                                    {selectedMissionForDetails.jcodes && selectedMissionForDetails.jcodes.length > 0 ? (
+                                        <div className="overflow-x-auto rounded-2xl border border-[var(--admin-border)] bg-white/30">
+                                            <table className="min-w-full divide-y divide-[var(--admin-border)] text-xs text-left">
+                                                <thead className="bg-[#fcf8f2] text-[var(--admin-muted)] font-semibold uppercase">
+                                                    <tr>
+                                                        <th className="px-4 py-2">Code</th>
+                                                        <th className="px-4 py-2">Montant</th>
+                                                        <th className="px-4 py-2">Statut</th>
+                                                        <th className="px-4 py-2">Fournisseur</th>
+                                                        <th className="px-4 py-2">Date d'utilisation</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-[var(--admin-border)]">
+                                                    {selectedMissionForDetails.jcodes.map((jcode: any) => (
+                                                        <tr key={jcode.id}>
+                                                            <td className="px-4 py-2 font-mono font-bold text-[#8a6b3d]">{jcode.code}</td>
+                                                            <td className="px-4 py-2 font-medium">{money(jcode.montant)}</td>
+                                                            <td className="px-4 py-2">
+                                                                <span className={cn('px-2 py-0.5 rounded-full border text-[10px] font-bold', 
+                                                                    jcode.statut === 'utilise' ? 'border-green-300 bg-green-50 text-green-700' : 'border-amber-300 bg-amber-50 text-amber-700'
+                                                                )}>
+                                                                    {jcode.statut}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-4 py-2">{jcode.fournisseur?.nom_boutique ?? jcode.fournisseur?.name ?? 'Non scanné'}</td>
+                                                            <td className="px-4 py-2">{jcode.scanned_at ? shortDate(jcode.scanned_at) : 'En attente'}</td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    ) : (
+                                        <p className="text-xs text-[var(--admin-muted)] italic">Aucun J-Code généré.</p>
+                                    )}
+                                </div>
+
+                                {/* Historique des Transactions Financières */}
+                                <div className="space-y-2.5">
+                                    <h3 className="text-sm font-bold text-[var(--admin-text)] uppercase tracking-wider">Transactions liées</h3>
+                                    {selectedMissionForDetails.transactions && selectedMissionForDetails.transactions.length > 0 ? (
+                                        <div className="overflow-x-auto rounded-2xl border border-[var(--admin-border)] bg-white/30">
+                                            <table className="min-w-full divide-y divide-[var(--admin-border)] text-xs text-left">
+                                                <thead className="bg-[#fcf8f2] text-[var(--admin-muted)] font-semibold uppercase">
+                                                    <tr>
+                                                        <th className="px-4 py-2">Type</th>
+                                                        <th className="px-4 py-2">Montant</th>
+                                                        <th className="px-4 py-2">Moyen</th>
+                                                        <th className="px-4 py-2">Statut</th>
+                                                        <th className="px-4 py-2">Date</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-[var(--admin-border)]">
+                                                    {selectedMissionForDetails.transactions.map((tx: any) => (
+                                                        <tr key={tx.id}>
+                                                            <td className="px-4 py-2 font-semibold">{transactionTypeLabels[tx.type] ?? tx.type}</td>
+                                                            <td className="px-4 py-2 font-bold">{money(tx.montant)}</td>
+                                                            <td className="px-4 py-2">
+                                                                <ProviderBadge provider={tx.provider} />
+                                                            </td>
+                                                            <td className="px-4 py-2">
+                                                                <TransactionStatusBadge status={tx.statut} />
+                                                            </td>
+                                                            <td className="px-4 py-2 text-[var(--admin-muted)]">{shortDate(tx.created_at)}</td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    ) : (
+                                        <p className="text-xs text-[var(--admin-muted)] italic">Aucune transaction enregistrée.</p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {selectedTransactionForDetails && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                        <div className="admin-panel admin-surface w-full max-w-[550px] rounded-[32px] border p-6 lg:p-8 shadow-2xl relative animate-in fade-in zoom-in duration-200">
+                            <div className="flex items-center justify-between border-b border-[var(--admin-border)] pb-4">
+                                <div className="space-y-1">
+                                    <h2 className="text-xl font-bold text-[var(--admin-text)] flex items-center gap-3">
+                                        <span>Transaction #{selectedTransactionForDetails.id}</span>
+                                        <TransactionStatusBadge status={selectedTransactionForDetails.statut} />
+                                    </h2>
+                                    <p className="text-xs text-[var(--admin-muted)]">Enregistrée le {shortDate(selectedTransactionForDetails.created_at)}</p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setSelectedTransactionForDetails(null)}
+                                    className="rounded-full p-2 text-[var(--admin-muted)] hover:bg-white/10 hover:text-[var(--admin-text)] transition"
+                                    title="Fermer"
+                                >
+                                    <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                        <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <div className="mt-6 space-y-4 text-sm">
+                                <div className="flex justify-between py-2.5 border-b border-[var(--admin-border)]">
+                                    <span className="text-[var(--admin-muted)]">Type de transaction</span>
+                                    <span className="font-semibold text-[var(--admin-text)]">{transactionTypeLabels[selectedTransactionForDetails.type] ?? selectedTransactionForDetails.type}</span>
+                                </div>
+                                <div className="flex justify-between py-2.5 border-b border-[var(--admin-border)]">
+                                    <span className="text-[var(--admin-muted)]">Montant</span>
+                                    <span className="font-bold text-[#8a6b3d] text-base">{money(selectedTransactionForDetails.montant)}</span>
+                                </div>
+                                <div className="flex justify-between py-2.5 border-b border-[var(--admin-border)]">
+                                    <span className="text-[var(--admin-muted)]">Moyen de paiement</span>
+                                    <span className="font-semibold text-[var(--admin-text)]">
+                                        <ProviderBadge provider={selectedTransactionForDetails.provider} />
+                                    </span>
+                                </div>
+                                <div className="flex justify-between py-2.5 border-b border-[var(--admin-border)]">
+                                    <span className="text-[var(--admin-muted)]">Référence externe</span>
+                                    <span className="font-mono text-xs bg-slate-100/80 border border-slate-200 rounded px-1.5 py-0.5 text-[var(--admin-text)]">
+                                        {selectedTransactionForDetails.reference_externe ?? 'N/A'}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between py-2.5 border-b border-[var(--admin-border)]">
+                                    <span className="text-[var(--admin-muted)]">Provenance (Source)</span>
+                                    <span className="font-medium text-[var(--admin-text)]">{selectedTransactionForDetails.wallet_source}</span>
+                                </div>
+                                <div className="flex justify-between py-2.5 border-b border-[var(--admin-border)]">
+                                    <span className="text-[var(--admin-muted)]">Destination</span>
+                                    <span className="font-medium text-[var(--admin-text)]">{selectedTransactionForDetails.wallet_dest}</span>
+                                </div>
+                                <div className="flex justify-between py-2.5 border-b border-[var(--admin-border)]">
+                                    <span className="text-[var(--admin-muted)]">Bénéficiaire</span>
+                                    <span className="font-semibold text-[var(--admin-text)]">{selectedTransactionForDetails.user?.name ?? 'Non renseigné'}</span>
+                                </div>
+                                {selectedTransactionForDetails.mission && (
+                                    <div className="flex justify-between py-2.5 border-b border-[var(--admin-border)]">
+                                        <span className="text-[var(--admin-muted)]">Mission associée</span>
+                                        <span className="font-semibold text-blue-700">#{selectedTransactionForDetails.mission.id} - {selectedTransactionForDetails.mission.description}</span>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
