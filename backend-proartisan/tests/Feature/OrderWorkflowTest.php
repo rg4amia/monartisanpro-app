@@ -175,7 +175,7 @@ test('full delivery order validation workflow', function () {
     $agree = FournisseurAgree::create(['user_id' => $supplier->id, 'nom_boutique' => 'Boutique Test', 'statut' => 'agree']);
     $agree->setPosition(5.36, -4.01);
 
-    $driver = User::factory()->create(['role' => 'driver']);
+    $driver = User::factory()->create(['role' => 'driver', 'kyc_status' => 'actif']);
 
     $product = SupplierProduct::create(['supplier_id' => $supplier->id, 'sku' => 'P1', 'name' => 'P', 'unit_price' => 1000, 'stock_quantity' => 5]);
 

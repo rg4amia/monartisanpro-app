@@ -28,12 +28,29 @@ class KycService
         $path    = $file->store("fileshare/kyc", 'public');
         $fileUrl = Storage::disk('public')->url($path);
 
-        return KycDocument::create([
+        $doc = KycDocument::create([
             'user_id'  => $user->id,
             'type'     => $type,
             'file_url' => $fileUrl,
             'statut'   => 'en_attente',
         ]);
+
+        // Send a pending validation notification if it hasn't been sent yet
+        $hasPendingNotif = \App\Models\Notification::where('user_id', $user->id)
+            ->where('type', 'kyc')
+            ->where('title', 'Compte en attente de validation')
+            ->exists();
+
+        if (!$hasPendingNotif) {
+            app(\App\Services\NotificationService::class)->send(
+                $user,
+                'kyc',
+                'Compte en attente de validation',
+                'Votre compte est en attente de validation KYC. Nos équipes étudient actuellement vos pièces justificatives.'
+            );
+        }
+
+        return $doc;
     }
 
     /**
