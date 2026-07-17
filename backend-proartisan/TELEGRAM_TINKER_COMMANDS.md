@@ -124,18 +124,22 @@ tail -f storage/logs/laravel.log
 ## Erreurs courantes
 
 ### Erreur 400 : Bad Request
+
 - Vérifier que le `TELEGRAM_CHAT_ID` est correct
 - Vérifier que le bot a bien été ajouté au chat/groupe
 
 ### Erreur 401 : Unauthorized
+
 - Vérifier que le `TELEGRAM_BOT_TOKEN` est correct
 - Vérifier qu'il n'y a pas d'espaces ou de guillemets en trop
 
 ### Timeout
+
 - Vérifier la connexion internet
 - Augmenter le timeout : `->timeout(10)`
 
 ### Message non reçu
+
 - Vérifier que vous avez démarré une conversation avec le bot
 - Pour un groupe : vérifier que le bot est membre du groupe
 - Utiliser `/start` dans le chat avec le bot

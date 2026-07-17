@@ -3,7 +3,7 @@
 ## ✅ Statut: TOUS LES TESTS PASSENT
 
 **Date:** 27 février 2026  
-**Backend:** http://backend-proartisan.test/api/v1  
+**Backend:** <http://backend-proartisan.test/api/v1>  
 **Tests exécutés:** 21/21 ✅
 
 ---
@@ -11,12 +11,14 @@
 ## 🎯 Tests Implémentés
 
 ### 1. Configuration API (4 tests) ✅
+
 - ✅ URL backend Herd correcte
 - ✅ Endpoints d'authentification
 - ✅ Endpoints des missions
 - ✅ Endpoints des J-Codes
 
 ### 2. UserModel (5 tests) ✅
+
 - ✅ Création depuis JSON
 - ✅ Gestion des champs optionnels
 - ✅ Validation KYC (isKycActif)
@@ -24,6 +26,7 @@
 - ✅ Conversion vers JSON
 
 ### 3. JcodeModel (5 tests) ✅
+
 - ✅ Création depuis JSON
 - ✅ Statut actif (isActive)
 - ✅ Statut utilisé (isUsed)
@@ -31,11 +34,13 @@
 - ✅ Conversion vers JSON
 
 ### 4. MissionModel (3 tests) ✅
+
 - ✅ Création depuis JSON
 - ✅ Conversion vers JSON
 - ✅ Règle référent (montant > 2M FCFA)
 
 ### 5. Logique Métier (4 tests) ✅
+
 - ✅ Calcul Score Nzassa
 - ✅ Validation statuts KYC
 - ✅ Format J-Code (PA-XXXX)
@@ -51,6 +56,7 @@ cd frontend_flutter
 ```
 
 Ou directement:
+
 ```bash
 flutter test test/unit_tests_simple.dart
 ```
@@ -86,11 +92,13 @@ frontend_flutter/test/
 ## 🔧 Configuration Backend
 
 ### URL Configurée
+
 ```dart
 ApiEndpoints.baseUrl = 'http://backend-proartisan.test/api/v1'
 ```
 
 ### Endpoints Testés
+
 - `/auth/send-otp`
 - `/auth/verify-otp`
 - `/auth/register`
@@ -106,17 +114,20 @@ ApiEndpoints.baseUrl = 'http://backend-proartisan.test/api/v1'
 ## 📈 Couverture des Tests
 
 ### Modèles de Données
+
 - ✅ UserModel: 100%
 - ✅ JcodeModel: 100%
 - ✅ MissionModel: 100%
 
 ### Logique Métier
+
 - ✅ Score Nzassa (Golden Marker)
 - ✅ Statuts KYC
 - ✅ Validation J-Codes
 - ✅ Règles missions (référent)
 
 ### Configuration
+
 - ✅ Endpoints API
 - ✅ URL backend Herd
 
@@ -125,27 +136,32 @@ ApiEndpoints.baseUrl = 'http://backend-proartisan.test/api/v1'
 ## 🎨 Règles Métier Validées
 
 ### Score Nzassa
+
 ```dart
 scoreNzassa > 65 → Golden Marker ✅
 ```
 
 ### Statuts KYC
+
 ```dart
 'en_attente' | 'en_cours' | 'actif' | 'refuse' ✅
 ```
 
 ### Format J-Code
+
 ```dart
 Pattern: 'PA-XXXX' ✅
 Statuts: 'actif' | 'utilise' | 'expire' ✅
 ```
 
 ### Missions
+
 ```dart
 montantTotal > 2_000_000 → Nécessite référent ✅
 ```
 
 ### Wallets
+
 ```dart
 walletMateriaux >= 0 ✅
 walletMo >= 0 ✅
@@ -156,6 +172,7 @@ walletMo >= 0 ✅
 ## 🔄 Tests d'Intégration
 
 Les tests d'intégration avec le backend réel sont disponibles mais nécessitent:
+
 - Backend Laravel Herd démarré
 - Base de données migrée et seedée
 - Plugins natifs configurés (FlutterSecureStorage)
@@ -174,6 +191,7 @@ flutter test test/integration/
 ## 📝 Scripts Disponibles
 
 ### run_tests.sh
+
 Script principal pour exécuter les tests avec vérifications.
 
 ```bash
@@ -181,6 +199,7 @@ Script principal pour exécuter les tests avec vérifications.
 ```
 
 ### test_runner.sh
+
 Script complet avec couverture de code.
 
 ```bash
@@ -192,6 +211,7 @@ Script complet avec couverture de code.
 ## 🐛 Dépannage
 
 ### Backend non accessible
+
 ```bash
 # Vérifier Herd
 herd status
@@ -201,6 +221,7 @@ curl http://backend-proartisan.test
 ```
 
 ### Tests échouent
+
 ```bash
 # Nettoyer et réinstaller
 flutter clean
@@ -236,6 +257,7 @@ flutter test test/unit_tests_simple.dart
 L'application Flutter est correctement configurée pour communiquer avec votre backend Laravel Herd. Les modèles de données, la logique métier et la configuration API sont validés.
 
 Pour exécuter les tests:
+
 ```bash
 cd frontend_flutter
 ./run_tests.sh

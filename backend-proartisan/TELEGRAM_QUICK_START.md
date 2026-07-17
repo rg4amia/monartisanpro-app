@@ -8,7 +8,7 @@
 
 ## Étape 1 : Ouvrez Telegram
 
-Cliquez sur ce lien : **https://t.me/ProsArtisanBot**
+Cliquez sur ce lien : **<https://t.me/ProsArtisanBot>**
 
 Ou recherchez `@ProsArtisanBot` dans Telegram.
 
@@ -91,7 +91,7 @@ Le script vous guidera automatiquement.
 
 ---
 
-## ✅ C'est tout !
+## ✅ C'est tout
 
 Une fois configuré, vous recevrez automatiquement des alertes Telegram pour :
 

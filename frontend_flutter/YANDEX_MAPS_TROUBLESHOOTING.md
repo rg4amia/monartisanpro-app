@@ -5,6 +5,7 @@
 ### 1. Carte blanche ou ne se charge pas
 
 **Causes possibles :**
+
 - Clé API invalide ou manquante
 - Permissions de localisation non accordées
 - Problème de connexion internet
@@ -13,23 +14,27 @@
 **Solutions :**
 
 #### Vérifier la clé API
+
 La clé API doit être configurée dans 3 endroits :
 
 1. **AndroidManifest.xml** (`android/app/src/main/AndroidManifest.xml`) :
+
 ```xml
 <meta-data 
     android:name="com.yandex.maps.api_key" 
     android:value="VOTRE_CLE_API"/>
 ```
 
-2. **main.dart** :
+1. **main.dart** :
+
 ```dart
 await mapkit_init.initMapkit(
   apiKey: 'VOTRE_CLE_API',
 );
 ```
 
-3. **Info.plist** (iOS) :
+1. **Info.plist** (iOS) :
+
 ```xml
 <key>YMKMapKitApiKey</key>
 <string>VOTRE_CLE_API</string>
@@ -38,6 +43,7 @@ await mapkit_init.initMapkit(
 #### Vérifier les permissions
 
 **Android** (`AndroidManifest.xml`) :
+
 ```xml
 <uses-permission android:name="android.permission.INTERNET"/>
 <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
@@ -45,6 +51,7 @@ await mapkit_init.initMapkit(
 ```
 
 **iOS** (`Info.plist`) :
+
 ```xml
 <key>NSLocationWhenInUseUsageDescription</key>
 <string>Nous avons besoin de votre position pour trouver des artisans près de vous</string>
@@ -55,12 +62,14 @@ await mapkit_init.initMapkit(
 ### 2. Marqueurs ne s'affichent pas
 
 **Causes :**
+
 - Collections non initialisées
 - Coordonnées GPS invalides
 - Problème de rendu des icônes
 
 **Solution :**
 Vérifier que les collections sont créées après `onMapCreated` :
+
 ```dart
 void _onMapCreated(mk.MapWindow mapWindow) {
   _mapWindow = mapWindow;
@@ -78,6 +87,7 @@ void _onMapCreated(mk.MapWindow mapWindow) {
 
 **Solution :**
 S'assurer que `initMapkit()` est appelé dans `main()` avant `runApp()` :
+
 ```dart
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -95,6 +105,7 @@ Future<void> main() async {
 **Cause :** Position invalide ou MapWindow non initialisé
 
 **Solution :**
+
 ```dart
 void _moveCamera(double lat, double lng, double zoom) {
   final mw = _mapWindow;
@@ -117,6 +128,7 @@ void _moveCamera(double lat, double lng, double zoom) {
 
 **Solution :**
 Conserver les listeners dans une liste de classe :
+
 ```dart
 class _MyMapState extends State<MyMap> {
   final List<_TapListener> _tapListeners = [];
@@ -135,6 +147,7 @@ class _MyMapState extends State<MyMap> {
 ## Commandes de débogage
 
 ### Vérifier les logs Android
+
 ```bash
 flutter run --verbose
 # ou
@@ -142,6 +155,7 @@ adb logcat | grep -i yandex
 ```
 
 ### Nettoyer et rebuilder
+
 ```bash
 flutter clean
 flutter pub get
@@ -149,6 +163,7 @@ flutter run
 ```
 
 ### Vérifier la version du package
+
 ```yaml
 # pubspec.yaml
 dependencies:

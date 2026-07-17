@@ -46,9 +46,10 @@ import 'package:frontend_flutter/core/utils/app_logger.dart';
 await AppLogger.info('Test de notification Telegram');
 ```
 
-## ✅ C'est tout !
+## ✅ C'est tout
 
 Vous recevrez maintenant automatiquement :
+
 - ❌ Toutes les erreurs de l'app
 - 🌐 Toutes les erreurs HTTP
 - ⚠️ Les warnings importants
@@ -76,6 +77,7 @@ await AppLogger.kyc('submitted', status: 'en_attente');
 ## 🎯 Exemples concrets
 
 ### Mission créée
+
 ```dart
 await AppLogger.mission('created', 
   missionId: mission.id,
@@ -87,6 +89,7 @@ await AppLogger.mission('created',
 ```
 
 ### Paiement effectué
+
 ```dart
 await AppLogger.transaction('acompte',
   montant: 50000,
@@ -98,11 +101,13 @@ await AppLogger.transaction('acompte',
 ```
 
 ### Erreur HTTP
+
 ```dart
 // Automatique ! Rien à faire, l'interceptor s'en charge
 ```
 
 ### Erreur custom
+
 ```dart
 try {
   // code risqué
@@ -127,17 +132,19 @@ try {
 ⚠️ **IMPORTANT** : Ne commitez JAMAIS vos tokens sur Git !
 
 Ajoutez à `.gitignore` :
+
 ```
 lib/core/config/env_config.local.dart
 ```
 
 En production, utilisez des variables d'environnement :
+
 ```bash
 flutter run \
   --dart-define=TELEGRAM_BOT_TOKEN=votre_token \
   --dart-define=TELEGRAM_CHAT_ID=votre_chat_id
 ```
 
-## 🎉 Vous êtes prêt !
+## 🎉 Vous êtes prêt
 
 Votre app envoie maintenant toutes les erreurs et événements importants directement sur Telegram.

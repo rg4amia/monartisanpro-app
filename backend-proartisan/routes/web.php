@@ -7,6 +7,7 @@ use App\Http\Controllers\Supplier\SupplierBackofficeController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
+Route::inertia('/cgu', 'cgu')->name('cgu');
 
 Route::prefix('supplier')->name('supplier.')->group(function () {
     Route::middleware(['auth', 'supplier.only'])->group(function () {

@@ -96,13 +96,13 @@ class MissionCacheService {
   }
 
   /// Récupère les missions du cache
-  List<MissionModel>? getCachedMissions({String? filter}) {
+  List<MissionModel>? getCachedMissions({String? filter, bool ignoreExpiration = false}) {
     if (!isInitialized) return null;
 
     final key = filter ?? 'all';
 
-    // Vérifier l'expiration
-    if (!_isValid('missions_$key')) {
+    // Vérifier l'expiration (sauf si mode hors-ligne)
+    if (!ignoreExpiration && !_isValid('missions_$key')) {
       return null;
     }
 
@@ -128,13 +128,13 @@ class MissionCacheService {
   }
 
   /// Récupère une mission du cache
-  MissionModel? getCachedMission(int id) {
+  MissionModel? getCachedMission(int id, {bool ignoreExpiration = false}) {
     if (!isInitialized) return null;
 
     final key = 'mission_$id';
 
     // Vérifier l'expiration
-    if (!_isValid(key)) {
+    if (!ignoreExpiration && !_isValid(key)) {
       return null;
     }
 
@@ -164,13 +164,13 @@ class MissionCacheService {
   }
 
   /// Récupère les jalons du cache
-  List<JalonModel>? getCachedJalons(int missionId) {
+  List<JalonModel>? getCachedJalons(int missionId, {bool ignoreExpiration = false}) {
     if (!isInitialized) return null;
 
     final key = 'jalons_$missionId';
 
     // Vérifier l'expiration
-    if (!_isValid(key)) {
+    if (!ignoreExpiration && !_isValid(key)) {
       return null;
     }
 

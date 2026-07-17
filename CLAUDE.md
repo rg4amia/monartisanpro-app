@@ -5,6 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Overview
 
 **ProsArtisan** — marketplace artisanal pour la Côte d'Ivoire. Deux sous-projets :
+
 - `backend-proartisan/` — Laravel 12 API (PHP 8.2+, MySQL 5.7.39)
 - `frontend_flutter/` — Flutter 3.x mobile app (Android-first)
 
@@ -42,6 +43,7 @@ php artisan serve --port=8000
 **Service Layer** : toute la logique métier est dans `app/Services/` — jamais dans les controllers. Les controllers font uniquement la validation + dispatch + réponse HTTP.
 
 **Couches** :
+
 ```
 routes/api.php
   → app/Http/Controllers/V1/
@@ -52,6 +54,7 @@ routes/api.php
 ```
 
 **Services clés** :
+
 - `GeoService` — floutage GPS artisan (~50m), `ST_Distance_Sphere`, vérification J-Code
 - `DevisService` — fragmentation séquestre (ratio immuable à l'acceptation)
 - `JalonService` — cycle OTP → libération `wallet_mo`
@@ -84,6 +87,7 @@ $table->dateTime('expires_at');  // ✅ pas timestamp()
 ```
 
 **Jamais** :
+
 - `POINT SRID 4326` dans les migrations (MySQL 8.0+ seulement)
 - `DB::raw("ST_SRID(...)")` (inutile en 5.7)
 - `FLOAT`/`DOUBLE` pour les montants (toujours `BIGINT`)
@@ -108,6 +112,7 @@ flutter build apk        # build Android release
 ### Architecture
 
 Pattern **GetX + Clean Architecture** :
+
 ```
 lib/
   core/          # réseau (Dio), thème, services GPS/notifications, storage

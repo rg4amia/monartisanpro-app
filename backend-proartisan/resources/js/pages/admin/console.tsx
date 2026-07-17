@@ -544,7 +544,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                     });
                 }
             })
-            .catch(err => {
+            .catch(() => {
                 setExchangeRates({
                     usdToXof: 605.5,
                     eurToXof: 655.96,
@@ -1084,6 +1084,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         volume24h,
         evaluationsList,
         artisansScores,
+        props.allPermissions?.length,
     ]);
 
     const summaryCards = [
@@ -3101,7 +3102,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                             {selectedMissionForDetails.montant_mo ? money(selectedMissionForDetails.montant_mo) : 'Non défini'}
                                         </p>
                                         {selectedMissionForDetails.ratio_materiaux && (
-                                            <p className="text-xs text-[var(--admin-text-soft)]">Ratio Mat : {Number(selectedMissionForDetails.ratio_materiaux * 100).toFixed(0)}%</p>
+                                            <p className="text-xs text-[var(--admin-text-soft)]">Ratio Mat : {(Number(selectedMissionForDetails.ratio_materiaux) * 100).toFixed(0)}%</p>
                                         )}
                                     </div>
                                 </div>

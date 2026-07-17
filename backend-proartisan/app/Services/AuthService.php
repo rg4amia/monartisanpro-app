@@ -57,6 +57,17 @@ class AuthService
                     'Compte en attente de validation',
                     'Votre compte est en attente de validation KYC. Veuillez uploader vos documents (CNI et Selfie) dans l\'application.'
                 );
+
+                // Notification pour les administrateurs
+                $admins = \App\Models\User::where('role', 'admin')->get();
+                foreach ($admins as $admin) {
+                    app(\App\Services\NotificationService::class)->send(
+                        $admin,
+                        'admin_alert',
+                        'Nouveau profil en attente KYC',
+                        "Le profil de {$user->name} ({$user->role}) nécessite une vérification KYC."
+                    );
+                }
             }
         }
 
