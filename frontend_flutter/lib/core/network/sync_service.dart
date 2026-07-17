@@ -47,6 +47,7 @@ class SyncService extends GetxService {
   final Dio _dio = Dio(); // Une instance basique ou injectée selon l'archi globale
 
   Future<SyncService> init() async {
+    await Hive.initFlutter();
     _queueBox = await Hive.openBox<Map>(_queueBoxName);
 
     // Vérification initiale

@@ -1,4 +1,4 @@
-import 'package:get/get.dart';
+import 'package:get/get.dart' hide Response, MultipartFile, FormData;
 import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
 
