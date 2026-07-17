@@ -28,6 +28,13 @@ class HomeController extends GetxController {
   final walletMo = 0.obs;
   final selectedCategory = Rx<String?>(null);
   final searchDistant = false.obs;
+  final fluidityScore = 0.obs;
+
+  String get fluidityStatus {
+    if (fluidityScore.value < 50) return 'Novice';
+    if (fluidityScore.value <= 150) return 'Confirmé';
+    return 'Premium';
+  }
 
   void toggleSearchDistant() {
     searchDistant.value = !searchDistant.value;
@@ -167,6 +174,8 @@ class HomeController extends GetxController {
         walletMateriaux.value = 0;
         walletMo.value = 0;
       }
+      
+      fluidityScore.value = StorageService.getScoreNzassa() ?? 10; // Default 10 if not set yet
 
       if (role.value == 'driver') {
         // Load driver configurations

@@ -174,6 +174,11 @@ class User extends Authenticatable
         return $this->role === 'fournisseur';
     }
 
+    public function isLivreur(): bool
+    {
+        return $this->role === 'livreur';
+    }
+
     public function isAccountActive(): bool
     {
         return ($this->account_status ?? 'actif') === 'actif';

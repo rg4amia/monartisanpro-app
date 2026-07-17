@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/gestures.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
@@ -82,13 +84,89 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     // If verification successful
     if (_c.errorMsg.value == null) {
       if (hasCompletedProfile) {
-        // User already has a profile, go to main tab
-        Get.offAllNamed(Routes.mainTab);
+        final user = _c.currentUser.value;
+        if (user != null && user.cguAcceptedAt == null) {
+          _showCguModal();
+        } else {
+          Get.offAllNamed(Routes.mainTab);
+        }
       } else {
         // User needs to complete profile first - use toNamed to keep controller alive
         Get.toNamed(Routes.register);
       }
     }
+  }
+
+  void _showCguModal() {
+    Get.dialog(
+      PopScope(
+        canPop: false,
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text(
+            'Mise à jour requise',
+            style: TextStyle(fontWeight: FontWeight.w800, color: _Dt.ink),
+          ),
+          content: RichText(
+            text: TextSpan(
+              style: const TextStyle(
+                fontSize: 14,
+                color: _Dt.ink,
+                fontWeight: FontWeight.w500,
+                height: 1.5,
+              ),
+              children: [
+                const TextSpan(text: 'Pour continuer à utiliser ProsArtisan, vous devez accepter nos nouvelles '),
+                TextSpan(
+                  text: 'Conditions Générales d\'Utilisation',
+                  style: const TextStyle(
+                    color: _Dt.primary,
+                    fontWeight: FontWeight.w700,
+                    decoration: TextDecoration.underline,
+                  ),
+                  recognizer: TapGestureRecognizer()
+                    ..onTap = () async {
+                      final url = Uri.parse('https://prosartisan.ci/cgu');
+                      if (await canLaunchUrl(url)) {
+                        await launchUrl(url, mode: LaunchMode.externalApplication);
+                      }
+                    },
+                ),
+                const TextSpan(text: '.'),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Get.back();
+                _c.errorMsg.value = null;
+              },
+              child: const Text('Plus tard', style: TextStyle(color: _Dt.muted, fontWeight: FontWeight.w600)),
+            ),
+            Obx(() => ElevatedButton(
+              onPressed: _c.isLoading.value ? null : () async {
+                final success = await _c.acceptCgu();
+                if (success) {
+                  Get.back(); // close modal
+                  Get.offAllNamed(Routes.mainTab);
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _Dt.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                elevation: 0,
+              ),
+              child: _c.isLoading.value
+                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                  : const Text('J\'accepte', style: TextStyle(fontWeight: FontWeight.w700)),
+            )),
+          ],
+        ),
+      ),
+      barrierDismissible: false,
+    );
   }
 
   void _handleResend() async {

@@ -26,6 +26,7 @@ class AuthService
         $user->update([
             'name' => $data['name'] ?? $user->name,
             'role' => $data['role'],
+            'cgu_accepted_at' => (isset($data['cgu_accepted']) && $data['cgu_accepted']) ? now() : $user->cgu_accepted_at,
         ]);
 
         if ($data['role'] === 'artisan') {

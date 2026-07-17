@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:flutter/gestures.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
@@ -132,6 +134,9 @@ class _RegisterScreenState extends State<RegisterScreen>
                       child: _buildError(_c.errorMsg.value!),
                     );
                   }),
+
+                  _buildCguCheckbox(),
+                  const SizedBox(height: 24),
 
                   _buildContinueButton(),
                   const SizedBox(height: 24),
@@ -391,7 +396,7 @@ class _RegisterScreenState extends State<RegisterScreen>
 
   Widget _buildContinueButton() {
     return Obx(() {
-      final canContinue = _c.name.value.trim().length >= 2;
+      final canContinue = _c.name.value.trim().length >= 2 && _c.cguAccepted.value;
 
       return SizedBox(
         width: double.infinity,
@@ -461,6 +466,66 @@ class _RegisterScreenState extends State<RegisterScreen>
         _c.errorMsg.value = 'Erreur: Token non reçu. Veuillez réessayer.';
       }
     }
+  }
+
+  // ── CGU Checkbox ──────────────────────────────────────────────────────────
+
+  Widget _buildCguCheckbox() {
+    return Obx(() => Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          height: 24,
+          width: 24,
+          child: Checkbox(
+            value: _c.cguAccepted.value,
+            onChanged: (val) {
+              if (val != null) _c.cguAccepted.value = val;
+            },
+            activeColor: _Dt.primary,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: GestureDetector(
+            onTap: () {
+              _c.cguAccepted.value = !_c.cguAccepted.value;
+            },
+            child: RichText(
+              text: TextSpan(
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: _Dt.ink,
+                  fontWeight: FontWeight.w500,
+                  height: 1.5,
+                ),
+                children: [
+                  const TextSpan(text: 'J\'ai lu et j\'accepte les '),
+                  TextSpan(
+                    text: 'Conditions Générales d\'Utilisation',
+                    style: const TextStyle(
+                      color: _Dt.primary,
+                      fontWeight: FontWeight.w700,
+                      decoration: TextDecoration.underline,
+                    ),
+                    recognizer: TapGestureRecognizer()
+                      ..onTap = () async {
+                        final url = Uri.parse('https://prosartisan.ci/cgu');
+                        if (await canLaunchUrl(url)) {
+                          await launchUrl(url, mode: LaunchMode.externalApplication);
+                        }
+                      },
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    ));
   }
 
   // ── Error ─────────────────────────────────────────────────────────────────

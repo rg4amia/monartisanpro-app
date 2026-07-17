@@ -216,10 +216,10 @@ class _SupplierHero extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: _HeroMetric(
-                    label: 'Position validée',
-                    value: 'GPS < 100 m',
+                    label: 'Score Fluidité',
+                    value: '${controller.fluidityScore.value} pts • ${controller.fluidityStatus}',
                   ),
                 ),
                 Container(

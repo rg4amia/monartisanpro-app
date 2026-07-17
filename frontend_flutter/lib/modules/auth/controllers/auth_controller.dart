@@ -15,6 +15,8 @@ class AuthController extends GetxController {
   final isLoading = false.obs;
   final otpSent = false.obs;
   final errorMsg = Rx<String?>(null);
+  final cguAccepted = false.obs;
+  final currentUser = Rx<UserModel?>(null);
 
   // Reset Account / Lost phone
   final resetOldPhone = ''.obs;
@@ -68,6 +70,8 @@ class AuthController extends GetxController {
               ? userData
               : UserModel.fromJson(userData as Map<String, dynamic>);
 
+          currentUser.value = user;
+
           StorageService.saveUserId(user.id);
           StorageService.saveName(user.name ?? '');
           StorageService.saveRole(user.role);
@@ -102,6 +106,7 @@ class AuthController extends GetxController {
         phone: phone.value,
         role: role.value!,
         name: name.value.trim(),
+        cguAccepted: cguAccepted.value,
       );
 
       final user = result['user'] as UserModel;
@@ -115,6 +120,30 @@ class AuthController extends GetxController {
       // Token is already saved in repository
     } catch (e) {
       errorMsg.value = _parseError(e);
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<bool> acceptCgu() async {
+    isLoading.value = true;
+    errorMsg.value = null;
+    try {
+      final res = await _repo.acceptCgu();
+      final userData = res['user'];
+      if (userData != null) {
+        final user = userData is UserModel
+            ? userData
+            : UserModel.fromJson(userData as Map<String, dynamic>);
+        StorageService.saveUserId(user.id);
+        StorageService.saveName(user.name ?? '');
+        StorageService.saveRole(user.role);
+        StorageService.saveKycStatus(user.kycStatus);
+      }
+      return true;
+    } catch (e) {
+      errorMsg.value = _parseError(e);
+      return false;
     } finally {
       isLoading.value = false;
     }

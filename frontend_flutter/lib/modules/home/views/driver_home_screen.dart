@@ -296,14 +296,14 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _buildStatCard(
-                  title: 'Note Moyenne',
-                  value: '4.9 ★',
-                  subtitle: '85 évaluations',
-                  color: AppColors.driver,
-                  background: AppColors.driverSoft,
-                  icon: Icons.star_outline_rounded,
-                ),
+                child: Obx(() => _buildStatCard(
+                  title: 'Score Fluidité',
+                  value: '${controller.fluidityScore.value} pts',
+                  subtitle: 'Statut : ${controller.fluidityStatus}',
+                  color: controller.fluidityScore.value > 150 ? Colors.amber.shade700 : AppColors.driver,
+                  background: controller.fluidityScore.value > 150 ? Colors.amber.shade50 : AppColors.driverSoft,
+                  icon: controller.fluidityScore.value > 150 ? Icons.workspace_premium_rounded : Icons.military_tech,
+                )),
               ),
             ],
           ),

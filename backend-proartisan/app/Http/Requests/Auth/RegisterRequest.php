@@ -46,6 +46,7 @@ class RegisterRequest extends FormRequest
             ],
             'bio' => ['sometimes', 'nullable', 'string'],
             'experience_years' => ['sometimes', 'integer', 'min:0', 'max:60'],
+            'cgu_accepted' => ['required', 'accepted', 'boolean'],
         ];
     }
 
@@ -58,6 +59,8 @@ class RegisterRequest extends FormRequest
             'name.min'       => 'Le nom doit comporter au moins 2 caractères.',
             'role.required'  => 'Le rôle est obligatoire.',
             'role.in'        => 'Le rôle doit être client, artisan ou fournisseur.',
+            'cgu_accepted.required' => 'Vous devez accepter les conditions générales d\'utilisation.',
+            'cgu_accepted.accepted' => 'Vous devez accepter les conditions générales d\'utilisation.',
         ];
     }
 }
