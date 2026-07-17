@@ -87,7 +87,7 @@ class Sprint4ComplianceTest extends TestCase
         \App\Models\ScoreLedgerEntry::create([
             'user_id' => $parrain->id,
             'event_type' => 'success_mission',
-            'points' => 600,
+            'points' => 890,
             'credibility_factor' => 1.00,
             'description' => 'Initial high score',
         ]);

@@ -23,7 +23,7 @@ class ScoreService
         'inactivity_decay'      =>  -5,
     ];
 
-    private const BASE_SCORE = 300;
+    private const BASE_SCORE = 10;
     private const MIN_SCORE  = 0;
     private const MAX_SCORE  = 1000;
 
