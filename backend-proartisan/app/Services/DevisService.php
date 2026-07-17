@@ -124,8 +124,8 @@ class DevisService
             $this->notificationService->send(
                 $devis->artisan,
                 'payment',
-                'Mission financée !',
-                "Votre mission #{$devis->mission_id} est financée. Vous pouvez commencer les travaux.",
+                'Devis validé et fonds séquestrés !',
+                "Votre devis pour la mission #{$devis->mission_id} a été approuvé. Les fonds sont disponibles et sécurisés en séquestre.",
                 ['mission_id' => $devis->mission_id]
             );
         });
@@ -137,6 +137,15 @@ class DevisService
     public function refuse(Devis $devis): void
     {
         $devis->update(['statut' => 'refuse']);
+
+        $devis->loadMissing(['artisan', 'mission']);
+        $this->notificationService->send(
+            $devis->artisan,
+            'devis',
+            'Devis refusé',
+            "Le client a refusé votre devis pour la mission #{$devis->mission_id}.",
+            ['mission_id' => $devis->mission_id, 'devis_id' => $devis->id]
+        );
     }
 
     private function normalizeLigne(array $ligne): array

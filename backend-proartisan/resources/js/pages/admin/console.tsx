@@ -496,6 +496,49 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
     const [evalSubTab, setEvalSubTab] = useState<'list' | 'artisans'>('list');
     const [selectedArtisanForLedger, setSelectedArtisanForLedger] = useState<ArtisanScoreItem | null>(null);
 
+    const [exchangeRates, setExchangeRates] = useState<{ usdToXof: number; eurToXof: number; eurToUsd: number } | null>(null);
+    const [isOnline, setIsOnline] = useState(() => typeof navigator !== 'undefined' ? navigator.onLine : true);
+    const [isOfflineSimulated, setIsOfflineSimulated] = useState(false);
+
+    useEffect(() => {
+        const handleOnline = () => setIsOnline(true);
+        const handleOffline = () => setIsOnline(false);
+
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+        };
+    }, []);
+
+    const offlineActive = !isOnline || isOfflineSimulated;
+
+    useEffect(() => {
+        fetch('https://open.er-api.com/v6/latest/EUR')
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.rates) {
+                    const eurToXof = data.rates.XOF || 655.957;
+                    const eurToUsd = data.rates.USD || 1.09;
+                    const usdToXof = eurToXof / eurToUsd;
+                    setExchangeRates({
+                        usdToXof: Math.round(usdToXof * 100) / 100,
+                        eurToXof: Math.round(eurToXof * 100) / 100,
+                        eurToUsd: Math.round(eurToUsd * 10000) / 10000
+                    });
+                }
+            })
+            .catch(err => {
+                setExchangeRates({
+                    usdToXof: 605.5,
+                    eurToXof: 655.96,
+                    eurToUsd: 1.085
+                });
+            });
+    }, []);
+
     const [userModalOpen, setUserModalOpen] = useState<boolean>(false);
     const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
     const [statusModalOpen, setStatusModalOpen] = useState<boolean>(false);
@@ -1218,6 +1261,23 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                     <InfoRow label="Paiements" value="Wave CI, Orange Money CI" />
                                     <InfoRow label="Connectivité" value="Mode hors-ligne + USSD" />
                                 </div>
+                                <div className="border-t border-[var(--admin-border)] pt-3 mt-3">
+                                    <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--admin-muted)] mb-2">Cours des devises</p>
+                                    <div className="grid grid-cols-1 gap-2 text-xs">
+                                        <div className="flex justify-between items-center bg-white/45 rounded-xl px-2.5 py-1.5 border border-[var(--admin-border)]">
+                                            <span className="font-medium text-[var(--admin-text)]">1 EUR</span>
+                                            <span className="font-bold text-[#8a6b3d]">{exchangeRates ? `${exchangeRates.eurToXof} XOF` : '655.96 XOF'}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center bg-white/45 rounded-xl px-2.5 py-1.5 border border-[var(--admin-border)]">
+                                            <span className="font-medium text-[var(--admin-text)]">1 USD</span>
+                                            <span className="font-bold text-[#8a6b3d]">{exchangeRates ? `${exchangeRates.usdToXof} XOF` : '605.50 XOF'}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center bg-white/45 rounded-xl px-2.5 py-1.5 border border-[var(--admin-border)]">
+                                            <span className="font-medium text-[var(--admin-text)]">1 EUR</span>
+                                            <span className="font-bold text-[#8a6b3d]">{exchangeRates ? `${exchangeRates.eurToUsd} USD` : '1.0850 USD'}</span>
+                                        </div>
+                                    </div>
+                                </div>
                             </Surface>
 
                             <Link
@@ -1233,6 +1293,14 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                     </aside>
 
                     <div className="min-w-0 flex-1">
+                        {offlineActive && (
+                            <div className="bg-amber-500 text-[#241b16] px-4 py-2 text-center text-xs font-semibold flex items-center justify-center gap-2 shadow-inner border-b border-amber-600 animate-pulse">
+                                <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                    <path d="M18.36 5.64a9 9 0 0 1 0 12.73m-2.82-9.9a6 6 0 0 1 0 7.07m-2.83-4.24a3 3 0 0 1 0 1.41m.01-1.42v.01" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                                <span>Mode hors-ligne actif • ProsArtisan bascule automatiquement sur les files d'attente locales et les interactions USSD.</span>
+                            </div>
+                        )}
                         <header className="admin-panel sticky top-0 z-20 border-b px-4 py-4 lg:px-7">
                             <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
                                 <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -2188,8 +2256,27 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                             <InfoPill label="Contact" value={adminContact} />
                                             <InfoPill label="Langue" value="Français" />
                                             <InfoPill label="Paiements" value="Wave CI / Orange Money CI" />
+                                            <div className="flex items-center justify-between gap-3 rounded-[18px] border border-[var(--admin-border)] bg-white/55 px-4 py-3">
+                                                <div>
+                                                    <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Connectivité</p>
+                                                    <p className="mt-1 text-sm font-bold text-[var(--admin-text)]">
+                                                        {offlineActive ? 'Hors-ligne (+ USSD)' : 'En ligne'}
+                                                    </p>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setIsOfflineSimulated(prev => !prev)}
+                                                    className={cn(
+                                                        "rounded-lg px-2.5 py-1.5 text-xs font-semibold border transition",
+                                                        offlineActive
+                                                            ? "bg-amber-100 border-amber-300 text-amber-800"
+                                                            : "bg-green-100 border-green-300 text-green-800"
+                                                    )}
+                                                >
+                                                    {isOfflineSimulated ? 'Simulé' : 'Simuler Offline'}
+                                                </button>
+                                            </div>
                                             <InfoPill label="Mobile" value="Android prioritaire" />
-                                            <InfoPill label="Connectivité" value="Hors-ligne + USSD" />
                                         </div>
                                         <div className="mt-5 flex flex-wrap gap-3">
                                             <button type="button" className="admin-button admin-button--primary" onClick={refreshData}>
