@@ -83,8 +83,8 @@ Route::prefix('v1')->group(function () {
         Route::post('/orders/{order}/verify-delivery', [OrderController::class, 'verifyDelivery']);
 
         // ── Logistique & Livraisons (Courses) ──────────────────────────────────
-        Route::get('/deliveries/available', [DeliveryController::class, 'available']);
-        Route::post('/deliveries/{order}/accept', [DeliveryController::class, 'accept']);
+        Route::get('/deliveries/available', [DeliveryController::class, 'available'])->middleware('kyc.verified');
+        Route::post('/deliveries/{order}/accept', [DeliveryController::class, 'accept'])->middleware('kyc.verified');
 
         // ── Utilisateurs ─────────────────────────────────────────────────────
         Route::put('/users/{user}',          [UserController::class, 'update']);
@@ -92,7 +92,7 @@ Route::prefix('v1')->group(function () {
         Route::put('/users/{user}/role',     [UserController::class, 'setRole']);
 
         // ── Artisans ──────────────────────────────────────────────────────────
-        Route::get('/artisans',              [ArtisanController::class, 'nearby']);
+        Route::get('/artisans',              [ArtisanController::class, 'nearby'])->middleware('kyc.verified');
         Route::get('/artisans/{user}',       [ArtisanController::class, 'show']);
         Route::get('/artisans/{user}/score', [ArtisanController::class, 'score']);
         Route::get('/artisans/{user}/report', [ArtisanController::class, 'downloadReport']);
@@ -102,25 +102,25 @@ Route::prefix('v1')->group(function () {
         Route::get('/sectors/{sector}/trades', [SectorController::class, 'trades']);
 
         // ── Fournisseurs & catalogue ─────────────────────────────────────────
-        Route::get('/fournisseurs', [SupplierCatalogController::class, 'suppliers']);
+        Route::get('/fournisseurs', [SupplierCatalogController::class, 'suppliers'])->middleware('kyc.verified');
         Route::get('/fournisseurs/{user}/articles', [SupplierCatalogController::class, 'supplierProducts']);
         Route::get('/supplier-products', [SupplierCatalogController::class, 'myProducts']);
-        Route::post('/supplier-products', [SupplierCatalogController::class, 'store'])->middleware('can:supplier-products.manage');
-        Route::put('/supplier-products/{supplierProduct}', [SupplierCatalogController::class, 'update'])->middleware('can:supplier-products.manage');
-        Route::delete('/supplier-products/{supplierProduct}', [SupplierCatalogController::class, 'destroy'])->middleware('can:supplier-products.manage');
+        Route::post('/supplier-products', [SupplierCatalogController::class, 'store'])->middleware(['can:supplier-products.manage', 'kyc.verified']);
+        Route::put('/supplier-products/{supplierProduct}', [SupplierCatalogController::class, 'update'])->middleware(['can:supplier-products.manage', 'kyc.verified']);
+        Route::delete('/supplier-products/{supplierProduct}', [SupplierCatalogController::class, 'destroy'])->middleware(['can:supplier-products.manage', 'kyc.verified']);
         Route::get('/supplier/dashboard', [SupplierDashboardController::class, 'dashboard'])->middleware('supplier.only');
 
         // ── Missions ──────────────────────────────────────────────────────────
         Route::get('/missions',                      [MissionController::class, 'index']);
-        Route::post('/missions',                     [MissionController::class, 'store'])->middleware('can:mission.create');
+        Route::post('/missions',                     [MissionController::class, 'store'])->middleware(['can:mission.create', 'kyc.verified']);
         Route::get('/missions/{mission}',            [MissionController::class, 'show']);
         Route::post('/missions/estimate',            [MissionController::class, 'estimate'])->middleware('can:mission.estimate');
         Route::put('/missions/{mission}/status',     [MissionController::class, 'updateStatus']);
-        Route::post('/missions/{mission}/referent-validate', [\App\Http\Controllers\Api\V1\ReferentController::class, 'validateMission'])->middleware('can:mission.referent-validate');
+        Route::post('/missions/{mission}/referent-validate', [\App\Http\Controllers\Api\V1\ReferentController::class, 'validateMission'])->middleware(['can:mission.referent-validate', 'kyc.verified']);
 
         // ── Devis ────────────────────────────────────────────────────────────
         Route::get('/missions/{mission}/devis',      [DevisController::class, 'index']);
-        Route::post('/missions/{mission}/devis',     [DevisController::class, 'store'])->middleware('can:devis.create');
+        Route::post('/missions/{mission}/devis',     [DevisController::class, 'store'])->middleware(['can:devis.create', 'kyc.verified']);
         Route::get('/devis/{devis}',                 [DevisController::class, 'show']);
         Route::put('/devis/{devis}',                 [DevisController::class, 'update'])->middleware('can:devis.update');
         Route::post('/devis/{devis}/accept',         [DevisController::class, 'accept'])->middleware('can:devis.accept');
@@ -128,16 +128,16 @@ Route::prefix('v1')->group(function () {
 
         // ── Jalons ────────────────────────────────────────────────────────────
         Route::get('/missions/{mission}/jalons',     [JalonController::class, 'index']);
-        Route::put('/jalons/{jalon}/submit',         [JalonController::class, 'submit'])->middleware('can:jalon.submit');
-        Route::post('/jalons/{jalon}/photos',        [JalonController::class, 'uploadPhotos'])->middleware('can:jalon.upload-photos');
-        Route::post('/jalons/{jalon}/request-otp',   [JalonController::class, 'requestOtp'])->middleware('can:jalon.request-otp');
-        Route::post('/jalons/{jalon}/validate-otp',  [JalonController::class, 'validateOtp'])->middleware('can:jalon.validate-otp');
+        Route::put('/jalons/{jalon}/submit',         [JalonController::class, 'submit'])->middleware(['can:jalon.submit', 'kyc.verified']);
+        Route::post('/jalons/{jalon}/photos',        [JalonController::class, 'uploadPhotos'])->middleware(['can:jalon.upload-photos', 'kyc.verified']);
+        Route::post('/jalons/{jalon}/request-otp',   [JalonController::class, 'requestOtp'])->middleware(['can:jalon.request-otp', 'kyc.verified']);
+        Route::post('/jalons/{jalon}/validate-otp',  [JalonController::class, 'validateOtp'])->middleware(['can:jalon.validate-otp', 'kyc.verified']);
 
         // ── J-Codes ───────────────────────────────────────────────────────────
-        Route::post('/jcodes',                       [JCodeController::class, 'store'])->middleware('can:jcode.create');
+        Route::post('/jcodes',                       [JCodeController::class, 'store'])->middleware(['can:jcode.create', 'kyc.verified']);
         Route::get('/jcodes/active',                 [JCodeController::class, 'active']);
         Route::get('/jcodes/{jcode}',                [JCodeController::class, 'show']);
-        Route::post('/jcodes/{jcode}/scan',          [JCodeController::class, 'scan'])->middleware('can:jcode.scan');
+        Route::post('/jcodes/{jcode}/scan',          [JCodeController::class, 'scan'])->middleware(['can:jcode.scan', 'kyc.verified']);
         Route::post('/jcodes/{jcode}/photo-materiaux', [JCodeController::class, 'uploadPhotoMateriaux'])->middleware('can:jcode.upload-photo-materials');
 
         // ── Paiements (Wave & Orange Money) ───────────────────────────────────

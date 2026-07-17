@@ -41,7 +41,25 @@ class AuthService
             );
         }
 
-        return $user->fresh();
+        $user = $user->fresh();
+
+        if ($user->kyc_status === 'en_attente') {
+            $hasPendingNotif = \App\Models\Notification::where('user_id', $user->id)
+                ->where('type', 'kyc')
+                ->where('title', 'Compte en attente de validation')
+                ->exists();
+
+            if (!$hasPendingNotif) {
+                app(\App\Services\NotificationService::class)->send(
+                    $user,
+                    'kyc',
+                    'Compte en attente de validation',
+                    'Votre compte est en attente de validation KYC. Veuillez uploader vos documents (CNI et Selfie) dans l\'application.'
+                );
+            }
+        }
+
+        return $user;
     }
 
     /**

@@ -182,4 +182,94 @@ class Sprint3ComplianceTest extends TestCase
         $response->assertOk()
             ->assertJsonStructure(['success', 'mediation']);
     }
+
+    public function test_kyc_restriction_and_notifications(): void
+    {
+        // 1. Create client, artisan, supplier and driver with 'en_attente' kyc status
+        $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'en_attente']);
+        $artisan = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'en_attente']);
+        $supplier = User::factory()->create(['role' => 'fournisseur', 'kyc_status' => 'en_attente']);
+        $driver = User::factory()->create(['role' => 'driver', 'kyc_status' => 'en_attente']);
+
+        $mission = Mission::create([
+            'client_id' => $client->id,
+            'artisan_id' => $artisan->id,
+            'description' => 'Test',
+            'status' => 'draft',
+            'montant_total' => 100000,
+            'montant_materiaux' => 60000,
+            'montant_mo' => 40000,
+            'ratio_materiaux' => 0.60,
+        ]);
+
+        $agree = \App\Models\FournisseurAgree::create([
+            'user_id' => $supplier->id,
+            'nom_boutique' => 'Test Boutique',
+            'statut' => 'agree',
+        ]);
+        $agree->setPosition(5.36, -4.01);
+
+        $product = \App\Models\SupplierProduct::create([
+            'supplier_id' => $supplier->id,
+            'sku' => 'TESTPRODUCT',
+            'name' => 'Test Product',
+            'unit_price' => 1000,
+            'stock_quantity' => 10,
+        ]);
+
+        $order = app(\App\Services\OrderService::class)->createOrder(
+            $client,
+            $supplier,
+            [['supplier_product_id' => $product->id, 'quantity' => 1]],
+            'delivery'
+        );
+
+        $order->update(['status' => 'searching_driver']);
+
+        // 2. Client is blocked from listing artisans
+        $this->actingAs($client)->getJson('/api/v1/artisans')->assertStatus(403);
+
+        // 3. Client is blocked from submitting a mission
+        $this->actingAs($client)->postJson('/api/v1/missions', [
+            'artisan_id' => $artisan->id,
+            'description' => 'Test mission description',
+            'montant_total' => 50000,
+            'montant_materiaux' => 30000,
+            'montant_mo' => 20000,
+            'ratio_materiaux' => 0.6,
+        ])->assertStatus(403);
+
+        // 4. Client is blocked from listing suppliers
+        $this->actingAs($client)->getJson('/api/v1/fournisseurs')->assertStatus(403);
+
+        // 5. Artisan is blocked from creating a devis
+        $this->actingAs($artisan)->postJson("/api/v1/missions/{$mission->id}/devis", [
+            'lignes_json' => [],
+            'jalons_json' => [],
+        ])->assertStatus(403);
+
+        // 6. Supplier is blocked from managing catalog items
+        $this->actingAs($supplier)->postJson('/api/v1/supplier-products', [
+            'sku' => 'TESTSKU',
+            'name' => 'Test product',
+            'unit_price' => 5000,
+            'stock_quantity' => 10,
+        ])->assertStatus(403);
+
+        // 7. Driver/Livreur is blocked from accepting a delivery course
+        $this->actingAs($driver)->postJson("/api/v1/deliveries/{$order->id}/accept")->assertStatus(403);
+
+        // 8. Test that notifications are created when document uploaded
+        $file = \Illuminate\Http\UploadedFile::fake()->create('cni.jpg', 500);
+        $this->actingAs($client)->postJson('/api/v1/kyc/upload-cni', [
+            'file' => $file,
+        ])->assertOk();
+
+        $this->assertTrue(
+            \App\Models\Notification::where('user_id', $client->id)
+                ->where('type', 'kyc')
+                ->where('title', 'Compte en attente de validation')
+                ->exists()
+        );
+    }
 }
