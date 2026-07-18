@@ -24,6 +24,38 @@ class AuthController extends Controller
      */
     public function sendOtp(SendOtpRequest $request): JsonResponse
     {
+        $roleParam = $request->input('role');
+        if ($roleParam) {
+            $role = strtolower($roleParam);
+            if ($role === 'driver') {
+                $role = 'livreur';
+            }
+
+            $blockStatus = \App\Models\Setting::getValueByKey('block_' . $role, 'none');
+
+            if ($blockStatus !== 'none') {
+                $user = \App\Models\User::where('phone', $request->phone)->first();
+                $isNewUser = !$user || ($user->name === null && $user->role === null);
+                
+                $shouldBlock = false;
+                if ($blockStatus === 'all') {
+                    $shouldBlock = true;
+                } elseif ($blockStatus === 'new' && $isNewUser) {
+                    $shouldBlock = true;
+                } elseif ($blockStatus === 'old' && !$isNewUser) {
+                    $shouldBlock = true;
+                }
+
+                if ($shouldBlock) {
+                    $msg = \App\Models\Setting::getValueByKey('app_access_disabled_message', 'L\'accès à cet espace est temporairement restreint suite à une opération de maintenance de nos services. Nous vous prions de nous excuser pour la gêne occasionnée et vous remercions de votre patience.');
+                    return response()->json([
+                        'success' => false,
+                        'message' => $msg,
+                    ], 403);
+                }
+            }
+        }
+
         $channel = $request->input('channel');
         $this->otpService->sendOtp($request->phone, null, $channel);
 
@@ -67,6 +99,26 @@ class AuthController extends Controller
 
         // Si le profil est déjà complet, on connecte directement
         if ($hasCompletedProfile) {
+            $role = $user->role;
+            if ($role === 'driver') {
+                $role = 'livreur';
+            }
+
+            $blockStatus = \App\Models\Setting::getValueByKey('block_' . $role, 'none');
+            $shouldBlock = false;
+            
+            if ($blockStatus === 'all' || $blockStatus === 'old') {
+                $shouldBlock = true;
+            }
+
+            if ($shouldBlock) {
+                $msg = \App\Models\Setting::getValueByKey('app_access_disabled_message', 'L\'accès à cet espace est temporairement restreint suite à une opération de maintenance de nos services. Nous vous prions de nous excuser pour la gêne occasionnée et vous remercions de votre patience.');
+                return response()->json([
+                    'success' => false,
+                    'message' => $msg,
+                ], 403);
+            }
+
             $token = $this->authService->createToken($user, $request->input('device_fingerprint'));
 
             return response()->json([
@@ -94,6 +146,26 @@ class AuthController extends Controller
      */
     public function register(RegisterRequest $request): JsonResponse
     {
+        $role = strtolower($request->validated('role'));
+        if ($role === 'driver') {
+            $role = 'livreur';
+        }
+
+        $blockStatus = \App\Models\Setting::getValueByKey('block_' . $role, 'none');
+        $shouldBlock = false;
+        
+        if ($blockStatus === 'all' || $blockStatus === 'new') {
+            $shouldBlock = true;
+        }
+
+        if ($shouldBlock) {
+            $msg = \App\Models\Setting::getValueByKey('app_access_disabled_message', 'L\'accès à cet espace est temporairement restreint suite à une opération de maintenance de nos services. Nous vous prions de nous excuser pour la gêne occasionnée et vous remercions de votre patience.');
+            return response()->json([
+                'success' => false,
+                'message' => $msg,
+            ], 403);
+        }
+
         $user = $this->authService->findOrCreateByPhone($request->phone);
 
         // Met à jour le profil utilisateur

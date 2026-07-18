@@ -11,6 +11,7 @@ import 'package:get/get.dart';
 import 'app/app.dart';
 import 'core/utils/error_handler.dart';
 import 'core/network/sync_service.dart';
+import 'data/services/app_settings_service.dart';
 
 Future<void> main() async {
   await runZonedGuarded(
@@ -62,6 +63,8 @@ Future<void> main() async {
 
       // Initialisation de la synchro hors-ligne
       await Get.putAsync(() => SyncService().init());
+      
+      Get.put(AppSettingsService());
 
       runApp(const App());
     },

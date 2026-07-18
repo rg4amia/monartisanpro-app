@@ -102,7 +102,12 @@ class _MissionTrackingScreenState extends State<MissionTrackingScreen> {
                       controller.hasReferentPendingValidation,
                 ),
                 const SizedBox(height: 16),
-                _BudgetSection(mission: mission),
+                if (isArtisan)
+                  _BudgetSection(mission: mission)
+                else if (mission.status == 'financee' || mission.status == 'en_cours')
+                  _EscrowSection(mission: mission, jalons: controller.jalons)
+                else
+                  _BudgetSection(mission: mission),
                 const SizedBox(height: 16),
                 _DevisSection(
                   role: role,
@@ -669,6 +674,91 @@ class _BudgetBar extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _EscrowSection extends StatelessWidget {
+  const _EscrowSection({
+    required this.mission,
+    required this.jalons,
+  });
+
+  final MissionModel mission;
+  final List<JalonModel> jalons;
+
+  @override
+  Widget build(BuildContext context) {
+    int totalMo = mission.montantMo;
+    int libereMo = jalons
+        .where((j) => j.statut == 'paye')
+        .fold(0, (sum, j) => sum + j.montant);
+    int restMo = totalMo - libereMo;
+
+    return _SectionContainer(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Fonds Séquestrés',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: _Palette.ink,
+                  ),
+                ),
+              ),
+              Icon(Icons.lock_outline, color: _Palette.primary, size: 20),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: _Palette.primaryLight.withValues(alpha: 0.6),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Text(
+              'Vos fonds sont sécurisés et ne sont libérés à l\'artisan qu\'après votre validation par OTP.',
+              style: TextStyle(
+                fontSize: 12,
+                color: _Palette.primary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          _BudgetBar(
+            label: 'Matériaux (Bloqué/Fournisseur)',
+            amount: mission.montantMateriaux,
+            percentage: mission.montantTotal > 0
+                ? (mission.montantMateriaux * 100 ~/ mission.montantTotal)
+                : 0,
+            color: _Palette.warning,
+          ),
+          const SizedBox(height: 14),
+          _BudgetBar(
+            label: 'Main d\'œuvre (Libéré)',
+            amount: libereMo,
+            percentage: mission.montantTotal > 0
+                ? (libereMo * 100 ~/ mission.montantTotal)
+                : 0,
+            color: _Palette.success,
+          ),
+          const SizedBox(height: 14),
+          _BudgetBar(
+            label: 'Main d\'œuvre (Restant bloqué)',
+            amount: restMo,
+            percentage: mission.montantTotal > 0
+                ? (restMo * 100 ~/ mission.montantTotal)
+                : 0,
+            color: _Palette.primary,
+          ),
+        ],
+      ),
     );
   }
 }

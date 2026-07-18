@@ -58,4 +58,5 @@ abstract class Routes {
   static const orderCheckout = '/order-checkout';
   static const clientSuppliers = '/client-suppliers';
   static const clientCatalog = '/client-catalog';
+  static const wallet = '/wallet';
 }

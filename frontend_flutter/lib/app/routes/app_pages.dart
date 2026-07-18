@@ -51,6 +51,8 @@ import '../../modules/artisans/views/parrainage_screen.dart';
 import '../../modules/orders/views/order_checkout_screen.dart';
 import '../../modules/orders/views/client_suppliers_list_screen.dart';
 import '../../modules/orders/views/client_catalog_screen.dart';
+import '../../modules/wallet/bindings/wallet_binding.dart';
+import '../../modules/wallet/views/wallet_screen.dart';
 import 'app_routes.dart';
 
 class AppPages {
@@ -263,5 +265,11 @@ class AppPages {
       name: Routes.clientCatalog,
       page: () => const ClientCatalogScreen(),
     ),
+    GetPage(
+      name: Routes.wallet,
+      page: () => const WalletScreen(),
+      binding: WalletBinding(),
+    ),
   ];
 }
+

@@ -263,6 +263,8 @@ class _LoginScreenState extends State<LoginScreen>
   // ── Profile Selection ─────────────────────────────────────────────────────
 
   Widget _buildProfileSelection() {
+    final appSettings = Get.find<AppSettingsService>();
+
     return Obx(() => GridView.count(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -276,6 +278,7 @@ class _LoginScreenState extends State<LoginScreen>
               Icons.person_outline_rounded,
               '👩‍💼',
               _selectedProfile.value == 'CLIENT',
+              appSettings.isBlockedAll('CLIENT'),
               () {
                 _selectedProfile.value = 'CLIENT';
                 _c.role.value = 'client';
@@ -287,6 +290,7 @@ class _LoginScreenState extends State<LoginScreen>
               Icons.construction_outlined,
               '👨‍🔧',
               _selectedProfile.value == 'ARTISAN',
+              appSettings.isBlockedAll('ARTISAN'),
               () {
                 _selectedProfile.value = 'ARTISAN';
                 _c.role.value = 'artisan';
@@ -298,6 +302,7 @@ class _LoginScreenState extends State<LoginScreen>
               Icons.warehouse_outlined,
               '🏭',
               _selectedProfile.value == 'FOURNISSEUR',
+              appSettings.isBlockedAll('FOURNISSEUR'),
               () {
                 _selectedProfile.value = 'FOURNISSEUR';
                 _c.role.value = 'fournisseur';
@@ -309,6 +314,7 @@ class _LoginScreenState extends State<LoginScreen>
               Icons.local_shipping_outlined,
               '🚚',
               _selectedProfile.value == 'LIVREUR',
+              appSettings.isBlockedAll('LIVREUR'),
               () {
                 _selectedProfile.value = 'LIVREUR';
                 _c.role.value = 'driver';
@@ -324,50 +330,63 @@ class _LoginScreenState extends State<LoginScreen>
     IconData icon,
     String emoji,
     bool isSelected,
+    bool isBlocked,
     VoidCallback onTap,
   ) {
+    final appSettings = Get.find<AppSettingsService>();
     final accent = _roleColor(label);
     return GestureDetector(
-      onTap: onTap,
+      onTap: isBlocked ? () {
+        Get.snackbar(
+          'Accès désactivé', 
+          appSettings.disabledMessage.value,
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red.withOpacity(0.9),
+          colorText: Colors.white,
+          margin: const EdgeInsets.all(16),
+        );
+      } : onTap,
       child: AnimatedScale(
         scale: isSelected ? 1.03 : 1.0,
         duration: const Duration(milliseconds: 250),
         curve: Curves.easeOutBack,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 280),
-          curve: Curves.easeOutCubic,
-          transform: isSelected
-              ? Matrix4.translationValues(0, -5, 0)
-              : Matrix4.identity(),
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-          decoration: BoxDecoration(
-            color: isSelected ? accent.withValues(alpha: 0.10) : _Dt.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isSelected ? accent : _Dt.border,
-              width: isSelected ? 2.5 : 1.5,
+        child: Opacity(
+          opacity: isBlocked ? 0.4 : 1.0,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 280),
+            curve: Curves.easeOutCubic,
+            transform: isSelected
+                ? Matrix4.translationValues(0, -5, 0)
+                : Matrix4.identity(),
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+            decoration: BoxDecoration(
+              color: isSelected ? accent.withValues(alpha: 0.10) : _Dt.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isSelected ? accent : _Dt.border,
+                width: isSelected ? 2.5 : 1.5,
+              ),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: accent.withValues(alpha: 0.20),
+                        blurRadius: 18,
+                        offset: const Offset(0, 8),
+                      ),
+                    ]
+                  : [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.03),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
             ),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: accent.withValues(alpha: 0.20),
-                      blurRadius: 18,
-                      offset: const Offset(0, 8),
-                    ),
-                  ]
-                : [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.03),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Stack(
-                clipBehavior: Clip.none,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Stack(
+                  clipBehavior: Clip.none,
                 alignment: Alignment.center,
                 children: [
                   AnimatedContainer(
@@ -413,6 +432,30 @@ class _LoginScreenState extends State<LoginScreen>
                           Icons.check_rounded,
                           color: Colors.white,
                           size: 12,
+                        ),
+                      ),
+                    ),
+                  if (isBlocked)
+                    Positioned(
+                      top: -6,
+                      right: -6,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade400,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.red.withValues(alpha: 0.3),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.lock_outline_rounded,
+                          color: Colors.white,
+                          size: 14,
                         ),
                       ),
                     ),

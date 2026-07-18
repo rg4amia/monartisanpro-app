@@ -43,7 +43,7 @@ class AuthController extends GetxController {
     isLoading.value = true;
     errorMsg.value = null;
     try {
-      await _repo.sendOtp(phone.value);
+      await _repo.sendOtp(phone.value, role: role.value);
       otpSent.value = true;
     } catch (e) {
       errorMsg.value = _parseError(e);
