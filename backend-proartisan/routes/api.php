@@ -47,6 +47,8 @@ Route::prefix('v1')->group(function () {
         Route::post('/reset-phone-confirm', [AuthController::class, 'confirmResetPhoneLost']);
     });
 
+    Route::get('/settings/app-access', [\App\Http\Controllers\Api\V1\SettingController::class, 'getAppAccess']);
+
     // ── Webhooks (sans authentification pour les callbacks externes) ─────────
     Route::prefix('webhooks')->middleware('throttle:webhook')->group(function () {
         Route::post('/wave',         [WebhookController::class, 'wave']);
@@ -198,6 +200,8 @@ Route::prefix('v1')->group(function () {
             Route::get('/permissions', [AdminRolePermissionController::class, 'listPermissions']);
             Route::post('/roles-permissions/assign', [AdminRolePermissionController::class, 'assign']);
             Route::post('/roles-permissions/revoke', [AdminRolePermissionController::class, 'revoke']);
+            
+            Route::put('/settings/app-access', [\App\Http\Controllers\Api\V1\SettingController::class, 'updateAppAccess']);
 
             Route::get('/kyc/pending', [AdminController::class, 'pendingKyc']);
             Route::post('/kyc/{user}/review', [AdminController::class, 'reviewKyc']);

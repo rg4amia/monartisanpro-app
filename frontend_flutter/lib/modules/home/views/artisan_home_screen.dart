@@ -175,9 +175,12 @@ class _HeroHeader extends StatelessWidget {
             child: Row(
               children: [
                 Expanded(
-                  child: _HeroMetric(
-                    label: 'Gains disponibles',
-                    value: Formatters.fcfa(controller.walletMo.value),
+                  child: GestureDetector(
+                    onTap: () => Get.toNamed(Routes.wallet),
+                    child: _HeroMetric(
+                      label: 'Gains disponibles',
+                      value: Formatters.fcfa(controller.walletMo.value),
+                    ),
                   ),
                 ),
                 Container(

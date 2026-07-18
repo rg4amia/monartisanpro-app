@@ -2341,6 +2341,34 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                                                     <option value="whatsapp">WhatsApp uniquement</option>
                                                                     <option value="both">SMS & WhatsApp</option>
                                                                 </select>
+                                                            ) : setting.key.startsWith('block_') ? (
+                                                                <select
+                                                                    defaultValue={setting.value}
+                                                                    onChange={(e) => {
+                                                                        router.put(`/admin/settings/${setting.id}`, {
+                                                                            value: e.target.value,
+                                                                        }, { preserveScroll: true });
+                                                                    }}
+                                                                    className="admin-input w-48 rounded-xl px-3 py-2 text-sm text-center outline-none bg-white border border-[var(--admin-border)]"
+                                                                >
+                                                                    <option value="none">Accès normal</option>
+                                                                    <option value="new">Bloquer Nouveaux</option>
+                                                                    <option value="old">Bloquer Anciens</option>
+                                                                    <option value="all">Bloquer Tous</option>
+                                                                </select>
+                                                            ) : setting.key === 'app_access_disabled_message' ? (
+                                                                <textarea
+                                                                    defaultValue={setting.value}
+                                                                    onBlur={(e) => {
+                                                                        if (e.target.value !== setting.value) {
+                                                                            router.put(`/admin/settings/${setting.id}`, {
+                                                                                value: e.target.value,
+                                                                            }, { preserveScroll: true });
+                                                                        }
+                                                                    }}
+                                                                    rows={3}
+                                                                    className="admin-input w-72 rounded-xl px-3 py-2 text-sm outline-none bg-white border border-[var(--admin-border)] resize-y"
+                                                                />
                                                             ) : (
                                                                 <input
                                                                     type="text"

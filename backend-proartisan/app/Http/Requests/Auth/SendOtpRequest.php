@@ -16,6 +16,7 @@ class SendOtpRequest extends FormRequest
         return [
             'phone'   => ['required', 'string', 'regex:/^\+225[0-9]{10}$/'],
             'channel' => ['nullable', 'string', 'in:sms,whatsapp'],
+            'role'    => ['nullable', 'string', 'in:client,artisan,fournisseur,driver,referent,LIVREUR,CLIENT,ARTISAN,FOURNISSEUR'],
         ];
     }
 

@@ -8,8 +8,10 @@ import '../models/user_model.dart';
 class AuthRepository {
   final ApiClient _client = ApiClient();
 
-  Future<void> sendOtp(String phone) async {
-    await _client.post(ApiEndpoints.sendOtp, data: {'phone': phone});
+  Future<void> sendOtp(String phone, {String? role}) async {
+    final data = {'phone': phone};
+    if (role != null) data['role'] = role;
+    await _client.post(ApiEndpoints.sendOtp, data: data);
   }
 
   Future<Map<String, dynamic>> verifyOtp(String phone, String otp) async {
