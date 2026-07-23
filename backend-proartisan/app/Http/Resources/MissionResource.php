@@ -84,8 +84,8 @@ class MissionResource extends JsonResource
                     'delivery' => 0,
                 ],
             ],
-            'createdAt' => $this->created_at?->toISOString(),
-            'updatedAt' => $this->updated_at?->toISOString(),
+            'createdAt' => $this->created_at?->toIso8601String(),
+            'updatedAt' => $this->updated_at?->toIso8601String(),
         ];
     }
 

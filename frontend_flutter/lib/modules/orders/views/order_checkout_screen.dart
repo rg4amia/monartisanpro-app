@@ -81,6 +81,8 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
   }
 
   void _submit() async {
+    if (controller.isSubmitting.value) return;
+
     final success = await controller.createOrder(
       supplierId: supplierId,
       deliveryMode: deliveryMode,
@@ -90,7 +92,48 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
     );
 
     if (success) {
-      Get.back(); // Retour après succès
+      Get.dialog(
+        AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Row(
+            children: [
+              Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 28),
+              SizedBox(width: 10),
+              Text('Commande confirmée', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+            ],
+          ),
+          content: const Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Votre commande a été enregistrée avec succès !',
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Color(0xFF1F2937)),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'Le paiement est sécurisé en compte séquestre et le fournisseur a été notifié. Vous recevrez des SMS de suivi.',
+                style: TextStyle(fontSize: 13, color: Color(0xFF4B5563), height: 1.4),
+              ),
+            ],
+          ),
+          actions: [
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2F6FED),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              ),
+              onPressed: () {
+                Get.back(); // Fermer la modale
+                Get.back(); // Fermer la page de commande
+              },
+              child: const Text('OK, Parfait', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+        barrierDismissible: false,
+      );
     }
   }
 

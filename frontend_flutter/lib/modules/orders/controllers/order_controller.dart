@@ -167,6 +167,7 @@ class OrderController extends GetxController {
     String? vehicleClass,
     double? surgeMultiplier,
   }) async {
+    if (isSubmitting.value) return false;
     isSubmitting.value = true;
     errorMsg.value = null;
 

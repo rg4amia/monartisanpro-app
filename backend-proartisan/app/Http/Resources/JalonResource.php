@@ -17,10 +17,10 @@ class JalonResource extends JsonResource
             'montant'         => $this->montant,
             'statut'          => $this->statut,
             'otp_code'        => null, // Jamais exposer le code OTP
-            'otp_expires_at'  => $this->otp_expires_at?->toISOString(),
+            'otp_expires_at'  => $this->otp_expires_at?->toIso8601String(),
             'photos_json'     => $this->photos_json ?? [],
-            'valide_at'       => $this->valide_at?->toISOString(),
-            'paye_at'         => $this->paye_at?->toISOString(),
+            'valide_at'       => $this->valide_at?->toIso8601String(),
+            'paye_at'         => $this->paye_at?->toIso8601String(),
         ];
     }
 }

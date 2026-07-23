@@ -28,7 +28,7 @@ class DevisResource extends JsonResource
                 $this->relationLoaded('artisan'),
                 fn () => $this->artisan->name ?? $this->artisan->phone
             ),
-            'createdAt'    => $this->created_at?->toISOString(),
+            'createdAt'    => $this->created_at?->toIso8601String(),
         ];
     }
 }

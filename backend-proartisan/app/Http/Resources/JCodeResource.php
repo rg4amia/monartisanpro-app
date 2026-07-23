@@ -33,8 +33,8 @@ class JCodeResource extends JsonResource
                 $this->relationLoaded('items'),
                 fn () => JCodeItemResource::collection($this->items)
             ),
-            'expiresAt'  => $this->expires_at?->toISOString(),
-            'scannedAt'  => $this->scanned_at?->toISOString(),
+            'expiresAt'  => $this->expires_at?->toIso8601String(),
+            'scannedAt'  => $this->scanned_at?->toIso8601String(),
             'isActif'    => $this->isActif(),
             'paymentStatus' => $this->paiement_status,
             'ttlHeures'  => config('prosartisan.jcode.ttl_hours', 48),

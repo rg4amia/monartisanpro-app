@@ -23,7 +23,7 @@ class UserResource extends JsonResource
             'scoreNzassa'      => $this->score_nzassa,
             'walletMateriaux'  => $this->wallet_materiaux,
             'walletMo'         => $this->wallet_mo,
-            'cguAcceptedAt'    => $this->cgu_accepted_at?->toISOString(),
+            'cguAcceptedAt'    => $this->cgu_accepted_at?->toIso8601String(),
             'position'         => $coords,
             'nightInterventionAvailable' => (bool) ($artisanProfile?->intervient_la_nuit ?? false),
             'artisanProfile'   => $this->when(
@@ -39,7 +39,7 @@ class UserResource extends JsonResource
                     'nightInterventionAvailable' => (bool) $artisanProfile->intervient_la_nuit,
                 ] : null
             ),
-            'createdAt'        => $this->created_at?->toISOString(),
+            'createdAt'        => $this->created_at?->toIso8601String(),
         ];
     }
 }

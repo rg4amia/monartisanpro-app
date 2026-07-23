@@ -23,8 +23,8 @@ class SupplierProductResource extends JsonResource
                 $this->relationLoaded('supplier'),
                 fn () => ['id' => $this->supplier->id, 'name' => $this->supplier->name, 'phone' => $this->supplier->phone]
             ),
-            'createdAt' => $this->created_at?->toISOString(),
-            'updatedAt' => $this->updated_at?->toISOString(),
+            'createdAt' => $this->created_at?->toIso8601String(),
+            'updatedAt' => $this->updated_at?->toIso8601String(),
         ];
     }
 }
