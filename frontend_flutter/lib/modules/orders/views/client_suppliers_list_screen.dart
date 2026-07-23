@@ -37,9 +37,39 @@ class _ClientSuppliersListScreenState extends State<ClientSuppliersListScreen> {
           style: TextStyle(fontWeight: FontWeight.w700, fontSize: 20),
         ),
         backgroundColor: Colors.white,
-        foregroundColor: AppColors.textPrimary,
-        elevation: 0.5,
-        centerTitle: false,
+        actions: [
+          Obx(() {
+            if (controller.cartCount == 0) return const SizedBox.shrink();
+            return Stack(
+              alignment: Alignment.center,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.shopping_cart_outlined, color: AppColors.primary),
+                  onPressed: () {
+                    if (controller.selectedSupplier.value != null) {
+                      Get.to(() => const ClientCatalogScreen());
+                    }
+                  },
+                ),
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                      color: AppColors.primary,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Text(
+                      '${controller.cartCount}',
+                      style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }),
+        ],
       ),
       body: Column(
         children: [
@@ -115,8 +145,9 @@ class _ClientSuppliersListScreenState extends State<ClientSuppliersListScreen> {
                     child: InkWell(
                       borderRadius: BorderRadius.circular(16),
                       onTap: () {
-                        controller.selectSupplier(supplier);
-                        Get.to(() => const ClientCatalogScreen());
+                        controller.selectSupplier(supplier, onConfirmed: () {
+                          Get.to(() => const ClientCatalogScreen());
+                        });
                       },
                       child: Padding(
                         padding: const EdgeInsets.all(16.0),
@@ -189,6 +220,63 @@ class _ClientSuppliersListScreenState extends State<ClientSuppliersListScreen> {
           ),
         ],
       ),
+      bottomNavigationBar: Obx(() {
+        if (controller.cartCount == 0 || controller.selectedSupplier.value == null) {
+          return const SizedBox.shrink();
+        }
+        final totalTtc = controller.totalTtc;
+        final totalFormatted = totalTtc.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]} ');
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 10, offset: const Offset(0, -3)),
+            ],
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: SafeArea(
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.1), shape: BoxShape.circle),
+                  child: const Icon(Icons.shopping_bag_outlined, color: AppColors.primary, size: 20),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Panier : ${controller.selectedSupplier.value?.shopName ?? "Quincaillerie"}',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.textPrimary),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        '${controller.cartCount} article(s) • $totalFormatted FCFA',
+                        style: const TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.w700),
+                      ),
+                    ],
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () => Get.to(() => const ClientCatalogScreen()),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text('Voir mon panier', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                ),
+              ],
+            ),
+          ),
+        );
+      }),
     );
   }
 }

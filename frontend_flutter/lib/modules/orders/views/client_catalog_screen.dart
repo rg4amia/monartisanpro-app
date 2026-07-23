@@ -23,25 +23,60 @@ class ClientCatalogScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text(
-          shopName,
-          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              shopName,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: AppColors.textPrimary),
+            ),
+            const Text(
+              'Catalogue des articles',
+              style: TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.normal),
+            ),
+          ],
         ),
         backgroundColor: Colors.white,
         foregroundColor: AppColors.textPrimary,
+        iconTheme: const IconThemeData(color: AppColors.textPrimary),
         elevation: 0.5,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.delete_outline),
-            onPressed: () {
-              if (isArtisan) {
-                artisanCart.clearCart();
-              } else {
-                controller.clearCart();
-              }
-              Get.snackbar('Panier vidé', 'Tous les articles ont été retirés');
-            },
-          ),
+          Obx(() {
+            final count = isArtisan ? artisanCart.cartCount : controller.cartCount;
+            if (count == 0) return const SizedBox.shrink();
+            return IconButton(
+              icon: const Icon(Icons.delete_outline, color: AppColors.danger),
+              tooltip: 'Vider le panier',
+              onPressed: () {
+                Get.dialog(
+                  AlertDialog(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    title: const Text('Vider le panier ?', style: TextStyle(fontWeight: FontWeight.bold)),
+                    content: const Text('Voulez-vous vraiment retirer tous les articles de votre panier ?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Get.back(),
+                        child: const Text('Annuler', style: TextStyle(color: AppColors.textSecondary)),
+                      ),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
+                        onPressed: () {
+                          Get.back();
+                          if (isArtisan) {
+                            artisanCart.clearCart();
+                          } else {
+                            controller.clearCart();
+                          }
+                          Get.snackbar('Panier vidé', 'Tous les articles ont été retirés');
+                        },
+                        child: const Text('Vider', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          }),
         ],
       ),
       body: Obx(() {
@@ -66,7 +101,7 @@ class ClientCatalogScreen extends StatelessWidget {
         }
 
         return ListView.builder(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
           itemCount: controller.supplierProducts.length,
           itemBuilder: (context, index) {
             final product = controller.supplierProducts[index];
@@ -74,6 +109,7 @@ class ClientCatalogScreen extends StatelessWidget {
             // Calcul du prix unitaire TTC pour l'affichage client (+3% de frais plateforme)
             // L'artisan voit le prix HT/fournisseur car les taxes/commissions sont appliquées globalement dans le devis
             final int displayPrice = isArtisan ? product.unitPrice : (product.unitPrice * 1.03).round();
+            final priceFormatted = displayPrice.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]} ');
             
             return Card(
               margin: const EdgeInsets.only(bottom: 16),
@@ -93,10 +129,10 @@ class ClientCatalogScreen extends StatelessWidget {
                       height: 72,
                       width: 72,
                       decoration: BoxDecoration(
-                        color: Colors.grey[100],
+                        color: AppColors.primary.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(Icons.handyman, color: AppColors.primary, size: 28),
+                      child: const Icon(Icons.build_circle_outlined, color: AppColors.primary, size: 32),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
@@ -121,14 +157,38 @@ class ClientCatalogScreen extends StatelessWidget {
                               fontSize: 13,
                             ),
                           ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: product.stockQuantity > 0
+                                      ? Colors.green.withValues(alpha: 0.1)
+                                      : Colors.red.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  product.stockQuantity > 0
+                                      ? 'En stock: ${product.stockQuantity}'
+                                      : 'Rupture de stock',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: product.stockQuantity > 0 ? Colors.green[800] : Colors.red[800],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                           const SizedBox(height: 12),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                '${displayPrice.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]} ')} FCFA',
+                                '$priceFormatted FCFA',
                                 style: const TextStyle(
-                                  fontWeight: FontWeight.w800,
+                                  fontWeight: FontWeight.w900,
                                   fontSize: 16,
                                   color: AppColors.primary,
                                 ),
@@ -187,77 +247,90 @@ class ClientCatalogScreen extends StatelessWidget {
         if (count == 0) return const SizedBox.shrink();
 
         final int totalDisplayPrice = isArtisan ? artisanCart.totalAmount : controller.totalTtc;
+        final totalFormatted = totalDisplayPrice.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]} ');
 
         return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: Colors.white,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 10,
-                offset: const Offset(0, -5),
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 12,
+                offset: const Offset(0, -4),
               ),
             ],
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
           ),
           child: SafeArea(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      '$count ${count > 1 ? "articles" : "article"}',
-                      style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            '$count ${count > 1 ? "articles" : "article"}',
+                            style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 12),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${totalDisplayPrice.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]} ')} FCFA',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 20,
-                        color: AppColors.textPrimary,
-                      ),
+                    Row(
+                      children: [
+                        const Text('Total TTC : ', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                        Text(
+                          '$totalFormatted FCFA',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 18,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-                ElevatedButton(
-                  onPressed: () {
-                    if (isArtisan) {
-                      Get.back();
-                      Get.snackbar(
-                        'Panier Devis mis à jour',
-                        'Vos articles ont été ajoutés à votre panier. Vous pouvez les importer lors de la création de votre devis.',
-                        backgroundColor: AppColors.success,
-                        colorText: Colors.white,
-                      );
-                    } else {
-                      Get.to(() => const OrderCheckoutScreen(), arguments: {
-                        'supplier_id': supplier?.id,
-                        'items': controller.getCartItemsPayload(),
-                      });
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    elevation: 0,
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        isArtisan ? 'Terminer mes ajouts' : 'Passer la commande',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                      ),
-                      const SizedBox(width: 8),
-                      const Icon(Icons.arrow_forward, size: 16),
-                    ],
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      if (isArtisan) {
+                        Get.back();
+                        Get.snackbar(
+                          'Panier Devis mis à jour',
+                          'Vos articles ont été ajoutés au panier pour le devis.',
+                          backgroundColor: AppColors.success,
+                          colorText: Colors.white,
+                        );
+                      } else {
+                        Get.to(() => const OrderCheckoutScreen(), arguments: {
+                          'supplier_id': supplier?.id,
+                          'items': controller.getCartItemsPayload(),
+                        });
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      elevation: 0,
+                    ),
+                    icon: const Icon(Icons.shopping_cart_checkout, size: 20),
+                    label: Text(
+                      isArtisan ? 'TERMINER MES AJOUTS' : 'PASSER LA COMMANDE',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, letterSpacing: 0.5),
+                    ),
                   ),
                 ),
               ],

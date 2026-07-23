@@ -4,7 +4,6 @@ import '../../../core/utils/formatters.dart';
 import '../../../app/routes/app_routes.dart';
 import '../controllers/settings_controller.dart';
 
-import '../../main_tab/controllers/main_tab_controller.dart';
 
 // ─── Design Tokens ────────────────────────────────────────────────────────────
 abstract class _C {
@@ -33,7 +32,6 @@ class SettingsScreen extends GetView<SettingsController> {
           slivers: [
             _AppBar(),
             SliverToBoxAdapter(child: _ProfileHeader(controller: controller)),
-            SliverToBoxAdapter(child: const _SpaceSwitcherCard()),
             SliverToBoxAdapter(child: _StatsRow(controller: controller)),
             SliverToBoxAdapter(child: const SizedBox(height: 8)),
             SliverToBoxAdapter(child: _MenuList(controller: controller)),
@@ -637,100 +635,4 @@ class _VerifiedBadge extends StatelessWidget {
 }
 
 // ─── Carte de Changement d'Espace ─────────────────────────────────────────────
-class _SpaceSwitcherCard extends StatelessWidget {
-  const _SpaceSwitcherCard();
 
-  @override
-  Widget build(BuildContext context) {
-    if (!Get.isRegistered<MainTabController>()) return const SizedBox.shrink();
-    final tabCtrl = Get.find<MainTabController>();
-
-    final roles = [
-      (key: 'client', label: 'Client', icon: Icons.person_rounded, color: const Color(0xFF2F6FED)),
-      (key: 'artisan', label: 'Artisan', icon: Icons.engineering_rounded, color: const Color(0xFFE67E22)),
-      (key: 'fournisseur', label: 'Fournisseur', icon: Icons.storefront_rounded, color: const Color(0xFF27AE60)),
-      (key: 'driver', label: 'Livreur', icon: Icons.two_wheeler_rounded, color: const Color(0xFF1ABC9C)),
-    ];
-
-    return Obx(() {
-      final currentRole = tabCtrl.role.value ?? 'client';
-
-      return Container(
-        margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'ESPACES DE NAVIGATION',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF6B7280),
-                letterSpacing: 0.8,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: roles.map((r) {
-                final isActive = currentRole == r.key ||
-                    (r.key == 'driver' &&
-                        (currentRole == 'livreur' || currentRole == 'LIVREUR'));
-                return Expanded(
-                  child: GestureDetector(
-                    onTap: () => tabCtrl.switchSpace(r.key),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      margin: const EdgeInsets.symmetric(horizontal: 2),
-                      decoration: BoxDecoration(
-                        color: isActive
-                            ? r.color.withValues(alpha: 0.12)
-                            : const Color(0xFFF9FAFB),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isActive ? r.color : const Color(0xFFE5E7EB),
-                          width: isActive ? 1.5 : 1.0,
-                        ),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(r.icon,
-                              size: 20,
-                              color: isActive ? r.color : const Color(0xFF9CA3AF)),
-                          const SizedBox(height: 4),
-                          Text(
-                            r.label,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight:
-                                  isActive ? FontWeight.w700 : FontWeight.w500,
-                              color: isActive ? r.color : const Color(0xFF6B7280),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-          ],
-        ),
-      );
-    });
-  }
-}

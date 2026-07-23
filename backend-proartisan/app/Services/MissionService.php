@@ -37,28 +37,43 @@ class MissionService
         ]);
 
         // Enrichissement Gemini
-        $estimate = $this->geminiService->analyzeMission($data['description'], [
-            'category' => $data['category'] ?? null,
-            'location_address' => $data['location_address'] ?? null,
-        ]);
+        try {
+            $estimate = $this->geminiService->analyzeMission($data['description'], [
+                'category' => $data['category'] ?? null,
+                'location_address' => $data['location_address'] ?? null,
+            ]);
 
-        $mission->update([
-            'gemini_category'       => $estimate['category'],
-            'gemini_urgency'        => $estimate['urgency'],
-            'gemini_estimation_min' => $estimate['price_min'],
-            'gemini_estimation_max' => $estimate['price_max'],
-        ]);
+            $urgency = match (strtolower((string) ($estimate['urgency'] ?? 'moyen'))) {
+                'faible', 'low', 'normale', 'normal' => 'faible',
+                'urgent', 'haute', 'high', 'elevee', 'élevée' => 'urgent',
+                default => 'moyen',
+            };
+
+            $mission->update([
+                'gemini_category'       => $estimate['category'] ?? 'Travaux généraux',
+                'gemini_urgency'        => $urgency,
+                'gemini_estimation_min' => $estimate['price_min'] ?? 25000,
+                'gemini_estimation_max' => $estimate['price_max'] ?? 100000,
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('Échec enrichissement Gemini: ' . $e->getMessage());
+        }
 
         if ($hasArtisan) {
-            $artisan = User::find($data['artisan_id']);
-            if ($artisan) {
-                $this->notificationService->send(
-                    $artisan,
-                    'mission',
-                    'Nouvelle demande de devis',
-                    "Le client {$client->phone} vous a envoyé une demande de devis.",
-                    ['mission_id' => $mission->id]
-                );
+            try {
+                $artisan = User::find($data['artisan_id']);
+                if ($artisan) {
+                    $clientPhone = $client->phone ?? 'Client';
+                    $this->notificationService->send(
+                        $artisan,
+                        'mission',
+                        'Nouvelle demande de devis',
+                        "Le client {$clientPhone} vous a envoyé une demande de devis.",
+                        ['mission_id' => $mission->id]
+                    );
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Échec envoi notification artisan: ' . $e->getMessage());
             }
         }
 
