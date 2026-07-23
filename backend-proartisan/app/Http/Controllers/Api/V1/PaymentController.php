@@ -526,6 +526,11 @@ class PaymentController extends Controller
                     ],
                 ]);
             }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Moyen de paiement non pris en charge.',
+            ], 422);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,

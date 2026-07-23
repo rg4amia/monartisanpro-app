@@ -124,7 +124,7 @@ class JCodeController extends Controller
     public function uploadPhotoMateriaux(UploadJCodePhotoRequest $request, JCode $jcode): JsonResponse
     {
         try {
-            $user = auth()->user();
+            $user = $request->user();
 
             // Vérifier que l'utilisateur est bien l'artisan du J-Code
             if ($jcode->artisan_id !== $user->id) {

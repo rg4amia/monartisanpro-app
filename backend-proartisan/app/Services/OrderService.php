@@ -252,13 +252,20 @@ class OrderService
 
     /**
      * Validation du code de retrait (chez le fournisseur).
+    /**
+     * Validation du code de retrait (chez le fournisseur).
      * Libère immédiatement la part des matériaux au profit du fournisseur.
      */
-    public function verifyPickup(Order $order, string $code): Order
+    public function verifyPickup(Order $order, string $code, ?string $photoUrl = null): Order
     {
-        return DB::transaction(function () use ($order, $code) {
+        return DB::transaction(function () use ($order, $code, $photoUrl) {
             if ($order->pickup_code !== trim($code)) {
                 throw new \Exception("Le code de retrait ou de prise en charge est incorrect.");
+            }
+
+            $updateData = [];
+            if ($photoUrl) {
+                $updateData['pickup_photo_url'] = $photoUrl;
             }
 
             if ($order->delivery_mode === 'pickup') {
@@ -267,7 +274,10 @@ class OrderService
                     throw new \Exception("La commande n'est pas encore prête pour le retrait.");
                 }
 
-                $order->update(['status' => 'delivered']);
+                $updateData['status'] = 'delivered';
+                $updateData['delivered_at'] = now();
+                $order->update($updateData);
+
                 $this->releaseSupplierFunds($order);
 
                 // Notification Client
@@ -291,7 +301,9 @@ class OrderService
                     throw new \Exception("Le livreur n'a pas été assigné à cette commande.");
                 }
 
-                $order->update(['status' => 'driver_picked_up']); // ou shipping
+                $updateData['status'] = 'driver_picked_up';
+                $order->update($updateData);
+
                 $this->releaseSupplierFunds($order);
 
                 // Notification Livreur (reçoit code de réception et localisation client)
@@ -320,9 +332,9 @@ class OrderService
      * Validation du code de réception par le client final.
      * Libère la part de la livraison au profit du livreur.
      */
-    public function verifyDelivery(Order $order, string $code): Order
+    public function verifyDelivery(Order $order, string $code, ?string $photoUrl = null): Order
     {
-        return DB::transaction(function () use ($order, $code) {
+        return DB::transaction(function () use ($order, $code, $photoUrl) {
             if ($order->delivery_mode !== 'delivery') {
                 throw new \Exception("Cette commande n'implique pas de livraison.");
             }
@@ -335,7 +347,15 @@ class OrderService
                 throw new \Exception("Le colis n'a pas encore été retiré chez le fournisseur.");
             }
 
-            $order->update(['status' => 'delivered']);
+            $updateData = [
+                'status' => 'delivered',
+                'delivered_at' => now(),
+            ];
+            if ($photoUrl) {
+                $updateData['delivery_photo_url'] = $photoUrl;
+            }
+
+            $order->update($updateData);
 
             // Libération des fonds au livreur
             $this->releaseDriverFunds($order);
@@ -358,6 +378,71 @@ class OrderService
 
             return $order;
         });
+    }
+
+    /**
+     * Ouverture d'un litige sur la commande (délai paramétrable en backoffice).
+     */
+    public function openOrderDispute(Order $order, User $client, string $reason): Order
+    {
+        return DB::transaction(function () use ($order, $client, $reason) {
+            if ($order->client_id !== $client->id) {
+                throw new \Exception("Seul le client ayant passé la commande peut ouvrir un litige.");
+            }
+
+            $windowMinutes = (int) \App\Models\Setting::getValueByKey('order_dispute_window_minutes', 30);
+
+            if (!$order->canDeclareDispute()) {
+                throw new \Exception("Le délai d'ouverture de litige (limité à {$windowMinutes} minutes) est dépassé ou la commande n'est pas éligible.");
+            }
+
+            $order->update([
+                'status' => 'disputed',
+                'dispute_reason' => $reason,
+                'dispute_opened_at' => now(),
+            ]);
+
+            // Notification Fournisseur
+            app(\App\Services\NotificationService::class)->send(
+                $order->supplier,
+                'payment',
+                'Litige ouvert sur la commande',
+                "Un litige a été ouvert par le client sur la commande #{$order->id} : {$reason}."
+            );
+
+            if ($order->driver) {
+                // Notification Livreur
+                app(\App\Services\NotificationService::class)->send(
+                    $order->driver,
+                    'payment',
+                    'Litige ouvert sur la livraison',
+                    "Un litige a été signalé pour la livraison de la commande #{$order->id}."
+                );
+            }
+
+            return $order;
+        });
+    }
+
+    /**
+     * Ajustement des frais d'attente (surge pricing) pour le livreur.
+     */
+    public function applyWaitingSurgeFee(Order $order, int $waitingMinutes): Order
+    {
+        if ($waitingMinutes <= 0) {
+            return $order;
+        }
+
+        $extraFee = (int) round(($waitingMinutes / 5) * 100); // 100 FCFA par tranche de 5 min d'attente
+        $newDeliveryCost = $order->delivery_cost + $extraFee;
+
+        $order->update([
+            'waiting_time_minutes' => $order->waiting_time_minutes + $waitingMinutes,
+            'delivery_cost' => $newDeliveryCost,
+            'total_amount' => $order->subtotal + $order->platform_fee + $newDeliveryCost,
+        ]);
+
+        return $order;
     }
 
     /**

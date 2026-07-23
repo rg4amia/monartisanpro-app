@@ -228,6 +228,32 @@ class MissionRepository {
     }
   }
 
+  /// Artisan accepte une demande de devis directe
+  Future<MissionModel> acceptRequest(int missionId) async {
+    final res = await _client.post('/api/v1/missions/$missionId/accept-request');
+    final data = res.data;
+    final Map<String, dynamic> missionData;
+    if (data is Map && data.containsKey('data')) {
+      missionData = data['data'] as Map<String, dynamic>;
+    } else {
+      missionData = data as Map<String, dynamic>;
+    }
+    return MissionModel.fromJson(missionData);
+  }
+
+  /// Artisan refuse une demande de devis directe
+  Future<MissionModel> rejectRequest(int missionId) async {
+    final res = await _client.post('/api/v1/missions/$missionId/reject-request');
+    final data = res.data;
+    final Map<String, dynamic> missionData;
+    if (data is Map && data.containsKey('data')) {
+      missionData = data['data'] as Map<String, dynamic>;
+    } else {
+      missionData = data as Map<String, dynamic>;
+    }
+    return MissionModel.fromJson(missionData);
+  }
+
   Future<Map<String, dynamic>> validateReferentMission({
     required int missionId,
     required double latitude,

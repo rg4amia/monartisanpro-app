@@ -195,7 +195,7 @@ class OrderController extends Controller
         }
 
         try {
-            $this->orderService->verifyPickup($order, $request->code);
+            $this->orderService->verifyPickup($order, $request->code, $request->input('photo_url'));
 
             if ($request->header('X-Inertia')) {
                 return back();
@@ -225,6 +225,7 @@ class OrderController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'code' => 'required|string',
+            'photo_url' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -244,12 +245,79 @@ class OrderController extends Controller
         }
 
         try {
-            $this->orderService->verifyDelivery($order, $request->code);
+            $this->orderService->verifyDelivery($order, $request->code, $request->input('photo_url'));
 
             return response()->json([
                 'success' => true,
                 'message' => 'Livraison finalisée avec succès. Fonds de livraison libérés au livreur.',
                 'data' => $order->fresh(),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    /**
+     * Déclaration d'un litige sur la commande par le client (dans le délai paramétré).
+     * POST /api/v1/orders/{order}/dispute
+     */
+    public function dispute(Request $request, Order $order): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'reason' => 'required|string|min:5',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Une raison valide est requise pour ouvrir un litige.',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        try {
+            $disputedOrder = $this->orderService->openOrderDispute($order, $request->user(), $request->reason);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Litige déclaré avec succès sur la commande.',
+                'data' => $disputedOrder->fresh(),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    /**
+     * Majoration des frais d'attente livreur.
+     * POST /api/v1/orders/{order}/waiting-surge
+     */
+    public function applyWaitingSurge(Request $request, Order $order): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'waiting_minutes' => 'required|integer|min:1',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Le nombre de minutes d\'attente est requis.',
+            ], 422);
+        }
+
+        try {
+            $updatedOrder = $this->orderService->applyWaitingSurgeFee($order, (int) $request->waiting_minutes);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Frais d\'attente majores appliqués.',
+                'data' => $updatedOrder->fresh(),
             ]);
         } catch (\Exception $e) {
             return response()->json([

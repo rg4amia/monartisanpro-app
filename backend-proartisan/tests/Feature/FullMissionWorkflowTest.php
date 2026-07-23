@@ -70,10 +70,15 @@ class FullMissionWorkflowTest extends TestCase
                 'location_address' => 'Abidjan Plateau',
             ])
             ->assertCreated()
-            ->assertJsonPath('data.status', 'draft');
+            ->assertJsonPath('data.status', 'pending_artisan_acceptance');
 
         $missionId = $missionResponse->json('data.id');
         $mission = Mission::findOrFail($missionId);
+
+        // Artisan accepte la demande de devis
+        $this->actingAs($artisan)
+            ->postJson("/api/v1/missions/{$mission->id}/accept-request")
+            ->assertOk();
 
         $devisResponse = $this->actingAs($artisan)
             ->postJson("/api/v1/missions/{$mission->id}/devis", [
