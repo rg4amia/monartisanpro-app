@@ -23,16 +23,25 @@ class Order extends Model
         'reception_code',
         'vehicle_class',
         'surge_multiplier',
+        'delivered_at',
+        'pickup_photo_url',
+        'delivery_photo_url',
+        'waiting_time_minutes',
+        'dispute_reason',
+        'dispute_opened_at',
     ];
 
     protected function casts(): array
     {
         return [
-            'subtotal'         => 'integer',
-            'delivery_cost'    => 'integer',
-            'platform_fee'     => 'integer',
-            'total_amount'     => 'integer',
-            'surge_multiplier' => 'float',
+            'subtotal'             => 'integer',
+            'delivery_cost'        => 'integer',
+            'platform_fee'         => 'integer',
+            'total_amount'         => 'integer',
+            'surge_multiplier'     => 'float',
+            'waiting_time_minutes' => 'integer',
+            'delivered_at'         => 'datetime',
+            'dispute_opened_at'    => 'datetime',
         ];
     }
 
@@ -96,5 +105,19 @@ class Order extends Model
     public function isDisputed(): bool
     {
         return $this->status === 'disputed';
+    }
+
+    public function canDeclareDispute(): bool
+    {
+        if ($this->status !== 'delivered' || !$this->delivered_at) {
+            return false;
+        }
+
+        if ($this->dispute_opened_at || $this->status === 'disputed') {
+            return false;
+        }
+
+        $windowMinutes = (int) Setting::getValueByKey('order_dispute_window_minutes', 30);
+        return now()->diffInMinutes($this->delivered_at) <= $windowMinutes;
     }
 }

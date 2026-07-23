@@ -101,6 +101,13 @@ class _MissionTrackingScreenState extends State<MissionTrackingScreen> {
                   hasReferentPendingValidation:
                       controller.hasReferentPendingValidation,
                 ),
+                if (isArtisan && mission.status == 'pending_artisan_acceptance') ...[
+                  const SizedBox(height: 16),
+                  _PendingAcceptanceCard(
+                    mission: mission,
+                    controller: controller,
+                  ),
+                ],
                 const SizedBox(height: 16),
                 if (isArtisan)
                   _BudgetSection(mission: mission)
@@ -472,6 +479,18 @@ class _WorkflowCard extends StatelessWidget {
         body:
             'Un litige a ete ouvert. Les fonds et les validations sont temporairement geles jusqu\'a decision.',
         color: _Palette.danger,
+      );
+    }
+
+    if (mission.status == 'pending_artisan_acceptance') {
+      return _PhaseDescription(
+        title: isArtisan
+            ? 'Nouvelle demande de devis reçue'
+            : 'Demande transmise à l\'artisan',
+        body: isArtisan
+            ? 'Un client vous a sélectionné pour cette mission. Veuillez accepter ou refuser la demande.'
+            : 'L\'artisan a été notifié. En attente de son acceptation pour créer le devis.',
+        color: _Palette.warning,
       );
     }
 
@@ -1749,6 +1768,79 @@ class _Pill extends StatelessWidget {
           fontWeight: FontWeight.w700,
           color: color,
         ),
+      ),
+    );
+  }
+}
+
+class _PendingAcceptanceCard extends StatelessWidget {
+  final MissionModel mission;
+  final MissionsController controller;
+
+  const _PendingAcceptanceCard({
+    required this.mission,
+    required this.controller,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return _SectionContainer(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.pending_actions_rounded, color: _Palette.warning, size: 24),
+              SizedBox(width: 10),
+              Text(
+                'Réponse requise',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: _Palette.ink,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Ce client vous a choisi pour réaliser ses travaux. Acceptez-vous la demande pour débloquer la création du devis ?',
+            style: TextStyle(fontSize: 13, color: _Palette.muted, height: 1.4),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () => controller.acceptMissionRequest(mission.id),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF10B981),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 0,
+                  ),
+                  icon: const Icon(Icons.check_circle_outline, size: 18),
+                  label: const Text('ACCEPTER', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => controller.rejectMissionRequest(mission.id),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFEF4444),
+                    side: const BorderSide(color: Color(0xFFEF4444)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  icon: const Icon(Icons.cancel_outlined, size: 18),
+                  label: const Text('REFUSER', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

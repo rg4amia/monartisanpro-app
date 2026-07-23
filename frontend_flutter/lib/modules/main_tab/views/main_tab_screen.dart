@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../core/theme/app_colors.dart';
 import '../../home/views/artisan_home_screen.dart';
 import '../../home/views/artisan_map_screen.dart';
 import '../../home/views/client_home_screen.dart';
-import '../../home/views/supplier_home_screen.dart';
 import '../../home/views/driver_home_screen.dart';
-import '../../jcode/views/jcode_screen.dart';
-import '../../missions/views/missions_screen.dart';
+import '../../home/views/supplier_home_screen.dart';
 import '../../ia/views/ia_assistant_screen.dart';
+import '../../jcode/views/jcode_screen.dart';
+import '../../jcode/views/scanner_screen.dart';
+import '../../jcode/views/supplier_catalog_screen.dart';
+import '../../missions/views/missions_screen.dart';
+import '../../orders/views/client_suppliers_list_screen.dart';
 import '../../settings/views/settings_screen.dart';
+import '../../wallet/views/wallet_screen.dart';
 import '../controllers/main_tab_controller.dart';
 
 class MainTabScreen extends StatelessWidget {
@@ -23,7 +28,7 @@ class MainTabScreen extends StatelessWidget {
       final role = c.role.value ?? 'client';
       final isFournisseur = role == 'fournisseur';
       final isArtisan = role == 'artisan';
-      final isDriver = role == 'driver' || role == 'LIVREUR';
+      final isDriver = role == 'driver' || role == 'livreur' || role == 'LIVREUR';
 
       final tabs = isFournisseur
           ? _fournisseurTabs()
@@ -33,91 +38,40 @@ class MainTabScreen extends StatelessWidget {
                   ? _driverTabs()
                   : _clientTabs();
 
+      final Color spaceThemeColor = isFournisseur
+          ? AppColors.success
+          : isArtisan
+              ? AppColors.accent
+              : isDriver
+                  ? AppColors.driver
+                  : AppColors.client;
+
+      // Safe index bound protection if role switches dynamically
+      final safeIndex = c.currentIndex.value >= tabs.screens.length
+          ? 0
+          : c.currentIndex.value;
+
       return Scaffold(
         body: IndexedStack(
-          index: c.currentIndex.value,
+          index: safeIndex,
           children: tabs.screens,
         ),
         bottomNavigationBar: _ModernBottomNav(
-          currentIndex: c.currentIndex.value,
+          currentIndex: safeIndex,
           onTap: c.changeTab,
           items: tabs.items,
+          activeColor: spaceThemeColor,
         ),
       );
     });
   }
 
+  // ── 1. ESPACE CLIENT ────────────────────────────────────────────────────────
   _TabConfig _clientTabs() => _TabConfig(
-        screens: [
-          const ClientHomeScreen(),
-          const ArtisanMapScreen(),
-          const MissionsScreen(),
-          const SettingsScreen(),
-        ],
-        items: const [
-          _NavItem(
-            icon: Icons.home_outlined,
-            activeIcon: Icons.home,
-            label: 'Accueil',
-          ),
-          _NavItem(
-            icon: Icons.map_outlined,
-            activeIcon: Icons.map,
-            label: 'Carte',
-          ),
-          _NavItem(
-            icon: Icons.calendar_today_outlined,
-            activeIcon: Icons.calendar_today,
-            label: 'Missions',
-          ),
-          _NavItem(
-            icon: Icons.person_outline_rounded,
-            activeIcon: Icons.person,
-            label: 'Profil',
-          ),
-        ],
-      );
-
-  _TabConfig _artisanTabs() => _TabConfig(
         screens: const [
-          ArtisanHomeScreen(),
-          MissionsScreen(),
-          IaAssistantScreen(),
-          JcodeScreen(),
-          SettingsScreen(),
-        ],
-        items: const [
-          _NavItem(
-            icon: Icons.home_outlined,
-            activeIcon: Icons.home,
-            label: 'Accueil',
-          ),
-          _NavItem(
-            icon: Icons.work_outline,
-            activeIcon: Icons.work,
-            label: 'Missions',
-          ),
-          _NavItem(
-            icon: Icons.smart_toy_outlined,
-            activeIcon: Icons.smart_toy,
-            label: 'Assistant IA',
-          ),
-          _NavItem(
-            icon: Icons.qr_code_2_outlined,
-            activeIcon: Icons.qr_code_2,
-            label: 'J-Code',
-          ),
-          _NavItem(
-            icon: Icons.person_outline_rounded,
-            activeIcon: Icons.person,
-            label: 'Profil',
-          ),
-        ],
-      );
-
-  _TabConfig _fournisseurTabs() => _TabConfig(
-        screens: const [
-          SupplierHomeScreen(),
+          ClientHomeScreen(),
+          ArtisanMapScreen(),
+          ClientSuppliersListScreen(),
           MissionsScreen(),
           SettingsScreen(),
         ],
@@ -125,57 +79,158 @@ class MainTabScreen extends StatelessWidget {
           _NavItem(
             icon: Icons.home_outlined,
             activeIcon: Icons.home_rounded,
-            label: 'ACCUEIL',
+            label: 'Accueil',
           ),
           _NavItem(
-            icon: Icons.access_time_outlined,
-            activeIcon: Icons.access_time_rounded,
-            label: 'TRANSACTIONS',
+            icon: Icons.map_outlined,
+            activeIcon: Icons.map_rounded,
+            label: 'Artisans',
+          ),
+          _NavItem(
+            icon: Icons.storefront_outlined,
+            activeIcon: Icons.storefront_rounded,
+            label: 'Boutiques',
+          ),
+          _NavItem(
+            icon: Icons.assignment_outlined,
+            activeIcon: Icons.assignment_rounded,
+            label: 'Missions',
           ),
           _NavItem(
             icon: Icons.person_outline_rounded,
             activeIcon: Icons.person_rounded,
-            label: 'PROFIL',
+            label: 'Profil',
           ),
         ],
       );
 
-  _TabConfig _driverTabs() => _TabConfig(
+  // ── 2. ESPACE ARTISAN ───────────────────────────────────────────────────────
+  _TabConfig _artisanTabs() => _TabConfig(
         screens: const [
-          DriverHomeScreen(),
+          ArtisanHomeScreen(),
           MissionsScreen(),
+          JcodeScreen(),
+          IaAssistantScreen(),
           SettingsScreen(),
         ],
         items: const [
           _NavItem(
             icon: Icons.home_outlined,
-            activeIcon: Icons.home,
+            activeIcon: Icons.home_rounded,
             label: 'Accueil',
           ),
           _NavItem(
-            icon: Icons.local_shipping_outlined,
-            activeIcon: Icons.local_shipping,
-            label: 'Livraison',
+            icon: Icons.work_outline_rounded,
+            activeIcon: Icons.work_rounded,
+            label: 'Devis & Projets',
+          ),
+          _NavItem(
+            icon: Icons.qr_code_2_outlined,
+            activeIcon: Icons.qr_code_2_rounded,
+            label: 'J-Codes',
+          ),
+          _NavItem(
+            icon: Icons.smart_toy_outlined,
+            activeIcon: Icons.smart_toy_rounded,
+            label: 'Assistant IA',
           ),
           _NavItem(
             icon: Icons.person_outline_rounded,
-            activeIcon: Icons.person,
+            activeIcon: Icons.person_rounded,
+            label: 'Profil',
+          ),
+        ],
+      );
+
+  // ── 3. ESPACE FOURNISSEUR ──────────────────────────────────────────────────
+  _TabConfig _fournisseurTabs() => _TabConfig(
+        screens: const [
+          SupplierHomeScreen(),
+          ScannerScreen(),
+          SupplierCatalogScreen(),
+          MissionsScreen(),
+          SettingsScreen(),
+        ],
+        items: const [
+          _NavItem(
+            icon: Icons.storefront_outlined,
+            activeIcon: Icons.storefront_rounded,
+            label: 'Boutique',
+          ),
+          _NavItem(
+            icon: Icons.qr_code_scanner_outlined,
+            activeIcon: Icons.qr_code_scanner_rounded,
+            label: 'Scan J-Code',
+          ),
+          _NavItem(
+            icon: Icons.inventory_2_outlined,
+            activeIcon: Icons.inventory_2_rounded,
+            label: 'Catalogue',
+          ),
+          _NavItem(
+            icon: Icons.receipt_long_outlined,
+            activeIcon: Icons.receipt_long_rounded,
+            label: 'Commandes',
+          ),
+          _NavItem(
+            icon: Icons.person_outline_rounded,
+            activeIcon: Icons.person_rounded,
+            label: 'Profil',
+          ),
+        ],
+      );
+
+  // ── 4. ESPACE LIVREUR ───────────────────────────────────────────────────────
+  _TabConfig _driverTabs() => _TabConfig(
+        screens: const [
+          DriverHomeScreen(),
+          MissionsScreen(),
+          ScannerScreen(),
+          WalletScreen(),
+          SettingsScreen(),
+        ],
+        items: const [
+          _NavItem(
+            icon: Icons.two_wheeler_outlined,
+            activeIcon: Icons.two_wheeler_rounded,
+            label: 'Tableau Bord',
+          ),
+          _NavItem(
+            icon: Icons.local_shipping_outlined,
+            activeIcon: Icons.local_shipping_rounded,
+            label: 'Livraisons',
+          ),
+          _NavItem(
+            icon: Icons.qr_code_scanner_outlined,
+            activeIcon: Icons.qr_code_scanner_rounded,
+            label: 'Code Retrait',
+          ),
+          _NavItem(
+            icon: Icons.account_balance_wallet_outlined,
+            activeIcon: Icons.account_balance_wallet_rounded,
+            label: 'Gains',
+          ),
+          _NavItem(
+            icon: Icons.person_outline_rounded,
+            activeIcon: Icons.person_rounded,
             label: 'Profil',
           ),
         ],
       );
 }
 
-// ─── Modern Bottom Navigation ─────────────────────────────────────────────────
+// ─── Modern Bottom Navigation with Space Color Theme ───────────────────────────
 class _ModernBottomNav extends StatelessWidget {
   final int currentIndex;
   final Function(int) onTap;
   final List<_NavItem> items;
+  final Color activeColor;
 
   const _ModernBottomNav({
     required this.currentIndex,
     required this.onTap,
     required this.items,
+    required this.activeColor,
   });
 
   @override
@@ -185,7 +240,7 @@ class _ModernBottomNav extends StatelessWidget {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 20,
             offset: const Offset(0, -4),
           ),
@@ -193,15 +248,18 @@ class _ModernBottomNav extends StatelessWidget {
       ),
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: List.generate(
               items.length,
-              (i) => _NavButton(
-                item: items[i],
-                isActive: currentIndex == i,
-                onTap: () => onTap(i),
+              (i) => Expanded(
+                child: _NavButton(
+                  item: items[i],
+                  isActive: currentIndex == i,
+                  activeColor: activeColor,
+                  onTap: () => onTap(i),
+                ),
               ),
             ),
           ),
@@ -214,17 +272,18 @@ class _ModernBottomNav extends StatelessWidget {
 class _NavButton extends StatelessWidget {
   final _NavItem item;
   final bool isActive;
+  final Color activeColor;
   final VoidCallback onTap;
 
   const _NavButton({
     required this.item,
     required this.isActive,
+    required this.activeColor,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    const primary = Color(0xFF4F46E5);
     const inactive = Color(0xFF9CA3AF);
 
     return GestureDetector(
@@ -232,9 +291,9 @@ class _NavButton extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
         decoration: BoxDecoration(
-          color: isActive ? primary.withValues(alpha: 0.1) : Colors.transparent,
+          color: isActive ? activeColor.withValues(alpha: 0.12) : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
@@ -242,7 +301,7 @@ class _NavButton extends StatelessWidget {
           children: [
             Icon(
               isActive ? item.activeIcon : item.icon,
-              color: isActive ? primary : inactive,
+              color: isActive ? activeColor : inactive,
               size: 22,
             ),
             const SizedBox(height: 4),
@@ -252,8 +311,8 @@ class _NavButton extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 10,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                color: isActive ? primary : inactive,
+                fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                color: isActive ? activeColor : inactive,
               ),
             ),
           ],

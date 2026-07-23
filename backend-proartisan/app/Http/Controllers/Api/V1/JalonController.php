@@ -135,7 +135,7 @@ class JalonController extends Controller
     public function uploadPhotos(UploadJalonPhotosRequest $request, Jalon $jalon): JsonResponse
     {
         try {
-            $user = auth()->user();
+            $user = $request->user();
 
             // Vérifier que l'utilisateur est bien l'artisan de la mission
             if ($jalon->mission->artisan_id !== $user->id) {

@@ -262,6 +262,48 @@ class MissionsController extends GetxController {
     }
   }
 
+  /// Artisan accepte la demande de devis
+  Future<bool> acceptMissionRequest(int missionId) async {
+    isLoading.value = true;
+    try {
+      final updated = await _repo.acceptRequest(missionId);
+      currentMission.value = updated;
+      await loadMission(missionId, forceRefresh: true);
+      Get.snackbar(
+        'Demande acceptée',
+        'Vous avez accepté la demande. Vous pouvez maintenant soumettre un devis.',
+        snackPosition: SnackPosition.TOP,
+      );
+      return true;
+    } catch (e) {
+      _showErrorSnackbar('Erreur lors de l\'acceptation');
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Artisan refuse la demande de devis
+  Future<bool> rejectMissionRequest(int missionId) async {
+    isLoading.value = true;
+    try {
+      final updated = await _repo.rejectRequest(missionId);
+      currentMission.value = updated;
+      await loadMission(missionId, forceRefresh: true);
+      Get.snackbar(
+        'Demande refusée',
+        'La demande de devis a été refusée.',
+        snackPosition: SnackPosition.TOP,
+      );
+      return true;
+    } catch (e) {
+      _showErrorSnackbar('Erreur lors du refus');
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   /// Soumet un jalon pour validation avec photos géolocalisées
   ///
   /// [jalonId] - ID du jalon à soumettre

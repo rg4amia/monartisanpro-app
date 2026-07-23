@@ -7,12 +7,16 @@ use App\Http\Requests\Mission\CreateMissionRequest;
 use App\Http\Resources\MissionResource;
 use App\Models\Mission;
 use App\Services\MissionService;
+use App\Services\NotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class MissionController extends Controller
 {
-    public function __construct(private MissionService $missionService) {}
+    public function __construct(
+        private MissionService $missionService,
+        private NotificationService $notificationService
+    ) {}
 
     /**
      * Liste des missions de l'utilisateur connecté.
@@ -176,6 +180,16 @@ class MissionController extends Controller
 
         $mission->status->transitionTo(\App\States\Mission\DraftState::class);
 
+        if ($mission->client) {
+            $this->notificationService->send(
+                $mission->client,
+                'mission',
+                'Demande de devis acceptée',
+                "L'artisan a accepté votre demande et prépare le devis.",
+                ['mission_id' => $mission->id]
+            );
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Demande acceptée.',
@@ -198,12 +212,24 @@ class MissionController extends Controller
             return response()->json(['success' => false, 'message' => 'Statut invalide.'], 400);
         }
 
+        $client = $mission->client;
+
         $mission->update(['artisan_id' => null]);
         $mission->status->transitionTo(\App\States\Mission\DraftState::class);
 
+        if ($client) {
+            $this->notificationService->send(
+                $client,
+                'mission',
+                'Demande de devis refusée',
+                "L'artisan a refusé votre demande de devis. Vous pouvez sélectionner un autre artisan.",
+                ['mission_id' => $mission->id]
+            );
+        }
+
         return response()->json([
             'success' => true,
-            'message' => 'Demande refusée, mission remise en brouillon.',
+            'message' => 'Demande refusée, mission remise en recherche d\'artisan.',
             'data'    => new MissionResource($mission->fresh()),
         ]);
     }

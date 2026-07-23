@@ -1,12 +1,13 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../data/models/artisan_model.dart';
 import '../../../shared/widgets/score_nzassa.dart';
+import '../../missions/controllers/missions_controller.dart';
 import '../controllers/artisan_controller.dart';
 
 class ArtisanProfileScreen extends StatelessWidget {
@@ -160,31 +161,23 @@ class ArtisanProfileScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 20),
 
-                    // Actions
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: () => launchUrl(
-                              Uri.parse('tel:${a.phone}'),
-                            ),
-                            icon: const Icon(Icons.call_outlined),
-                            label: const Text('Appeler'),
+                    // Actions - Bouton Demander devis (Sans option Appeler)
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () => _showQuoteRequestModal(context, a),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () => Get.toNamed(
-                              Routes.missionRequest,
-                              arguments: {'artisan': a},
-                            ),
-                            icon: const Icon(Icons.send_outlined,
-                                color: Colors.white),
-                            label: const Text('Demander devis'),
-                          ),
+                        icon: const Icon(Icons.send_outlined, color: Colors.white),
+                        label: const Text(
+                          'Demander un devis',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                         ),
-                      ],
+                      ),
                     ),
                     const SizedBox(height: 20),
 
@@ -313,4 +306,138 @@ class _ScoreDimension extends StatelessWidget {
       ),
     );
   }
+}
+
+void _showQuoteRequestModal(BuildContext context, ArtisanModel a) {
+  final descCtrl = TextEditingController();
+  final urgency = 'moyen'.obs;
+
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) {
+      return Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Demande de devis - ${a.name}',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Get.back(),
+                    icon: const Icon(Icons.close_rounded),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Décrivez vos travaux pour que ${a.name} puisse vous établir un devis personnalisé.',
+                style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+              ),
+              const SizedBox(height: 16),
+
+              // Description Textfield
+              TextField(
+                controller: descCtrl,
+                maxLines: 4,
+                decoration: InputDecoration(
+                  hintText: 'Décrivez précisément votre besoin (min. 20 caractères)...\nEx: Remplacement fuite sous évier cuisine et pose nouveau siphon.',
+                  hintStyle: const TextStyle(fontSize: 13, color: AppColors.textMuted),
+                  filled: true,
+                  fillColor: AppColors.background,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.border),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Urgency Selection
+              const Text(
+                'Niveau d\'urgence',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+              ),
+              const SizedBox(height: 8),
+              Obx(() => SegmentedButton<String>(
+                segments: const [
+                  ButtonSegment(value: 'faible', label: Text('Normal')),
+                  ButtonSegment(value: 'moyen', label: Text('Moyen')),
+                  ButtonSegment(value: 'urgent', label: Text('Urgent')),
+                ],
+                selected: {urgency.value},
+                onSelectionChanged: (set) => urgency.value = set.first,
+              )),
+              const SizedBox(height: 24),
+
+              // Submit Button
+              ElevatedButton.icon(
+                onPressed: () async {
+                  final text = descCtrl.text.trim();
+                  if (text.length < 20) {
+                    Get.snackbar(
+                      'Description insuffisante',
+                      'Veuillez saisir au moins 20 caractères pour décrire vos travaux.',
+                      snackPosition: SnackPosition.TOP,
+                      backgroundColor: AppColors.warning,
+                      colorText: Colors.white,
+                    );
+                    return;
+                  }
+
+                  Get.back(); // Ferme le modal sheet
+
+                  final missionsController = Get.isRegistered<MissionsController>()
+                      ? Get.find<MissionsController>()
+                      : Get.put(MissionsController());
+
+                  final mission = await missionsController.createMission(
+                    artisanId: a.id,
+                    description: text,
+                    category: a.trade ?? 'Travaux généraux',
+                    urgency: urgency.value,
+                  );
+
+                  if (mission != null) {
+                    Get.toNamed(
+                      Routes.missionTracking,
+                      arguments: mission,
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  backgroundColor: AppColors.client,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                icon: const Icon(Icons.send_outlined, color: Colors.white),
+                label: const Text('ENVOYER LA DEMANDE DE DEVIS', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
 }

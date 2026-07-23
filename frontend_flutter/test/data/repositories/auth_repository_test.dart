@@ -74,6 +74,7 @@ void main() {
           phone: TestConfig.testPhone,
           role: TestConfig.testRole,
           name: TestConfig.testName,
+          cguAccepted: true,
         );
 
         // register() retourne un Map avec 'token' et 'user'
@@ -143,6 +144,7 @@ void main() {
           phone: '',
           role: '',
           name: '',
+          cguAccepted: true,
         );
         fail('Should throw validation error');
       } on DioException catch (e) {

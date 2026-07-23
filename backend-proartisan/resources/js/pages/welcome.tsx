@@ -658,11 +658,11 @@ export default function Welcome() {
                                     <Link href="/admin/login" className="transition hover:text-white">
                                         Backoffice admin
                                     </Link>
-                                    <a href="mailto:contact@prosartisan.ci" className="transition hover:text-white">
-                                        contact@prosartisan.ci
+                                    <a href="mailto:info@prosartisan.net" className="transition hover:text-white">
+                                        info@prosartisan.net
                                     </a>
-                                    <a href="tel:+2250123456789" className="transition hover:text-white">
-                                        +225 01 23 45 67 89
+                                    <a href="tel:+2250160606183" className="transition hover:text-white">
+                                        +225 01 60 60 61 83
                                     </a>
                                 </FooterGroup>
 
@@ -943,7 +943,7 @@ function FooterGroup({ children, title }: { children: ReactNode; title: string }
     );
 }
 
-type IconName = 'alert' | 'artisan' | 'client' | 'dashboard' | 'gps' | 'mobile' | 'otp' | 'pin' | 'scale' | 'score' | 'shield' | 'signal' | 'store' | 'wallet';
+type IconName = 'alert' | 'artisan' | 'client' | 'dashboard' | 'gps' | 'mobile' | 'otp' | 'pin' | 'robot' | 'scale' | 'score' | 'shield' | 'signal' | 'store' | 'wallet';
 
 function FeatureIcon({ className, kind }: { className?: string; kind: IconName }) {
     switch (kind) {
@@ -1022,6 +1022,17 @@ function FeatureIcon({ className, kind }: { className?: string; kind: IconName }
                     <path d="m7 8-3 5h6Z" strokeLinejoin="round" />
                     <path d="m17 8-3 5h6Z" strokeLinejoin="round" />
                     <path d="M9.5 20h5" strokeLinecap="round" />
+                </svg>
+            );
+        case 'robot':
+            return (
+                <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                    <rect x="5" y="8" width="14" height="11" rx="2.5" />
+                    <circle cx="9" cy="12" r="1.2" fill="currentColor" />
+                    <circle cx="15" cy="12" r="1.2" fill="currentColor" />
+                    <path d="M10 15.5h4" strokeLinecap="round" />
+                    <path d="M12 4v4" strokeLinecap="round" />
+                    <circle cx="12" cy="3" r="1" fill="currentColor" />
                 </svg>
             );
         case 'dashboard':

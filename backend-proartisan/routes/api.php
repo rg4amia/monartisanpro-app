@@ -180,6 +180,18 @@ Route::prefix('v1')->group(function () {
         // ── Évaluations ───────────────────────────────────────────────────────
         Route::post('/evaluations', [EvaluationController::class, 'store']);
 
+        // ── Commandes e-Commerce (Fournisseurs & Livraison) ─────────────────────
+        Route::prefix('orders')->group(function () {
+            Route::get('/',                                  [\App\Http\Controllers\Api\V1\OrderController::class, 'index']);
+            Route::post('/',                                 [\App\Http\Controllers\Api\V1\OrderController::class, 'store']);
+            Route::get('/{order}',                           [\App\Http\Controllers\Api\V1\OrderController::class, 'show']);
+            Route::post('/{order}/prepared',                 [\App\Http\Controllers\Api\V1\OrderController::class, 'markPrepared']);
+            Route::post('/{order}/verify-pickup',            [\App\Http\Controllers\Api\V1\OrderController::class, 'verifyPickup']);
+            Route::post('/{order}/verify-delivery',          [\App\Http\Controllers\Api\V1\OrderController::class, 'verifyDelivery']);
+            Route::post('/{order}/dispute',                  [\App\Http\Controllers\Api\V1\OrderController::class, 'dispute']);
+            Route::post('/{order}/waiting-surge',            [\App\Http\Controllers\Api\V1\OrderController::class, 'applyWaitingSurge']);
+        });
+
         // ── Parrainages ────────────────────────────────────────────────────────
         Route::post('/parrainages', [ParrainageController::class, 'store']);
         Route::get('/parrainages', [ParrainageController::class, 'index']);

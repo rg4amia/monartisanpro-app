@@ -13,7 +13,14 @@ class MainTabController extends GetxController {
 
   void changeTab(int index) => currentIndex.value = index;
 
+  void switchSpace(String newRole) {
+    StorageService.saveRole(newRole);
+    role.value = newRole;
+    currentIndex.value = 0;
+  }
+
   bool get isClient => role.value == 'client';
   bool get isArtisan => role.value == 'artisan';
   bool get isFournisseur => role.value == 'fournisseur';
+  bool get isDriver => role.value == 'driver' || role.value == 'livreur' || role.value == 'LIVREUR';
 }

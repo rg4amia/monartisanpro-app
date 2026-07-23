@@ -47,6 +47,8 @@ class MissionModel {
 
   String get statusLabel {
     switch (status) {
+      case 'pending_artisan_acceptance':
+        return 'En attente acceptation artisan';
       case 'en_attente':
         return 'Devis en attente';
       case 'financee':
