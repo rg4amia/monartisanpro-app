@@ -42,18 +42,9 @@ return new class extends Migration
         DB::statement("UPDATE missions SET status = 'disputed'     WHERE status = 'litige'");
 
         if (DB::getDriverName() !== 'sqlite') {
-            // Retirer les anciens statuts de l'ENUM
             DB::statement("
                 ALTER TABLE missions
-                MODIFY COLUMN status ENUM(
-                    'draft',
-                    'pending_funding',
-                    'funded_locked',
-                    'in_progress',
-                    'pending_approval',
-                    'completed',
-                    'disputed'
-                ) NOT NULL DEFAULT 'draft'
+                MODIFY COLUMN status VARCHAR(50) NOT NULL DEFAULT 'draft'
             ");
         }
     }
