@@ -1,7 +1,6 @@
 import 'package:get/get.dart';
 
 import '../../../core/network/api_client.dart';
-import '../../../core/utils/ui_helpers.dart';
 import '../../../data/models/transaction_model.dart';
 
 class WalletController extends GetxController {
@@ -33,7 +32,7 @@ class WalletController extends GetxController {
       final List<dynamic> data = transactionsResponse.data['data'] ?? [];
       transactions.value = data.map((e) => TransactionModel.fromJson(e)).toList();
     } catch (e) {
-      UiHelpers.showError('Erreur', 'Impossible de charger le portefeuille');
+      Get.snackbar('Erreur', 'Impossible de charger le portefeuille', snackPosition: SnackPosition.BOTTOM);
     } finally {
       isLoading.value = false;
     }
