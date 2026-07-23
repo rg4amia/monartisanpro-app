@@ -20,6 +20,12 @@ const landingTheme: CSSProperties = {
 
 const heroSignals = [
     {
+        eyebrow: 'Intelligence Artificielle',
+        title: 'Diagnostic et estimation assistes par Gemini',
+        text: "Analyse automatique des descriptions et photos du client pour determiner la categorie, l'urgence et le budget estimatif.",
+        tone: 'night' as const,
+    },
+    {
         eyebrow: 'Matching',
         title: 'Artisans trouves a moins de 2 km',
         text: 'Le client trouve vite, mais la position exacte reste protegee cote public.',
@@ -46,6 +52,7 @@ const heroSignals = [
 ];
 
 const keyStats = [
+    { label: 'Intelligence Artificielle', value: 'API Gemini (Diagnostic, Chat, RAG)' },
     { label: 'Acteurs relies', value: 'Clients, artisans, fournisseurs, referents' },
     { label: 'Paiements CI', value: 'Wave CI et Orange Money CI' },
     { label: 'Preuves mission', value: 'OTP, photos geo, logs et litiges' },
@@ -90,8 +97,8 @@ const flowSteps = [
     {
         phase: 'Phase 1',
         title: 'Diagnostic et matching local',
-        text: 'Le besoin est qualifie, puis les artisans actifs sont proposes dans un rayon court autour du client.',
-        points: ['Estimation assistee', 'Rayon de 2 km', 'Position artisan floutee cote client'],
+        text: "L'IA analyse le besoin (texte et photos) pour estimer le budget FCFA, puis les artisans actifs sont proposes dans un rayon court.",
+        points: ['Analyse IA par Gemini', 'Estimation FCFA automatique', 'Position artisan floutee'],
         tone: 'blue' as const,
     },
     {
@@ -177,6 +184,11 @@ const adminModules = [
         title: 'Litiges et fraude',
         text: 'Ouvrir un dossier, arbitrer, geler une operation ou demander une verification terrain.',
         icon: 'scale' as const,
+    },
+    {
+        title: 'Administration LLM (IA)',
+        text: 'Piloter le moteur de diagnostic Gemini, configurer les contextes, importer des donnees et chatter avec les bases documentaires.',
+        icon: 'robot' as const,
     },
 ];
 
@@ -619,7 +631,6 @@ export default function Welcome() {
                                             <p className="text-sm text-white/55">Marketplace travaux securisee</p>
                                         </div>
                                     </div>
-
                                     <p className="mt-5 max-w-md text-sm leading-7 text-white/68">
                                         ProsArtisan connecte les bons acteurs autour d un cadre clair: verification, execution, paiement, preuves et arbitrage.
                                     </p>
@@ -631,6 +642,9 @@ export default function Welcome() {
                                     </a>
                                     <a href="#flux" className="transition hover:text-white">
                                         Flux metier
+                                    </a>
+                                    <a href="/cgu" className="transition hover:text-white">
+                                        Conditions d'utilisation
                                     </a>
                                     <a href="#backoffice" className="transition hover:text-white">
                                         Backoffice

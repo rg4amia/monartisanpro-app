@@ -9,11 +9,13 @@ import '../../../data/models/mission_model.dart';
 import '../../../data/repositories/artisan_repository.dart';
 import '../../../data/repositories/mission_repository.dart';
 import '../../../data/repositories/wallet_repository.dart';
+import '../../../data/repositories/user_repository.dart';
 
 class HomeController extends GetxController {
   final ArtisanRepository _artisanRepo = ArtisanRepository();
   final MissionRepository _missionRepo = MissionRepository();
   final WalletRepository _walletRepo = WalletRepository();
+  final UserRepository _userRepo = UserRepository();
 
   final artisans = <ArtisanModel>[].obs;
   final artisanMissions = <MissionModel>[].obs;
@@ -176,6 +178,28 @@ class HomeController extends GetxController {
       }
       
       fluidityScore.value = StorageService.getScoreNzassa() ?? 10; // Default 10 if not set yet
+
+      try {
+        final dashboardData = await _userRepo.getDashboardStats();
+        acceptedDevisCount.value = dashboardData['accepted_devis_count'] ?? dashboardData['completed_deliveries'] ?? 0;
+        refusedDevisCount.value = dashboardData['refused_devis_count'] ?? dashboardData['pending_deliveries'] ?? 0;
+        disputesCount.value = dashboardData['disputes_count'] ?? 0;
+        
+        // If it's supplier stats
+        if (dashboardData.containsKey('stats')) {
+           final s = dashboardData['stats'];
+           acceptedDevisCount.value = s['total_orders'] ?? 0;
+           refusedDevisCount.value = s['pending_orders'] ?? 0;
+           disputesCount.value = s['catalog_count'] ?? 0;
+        }
+
+        // If it returns score_nzassa from backend, update it
+        if (dashboardData.containsKey('score_nzassa')) {
+           fluidityScore.value = dashboardData['score_nzassa'] ?? 10;
+        }
+      } catch (e) {
+        print("Error fetching dashboard stats: $e");
+      }
 
       if (role.value == 'driver') {
         // Load driver configurations

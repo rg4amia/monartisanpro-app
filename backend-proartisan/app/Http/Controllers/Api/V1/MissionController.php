@@ -158,4 +158,53 @@ class MissionController extends Controller
             'data'    => new MissionResource($mission->fresh()),
         ]);
     }
+
+    /**
+     * Artisan accepte la demande de devis.
+     */
+    public function acceptRequest(Request $request, Mission $mission): JsonResponse
+    {
+        $user = $request->user();
+
+        if ($mission->artisan_id !== $user->id) {
+            return response()->json(['success' => false, 'message' => 'Accès refusé.'], 403);
+        }
+
+        if (!$mission->status instanceof \App\States\Mission\PendingArtisanAcceptanceState) {
+            return response()->json(['success' => false, 'message' => 'Statut invalide.'], 400);
+        }
+
+        $mission->status->transitionTo(\App\States\Mission\DraftState::class);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Demande acceptée.',
+            'data'    => new MissionResource($mission->fresh()),
+        ]);
+    }
+
+    /**
+     * Artisan refuse la demande de devis.
+     */
+    public function rejectRequest(Request $request, Mission $mission): JsonResponse
+    {
+        $user = $request->user();
+
+        if ($mission->artisan_id !== $user->id) {
+            return response()->json(['success' => false, 'message' => 'Accès refusé.'], 403);
+        }
+
+        if (!$mission->status instanceof \App\States\Mission\PendingArtisanAcceptanceState) {
+            return response()->json(['success' => false, 'message' => 'Statut invalide.'], 400);
+        }
+
+        $mission->update(['artisan_id' => null]);
+        $mission->status->transitionTo(\App\States\Mission\DraftState::class);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Demande refusée, mission remise en brouillon.',
+            'data'    => new MissionResource($mission->fresh()),
+        ]);
+    }
 }

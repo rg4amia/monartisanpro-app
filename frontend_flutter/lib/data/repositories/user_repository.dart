@@ -49,4 +49,9 @@ class UserRepository {
     );
     return response.data as Map<String, dynamic>;
   }
+
+  Future<Map<String, dynamic>> getDashboardStats() async {
+    final response = await _client.get(ApiEndpoints.dashboard);
+    return response.data as Map<String, dynamic>;
+  }
 }
