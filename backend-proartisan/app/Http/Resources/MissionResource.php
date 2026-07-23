@@ -24,7 +24,7 @@ class MissionResource extends JsonResource
             'description' => $this->description,
             'problem' => $this->description,
             'photos' => $this->photos_json ?? [],
-            'status' => $this->status,
+            'status' => (string) $this->status,
             'statusGemini' => $this->mapMissionStatusToGemini($this->status),
             'geminiCategory' => $this->gemini_category,
             'geminiUrgency' => $this->gemini_urgency,
@@ -89,9 +89,11 @@ class MissionResource extends JsonResource
         ];
     }
 
-    private function mapMissionStatusToGemini(string $status): string
+    private function mapMissionStatusToGemini(mixed $status): string
     {
-        return match ($status) {
+        $statusStr = (string) $status;
+        return match ($statusStr) {
+            'pending_artisan_acceptance' => 'pending_artisan_acceptance',
             'pending_funding' => 'sent',
             'funded_locked', 'financee' => 'funded',
             'in_progress', 'en_cours' => 'work_done',
@@ -113,7 +115,8 @@ class MissionResource extends JsonResource
 
     private function mapPaymentStatus(): string
     {
-        return match ($this->status) {
+        $statusStr = (string) $this->status;
+        return match ($statusStr) {
             'funded_locked', 'financee', 'in_progress', 'en_cours', 'completed', 'terminee' => 'funded',
             'disputed', 'litige' => $this->funds_frozen ? 'blocked' : 'funded',
             'cancelled', 'annulee' => 'refunded',
