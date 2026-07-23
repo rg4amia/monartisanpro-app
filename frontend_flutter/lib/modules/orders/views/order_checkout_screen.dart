@@ -23,6 +23,9 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
   
   double _promoDiscount = 0.0;
   String? _appliedPromoCode;
+  
+  /// Flag réactif pour éviter toute double soumission après succès.
+  final _orderSubmitted = false.obs;
 
   @override
   void initState() {
@@ -81,7 +84,9 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
   }
 
   void _submit() async {
-    if (controller.isSubmitting.value) return;
+    // Protection anti double-submit : flag local + contrôle du controller
+    if (_orderSubmitted.value || controller.isSubmitting.value) return;
+    _orderSubmitted.value = true;
 
     final success = await controller.createOrder(
       supplierId: supplierId,
@@ -126,7 +131,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
               ),
               onPressed: () {
                 Get.back(); // Fermer la modale
-                Get.back(); // Fermer la page de commande
+                Get.back(); // Retour au catalogue
               },
               child: const Text('OK, Parfait', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             ),
@@ -134,6 +139,9 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
         ),
         barrierDismissible: false,
       );
+    } else {
+      // En cas d'échec, permettre une nouvelle tentative
+      _orderSubmitted.value = false;
     }
   }
 
@@ -490,7 +498,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
 
             // CONFIRMER LA COMMANDE BUTTON
             Obx(() => ElevatedButton(
-              onPressed: controller.isSubmitting.value ? null : _submit,
+              onPressed: (controller.isSubmitting.value || _orderSubmitted.value) ? null : _submit,
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 backgroundColor: const Color(0xFFE28A32), // Jumia styled orange tone
