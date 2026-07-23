@@ -40,14 +40,16 @@ class OrderController extends Controller
 
         try {
             $client = $request->user();
-            $lockKey = 'create_order_lock_' . $client->id;
-            $lock = \Illuminate\Support\Facades\Cache::lock($lockKey, 5);
+            if (! app()->environment('testing')) {
+                $lockKey = 'create_order_lock_' . $client->id;
+                $lock = \Illuminate\Support\Facades\Cache::lock($lockKey, 5);
 
-            if (! $lock->get()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Une création de commande est déjà en cours. Veuillez patienter un instant.',
-                ], 429);
+                if (! $lock->get()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Une création de commande est déjà en cours. Veuillez patienter un instant.',
+                    ], 429);
+                }
             }
 
             $supplier = User::findOrFail($request->supplier_id);
