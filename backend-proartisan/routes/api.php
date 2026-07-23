@@ -60,6 +60,7 @@ Route::prefix('v1')->group(function () {
     // ─────────────────────────────────────────────────────────────────────────
 
     Route::middleware(['auth:sanctum', 'account.active', 'throttle:api'])->group(function () {
+        Route::get('/dashboard', [\App\Http\Controllers\Api\V1\DashboardController::class, 'index']);
 
         // ── Auth ─────────────────────────────────────────────────────────────
         Route::prefix('auth')->group(function () {
@@ -99,6 +100,8 @@ Route::prefix('v1')->group(function () {
         Route::get('/artisans/{user}',       [ArtisanController::class, 'show']);
         Route::get('/artisans/{user}/score', [ArtisanController::class, 'score']);
         Route::get('/artisans/{user}/report', [ArtisanController::class, 'downloadReport']);
+        
+        Route::apiResource('artisan-stock', \App\Http\Controllers\Api\V1\ArtisanStockController::class)->except(['show']);
 
         // ── Secteurs & Métiers ────────────────────────────────────────────────
         Route::get('/sectors',                 [SectorController::class, 'index']);
@@ -119,6 +122,8 @@ Route::prefix('v1')->group(function () {
         Route::get('/missions/{mission}',            [MissionController::class, 'show']);
         Route::post('/missions/estimate',            [MissionController::class, 'estimate'])->middleware('can:mission.estimate');
         Route::put('/missions/{mission}/status',     [MissionController::class, 'updateStatus']);
+        Route::post('/missions/{mission}/accept-request', [MissionController::class, 'acceptRequest']);
+        Route::post('/missions/{mission}/reject-request', [MissionController::class, 'rejectRequest']);
         Route::post('/missions/{mission}/referent-validate', [\App\Http\Controllers\Api\V1\ReferentController::class, 'validateMission'])->middleware(['can:mission.referent-validate', 'kyc.verified']);
 
         // ── Devis ────────────────────────────────────────────────────────────

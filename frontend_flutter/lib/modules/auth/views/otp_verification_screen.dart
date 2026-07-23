@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/config/env_config.dart';
 import '../controllers/auth_controller.dart';
 
 // ─── Design Tokens ───────────────────────────────────────────────────────────
@@ -126,7 +127,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                   ),
                   recognizer: TapGestureRecognizer()
                     ..onTap = () async {
-                      final url = Uri.parse('https://prosartisan.ci/cgu');
+                      final url = Uri.parse(EnvConfig.baseUrl.replaceAll('/api/v1', '/cgu'));
                       if (await canLaunchUrl(url)) {
                         await launchUrl(url, mode: LaunchMode.externalApplication);
                       }

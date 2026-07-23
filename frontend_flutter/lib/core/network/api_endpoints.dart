@@ -21,6 +21,9 @@ class ApiEndpoints {
   static String updateLocation(int id) => '/users/$id/location';
   static String setRole(int id) => '/users/$id/role';
 
+  // Dashboard
+  static const String dashboard = '/dashboard';
+
   // Artisans
   static const String artisans = '/artisans';
   static String artisan(int id) => '/artisans/$id';

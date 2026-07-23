@@ -8,13 +8,21 @@ use Illuminate\Support\Facades\Log;
 
 class MissionService
 {
-    public function __construct(private GeminiService $geminiService) {}
+    public function __construct(
+        private GeminiService $geminiService,
+        private NotificationService $notificationService
+    ) {}
 
     /**
      * Crée une mission et appelle Gemini pour l'estimation.
      */
     public function create(User $client, array $data): Mission
     {
+        $hasArtisan = !empty($data['artisan_id']);
+        $initialState = $hasArtisan 
+            ? \App\States\Mission\PendingArtisanAcceptanceState::class 
+            : \App\States\Mission\DraftState::class;
+
         $mission = Mission::create([
             'client_id'           => $client->id,
             'artisan_id'          => $data['artisan_id'] ?? null,
@@ -22,7 +30,7 @@ class MissionService
             'requested_trade_id'  => $data['trade_id'] ?? null,
             'description'         => $data['description'],
             'photos_json'         => $data['photos'] ?? null,
-            'status'              => \App\States\Mission\DraftState::class,
+            'status'              => $initialState,
             'client_latitude'     => $data['lat'] ?? null,
             'client_longitude'    => $data['lng'] ?? null,
             'client_address'      => $data['location_address'] ?? null,
@@ -40,6 +48,19 @@ class MissionService
             'gemini_estimation_min' => $estimate['price_min'],
             'gemini_estimation_max' => $estimate['price_max'],
         ]);
+
+        if ($hasArtisan) {
+            $artisan = User::find($data['artisan_id']);
+            if ($artisan) {
+                $this->notificationService->send(
+                    $artisan,
+                    'mission',
+                    'Nouvelle demande de devis',
+                    "Le client {$client->phone} vous a envoyé une demande de devis.",
+                    ['mission_id' => $mission->id]
+                );
+            }
+        }
 
         return $mission->fresh();
     }

@@ -2765,6 +2765,9 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                 <p className="mt-1 max-w-3xl">
                                     Pilotage des validations, des opérations terrain, des litiges et des flux financiers dans une seule interface.
                                 </p>
+                                <div className="mt-4">
+                                    <Link href="/cgu" className="hover:text-[var(--admin-text)] hover:underline">Conditions Générales d'Utilisation</Link>
+                                </div>
                             </div>
                         </footer>
                     </div>

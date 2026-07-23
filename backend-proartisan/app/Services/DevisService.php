@@ -22,14 +22,33 @@ class DevisService
     public function create(Mission $mission, User $artisan, array $data): Devis
     {
         $payload = $this->normalizePayload($data);
+        
+        $isNightMode = now()->hour >= 18 || now()->hour < 6;
+        if (!$isNightMode) {
+            foreach ($payload['lignes_json'] as $ligne) {
+                if (($ligne['source'] ?? '') === 'artisan_stock') {
+                    throw new \InvalidArgumentException('Le stock artisan ne peut être utilisé que pendant le mode nuit (18h-06h).');
+                }
+            }
+        }
 
-        return Devis::create([
+        $devis = Devis::create([
             'mission_id'  => $mission->id,
             'artisan_id'  => $artisan->id,
             'lignes_json' => $payload['lignes_json'],
             'jalons_json' => $payload['jalons_json'],
             'statut'      => 'soumis',
         ]);
+
+        $this->notificationService->send(
+            $mission->client,
+            'devis',
+            'Nouveau devis reçu',
+            "L'artisan {$artisan->phone} vous a transmis un devis pour la mission #{$mission->id}.",
+            ['mission_id' => $mission->id, 'devis_id' => $devis->id]
+        );
+
+        return $devis;
     }
 
     public function normalizePayload(array $data): array
@@ -183,6 +202,10 @@ class DevisService
 
         if (! empty($ligne['supplier_product_id'])) {
             $normalized['supplier_product_id'] = (int) $ligne['supplier_product_id'];
+        }
+
+        if (! empty($ligne['artisan_stock_id'])) {
+            $normalized['artisan_stock_id'] = (int) $ligne['artisan_stock_id'];
         }
 
         return $normalized;

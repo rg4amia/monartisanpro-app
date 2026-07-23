@@ -18,6 +18,9 @@ abstract class MissionState extends State
 
             // Transitions normales
             ->allowTransition(DraftState::class,          PendingFundingState::class)
+            ->allowTransition(DraftState::class,          PendingArtisanAcceptanceState::class)
+            ->allowTransition(PendingArtisanAcceptanceState::class, DraftState::class)
+            ->allowTransition(PendingArtisanAcceptanceState::class, CancelledState::class)
             ->allowTransition(PendingFundingState::class, FundedLockedState::class)
             ->allowTransition(FundedLockedState::class,   InProgressState::class)
             ->allowTransition(InProgressState::class,     PendingApprovalState::class)
@@ -37,6 +40,7 @@ abstract class MissionState extends State
 
             // Transitions d'idempotence (soi-même)
             ->allowTransition(DraftState::class,          DraftState::class)
+            ->allowTransition(PendingArtisanAcceptanceState::class, PendingArtisanAcceptanceState::class)
             ->allowTransition(PendingFundingState::class,  PendingFundingState::class)
             ->allowTransition(FundedLockedState::class,    FundedLockedState::class)
             ->allowTransition(InProgressState::class,      InProgressState::class)
