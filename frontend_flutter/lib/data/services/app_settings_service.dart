@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
-import '../../core/utils/constants.dart';
+import '../../core/config/env_config.dart';
 
 class AppSettingsService extends GetxService {
   final RxString blockClient = 'none'.obs;
@@ -18,7 +18,7 @@ class AppSettingsService extends GetxService {
 
   Future<void> fetchSettings() async {
     try {
-      final url = Uri.parse('${Constants.apiUrl}/settings/app-access');
+      final url = Uri.parse('${EnvConfig.baseUrl}/settings/app-access');
       final response = await http.get(url).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
