@@ -20,7 +20,7 @@ class FournisseurResource extends JsonResource
             'status' => $agree?->statut,
             'location' => $coords,
             'activeProductsCount' => $this->whenCounted('supplierProducts'),
-            'createdAt' => $this->created_at?->toISOString(),
+            'createdAt' => $this->created_at?->toIso8601String(),
         ];
     }
 }

@@ -18,8 +18,8 @@ class LitigeEvidenceResource extends JsonResource
                 'lat' => $this->latitude,
                 'lng' => $this->longitude,
             ] : null,
-            'takenAt' => $this->taken_at?->toISOString(),
-            'createdAt' => $this->created_at?->toISOString(),
+            'takenAt' => $this->taken_at?->toIso8601String(),
+            'createdAt' => $this->created_at?->toIso8601String(),
             'user' => $this->whenLoaded('user', fn () => [
                 'id' => $this->user?->id,
                 'name' => $this->user?->name,

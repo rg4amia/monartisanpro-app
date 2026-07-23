@@ -19,7 +19,7 @@ class TransactionResource extends JsonResource
             'statut'            => $this->statut,
             'referenceExterne'  => $this->reference_externe,
             'missionId'         => $this->mission_id,
-            'createdAt'         => $this->created_at?->toISOString(),
+            'createdAt'         => $this->created_at?->toIso8601String(),
         ];
     }
 }
