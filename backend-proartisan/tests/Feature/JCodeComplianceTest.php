@@ -126,8 +126,11 @@ class JCodeComplianceTest extends TestCase
     {
         Queue::fake();
 
+        /** @var User $artisan */
         $artisan = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif', 'wallet_materiaux' => 100000]);
+        /** @var User $client */
         $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
+        /** @var User $fournisseur */
         $fournisseur = User::factory()->create(['role' => 'fournisseur', 'kyc_status' => 'actif']);
 
         $agreement = FournisseurAgree::create([

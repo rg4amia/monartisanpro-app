@@ -275,6 +275,10 @@ class MissionsController extends GetxController {
         snackPosition: SnackPosition.TOP,
       );
       return true;
+    } on DioException catch (e) {
+      final msg = _handleDioError(e);
+      _showErrorSnackbar(msg);
+      return false;
     } catch (e) {
       _showErrorSnackbar('Erreur lors de l\'acceptation');
       return false;
@@ -296,6 +300,10 @@ class MissionsController extends GetxController {
         snackPosition: SnackPosition.TOP,
       );
       return true;
+    } on DioException catch (e) {
+      final msg = _handleDioError(e);
+      _showErrorSnackbar(msg);
+      return false;
     } catch (e) {
       _showErrorSnackbar('Erreur lors du refus');
       return false;

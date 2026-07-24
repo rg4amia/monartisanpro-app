@@ -1,5 +1,5 @@
-import { useState } from 'react';
 import { router } from '@inertiajs/react';
+import { useState } from 'react';
 
 interface Permission {
     id: number;
@@ -71,7 +71,7 @@ export default function RolesPermissionsPanel({
             onFinish: () => {
                 setToggling(null);
             },
-            onError: (errors) => {
+            onError: () => {
                 alert("Une erreur est survenue lors de la mise à jour des droits.");
             }
         });
