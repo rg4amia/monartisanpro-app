@@ -42,7 +42,7 @@ class ArtisanResource extends JsonResource
             'bio'                => $profile?->bio,
             'experienceYears'    => $profile?->experience_years ?? 0,
             'nightInterventionAvailable' => (bool) ($profile?->intervient_la_nuit ?? false),
-            'scoreNzassa'        => $this->score_nzassa,
+            'scoreProsArtisan'   => $this->score_prosartisan,
             'rating'             => round((float) $avgRating, 1),
             'completedMissions'  => $missionsCount,
             // POSITION FLOUTÉE — jamais la position exacte
@@ -51,7 +51,7 @@ class ArtisanResource extends JsonResource
                 ? $this->formatDistance($this->distanceMetres)
                 : null,
             'distanceMetres'     => $this->distanceMetres,
-            'isGoldenMarker'     => $this->score_nzassa >= 70,
+            'isGoldenMarker'     => $this->score_prosartisan >= 70,
             'kycStatus'          => $this->kyc_status,
             'commune'            => $this->commune?->name,
             'locationLabel'      => $this->commune?->name ?? $profile?->sector?->name,

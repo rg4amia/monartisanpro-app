@@ -60,7 +60,7 @@ class MicroCreditController extends Controller
                     'id' => $application->id,
                     'amount' => $application->amount,
                     'status' => $application->status,
-                    'score_nzassa_at_application' => $application->score_nzassa_at_application,
+                    'score_prosartisan_at_application' => $application->score_prosartisan_at_application,
                     'approved_at' => $application->approved_at?->toIso8601String(),
                     'external_reference' => $application->external_reference,
                 ],

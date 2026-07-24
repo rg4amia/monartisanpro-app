@@ -3,12 +3,12 @@ import '../../core/theme/app_colors.dart';
 
 enum ScoreSize { small, medium, large }
 
-class ScoreNzassa extends StatelessWidget {
+class ScoreProsArtisan extends StatelessWidget {
   final int score;
   final ScoreSize size;
   final bool showLabel;
 
-  const ScoreNzassa({
+  const ScoreProsArtisan({
     super.key,
     required this.score,
     this.size = ScoreSize.medium,
@@ -65,7 +65,7 @@ class ScoreNzassa extends StatelessWidget {
         if (showLabel) ...[
           const SizedBox(height: 4),
           Text(
-            'Score N\'Zassa',
+            'Score ProsArtisan',
             style: TextStyle(
               fontSize: 10,
               color: AppColors.textSecondary,
@@ -78,11 +78,11 @@ class ScoreNzassa extends StatelessWidget {
   }
 }
 
-/// Badge compact pour afficher le score N'Zassa dans les listes
-class ScoreNzassaBadge extends StatelessWidget {
+/// Badge compact pour afficher le score ProsArtisan dans les listes
+class ScoreProsArtisanBadge extends StatelessWidget {
   final int score;
   
-  const ScoreNzassaBadge({
+  const ScoreProsArtisanBadge({
     super.key,
     required this.score,
   });
@@ -109,7 +109,7 @@ class ScoreNzassaBadge extends StatelessWidget {
             ),
           ),
           Text(
-            'N\'Zassa',
+            'ProsArtisan',
             style: TextStyle(
               fontSize: 9,
               fontWeight: FontWeight.w600,

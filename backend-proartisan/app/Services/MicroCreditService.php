@@ -22,8 +22,8 @@ class MicroCreditService
         if (! $this->scoreService->isEligibleCredit($artisan)) {
             return [
                 'eligible' => false,
-                'reason' => 'Score N\'Zassa < 70. Améliorez votre score en complétant des missions.',
-                'current_score' => $artisan->score_nzassa,
+                'reason' => 'Score ProsArtisan < 70. Améliorez votre score en complétant des missions.',
+                'current_score' => $artisan->score_prosartisan,
                 'required_score' => 70,
             ];
         }
@@ -35,7 +35,7 @@ class MicroCreditService
         return [
             'eligible' => true,
             'max_amount' => $maxAmount,
-            'score_nzassa' => $artisan->score_nzassa,
+            'score_prosartisan' => $artisan->score_prosartisan,
             'total_evaluations' => $scoreDetail['total_evaluations'],
         ];
     }
@@ -59,7 +59,7 @@ class MicroCreditService
         $application = CreditApplication::create([
             'user_id' => $artisan->id,
             'amount' => $amount,
-            'score_nzassa_at_application' => $artisan->score_nzassa,
+            'score_prosartisan_at_application' => $artisan->score_prosartisan,
             'status' => 'en_attente',
         ]);
 
@@ -76,7 +76,7 @@ class MicroCreditService
                     'artisan_phone' => $artisan->phone,
                     'artisan_name' => $artisan->name,
                     'amount' => $amount,
-                    'score_nzassa' => $artisan->score_nzassa,
+                    'score_prosartisan' => $artisan->score_prosartisan,
                     'score_breakdown' => $this->scoreService->getScoreDetail($artisan),
                 ]);
 
@@ -126,7 +126,7 @@ class MicroCreditService
         // Formule : Base 50 000 FCFA + (score - 70) * 5 000 FCFA par point
         $base = 50000;
         $perPoint = 5000;
-        $scoreAboveThreshold = max(0, $artisan->score_nzassa - 70);
+        $scoreAboveThreshold = max(0, $artisan->score_prosartisan - 70);
 
         return $base + ($scoreAboveThreshold * $perPoint);
     }

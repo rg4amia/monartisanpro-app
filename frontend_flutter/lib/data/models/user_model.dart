@@ -3,7 +3,7 @@ class UserModel {
   final String phone;
   final String role;
   final String kycStatus;
-  final int scoreNzassa;
+  final int scoreProsArtisan;
   final int walletMateriaux;
   final int walletMo;
   final String? name;
@@ -22,7 +22,7 @@ class UserModel {
     required this.phone,
     required this.role,
     required this.kycStatus,
-    required this.scoreNzassa,
+    required this.scoreProsArtisan,
     required this.walletMateriaux,
     required this.walletMo,
     this.name,
@@ -38,7 +38,7 @@ class UserModel {
   });
 
   bool get isKycActif => kycStatus == 'actif';
-  bool get isGoldenMarker => scoreNzassa > 65;
+  bool get isGoldenMarker => scoreProsArtisan > 65;
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     final artisanProfile = json['artisanProfile'] as Map<String, dynamic>?;
@@ -47,7 +47,7 @@ class UserModel {
       phone: json['phone'] as String,
       role: json['role'] as String,
       kycStatus: (json['kycStatus'] ?? json['kyc_status']) as String? ?? 'en_attente',
-      scoreNzassa: (json['scoreNzassa'] ?? json['score_nzassa']) as int? ?? 0,
+      scoreProsArtisan: (json['scoreProsArtisan'] ?? json['score_prosartisan'] ?? json['scoreNzassa'] ?? json['score_nzassa']) as int? ?? 0,
       walletMateriaux: (json['walletMateriaux'] ?? json['wallet_materiaux']) as int? ?? 0,
       walletMo: (json['walletMo'] ?? json['wallet_mo']) as int? ?? 0,
       name: json['name'] as String?,
@@ -80,7 +80,7 @@ class UserModel {
         'phone': phone,
         'role': role,
         'kycStatus': kycStatus,
-        'scoreNzassa': scoreNzassa,
+        'scoreProsArtisan': scoreProsArtisan,
         'walletMateriaux': walletMateriaux,
         'walletMo': walletMo,
         'name': name,

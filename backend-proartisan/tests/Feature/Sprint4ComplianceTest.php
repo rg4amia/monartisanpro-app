@@ -84,7 +84,7 @@ class Sprint4ComplianceTest extends TestCase
         $parrain = User::factory()->create([
             'role' => 'artisan',
             'kyc_status' => 'actif',
-            'score_nzassa' => 300,
+            'score_prosartisan' => 300,
         ]);
 
         \App\Models\ScoreLedgerEntry::create([
@@ -100,7 +100,7 @@ class Sprint4ComplianceTest extends TestCase
             'role' => 'artisan',
             'phone' => '+2250909090909',
             'kyc_status' => 'actif',
-            'score_nzassa' => 300,
+            'score_prosartisan' => 300,
         ]);
 
         // Register sponsorship
@@ -158,6 +158,6 @@ class Sprint4ComplianceTest extends TestCase
             ->assertOk();
 
         // Parrain score must have dropped from 900 by 50 points -> 850
-        $this->assertSame(850, $parrain->fresh()->score_nzassa);
+        $this->assertSame(850, $parrain->fresh()->score_prosartisan);
     }
 }

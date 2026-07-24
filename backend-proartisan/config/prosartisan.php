@@ -20,7 +20,7 @@ return [
         'ttl'    => 5, // minutes
     ],
 
-    'score_nzassa' => [
+    'score_prosartisan' => [
         'weights' => [
             'fiabilite'  => 40,
             'integrite'  => 30,

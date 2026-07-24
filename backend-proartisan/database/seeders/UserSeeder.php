@@ -59,7 +59,7 @@ class UserSeeder extends Seeder
                 'password'       => Hash::make('artisan123'),
                 'role'           => 'artisan',
                 'kyc_status'     => 'actif',
-                'score_nzassa'   => 78,
+                'score_prosartisan'   => 78,
                 'commune_id'     => $plateau?->id,
             ]
         );
@@ -86,7 +86,7 @@ class UserSeeder extends Seeder
                 'password'       => Hash::make('artisan123'),
                 'role'           => 'artisan',
                 'kyc_status'     => 'actif',
-                'score_nzassa'   => 65,
+                'score_prosartisan'   => 65,
                 'commune_id'     => $plateau?->id,
             ]
         );

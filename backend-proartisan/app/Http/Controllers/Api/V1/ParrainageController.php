@@ -30,11 +30,11 @@ class ParrainageController extends Controller
             ], 403);
         }
 
-        // RÈGLE : Score N'Zassa > 800 requis
-        if ($parrain->score_nzassa <= 800) {
+        // RÈGLE : Score ProsArtisan > 800 requis
+        if ($parrain->score_prosartisan <= 800) {
             return response()->json([
                 'success' => false,
-                'message' => 'Score N\'Zassa insuffisant pour parrainer (minimum 800).'
+                'message' => 'Score ProsArtisan insuffisant pour parrainer (minimum 800).'
             ], 422);
         }
 

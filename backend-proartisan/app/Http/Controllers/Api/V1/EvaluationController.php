@@ -63,7 +63,7 @@ class EvaluationController extends Controller
             'data'          => [
                 'id'            => $evaluation->id,
                 'note'          => $evaluation->note,
-                'scoreNzassa'   => $newScore ?? null,
+                'scoreProsArtisan' => $newScore ?? null,
             ],
         ], 201);
     }

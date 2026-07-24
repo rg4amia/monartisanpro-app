@@ -20,7 +20,7 @@ class UserResource extends JsonResource
             'kycStatus'        => $this->kyc_status,
             'accountStatus'    => $this->account_status ?? 'actif',
             'accountStatusReason' => $this->account_status_reason,
-            'scoreNzassa'      => $this->score_nzassa,
+            'scoreProsArtisan' => $this->score_prosartisan,
             'walletMateriaux'  => $this->wallet_materiaux,
             'walletMo'         => $this->wallet_mo,
             'cguAcceptedAt'    => $this->cgu_accepted_at?->toIso8601String(),

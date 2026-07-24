@@ -23,7 +23,7 @@ class User extends Authenticatable
         'account_status',
         'account_status_reason',
         'blocked_at',
-        'score_nzassa',
+        'score_prosartisan',
         'wallet_materiaux',
         'wallet_mo',
         'fcm_token',
@@ -42,7 +42,7 @@ class User extends Authenticatable
             'blocked_at'       => 'datetime',
             'wallet_materiaux' => 'integer',
             'wallet_mo'        => 'integer',
-            'score_nzassa'     => 'integer',
+            'score_prosartisan'=> 'integer',
             'score_frozen'     => 'boolean',
         ];
     }

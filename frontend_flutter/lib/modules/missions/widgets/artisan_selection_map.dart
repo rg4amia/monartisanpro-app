@@ -182,7 +182,7 @@ class _ArtisanSelectionMapState extends State<ArtisanSelectionMap> {
 
       final isSelected = artisan.id == _selectedArtisan?.id;
       final bytes = await _renderArtisanMarker(
-        score: artisan.scoreNzassa,
+        score: artisan.scoreProsArtisan,
         isGolden: artisan.isGoldenMarker,
         isSelected: isSelected,
       );
@@ -947,7 +947,7 @@ class _SelectedArtisanCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  ScoreNzassaBadge(score: artisan.scoreNzassa),
+                  ScoreProsArtisanBadge(score: artisan.scoreProsArtisan),
                 ],
               ),
             ],

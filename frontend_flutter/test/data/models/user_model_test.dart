@@ -9,7 +9,7 @@ void main() {
         'phone': '+2250700000001',
         'role': 'client',
         'kycStatus': 'actif',
-        'scoreNzassa': 70,
+        'scoreProsArtisan': 70,
         'walletMateriaux': 50000,
         'walletMo': 30000,
         'name': 'Test User',
@@ -24,7 +24,7 @@ void main() {
       expect(user.phone, '+2250700000001');
       expect(user.role, 'client');
       expect(user.kycStatus, 'actif');
-      expect(user.scoreNzassa, 70);
+      expect(user.scoreProsArtisan, 70);
       expect(user.walletMateriaux, 50000);
       expect(user.walletMo, 30000);
       expect(user.name, 'Test User');
@@ -44,7 +44,7 @@ void main() {
 
       expect(user.id, 1);
       expect(user.kycStatus, 'en_attente');
-      expect(user.scoreNzassa, 0);
+      expect(user.scoreProsArtisan, 0);
       expect(user.walletMateriaux, 0);
       expect(user.walletMo, 0);
       expect(user.name, isNull);
@@ -59,7 +59,7 @@ void main() {
         phone: '+2250700000001',
         role: 'artisan',
         kycStatus: 'actif',
-        scoreNzassa: 80,
+        scoreProsArtisan: 80,
         walletMateriaux: 100000,
         walletMo: 50000,
         name: 'Artisan Test',
@@ -71,7 +71,7 @@ void main() {
       expect(json['phone'], '+2250700000001');
       expect(json['role'], 'artisan');
       expect(json['kycStatus'], 'actif');
-      expect(json['scoreNzassa'], 80);
+      expect(json['scoreProsArtisan'], 80);
       expect(json['name'], 'Artisan Test');
     });
 
@@ -81,7 +81,7 @@ void main() {
         phone: '+2250700000001',
         role: 'client',
         kycStatus: 'actif',
-        scoreNzassa: 50,
+        scoreProsArtisan: 50,
         walletMateriaux: 0,
         walletMo: 0,
       );
@@ -95,7 +95,7 @@ void main() {
         phone: '+2250700000001',
         role: 'client',
         kycStatus: 'en_attente',
-        scoreNzassa: 50,
+        scoreProsArtisan: 50,
         walletMateriaux: 0,
         walletMo: 0,
       );
@@ -109,7 +109,7 @@ void main() {
         phone: '+2250700000001',
         role: 'artisan',
         kycStatus: 'actif',
-        scoreNzassa: 70,
+        scoreProsArtisan: 70,
         walletMateriaux: 0,
         walletMo: 0,
       );
@@ -123,7 +123,7 @@ void main() {
         phone: '+2250700000001',
         role: 'artisan',
         kycStatus: 'actif',
-        scoreNzassa: 60,
+        scoreProsArtisan: 60,
         walletMateriaux: 0,
         walletMo: 0,
       );

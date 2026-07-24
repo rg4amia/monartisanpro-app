@@ -22,7 +22,7 @@ class EvaluationComplianceTest extends TestCase
         $artisan = User::factory()->create([
             'role' => 'artisan',
             'kyc_status' => 'actif',
-            'score_nzassa' => 300,
+            'score_prosartisan' => 300,
         ]);
 
         $mission = Mission::create([
@@ -48,7 +48,7 @@ class EvaluationComplianceTest extends TestCase
                 'reactivite' => 2,
             ])
             ->assertCreated()
-            ->assertJsonPath('data.scoreNzassa', 17);
+            ->assertJsonPath('data.scoreProsArtisan', 17);
 
         $this->assertDatabaseHas('evaluations', [
             'mission_id' => $mission->id,
@@ -61,6 +61,6 @@ class EvaluationComplianceTest extends TestCase
             'reactivite' => 2,
         ]);
 
-        $this->assertSame(17, $artisan->fresh()->score_nzassa);
+        $this->assertSame(17, $artisan->fresh()->score_prosartisan);
     }
 }

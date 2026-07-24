@@ -30,7 +30,7 @@ class UserFactory extends Factory
             'password' => static::$password ??= Hash::make('password'),
             'role' => 'client',
             'kyc_status' => 'en_attente',
-            'score_nzassa' => 0,
+            'score_prosartisan' => 0,
             'wallet_materiaux' => 0,
             'wallet_mo' => 0,
             'remember_token' => Str::random(10),

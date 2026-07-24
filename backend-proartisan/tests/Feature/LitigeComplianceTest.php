@@ -228,7 +228,7 @@ class LitigeComplianceTest extends TestCase
         $artisan = User::factory()->create([
             'role' => 'artisan',
             'kyc_status' => 'actif',
-            'score_nzassa' => 5,
+            'score_prosartisan' => 5,
             'wallet_materiaux' => 65000,
             'wallet_mo' => 35000,
         ]);
@@ -295,7 +295,7 @@ class LitigeComplianceTest extends TestCase
         $artisan->refresh();
 
         $this->assertSame('banni', $artisan->account_status);
-        $this->assertSame(0, $artisan->score_nzassa);
+        $this->assertSame(0, $artisan->score_prosartisan);
         $this->assertNotNull($artisan->blocked_at);
     }
 

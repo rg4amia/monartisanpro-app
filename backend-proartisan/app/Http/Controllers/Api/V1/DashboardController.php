@@ -148,7 +148,7 @@ class DashboardController extends Controller
             'disputes_count' => $disputesCount,
             'total_earnings' => (int) $totalEarnings,
             'active_missions_count' => $activeMissionsCount,
-            'score_nzassa' => $user->score_nzassa,
+            'score_prosartisan' => $user->score_prosartisan,
             'wallet_mo' => $user->wallet_mo,
         ];
     }

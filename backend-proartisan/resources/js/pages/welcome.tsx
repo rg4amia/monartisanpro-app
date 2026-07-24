@@ -72,7 +72,7 @@ const audienceCards = [
         badge: 'Artisan',
         title: 'Recevoir des missions, etre paye proprement et monter en confiance',
         text: "L artisan ne depend plus seulement du bouche-a-oreille. Il gere devis, execution, jalons et capital reputation.",
-        points: ['Matching local base sur la proximite', 'J-Code materiaux pour les achats chantier', "Score N'Zassa archive pour la solvabilite"],
+        points: ['Matching local base sur la proximite', 'J-Code materiaux pour les achats chantier', "Score ProsArtisan archive pour la solvabilite"],
         icon: 'artisan' as const,
         tone: 'green' as const,
     },
@@ -124,9 +124,9 @@ const flowSteps = [
     },
     {
         phase: 'Phase 5',
-        title: "Cloture, note et score N'Zassa",
+        title: "Cloture, note et score ProsArtisan",
         text: "La mission se ferme avec signature, evaluation, archivage du score et lecture solvabilite.",
-        points: ['Notation client', "Score N'Zassa 40 / 30 / 20 / 10", "Base utile pour micro-credit d'urgence"],
+        points: ['Notation client', "Score ProsArtisan 40 / 30 / 20 / 10", "Base utile pour micro-credit d'urgence"],
         tone: 'gold' as const,
     },
 ];
@@ -432,7 +432,7 @@ export default function Welcome() {
                                     </LandingPanel>
 
                                     <LandingPanel className="mt-5 rounded-[32px] p-6">
-                                        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--landing-copy)]">Score N'Zassa</p>
+                                        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--landing-copy)]">Score ProsArtisan</p>
                                         <h3 className="mt-3 text-2xl font-semibold text-[var(--landing-ink)]" style={{ fontFamily: '"Sora", sans-serif' }}>
                                             Un score qui sert l execution et la confiance
                                         </h3>

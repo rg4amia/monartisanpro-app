@@ -21,7 +21,7 @@ class Sprint3ComplianceTest extends TestCase
             'role' => 'artisan',
             'phone' => '+2250102030405',
             'kyc_status' => 'actif',
-            'score_nzassa' => 300,
+            'score_prosartisan' => 300,
             'device_fingerprint' => null,
             'score_frozen' => false,
         ]);
@@ -65,10 +65,10 @@ class Sprint3ComplianceTest extends TestCase
         $scoreService = app(ScoreService::class);
         $scoreService->recordEvent($artisan, 'success_mission', null, null, 'Attempting change', 1.0);
 
-        $this->assertSame(300, $artisan->fresh()->score_nzassa);
+        $this->assertSame(300, $artisan->fresh()->score_prosartisan);
     }
 
-    public function test_jury_nzassa_assignment_voting_and_consensus(): void
+    public function test_jury_prosartisan_assignment_voting_and_consensus(): void
     {
         /** @var User $client */
         $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
@@ -79,15 +79,15 @@ class Sprint3ComplianceTest extends TestCase
 
         // Create 3 eligible jurors
         /** @var User $jure1 */
-        $jure1 = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif', 'score_nzassa' => 900]);
+        $jure1 = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif', 'score_prosartisan' => 900]);
         $jure1->artisanProfile()->create(['experience_years' => 5]);
 
         /** @var User $jure2 */
-        $jure2 = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif', 'score_nzassa' => 950]);
+        $jure2 = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif', 'score_prosartisan' => 950]);
         $jure2->artisanProfile()->create(['experience_years' => 8]);
 
         /** @var User $jure3 */
-        $jure3 = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif', 'score_nzassa' => 850]);
+        $jure3 = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif', 'score_prosartisan' => 850]);
         $jure3->artisanProfile()->create(['experience_years' => 3]);
 
         $mission = Mission::create([

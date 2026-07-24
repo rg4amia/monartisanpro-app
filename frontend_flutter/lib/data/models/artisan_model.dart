@@ -7,7 +7,7 @@ class ArtisanModel {
   final String? trade;
   final String? sector;
   final int experienceYears;
-  final int scoreNzassa;
+  final int scoreProsArtisan;
   final double rating;
   final int completedMissions;
   final String? distance;
@@ -26,7 +26,7 @@ class ArtisanModel {
   const ArtisanModel({
     required this.id,
     required this.phone,
-    required this.scoreNzassa,
+    required this.scoreProsArtisan,
     required this.isGoldenMarker,
     this.nightInterventionAvailable = false,
     required this.experienceYears,
@@ -51,7 +51,7 @@ class ArtisanModel {
 
   factory ArtisanModel.fromJson(Map<String, dynamic> json) {
     final parsedLocation = _parseLocation(json);
-    final scoreNzassa = _parseInt(json['scoreNzassa'] ?? json['score_nzassa']);
+    final scoreProsArtisan = _parseInt(json['scoreProsArtisan'] ?? json['score_prosartisan'] ?? json['scoreNzassa'] ?? json['score_nzassa']);
     final distanceMetres = _parseDouble(
       json['distanceMetres'] ?? json['distance_metres'],
     );
@@ -70,7 +70,7 @@ class ArtisanModel {
       experienceYears: _parseInt(
         json['experienceYears'] ?? json['experience_years'],
       ),
-      scoreNzassa: scoreNzassa,
+      scoreProsArtisan: scoreProsArtisan,
       rating: _parseDouble(json['rating']) ?? 0.0,
       completedMissions: _parseInt(
         json['completedMissions'] ?? json['completed_missions'],
@@ -79,7 +79,7 @@ class ArtisanModel {
           (json['distance'] as String?) ??
           (distanceMetres != null ? _formatDistance(distanceMetres) : null),
       distanceMetres: distanceMetres,
-      isGoldenMarker: (json['isGoldenMarker'] as bool?) ?? scoreNzassa >= 70,
+      isGoldenMarker: (json['isGoldenMarker'] as bool?) ?? scoreProsArtisan >= 70,
       nightInterventionAvailable: _parseBool(
         json['nightInterventionAvailable'] ??
             json['intervention_nuit'] ??
@@ -107,7 +107,7 @@ class ArtisanModel {
     'trade': trade,
     'sector': sector,
     'experienceYears': experienceYears,
-    'scoreNzassa': scoreNzassa,
+    'scoreProsArtisan': scoreProsArtisan,
     'rating': rating,
     'completedMissions': completedMissions,
     'distance': distance,

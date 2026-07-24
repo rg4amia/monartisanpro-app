@@ -488,7 +488,7 @@ class LitigeService
         $losers
             ->filter()
             ->each(function (User $user) use (&$sanctions, $litige): void {
-                $previousScore = $user->score_nzassa;
+                $previousScore = $user->score_prosartisan;
                 // Création d'une entrée de Ledger pour litige perdu
                 // Décision client = perte totale de l'artisan. Si la mission a été commencée et le client remboursé,
                 // c'est soit un abandon (-300 pts), soit une malfaçon/fraude (-150 pts).
@@ -548,7 +548,7 @@ class LitigeService
                     }
                 } else {
                     $user->update([
-                        'score_nzassa' => max(0, $previousScore - 1),
+                        'score_prosartisan' => max(0, $previousScore - 1),
                     ]);
                 }
 
@@ -597,7 +597,7 @@ class LitigeService
                     'user_id' => $user->id,
                     'role' => $user->role,
                     'score_before' => $previousScore,
-                    'score_after' => $user->fresh()->score_nzassa,
+                    'score_after' => $user->fresh()->score_prosartisan,
                     'lost_disputes_last_6_months' => $lostCount,
                     'account_status' => $user->fresh()->account_status,
                     'reason' => $user->fresh()->account_status_reason,
@@ -655,7 +655,7 @@ class LitigeService
             ->where('role', 'artisan')
             ->where('kyc_status', 'actif')
             ->where('id', '!=', $litige->mission->artisan_id)
-            ->where('score_nzassa', '>', 800);
+            ->where('score_prosartisan', '>', 800);
 
         if ($artisanTradeId) {
             $jurorsQuery->whereHas('artisanProfile', function ($q) use ($artisanTradeId) {
@@ -670,7 +670,7 @@ class LitigeService
                 ->where('role', 'artisan')
                 ->where('kyc_status', 'actif')
                 ->where('id', '!=', $litige->mission->artisan_id)
-                ->where('score_nzassa', '>', 800)
+                ->where('score_prosartisan', '>', 800)
                 ->inRandomOrder()
                 ->limit(3)
                 ->get();

@@ -149,7 +149,7 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
       final color =
           artisan.isGoldenMarker ? const Color(0xFFFBBF24) : const Color(0xFF64748B);
       final bytes = await _renderArtisanIcon(
-          color, artisan.scoreNzassa.toString(), artisan.isGoldenMarker);
+          color, artisan.scoreProsArtisan.toString(), artisan.isGoldenMarker);
 
       final pm = col.addPlacemarkWithImageStyle(
         mk.Point(latitude: lat, longitude: lng),
@@ -734,7 +734,7 @@ class _ArtisanBottomPanel extends StatelessWidget {
                                       color: Color(0xFFF59E0B), size: 14),
                                   const SizedBox(width: 4),
                                   Text(
-                                    artisan.scoreNzassa.toString(),
+                                    artisan.scoreProsArtisan.toString(),
                                     style: const TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.bold,

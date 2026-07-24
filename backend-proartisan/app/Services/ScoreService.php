@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 class ScoreService
 {
     /**
-     * Poids des événements du Score N'Zassa (échelle 0–1000, base 300).
+     * Poids des événements du Score ProsArtisan (échelle 0–1000, base 300).
      */
     private const EVENT_POINTS = [
         'success_mission'       =>   5,
@@ -40,18 +40,18 @@ class ScoreService
     // ──────────────────────────────────────────────
 
     /**
-     * Recalcule le Score N'Zassa d'un artisan à partir de la dernière évaluation
+     * Recalcule le Score ProsArtisan d'un artisan à partir de la dernière évaluation
      * reçue et de l'ensemble du Ledger.
      */
     public function recalculate(User $artisan): int
     {
         if ($artisan->score_frozen) {
-            return $artisan->score_nzassa;
+            return $artisan->score_prosartisan;
         }
 
         $lastEvaluation = Evaluation::where('evalue_id', $artisan->id)->latest('id')->first();
         if (!$lastEvaluation) {
-            return $artisan->score_nzassa;
+            return $artisan->score_prosartisan;
         }
 
         $credibility = $this->resolveCredibility($lastEvaluation->evaluateur);
@@ -100,12 +100,12 @@ class ScoreService
     public function recalculateLogistic(User $logisticWorker): int
     {
         if ($logisticWorker->score_frozen) {
-            return $logisticWorker->score_nzassa;
+            return $logisticWorker->score_prosartisan;
         }
 
         $lastEvaluation = Evaluation::where('evalue_id', $logisticWorker->id)->latest('id')->first();
         if (!$lastEvaluation) {
-            return $logisticWorker->score_nzassa;
+            return $logisticWorker->score_prosartisan;
         }
 
         $credibility = $this->resolveCredibility($lastEvaluation->evaluateur);
@@ -162,7 +162,7 @@ class ScoreService
     ): int {
         $points = self::EVENT_POINTS[$eventType] ?? 0;
         if ($points === 0) {
-            return $artisan->score_nzassa;
+            return $artisan->score_prosartisan;
         }
 
         ScoreLedgerEntry::create([
@@ -307,12 +307,12 @@ class ScoreService
     // ──────────────────────────────────────────────
 
     /**
-     * Somme toutes les entrées du Ledger et met à jour score_nzassa.
+     * Somme toutes les entrées du Ledger et met à jour score_prosartisan.
      */
     public function recalculateFromLedger(User $artisan): int
     {
         if ($artisan->score_frozen) {
-            return $artisan->score_nzassa;
+            return $artisan->score_prosartisan;
         }
 
         $ledgerSum = (int) ScoreLedgerEntry::where('user_id', $artisan->id)
@@ -320,7 +320,7 @@ class ScoreService
             ->value('total');
 
         $newScore = min(self::MAX_SCORE, max(self::MIN_SCORE, self::BASE_SCORE + $ledgerSum));
-        $artisan->update(['score_nzassa' => $newScore]);
+        $artisan->update(['score_prosartisan' => $newScore]);
 
         return $newScore;
     }
@@ -378,11 +378,11 @@ class ScoreService
             WHERE evalue_id = ?
         ", [$artisan->id]);
 
-        $threshold = config('prosartisan.score_nzassa.credit_threshold', 700);
+        $threshold = config('prosartisan.score_prosartisan.credit_threshold', 70);
 
         return [
-            'score_nzassa'          => $artisan->score_nzassa,
-            'micro_credit_eligible' => $artisan->score_nzassa >= $threshold,
+            'score_prosartisan'     => $artisan->score_prosartisan,
+            'micro_credit_eligible' => $artisan->score_prosartisan >= $threshold,
             'total_evaluations'     => $row?->total_evaluations ?? 0,
             'breakdown'             => [
                 'fiabilite'  => round((float) ($row?->avg_fiabilite ?? 0), 1),
@@ -396,6 +396,6 @@ class ScoreService
 
     public function isEligibleCredit(User $artisan): bool
     {
-        return $artisan->score_nzassa >= config('prosartisan.score_nzassa.credit_threshold', 700);
+        return $artisan->score_prosartisan >= config('prosartisan.score_prosartisan.credit_threshold', 70);
     }
 }
