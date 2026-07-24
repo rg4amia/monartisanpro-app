@@ -1,0 +1,345 @@
+Checkout API
+The Checkout API provides a programmatic means to allow you to prompt users from a website or a mobile app to send payments. For an overview and quick start instructions, see our Getting Started with the Wave Checkout API guide.
+
+ENDPOINTS:
+
+POST /v1/checkout/sessions
+GET /v1/checkout/sessions/:id
+GET /v1/checkout/sessions
+GET /v1/checkout/sessions/search
+POST /v1/checkout/sessions/:id/expire
+POST /v1/checkout/sessions/:id/refund
+
+Base URL
+All the endpoint paths referenced in the API document are relative to a base URL, https://api.wave.com.
+
+Authentication
+Authenticating to the API is done via API keys. These keys are bound to a single business wallet and can only interact with it.
+
+If you need to interact with more than one wallet in your network, then you will have to obtain one key per wallet.
+
+Since API keys can be used to perform any API request, including those which move money and access sensitive information, you must take care to keep your key secret. Your key should not be shared, stored anywhere but your own servers, or used from client-side code.
+
+Each request must be sent over HTTPS and contain an authorization header specifying the bearer scheme with the api key:
+
+Authorization: Bearer wave_sn_prod_YhUNb9d...i4bA6
+Note that the actual key is much longer but for documentation purposes most of the characters have been replaced by an ellipses.
+
+Obtaining your API key
+You can manage API keys in the developer's section in the Wave Business Portal. You can create, view, and revoke keys, and define which specific APIs each key has access to.
+
+Dev Portal
+
+When you create a new API key, you will only see the full key once. Make sure you copy it without missing any characters, since it will be masked afterwards for security reasons.
+
+Create API Key
+
+Wave doesn't know your full key, but if you contact API support we can identify them by the last 4 letters that you see displayed in the business portal.
+
+Only Admin users can access the Developer section in the Business Portal. If you are an Admin but still can't see it, contact API support to enable it.
+
+Error codes
+In the authentication phase, one of the following errors can cause your request to return early:
+
+Status	Code	Descriptions
+401	missing-auth-header	Your request should include an HTTP auth header.
+401	invalid-auth	Your HTTP auth header can't be processed.
+401	api-key-not-provided	Your request should include an API key.
+401	no-matching-api-key	The key you provided doesn't exist in our system.
+401	api-key-revoked	Your API key has been revoked.
+403	invalid-wallet	Your wallet can't be used in this particular API.
+403	disabled-wallet	Your wallet has been temporarily disabled. You should still be able to use the endpoint to check your balance.
+Types
+Amounts
+All amounts are represented as strings. When the amount includes decimal places, the separator is a period (.). The following rules apply to valid amounts:
+
+Include between zero and two decimal places. (See Currency for the maximum number of allowed decimal places for each currency.)
+No leading zeroes where the value is one or greater.
+One leading zero where the value is less than one.
+May include trailing zeroes.
+Must be positive for requests. May be zero or negative in object attributes.
+Currency
+Standard ISO 4217 three-letter codes in upper case are used to specify currency. The code for the West African Franc is XOF. Decimal places are not allowed for XOF currency amounts.
+
+Timestamps
+Timestamp values follow the ISO 8601 standard. Timestamps that we provide in API objects will be of the form YYYY-MM-DDThh:mm:ssZ where the Z indicates the UTC time zone.
+
+The Checkout Session object
+CHECKOUT SESSION OBJECT
+
+{
+  "id": "cos-18qq25rgr100a",
+  "amount": "1000",
+  "checkout_status": "complete",
+  "client_reference": null,
+  "currency": "XOF",
+  "error_url": "https://example.com/error",
+  "last_payment_error": null,
+  "business_name": "Papa's Penguins",
+  "payment_status": "succeeded",
+  "transaction_id": "TDH5TEWTLFE",
+  "aggregated_merchant_id": "am-7lks22ap113t4",
+  "success_url": "https://example.com/success",
+  "wave_launch_url": "https://pay.wave.com/c/cos-18qq25rgr100a",
+  "when_completed": "2021-12-08T10:15:32Z",
+  "when_created": "2021-12-08T10:13:04Z",
+  "when_expires": "2021-12-09T10:13:04Z"
+}
+The Checkout Session object contains details about the requested payment and its status.
+
+Attributes
+id string
+Unique identifier for the Checkout Session object. Up to 20 characters.
+
+amount string
+Total amount to collect from the customer (gross of fees).
+
+checkout_status enum
+The status of the checkout, one of open, complete, or expired.
+
+client_reference string (optional)
+A unique string which can be used to correlate the checkout session and subsequent payment with your system. You provide this value in the request to create a checkout session.
+
+currency string
+Three-letter ISO 4217 currency code.
+
+error_url string
+The URL the customer will be directed to if an error occurs on a payment attempt.
+
+last_payment_error hash (optional)
+The reason for the last failed payment attempt. Can only be populated when the payment_status is processing or cancelled. Contains the following fields:
+
+code string
+A short string indicated the error code.
+
+message string
+A human-readable description of the error.
+
+business_name string
+The name of the business as it will be shown to the customer.
+
+payment_status enum
+The status of the associated payment, one of processing, cancelled, or succeeded.
+
+aggregated_merchant_id: string (optional)
+The aggregated merchant id used for this checkout transaction.
+
+restrict_payer_mobile: string (optional)
+This checkout session can only be paid by the Wave account with this number. Note: this field was previously called enforce_payer_mobile, so both are currently returned.
+
+success_url string
+The URL the customer will be directed to if the payment succeeds.
+
+transaction_id string
+A Wave transaction ID that is also visible in the user's app.
+
+wave_launch_url string
+A URL which will open the Wave app to initiate the checkout or give instructions for completing the checkout if Wave is not installed on the device.
+
+ You must let wave_launch_url be opened by the user's browser. If your app captures it or opens it in a webview inside your app, then the redirect to the Wave app for the payment step won't work.
+when_completed ISO 8601 timestamp
+UTC time at which the checkout session either succeeded or expired. Not populated when the checkout_status is open.
+
+when_created ISO 8601 timestamp
+UTC time that the checkout session was created.
+
+when_expires ISO 8601 timestamp
+UTC time at which the checkout session will expire. By default, checkout sessions expire 30 minutes after their creation. After expiration, payments will not be accepted for the checkout session.
+
+API
+Create a checkout session
+POST /v1/checkout/sessions
+
+Creates a Checkout Session object.
+
+curl \
+-X POST \
+-H 'Authorization: Bearer wave_sn_prod_YhUNb9d...i4bA6' \
+-H 'Content-Type: application/json' \
+-d '{
+      "amount": "1000",
+      "currency": "XOF",
+      "error_url": "https://example.com/error",
+      "success_url": "https://example.com/success"
+    }' \
+https://api.wave.com/v1/checkout/sessions
+shell
+php
+javascript
+java
+Parameters
+amount string
+Total amount to collect from the customer (gross of fees).
+
+client_reference string (optional, up to 255 characters)
+A unique string that you provide which can be used to correlate the checkout in your system.
+
+currency string
+Three-letter ISO 4217 currency code.
+
+restrict_payer_mobile string (optional)
+If you provide this, then the checkout session can only be paid by the Wave account with the specified mobile number. This is a feature that can help you protect your users from scams. Phone numbers follow the E.164 standard. They must include a country code preceded by +. Note: this field was previously called enforce_payer_mobile. This field is also still accepted for compatibility reasons, but the new name is preferred.
+
+error_url string
+The URL the customer will be directed to if an error occurs on a payment attempt. You must provide a fully-qualified address using https as the scheme. You may include any information you need in the path itself or in query parameters.
+
+success_url string
+The URL the customer will be directed to if the payment succeeds. You must provide a fully-qualified address using https as the scheme. You may include any information you need in the path itself or in query parameters.
+
+aggregated_merchant_id string (required for Aggregators)
+An aggregated merchant ID to use when making this transaction. This is only available to specific businesses and will return an error if you provide it but don't have permission. If you would like to use this feature, please contact your Wave support representative.
+
+Returns
+Returns a Checkout Session object.
+
+ After receiving a checkout session object, the next step is to redirect the user to the URL specified in wave_launch_url.
+
+Note that this must simply be opened in the user's browser, so a simple link/redirect will be enough. If you have a mobile app, make sure it doesn't try to open wave_launch_url in a webview.
+Retrieve a checkout
+GET /v1/checkout/sessions/:id
+
+Retrieves a Checkout Session object by checkout session id (identifier starting with cos-).
+
+curl \
+-H 'Authorization: Bearer wave_sn_prod_YhUNb9d...i4bA6' \
+https://api.wave.com/v1/checkout/sessions/cos-18qq25rgr100a
+shell
+php
+javascript
+java
+Parameters
+No parameters.
+
+Returns
+Returns a Checkout Session object if a valid identifier was provided. Returns an error otherwise.
+
+Retrieve a checkout by Transaction ID
+GET /v1/checkout/sessions
+
+Retrieves a Checkout Session object by transaction id (identifier starting with T_).
+
+curl -X GET \
+  --url https://api.wave.com/v1/checkout/sessions?transaction_id=FAH.4827.1734 \
+  -H 'Authorization : Bearer wave_sn_prod_YhUNb9d...i4bA6'
+shell
+php
+javascript
+java
+Parameters
+Key	Type	Description
+transaction_id	string	The transaction ID of the checkout session to retrieve.
+Returns
+Returns a Checkout Session object if a valid identifier was provided. Returns an error otherwise.
+
+Search for checkouts
+GET /v1/checkout/sessions/search
+
+Retrieves a list of Checkout Session objects that match the search criteria.
+
+curl -X GET \
+  --url https://api.wave.com/v1/checkout/sessions/search?client_reference=123456 \
+  -H 'Authorization : Bearer wave_sn_prod_YhUNb9d...i4bA6'
+shell
+php
+javascript
+java
+Example response
+
+{
+  "result": [
+    {
+      "id": "cos-18qq25rgr100a",
+      "amount": "1000",
+      "checkout_status": "complete",
+      "client_reference": "123456",
+      "currency": "XOF",
+      "error_url": "https://example.com/error",
+      "last_payment_error": null,
+      "business_name": "Papa's Penguins",
+      "payment_status": "succeeded",
+      "transaction_id": "TDH5TEWTLFE",
+      "aggregated_merchant_id": "am-7lks22ap113t4",
+      "success_url": "https://example.com/success",
+      "wave_launch_url": "https://pay.wave.com/c/cos-18qq25rgr100a",
+      "when_completed": "2021-12-08T10:15:32Z",
+      "when_created": "2021-12-08T10:13:04Z",
+      "when_expires": "2021-12-09T10:13:04Z"
+    }
+  ]
+}
+Parameters
+Key	Type	Description
+client_reference	string	A unique string that you provide which can be used to correlate the checkout in your system.
+Return attributes
+Key	Type	Description
+result	List of checkout sessions	The list of payouts that match the search criteria.
+Refund a checkout
+POST /v1/checkout/sessions/:id/refund
+
+Refunds the user payment associated with a Checkout Session.
+
+curl -X POST \
+-H 'Authorization: Bearer wave_sn_prod_YhUNb9d...i4bA6' \
+https://api.wave.com/v1/checkout/sessions/cos-18qq25rgr100a/refund
+shell
+php
+javascript
+java
+Parameters
+No parameters.
+
+Returns
+Returns an empty body and an HTTP 200 Success code when the payment is refunded, and an error otherwise. If the Checkout Session doesn't exists this returns an HTTP 404 Not Found error.
+
+If you try to refund a checkout twice, no additional transaction will be created, but this endpoint will simply return HTTP 200 Success again.
+
+All normal transaction restrictions apply: if the recipient has reached their monthly limit or their account is for any reason blocked then the corresponding error is returned as well.
+
+Expire a checkout
+POST /v1/checkout/sessions/:id/expire
+
+Expires an open Checkout Session, preventing it from being completed by any user.
+
+curl -X POST \
+-H 'Authorization: Bearer wave_sn_prod_YhUNb9d...i4bA6' \
+https://api.wave.com/v1/checkout/sessions/cos-18qq25rgr100a/expire
+shell
+php
+javascript
+java
+Parameters
+No parameters.
+
+Returns
+Returns an empty body and an HTTP 200 Success code when successfully expiring the session. Can also return the following errors:
+
+404 Not Found: If no Checkout Session is found with the provided id
+403 Forbidden: If your API key has no permission for this endpoint
+409 Conflict: If the Checkout Session was already completed or expired
+Checkout API errors
+A couple of things can go wrong when attempting to create a checkout session, or when a user tries to pay an existing session. The following is the list of errors that can occur when using this API.
+
+This is in addition to the general HTTP code that can be returned as described in the errors section.
+
+Checkout Session errors
+error_code	explanation
+authorization-error	The API key is either missing or incomplete. Make sure you copy-pasted the entire key and refer to the authentication section for instructions.
+missing-auth-header	The request is missing a Bearer token in the Authorization header. See Authentication for instructions.
+checkout-refund-failed	You tried to refund a checkout but the transaction couldn't be made. It's possible that the payment wasn't in a success state beforehand, the recipient account was blocked, or your wallet didn't have sufficient funds for the transaction.
+checkout-session-not-found	You requested a checkout session by ID that we can't match to anything in our system. You should double-check that the ID corresponds to one that you've received in a response.
+internal-server-error	A technical error has occurred in Wave's system. We work very hard to avoid this, so it is only reserved for unexpected cases.
+request-validation-error	Your request doesn't match the object type required. These are things like a missing field or an invalid type in a provided field like an invalid phone number. The error_message will help you with details.
+service-unavailable	In some rare and short cases Wave services are down for maintenance. You can try the request again later.
+unauthorized-wallet	The account you are using is not authorized to use this API. Please get in touch with a Wave partner representative to discuss getting access.
+Payment errors
+These errors will be delivered as part of the webhook that notifies your system of a failed checkout payment attempt. They basically answer why the payment of the user failed. The code will be under the last_payment_error field of the webhook body.
+
+error_code	explanation
+blocked-account	The customer used a blocked account to try and pay for the checkout.
+cross-border-payment-not-allowed	Sending a payment between countries is often restricted for regulatory reasons.
+customer-age-restricted	The customer is underage (or of unknown age), but is trying to pay for an age restricted product or service.
+insufficient-funds	The user didn't have enough account balance.
+kyb-limits-exceeded	Your business has exceeded its account limits. Please contact Wave to find out how you can increase your limits.
+payer-mobile-mismatch	If you passed the restrict_payer_mobile (formerly enforce_payer_mobile) parameter, then the checkout session can only be paid by the number you specified. This error is returned if a customer with a different number tried to pay.
+payment-failure	A technical error has occurred in Wave's system. We work very hard to avoid this, so it error code only reserved for unexpected cases.
+Changelog
