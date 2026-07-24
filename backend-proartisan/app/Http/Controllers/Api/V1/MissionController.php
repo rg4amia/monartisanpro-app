@@ -170,7 +170,14 @@ class MissionController extends Controller
     {
         $user = $request->user();
 
-        if ($mission->artisan_id !== $user->id) {
+        if (! $user->isKycActif()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Votre KYC doit être validé pour accepter cette mission.',
+            ], 403);
+        }
+
+        if ((int) $mission->artisan_id !== (int) $user->id) {
             return response()->json(['success' => false, 'message' => 'Accès refusé.'], 403);
         }
 
@@ -190,10 +197,13 @@ class MissionController extends Controller
             );
         }
 
+        $mission->refresh();
+        $mission->load(['client', 'artisan', 'jalons', 'requestedSector', 'requestedTrade']);
+
         return response()->json([
             'success' => true,
             'message' => 'Demande acceptée.',
-            'data'    => new MissionResource($mission->fresh()),
+            'data'    => new MissionResource($mission),
         ]);
     }
 
@@ -204,7 +214,7 @@ class MissionController extends Controller
     {
         $user = $request->user();
 
-        if ($mission->artisan_id !== $user->id) {
+        if ((int) $mission->artisan_id !== (int) $user->id) {
             return response()->json(['success' => false, 'message' => 'Accès refusé.'], 403);
         }
 
@@ -227,10 +237,13 @@ class MissionController extends Controller
             );
         }
 
+        $mission->refresh();
+        $mission->load(['client', 'artisan', 'jalons', 'requestedSector', 'requestedTrade']);
+
         return response()->json([
             'success' => true,
             'message' => 'Demande refusée, mission remise en recherche d\'artisan.',
-            'data'    => new MissionResource($mission->fresh()),
+            'data'    => new MissionResource($mission),
         ]);
     }
 }

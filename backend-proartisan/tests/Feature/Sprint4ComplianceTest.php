@@ -16,7 +16,9 @@ class Sprint4ComplianceTest extends TestCase
 
     public function test_jalon_computer_vision_compliance(): void
     {
+        /** @var User $client */
         $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
+        /** @var User $artisan */
         $artisan = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif']);
 
         $mission = Mission::create([
@@ -78,6 +80,7 @@ class Sprint4ComplianceTest extends TestCase
 
     public function test_sponsorship_registration_and_caution_penalty(): void
     {
+        /** @var User $parrain */
         $parrain = User::factory()->create([
             'role' => 'artisan',
             'kyc_status' => 'actif',
@@ -120,7 +123,9 @@ class Sprint4ComplianceTest extends TestCase
             ->assertJsonCount(1, 'data');
 
         // Verify penalty cascade when filleul loses a dispute
+        /** @var User $client */
         $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
+        /** @var User $admin */
         $admin = User::factory()->create(['role' => 'admin']);
 
         $mission = Mission::create([

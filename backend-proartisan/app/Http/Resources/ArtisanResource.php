@@ -16,7 +16,7 @@ class ArtisanResource extends JsonResource
     private ?float $distanceMetres;
     private ?array $blurredPosition;
 
-    public function __construct($resource, ?float $distanceMetres = null, ?array $blurredPosition = null)
+    public function __construct(mixed $resource, ?float $distanceMetres = null, ?array $blurredPosition = null)
     {
         parent::__construct($resource);
         $this->distanceMetres  = $distanceMetres;
