@@ -69,10 +69,10 @@ class PaymentController extends Controller
                 ], 403);
             }
 
-            if ((string) $mission->status !== 'draft') {
+            if (! in_array((string) $mission->status, ['draft', 'pending_artisan_acceptance', 'pending_funding'], true)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cette mission n\'est pas en attente de paiement',
+                    'message' => 'Cette mission n\'est pas en attente de paiement (statut actuel: ' . (string) $mission->status . ')',
                 ], 400);
             }
 

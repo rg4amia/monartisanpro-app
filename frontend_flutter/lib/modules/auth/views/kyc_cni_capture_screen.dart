@@ -540,7 +540,7 @@ class _KycCniCaptureScreenState extends State<KycCniCaptureScreen> {
             ),
           ),
           TextSpan(
-              text: ' de N\'Zassa concernant le traitement des documents.'),
+              text: ' de ProsArtisan concernant le traitement des documents.'),
         ],
       ),
     );

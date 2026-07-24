@@ -92,7 +92,7 @@ class MissionsController extends GetxController {
 
       final results = await Future.wait([
         _repo.getMission(id, forceRefresh: forceRefresh),
-        _repo.getJalons(id, forceRefresh: forceRefresh),
+        _repo.getJalons(id, forceRefresh: forceRefresh).catchError((_) => <JalonModel>[]),
       ]);
 
       currentMission.value = results[0] as MissionModel;

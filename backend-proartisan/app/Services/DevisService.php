@@ -32,6 +32,11 @@ class DevisService
             }
         }
 
+        if ($mission->status instanceof \App\States\Mission\PendingArtisanAcceptanceState) {
+            $mission->status->transitionTo(\App\States\Mission\DraftState::class);
+            $mission->refresh();
+        }
+
         $devis = Devis::create([
             'mission_id'  => $mission->id,
             'artisan_id'  => $artisan->id,

@@ -59,7 +59,7 @@ class ParrainageScreen extends StatelessWidget {
                           const SizedBox(width: 16),
                           Expanded(
                             child: Text(
-                              'En tant que Maître Artisan, vous pouvez parrainer des apprentis. Attention : en cas de litige perdu par votre filleul, votre Score N\'Zassa subira une pénalité de caution.',
+                              'En tant que Maître Artisan, vous pouvez parrainer des apprentis. Attention : en cas de litige perdu par votre filleul, votre Score ProsArtisan subira une pénalité de caution.',
                               style: TextStyle(
                                 fontSize: 13,
                                 color: AppColors.primary.withValues(alpha: 0.9),

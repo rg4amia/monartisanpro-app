@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../data/models/mission_model.dart';
 import '../../../shared/widgets/loading_shimmer.dart';
+import '../../notifications/controllers/notifications_controller.dart';
 import '../controllers/home_controller.dart';
 
 class SupplierHomeScreen extends StatelessWidget {
@@ -200,9 +201,45 @@ class _SupplierHero extends StatelessWidget {
                   ],
                 ),
               ),
-              _HeroAction(
-                icon: Icons.notifications_outlined,
-                onTap: () => Get.toNamed(Routes.notifications),
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  _HeroAction(
+                    icon: Icons.notifications_outlined,
+                    onTap: () => Get.toNamed(Routes.notifications),
+                  ),
+                  Obx(() {
+                    final unread = Get.isRegistered<NotificationsController>()
+                        ? Get.find<NotificationsController>().unreadCount
+                        : 0;
+                    if (unread == 0) return const SizedBox.shrink();
+                    return Positioned(
+                      right: 2,
+                      top: 2,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        child: Center(
+                          child: Text(
+                            '$unread',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ],
               ),
             ],
           ),

@@ -13,7 +13,7 @@ class ScoreScreen extends GetView<ScoreController> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('Score N\'Zassa')),
+      appBar: AppBar(title: const Text('Score ProsArtisan')),
       body: Obx(() {
         if (controller.isLoading.value) {
           return const Center(child: CircularProgressIndicator());

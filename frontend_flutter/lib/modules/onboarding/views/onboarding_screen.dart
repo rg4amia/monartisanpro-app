@@ -35,7 +35,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     ),
     OnboardingPage(
       image: 'assets/images/onboarding_3.png',
-      title: "La Transparence avec le Score N'Zassa",
+      title: "La Transparence avec le Score ProsArtisan",
       description:
           'Évaluez vos artisans sur la fiabilité, la qualité, l\'intégrité et la réactivité. Choisissez l\'excellence grâce à un score transparent et audité.',
       backgroundColor: Colors.white,
@@ -515,13 +515,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildNZassaMetric(
-                  'Score N\'Zassa',
+                _buildProsArtisanMetric(
+                  'Score ProsArtisan',
                   '98',
                   '/100',
                   const Color(0xFFFDB750),
                 ),
-                _buildNZassaMetric(
+                _buildProsArtisanMetric(
                   'Missions',
                   '124',
                   ' faites',
@@ -560,7 +560,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  Widget _buildNZassaMetric(String label, String value, String suffix, Color color) {
+  Widget _buildProsArtisanMetric(String label, String value, String suffix, Color color) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
