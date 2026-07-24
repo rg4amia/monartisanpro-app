@@ -96,6 +96,73 @@ class PaymentController extends Controller
             $provider = PaymentProvider::from($request->provider);
             $phone = (string) ($request->phone ?? $client->phone ?? '');
 
+            $existingTransaction = Transaction::where('mission_id', $mission->id)
+                ->where('user_id', $client->id)
+                ->where('type', 'acompte')
+                ->where('montant', $montant)
+                ->where('provider', $provider)
+                ->where('statut', PaymentStatus::EN_ATTENTE)
+                ->whereJsonContains('metadata->devis_id', $devis->id)
+                ->whereJsonContains('metadata->payment_type', $paymentType)
+                ->orderBy('id', 'desc')
+                ->first();
+
+            if ($existingTransaction) {
+                if ($provider === PaymentProvider::WAVE) {
+                    $checkoutUrl = $existingTransaction->metadata['payment_url'] ?? null;
+                    $waveLaunchUrl = $existingTransaction->metadata['wave_launch_url'] ?? null;
+                    if ($checkoutUrl) {
+                        return response()->json([
+                            'success' => true,
+                            'message' => 'Paiement Wave existant récupéré',
+                            'data' => [
+                                'transaction_id' => $existingTransaction->id,
+                                'devis_id' => $devis->id,
+                                'payment_url' => $checkoutUrl,
+                                'wave_launch_url' => $waveLaunchUrl,
+                                'provider' => 'wave',
+                            ],
+                        ]);
+                    }
+                }
+
+                if ($provider === PaymentProvider::ORANGE_MONEY) {
+                    $paymentUrl = $existingTransaction->metadata['payment_url'] ?? null;
+                    $orderId = $existingTransaction->orange_order_id ?? null;
+                    if ($paymentUrl && $orderId) {
+                        return response()->json([
+                            'success' => true,
+                            'message' => 'Paiement Orange Money existant récupéré',
+                            'data' => [
+                                'transaction_id' => $existingTransaction->id,
+                                'devis_id' => $devis->id,
+                                'payment_url' => $paymentUrl,
+                                'order_id' => $orderId,
+                                'provider' => 'orange_money',
+                            ],
+                        ]);
+                    }
+                }
+
+                if ($provider === PaymentProvider::VIREMENT_BANCAIRE) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Paiement par Virement Bancaire existant récupéré',
+                        'data' => [
+                            'transaction_id' => $existingTransaction->id,
+                            'devis_id' => $devis->id,
+                            'provider' => 'virement_bancaire',
+                            'virement_instructions' => [
+                                'bank_name' => $existingTransaction->metadata['bank_name'] ?? 'ECOBANK CI',
+                                'account_name' => $existingTransaction->metadata['bank_account_name'] ?? 'PROSARTISAN ESCROW',
+                                'iban' => $existingTransaction->metadata['bank_iban'] ?? 'CI59 CI05 9012 3456 7890 12',
+                                'reference' => $existingTransaction->reference_externe,
+                            ],
+                        ],
+                    ]);
+                }
+            }
+
             $transaction = Transaction::create([
                 'mission_id' => $mission->id,
                 'user_id' => $client->id,
@@ -416,6 +483,73 @@ class PaymentController extends Controller
         }
 
         try {
+            $existingTransaction = Transaction::where('mission_id', $mission->id)
+                ->where('user_id', $client->id)
+                ->where('type', 'acompte')
+                ->where('montant', $montant)
+                ->where('provider', $provider)
+                ->where('statut', PaymentStatus::EN_ATTENTE)
+                ->whereJsonContains('metadata->jalon_id', $jalon->id)
+                ->whereJsonContains('metadata->payment_type', 'jalon')
+                ->orderBy('id', 'desc')
+                ->first();
+
+            if ($existingTransaction) {
+                if ($provider === PaymentProvider::WAVE) {
+                    $checkoutUrl = $existingTransaction->metadata['payment_url'] ?? null;
+                    $waveLaunchUrl = $existingTransaction->metadata['wave_launch_url'] ?? null;
+                    if ($checkoutUrl) {
+                        return response()->json([
+                            'success' => true,
+                            'message' => 'Paiement du jalon Wave existant récupéré',
+                            'data' => [
+                                'transaction_id' => $existingTransaction->id,
+                                'jalon_id' => $jalon->id,
+                                'payment_url' => $checkoutUrl,
+                                'wave_launch_url' => $waveLaunchUrl,
+                                'provider' => 'wave',
+                            ],
+                        ]);
+                    }
+                }
+
+                if ($provider === PaymentProvider::ORANGE_MONEY) {
+                    $paymentUrl = $existingTransaction->metadata['payment_url'] ?? null;
+                    $orderId = $existingTransaction->orange_order_id ?? null;
+                    if ($paymentUrl && $orderId) {
+                        return response()->json([
+                            'success' => true,
+                            'message' => 'Paiement du jalon Orange Money existant récupéré',
+                            'data' => [
+                                'transaction_id' => $existingTransaction->id,
+                                'jalon_id' => $jalon->id,
+                                'payment_url' => $paymentUrl,
+                                'order_id' => $orderId,
+                                'provider' => 'orange_money',
+                            ],
+                        ]);
+                    }
+                }
+
+                if ($provider === PaymentProvider::VIREMENT_BANCAIRE) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Paiement du jalon par Virement Bancaire existant récupéré',
+                        'data' => [
+                            'transaction_id' => $existingTransaction->id,
+                            'jalon_id' => $jalon->id,
+                            'provider' => 'virement_bancaire',
+                            'virement_instructions' => [
+                                'bank_name' => $existingTransaction->metadata['bank_name'] ?? 'ECOBANK CI',
+                                'account_name' => $existingTransaction->metadata['bank_account_name'] ?? 'PROSARTISAN ESCROW',
+                                'iban' => $existingTransaction->metadata['bank_iban'] ?? 'CI59 CI05 9012 3456 7890 12',
+                                'reference' => $existingTransaction->reference_externe,
+                            ],
+                        ],
+                    ]);
+                }
+            }
+
             $transaction = Transaction::create([
                 'mission_id' => $mission->id,
                 'user_id' => $client->id,
