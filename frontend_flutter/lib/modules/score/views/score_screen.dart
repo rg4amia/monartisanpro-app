@@ -28,7 +28,7 @@ class ScoreScreen extends GetView<ScoreController> {
                   padding: const EdgeInsets.all(24),
                   child: Column(
                     children: [
-                      ScoreNzassa(
+                      ScoreProsArtisan(
                         score: controller.score.value,
                         size: ScoreSize.large,
                       ),

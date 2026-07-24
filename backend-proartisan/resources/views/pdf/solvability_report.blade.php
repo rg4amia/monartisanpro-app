@@ -29,8 +29,8 @@
     <p><strong>Date d'inscription :</strong> {{ $artisan->created_at->format('d/m/Y') }}</p>
 
     <div class="score-container">
-        <h3>Score N'Zassa Global</h3>
-        <div class="score">{{ $score_detail['score_nzassa'] }}/100</div>
+        <h3>Score ProsArtisan Global</h3>
+        <div class="score">{{ $score_detail['score_prosartisan'] }}/100</div>
         <p>Ce score représente la fiabilité globale calculée par l'algorithme ProsArtisan.</p>
     </div>
 

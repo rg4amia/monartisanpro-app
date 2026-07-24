@@ -8,7 +8,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
 /**
- * CRON Dégradation temporelle (« La Rouille ») du Score N'Zassa.
+ * CRON Dégradation temporelle (« La Rouille ») du Score ProsArtisan.
  *
  * JUSTIFICATION BACKLOG (Epic 12) :
  * Si un artisan n'a validé aucun jalon et n'a accepté aucune mission
@@ -33,7 +33,7 @@ class DecayScoreCommand extends Command
     {
         $isDryRun = $this->option('dry-run');
 
-        $this->info('=== Dégradation Score N\'Zassa (inactivité ≥ 60j) ===');
+        $this->info('=== Dégradation Score ProsArtisan (inactivité ≥ 60j) ===');
 
         if ($isDryRun) {
             $this->warn('[DRY-RUN] Aucune modification ne sera effectuée.');
@@ -42,7 +42,7 @@ class DecayScoreCommand extends Command
         $artisans = User::query()
             ->where('role', 'artisan')
             ->where('account_status', 'actif')
-            ->where('score_nzassa', '>', 0)
+            ->where('score_prosartisan', '>', 0)
             ->get();
 
         $penalized = 0;
@@ -55,7 +55,7 @@ class DecayScoreCommand extends Command
                 continue;
             }
 
-            $label = "Artisan #{$artisan->id} ({$artisan->name}) — {$inactivityDays}j inactif, score actuel: {$artisan->score_nzassa}";
+            $label = "Artisan #{$artisan->id} ({$artisan->name}) — {$inactivityDays}j inactif, score actuel: {$artisan->score_prosartisan}";
 
             if ($isDryRun) {
                 $this->line("  [DRY-RUN] Serait pénalisé : {$label}");
@@ -67,7 +67,7 @@ class DecayScoreCommand extends Command
                 $pointsRemoved = $this->scoreService->applyInactivityDecay($artisan);
 
                 if ($pointsRemoved > 0) {
-                    $newScore = $artisan->fresh()->score_nzassa;
+                    $newScore = $artisan->fresh()->score_prosartisan;
                     $this->info("  ✅ Pénalisé : {$label} → nouveau score: {$newScore} (−{$pointsRemoved} pts)");
                     $penalized++;
                 } else {

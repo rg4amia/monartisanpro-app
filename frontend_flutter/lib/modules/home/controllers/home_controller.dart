@@ -177,7 +177,7 @@ class HomeController extends GetxController {
         walletMo.value = 0;
       }
       
-      fluidityScore.value = StorageService.getScoreNzassa() ?? 10; // Default 10 if not set yet
+      fluidityScore.value = StorageService.getScoreProsArtisan() ?? 10; // Default 10 if not set yet
 
       try {
         final rawResponse = await _userRepo.getDashboardStats();
@@ -212,8 +212,10 @@ class HomeController extends GetxController {
            disputesCount.value = s['catalog_count'] ?? 0;
         }
 
-        // If it returns score_nzassa from backend, update it
-        if (dashboardData.containsKey('score_nzassa')) {
+        // If it returns score_prosartisan/score_nzassa from backend, update it
+        if (dashboardData.containsKey('score_prosartisan')) {
+           fluidityScore.value = dashboardData['score_prosartisan'] ?? 10;
+        } else if (dashboardData.containsKey('score_nzassa')) {
            fluidityScore.value = dashboardData['score_nzassa'] ?? 10;
         }
       } catch (e) {

@@ -153,8 +153,8 @@ class ArtisanProfileScreen extends StatelessWidget {
                             ],
                           ),
                         ),
-                        ScoreNzassa(
-                            score: a.scoreNzassa,
+                        ScoreProsArtisan(
+                            score: a.scoreProsArtisan,
                             size: ScoreSize.large,
                             showLabel: true),
                       ],

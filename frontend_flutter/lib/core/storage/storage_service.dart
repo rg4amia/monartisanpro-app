@@ -25,7 +25,7 @@ class StorageService {
   static const String _nameKey = 'user_name';
   static const String _kycStatusKey = 'kyc_status';
   static const String _onboardedKey = 'onboarded';
-  static const String _scoreNzassaKey = 'score_nzassa';
+  static const String _scoreProsArtisanKey = 'score_prosartisan';
 
   static void saveRole(String role) => _box.write(_roleKey, role);
   static String? getRole() => _box.read<String>(_roleKey);
@@ -45,8 +45,8 @@ class StorageService {
   static void setOnboarded(bool value) => _box.write(_onboardedKey, value);
   static bool isOnboarded() => _box.read<bool>(_onboardedKey) ?? false;
 
-  static void saveScoreNzassa(int score) => _box.write(_scoreNzassaKey, score);
-  static int? getScoreNzassa() => _box.read<int>(_scoreNzassaKey);
+  static void saveScoreProsArtisan(int score) => _box.write(_scoreProsArtisanKey, score);
+  static int? getScoreProsArtisan() => _box.read<int>(_scoreProsArtisanKey);
 
   // ── Device Fingerprint ──────────────────────────────────────────────────────
   static const String _fingerprintKey = 'device_fingerprint';

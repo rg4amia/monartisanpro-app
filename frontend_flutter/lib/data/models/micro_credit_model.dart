@@ -19,7 +19,7 @@ class MicroCreditEligibilityModel {
     return MicroCreditEligibilityModel(
       eligible: json['eligible'] as bool? ?? false,
       currentScore: _parseInt(
-        json['score_nzassa'] ?? json['current_score'] ?? json['currentScore'],
+        json['score_prosartisan'] ?? json['scoreProsArtisan'] ?? json['score_nzassa'] ?? json['current_score'] ?? json['currentScore'],
       ),
       requiredScore: _parseInt(
         json['required_score'] ?? json['requiredScore'] ?? 70,
@@ -37,7 +37,7 @@ class MicroCreditApplicationModel {
   final int id;
   final int amount;
   final String status;
-  final int scoreNzassaAtApplication;
+  final int scoreProsArtisanAtApplication;
   final String? approvedAt;
   final String? externalReference;
 
@@ -45,7 +45,7 @@ class MicroCreditApplicationModel {
     required this.id,
     required this.amount,
     required this.status,
-    required this.scoreNzassaAtApplication,
+    required this.scoreProsArtisanAtApplication,
     this.approvedAt,
     this.externalReference,
   });
@@ -55,8 +55,8 @@ class MicroCreditApplicationModel {
       id: _parseInt(json['id']),
       amount: _parseInt(json['amount']),
       status: (json['status'] ?? '').toString(),
-      scoreNzassaAtApplication: _parseInt(
-        json['score_nzassa_at_application'] ?? json['scoreNzassaAtApplication'],
+      scoreProsArtisanAtApplication: _parseInt(
+        json['score_prosartisan_at_application'] ?? json['scoreProsArtisanAtApplication'] ?? json['score_nzassa_at_application'] ?? json['scoreNzassaAtApplication'],
       ),
       approvedAt:
           json['approved_at']?.toString() ?? json['approvedAt']?.toString(),

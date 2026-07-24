@@ -516,10 +516,10 @@ class _ArtisanCard extends StatelessWidget {
                   ),
                 ),
 
-                // Score N'Zassa
+                // Score ProsArtisan
                 Column(
                   children: [
-                    ScoreNzassaBadge(score: artisan.scoreNzassa),
+                    ScoreProsArtisanBadge(score: artisan.scoreProsArtisan),
                     const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(

@@ -142,7 +142,7 @@ class ArtisanCard extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             // Score
-            ScoreNzassa(score: artisan.scoreNzassa, size: ScoreSize.medium),
+            ScoreProsArtisan(score: artisan.scoreProsArtisan, size: ScoreSize.medium),
           ],
         ),
       ),

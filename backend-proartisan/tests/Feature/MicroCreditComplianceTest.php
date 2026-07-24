@@ -15,7 +15,7 @@ class MicroCreditComplianceTest extends TestCase
         $artisan = User::factory()->create([
             'role' => 'artisan',
             'kyc_status' => 'actif',
-            'score_nzassa' => 80,
+            'score_prosartisan' => 80,
         ]);
 
         $this->actingAs($artisan)
@@ -23,7 +23,7 @@ class MicroCreditComplianceTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.eligible', true)
             ->assertJsonPath('data.max_amount', 100000)
-            ->assertJsonPath('data.score_nzassa', 80);
+            ->assertJsonPath('data.score_prosartisan', 80);
 
         $this->actingAs($artisan)
             ->postJson('/api/v1/micro-credit/apply', [
@@ -37,7 +37,7 @@ class MicroCreditComplianceTest extends TestCase
             'user_id' => $artisan->id,
             'amount' => 90000,
             'status' => 'approuve',
-            'score_nzassa_at_application' => 80,
+            'score_prosartisan_at_application' => 80,
         ]);
     }
 }

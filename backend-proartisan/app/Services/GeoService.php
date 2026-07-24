@@ -30,7 +30,7 @@ class GeoService
                     u.id,
                     u.phone,
                     u.name,
-                    u.score_nzassa,
+                    u.score_prosartisan,
                     0.0 AS lng,
                     0.0 AS lat,
                     0 AS distance_metres,
@@ -58,7 +58,7 @@ class GeoService
                 u.id,
                 u.phone,
                 u.name,
-                u.score_nzassa,
+                u.score_prosartisan,
                 ST_X(u.position) AS lng,
                 ST_Y(u.position) AS lat,
                 ST_Distance_Sphere(u.position, POINT(?, ?)) AS distance_metres,
@@ -79,7 +79,7 @@ class GeoService
 
         $bindings = [$lng, $lat, $lng, $lat, $radiusMeters];
         [$sql, $bindings] = $this->appendFilters($sql, $bindings, $sectorFilter, $tradeFilter, $nightOnly);
-        $sql .= " ORDER BY u.score_nzassa DESC, distance_metres ASC";
+        $sql .= " ORDER BY u.score_prosartisan DESC, distance_metres ASC";
 
         return collect(DB::select($sql, $bindings));
     }

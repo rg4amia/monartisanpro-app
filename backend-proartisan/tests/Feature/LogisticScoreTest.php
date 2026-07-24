@@ -24,12 +24,12 @@ class LogisticScoreTest extends TestCase
 
     public function test_fournisseur_gps_fraud_decreases_score()
     {
-        $fournisseur = User::factory()->create(['role' => 'fournisseur', 'score_nzassa' => 10]);
+        $fournisseur = User::factory()->create(['role' => 'fournisseur', 'score_prosartisan' => 10]);
 
         $this->scoreService->recordGpsFraudAttempt($fournisseur, null, 'PA-XXXX');
 
         $fournisseur->refresh();
-        $this->assertEquals(0, $fournisseur->score_nzassa); // 10 - 50 = -40, bounded to MIN_SCORE = 0
+        $this->assertEquals(0, $fournisseur->score_prosartisan); // 10 - 50 = -40, bounded to MIN_SCORE = 0
         
         $entry = ScoreLedgerEntry::where('user_id', $fournisseur->id)->first();
         $this->assertNotNull($entry);
@@ -39,7 +39,7 @@ class LogisticScoreTest extends TestCase
 
     public function test_fournisseur_jcode_success_increases_score()
     {
-        $fournisseur = User::factory()->create(['role' => 'fournisseur', 'score_nzassa' => 10]);
+        $fournisseur = User::factory()->create(['role' => 'fournisseur', 'score_prosartisan' => 10]);
         $client = User::factory()->create(['role' => 'client']);
         $artisan = User::factory()->create(['role' => 'artisan']);
         
@@ -56,7 +56,7 @@ class LogisticScoreTest extends TestCase
         $this->scoreService->recordJCodeSuccess($fournisseur, $mission->id, 'PA-ABCD');
 
         $fournisseur->refresh();
-        $this->assertEquals(15, $fournisseur->score_nzassa); // 10 + 5
+        $this->assertEquals(15, $fournisseur->score_prosartisan); // 10 + 5
         
         $entry = ScoreLedgerEntry::where('user_id', $fournisseur->id)->first();
         $this->assertEquals('jcode_scan_success', $entry->event_type);
@@ -67,7 +67,7 @@ class LogisticScoreTest extends TestCase
     {
         $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
         $artisan = User::factory()->create(['role' => 'artisan']);
-        $livreur = User::factory()->create(['role' => 'livreur', 'score_nzassa' => 10]);
+        $livreur = User::factory()->create(['role' => 'livreur', 'score_prosartisan' => 10]);
         
         $mission = Mission::create([
             'client_id' => $client->id,

@@ -633,8 +633,8 @@ class LlmAdminController extends Controller
         $prompt .= "- Montant Total: {$mission->montant_total} FCFA\n";
         $prompt .= "- Montant Matériaux: {$mission->montant_materiaux} FCFA\n";
         $prompt .= "- Montant Main d'œuvre: {$mission->montant_mo} FCFA\n";
-        $prompt .= "- Client: {$client->name} (Score N'Zassa: {$client->score_nzassa})\n";
-        $prompt .= "- Artisan: {$artisan->name} (Score N'Zassa: {$artisan->score_nzassa})\n\n";
+        $prompt .= "- Client: {$client->name} (Score ProsArtisan: {$client->score_prosartisan})\n";
+        $prompt .= "- Artisan: {$artisan->name} (Score ProsArtisan: {$artisan->score_prosartisan})\n\n";
         $prompt .= "--- RESSENTI / RÈCIT SUPPLÉMENTAIRE SOUMIS ---\n";
         $prompt .= "\"{$userMsg}\"\n\n";
         $prompt .= "Rédige une réponse structurée contenant :\n";

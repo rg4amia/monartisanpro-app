@@ -252,7 +252,7 @@ class AdminService
             ->withAvg('evaluationsRecues', 'integrite')
             ->withAvg('evaluationsRecues', 'qualite')
             ->withAvg('evaluationsRecues', 'reactivite')
-            ->orderByDesc('score_nzassa')
+            ->orderByDesc('score_prosartisan')
             ->get()
             ->toArray();
     }

@@ -29,7 +29,7 @@ class ScoreController extends GetxController {
           ? Map<String, dynamic>.from(data['breakdown'] as Map)
           : const <String, dynamic>{};
 
-      score.value = _asInt(data['score_nzassa'] ?? data['scoreNzassa']);
+      score.value = _asInt(data['score_prosartisan'] ?? data['scoreProsArtisan'] ?? data['score_nzassa'] ?? data['scoreNzassa']);
       fiabilite.value = _normalizeCriterion(breakdown['fiabilite']);
       integrite.value = _normalizeCriterion(breakdown['integrite']);
       qualite.value = _normalizeCriterion(breakdown['qualite']);
