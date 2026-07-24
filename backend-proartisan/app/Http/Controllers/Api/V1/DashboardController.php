@@ -66,12 +66,57 @@ class DashboardController extends Controller
             ->whereIn('status', ['en_attente', 'financee', 'en_cours'])
             ->count();
 
+        // Expenses by category (sum of total spent grouped by gemini_category)
+        $expenses = Mission::where('client_id', $user->id)
+            ->whereIn('status', ['financee', 'en_cours', 'terminee'])
+            ->selectRaw('COALESCE(gemini_category, "Travaux généraux") as category, SUM(montant_total) as total')
+            ->groupBy('category')
+            ->pluck('total', 'category')
+            ->toArray();
+
+        // Top 3 suppliers based on ratings & completed deliveries count
+        $topSuppliers = \App\Models\FournisseurAgree::join('users', 'fournisseurs_agrees.user_id', '=', 'users.id')
+            ->leftJoin('evaluations', 'evaluations.evalue_id', '=', 'users.id')
+            ->select('fournisseurs_agrees.nom_boutique as name')
+            ->selectRaw('COALESCE(AVG(evaluations.note), 5.0) as rating')
+            ->selectRaw('(SELECT COUNT(*) FROM orders WHERE orders.supplier_id = users.id AND orders.status = "delivered") as deliveries')
+            ->groupBy('fournisseurs_agrees.id', 'fournisseurs_agrees.nom_boutique', 'users.id')
+            ->orderByDesc('rating')
+            ->take(3)
+            ->get()
+            ->map(fn($item) => [
+                'name' => $item->name,
+                'rating' => round((float) $item->rating, 1),
+                'deliveries' => (int) $item->deliveries,
+            ])
+            ->toArray();
+
+        // Top 3 delivery drivers based on ratings & completed delivery trips count
+        $topDrivers = \App\Models\User::where('role', 'livreur')
+            ->leftJoin('evaluations', 'evaluations.evalue_id', '=', 'users.id')
+            ->select('users.name', 'users.id')
+            ->selectRaw('COALESCE(AVG(evaluations.note), 5.0) as rating')
+            ->selectRaw('(SELECT COUNT(*) FROM orders WHERE orders.driver_id = users.id AND orders.status = "delivered") as trips')
+            ->groupBy('users.id', 'users.name')
+            ->orderByDesc('rating')
+            ->take(3)
+            ->get()
+            ->map(fn($item) => [
+                'name' => $item->name ?? 'Livreur #' . $item->id,
+                'rating' => round((float) $item->rating, 1),
+                'trips' => (int) $item->trips,
+            ])
+            ->toArray();
+
         return [
             'accepted_devis_count' => $acceptedDevisCount,
             'refused_devis_count' => $refusedDevisCount,
             'disputes_count' => $disputesCount,
             'total_spent' => (int) $totalSpent,
             'active_missions_count' => $activeMissionsCount,
+            'expenses_by_category' => $expenses,
+            'top_suppliers' => $topSuppliers,
+            'top_drivers' => $topDrivers,
         ];
     }
 

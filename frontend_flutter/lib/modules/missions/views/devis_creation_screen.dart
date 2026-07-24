@@ -603,53 +603,76 @@ class _MaterialsSection extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Expanded(
-                  child: Text(
-                    'Matériaux du devis',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: _C.ink,
-                    ),
+                const Text(
+                  'Matériaux du devis',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: _C.ink,
                   ),
                 ),
-                TextButton.icon(
-                  onPressed: () {
-                    final ArtisanCartController artisanCart = Get.isRegistered<ArtisanCartController>()
-                        ? Get.find<ArtisanCartController>()
-                        : Get.put(ArtisanCartController());
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: Wrap(
+                    spacing: 12,
+                    runSpacing: 8,
+                    alignment: WrapAlignment.start,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      TextButton.icon(
+                        onPressed: () {
+                          final ArtisanCartController artisanCart = Get.isRegistered<ArtisanCartController>()
+                              ? Get.find<ArtisanCartController>()
+                              : Get.put(ArtisanCartController());
 
-                    if (artisanCart.cart.isEmpty) {
-                      Get.snackbar(
-                        'Panier vide',
-                        'Votre panier ne contient aucun article à importer.',
-                        backgroundColor: _C.danger,
-                        colorText: Colors.white,
-                      );
-                      return;
-                    }
+                          if (artisanCart.cart.isEmpty) {
+                            Get.snackbar(
+                              'Panier vide',
+                              'Votre panier ne contient aucun article à importer.',
+                              backgroundColor: _C.danger,
+                              colorText: Colors.white,
+                            );
+                            return;
+                          }
 
-                    controller.importArtisanCart(artisanCart.getCartLinesForDevis());
-                    Get.snackbar(
-                      'Panier importé',
-                      '${artisanCart.cartCount} articles ont été importés dans votre devis.',
-                      backgroundColor: _C.success,
-                      colorText: Colors.white,
-                    );
-                  },
-                  icon: const Icon(Icons.download_rounded, size: 18),
-                  label: const Text('Importer panier'),
-                  style: TextButton.styleFrom(foregroundColor: _C.success),
-                ),
-                const SizedBox(width: 8),
-                TextButton.icon(
-                  onPressed: selectedSupplier == null
-                      ? null
-                      : () => _showCustomMaterialDialog(context),
-                  icon: const Icon(Icons.add_circle_outline, size: 18),
-                  label: const Text('Hors catalogue'),
-                  style: TextButton.styleFrom(foregroundColor: _C.primary),
+                          controller.importArtisanCart(artisanCart.getCartLinesForDevis());
+                          Get.snackbar(
+                            'Panier importé',
+                            '${artisanCart.cartCount} articles ont été importés dans votre devis.',
+                            backgroundColor: _C.success,
+                            colorText: Colors.white,
+                          );
+                        },
+                        icon: const Icon(Icons.download_rounded, size: 16),
+                        label: const Text('Importer panier', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                        style: TextButton.styleFrom(
+                          foregroundColor: _C.success,
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                      ),
+                      TextButton.icon(
+                        onPressed: selectedSupplier == null
+                            ? null
+                            : () => _showCustomMaterialDialog(context),
+                        icon: const Icon(Icons.add_circle_outline, size: 16),
+                        label: const Text('Hors catalogue', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                        style: TextButton.styleFrom(
+                          foregroundColor: _C.primary,
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),

@@ -165,8 +165,12 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
       final listener = _ArtisanTapListener((obj, point) {
         final found = _placemarkIndex[obj as mk.PlacemarkMapObject];
         if (found != null) {
-          setState(() => _selectedArtisan = found);
-          _moveCamera(point.latitude, point.longitude, _kDefaultZoom + 1);
+          if (_selectedArtisan?.id == found.id) {
+            Get.toNamed(Routes.artisanProfile, arguments: found);
+          } else {
+            setState(() => _selectedArtisan = found);
+            _moveCamera(point.latitude, point.longitude, _kDefaultZoom + 1);
+          }
         }
         return true;
       });
@@ -659,140 +663,147 @@ class _ArtisanBottomPanel extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Image
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(12),
-                    image: artisan.photo != null
-                        ? DecorationImage(
-                            image: NetworkImage(artisan.photo!),
-                            fit: BoxFit.cover,
-                          )
+            GestureDetector(
+              onTap: () {
+                onClose();
+                Get.toNamed(Routes.artisanProfile, arguments: artisan);
+              },
+              behavior: HitTestBehavior.opaque,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Image
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(12),
+                      image: artisan.photo != null
+                          ? DecorationImage(
+                              image: NetworkImage(artisan.photo!),
+                              fit: BoxFit.cover,
+                            )
+                          : null,
+                    ),
+                    child: artisan.photo == null
+                        ? const Icon(Icons.person, color: Colors.grey, size: 40)
                         : null,
                   ),
-                  child: artisan.photo == null
-                      ? const Icon(Icons.person, color: Colors.grey, size: 40)
-                      : null,
-                ),
-                const SizedBox(width: 16),
+                  const SizedBox(width: 16),
 
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (artisan.isGoldenMarker)
-                        const Text(
-                          'ARTISAN D\'ÉLITE',
-                          style: TextStyle(
-                            color: Color(0xFF4F46E5),
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (artisan.isGoldenMarker)
+                          const Text(
+                            'ARTISAN D\'ÉLITE',
+                            style: TextStyle(
+                              color: Color(0xFF4F46E5),
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1,
+                            ),
                           ),
-                        ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              artisan.name ?? 'Artisan',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18,
-                                color: Color(0xFF0F172A),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                artisan.name ?? 'Artisan',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                  color: Color(0xFF0F172A),
+                                ),
                               ),
                             ),
-                          ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFFF7ED),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: const Color(0xFFFFEDD5)),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.stars,
+                                      color: Color(0xFFF59E0B), size: 14),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    artisan.scoreNzassa.toString(),
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF9A3412),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            const Icon(Icons.near_me,
+                                size: 14, color: Color(0xFF64748B)),
+                            const SizedBox(width: 4),
+                            Text(
+                              artisan.distance ?? 'à 0,8 km',
+                              style: const TextStyle(
+                                  color: Color(0xFF64748B), fontSize: 13),
+                            ),
+                            const SizedBox(width: 8),
+                            const Icon(Icons.circle, size: 4, color: Color(0xFFCBD5E1)),
+                            const SizedBox(width: 8),
+                            Text(
+                              artisan.trade ?? 'Tailleur',
+                              style: const TextStyle(
+                                  color: Color(0xFF64748B), fontSize: 13),
+                            ),
+                          ],
+                        ),
+                        if (artisan.nightInterventionAvailable) ...[
+                          const SizedBox(height: 10),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFFF7ED),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: const Color(0xFFFFEDD5)),
+                              horizontal: 10,
+                              vertical: 6,
                             ),
-                            child: Row(
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEEF2FF),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.stars,
-                                    color: Color(0xFFF59E0B), size: 14),
-                                const SizedBox(width: 4),
+                                Icon(
+                                  Icons.nightlight_round,
+                                  size: 14,
+                                  color: Color(0xFF4F46E5),
+                                ),
+                                SizedBox(width: 6),
                                 Text(
-                                  artisan.scoreNzassa.toString(),
-                                  style: const TextStyle(
+                                  'Intervention de nuit',
+                                  style: TextStyle(
+                                    color: Color(0xFF4F46E5),
                                     fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF9A3412),
+                                    fontWeight: FontWeight.w700,
                                   ),
                                 ),
                               ],
                             ),
                           ),
                         ],
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          const Icon(Icons.near_me,
-                              size: 14, color: Color(0xFF64748B)),
-                          const SizedBox(width: 4),
-                          Text(
-                            artisan.distance ?? 'à 0,8 km',
-                            style: const TextStyle(
-                                color: Color(0xFF64748B), fontSize: 13),
-                          ),
-                          const SizedBox(width: 8),
-                          const Icon(Icons.circle, size: 4, color: Color(0xFFCBD5E1)),
-                          const SizedBox(width: 8),
-                          Text(
-                            artisan.trade ?? 'Tailleur',
-                            style: const TextStyle(
-                                color: Color(0xFF64748B), fontSize: 13),
-                          ),
-                        ],
-                      ),
-                      if (artisan.nightInterventionAvailable) ...[
-                        const SizedBox(height: 10),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFEEF2FF),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.nightlight_round,
-                                size: 14,
-                                color: Color(0xFF4F46E5),
-                              ),
-                              SizedBox(width: 6),
-                              Text(
-                                'Intervention de nuit',
-                                style: TextStyle(
-                                  color: Color(0xFF4F46E5),
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
                       ],
-                    ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
             const SizedBox(height: 16),
 
