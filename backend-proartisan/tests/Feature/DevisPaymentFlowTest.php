@@ -215,4 +215,66 @@ class DevisPaymentFlowTest extends TestCase
             'title' => 'Devis refusé',
         ]);
     }
+
+    public function test_duplicate_payment_initiation_reuses_existing_transaction(): void
+    {
+        /** @var \App\Models\User $client */
+        $client = User::factory()->create([
+            'role' => 'client',
+            'kyc_status' => 'actif',
+        ]);
+
+        /** @var \App\Models\User $artisan */
+        $artisan = User::factory()->create([
+            'role' => 'artisan',
+            'kyc_status' => 'actif',
+        ]);
+
+        $mission = Mission::create([
+            'client_id' => $client->id,
+            'artisan_id' => null,
+            'description' => 'Test double paiement',
+            'status' => 'draft',
+        ]);
+
+        $devis = Devis::create([
+            'mission_id' => $mission->id,
+            'artisan_id' => $artisan->id,
+            'statut' => 'soumis',
+            'lignes_json' => [
+                ['type' => 'mo', 'description' => 'Tâche unique', 'montant' => 50000],
+            ],
+            'jalons_json' => [
+                ['ordre' => 1, 'description' => 'Etape 1', 'montant' => 50000, 'date_cible' => '2026-03-25'],
+            ],
+        ]);
+
+        // First payment initiation
+        $response1 = $this->actingAs($client)
+            ->postJson('/api/v1/payments/initiate', [
+                'mission_id' => $mission->id,
+                'devis_id' => $devis->id,
+                'montant' => $devis->montant_total,
+                'provider' => 'wave',
+                'phone' => $client->phone,
+            ]);
+        $response1->assertOk();
+        $txId1 = $response1->json('data.transaction_id');
+
+        // Second payment initiation (identical)
+        $response2 = $this->actingAs($client)
+            ->postJson('/api/v1/payments/initiate', [
+                'mission_id' => $mission->id,
+                'devis_id' => $devis->id,
+                'montant' => $devis->montant_total,
+                'provider' => 'wave',
+                'phone' => $client->phone,
+            ]);
+        $response2->assertOk();
+        $txId2 = $response2->json('data.transaction_id');
+
+        // Assert they are the same transaction
+        $this->assertSame($txId1, $txId2);
+        $this->assertDatabaseCount('transactions', 1);
+    }
 }
