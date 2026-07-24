@@ -206,7 +206,7 @@ class ArtisanProfileScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Score N\'Zassa',
+        const Text('Score ProsArtisan',
             style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.w700,

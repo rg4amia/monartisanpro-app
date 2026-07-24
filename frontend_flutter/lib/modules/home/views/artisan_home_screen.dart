@@ -7,6 +7,7 @@ import '../../../core/utils/formatters.dart';
 import '../../../data/models/mission_model.dart';
 import '../../../shared/widgets/loading_shimmer.dart';
 import '../../main_tab/controllers/main_tab_controller.dart';
+import '../../notifications/controllers/notifications_controller.dart';
 import '../controllers/home_controller.dart';
 
 abstract class _Palette {
@@ -147,20 +148,56 @@ class _HeroHeader extends StatelessWidget {
                   ],
                 ),
               ),
-              GestureDetector(
-                onTap: () => Get.toNamed(Routes.notifications),
-                child: Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(14),
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  GestureDetector(
+                    onTap: () => Get.toNamed(Routes.notifications),
+                    child: Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Icon(
+                        Icons.notifications_outlined,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
-                  child: const Icon(
-                    Icons.notifications_outlined,
-                    color: Colors.white,
-                  ),
-                ),
+                  Obx(() {
+                    final unread = Get.isRegistered<NotificationsController>()
+                        ? Get.find<NotificationsController>().unreadCount
+                        : 0;
+                    if (unread == 0) return const SizedBox.shrink();
+                    return Positioned(
+                      right: -2,
+                      top: -2,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        child: Center(
+                          child: Text(
+                            '$unread',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ],
               ),
             ],
           ),

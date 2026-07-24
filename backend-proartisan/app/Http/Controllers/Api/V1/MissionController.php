@@ -33,15 +33,25 @@ class MissionController extends Controller
         };
 
         if ($status) {
-            $mappedStatuses = match ($status) {
-                'en_attente' => ['draft', 'pending_funding'],
-                'financee'   => ['funded_locked'],
-                'en_cours'   => ['in_progress', 'pending_approval'],
-                'terminee'   => ['completed'],
-                'litige'     => ['disputed'],
-                'annulee'    => ['cancelled'],
-                default      => [$status],
-            };
+            if ($user->role === 'artisan') {
+                $mappedStatuses = match ($status) {
+                    'en_attente' => ['draft', 'pending_funding', 'pending_artisan_acceptance'],
+                    'financee'   => ['funded_locked'],
+                    'en_cours'   => ['in_progress', 'pending_approval'],
+                    'terminee'   => ['completed'],
+                    'litige'     => ['disputed'],
+                    'annulee'    => ['cancelled'],
+                    default      => [$status],
+                };
+            } else {
+                $mappedStatuses = match ($status) {
+                    'en_cours'   => ['draft', 'pending_artisan_acceptance', 'pending_funding', 'funded_locked', 'in_progress', 'pending_approval'],
+                    'terminee'   => ['completed'],
+                    'litige'     => ['disputed'],
+                    'annulee'    => ['cancelled'],
+                    default      => [$status],
+                };
+            }
             $query->whereIn('status', $mappedStatuses);
         }
 
@@ -220,6 +230,18 @@ class MissionController extends Controller
 
         if (!$mission->status instanceof \App\States\Mission\PendingArtisanAcceptanceState) {
             return response()->json(['success' => false, 'message' => 'Statut invalide.'], 400);
+        }
+
+        // Éviter les conflits/litiges si un paiement est en cours ou déjà effectué
+        $hasActiveTransaction = $mission->transactions()
+            ->whereIn('statut', ['en_attente', 'confirme'])
+            ->exists();
+
+        if ($hasActiveTransaction) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Impossible de refuser la demande : un paiement est en cours d\'initiation ou a déjà été validé.',
+            ], 400);
         }
 
         $client = $mission->client;

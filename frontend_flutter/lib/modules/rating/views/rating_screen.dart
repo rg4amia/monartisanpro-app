@@ -32,7 +32,7 @@ class RatingScreen extends GetView<RatingController> {
               ),
               const SizedBox(height: 8),
               const Text(
-                'Votre avis aide d\'autres clients et contribue au Score N\'Zassa de l\'artisan.',
+                'Votre avis aide d\'autres clients et contribue au Score ProsArtisan de l\'artisan.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
               ),
