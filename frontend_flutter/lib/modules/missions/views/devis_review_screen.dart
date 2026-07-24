@@ -443,19 +443,19 @@ class _RecapSection extends StatelessWidget {
           const SizedBox(height: 16),
           _RecapRow(
             label: 'Main d\'œuvre',
-            value: _formatFCFA(devis.totalMo),
+            value: _formatFCFA(devis.montantMo),
             valueColor: _C.success,
           ),
           const SizedBox(height: 8),
           _RecapRow(
             label: 'Matériaux',
-            value: _formatFCFA(devis.totalMat),
+            value: _formatFCFA(devis.montantMateriaux),
             valueColor: _C.warning,
           ),
           const Divider(height: 24),
           _RecapRow(
             label: 'MONTANT TOTAL À PAYER',
-            value: _formatFCFA(devis.totalGeneral),
+            value: _formatFCFA(devis.totalGeneralTtc),
             valueColor: _C.primary,
             isBold: true,
             isLarge: true,
@@ -484,7 +484,9 @@ class _RecapSection extends StatelessWidget {
                     Expanded(
                       child: _ProgressBar(
                         label: 'Matériaux',
-                        percentage: (devis.totalMat / devis.totalGeneral * 100),
+                        percentage: devis.totalGeneralTtc > 0
+                            ? (devis.montantMateriaux / devis.totalGeneralTtc * 100)
+                            : 0.0,
                         color: _C.warning,
                       ),
                     ),
@@ -496,7 +498,9 @@ class _RecapSection extends StatelessWidget {
                     Expanded(
                       child: _ProgressBar(
                         label: 'Main d\'œuvre',
-                        percentage: (devis.totalMo / devis.totalGeneral * 100),
+                        percentage: devis.totalGeneralTtc > 0
+                            ? (devis.montantMo / devis.totalGeneralTtc * 100)
+                            : 0.0,
                         color: _C.success,
                       ),
                     ),
