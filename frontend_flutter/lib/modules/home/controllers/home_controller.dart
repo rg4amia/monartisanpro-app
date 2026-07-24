@@ -180,10 +180,29 @@ class HomeController extends GetxController {
       fluidityScore.value = StorageService.getScoreNzassa() ?? 10; // Default 10 if not set yet
 
       try {
-        final dashboardData = await _userRepo.getDashboardStats();
+        final rawResponse = await _userRepo.getDashboardStats();
+        final dashboardData = (rawResponse['data'] as Map<String, dynamic>?) ?? {};
+        
         acceptedDevisCount.value = dashboardData['accepted_devis_count'] ?? dashboardData['completed_deliveries'] ?? 0;
         refusedDevisCount.value = dashboardData['refused_devis_count'] ?? dashboardData['pending_deliveries'] ?? 0;
         disputesCount.value = dashboardData['disputes_count'] ?? 0;
+        
+        if (dashboardData.containsKey('expenses_by_category')) {
+          final expenses = Map<String, dynamic>.from(dashboardData['expenses_by_category'] as Map);
+          expensesByCategory.value = expenses.map((key, value) => MapEntry(key, (value as num).toInt()));
+        }
+
+        if (dashboardData.containsKey('top_suppliers')) {
+          topSuppliers.value = List<Map<String, dynamic>>.from(
+            (dashboardData['top_suppliers'] as List).map((x) => Map<String, dynamic>.from(x as Map))
+          );
+        }
+
+        if (dashboardData.containsKey('top_drivers')) {
+          topDrivers.value = List<Map<String, dynamic>>.from(
+            (dashboardData['top_drivers'] as List).map((x) => Map<String, dynamic>.from(x as Map))
+          );
+        }
         
         // If it's supplier stats
         if (dashboardData.containsKey('stats')) {
