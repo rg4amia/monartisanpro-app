@@ -4,6 +4,8 @@ namespace App\Http\Requests\SupplierProduct;
 
 use Illuminate\Foundation\Http\FormRequest;
 
+use App\Rules\NoContactInformation;
+
 class StoreSupplierProductRequest extends FormRequest
 {
     public function authorize(): bool
@@ -14,9 +16,9 @@ class StoreSupplierProductRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'min:2', 'max:150'],
+            'name' => ['required', 'string', 'min:2', 'max:150', new NoContactInformation()],
             'sku' => ['nullable', 'string', 'max:60'],
-            'description' => ['nullable', 'string', 'max:1000'],
+            'description' => ['nullable', 'string', 'max:1000', new NoContactInformation()],
             'unit_price' => ['required', 'integer', 'min:0'],
             'stock_quantity' => ['required', 'integer', 'min:0'],
             'image_url' => ['nullable', 'string', 'max:500'],

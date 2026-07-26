@@ -4,6 +4,8 @@ namespace App\Http\Requests\Mission;
 
 use Illuminate\Foundation\Http\FormRequest;
 
+use App\Rules\NoContactInformation;
+
 class CreateMissionRequest extends FormRequest
 {
     public function authorize(): bool
@@ -18,10 +20,10 @@ class CreateMissionRequest extends FormRequest
             'sector_id'    => ['nullable', 'integer', 'exists:sectors,id'],
             'trade_id'     => ['nullable', 'integer', 'exists:trades,id'],
             'category'     => ['nullable', 'string', 'max:100'],
-            'description' => ['required', 'string', 'min:20', 'max:2000'],
+            'description' => ['required', 'string', 'min:20', 'max:2000', new NoContactInformation()],
             'lat'         => ['nullable', 'numeric', 'between:-90,90'],
             'lng'         => ['nullable', 'numeric', 'between:-180,180'],
-            'location_address' => ['nullable', 'string', 'max:255'],
+            'location_address' => ['nullable', 'string', 'max:255', new NoContactInformation()],
             'photos'      => ['nullable', 'array', 'max:5'],
             'photos.*'    => ['string'],
         ];
