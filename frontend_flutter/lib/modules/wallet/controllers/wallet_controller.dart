@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_endpoints.dart';
 import '../../../data/models/transaction_model.dart';
 
 class WalletController extends GetxController {
@@ -23,12 +24,12 @@ class WalletController extends GetxController {
       // Assuming GET /api/v1/wallets/balance returns wallet balance
       // and GET /api/v1/transactions returns transaction history
       
-      final balanceResponse = await _apiClient.get('/api/v1/wallets/balance');
+      final balanceResponse = await _apiClient.get(ApiEndpoints.walletBalance);
       final balance = WalletBalance.fromJson(balanceResponse.data);
       walletMateriaux.value = balance.walletMateriaux;
       walletMo.value = balance.walletMo;
 
-      final transactionsResponse = await _apiClient.get('/api/v1/transactions');
+      final transactionsResponse = await _apiClient.get(ApiEndpoints.transactions);
       final List<dynamic> data = transactionsResponse.data['data'] ?? [];
       transactions.value = data.map((e) => TransactionModel.fromJson(e)).toList();
     } catch (e) {

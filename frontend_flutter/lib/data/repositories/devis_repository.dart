@@ -53,4 +53,9 @@ class DevisRepository {
   Future<void> refuseDevis(int id) async {
     await _client.post(ApiEndpoints.refuseDevis(id));
   }
+
+  Future<Map<String, dynamic>> getDevisSuggestion(int missionId) async {
+    final res = await _client.get(ApiEndpoints.missionDevisSuggest(missionId));
+    return res.data['data'] as Map<String, dynamic>;
+  }
 }

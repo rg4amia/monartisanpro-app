@@ -230,7 +230,7 @@ class MissionRepository {
 
   /// Artisan accepte une demande de devis directe
   Future<MissionModel> acceptRequest(int missionId) async {
-    final res = await _client.post('/api/v1/missions/$missionId/accept-request');
+    final res = await _client.post('/missions/$missionId/accept-request');
     final data = res.data;
     final Map<String, dynamic> missionData;
     if (data is Map && data.containsKey('data')) {
@@ -243,7 +243,7 @@ class MissionRepository {
 
   /// Artisan refuse une demande de devis directe
   Future<MissionModel> rejectRequest(int missionId) async {
-    final res = await _client.post('/api/v1/missions/$missionId/reject-request');
+    final res = await _client.post('/missions/$missionId/reject-request');
     final data = res.data;
     final Map<String, dynamic> missionData;
     if (data is Map && data.containsKey('data')) {
