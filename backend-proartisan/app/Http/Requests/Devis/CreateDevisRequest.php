@@ -4,6 +4,8 @@ namespace App\Http\Requests\Devis;
 
 use Illuminate\Foundation\Http\FormRequest;
 
+use App\Rules\NoContactInformation;
+
 class CreateDevisRequest extends FormRequest
 {
     public function authorize(): bool
@@ -16,7 +18,7 @@ class CreateDevisRequest extends FormRequest
         return [
             'lignes_json'            => ['sometimes', 'array', 'min:1'],
             'lignes_json.*.type'     => ['required_with:lignes_json', 'in:mo,mat'],
-            'lignes_json.*.description' => ['required_with:lignes_json', 'string', 'max:255'],
+            'lignes_json.*.description' => ['required_with:lignes_json', 'string', 'max:255', new NoContactInformation()],
             'lignes_json.*.montant'  => ['required_with:lignes_json', 'integer', 'min:0'],
             'lignes_json.*.source'   => ['nullable', 'in:catalog,custom'],
             'lignes_json.*.quantity' => ['nullable', 'integer', 'min:1'],
@@ -26,7 +28,7 @@ class CreateDevisRequest extends FormRequest
 
             'lignes'                 => ['sometimes', 'array', 'min:1'],
             'lignes.*.type'          => ['required_with:lignes', 'in:mo,mat'],
-            'lignes.*.description'   => ['required_with:lignes', 'string', 'max:255'],
+            'lignes.*.description'   => ['required_with:lignes', 'string', 'max:255', new NoContactInformation()],
             'lignes.*.montant'       => ['required_with:lignes', 'integer', 'min:0'],
             'lignes.*.source'        => ['nullable', 'in:catalog,custom'],
             'lignes.*.quantity'      => ['nullable', 'integer', 'min:1'],
@@ -36,13 +38,13 @@ class CreateDevisRequest extends FormRequest
 
             'jalons_json'            => ['sometimes', 'array', 'min:1'],
             'jalons_json.*.ordre'    => ['required_with:jalons_json', 'integer', 'min:1'],
-            'jalons_json.*.description' => ['required_with:jalons_json', 'string', 'max:255'],
+            'jalons_json.*.description' => ['required_with:jalons_json', 'string', 'max:255', new NoContactInformation()],
             'jalons_json.*.montant'  => ['required_with:jalons_json', 'integer', 'min:1000'],
             'jalons_json.*.date_cible' => ['required_with:jalons_json', 'date', 'after:today'],
 
             'jalons'                 => ['sometimes', 'array', 'min:1'],
             'jalons.*.ordre'         => ['required_with:jalons', 'integer', 'min:1'],
-            'jalons.*.description'   => ['required_with:jalons', 'string', 'max:255'],
+            'jalons.*.description'   => ['required_with:jalons', 'string', 'max:255', new NoContactInformation()],
             'jalons.*.montant'       => ['required_with:jalons', 'integer', 'min:1000'],
             'jalons.*.date_cible'    => ['required_with:jalons', 'date', 'after:today'],
         ];

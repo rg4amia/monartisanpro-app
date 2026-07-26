@@ -176,4 +176,26 @@ class DevisController extends Controller
             'message' => 'Devis refusé.',
         ]);
     }
+
+    /**
+     * Suggère des lignes et jalons de devis via Gemini pour aider l'artisan.
+     */
+    public function suggest(Mission $mission, Request $request, \App\Services\GeminiService $geminiService): JsonResponse
+    {
+        $user = $request->user();
+
+        if ($user->role !== 'artisan') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Seul un artisan peut demander une suggestion de devis.',
+            ], 403);
+        }
+
+        $suggestion = $geminiService->suggestDevis($mission);
+
+        return response()->json([
+            'success' => true,
+            'data'    => $suggestion,
+        ]);
+    }
 }

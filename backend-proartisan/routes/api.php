@@ -129,6 +129,7 @@ Route::prefix('v1')->group(function () {
         // ── Devis ────────────────────────────────────────────────────────────
         Route::get('/missions/{mission}/devis',      [DevisController::class, 'index']);
         Route::post('/missions/{mission}/devis',     [DevisController::class, 'store'])->middleware(['can:devis.create', 'kyc.verified']);
+        Route::get('/missions/{mission}/devis/suggest', [DevisController::class, 'suggest'])->middleware('kyc.verified');
         Route::get('/devis/{devis}',                 [DevisController::class, 'show']);
         Route::put('/devis/{devis}',                 [DevisController::class, 'update'])->middleware('can:devis.update');
         Route::post('/devis/{devis}/accept',         [DevisController::class, 'accept'])->middleware('can:devis.accept');
