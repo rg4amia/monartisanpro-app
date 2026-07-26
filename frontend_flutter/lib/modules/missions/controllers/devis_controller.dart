@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -59,6 +60,40 @@ class DevisController extends GetxController {
     supplierProducts.clear();
     lignes.clear();
     jalons.clear();
+  }
+
+  final isAiLoading = false.obs;
+
+  Future<void> fetchAiSuggestion() async {
+    if (missionId == null) return;
+    isAiLoading.value = true;
+    try {
+      final suggestion = await _repo.getDevisSuggestion(missionId!);
+      
+      final List<dynamic> suggestedLignes = suggestion['lignes'] ?? [];
+      lignes.value = suggestedLignes.map((l) => DevisLigne.fromJson(l as Map<String, dynamic>)).toList();
+      
+      final List<dynamic> suggestedJalons = suggestion['jalons'] ?? [];
+      jalons.value = suggestedJalons.map((j) => DevisJalon.fromJson(j as Map<String, dynamic>)).toList();
+
+      Get.snackbar(
+        'Assistant IA',
+        'Suggestion de devis générée avec succès !',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: const Color(0xFFD1FAE5),
+        colorText: const Color(0xFF065F46),
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Erreur Assistant IA',
+        'Impossible d\'obtenir la suggestion de l\'assistant.',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: const Color(0xFFFEE2E2),
+        colorText: const Color(0xFF991B1B),
+      );
+    } finally {
+      isAiLoading.value = false;
+    }
   }
 
   List<DevisLigne> get laborLines =>
