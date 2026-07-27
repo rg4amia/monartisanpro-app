@@ -552,7 +552,10 @@ class _ArtisanCard extends StatelessWidget {
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () =>
-                        Get.toNamed(Routes.artisanProfile, arguments: artisan),
+                        Get.toNamed(Routes.artisanProfile, arguments: {
+                      'artisan': artisan,
+                      'fromSelection': true,
+                    }),
                     icon: const Icon(Icons.person_outline, size: 16),
                     label: const Text('Profil'),
                     style: OutlinedButton.styleFrom(

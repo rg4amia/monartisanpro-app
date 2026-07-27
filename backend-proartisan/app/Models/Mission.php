@@ -137,4 +137,9 @@ class Mission extends Model
     {
         return $this->hasOne(Devis::class)->where('statut', 'accepte');
     }
+
+    public function hasPendingDevis(): bool
+    {
+        return $this->devis()->where('statut', 'soumis')->exists();
+    }
 }

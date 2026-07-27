@@ -37,7 +37,14 @@ class DevisController extends Controller
             ], 403);
         }
 
-        $devis = $this->devisService->create($mission, $user, $request->validated());
+        try {
+            $devis = $this->devisService->create($mission, $user, $request->validated());
+        } catch (\InvalidArgumentException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
 
         return response()->json([
             'success' => true,

@@ -35,7 +35,6 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/login/verify-2fa', [AuthenticatedSessionController::class, 'showVerify2fa'])->name('login.verify-2fa');
         Route::post('/login/verify-2fa', [AuthenticatedSessionController::class, 'verify2fa'])->name('login.verify-2fa.store');
     });
-
     Route::middleware(['auth', 'admin.only'])->group(function () {
         Route::get('/', fn() => redirect()->route('admin.dashboard'))->name('index');
 
@@ -91,5 +90,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         });
     });
 });
+
+Route::get('/pay', [\App\Http\Controllers\Api\V1\PaymentController::class, 'showMockPay'])->name('payment.mock.pay');
+Route::post('/pay/validate', [\App\Http\Controllers\Api\V1\PaymentController::class, 'validateMockPay'])->name('payment.mock.validate');
 
 // Trigger deploy: SSH test 7

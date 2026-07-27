@@ -7,6 +7,7 @@ class ArtisanController extends GetxController {
   final artisan = Rx<ArtisanModel?>(null);
   final score = Rx<Map<String, dynamic>?>(null);
   final isLoading = false.obs;
+  final fromSelection = false.obs;
 
   @override
   void onInit() {
@@ -15,6 +16,12 @@ class ArtisanController extends GetxController {
     if (arg is ArtisanModel) {
       artisan.value = arg;
       _loadScore(arg.id);
+    } else if (arg is Map<String, dynamic>) {
+      artisan.value = arg['artisan'] as ArtisanModel?;
+      fromSelection.value = arg['fromSelection'] as bool? ?? false;
+      if (artisan.value != null) {
+        _loadScore(artisan.value!.id);
+      }
     } else if (arg is int) {
       _loadArtisan(arg);
     }

@@ -145,6 +145,13 @@ class MissionController extends Controller
      */
     public function updateStatus(Request $request, Mission $mission): JsonResponse
     {
+        if ($mission->hasPendingDevis()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cette mission a un devis en cours d\'examen et ne peut pas être modifiée.',
+            ], 422);
+        }
+
         $data = $request->validate([
             'status' => [
                 'required',
@@ -178,6 +185,13 @@ class MissionController extends Controller
      */
     public function acceptRequest(Request $request, Mission $mission): JsonResponse
     {
+        if ($mission->hasPendingDevis()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cette mission a un devis en cours d\'examen et ne peut pas être traitée.',
+            ], 422);
+        }
+
         $user = $request->user();
 
         if (! $user->isKycActif()) {
@@ -222,6 +236,13 @@ class MissionController extends Controller
      */
     public function rejectRequest(Request $request, Mission $mission): JsonResponse
     {
+        if ($mission->hasPendingDevis()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cette mission a un devis en cours d\'examen et ne peut pas être traitée.',
+            ], 422);
+        }
+
         $user = $request->user();
 
         if ((int) $mission->artisan_id !== (int) $user->id) {

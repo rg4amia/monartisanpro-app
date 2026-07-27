@@ -505,7 +505,10 @@ class _ArtisanSelectionMapState extends State<ArtisanSelectionMap> {
                             },
                             onProfile: () => Get.toNamed(
                               Routes.artisanProfile,
-                              arguments: _selectedArtisan,
+                              arguments: {
+                                'artisan': _selectedArtisan,
+                                'fromSelection': true,
+                              },
                             ),
                             onChoose: () => widget.controller
                                 .selectArtisan(_selectedArtisan!),
