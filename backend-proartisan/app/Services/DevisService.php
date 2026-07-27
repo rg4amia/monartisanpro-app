@@ -22,7 +22,24 @@ class DevisService
     public function create(Mission $mission, User $artisan, array $data): Devis
     {
         $payload = $this->normalizePayload($data);
-        
+
+        // RÈGLE : Un artisan ne peut pas soumettre plusieurs devis tant que le précédent n'est pas refusé
+        $existingArtisanDevis = Devis::where('mission_id', $mission->id)
+            ->where('artisan_id', $artisan->id)
+            ->where('statut', '!=', 'refuse')
+            ->exists();
+        if ($existingArtisanDevis) {
+            throw new \InvalidArgumentException("Vous avez déjà soumis un devis pour cette mission. Vous devez attendre que le client le refuse ou l'accepte.");
+        }
+
+        // RÈGLE : La mission concernée par un devis en attente ne doit plus pouvoir recevoir d'autres devis
+        $hasPendingDevis = Devis::where('mission_id', $mission->id)
+            ->where('statut', 'soumis')
+            ->exists();
+        if ($hasPendingDevis) {
+            throw new \InvalidArgumentException("Cette mission a déjà un devis en cours d'examen par le client.");
+        }
+
         $isNightMode = now()->hour >= 18 || now()->hour < 6;
         if (!$isNightMode) {
             foreach ($payload['lignes_json'] as $ligne) {

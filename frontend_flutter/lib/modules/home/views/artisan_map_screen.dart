@@ -165,12 +165,7 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
       final listener = _ArtisanTapListener((obj, point) {
         final found = _placemarkIndex[obj as mk.PlacemarkMapObject];
         if (found != null) {
-          if (_selectedArtisan?.id == found.id) {
-            Get.toNamed(Routes.artisanProfile, arguments: found);
-          } else {
-            setState(() => _selectedArtisan = found);
-            _moveCamera(point.latitude, point.longitude, _kDefaultZoom + 1);
-          }
+          Get.toNamed(Routes.artisanProfile, arguments: found);
         }
         return true;
       });

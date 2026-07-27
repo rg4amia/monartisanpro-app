@@ -699,4 +699,46 @@ class PaymentController extends Controller
             }
         }
     }
+
+    /**
+     * Affiche la page de simulation de paiement.
+     */
+    public function showMockPay(Request $request): \Illuminate\View\View
+    {
+        $transactionId = $request->query('transaction_id');
+        $transaction = Transaction::findOrFail($transactionId);
+
+        return view('pay', compact('transaction'));
+    }
+
+    /**
+     * Valide ou échoue le paiement simulé.
+     */
+    public function validateMockPay(Request $request): \Illuminate\Http\RedirectResponse
+    {
+        $transactionId = $request->input('transaction_id');
+        $action = $request->input('action'); // 'confirm' or 'fail'
+
+        $transaction = Transaction::findOrFail($transactionId);
+
+        if ($action === 'confirm') {
+            $transaction->update([
+                'statut' => PaymentStatus::CONFIRME,
+                'paid_at' => now(),
+            ]);
+
+            $this->handleJalonPaymentConfirmed($transaction);
+
+            Log::info("Paiement simulé validé pour la transaction #{$transaction->id}");
+        } else {
+            $transaction->update([
+                'statut' => PaymentStatus::ECHOUE,
+                'failed_at' => now(),
+                'error_message' => 'Annulé par l\'utilisateur sur le simulateur.',
+            ]);
+            Log::info("Paiement simulé échoué pour la transaction #{$transaction->id}");
+        }
+
+        return response()->redirectToRoute('home');
+    }
 }

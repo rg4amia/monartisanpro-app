@@ -8,6 +8,7 @@ import '../../../core/utils/formatters.dart';
 import '../../../data/models/artisan_model.dart';
 import '../../../shared/widgets/score_nzassa.dart';
 import '../../missions/controllers/missions_controller.dart';
+import '../../missions/controllers/artisan_selection_controller.dart';
 import '../controllers/artisan_controller.dart';
 
 class ArtisanProfileScreen extends StatelessWidget {
@@ -162,22 +163,49 @@ class ArtisanProfileScreen extends StatelessWidget {
                     const SizedBox(height: 20),
 
                     // Actions - Bouton Demander devis (Sans option Appeler)
+                    // Actions - Bouton Demander devis / Choisir l'artisan
                     SizedBox(
                       width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () => _showQuoteRequestModal(context, a),
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        icon: const Icon(Icons.send_outlined, color: Colors.white),
-                        label: const Text(
-                          'Demander un devis',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
-                      ),
+                      child: c.fromSelection.value
+                          ? ElevatedButton.icon(
+                              onPressed: () {
+                                if (Get.isRegistered<ArtisanSelectionController>()) {
+                                  Get.find<ArtisanSelectionController>().selectArtisan(a);
+                                } else {
+                                  Get.snackbar(
+                                    'Erreur',
+                                    'Impossible de sélectionner cet artisan',
+                                    snackPosition: SnackPosition.TOP,
+                                  );
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                backgroundColor: AppColors.primary,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              icon: const Icon(Icons.check_circle_outline, color: Colors.white),
+                              label: const Text(
+                                'Choisir cet artisan',
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
+                            )
+                          : ElevatedButton.icon(
+                              onPressed: () => _showQuoteRequestModal(context, a),
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              icon: const Icon(Icons.send_outlined, color: Colors.white),
+                              label: const Text(
+                                'Demander un devis',
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
+                            ),
                     ),
                     const SizedBox(height: 20),
 

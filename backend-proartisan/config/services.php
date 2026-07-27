@@ -53,6 +53,8 @@ return [
 
     'orange_money' => [
         'api_url' => env('ORANGE_MONEY_API_URL', 'https://api.orange.com/orange-money-webpay/ci/v1'),
+        'client_id' => env('ORANGE_MONEY_CLIENT_ID'),
+        'client_secret' => env('ORANGE_MONEY_CLIENT_SECRET'),
         'merchant_key' => env('ORANGE_MONEY_MERCHANT_KEY'),
         'merchant_id' => env('ORANGE_MONEY_MERCHANT_ID'),
         'auth_header' => env('ORANGE_MONEY_AUTH_HEADER'),

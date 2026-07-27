@@ -84,6 +84,9 @@ class MissionResource extends JsonResource
                     'delivery' => 0,
                 ],
             ],
+            'mention' => $this->hasPendingDevis() 
+                ? "En attente de validation du devis" 
+                : ($this->devisAccepte()->exists() ? "Devis accepté" : null),
             'createdAt' => $this->created_at?->toIso8601String(),
             'updatedAt' => $this->updated_at?->toIso8601String(),
         ];

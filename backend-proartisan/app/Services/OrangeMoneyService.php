@@ -45,9 +45,20 @@ class OrangeMoneyService
     protected function getAccessToken(): string
     {
         try {
-            $response = Http::asForm()->post($this->apiUrl . '/oauth/v3/token', [
-                'grant_type' => 'client_credentials',
-            ]);
+            $authUrl = 'https://api.orange.com/oauth/v3/token';
+            if ($this->apiUrl && str_contains($this->apiUrl, 'api.orange.com')) {
+                $parsedUrl = parse_url($this->apiUrl);
+                $authUrl = ($parsedUrl['scheme'] ?? 'https') . '://' . ($parsedUrl['host'] ?? 'api.orange.com') . '/oauth/v3/token';
+            }
+
+            $response = Http::asForm()
+                ->withHeaders([
+                    'Authorization' => 'Basic ' . base64_encode($this->clientId . ':' . $this->clientSecret),
+                    'Content-Type' => 'application/x-www-form-urlencoded',
+                ])
+                ->post($authUrl, [
+                    'grant_type' => 'client_credentials',
+                ]);
 
             if (!$response->successful()) {
                 Log::error('Orange Money: Erreur obtention token', [
@@ -90,10 +101,12 @@ class OrangeMoneyService
         $this->circuitBreaker->ensureAvailable(self::CIRCUIT_PROVIDER);
 
         try {
-            if (config('app.env') === 'testing' || config('app.env') === 'local' || empty($this->clientId) || str_contains($this->clientId, 'votre_client_id')) {
+            $isMock = empty($this->clientId) || str_contains($this->clientId, 'votre_client_id') || config('app.env') === 'testing';
+            if ($isMock) {
                 $this->circuitBreaker->recordSuccess(self::CIRCUIT_PROVIDER);
+                $transactionId = $metadata['transaction_id'] ?? 0;
                 return [
-                    'payment_url' => 'http://localhost/pay',
+                    'payment_url' => route('payment.mock.pay', ['transaction_id' => $transactionId]),
                     'order_id' => 'OM-' . strtoupper(\Illuminate\Support\Str::random(16)),
                     'payment_token' => 'test_payment_token',
                 ];
@@ -167,9 +180,22 @@ class OrangeMoneyService
     public function checkPaymentStatus(string $orderId, string $paymentToken): array
     {
         try {
-            if (config('app.env') === 'testing' || config('app.env') === 'local' || empty($this->clientId) || str_contains($this->clientId, 'votre_client_id')) {
+            if (config('app.env') === 'testing') {
                 return [
                     'status' => 'SUCCESS',
+                    'tx_reference' => 'test_om_tx_ref',
+                    'data' => [],
+                ];
+            }
+
+            $isMock = empty($this->clientId) || str_contains($this->clientId, 'votre_client_id');
+            if ($isMock) {
+                $tx = Transaction::where('orange_order_id', $orderId)
+                    ->orWhere('reference_externe', $orderId)
+                    ->first();
+                $status = ($tx && $tx->statut->isSuccessful()) ? 'SUCCESS' : 'PENDING';
+                return [
+                    'status' => $status,
                     'tx_reference' => 'test_om_tx_ref',
                     'data' => [],
                 ];

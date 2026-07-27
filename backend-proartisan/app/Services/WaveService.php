@@ -66,9 +66,12 @@ class WaveService
 
             Log::info('Wave: Création checkout', ['payload' => $payload]);
 
-            if (config('app.env') === 'testing' || config('app.env') === 'local' || empty($this->apiKey) || str_contains($this->apiKey, 'votre_cle')) {
+            $isMock = empty($this->apiKey) || str_contains($this->apiKey, 'votre_cle') || config('app.env') === 'testing';
+            if ($isMock) {
                 $this->circuitBreaker->recordSuccess(self::CIRCUIT_PROVIDER);
-                return ['checkout_url' => 'http://localhost/pay', 'checkout_id' => 'test_id', 'wave_launch_url' => 'http://localhost/pay'];
+                $transactionId = $metadata['transaction_id'] ?? 0;
+                $mockUrl = route('payment.mock.pay', ['transaction_id' => $transactionId]);
+                return ['checkout_url' => $mockUrl, 'checkout_id' => 'test_id', 'wave_launch_url' => $mockUrl];
             }
 
             $response = Http::withHeaders([
@@ -121,8 +124,17 @@ class WaveService
         try {
             Log::info('Wave: Vérification statut paiement', ['checkout_id' => $checkoutId]);
 
-            if (config('app.env') === 'testing' || config('app.env') === 'local' || empty($this->apiKey) || str_contains($this->apiKey, 'votre_cle')) {
+            if (config('app.env') === 'testing') {
                 return ['status' => 'completed', 'payment_id' => 'test_pay_id', 'data' => []];
+            }
+
+            $isMock = empty($this->apiKey) || str_contains($this->apiKey, 'votre_cle');
+            if ($isMock) {
+                $tx = Transaction::where('wave_checkout_id', $checkoutId)
+                    ->orWhere('reference_externe', $checkoutId)
+                    ->first();
+                $status = ($tx && $tx->statut->isSuccessful()) ? 'completed' : 'pending';
+                return ['status' => $status, 'payment_id' => 'test_pay_id', 'data' => []];
             }
 
             $response = Http::withHeaders([
