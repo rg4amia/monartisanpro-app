@@ -670,74 +670,106 @@ class _SupplierProductTile extends StatelessWidget {
     final outOfStock = product.stockQuantity <= 0;
 
     return Container(
+      width: double.infinity,
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        border: Border.all(color: AppColors.border),
-        borderRadius: BorderRadius.circular(14),
+        color: Colors.white,
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.8)),
+        borderRadius: BorderRadius.circular(16),
       ),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(Icons.inventory_2_outlined,
-                color: AppColors.primary),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  product.name,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                if ((product.description ?? '').isNotEmpty) ...[
-                  const SizedBox(height: 4),
+                child: const Icon(Icons.inventory_2_outlined,
+                    color: AppColors.primary, size: 22),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      product.name,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    if ((product.sku ?? '').isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        'SKU: ${product.sku}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if ((product.description ?? '').isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(
+              product.description!,
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.textSecondary,
+                height: 1.4,
+              ),
+            ),
+          ],
+          const SizedBox(height: 14),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(
-                    product.description!,
+                    Formatters.fcfa(product.unitPrice),
                     style: const TextStyle(
-                      color: AppColors.textSecondary,
-                      height: 1.3,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.success,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    outOfStock ? 'Rupture de stock' : 'Stock: ${product.stockQuantity}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: outOfStock ? AppColors.danger : AppColors.textSecondary,
                     ),
                   ),
                 ],
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _InfoChip(
-                      label: Formatters.fcfa(product.unitPrice),
-                      color: AppColors.success,
-                    ),
-                    _InfoChip(
-                      label: 'Stock: ${product.stockQuantity}',
-                      color: outOfStock ? AppColors.danger : AppColors.info,
-                    ),
-                    if ((product.sku ?? '').isNotEmpty)
-                      _InfoChip(
-                        label: product.sku!,
-                        color: AppColors.primary,
-                      ),
-                  ],
+              ),
+              ElevatedButton.icon(
+                onPressed: outOfStock ? null : onAdd,
+                icon: const Icon(Icons.add, size: 16),
+                label: const Text('Ajouter'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          ElevatedButton(
-            onPressed: outOfStock ? null : onAdd,
-            child: const Text('Ajouter'),
+              ),
+            ],
           ),
         ],
       ),
