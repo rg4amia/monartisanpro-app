@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../controllers/services_controller.dart';
 import '../models/sector_model.dart';
 import '../models/trade_model.dart';
+import '../../../app/routes/app_routes.dart';
 
 class ServicesScreen extends StatelessWidget {
   const ServicesScreen({super.key});
@@ -473,7 +474,7 @@ class _NeedHelpCard extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () {},
+              onPressed: () => Get.toNamed(Routes.missionRequest),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
                 foregroundColor: const Color(0xFF4F46E5),

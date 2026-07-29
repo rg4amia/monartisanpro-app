@@ -58,7 +58,7 @@ Future<void> main() async {
 
       // OneSignal — Initialisation (Push Notifications)
       OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
-      OneSignal.initialize("YOUR_ONESIGNAL_APP_ID_HERE"); // À remplacer par votre ID
+      OneSignal.initialize("00d061c8-977b-405a-a207-e2d87846670b"); // À remplacer par votre ID
       OneSignal.Notifications.requestPermission(true);
 
       // Initialisation de la synchro hors-ligne

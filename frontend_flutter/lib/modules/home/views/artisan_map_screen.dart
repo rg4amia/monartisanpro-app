@@ -163,9 +163,29 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
       _placemarkIndex[pm] = artisan;
 
       final listener = _ArtisanTapListener((obj, point) {
-        final found = _placemarkIndex[obj as mk.PlacemarkMapObject];
+        ArtisanModel? found;
+        
+        // Find using coordinate comparison to avoid FFI object wrapper inequality issues
+        for (final entry in _placemarkIndex.entries) {
+          final entryPoint = entry.key.geometry;
+          if ((entryPoint.latitude - point.latitude).abs() < 0.005 &&
+              (entryPoint.longitude - point.longitude).abs() < 0.005) {
+            found = entry.value;
+            break;
+          }
+        }
+
         if (found != null) {
-          Get.toNamed(Routes.artisanProfile, arguments: found);
+          setState(() {
+            _selectedArtisan = found;
+          });
+          if (found.location != null) {
+            _moveCamera(
+              found.location!['lat']!,
+              found.location!['lng']!,
+              _kDefaultZoom,
+            );
+          }
         }
         return true;
       });
