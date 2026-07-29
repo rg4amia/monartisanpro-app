@@ -144,7 +144,7 @@ class AdminService
                 'client:id,name,phone',
                 'artisan:id,name,phone',
                 'jalons',
-                'jcodes.fournisseur:id,nom_boutique',
+                'jcodes.fournisseur:id,name,phone',
                 'transactions',
                 'litiges',
                 'evaluations',
