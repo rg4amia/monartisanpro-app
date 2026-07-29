@@ -6,8 +6,22 @@ import '../controllers/order_controller.dart';
 import '../controllers/artisan_cart_controller.dart';
 import 'order_checkout_screen.dart';
 
-class ClientCatalogScreen extends StatelessWidget {
+class ClientCatalogScreen extends StatefulWidget {
   const ClientCatalogScreen({super.key});
+
+  @override
+  State<ClientCatalogScreen> createState() => _ClientCatalogScreenState();
+}
+
+class _ClientCatalogScreenState extends State<ClientCatalogScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  final RxString _searchQuery = ''.obs;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -79,32 +93,91 @@ class ClientCatalogScreen extends StatelessWidget {
           }),
         ],
       ),
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator(color: AppColors.primary));
-        }
-
-        if (controller.supplierProducts.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.category_outlined, size: 64, color: Colors.grey[400]),
-                const SizedBox(height: 16),
-                Text(
-                  'Aucun article disponible pour le moment',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 15),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: TextField(
+              controller: _searchController,
+              onChanged: (val) => _searchQuery.value = val,
+              decoration: InputDecoration(
+                hintText: 'Rechercher un article...',
+                prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary),
+                suffixIcon: Obx(() => _searchQuery.value.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, color: AppColors.textSecondary),
+                        onPressed: () {
+                          _searchController.clear();
+                          _searchQuery.value = '';
+                        },
+                      )
+                    : const SizedBox.shrink()),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
                 ),
-              ],
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                ),
+              ),
             ),
-          );
-        }
+          ),
+          Expanded(
+            child: Obx(() {
+              if (controller.isLoading.value) {
+                return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+              }
 
-        return ListView.builder(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-          itemCount: controller.supplierProducts.length,
-          itemBuilder: (context, index) {
-            final product = controller.supplierProducts[index];
+              if (controller.supplierProducts.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.category_outlined, size: 64, color: Colors.grey[400]),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Aucun article disponible pour le moment',
+                        style: TextStyle(color: Colors.grey[600], fontSize: 15),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              final products = controller.supplierProducts.where((p) {
+                final query = _searchQuery.value.toLowerCase().trim();
+                if (query.isEmpty) return true;
+                final nameMatch = p.name.toLowerCase().contains(query);
+                final descMatch = (p.description ?? '').toLowerCase().contains(query);
+                final skuMatch = (p.sku ?? '').toLowerCase().contains(query);
+                return nameMatch || descMatch || skuMatch;
+              }).toList();
+
+              if (products.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.search_off_outlined, size: 64, color: Colors.grey[400]),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Aucun article ne correspond à votre recherche',
+                        style: TextStyle(color: Colors.grey[600], fontSize: 15),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              return ListView.builder(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+                itemCount: products.length,
+                itemBuilder: (context, index) {
+                  final product = products[index];
             
             // Calcul du prix unitaire TTC pour l'affichage client (+3% de frais plateforme)
             // L'artisan voit le prix HT/fournisseur car les taxes/commissions sont appliquées globalement dans le devis
@@ -241,7 +314,9 @@ class ClientCatalogScreen extends StatelessWidget {
             );
           },
         );
-      }),
+      })),
+        ],
+      ),
       bottomNavigationBar: Obx(() {
         final count = isArtisan ? artisanCart.cartCount : controller.cartCount;
         if (count == 0) return const SizedBox.shrink();

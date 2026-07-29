@@ -16,12 +16,20 @@ class SupplierCatalogScreen extends StatefulWidget {
 
 class _SupplierCatalogScreenState extends State<SupplierCatalogScreen> {
   late final JcodeController controller;
+  final TextEditingController _searchController = TextEditingController();
+  final RxString _searchQuery = ''.obs;
 
   @override
   void initState() {
     super.initState();
     controller = Get.find<JcodeController>();
     controller.loadMyCatalogProducts();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -42,68 +50,130 @@ class _SupplierCatalogScreenState extends State<SupplierCatalogScreen> {
         icon: const Icon(Icons.add),
         label: const Text('Ajouter'),
       ),
-      body: Obx(() {
-        if (controller.isCatalogLoading.value &&
-            controller.myProducts.isEmpty) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (controller.myProducts.isEmpty) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(32),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: AppColors.success.withValues(alpha: 0.08),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.inventory_2_outlined,
-                      size: 56,
-                      color: AppColors.success,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Aucun article dans votre catalogue',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Ajoutez vos articles pour enrichir le catalogue consulté par les artisans.',
-                    textAlign: TextAlign.center,
-                    style:
-                        TextStyle(color: AppColors.textSecondary, height: 1.4),
-                  ),
-                ],
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+            child: TextField(
+              controller: _searchController,
+              onChanged: (val) => _searchQuery.value = val,
+              decoration: InputDecoration(
+                hintText: 'Rechercher un article...',
+                prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary),
+                suffixIcon: Obx(() => _searchQuery.value.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, color: AppColors.textSecondary),
+                        onPressed: () {
+                          _searchController.clear();
+                          _searchQuery.value = '';
+                        },
+                      )
+                    : const SizedBox.shrink()),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AppColors.success, width: 1.5),
+                ),
               ),
             ),
-          );
-        }
+          ),
+          Expanded(
+            child: Obx(() {
+              if (controller.isCatalogLoading.value &&
+                  controller.myProducts.isEmpty) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-        return ListView.separated(
-          padding: const EdgeInsets.all(20),
-          itemCount: controller.myProducts.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
-          itemBuilder: (_, index) {
-            final product = controller.myProducts[index];
-            return _CatalogProductCard(
-              product: product,
-              onEdit: () => _showProductDialog(context, product: product),
-              onArchive: () => _confirmArchive(product),
-            );
-          },
-        );
-      }),
+              if (controller.myProducts.isEmpty) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: AppColors.success.withValues(alpha: 0.08),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.inventory_2_outlined,
+                            size: 56,
+                            color: AppColors.success,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Aucun article dans votre catalogue',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Ajoutez vos articles pour enrichir le catalogue consulté par les artisans.',
+                          textAlign: TextAlign.center,
+                          style:
+                              TextStyle(color: AppColors.textSecondary, height: 1.4),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+
+              final products = controller.myProducts.where((p) {
+                final query = _searchQuery.value.toLowerCase().trim();
+                if (query.isEmpty) return true;
+                final nameMatch = p.name.toLowerCase().contains(query);
+                final descMatch = (p.description ?? '').toLowerCase().contains(query);
+                final skuMatch = (p.sku ?? '').toLowerCase().contains(query);
+                return nameMatch || descMatch || skuMatch;
+              }).toList();
+
+              if (products.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.search_off_outlined, size: 64, color: Colors.grey[400]),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Aucun article ne correspond à votre recherche',
+                        style: TextStyle(color: AppColors.textSecondary, fontSize: 15),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              return ListView.separated(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+                itemCount: products.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (_, index) {
+                  final product = products[index];
+                  return _CatalogProductCard(
+                    product: product,
+                    onEdit: () => _showProductDialog(context, product: product),
+                    onArchive: () => _confirmArchive(product),
+                  );
+                },
+              );
+            }),
+          ),
+        ],
+      ),
     );
   }
 

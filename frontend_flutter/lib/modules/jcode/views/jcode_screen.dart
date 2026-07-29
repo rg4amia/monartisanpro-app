@@ -161,7 +161,7 @@ class _JcodeScreenState extends State<JcodeScreen> {
   }
 }
 
-class _ComposerView extends StatelessWidget {
+class _ComposerView extends StatefulWidget {
   final JcodeController controller;
   final TextEditingController missionIdCtrl;
   final Future<void> Function() onAddCustomItem;
@@ -173,13 +173,27 @@ class _ComposerView extends StatelessWidget {
   });
 
   @override
+  State<_ComposerView> createState() => _ComposerViewState();
+}
+
+class _ComposerViewState extends State<_ComposerView> {
+  final TextEditingController _searchController = TextEditingController();
+  final RxString _searchQuery = ''.obs;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
       onRefresh: () async {
-        await controller.loadSuppliers();
-        final supplier = controller.selectedSupplier.value;
+        await widget.controller.loadSuppliers();
+        final supplier = widget.controller.selectedSupplier.value;
         if (supplier != null) {
-          await controller.loadSupplierProducts(supplier.id);
+          await widget.controller.loadSupplierProducts(supplier.id);
         }
       },
       child: ListView(
@@ -204,7 +218,7 @@ class _ComposerView extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 TextField(
-                  controller: missionIdCtrl,
+                  controller: widget.missionIdCtrl,
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(
                     labelText: 'ID de la mission',
@@ -217,11 +231,11 @@ class _ComposerView extends StatelessWidget {
                   () => SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
-                      onPressed: controller.isImportingDevis.value
+                      onPressed: widget.controller.isImportingDevis.value
                           ? null
                           : () {
                               final missionId =
-                                  int.tryParse(missionIdCtrl.text.trim());
+                                  int.tryParse(widget.missionIdCtrl.text.trim());
                               if (missionId == null || missionId <= 0) {
                                 Get.snackbar(
                                   'Mission invalide',
@@ -230,9 +244,9 @@ class _ComposerView extends StatelessWidget {
                                 );
                                 return;
                               }
-                              controller.importMaterialsFromMission(missionId);
+                              widget.controller.importMaterialsFromMission(missionId);
                             },
-                      icon: controller.isImportingDevis.value
+                      icon: widget.controller.isImportingDevis.value
                           ? const SizedBox(
                               width: 16,
                               height: 16,
@@ -240,7 +254,7 @@ class _ComposerView extends StatelessWidget {
                             )
                           : const Icon(Icons.file_download_outlined),
                       label: Text(
-                        controller.isImportingDevis.value
+                        widget.controller.isImportingDevis.value
                             ? 'Import en cours...'
                             : 'Importer les matériaux du devis',
                       ),
@@ -253,8 +267,8 @@ class _ComposerView extends StatelessWidget {
           const SizedBox(height: 16),
           _SectionCard(
             child: Obx(() {
-              final suppliers = controller.suppliers;
-              final selectedSupplier = controller.selectedSupplier.value;
+              final suppliers = widget.controller.suppliers;
+              final selectedSupplier = widget.controller.selectedSupplier.value;
 
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -272,13 +286,13 @@ class _ComposerView extends StatelessWidget {
                         ),
                       ),
                       IconButton(
-                        onPressed: controller.loadSuppliers,
+                        onPressed: widget.controller.loadSuppliers,
                         icon: const Icon(Icons.refresh),
                       ),
                     ],
                   ),
                   const SizedBox(height: 12),
-                  if (controller.isSuppliersLoading.value && suppliers.isEmpty)
+                  if (widget.controller.isSuppliersLoading.value && suppliers.isEmpty)
                     const Center(child: CircularProgressIndicator())
                   else if (suppliers.isEmpty)
                     const Text(
@@ -310,7 +324,7 @@ class _ComposerView extends StatelessWidget {
                             break;
                           }
                         }
-                        controller.selectSupplier(supplier);
+                        widget.controller.selectSupplier(supplier);
                       },
                     ),
                   if (selectedSupplier != null) ...[
@@ -356,8 +370,17 @@ class _ComposerView extends StatelessWidget {
           const SizedBox(height: 16),
           _SectionCard(
             child: Obx(() {
-              final supplier = controller.selectedSupplier.value;
-              final products = controller.supplierProducts;
+              final supplier = widget.controller.selectedSupplier.value;
+              final products = widget.controller.supplierProducts;
+
+              final filteredProducts = products.where((p) {
+                final query = _searchQuery.value.toLowerCase().trim();
+                if (query.isEmpty) return true;
+                final nameMatch = p.name.toLowerCase().contains(query);
+                final descMatch = (p.description ?? '').toLowerCase().contains(query);
+                final skuMatch = (p.sku ?? '').toLowerCase().contains(query);
+                return nameMatch || descMatch || skuMatch;
+              }).toList();
 
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -375,19 +398,52 @@ class _ComposerView extends StatelessWidget {
                         ),
                       ),
                       TextButton.icon(
-                        onPressed: supplier == null ? null : onAddCustomItem,
+                        onPressed: supplier == null ? null : widget.onAddCustomItem,
                         icon: const Icon(Icons.add_circle_outline),
                         label: const Text('Article hors catalogue'),
                       ),
                     ],
                   ),
                   const SizedBox(height: 12),
+                  if (supplier != null && products.isNotEmpty) ...[
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: (val) => _searchQuery.value = val,
+                        decoration: InputDecoration(
+                          hintText: 'Rechercher un article...',
+                          prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary),
+                          suffixIcon: Obx(() => _searchQuery.value.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.clear, color: AppColors.textSecondary),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    _searchQuery.value = '';
+                                  },
+                                )
+                              : const SizedBox.shrink()),
+                          filled: true,
+                          fillColor: Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: AppColors.accent, width: 1.5),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                   if (supplier == null)
                     const Text(
                       'Choisissez un fournisseur pour afficher son catalogue.',
                       style: TextStyle(color: AppColors.textSecondary),
                     )
-                  else if (controller.isCatalogLoading.value &&
+                  else if (widget.controller.isCatalogLoading.value &&
                       products.isEmpty)
                     const Center(child: CircularProgressIndicator())
                   else if (products.isEmpty)
@@ -395,11 +451,16 @@ class _ComposerView extends StatelessWidget {
                       'Ce fournisseur n\'a pas encore publié d\'article actif.',
                       style: TextStyle(color: AppColors.textSecondary),
                     )
+                  else if (filteredProducts.isEmpty)
+                    const Text(
+                      'Aucun article ne correspond à votre recherche.',
+                      style: TextStyle(color: AppColors.textSecondary),
+                    )
                   else
-                    ...products.map(
+                    ...filteredProducts.map(
                       (product) => _SupplierProductTile(
                         product: product,
-                        onAdd: () => controller.addCatalogProduct(product),
+                        onAdd: () => widget.controller.addCatalogProduct(product),
                       ),
                     ),
                 ],
@@ -408,7 +469,7 @@ class _ComposerView extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Obx(() {
-            final items = controller.draftItems;
+            final items = widget.controller.draftItems;
 
             return _SectionCard(
               child: Column(
@@ -432,15 +493,15 @@ class _ComposerView extends StatelessWidget {
                     ...items.map(
                       (item) => _DraftItemTile(
                         item: item,
-                        onIncrement: () => controller.updateDraftQuantity(
+                        onIncrement: () => widget.controller.updateDraftQuantity(
                           item,
                           item.quantity + 1,
                         ),
-                        onDecrement: () => controller.updateDraftQuantity(
+                        onDecrement: () => widget.controller.updateDraftQuantity(
                           item,
                           item.quantity - 1,
                         ),
-                        onRemove: () => controller.removeDraftItem(item),
+                        onRemove: () => widget.controller.removeDraftItem(item),
                       ),
                     ),
                   const SizedBox(height: 16),
@@ -462,7 +523,7 @@ class _ComposerView extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          Formatters.fcfa(controller.draftTotal),
+                          Formatters.fcfa(widget.controller.draftTotal),
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
@@ -476,11 +537,11 @@ class _ComposerView extends StatelessWidget {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      onPressed: controller.isLoading.value
+                      onPressed: widget.controller.isLoading.value
                           ? null
                           : () {
                               final missionId =
-                                  int.tryParse(missionIdCtrl.text.trim());
+                                  int.tryParse(widget.missionIdCtrl.text.trim());
                               if (missionId == null || missionId <= 0) {
                                 Get.snackbar(
                                   'Mission invalide',
@@ -489,9 +550,9 @@ class _ComposerView extends StatelessWidget {
                                 );
                                 return;
                               }
-                              controller.generateJcodeForDraft(missionId);
+                              widget.controller.generateJcodeForDraft(missionId);
                             },
-                      icon: controller.isLoading.value
+                      icon: widget.controller.isLoading.value
                           ? const SizedBox(
                               width: 18,
                               height: 18,
@@ -499,7 +560,7 @@ class _ComposerView extends StatelessWidget {
                             )
                           : const Icon(Icons.qr_code_2),
                       label: Text(
-                        controller.isLoading.value
+                        widget.controller.isLoading.value
                             ? 'Génération...'
                             : 'Générer le J-Code',
                       ),
