@@ -1066,6 +1066,7 @@ class _JalonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final controller = Get.find<MissionsController>();
     final config = _statusConfig();
 
     return Container(
