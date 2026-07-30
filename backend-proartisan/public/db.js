@@ -249,23 +249,21 @@ class APIDatabaseClient {
    * Effectue la recherche hybride sémantique + filtres via le serveur Python SQLite
    */
   async hybridSearch(queryTags, metadataFilters = {}, imageB64 = null, imageUrl = null, imageName = null) {
-    try {
-      const res = await this.apiFetch("/api/v1/search", {
-        method: "POST",
-        headers: this.getHeaders(),
-        body: JSON.stringify({
-          tags: queryTags,
-          filters: metadataFilters,
-          image_b64: imageB64,
-          image_url: imageUrl,
-          image_name: imageName
-        })
-      });
-      return await res.json();
-    } catch (err) {
-      console.error("Erreur de recherche hybride:", err);
-      return [];
+    const res = await this.apiFetch("/api/v1/search", {
+      method: "POST",
+      headers: this.getHeaders(),
+      body: JSON.stringify({
+        tags: queryTags,
+        filters: metadataFilters,
+        image_b64: imageB64,
+        image_url: imageUrl,
+        image_name: imageName
+      })
+    });
+    if (!res.ok) {
+      throw new Error(`Erreur serveur (${res.status})`);
     }
+    return await res.json();
   }
 
   async sendChatMessage(message, history = []) {

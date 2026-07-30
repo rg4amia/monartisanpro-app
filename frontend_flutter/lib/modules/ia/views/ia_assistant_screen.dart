@@ -16,6 +16,8 @@ class IaAssistantScreen extends StatefulWidget {
 class _IaAssistantScreenState extends State<IaAssistantScreen> {
   late final WebViewController _controller;
   bool _isLoading = true;
+  bool _hasError = false;
+  String _errorMessage = '';
 
   @override
   void initState() {
@@ -86,12 +88,24 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
     }
   }
 
-  void _initWebView() {
+  /// Construit l'URL de client.html à partir de l'URL API résolue.
+  String _buildAssistantUrl() {
     final uri = Uri.parse(EnvConfig.baseUrl);
     final host = uri.host;
-    final assistantUrl = uri.hasPort
+    return uri.hasPort
         ? '${uri.scheme}://$host:${uri.port}/client.html'
         : '${uri.scheme}://$host/client.html';
+  }
+
+  void _initWebView() {
+    final assistantUrl = _buildAssistantUrl();
+    debugPrint('[IaAssistant] Chargement WebView → $assistantUrl (mode: ${EnvConfig.currentMode})');
+
+    setState(() {
+      _isLoading = true;
+      _hasError = false;
+      _errorMessage = '';
+    });
 
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
@@ -101,6 +115,7 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
           onPageStarted: (String url) {
             setState(() {
               _isLoading = true;
+              _hasError = false;
             });
           },
           onPageFinished: (String url) {
@@ -110,6 +125,11 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
           },
           onWebResourceError: (WebResourceError error) {
             debugPrint("WebView error: ${error.description}");
+            setState(() {
+              _isLoading = false;
+              _hasError = true;
+              _errorMessage = error.description;
+            });
           },
         ),
       )
@@ -157,6 +177,23 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
       ..loadRequest(Uri.parse(assistantUrl));
   }
 
+  /// Re-découvre le réseau et recharge la WebView.
+  Future<void> _retryConnection() async {
+    setState(() {
+      _isLoading = true;
+      _hasError = false;
+      _errorMessage = '';
+    });
+
+    // Relancer la découverte réseau
+    await EnvConfig.rediscover();
+
+    // Recharger avec la nouvelle URL
+    final assistantUrl = _buildAssistantUrl();
+    debugPrint('[IaAssistant] Retry → $assistantUrl (mode: ${EnvConfig.currentMode})');
+    _controller.loadRequest(Uri.parse(assistantUrl));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -169,20 +206,159 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
         backgroundColor: const Color(0xFFFFFFFF),
         elevation: 0,
         iconTheme: const IconThemeData(color: Color(0xFF0F172A)),
+        actions: [
+          // Badge indiquant le mode de connexion
+          Center(
+            child: Container(
+              margin: const EdgeInsets.only(right: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: _modeColor.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: _modeColor.withOpacity(0.3)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(_modeIcon, size: 12, color: _modeColor),
+                  const SizedBox(width: 4),
+                  Text(
+                    _modeLabel,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: _modeColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
       body: SafeArea(
         child: Stack(
           children: [
+            // WebView
             WebViewWidget(controller: _controller),
-            if (_isLoading)
+
+            // Loading spinner
+            if (_isLoading && !_hasError)
               const Center(
                 child: CircularProgressIndicator(
-                  color: Color(0xFF06B6D4), // Cyan neon color
+                  color: Color(0xFF06B6D4),
+                ),
+              ),
+
+            // Panneau d'erreur avec retry
+            if (_hasError)
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(32.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.wifi_off_rounded,
+                        size: 64,
+                        color: Color(0xFFEF4444),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Erreur de connexion',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF0F172A),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Impossible de joindre le serveur.\n'
+                        'Mode actuel : ${EnvConfig.currentMode}\n'
+                        'URL : ${_buildAssistantUrl()}',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                      if (_errorMessage.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          _errorMessage,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: Color(0xFF94A3B8),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 24),
+                      ElevatedButton.icon(
+                        onPressed: _retryConnection,
+                        icon: const Icon(Icons.refresh_rounded),
+                        label: const Text('Re-scanner le réseau'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF06B6D4),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 12,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
           ],
         ),
       ),
     );
+  }
+
+  // ── Helpers pour le badge de mode ────────────────────────────────────────
+
+  String get _modeLabel {
+    switch (EnvConfig.currentMode) {
+      case 'production':
+        return 'PROD';
+      case 'local':
+        return 'LOCAL';
+      case 'emulator':
+        return 'EMU';
+      default:
+        return '...';
+    }
+  }
+
+  Color get _modeColor {
+    switch (EnvConfig.currentMode) {
+      case 'production':
+        return const Color(0xFF10B981);
+      case 'local':
+        return const Color(0xFF06B6D4);
+      case 'emulator':
+        return const Color(0xFF8B5CF6);
+      default:
+        return const Color(0xFF94A3B8);
+    }
+  }
+
+  IconData get _modeIcon {
+    switch (EnvConfig.currentMode) {
+      case 'production':
+        return Icons.cloud_done_rounded;
+      case 'local':
+        return Icons.wifi_rounded;
+      case 'emulator':
+        return Icons.phone_android_rounded;
+      default:
+        return Icons.help_outline_rounded;
+    }
   }
 }

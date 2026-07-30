@@ -27,6 +27,7 @@ class ApiClient {
     );
 
     _dio.interceptors.addAll([
+      _DynamicBaseUrlInterceptor(),
       _AuthInterceptor(),
       _ErrorLoggerInterceptor(),
     ]);
@@ -48,6 +49,12 @@ class ApiClient {
   factory ApiClient() => _instance ??= ApiClient._();
 
   Dio get dio => _dio;
+
+  /// Met à jour le baseUrl de Dio après une re-découverte réseau.
+  void updateBaseUrl() {
+    _dio.options.baseUrl = ApiEndpoints.baseUrl;
+    debugPrint('[ApiClient] baseUrl mis à jour → ${_dio.options.baseUrl}');
+  }
 
   Future<Response> get(String path, {Map<String, dynamic>? params}) =>
       _dio.get(path, queryParameters: params);
@@ -108,5 +115,21 @@ class _ErrorLoggerInterceptor extends Interceptor {
     );
     
     handler.next(err);
+  }
+}
+
+/// Interceptor qui synchronise dynamiquement le baseUrl de chaque requête
+/// avec la valeur courante de [ApiEndpoints.baseUrl].
+///
+/// Permet de changer d'URL (prod ↔ local) après une re-découverte réseau
+/// sans recréer le singleton Dio.
+class _DynamicBaseUrlInterceptor extends Interceptor {
+  @override
+  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
+    final latestBaseUrl = ApiEndpoints.baseUrl;
+    if (options.baseUrl != latestBaseUrl) {
+      options.baseUrl = latestBaseUrl;
+    }
+    handler.next(options);
   }
 }
