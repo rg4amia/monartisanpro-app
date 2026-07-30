@@ -190,13 +190,14 @@ class _ClientSuppliersListScreenState extends State<ClientSuppliersListScreen> {
                                   const SizedBox(height: 6),
                                   Row(
                                     children: [
-                                      const Icon(Icons.phone, size: 14, color: AppColors.primary),
+                                      const Icon(Icons.phone, size: 14, color: AppColors.textSecondary),
                                       const SizedBox(width: 4),
                                       Text(
-                                        supplier.phone,
+                                        "Contact masqué (disponible après validation)",
                                         style: TextStyle(
-                                          color: Colors.grey[700],
-                                          fontSize: 13,
+                                          color: Colors.grey[500],
+                                          fontSize: 12,
+                                          fontStyle: FontStyle.italic,
                                           fontWeight: FontWeight.w500,
                                         ),
                                       ),
@@ -227,6 +228,7 @@ class _ClientSuppliersListScreenState extends State<ClientSuppliersListScreen> {
         final totalTtc = controller.totalTtc;
         final totalFormatted = totalTtc.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]} ');
         return Container(
+          width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
             color: Colors.white,
@@ -258,6 +260,8 @@ class _ClientSuppliersListScreenState extends State<ClientSuppliersListScreen> {
                       Text(
                         '${controller.cartCount} article(s) • $totalFormatted FCFA',
                         style: const TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.w700),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
