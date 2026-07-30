@@ -4,9 +4,15 @@
 <head>
   <script src="config.js"></script>
   <script>
-    // Bypass authentication for unified mobile app
-    localStorage.setItem("auth_token", "bypass-token");
-    localStorage.setItem("user_email", "admin@prosartisan.ci");
+    // Auth token for the embedded WebView.
+    // In the Flutter app, a real Sanctum token should be injected via
+    // JavaScript channel. This fallback ensures the client works in dev
+    // when opened directly in a browser.
+    if (!localStorage.getItem("auth_token")) {
+      console.warn("[ProsArtisan] No auth token found — using dev bypass.");
+      localStorage.setItem("auth_token", "bypass-token");
+      localStorage.setItem("user_email", "dev@prosartisan.ci");
+    }
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -117,6 +123,8 @@
           <span class="voice-simulation-link" id="btn-simulate-voice">
             ⚡ Simuler la dictée vocale (Nouchi)
           </span>
+        </section>
+
         <!-- MODULE 3: DYNAMIC FILTERS -->
         <section class="glass-card neon-cyan-border">
           <div class="card-title">
@@ -148,7 +156,6 @@
               <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyan-500"></div>
             </label>
           </div>
-        </section>
         </section>
 
         <!-- SUBMIT DIAGNOSTIC -->

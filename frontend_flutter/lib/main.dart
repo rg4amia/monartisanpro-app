@@ -11,6 +11,7 @@ import 'package:get/get.dart';
 import 'app/app.dart';
 import 'core/utils/error_handler.dart';
 import 'core/network/sync_service.dart';
+import 'core/config/env_config.dart';
 import 'data/services/app_settings_service.dart';
 
 Future<void> main() async {
@@ -49,6 +50,10 @@ Future<void> main() async {
 
       // GetStorage (user prefs — role, nom, kyc_status…)
       await GetStorage.init();
+
+      // ── Découverte automatique du serveur API ──────────────────────────────
+      // Teste production → émulateur → scan réseau local (port 8000)
+      await EnvConfig.init();
 
       // Yandex MapKit — clé API
       await mapkit_init.initMapkit(
