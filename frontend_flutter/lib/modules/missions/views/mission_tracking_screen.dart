@@ -1181,6 +1181,20 @@ class _JalonCard extends StatelessWidget {
                 ),
               ],
             ),
+            if (jalon.isSubmitted) ...[
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: TextButton.icon(
+                  onPressed: () async => controller.requestOtp(jalon.id),
+                  icon: const Icon(Icons.sms_outlined, size: 16, color: _Palette.primary),
+                  label: const Text(
+                    'Renvoyer le code de validation (SMS)',
+                    style: TextStyle(color: _Palette.primary, fontSize: 13, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+            ],
           ],
         ],
       ),
@@ -1312,7 +1326,22 @@ class _JalonCard extends StatelessWidget {
                   border: OutlineInputBorder(),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 12),
+              TextButton.icon(
+                onPressed: () async {
+                  await controller.requestOtp(jalon.id);
+                },
+                icon: const Icon(Icons.refresh, size: 16, color: _Palette.primary),
+                label: const Text(
+                  'Renvoyer le code par SMS',
+                  style: TextStyle(
+                    color: _Palette.primary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
               Row(
                 children: [
                   Expanded(
