@@ -21,7 +21,7 @@ return [
 
     // Charger les origines autorisées depuis le fichier .env, avec des fallbacks sécurisés.
     // Pas de wildcard '*' en production si les cookies/tokens d'authentification sont supportés.
-    'allowed_origins' => array_filter(explode(',', env('ALLOWED_ORIGINS', 'https://prosartisan.ci,https://admin.prosartisan.ci'))),
+    'allowed_origins' => array_filter(explode(',', env('ALLOWED_ORIGINS', 'https://prosartisan.ci,https://admin.prosartisan.ci,https://prosartisan.net,https://admin.prosartisan.net'))),
 
     'allowed_origins_patterns' => [],
 
