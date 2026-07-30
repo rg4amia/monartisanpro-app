@@ -45,13 +45,17 @@ class NetworkDiscoveryService {
       return _resolvedUrl!;
     }
 
-    // Build de production → toujours utiliser la production.
+    // Build de production : tester d'abord la production, sinon chercher en local (utile pour tests APK).
     const bool isProduction = bool.fromEnvironment('dart.vm.product');
     if (isProduction) {
-      _resolvedUrl = _productionBaseUrl;
-      _mode = 'production';
-      _log('Build release → production forcée');
-      return _resolvedUrl!;
+      _log('Build release → verication disponibilite production...');
+      if (await _isServerReachable(_productionHost, 443, _probeTimeout)) {
+        _resolvedUrl = _productionBaseUrl;
+        _mode = 'production';
+        _log('✅ Build release : production joignable → $_productionBaseUrl');
+        return _resolvedUrl!;
+      }
+      _log('⚠️ Production non joignable, tentative de recherche sur le réseau local...');
     }
 
     // ── 1. Émulateur Android ───────────────────────────────────────────────
@@ -124,20 +128,14 @@ class NetworkDiscoveryService {
           final subnet = '${parts[0]}.${parts[1]}.${parts[2]}';
           _log('Scan du sous-réseau $subnet.0/24 sur le port $_serverPort...');
 
-          // Scanner les hôtes les plus probables en parallèle.
-          // Priorité : passerelle (.1), et les 30 premières adresses (machines dev)
-          final hostCandidates = <int>[
-            // Passerelle et adresses courantes en premier
-            1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-            11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-            // Étendre si besoin
-            100, 101, 102, 103, 104, 105,
-            200, 201, 202, 203, 204, 205,
-          ];
+          // Scanner l'ensemble des IP du sous-réseau (1..254)
+          final hostCandidates = List<int>.generate(254, (i) => i + 1);
 
           // Exclure notre propre IP
           final selfHost = int.tryParse(parts[3]);
-          hostCandidates.remove(selfHost);
+          if (selfHost != null) {
+            hostCandidates.remove(selfHost);
+          }
 
           // Lancer toutes les sondes en parallèle et prendre la première réponse.
           final completer = Completer<String?>();
@@ -176,12 +174,34 @@ class NetworkDiscoveryService {
     return _isServerReachable(ip, _serverPort, _localProbeTimeout);
   }
 
-  /// Teste si un serveur est joignable via une connexion TCP.
+  /// Teste si un serveur est joignable.
+  ///
+  /// Pour la production (port 443), effectue une vraie requête HTTP pour
+  /// s'assurer que le serveur Web ne ferme pas brusquement la connexion.
   static Future<bool> _isServerReachable(
     String host,
     int port,
     Duration timeout,
   ) async {
+    if (port == 443 || host == _productionHost) {
+      try {
+        final client = HttpClient()
+          ..connectionTimeout = timeout
+          ..badCertificateCallback = (cert, host, port) => true;
+
+        final url = Uri.parse('https://$host/client.html');
+        final request = await client.getUrl(url).timeout(timeout);
+        final response = await request.close().timeout(timeout);
+        client.close();
+
+        // Si le serveur répond avec un statut HTTP valide, la connexion est OK.
+        return response.statusCode < 500;
+      } catch (e) {
+        _log('Échec test HTTP production ($host) : $e');
+        return false;
+      }
+    }
+
     try {
       final socket = await Socket.connect(host, port, timeout: timeout);
       socket.destroy();
