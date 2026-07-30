@@ -1,5 +1,21 @@
 {
   "claudeCode.useTerminal": true,
   "kiroAgent.configureMCP": "Disabled",
-  "vscode-edge-devtools.webhint": false
+  "vscode-edge-devtools.webhint": false,
+  "java.project.excludePaths": [
+    "**/node_modules",
+    "**/.metadata",
+    "**/archetype",
+    "**/bin",
+    "**/frontend_flutter/build",
+    "**/build"
+  ],
+  "files.exclude": {
+    "**/frontend_flutter/build": true,
+    "**/build": true
+  },
+  "files.watcherExclude": {
+    "**/frontend_flutter/build/**": true,
+    "**/build/**": true
+  }
 }
