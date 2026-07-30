@@ -461,7 +461,8 @@ function normalizeSearch(parts: Array<number | string | null | undefined>): stri
         .toLowerCase();
 }
 
-function getInitials(value: string): string {
+function getInitials(value: string | null | undefined): string {
+    if (!value) return 'PA';
     const initials = value
         .split(/\s+/)
         .filter(Boolean)
