@@ -54,17 +54,7 @@ class NetworkDiscoveryService {
       return _resolvedUrl!;
     }
 
-    // ── 1. Tester la production ────────────────────────────────────────────
-    _log('Tentative de connexion à $_productionHost...');
-    if (await _isServerReachable(_productionHost, 443, _probeTimeout)) {
-      _resolvedUrl = _productionBaseUrl;
-      _mode = 'production';
-      _log('✅ Serveur de production joignable → $_productionBaseUrl');
-      return _resolvedUrl!;
-    }
-    _log('❌ Production injoignable, recherche du serveur local...');
-
-    // ── 2. Émulateur Android ───────────────────────────────────────────────
+    // ── 1. Émulateur Android ───────────────────────────────────────────────
     if (Platform.isAndroid) {
       const emulatorHost = '10.0.2.2';
       if (await _isServerReachable(emulatorHost, _serverPort, _localProbeTimeout)) {
@@ -75,12 +65,21 @@ class NetworkDiscoveryService {
       }
     }
 
-    // ── 3. Découverte du sous-réseau local ─────────────────────────────────
+    // ── 2. Découverte du sous-réseau local (Dev local) ──────────────────────
     final localUrl = await _discoverOnLocalNetwork();
     if (localUrl != null) {
       _resolvedUrl = localUrl;
       _mode = 'local';
       _log('✅ Serveur local trouvé → $_resolvedUrl');
+      return _resolvedUrl!;
+    }
+
+    // ── 3. Tester la production si aucun serveur local n'est trouvé ─────────
+    _log('Tentative de connexion à $_productionHost...');
+    if (await _isServerReachable(_productionHost, 443, _probeTimeout)) {
+      _resolvedUrl = _productionBaseUrl;
+      _mode = 'production';
+      _log('✅ Serveur de production joignable → $_productionBaseUrl');
       return _resolvedUrl!;
     }
 

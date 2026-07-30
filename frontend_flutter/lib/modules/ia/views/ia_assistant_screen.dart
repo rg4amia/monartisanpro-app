@@ -250,68 +250,82 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
                 ),
               ),
 
-            // Panneau d'erreur avec retry
+            // Panneau d'erreur avec retry (fond opaque propre)
             if (_hasError)
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(32.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.wifi_off_rounded,
-                        size: 64,
-                        color: Color(0xFFEF4444),
+              Container(
+                color: const Color(0xFFF8FAFC),
+                width: double.infinity,
+                height: double.infinity,
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Card(
+                      elevation: 4,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'Erreur de connexion',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF0F172A),
+                      child: Padding(
+                        padding: const EdgeInsets.all(24.0),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.wifi_off_rounded,
+                              size: 56,
+                              color: Color(0xFFEF4444),
+                            ),
+                            const SizedBox(height: 16),
+                            const Text(
+                              'Erreur de connexion',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF0F172A),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Impossible de joindre le serveur.\n'
+                              'Mode actuel : ${EnvConfig.currentMode}\n'
+                              'URL : ${_buildAssistantUrl()}',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF64748B),
+                              ),
+                            ),
+                            if (_errorMessage.isNotEmpty) ...[
+                              const SizedBox(height: 6),
+                              Text(
+                                _errorMessage,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  color: Color(0xFF94A3B8),
+                                ),
+                              ),
+                            ],
+                            const SizedBox(height: 20),
+                            ElevatedButton.icon(
+                              onPressed: _retryConnection,
+                              icon: const Icon(Icons.refresh_rounded, size: 18),
+                              label: const Text('Re-scanner le réseau'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF06B6D4),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Impossible de joindre le serveur.\n'
-                        'Mode actuel : ${EnvConfig.currentMode}\n'
-                        'URL : ${_buildAssistantUrl()}',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF64748B),
-                        ),
-                      ),
-                      if (_errorMessage.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          _errorMessage,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 10,
-                            color: Color(0xFF94A3B8),
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 24),
-                      ElevatedButton.icon(
-                        onPressed: _retryConnection,
-                        icon: const Icon(Icons.refresh_rounded),
-                        label: const Text('Re-scanner le réseau'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF06B6D4),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 12,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),
