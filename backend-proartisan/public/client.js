@@ -699,7 +699,7 @@ class ClientAppManager {
         </div>
         
         ${(() => {
-        const typeOuvrage = resultDoc.metadata?.type_ouvrage || "Dallage";
+        const typeOuvrage = doc.metadata?.type_ouvrage || "Dallage";
         if (typeOuvrage === "Dallage") {
           return `
               <div class="calc-input-row flex flex-col gap-2">
@@ -791,7 +791,7 @@ class ClientAppManager {
     document.getElementById("btn-play-audio").addEventListener("click", () => this.toggleAudioPitch(clientPitch));
 
     // Liaison dynamique des écouteurs selon le type d'ouvrage
-    const typeOuvrage = resultDoc.metadata?.type_ouvrage || "Dallage";
+    const typeOuvrage = doc.metadata?.type_ouvrage || "Dallage";
     if (typeOuvrage === "Dallage") {
       const slabArea = document.getElementById("calc-slab-area-input");
       const slabThick = document.getElementById("calc-slab-thickness-input");

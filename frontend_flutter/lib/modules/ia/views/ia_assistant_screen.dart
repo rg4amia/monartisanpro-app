@@ -89,8 +89,9 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
   void _initWebView() {
     final uri = Uri.parse(EnvConfig.baseUrl);
     final host = uri.host;
-    final port = uri.hasPort ? uri.port : (uri.scheme == 'https' ? 443 : 80);
-    final assistantUrl = '${uri.scheme}://$host:$port/client.html';
+    final assistantUrl = uri.hasPort
+        ? '${uri.scheme}://$host:${uri.port}/client.html'
+        : '${uri.scheme}://$host/client.html';
 
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
