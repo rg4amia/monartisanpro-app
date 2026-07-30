@@ -577,7 +577,7 @@ class ClientAppManager {
         <div class="glass-card text-center py-6 border-red-500/30">
           <span class="text-2xl block mb-2">⚠️</span>
           <p class="text-sm font-semibold text-red-400">Erreur de connexion</p>
-          <p class="text-xs text-slate-400 mt-2">Impossible de joindre le serveur API. Veuillez vérifier que PHP artisan (composer dev-win) et MySQL sont démarrés.</p>
+          <p class="text-xs text-slate-400 mt-2">Impossible de joindre le serveur API. Veuillez vérifier votre connexion Internet ou réessayer plus tard.</p>
         </div>
       `;
       this.log("system", `Erreur de communication : ${err.message}`);
