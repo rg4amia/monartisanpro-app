@@ -112,6 +112,7 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(const Color(0xFFF8FAFC))
+      ..setUserAgent("Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36")
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (String url) {
@@ -126,8 +127,15 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
             });
           },
           onWebResourceError: (WebResourceError error) {
-            debugPrint("WebView error (attempt ${_retryCount + 1}/$_maxRetries): ${error.description}");
+            debugPrint("WebView error (isForMainFrame: ${error.isForMainFrame}, url: ${error.url}): ${error.description}");
             
+            // Ne bloquer la page entière QUE si l'erreur concerne le cadre principal (main frame)
+            final bool isMainFrameError = error.isForMainFrame ?? true;
+            if (!isMainFrameError) {
+              // Ignorer les erreurs de sous-ressources secondaires (WS, favicons, etc.)
+              return;
+            }
+
             // Retry automatique avant d'afficher l'erreur
             if (_retryCount < _maxRetries - 1) {
               _retryCount++;
