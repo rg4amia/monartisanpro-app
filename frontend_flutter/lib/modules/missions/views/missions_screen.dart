@@ -213,9 +213,10 @@ class _FilterTabs extends StatelessWidget {
     if (role == 'artisan') {
       return const [
         ('all', 'Toutes'),
-        ('en_attente', 'A deviser'),
-        ('financee', 'Financees'),
-        ('en_cours', 'Travaux'),
+        ('en_attente', 'À deviser'),
+        ('financee', 'Financées'),
+        ('en_cours', 'En cours'),
+        ('terminee', 'Terminées'),
         ('litige', 'Litiges'),
       ];
     }
