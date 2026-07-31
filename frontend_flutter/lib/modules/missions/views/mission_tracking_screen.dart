@@ -1327,8 +1327,6 @@ class _JalonCard extends StatelessWidget {
     );
   }
 
-  }
-
   _JalonStatusConfig _statusConfig() {
     if (jalon.isPaid) {
       return const _JalonStatusConfig(
