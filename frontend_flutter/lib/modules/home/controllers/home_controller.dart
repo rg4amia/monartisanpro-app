@@ -21,6 +21,7 @@ class HomeController extends GetxController {
   final artisanMissions = <MissionModel>[].obs;
   final activeMissions = <MissionModel>[].obs;
   final isLoading = false.obs;
+  final hasError = false.obs;
   final isMapLoading = false.obs;
   final role = Rx<String?>(null);
   final userName = ''.obs;
@@ -162,9 +163,35 @@ class HomeController extends GetxController {
     _loadData();
   }
 
+  /// Nombre max de tentatives de chargement avant d'afficher l'erreur.
+  static const int _maxRetries = 3;
+
   Future<void> _loadData() async {
     isLoading.value = true;
-    try {
+    hasError.value = false;
+
+    for (var attempt = 1; attempt <= _maxRetries; attempt++) {
+      try {
+        await _loadDataCore();
+        // Succès — on sort de la boucle de retry
+        hasError.value = false;
+        return;
+      } catch (e) {
+        debugPrint('[HomeController] Tentative $attempt/$_maxRetries échouée : $e');
+        if (attempt < _maxRetries) {
+          // Backoff exponentiel : 2s, 4s
+          await Future.delayed(Duration(seconds: 2 * attempt));
+        } else {
+          hasError.value = true;
+        }
+      } finally {
+        isLoading.value = false;
+      }
+    }
+  }
+
+  /// Logique principale de chargement — extraite pour le retry.
+  Future<void> _loadDataCore() async {
       await _getLocation();
 
       // Load wallet balance for all users
@@ -219,7 +246,7 @@ class HomeController extends GetxController {
            fluidityScore.value = dashboardData['score_nzassa'] ?? 10;
         }
       } catch (e) {
-        print("Error fetching dashboard stats: $e");
+        debugPrint("Error fetching dashboard stats: $e");
       }
 
       if (role.value == 'driver') {
@@ -302,11 +329,6 @@ class HomeController extends GetxController {
         activeMissions.value = missions;
         activeMissionsCount.value = missions.length;
       }
-    } catch (_) {
-      // keep empty state
-    } finally {
-      isLoading.value = false;
-    }
   }
 
   void refreshLocationAndArtisans(double lat, double lng) {

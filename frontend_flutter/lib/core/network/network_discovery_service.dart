@@ -20,7 +20,7 @@ class NetworkDiscoveryService {
   static const int _serverPort = 8000;
   static const String _apiSuffix = '/api/v1';
 
-  static const Duration _probeTimeout = Duration(seconds: 3);
+  static const Duration _probeTimeout = Duration(seconds: 8);
   static const Duration _localProbeTimeout = Duration(milliseconds: 800);
 
   /// URL résolue, accessible après [discover].
@@ -178,28 +178,35 @@ class NetworkDiscoveryService {
   ///
   /// Pour la production (port 443), effectue une vraie requête HTTP pour
   /// s'assurer que le serveur Web ne ferme pas brusquement la connexion.
+  /// Inclut un retry automatique (2 tentatives) pour les réseaux instables.
   static Future<bool> _isServerReachable(
     String host,
     int port,
     Duration timeout,
   ) async {
     if (port == 443 || host == _productionHost) {
-      try {
-        final client = HttpClient()
-          ..connectionTimeout = timeout
-          ..badCertificateCallback = (cert, host, port) => true;
+      const maxAttempts = 2;
+      for (var attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+          final client = HttpClient()
+            ..connectionTimeout = timeout
+            ..badCertificateCallback = (cert, host, port) => true;
 
-        final url = Uri.parse('https://$host/client.html');
-        final request = await client.getUrl(url).timeout(timeout);
-        final response = await request.close().timeout(timeout);
-        client.close();
+          final url = Uri.parse('https://$host/client.html');
+          final request = await client.getUrl(url).timeout(timeout);
+          final response = await request.close().timeout(timeout);
+          client.close();
 
-        // Si le serveur répond avec un statut HTTP valide, la connexion est OK.
-        return response.statusCode < 500;
-      } catch (e) {
-        _log('Échec test HTTP production ($host) : $e');
-        return false;
+          // Si le serveur répond avec un statut HTTP valide, la connexion est OK.
+          if (response.statusCode < 500) return true;
+        } catch (e) {
+          _log('Tentative $attempt/$maxAttempts — échec test HTTP production ($host) : $e');
+          if (attempt < maxAttempts) {
+            await Future.delayed(Duration(seconds: 2 * attempt));
+          }
+        }
       }
+      return false;
     }
 
     try {

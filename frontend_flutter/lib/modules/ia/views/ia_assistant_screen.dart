@@ -18,6 +18,8 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
   bool _isLoading = true;
   bool _hasError = false;
   String _errorMessage = '';
+  int _retryCount = 0;
+  static const int _maxRetries = 3;
 
   @override
   void initState() {
@@ -124,12 +126,29 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
             });
           },
           onWebResourceError: (WebResourceError error) {
-            debugPrint("WebView error: ${error.description}");
-            setState(() {
-              _isLoading = false;
-              _hasError = true;
-              _errorMessage = error.description;
-            });
+            debugPrint("WebView error (attempt ${_retryCount + 1}/$_maxRetries): ${error.description}");
+            
+            // Retry automatique avant d'afficher l'erreur
+            if (_retryCount < _maxRetries - 1) {
+              _retryCount++;
+              setState(() {
+                _isLoading = true;
+                _hasError = false;
+              });
+              Future.delayed(const Duration(seconds: 2), () {
+                if (mounted) {
+                  final assistantUrl = _buildAssistantUrl();
+                  debugPrint('[IaAssistant] Retry automatique $_retryCount/$_maxRetries → $assistantUrl');
+                  _controller.loadRequest(Uri.parse(assistantUrl));
+                }
+              });
+            } else {
+              setState(() {
+                _isLoading = false;
+                _hasError = true;
+                _errorMessage = error.description;
+              });
+            }
           },
         ),
       )
@@ -183,6 +202,7 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
       _isLoading = true;
       _hasError = false;
       _errorMessage = '';
+      _retryCount = 0; // Reset le compteur pour une nouvelle série de tentatives
     });
 
     // Relancer la découverte réseau
@@ -242,11 +262,27 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
             // WebView
             WebViewWidget(controller: _controller),
 
-            // Loading spinner
+            // Loading spinner avec indicateur de retry
             if (_isLoading && !_hasError)
-              const Center(
-                child: CircularProgressIndicator(
-                  color: Color(0xFF06B6D4),
+              Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const CircularProgressIndicator(
+                      color: Color(0xFF06B6D4),
+                    ),
+                    if (_retryCount > 0) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        'Tentative ${_retryCount + 1}/$_maxRetries...',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF64748B),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
 
