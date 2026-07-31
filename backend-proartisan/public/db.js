@@ -55,7 +55,16 @@ class APIDatabaseClient {
   }
 
   apiFetch(path, options = {}) {
-    const url = (window.API_BASE_URL || "") + path;
+    let baseUrl = window.API_BASE_URL || "";
+    let cleanPath = path;
+
+    if (baseUrl.endsWith('/api/v1') && cleanPath.startsWith('/api/v1')) {
+      cleanPath = cleanPath.substring('/api/v1'.length);
+    } else if (baseUrl.endsWith('/api/v1') && cleanPath.startsWith('/api/')) {
+      cleanPath = cleanPath.substring('/api'.length);
+    }
+
+    const url = baseUrl + cleanPath;
     return fetch(url, options);
   }
 

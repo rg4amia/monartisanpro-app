@@ -1642,6 +1642,26 @@ class _BottomActions extends StatelessWidget {
 
     if ((mission.status == 'financee' || mission.status == 'en_cours') &&
         mission.status != 'litige') {
+      if (nextSubmittedJalon != null) {
+        return Builder(
+          builder: (context) => _ActionRow(
+            primary: _ActionButtonConfig(
+              label: 'Valider le jalon (OTP)',
+              icon: Icons.check_circle_outline,
+              color: _Palette.success,
+              onTap: () => _showOtpValidationDialog(context, nextSubmittedJalon!),
+            ),
+            secondary: _ActionButtonConfig(
+              label: 'Signaler',
+              icon: Icons.warning_amber_outlined,
+              color: _Palette.danger,
+              filled: false,
+              onTap: () => Get.toNamed(Routes.litige, arguments: mission),
+            ),
+          ),
+        );
+      }
+
       return _ActionRow(
         primary: _ActionButtonConfig(
           label: 'Signaler un litige',
