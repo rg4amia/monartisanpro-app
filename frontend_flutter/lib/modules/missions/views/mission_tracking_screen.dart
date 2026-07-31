@@ -1327,92 +1327,6 @@ class _JalonCard extends StatelessWidget {
     );
   }
 
-void showOtpValidationDialog(BuildContext context, JalonModel jalon) {
-    final MissionsController controller = Get.find<MissionsController>();
-    final TextEditingController otpController = TextEditingController();
-
-    Get.dialog(
-      Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.sms_outlined, color: _Palette.success, size: 36),
-              const SizedBox(height: 12),
-              Text(
-                'Valider le Jalon ${jalon.ordre}',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Saisissez le code de validation OTP à 4 chiffres envoyé par SMS.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12, color: _Palette.muted),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: otpController,
-                keyboardType: TextInputType.number,
-                maxLength: 4,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 20, letterSpacing: 8, fontWeight: FontWeight.bold),
-                decoration: const InputDecoration(
-                  hintText: '0000',
-                  counterText: '',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextButton.icon(
-                onPressed: () async {
-                  await controller.requestOtp(jalon.id);
-                },
-                icon: const Icon(Icons.refresh, size: 16, color: _Palette.primary),
-                label: const Text(
-                  'Renvoyer le code par SMS',
-                  style: TextStyle(
-                    color: _Palette.primary,
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Get.back(),
-                      child: const Text('Annuler'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        final otp = otpController.text.trim();
-                        if (otp.length != 4) {
-                          Get.snackbar('Code invalide', 'Le code doit contenir 4 chiffres');
-                          return;
-                        }
-                        Get.back();
-                        final success = await controller.validateOtp(jalon.id, otp);
-                        if (success) {
-                          controller.loadMission(jalon.missionId, forceRefresh: true);
-                        }
-                      },
-                      child: const Text('Valider'),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 
   _JalonStatusConfig _statusConfig() {
@@ -1476,6 +1390,94 @@ class _JalonStatusConfig {
   final Color bg;
   final Color border;
   final String message;
+}
+
+void showOtpValidationDialog(BuildContext context, JalonModel jalon) {
+  final MissionsController controller = Get.find<MissionsController>();
+  final TextEditingController otpController = TextEditingController();
+
+  Get.dialog(
+    Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.sms_outlined, color: _Palette.success, size: 36),
+            const SizedBox(height: 12),
+            Text(
+              'Valider le Jalon ${jalon.ordre}',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Saisissez le code de validation OTP à 4 chiffres envoyé par SMS.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12, color: _Palette.muted),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: otpController,
+              keyboardType: TextInputType.number,
+              maxLength: 4,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 20, letterSpacing: 8, fontWeight: FontWeight.bold),
+              decoration: const InputDecoration(
+                hintText: '0000',
+                counterText: '',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextButton.icon(
+              onPressed: () async {
+                await controller.requestOtp(jalon.id);
+              },
+              icon: const Icon(Icons.refresh, size: 16, color: _Palette.primary),
+              label: const Text(
+                'Renvoyer le code par SMS',
+                style: TextStyle(
+                  color: _Palette.primary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Get.back(),
+                    child: const Text('Annuler'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      final otp = otpController.text.trim();
+                      if (otp.length != 4) {
+                        Get.snackbar('Code invalide', 'Le code doit contenir 4 chiffres');
+                        return;
+                      }
+                      Get.back();
+                      final success = await controller.validateOtp(jalon.id, otp);
+                      if (success) {
+                        controller.loadMission(jalon.missionId, forceRefresh: true);
+                      }
+                    },
+                    child: const Text('Valider'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
 class _BottomActions extends StatelessWidget {
