@@ -150,6 +150,7 @@ class _MissionTrackingScreenState extends State<MissionTrackingScreen> {
           mission: mission,
           devis: controller.latestDevis,
           nextPendingJalon: controller.nextPendingJalon,
+          nextSubmittedJalon: controller.nextSubmittedJalon,
           onStartMission: () =>
               controller.updateMissionStatus(mission.id, 'en_cours'),
         );
@@ -1207,7 +1208,7 @@ class _JalonCard extends StatelessWidget {
                 ],
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: () => _showOtpValidationDialog(context, jalon),
+                    onPressed: () => showOtpValidationDialog(context, jalon),
                     icon: const Icon(Icons.check_circle_outline, size: 18),
                     label: const Text('Valider OTP'),
                     style: ElevatedButton.styleFrom(
@@ -1310,7 +1311,7 @@ class _JalonCard extends StatelessWidget {
                           );
                           if (success) {
                             Get.find<MissionsController>().loadMission(jalon.missionId, forceRefresh: true);
-                            _showOtpValidationDialog(context, jalon);
+                            showOtpValidationDialog(context, jalon);
                           }
                         },
                         child: const Text('Payer'),
@@ -1326,7 +1327,7 @@ class _JalonCard extends StatelessWidget {
     );
   }
 
-  void _showOtpValidationDialog(BuildContext context, JalonModel jalon) {
+void showOtpValidationDialog(BuildContext context, JalonModel jalon) {
     final MissionsController controller = Get.find<MissionsController>();
     final TextEditingController otpController = TextEditingController();
 
@@ -1483,6 +1484,7 @@ class _BottomActions extends StatelessWidget {
     required this.mission,
     required this.devis,
     required this.nextPendingJalon,
+    required this.nextSubmittedJalon,
     required this.onStartMission,
   });
 
@@ -1490,6 +1492,7 @@ class _BottomActions extends StatelessWidget {
   final MissionModel mission;
   final DevisModel? devis;
   final JalonModel? nextPendingJalon;
+  final JalonModel? nextSubmittedJalon;
   final Future<bool> Function() onStartMission;
 
   @override
@@ -1649,7 +1652,7 @@ class _BottomActions extends StatelessWidget {
               label: 'Valider le jalon (OTP)',
               icon: Icons.check_circle_outline,
               color: _Palette.success,
-              onTap: () => _showOtpValidationDialog(context, nextSubmittedJalon!),
+              onTap: () => showOtpValidationDialog(context, nextSubmittedJalon!),
             ),
             secondary: _ActionButtonConfig(
               label: 'Signaler',
