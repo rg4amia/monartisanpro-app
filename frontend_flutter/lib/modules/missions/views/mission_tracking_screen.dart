@@ -1133,23 +1133,59 @@ class _JalonCard extends StatelessWidget {
               height: 1.35,
             ),
           ),
-          if (role == 'artisan' && jalon.isPending) ...[
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () => Get.to(
-                  () => const JalonSubmitScreen(),
-                  arguments: jalon,
-                ),
-                icon: const Icon(Icons.camera_alt_outlined, size: 18),
-                label: const Text('Soumettre le jalon'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _Palette.primary,
-                  foregroundColor: Colors.white,
+          if (role == 'artisan') ...[
+            if (jalon.isPending) ...[
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => Get.to(
+                    () => const JalonSubmitScreen(),
+                    arguments: jalon,
+                  ),
+                  icon: const Icon(Icons.camera_alt_outlined, size: 18),
+                  label: const Text('Soumettre le jalon'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _Palette.primary,
+                    foregroundColor: Colors.white,
+                  ),
                 ),
               ),
-            ),
+            ] else if (jalon.isSubmitted) ...[
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => Get.to(
+                        () => const JalonSubmitScreen(),
+                        arguments: jalon,
+                      ),
+                      icon: const Icon(Icons.add_a_photo_outlined, size: 16),
+                      label: const Text(
+                        'Compléter preuves',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () async => controller.requestOtp(jalon.id),
+                      icon: const Icon(Icons.sms_outlined, size: 16),
+                      label: const Text(
+                        'Renvoyer OTP',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _Palette.primary,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
           if (role == 'client' && (jalon.isSubmitted || jalon.isPending)) ...[
             const SizedBox(height: 12),
