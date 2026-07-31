@@ -1,6 +1,8 @@
 import 'package:get/get.dart';
 import '../../../core/storage/storage_service.dart';
 
+import 'package:onesignal_flutter/onesignal_flutter.dart';
+
 class MainTabController extends GetxController {
   final currentIndex = 0.obs;
   final role = Rx<String?>(null);
@@ -9,6 +11,13 @@ class MainTabController extends GetxController {
   void onInit() {
     super.onInit();
     role.value = StorageService.getRole();
+    
+    final userId = StorageService.getUserId();
+    if (userId != null) {
+      try {
+        OneSignal.login(userId.toString());
+      } catch (_) {}
+    }
   }
 
   void changeTab(int index) => currentIndex.value = index;

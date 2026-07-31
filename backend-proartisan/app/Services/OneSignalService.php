@@ -34,17 +34,23 @@ class OneSignalService
         }
 
         try {
-            $response = Http::withHeaders([
-                'Authorization' => 'Basic ' . $this->restApiKey,
-                'Content-Type' => 'application/json',
-            ])->post($this->baseUrl, [
+            $payload = [
                 'app_id' => $this->appId,
+                'include_aliases' => [
+                    'external_id' => [(string) $userId]
+                ],
+                'target_channel' => 'push',
                 'include_external_user_ids' => [(string) $userId],
                 'channel_for_external_user_ids' => 'push',
                 'headings' => ['en' => $heading, 'fr' => $heading],
                 'contents' => ['en' => $content, 'fr' => $content],
                 'data' => $data,
-            ]);
+            ];
+
+            $response = Http::withHeaders([
+                'Authorization' => 'Basic ' . $this->restApiKey,
+                'Content-Type' => 'application/json',
+            ])->post($this->baseUrl, $payload);
 
             if ($response->successful()) {
                 Log::info("Notification OneSignal envoyée avec succès à l'utilisateur $userId");
