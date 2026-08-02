@@ -94,9 +94,10 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
   String _buildAssistantUrl() {
     final uri = Uri.parse(EnvConfig.baseUrl);
     final host = uri.host;
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
     return uri.hasPort
-        ? '${uri.scheme}://$host:${uri.port}/client.html'
-        : '${uri.scheme}://$host/client.html';
+        ? '${uri.scheme}://$host:${uri.port}/client.html?t=$timestamp'
+        : '${uri.scheme}://$host/client.html?t=$timestamp';
   }
 
   void _initWebView() {
