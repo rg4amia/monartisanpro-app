@@ -540,9 +540,9 @@ class ClientAppManager {
         this.renderConsoleLogs();
       } else {
         // Mode en ligne : Requête POST /api/search avec jeton
-        const maxBudget = this.dom.diagFilterBudget.value;
-        const onlyHardwareStore = this.dom.diagFilterHardware.checked;
-        const typeOuvrage = this.dom.diagFilterType.value;
+        const maxBudget = this.dom.diagFilterBudget?.value || "";
+        const onlyHardwareStore = this.dom.diagFilterHardware?.checked || false;
+        const typeOuvrage = this.dom.diagFilterType?.value || "";
 
         const list = await dbInstance.hybridSearch(tags, {
           maxBudget: maxBudget,
