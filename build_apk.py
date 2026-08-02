@@ -17,7 +17,27 @@ os.system("taskkill /f /im java.exe 2>nul")
 os.system("taskkill /f /im javaw.exe 2>nul")
 os.system("taskkill /f /im adb.exe 2>nul")
 os.system("taskkill /f /im dart.exe 2>nul")
-time.sleep(2)
+time.sleep(1)
+
+# Stop gradle daemons to release file locks
+print("Arret des Gradle Daemons...")
+android_dir = os.path.join(FLUTTER_DIR, "android")
+if os.path.exists(android_dir):
+    subprocess.run("gradlew --stop", shell=True, cwd=android_dir)
+
+# Forcibly delete ephemeral and build dirs using cmd rmdir to bypass MAX_PATH and locking
+print("Nettoyage force des repertoires temporaires...")
+dirs_to_clean = [
+    os.path.join(FLUTTER_DIR, "build"),
+    os.path.join(FLUTTER_DIR, ".dart_tool"),
+    os.path.join(FLUTTER_DIR, "ios", "Flutter", "ephemeral"),
+    os.path.join(FLUTTER_DIR, "linux", "flutter", "ephemeral"),
+    os.path.join(FLUTTER_DIR, "macos", "Flutter", "ephemeral"),
+    os.path.join(FLUTTER_DIR, "windows", "flutter", "ephemeral"),
+]
+for d in dirs_to_clean:
+    if os.path.exists(d):
+        os.system(f'cmd /c "rmdir /s /q \"{d}\""')
 
 # 2. Nettoyage du cache Flutter Kernel corrompu
 print("\n[2/5] Nettoyage Flutter Clean & Re-fetch...")
