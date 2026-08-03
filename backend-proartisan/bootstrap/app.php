@@ -54,6 +54,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->validateCsrfTokens(except: [
             'admin/api/llm/*',
+            'api/v1/*',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
