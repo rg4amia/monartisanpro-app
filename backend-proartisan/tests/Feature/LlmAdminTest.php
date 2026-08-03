@@ -114,4 +114,18 @@ class LlmAdminTest extends TestCase
         $response->assertOk()
             ->assertJsonFragment(['title' => 'Matched Prod Item']);
     }
+
+    public function test_can_upload_attachment(): void
+    {
+        Storage::fake('public');
+
+        $response = $this->actingAs($this->admin)
+            ->postJson(route('admin.api.llm.upload'), [
+                'filename' => 'test_document.pdf',
+                'content' => base64_encode('fake pdf content'),
+            ]);
+
+        $response->assertStatus(201)
+            ->assertJsonStructure(['status', 'id', 'file_link']);
+    }
 }
