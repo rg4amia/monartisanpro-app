@@ -227,8 +227,62 @@ class LlmAdminController extends Controller
         $queryTags = $validated['tags'] ?? [];
         $filters = $validated['filters'] ?? [];
 
-        // VLM analysis simulator if image is provided
+        // VLM analysis using real Gemini 1.5 Flash if image is provided
         if (!empty($validated['image_b64']) || !empty($validated['image_url'])) {
+            $geminiKey = env('GEMINI_API_KEY');
+            if ($geminiKey) {
+                $base64 = '';
+                $mimeType = 'image/jpeg';
+
+                if (!empty($validated['image_b64'])) {
+                    $base64 = $validated['image_b64'];
+                    if (preg_match('/^data:([^;]+);base64,(.*)$/', $base64, $m)) {
+                        $mimeType = $m[1];
+                        $base64 = $m[2];
+                    }
+                } else if (!empty($validated['image_url'])) {
+                    try {
+                        $imgResponse = Http::timeout(10)->get($validated['image_url']);
+                        if ($imgResponse->successful()) {
+                            $base64 = base64_encode($imgResponse->body());
+                            $mimeType = $imgResponse->header('Content-Type') ?? 'image/jpeg';
+                        }
+                    } catch (\Exception $e) {
+                        \Illuminate\Support\Facades\Log::error("Failed to download image from URL: " . $e->getMessage());
+                    }
+                }
+
+                if (!empty($base64)) {
+                    $vlmData = $this->analyzeMultimodalImage($base64, $mimeType, $geminiKey);
+                    if ($vlmData) {
+                        $matched = [
+                            'id' => 'vlm-' . rand(100, 999),
+                            'norme_origine' => [
+                                'source' => 'VLM Ingestion',
+                                'reference_article' => 'ANALYSIS',
+                                'titre_original' => 'Analyse visuelle VLM en direct',
+                                'texte_brut' => 'Analyse automatique de l\'image soumise par l\'IA.'
+                            ],
+                            'alternative_prosartisan' => [
+                                'titre_vulgarise' => $vlmData['titre_vulgarise'] ?? 'Analyse de l\'image',
+                                'methode_execution' => $vlmData['methode_execution'] ?? '',
+                                'bouclier_autorite' => $vlmData['bouclier_autorite'] ?? '',
+                                'dosages_recommandes' => [],
+                                'materiaux_recommandes' => []
+                            ],
+                            'cout_estime_local' => [
+                                'gamme_prix' => 'Moyen',
+                                'estimation_m2_fcfa' => 'N/A'
+                            ],
+                            'metadata' => [
+                                'tags_pathologies' => [$vlmData['pathologie_principale'] ?? 'divers']
+                            ]
+                        ];
+                        return response()->json([$matched]);
+                    }
+                }
+            }
+
             $matched = $this->simulateVlmResult($queryTags);
             return response()->json([$matched]);
         }
@@ -548,6 +602,52 @@ class LlmAdminController extends Controller
                 'tags_pathologies' => $queryTags
             ]
         ];
+    }
+
+    private function analyzeMultimodalImage(string $base64, string $mime, string $key): ?array
+    {
+        $prompt = "Tu es un ingénieur BTP expert en Côte d'Ivoire. Analyse cette image de pathologie de chantier. ";
+        $prompt .= "Identifie les pathologies visibles (ex: fissures, humidité, infiltration, éclatement du béton, rouille de fer). ";
+        $prompt .= "Retourne obligatoirement un objet JSON valide contenant UNIQUEMENT ces clés :\n";
+        $prompt .= "- 'titre_vulgarise': Le titre simple de la pathologie (ex: Fissure de linteau, Infiltration de dalle, Humidité de bas de mur).\n";
+        $prompt .= "- 'pathologie_principale': Le tag système principal (choisis parmi: fissure_structure, remontee_capillaire, infiltration_dalle, ferraillage, toit_terrasse).\n";
+        $prompt .= "- 'methode_execution': Instructions techniques claires, étapes de réparation adaptées aux chantiers ivoiriens (avec dosages et ciment).\n";
+        $prompt .= "- 'bouclier_autorite': L'argumentaire de vulgarisation en français ivoirien, rassurant et professionnel, pour expliquer le problème au propriétaire de la maison et le convaincre de faire les bons travaux de réparation durables (par exemple: 'Propriétaire, ...' ou 'Tonton, ...').\n\n";
+        $prompt .= "Ne retourne aucun texte en dehors du JSON.";
+
+        try {
+            $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={$key}";
+            $response = Http::timeout(20)->post($url, [
+                'contents' => [
+                    [
+                        'parts' => [
+                            ['text' => $prompt],
+                            [
+                                'inlineData' => [
+                                    'mimeType' => $mime,
+                                    'data' => $base64
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ]);
+
+            if ($response->successful()) {
+                $text = $response->json('candidates.0.content.parts.0.text') ?? '';
+                $text = preg_replace('/^```json\s*/i', '', $text);
+                $text = preg_replace('/```\s*$/', '', $text);
+                $text = trim($text);
+
+                $data = json_decode($text, true);
+                if (is_array($data)) {
+                    return $data;
+                }
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Multimodal analysis failed: " . $e->getMessage());
+        }
+        return null;
     }
 
     private function generateFallback(array $queryTags): array
