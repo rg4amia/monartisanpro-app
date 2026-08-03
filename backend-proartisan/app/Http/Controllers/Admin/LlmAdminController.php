@@ -233,25 +233,42 @@ class LlmAdminController extends Controller
             return response()->json([$matched]);
         }
 
-        $rows = ProductionItem::all();
-        $matchedResults = [];
+        $ragMatches = null;
+        $geminiKey = env('GEMINI_API_KEY');
+        $qdrantUrl = env('QDRANT_URL');
 
-        foreach ($rows as $r) {
-            $itemJson = $r->generated_json;
-            $itemTags = array_filter(array_map('trim', explode(',', $r->tags)));
+        if (!empty($qdrantUrl) && !empty($geminiKey) && !empty($queryTags)) {
+            $vector = $this->getGeminiEmbedding(implode(' ', $queryTags), $geminiKey);
+            if ($vector) {
+                $ragMatches = $this->queryQdrant($vector);
+            }
+        }
 
-            // 1. Tag Match
-            $hasTagMatch = false;
-            foreach ($queryTags as $tag) {
-                if (in_array(trim($tag), $itemTags)) {
-                    $hasTagMatch = true;
-                    break;
+        if ($ragMatches === null) {
+            $rows = ProductionItem::all();
+            $ragMatches = [];
+
+            foreach ($rows as $r) {
+                $itemJson = $r->generated_json;
+                $itemTags = array_filter(array_map('trim', explode(',', $r->tags)));
+
+                // 1. Tag Match
+                $hasTagMatch = false;
+                foreach ($queryTags as $tag) {
+                    if (in_array(trim($tag), $itemTags)) {
+                        $hasTagMatch = true;
+                        break;
+                    }
                 }
+                if (!empty($queryTags) && !$hasTagMatch) {
+                    continue;
+                }
+                $ragMatches[] = $itemJson;
             }
-            if (!empty($queryTags) && !$hasTagMatch) {
-                continue;
-            }
+        }
 
+        $matchedResults = [];
+        foreach ($ragMatches as $itemJson) {
             // 2. Budget filter
             if (!empty($filters['maxBudget'])) {
                 $maxBudget = $filters['maxBudget'];
@@ -395,51 +412,64 @@ class LlmAdminController extends Controller
         $trade = $validated['trade'] ?? 'Maçon';
         $userMsgLower = strtolower($userMsg);
 
-        $rows = ProductionItem::all();
-        $ragMatches = [];
+        $ragMatches = null;
+        $geminiKey = env('GEMINI_API_KEY');
+        $qdrantUrl = env('QDRANT_URL');
 
-        foreach ($rows as $r) {
-            $itemJson = $r->generated_json;
-            $itemTags = array_filter(array_map('trim', explode(',', strtolower($r->tags))));
-            $title = strtolower($itemJson['alternative_prosartisan']['titre_vulgarise'] ?? '');
-            $rawText = strtolower($itemJson['norme_origine']['texte_brut'] ?? '');
-            $execution = strtolower($itemJson['alternative_prosartisan']['methode_execution'] ?? '');
+        if (!empty($qdrantUrl) && !empty($geminiKey)) {
+            $vector = $this->getGeminiEmbedding($userMsg, $geminiKey);
+            if ($vector) {
+                $ragMatches = $this->queryQdrant($vector);
+            }
+        }
 
-            $matched = false;
+        if ($ragMatches === null) {
+            $rows = ProductionItem::all();
+            $ragMatches = [];
 
-            // 1. Exact Tag Match
-            foreach ($itemTags as $tag) {
-                if (str_contains($userMsgLower, $tag) || str_contains($tag, $userMsgLower)) {
-                    $matched = true;
-                    break;
+            foreach ($rows as $r) {
+                $itemJson = $r->generated_json;
+                $itemTags = array_filter(array_map('trim', explode(',', strtolower($r->tags))));
+                $title = strtolower($itemJson['alternative_prosartisan']['titre_vulgarise'] ?? '');
+                $rawText = strtolower($itemJson['norme_origine']['texte_brut'] ?? '');
+                $execution = strtolower($itemJson['alternative_prosartisan']['methode_execution'] ?? '');
+
+                $matched = false;
+
+                // 1. Exact Tag Match
+                foreach ($itemTags as $tag) {
+                    if (str_contains($userMsgLower, $tag) || str_contains($tag, $userMsgLower)) {
+                        $matched = true;
+                        break;
+                    }
                 }
-            }
 
-            // 2. Title Match
-            if (!$matched && $title && (str_contains($userMsgLower, $title) || $this->hasMatchingWord($title, $userMsgLower))) {
-                $matched = true;
-            }
+                // 2. Title Match
+                if (!$matched && $title && (str_contains($userMsgLower, $title) || $this->hasMatchingWord($title, $userMsgLower))) {
+                    $matched = true;
+                }
 
-            // 3. Raw Text or Execution Method Match
-            if (!$matched && (str_contains($rawText, $userMsgLower) || str_contains($execution, $userMsgLower))) {
-                $matched = true;
-            }
+                // 3. Raw Text or Execution Method Match
+                if (!$matched && (str_contains($rawText, $userMsgLower) || str_contains($execution, $userMsgLower))) {
+                    $matched = true;
+                }
 
-            // 4. Token Word Match (for keywords > 4 characters)
-            if (!$matched) {
-                $userWords = array_filter(explode(' ', preg_replace('/[^\p{L}\p{N}\s]/u', '', $userMsgLower)));
-                foreach ($userWords as $uWord) {
-                    if (strlen($uWord) > 4) {
-                        if (str_contains($title, $uWord) || str_contains($rawText, $uWord) || str_contains($execution, $uWord)) {
-                            $matched = true;
-                            break;
+                // 4. Token Word Match (for keywords > 4 characters)
+                if (!$matched) {
+                    $userWords = array_filter(explode(' ', preg_replace('/[^\p{L}\p{N}\s]/u', '', $userMsgLower)));
+                    foreach ($userWords as $uWord) {
+                        if (strlen($uWord) > 4) {
+                            if (str_contains($title, $uWord) || str_contains($rawText, $uWord) || str_contains($execution, $uWord)) {
+                                $matched = true;
+                                break;
+                            }
                         }
                     }
                 }
-            }
 
-            if ($matched) {
-                $ragMatches[] = $itemJson;
+                if ($matched) {
+                    $ragMatches[] = $itemJson;
+                }
             }
         }
 
@@ -605,8 +635,67 @@ class LlmAdminController extends Controller
         foreach ($alt['dosages_recommandes'] ?? [] as $d) {
             $reply .= "- " . ($d['element'] ?? '') . " : " . ($d['ratio'] ?? '') . " (" . ($d['unite_mesure_locale'] ?? '') . ")\n";
         }
-
         return $reply;
+    }
+
+    private function getGeminiEmbedding(string $text, string $key): ?array
+    {
+        try {
+            $url = "https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key={$key}";
+            $response = Http::timeout(5)->post($url, [
+                'model' => 'models/text-embedding-004',
+                'content' => [
+                    'parts' => [
+                        ['text' => $text]
+                    ]
+                ]
+            ]);
+
+            if ($response->successful()) {
+                return $response->json('embedding.values');
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Failed to generate embedding: " . $e->getMessage());
+        }
+        return null;
+    }
+
+    private function queryQdrant(array $vector, int $limit = 3): ?array
+    {
+        $url = env('QDRANT_URL');
+        $apiKey = env('QDRANT_API_KEY');
+        $collection = env('QDRANT_COLLECTION', 'btp_rules');
+
+        if (empty($url)) {
+            return null;
+        }
+
+        try {
+            $request = Http::timeout(5);
+            if (!empty($apiKey)) {
+                $request = $request->withHeaders(['api-key' => $apiKey]);
+            }
+
+            $response = $request->post("{$url}/collections/{$collection}/points/search", [
+                'vector' => $vector,
+                'limit' => $limit,
+                'with_payload' => true
+            ]);
+
+            if ($response->successful()) {
+                $points = $response->json('result') ?? [];
+                $matches = [];
+                foreach ($points as $point) {
+                    if (!empty($point['payload'])) {
+                        $matches[] = $point['payload'];
+                    }
+                }
+                return $matches;
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Failed to query Qdrant: " . $e->getMessage());
+        }
+        return null;
     }
 
     public function llmMediation(Request $request, \App\Models\Litige $litige): \Illuminate\Http\JsonResponse
