@@ -564,7 +564,7 @@ class LlmAdminController extends Controller
 
         try {
             $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={$key}";
-            $response = Http::post($url, [
+            $response = Http::timeout(12)->post($url, [
                 'contents' => [
                     [
                         'parts' => [
