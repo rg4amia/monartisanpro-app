@@ -45,17 +45,13 @@ class NetworkDiscoveryService {
       return _resolvedUrl!;
     }
 
-    // Build de production : tester d'abord la production, sinon chercher en local (utile pour tests APK).
+    // Build de production : Forcer la production directement sans scan local (sécurité et priorité absolue pour les utilisateurs finaux)
     const bool isProduction = bool.fromEnvironment('dart.vm.product');
     if (isProduction) {
-      _log('Build release → verication disponibilite production...');
-      if (await _isServerReachable(_productionHost, 443, _probeTimeout)) {
-        _resolvedUrl = _productionBaseUrl;
-        _mode = 'production';
-        _log('✅ Build release : production joignable → $_productionBaseUrl');
-        return _resolvedUrl!;
-      }
-      _log('⚠️ Production non joignable, tentative de recherche sur le réseau local...');
+      _resolvedUrl = _productionBaseUrl;
+      _mode = 'production';
+      _log('✅ Build release : production forcée → $_productionBaseUrl');
+      return _resolvedUrl!;
     }
 
     // ── 1. Émulateur Android ───────────────────────────────────────────────
