@@ -120,7 +120,7 @@ class LlmAdminController extends Controller
             'extension' => $ext,
             'file_link' => $fileLink,
             'uploaded_by' => Auth::user()?->name ?? 'Admin',
-            'created_at' => now()->toIso8601String(),
+            'created_at' => now(),
         ]);
 
         return response()->json([
@@ -146,8 +146,8 @@ class LlmAdminController extends Controller
             'original_extracted_text' => $validated['original_extracted_text'],
             'generated_json' => $validated['generated_json'],
             'status' => $validated['status'] ?? 'PENDING',
-            'created_at' => now()->toIso8601String(),
-            'updated_at' => now()->toIso8601String(),
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         return response()->json(['status' => 'success', 'id' => $staging->id], 201);
@@ -158,7 +158,7 @@ class LlmAdminController extends Controller
         $staging = StagingItem::findOrFail($id);
         $staging->update([
             'generated_json' => $request->all(),
-            'updated_at' => now()->toIso8601String(),
+            'updated_at' => now(),
         ]);
         return response()->json(['status' => 'success', 'updated' => $staging->id]);
     }
@@ -168,7 +168,7 @@ class LlmAdminController extends Controller
         $staging = StagingItem::findOrFail($id);
         $staging->update([
             'status' => 'APPROVED',
-            'validated_at' => now()->toIso8601String(),
+            'validated_at' => now(),
         ]);
 
         $generatedJson = $staging->generated_json;
@@ -200,7 +200,7 @@ class LlmAdminController extends Controller
         $staging->update([
             'status' => 'REJECTED',
             'reviewer_notes' => $validated['reviewer_notes'] ?? '',
-            'validated_at' => now()->toIso8601String(),
+            'validated_at' => now(),
         ]);
 
         return response()->json(['status' => 'success', 'rejected' => $id]);
