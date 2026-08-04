@@ -31,7 +31,7 @@ class DevisGestionRulesTest extends TestCase
                     ['type' => 'mo', 'description' => 'Main d\'oeuvre', 'montant' => 50000],
                 ],
                 'jalons' => [
-                    ['ordre' => 1, 'description' => 'Jalon 1', 'montant' => 50000, 'date_cible' => '2026-08-01'],
+                    ['ordre' => 1, 'description' => 'Jalon 1', 'montant' => 50000, 'date_cible' => now()->addDays(5)->toDateString()],
                 ],
             ]);
         $response1->assertCreated();
@@ -43,7 +43,7 @@ class DevisGestionRulesTest extends TestCase
                     ['type' => 'mo', 'description' => 'Main d\'oeuvre 2', 'montant' => 60000],
                 ],
                 'jalons' => [
-                    ['ordre' => 1, 'description' => 'Jalon 1', 'montant' => 60000, 'date_cible' => '2026-08-01'],
+                    ['ordre' => 1, 'description' => 'Jalon 1', 'montant' => 60000, 'date_cible' => now()->addDays(5)->toDateString()],
                 ],
             ]);
         $response2->assertStatus(422);
@@ -64,7 +64,7 @@ class DevisGestionRulesTest extends TestCase
                     ['type' => 'mo', 'description' => 'Main d\'oeuvre 2', 'montant' => 60000],
                 ],
                 'jalons' => [
-                    ['ordre' => 1, 'description' => 'Jalon 1', 'montant' => 60000, 'date_cible' => '2026-08-01'],
+                    ['ordre' => 1, 'description' => 'Jalon 1', 'montant' => 60000, 'date_cible' => now()->addDays(5)->toDateString()],
                 ],
             ]);
         $response3->assertCreated();
@@ -89,7 +89,7 @@ class DevisGestionRulesTest extends TestCase
                     ['type' => 'mo', 'description' => 'Main d\'oeuvre', 'montant' => 50000],
                 ],
                 'jalons' => [
-                    ['ordre' => 1, 'description' => 'Jalon 1', 'montant' => 50000, 'date_cible' => '2026-08-01'],
+                    ['ordre' => 1, 'description' => 'Jalon 1', 'montant' => 50000, 'date_cible' => now()->addDays(5)->toDateString()],
                 ],
             ])
             ->assertCreated();
@@ -101,7 +101,7 @@ class DevisGestionRulesTest extends TestCase
                     ['type' => 'mo', 'description' => 'Main d\'oeuvre', 'montant' => 50000],
                 ],
                 'jalons' => [
-                    ['ordre' => 1, 'description' => 'Jalon 1', 'montant' => 50000, 'date_cible' => '2026-08-01'],
+                    ['ordre' => 1, 'description' => 'Jalon 1', 'montant' => 50000, 'date_cible' => now()->addDays(5)->toDateString()],
                 ],
             ]);
         $response2->assertStatus(422);
@@ -145,7 +145,7 @@ class DevisGestionRulesTest extends TestCase
                 ['type' => 'mo', 'description' => 'Pose', 'montant' => 35000],
             ],
             'jalons_json' => [
-                ['ordre' => 1, 'description' => 'Finition', 'montant' => 35000, 'date_cible' => '2026-08-01'],
+                ['ordre' => 1, 'description' => 'Finition', 'montant' => 35000, 'date_cible' => now()->addDays(5)->toDateString()],
             ],
         ]);
 

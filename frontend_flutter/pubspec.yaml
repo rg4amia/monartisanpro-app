@@ -25,13 +25,13 @@ dependencies:
   # ── Local storage ────────────────────────────────────────────────────────────
   hive: ^2.2.3
   hive_flutter: ^1.1.0
-  flutter_secure_storage: ^9.2.4
+  flutter_secure_storage: ^10.3.1
   shared_preferences: ^2.3.5
 
   # ── Maps & location ──────────────────────────────────────────────────────────
   yandex_maps_mapkit: ^4.7.1
-  geolocator: ^13.0.2
-  geocoding: ^3.0.0
+  geolocator: ^14.0.3
+  geocoding: ^4.0.0
 
   # ── Media ────────────────────────────────────────────────────────────────────
   image_picker: ^1.1.2
@@ -40,7 +40,7 @@ dependencies:
 
   # ── QR Code ──────────────────────────────────────────────────────────────────
   qr_flutter: ^4.1.0
-  mobile_scanner: ^6.0.10
+  mobile_scanner: ^7.4.0
   exif: ^3.1.2
 
   # ── WebView & URLs ───────────────────────────────────────────────────────────
@@ -51,23 +51,23 @@ dependencies:
   onesignal_flutter: ^5.3.4
 
   # ── Charts ───────────────────────────────────────────────────────────────────
-  fl_chart: ^0.70.2
+  fl_chart: ^1.2.0
 
   # ── UI helpers ───────────────────────────────────────────────────────────────
   shimmer: ^3.0.0
-  dropdown_search: ^5.0.6
+  dropdown_search: ^7.0.0
 
   # ── Utilities ────────────────────────────────────────────────────────────────
   intl: ^0.20.2
   uuid: ^4.5.1
-  permission_handler: ^11.4.0
+  permission_handler: ^13.0.0
   cupertino_icons: ^1.0.8
   connectivity_plus: ^7.3.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
   build_runner: ^2.4.13
   json_serializable: ^6.7.1
   hive_generator: ^2.0.1
