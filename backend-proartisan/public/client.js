@@ -62,7 +62,7 @@ class ClientAppManager {
     this.setupDOM();
     this.bindEvents();
     this.setupSpeechRecognition();
-    this.drawMap();
+
 
     // Register callback for Flutter image selection
     window.handleFlutterImage = (base64Data, filename, fileSize) => {
@@ -134,7 +134,6 @@ class ClientAppManager {
 
       // Navigation & Settings
       navDiag: document.getElementById("nav-diag"),
-      navMap: document.getElementById("nav-map"),
       navSettings: document.getElementById("nav-settings"),
       btnClientLogout: document.getElementById("btn-client-logout"),
       badgeNetwork: document.getElementById("badge-network"),
@@ -143,10 +142,7 @@ class ClientAppManager {
       selectNetwork: document.getElementById("setting-network"),
       btnClearLocalCache: document.getElementById("btn-clear-local-cache"),
 
-      // Interactive map
-      mapCanvas: document.getElementById("quincaillerie-map"),
-      mapView: document.getElementById("map-view"),
-      btnBackMap: document.getElementById("btn-back-map"),
+
 
       // Chat BTP
       navChat: document.getElementById("nav-chat"),
@@ -192,32 +188,10 @@ class ClientAppManager {
       });
     }
 
-    // Clic sur Carte
-    this.dom.navMap.addEventListener("click", () => {
-      this.dom.screenHome.classList.add("hidden");
-      this.dom.screenResult.classList.add("hidden");
-      this.dom.chatView.classList.add("hidden");
-      this.dom.mapView.classList.remove("hidden");
-      this.dom.navMap.classList.add("active");
-      this.dom.navDiag.classList.remove("active");
-      this.dom.navChat.classList.remove("active");
-      this.drawMap();
-    });
-    this.dom.btnBackMap.addEventListener("click", () => {
-      this.dom.mapView.classList.add("hidden");
-      if (this.currentDoc) {
-        this.dom.screenResult.classList.remove("hidden");
-      } else {
-        this.dom.screenHome.classList.remove("hidden");
-      }
-      this.dom.navDiag.classList.add("active");
-      this.dom.navMap.classList.remove("active");
-      this.dom.navChat.classList.remove("active");
-    });
+
 
     // Navigation Diagnostic
     this.dom.navDiag.addEventListener("click", () => {
-      this.dom.mapView.classList.add("hidden");
       this.dom.chatView.classList.add("hidden");
       if (this.currentDoc) {
         this.dom.screenHome.classList.add("hidden");
@@ -227,19 +201,16 @@ class ClientAppManager {
         this.dom.screenHome.classList.remove("hidden");
       }
       this.dom.navDiag.classList.add("active");
-      this.dom.navMap.classList.remove("active");
       this.dom.navChat.classList.remove("active");
     });
 
     // Navigation Chat BTP
     this.dom.navChat.addEventListener("click", () => {
-      this.dom.mapView.classList.add("hidden");
       this.dom.screenHome.classList.add("hidden");
       this.dom.screenResult.classList.add("hidden");
       this.dom.chatView.classList.remove("hidden");
       this.dom.navChat.classList.add("active");
       this.dom.navDiag.classList.remove("active");
-      this.dom.navMap.classList.remove("active");
       this.initChat();
     });
     this.dom.btnBackChat.addEventListener("click", () => {
@@ -251,7 +222,6 @@ class ClientAppManager {
       }
       this.dom.navDiag.classList.add("active");
       this.dom.navChat.classList.remove("active");
-      this.dom.navMap.classList.remove("active");
     });
 
     // Rendu des presets de pathologies
@@ -846,7 +816,8 @@ class ClientAppManager {
       window.speechSynthesis.cancel();
       this.setAudioState(false);
     } else {
-      this.speechUtterance = new SpeechSynthesisUtterance(text);
+      const cleanText = (text || "").replace(/[«»]/g, '').trim();
+      this.speechUtterance = new SpeechSynthesisUtterance(cleanText);
       this.speechUtterance.lang = "fr-FR";
       this.speechUtterance.rate = 0.95; // Un peu plus lent et articulé
 
@@ -865,6 +836,7 @@ class ClientAppManager {
         this.setAudioState(false);
       };
 
+      window.speechSynthesis.cancel();
       window.speechSynthesis.speak(this.speechUtterance);
     }
   }
@@ -979,105 +951,7 @@ class ClientAppManager {
     this.renderConsoleLogs();
   }
 
-  // --- DESSIN DE LA CARTE DES QUINCAILLERIES ---
-  drawMap() {
-    const canvas = this.dom.mapCanvas;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
 
-    // Ajuster taille logique
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
-
-    const w = canvas.width;
-    const h = canvas.height;
-
-    // Fond sombre bleuâtre
-    ctx.fillStyle = "#0c1222";
-    ctx.fillRect(0, 0, w, h);
-
-    // Tracer des quadrillages
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.03)";
-    ctx.lineWidth = 1;
-    for (let x = 0; x < w; x += 30) {
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, h);
-      ctx.stroke();
-    }
-    for (let y = 0; y < h; y += 30) {
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(w, y);
-      ctx.stroke();
-    }
-
-    // Tracer des cercles concentriques de radar/recherche
-    ctx.strokeStyle = "rgba(6, 182, 212, 0.15)";
-    ctx.beginPath();
-    ctx.arc(w / 2, h / 2, 40, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(w / 2, h / 2, 90, 0, Math.PI * 2);
-    ctx.stroke();
-
-    // Tracer les routes principales fictives de Yopougon / Koumassi
-    ctx.strokeStyle = "rgba(255,255,255,0.06)";
-    ctx.lineWidth = 6;
-    ctx.lineCap = "round";
-    // Route 1
-    ctx.beginPath();
-    ctx.moveTo(20, h / 2 - 20);
-    ctx.lineTo(w - 20, h / 2 + 30);
-    ctx.stroke();
-    // Route 2
-    ctx.beginPath();
-    ctx.moveTo(w / 3, 15);
-    ctx.lineTo(w * 2 / 3, h - 15);
-    ctx.stroke();
-
-    // Placer les quincailleries sous forme de pins
-    const stores = [
-      { name: "Quincaillerie Siporex (Yopougon)", x: w / 2 - 40, y: h / 2 - 30, stock: "En Stock (CIMAF CPJ 42.5)", color: "var(--neon-cyan)" },
-      { name: "Quincaillerie de la Gare (Koumassi)", x: w / 2 + 60, y: h / 2 + 20, stock: "En Stock (SikaCim)", color: "var(--neon-purple)" },
-      { name: "Dépôt Ciment Zone Ind.", x: w / 2 - 80, y: h / 2 + 30, stock: "CPJ 42.5 & 32.5", color: "var(--neon-emerald)" }
-    ];
-
-    stores.forEach(s => {
-      // Effet de halo clignotant
-      ctx.fillStyle = s.color === "var(--neon-cyan)" ? "rgba(6, 182, 212, 0.2)" : (s.color === "var(--neon-purple)" ? "rgba(168, 85, 247, 0.2)" : "rgba(16, 185, 129, 0.2)");
-      ctx.beginPath();
-      ctx.arc(s.x, s.y, 10, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Pin central
-      ctx.fillStyle = s.color === "var(--neon-cyan)" ? "#06b6d4" : (s.color === "var(--neon-purple)" ? "#a855f7" : "#10b981");
-      ctx.beginPath();
-      ctx.arc(s.x, s.y, 4, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Texte du magasin
-      ctx.fillStyle = "#f8fafc";
-      ctx.font = "bold 8px sans-serif";
-      ctx.fillText(s.name, s.x + 8, s.y + 2);
-      ctx.fillStyle = "#94a3b8";
-      ctx.font = "6px sans-serif";
-      ctx.fillText(s.stock, s.x + 8, s.y + 10);
-    });
-
-    // Point utilisateur (Maçon)
-    ctx.fillStyle = "rgba(239, 68, 68, 0.3)";
-    ctx.beginPath();
-    ctx.arc(w / 2, h / 2, 12, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#ef4444";
-    ctx.beginPath();
-    ctx.arc(w / 2, h / 2, 4, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "white";
-    ctx.font = "bold 6px sans-serif";
-    ctx.fillText("Moi (Chantier)", w / 2 - 18, h / 2 - 15);
-  }
 
   // --- JOURNALISATION SUR LE TERMINAL MOBILE ---
   log(category, message) {
