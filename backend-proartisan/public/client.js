@@ -188,7 +188,15 @@ class ClientAppManager {
       });
     }
 
-
+    if (this.dom.selectArtisanTrade) {
+      this.dom.selectArtisanTrade.addEventListener("change", (e) => {
+        const trade = e.target.value;
+        this.log("system", `Métier changé en : ${trade}`);
+        if (this.chatInitialized) {
+          this.updateChatSuggestions(trade);
+        }
+      });
+    }
 
     // Navigation Diagnostic
     this.dom.navDiag.addEventListener("click", () => {
@@ -988,14 +996,48 @@ class ClientAppManager {
     this.chatHistory = [];
     this.renderChatMessage("bot", "Bonjour Boss ! Je suis votre assistant BTP ProsArtisan. Comment puis-je vous aider aujourd'hui ? Vous pouvez me poser des questions sur les dosages de dalles (ciment CPJ 42.5), les enduits extérieurs (ciment CPJ 32.5), le rôle de l'hydrofuge SikaCim, ou les caractéristiques des sables.");
 
-    // Pilules de suggestions
-    const suggestions = [
-      { text: "Quel ciment pour les dalles ?", query: "Quel ciment pour couler une dalles de structure ?" },
-      { text: "Pourquoi l'enduit craquelle ?", query: "Pourquoi mon enduit fissure et comment crepir ?" },
-      { text: "Comment doser le SikaCim ?", query: "Quel est le dosage de l'hydrofuge SikaCim ?" },
-      { text: "Sable de lagune ou carrière ?", query: "Quelle est la différence entre sable de lagune et sable de carriere ?" }
-    ];
+    const selectedTrade = this.dom.selectArtisanTrade ? this.dom.selectArtisanTrade.value : "Maçon";
+    this.updateChatSuggestions(selectedTrade);
 
+    // Événements d'envoi
+    this.dom.btnSendChat.addEventListener("click", () => this.sendChat());
+    this.dom.chatInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") this.sendChat();
+    });
+
+    // Événement microphone chat
+    this.setupChatMic();
+
+    this.chatInitialized = true;
+  }
+
+  updateChatSuggestions(trade) {
+    const tradeSuggestions = {
+      "Maçon": [
+        { text: "Quel ciment pour les dalles ?", query: "Quel ciment pour couler une dalles de structure ?" },
+        { text: "Pourquoi l'enduit craquelle ?", query: "Pourquoi mon enduit fissure et comment crepir ?" },
+        { text: "Comment doser le SikaCim ?", query: "Quel est le dosage de l'hydrofuge SikaCim ?" },
+        { text: "Sable de lagune ou carrière ?", query: "Quelle est la différence entre sable de lagune et sable de carriere ?" }
+      ],
+      "Plombier": [
+        { text: "Quel tuyau pour évacuation ?", query: "Quel diamètre de tuyau PVC utiliser pour l'évacuation ?" },
+        { text: "Comment réparer une fuite ?", query: "Comment réparer une fuite sur un raccord de tuyau PVC ?" },
+        { text: "Faible pression d'eau ?", query: "Comment augmenter la pression d'eau avec un surpresseur ?" },
+        { text: "Raccordement SODECI ?", query: "Quel type de tuyau utiliser pour le raccordement SODECI ?" }
+      ],
+      "Électricien": [
+        { text: "Section de câble éclairage ?", query: "Quelle section de câble utiliser pour l'éclairage et les prises ?" },
+        { text: "Utilité du disjoncteur ?", query: "Pourquoi installer un disjoncteur différentiel de 30mA ?" },
+        { text: "Comment faire la terre ?", query: "Comment réaliser une prise de terre efficace sur le chantier ?" }
+      ],
+      "Peintre": [
+        { text: "Quelle peinture extérieure ?", query: "Quelle peinture utiliser pour une façade extérieure contre la pluie ?" },
+        { text: "Peindre sur mur humide ?", query: "Peut-on peindre sur un mur humide ou avec du salpêtre ?" },
+        { text: "Comment préparer le mur ?", query: "Comment préparer et enduire un mur avant peinture ?" }
+      ]
+    };
+
+    const suggestions = tradeSuggestions[trade] || tradeSuggestions["Maçon"];
     this.dom.chatSuggestions.innerHTML = suggestions.map(s => `
       <button class="suggestion-pill" data-query="${s.query}">${s.text}</button>
     `).join("");
@@ -1008,17 +1050,6 @@ class ClientAppManager {
         this.sendChat();
       });
     });
-
-    // Événements d'envoi
-    this.dom.btnSendChat.addEventListener("click", () => this.sendChat());
-    this.dom.chatInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") this.sendChat();
-    });
-
-    // Événement microphone chat
-    this.setupChatMic();
-
-    this.chatInitialized = true;
   }
 
   setupChatMic() {

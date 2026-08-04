@@ -29,11 +29,11 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
   }
 
   Future<void> _requestPermissions() async {
-    await [
-      Permission.camera,
-      Permission.storage,
-      Permission.photos,
-    ].request();
+    try {
+      await Permission.camera.request();
+    } catch (e) {
+      debugPrint("Error requesting camera permission: $e");
+    }
   }
 
   Future<void> _selectAndSendImage() async {
@@ -82,8 +82,14 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
       final filename = image.name;
       final fileSize = bytes.length;
 
+      final String jsData = jsonEncode({
+        'base64': base64Image,
+        'filename': filename,
+        'fileSize': fileSize,
+      });
+
       await _controller.runJavaScript(
-        "window.handleFlutterImage('$base64Image', '$filename', $fileSize);"
+        "(() => { const data = $jsData; window.handleFlutterImage(data.base64, data.filename, data.fileSize); })()"
       );
     } catch (e) {
       debugPrint("Error reading/sending image: $e");
