@@ -1105,7 +1105,7 @@ class _LoginScreenState extends State<LoginScreen>
                   
                   // Role Selector
                   DropdownButtonFormField<String>(
-                    value: _c.resetRole.value,
+                    initialValue: _c.resetRole.value,
                     decoration: const InputDecoration(
                       labelText: 'Votre espace / rôle',
                       border: OutlineInputBorder(),

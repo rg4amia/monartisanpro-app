@@ -262,7 +262,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
-                      value: vehicleClass,
+                      initialValue: vehicleClass,
                       decoration: InputDecoration(
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         filled: true,
