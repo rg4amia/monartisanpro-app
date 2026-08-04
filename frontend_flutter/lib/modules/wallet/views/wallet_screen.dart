@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
-import '../../../shared/widgets/loading_shimmer.dart';
 import '../controllers/wallet_controller.dart';
 
 class WalletScreen extends StatelessWidget {

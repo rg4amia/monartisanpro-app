@@ -39,6 +39,7 @@ class WalletController extends GetxController {
     }
   }
 
+  @override
   Future<void> refresh() async {
     await fetchData();
   }

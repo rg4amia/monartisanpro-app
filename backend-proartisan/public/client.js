@@ -237,8 +237,9 @@ class ClientAppManager {
 
     // Importation de fichier photo
     this.dom.uploadZone.addEventListener("click", () => {
-      if (window.FlutterNotificationChannel) {
-        window.FlutterNotificationChannel.postMessage(JSON.stringify({ event: "select_image" }));
+      const channel = window.FlutterNotificationChannel || (typeof FlutterNotificationChannel !== 'undefined' ? FlutterNotificationChannel : null);
+      if (channel) {
+        channel.postMessage(JSON.stringify({ event: "select_image" }));
       } else {
         this.dom.uploadInput.click();
       }
@@ -1178,7 +1179,7 @@ class ClientAppManager {
     } else {
       // En ligne : Requête à l'API Laravel MySQL
       try {
-        const res = await fetch((window.API_BASE_URL || "") + "/api/v1/chat", {
+        const res = await dbInstance.apiFetch("/api/v1/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

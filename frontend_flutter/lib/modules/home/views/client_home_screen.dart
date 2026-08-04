@@ -1301,7 +1301,7 @@ class _TopArtisansSection extends StatelessWidget {
                     const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
                     const SizedBox(width: 4),
                     Text(
-                      '${artisan.rating.toStringAsFixed(1)}',
+                      artisan.rating.toStringAsFixed(1),
                       style: const TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 13,

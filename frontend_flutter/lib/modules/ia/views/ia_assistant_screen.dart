@@ -31,8 +31,12 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
   Future<void> _requestPermissions() async {
     try {
       await Permission.camera.request();
+      // On Android 13+ photos is used, on Android 12- storage is used.
+      if (await Permission.photos.request().isDenied) {
+        await Permission.storage.request();
+      }
     } catch (e) {
-      debugPrint("Error requesting camera permission: $e");
+      debugPrint("Error requesting permissions: $e");
     }
   }
 
@@ -67,16 +71,16 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
 
     if (source == null) return;
 
-    final XFile? image = await picker.pickImage(
-      source: source,
-      maxWidth: 1024,
-      maxHeight: 1024,
-      imageQuality: 80,
-    );
-
-    if (image == null) return;
-
     try {
+      final XFile? image = await picker.pickImage(
+        source: source,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 80,
+      );
+
+      if (image == null) return;
+
       final bytes = await image.readAsBytes();
       final base64Image = base64Encode(bytes);
       final filename = image.name;
@@ -92,7 +96,15 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
         "(() => { const data = $jsData; window.handleFlutterImage(data.base64, data.filename, data.fileSize); })()"
       );
     } catch (e) {
-      debugPrint("Error reading/sending image: $e");
+      debugPrint("Error picking/reading/sending image: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Erreur d'accès à l'appareil photo/galerie : $e"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 

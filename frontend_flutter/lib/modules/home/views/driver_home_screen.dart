@@ -836,7 +836,7 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
           ),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
-            value: _selectedVehicle,
+            initialValue: _selectedVehicle,
             decoration: InputDecoration(
               labelText: 'Catégorie de Véhicule',
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'app_logger.dart';
-import 'error_handler.dart';
 
 /// Écran de test pour les notifications Telegram
 /// Accessible via Get.to(() => TelegramTestScreen())
