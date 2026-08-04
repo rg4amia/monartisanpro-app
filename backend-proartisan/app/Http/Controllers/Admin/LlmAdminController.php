@@ -456,13 +456,6 @@ class LlmAdminController extends Controller
 
         $userMsg = trim($validated['message']);
 
-        if (!$this->isQueryInScope($userMsg)) {
-            return response()->json([
-                'response' => "Désolé, cette question ne fait pas partie du périmètre fonctionnel de ProsArtisan.",
-                'sources' => []
-            ]);
-        }
-
         $trade = $validated['trade'] ?? 'Maçon';
         $userMsgLower = strtolower($userMsg);
 
