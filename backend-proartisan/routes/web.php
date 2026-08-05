@@ -52,8 +52,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/transactions', [BackofficeController::class, 'transactions'])->name('transactions');
         Route::get('/llm-admin', [BackofficeController::class, 'llmAdmin'])->name('llm-admin');
         Route::get('/settings', [BackofficeController::class, 'settings'])->name('settings');
-        Route::get('/ai-dashboard', [\App\Http\Controllers\Admin\AiDashboardController::class, 'index'])->name('ai-dashboard');
-        Route::post('/ai-dashboard/settings', [\App\Http\Controllers\Admin\AiDashboardController::class, 'updateSettings'])->name('ai-dashboard.settings.update');
+        Route::get('/ai-dashboard', [BackofficeController::class, 'aiDashboard'])->name('ai-dashboard');
+        Route::post('/ai-dashboard/settings', [BackofficeController::class, 'updateAiSettings'])->name('ai-dashboard.settings.update');
         Route::get('/roles-permissions', [BackofficeController::class, 'rolesPermissions'])->name('roles-permissions');
         Route::put('/settings/{setting}', [BackofficeController::class, 'updateSetting'])->name('settings.update');
         Route::post('/sectors', [BackofficeController::class, 'storeSector'])->name('sectors.store');
