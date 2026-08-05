@@ -612,9 +612,11 @@ class LlmAdminController extends Controller
             $model = config('services.gemini.model', 'gemini-3.5-flash');
             $baseUrl = config('services.gemini.base_url', 'https://generativelanguage.googleapis.com');
             $url = "{$baseUrl}/v1beta/models/{$model}:generateContent?key={$key}";
-            $response = Http::withOptions([
+            $response = Http::withHeaders([
+                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            ])->withOptions([
                 'curl' => [CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4]
-            ])->timeout(20)->post($url, [
+            ])->timeout(35)->post($url, [
                 'contents' => [
                     [
                         'parts' => [
@@ -693,9 +695,11 @@ class LlmAdminController extends Controller
             $model = config('services.gemini.model', 'gemini-3.5-flash');
             $baseUrl = config('services.gemini.base_url', 'https://generativelanguage.googleapis.com');
             $url = "{$baseUrl}/v1beta/models/{$model}:generateContent?key={$key}";
-            $response = Http::withOptions([
+            $response = Http::withHeaders([
+                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            ])->withOptions([
                 'curl' => [CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4]
-            ])->timeout(12)->post($url, [
+            ])->timeout(30)->post($url, [
                 'contents' => [
                     [
                         'parts' => [
@@ -744,9 +748,11 @@ class LlmAdminController extends Controller
         try {
             $baseUrl = config('services.gemini.base_url', 'https://generativelanguage.googleapis.com');
             $url = "{$baseUrl}/v1beta/models/text-embedding-004:embedContent?key={$key}";
-            $response = Http::withOptions([
+            $response = Http::withHeaders([
+                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            ])->withOptions([
                 'curl' => [CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4]
-            ])->timeout(5)->post($url, [
+            ])->timeout(15)->post($url, [
                 'model' => 'models/text-embedding-004',
                 'content' => [
                     'parts' => [
