@@ -66,7 +66,7 @@ class DevisService
             $mission->client,
             'devis',
             'Nouveau devis reçu',
-            "L'artisan {$artisan->phone} vous a transmis un devis pour la mission #{$mission->id}.",
+            "L'artisan {$artisan->name} vous a transmis un devis pour la mission #{$mission->id}.",
             ['mission_id' => $mission->id, 'devis_id' => $devis->id]
         );
 
