@@ -24,7 +24,7 @@ class NoContactInformation implements ValidationRule
             return;
         }
 
-        // 2. Détection des mots-clés suspects ou invitations à contacter hors plateforme
+        // 2. Détection des mots-clés suspects ou invitations à contacter hors plateforme (et indications d'adresse précises)
         $suspiciousPatterns = [
             '/\bwhatsapp\b/i',
             '/\btelegram\b/i',
@@ -41,13 +41,31 @@ class NoContactInformation implements ValidationRule
             '/\bjoignable sur\b/i',
             '/tel\s*:\s*\+?\d+/i',
             '/tél\s*:\s*\+?\d+/i',
+            '/\bcarrefour\b/i',
+            '/\bface\s+(a|à)\b/i',
+            '/\bdevant\b/i',
+            '/\b(a|à)\s+cote\s+de\b/i',
+            '/\b(a|à)\s+côté\s+de\b/i',
+            '/\bmon\s+adresse\b/i',
+            '/\bmon\s+quartier\b/i',
+            '/\b(situe|situé)\s+(a|à)\b/i',
+            '/\bjoignable\b/i',
         ];
 
         foreach ($suspiciousPatterns as $pattern) {
             if (preg_match($pattern, $value)) {
-                $fail("L'insertion de coordonnées de contact ou de réseaux sociaux est interdite dans le champ :attribute.");
+                $fail("L'insertion de coordonnées de contact, d'indications d'adresse précises ou de réseaux sociaux est interdite.");
                 return;
             }
+        }
+
+        // 2.5 Détection de numéros de téléphone épelés en toutes lettres (ex: "zero sept", "zéro huit...")
+        // ou de chiffres séparés par des espaces/caractères spéciaux pour contourner le filtre
+        $normalizedText = strtolower(str_replace([' ', '-', '.', ',', '_', '/'], '', $value));
+        $numberWords = '(zero|zéro|un|deux|trois|quatre|cinq|six|sept|huit|neuf|dix)';
+        if (preg_match('/(?:' . $numberWords . '){3,}/i', $normalizedText)) {
+            $fail("L'insertion de numéros de téléphone (même épelés en lettres ou fragmentés) est interdite.");
+            return;
         }
 
         // 3. Détection des numéros de téléphone (Côte d'Ivoire et générique)

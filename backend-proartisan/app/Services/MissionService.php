@@ -18,6 +18,17 @@ class MissionService
      */
     public function create(User $client, array $data): Mission
     {
+        // 0. Sécurité anti-doublon (évite la création multiple en cas de double-clic ou soumission en rafale)
+        $duplicate = Mission::where('client_id', $client->id)
+            ->where('artisan_id', $data['artisan_id'] ?? null)
+            ->where('description', $data['description'])
+            ->where('created_at', '>=', now()->subSeconds(15))
+            ->first();
+
+        if ($duplicate) {
+            return $duplicate;
+        }
+
         $hasArtisan = !empty($data['artisan_id']);
         $initialState = $hasArtisan 
             ? \App\States\Mission\PendingArtisanAcceptanceState::class 
