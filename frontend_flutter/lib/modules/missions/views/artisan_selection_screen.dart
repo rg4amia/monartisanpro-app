@@ -276,6 +276,7 @@ class _ListView extends StatelessWidget {
             return _ArtisanCard(
               artisan: artisans[artisanIndex],
               onTap: () => controller.selectArtisan(artisans[artisanIndex]),
+              isLoading: controller.isLoading.value,
             );
           },
         ),
@@ -322,13 +323,18 @@ class _FallbackZoneBanner extends StatelessWidget {
 class _ArtisanCard extends StatelessWidget {
   final ArtisanModel artisan;
   final VoidCallback onTap;
+  final bool isLoading;
 
-  const _ArtisanCard({required this.artisan, required this.onTap});
+  const _ArtisanCard({
+    required this.artisan,
+    required this.onTap,
+    required this.isLoading,
+  });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: isLoading ? null : onTap,
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -551,11 +557,12 @@ class _ArtisanCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () =>
-                        Get.toNamed(Routes.artisanProfile, arguments: {
-                      'artisan': artisan,
-                      'fromSelection': true,
-                    }),
+                    onPressed: isLoading
+                        ? null
+                        : () => Get.toNamed(Routes.artisanProfile, arguments: {
+                              'artisan': artisan,
+                              'fromSelection': true,
+                            }),
                     icon: const Icon(Icons.person_outline, size: 16),
                     label: const Text('Profil'),
                     style: OutlinedButton.styleFrom(
@@ -573,7 +580,7 @@ class _ArtisanCard extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: onTap,
+                    onPressed: isLoading ? null : onTap,
                     icon: const Icon(Icons.handshake, size: 16),
                     label: const Text('Choisir'),
                     style: ElevatedButton.styleFrom(

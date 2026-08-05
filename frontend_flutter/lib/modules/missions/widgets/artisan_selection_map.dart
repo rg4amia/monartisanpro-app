@@ -499,7 +499,9 @@ class _ArtisanSelectionMapState extends State<ArtisanSelectionMap> {
                         ? _SelectedArtisanCard(
                             key: ValueKey(_selectedArtisan!.id),
                             artisan: _selectedArtisan!,
+                            isLoading: widget.controller.isLoading.value,
                             onClose: () {
+                              if (widget.controller.isLoading.value) return;
                               setState(() => _selectedArtisan = null);
                               _plotArtisans();
                             },
@@ -817,12 +819,14 @@ class _SelectedArtisanCard extends StatelessWidget {
   const _SelectedArtisanCard({
     super.key,
     required this.artisan,
+    required this.isLoading,
     required this.onClose,
     required this.onProfile,
     required this.onChoose,
   });
 
   final ArtisanModel artisan;
+  final bool isLoading;
   final VoidCallback onClose;
   final VoidCallback onProfile;
   final VoidCallback onChoose;
@@ -834,210 +838,213 @@ class _SelectedArtisanCard extends StatelessWidget {
         artisan.commune ??
         'Position approximative';
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: _Palette.surface.withValues(alpha: 0.98),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: artisan.isGoldenMarker
-              ? _Palette.warning.withValues(alpha: 0.34)
-              : _Palette.subtle,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: _Palette.ink.withValues(alpha: 0.12),
-            blurRadius: 22,
-            offset: const Offset(0, 10),
+    return GestureDetector(
+      onTap: isLoading ? null : onProfile,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: _Palette.surface.withValues(alpha: 0.98),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: artisan.isGoldenMarker
+                ? _Palette.warning.withValues(alpha: 0.34)
+                : _Palette.subtle,
           ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  color: _Palette.primaryLight,
-                  borderRadius: BorderRadius.circular(14),
-                  image: artisan.photo != null
-                      ? DecorationImage(
-                          image: NetworkImage(artisan.photo!),
-                          fit: BoxFit.cover,
+          boxShadow: [
+            BoxShadow(
+              color: _Palette.ink.withValues(alpha: 0.12),
+              blurRadius: 22,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: _Palette.primaryLight,
+                    borderRadius: BorderRadius.circular(14),
+                    image: artisan.photo != null
+                        ? DecorationImage(
+                            image: NetworkImage(artisan.photo!),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
+                  ),
+                  child: artisan.photo == null
+                      ? const Icon(
+                          Icons.person,
+                          color: _Palette.primary,
+                          size: 28,
                         )
                       : null,
                 ),
-                child: artisan.photo == null
-                    ? const Icon(
-                        Icons.person,
-                        color: _Palette.primary,
-                        size: 28,
-                      )
-                    : null,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      artisan.name ?? 'Artisan',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: _Palette.ink,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        artisan.name ?? 'Artisan',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: _Palette.ink,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      artisan.trade ?? 'Metier non renseigne',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: _Palette.muted,
+                      const SizedBox(height: 4),
+                      Text(
+                        artisan.trade ?? 'Metier non renseigne',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: _Palette.muted,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.place_outlined,
+                            size: 15,
+                            color: _Palette.muted,
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              subtitle,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: _Palette.muted,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                Column(
+                  children: [
+                    GestureDetector(
+                      onTap: isLoading ? null : onClose,
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: _Palette.bg,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.close,
+                          size: 18,
+                          color: _Palette.muted,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.place_outlined,
-                          size: 15,
-                          color: _Palette.muted,
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            subtitle,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: _Palette.muted,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                    ScoreProsArtisanBadge(score: artisan.scoreProsArtisan),
                   ],
                 ),
-              ),
-              Column(
+              ],
+            ),
+            if (artisan.isGoldenMarker || artisan.nightInterventionAvailable) ...[
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
                 children: [
-                  GestureDetector(
-                    onTap: onClose,
-                    child: Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: _Palette.bg,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        Icons.close,
-                        size: 18,
-                        color: _Palette.muted,
-                      ),
+                  if (artisan.isGoldenMarker)
+                    _InfoChip(
+                      icon: Icons.stars_rounded,
+                      label: 'Artisan d\'elite',
+                      color: _Palette.warning,
+                      background: const Color(0xFFFFF7D1),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  ScoreProsArtisanBadge(score: artisan.scoreProsArtisan),
+                  if (artisan.nightInterventionAvailable)
+                    _InfoChip(
+                      icon: Icons.nightlight_round,
+                      label: 'Disponible la nuit',
+                      color: _Palette.primary,
+                      background: _Palette.primaryLight,
+                    ),
                 ],
               ),
             ],
-          ),
-          if (artisan.isGoldenMarker || artisan.nightInterventionAvailable) ...[
             const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
+            Row(
               children: [
-                if (artisan.isGoldenMarker)
-                  _InfoChip(
-                    icon: Icons.stars_rounded,
-                    label: 'Artisan d\'elite',
-                    color: _Palette.warning,
-                    background: const Color(0xFFFFF7D1),
+                const Icon(
+                  Icons.privacy_tip_outlined,
+                  size: 14,
+                  color: _Palette.muted,
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'Position approximative affichee pour proteger l\'artisan.',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: _Palette.muted,
+                      height: 1.3,
+                    ),
                   ),
-                if (artisan.nightInterventionAvailable)
-                  _InfoChip(
-                    icon: Icons.nightlight_round,
-                    label: 'Disponible la nuit',
-                    color: _Palette.primary,
-                    background: _Palette.primaryLight,
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: isLoading ? null : onProfile,
+                    icon: const Icon(Icons.person_outline, size: 16),
+                    label: const Text('Profil'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: _Palette.primary,
+                      side: BorderSide(
+                        color: _Palette.primary.withValues(alpha: 0.28),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
                   ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: isLoading ? null : onChoose,
+                    icon: const Icon(Icons.handshake, size: 16),
+                    label: const Text('Choisir'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _Palette.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
           ],
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              const Icon(
-                Icons.privacy_tip_outlined,
-                size: 14,
-                color: _Palette.muted,
-              ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  'Position approximative affichee pour proteger l\'artisan.',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: _Palette.muted,
-                    height: 1.3,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: onProfile,
-                  icon: const Icon(Icons.person_outline, size: 16),
-                  label: const Text('Profil'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: _Palette.primary,
-                    side: BorderSide(
-                      color: _Palette.primary.withValues(alpha: 0.28),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: onChoose,
-                  icon: const Icon(Icons.handshake, size: 16),
-                  label: const Text('Choisir'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _Palette.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }
