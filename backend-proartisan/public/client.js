@@ -1244,8 +1244,14 @@ class ClientAppManager {
   }
 }
 
-// Lancement à la disponibilité du DOM
-document.addEventListener("DOMContentLoaded", () => {
+// Lancement direct ou dès que le DOM est prêt
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", () => {
+    const app = new ClientAppManager();
+    app.init();
+  });
+} else {
   const app = new ClientAppManager();
   app.init();
-});
+}
+
