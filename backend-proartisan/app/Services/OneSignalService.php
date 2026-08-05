@@ -13,8 +13,8 @@ class OneSignalService
 
     public function __construct()
     {
-        $this->appId = config('services.onesignal.app_id', env('ONESIGNAL_APP_ID', ''));
-        $this->restApiKey = config('services.onesignal.rest_api_key', env('ONESIGNAL_REST_API_KEY', ''));
+        $this->appId = trim(config('services.onesignal.app_id', ''));
+        $this->restApiKey = trim(config('services.onesignal.rest_api_key', ''));
     }
 
     /**
