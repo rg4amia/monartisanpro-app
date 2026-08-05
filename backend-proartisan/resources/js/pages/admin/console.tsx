@@ -5,8 +5,9 @@ import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import LlmAdminPanel from './llm-admin-panel';
 import RolesPermissionsPanel from './roles-permissions-panel';
+import AiDashboardPanel from './ai-dashboard-panel';
 
-type AdminTab = 'dashboard' | 'kyc' | 'missions' | 'litiges' | 'users' | 'transactions' | 'settings' | 'llm_admin' | 'roles_permissions' | 'evaluations';
+type AdminTab = 'dashboard' | 'kyc' | 'missions' | 'litiges' | 'users' | 'transactions' | 'settings' | 'llm_admin' | 'roles_permissions' | 'evaluations' | 'ai_dashboard';
 type ThemeMode = 'light' | 'dark';
 type Tone = 'amber' | 'green' | 'rose' | 'blue' | 'slate';
 
@@ -291,6 +292,7 @@ const tabRoutes: Record<AdminTab, string> = {
     transactions: '/admin/transactions',
     settings: '/admin/settings',
     llm_admin: '/admin/llm-admin',
+    ai_dashboard: '/admin/ai-dashboard',
     roles_permissions: '/admin/roles-permissions',
     evaluations: '/admin/evaluations',
 };
@@ -341,6 +343,11 @@ const tabMeta: Record<AdminTab, { description: string; label: string; section: s
         section: 'INTELLIGENCE',
         description: "Supervision de l'ingestion sémantique des documents et du pipeline RAG local.",
     },
+    ai_dashboard: {
+        label: 'Suivi & Coûts IA',
+        section: 'INTELLIGENCE',
+        description: 'Visualisation de l\'utilisation de l\'IA, des jetons consommés et contrôle des limites de coûts.',
+    },
     evaluations: {
         label: 'Évaluations & Scores',
         section: 'QUALITÉ',
@@ -358,6 +365,7 @@ const searchPlaceholders: Record<AdminTab, string> = {
     settings: 'Rechercher une règle ou un paramètre...',
     roles_permissions: 'Rechercher une action ou un rôle...',
     llm_admin: 'Rechercher une règle ou un document...',
+    ai_dashboard: 'Rechercher un log ou un modèle...',
     evaluations: 'Rechercher une évaluation, un artisan ou un commentaire...',
 };
 
@@ -953,6 +961,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                 { count: missionsInProgress, id: 'missions', label: tabMeta.missions.label },
                 { count: openDisputes, id: 'litiges', label: tabMeta.litiges.label },
                 { id: 'llm_admin', label: 'Administration LLM' },
+                { id: 'ai_dashboard', label: 'Suivi & Coûts IA' },
             ],
         },
         {
@@ -2542,6 +2551,18 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                 </section>
                             ) : null}
 
+                            {activeTab === 'ai_dashboard' ? (
+                                <section className="mt-5">
+                                    <AiDashboardPanel
+                                        stats={props.stats as any}
+                                        costsByModel={props.costsByModel as any}
+                                        dailyUsage={props.dailyUsage as any}
+                                        logs={props.logs as any}
+                                        settings={props.settings as any}
+                                    />
+                                </section>
+                            ) : null}
+
                             {activeTab === 'evaluations' ? (
                                 <section className="mt-5 space-y-5">
                                     <div className="flex gap-2 border-b border-[var(--admin-border)] pb-4">
@@ -3686,6 +3707,8 @@ function TabIcon({ className = 'h-5 w-5', tab }: { className?: string; tab: Admi
     switch (tab) {
         case 'llm_admin':
             return <InboxIcon className={className} />;
+        case 'ai_dashboard':
+            return <SettingsIcon className={className} />;
         case 'dashboard':
             return <DashboardIcon className={className} />;
         case 'kyc':
