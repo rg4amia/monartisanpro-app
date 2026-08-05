@@ -610,7 +610,8 @@ class LlmAdminController extends Controller
 
         try {
             $model = config('services.gemini.model', 'gemini-3.5-flash');
-            $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$key}";
+            $baseUrl = config('services.gemini.base_url', 'https://generativelanguage.googleapis.com');
+            $url = "{$baseUrl}/v1beta/models/{$model}:generateContent?key={$key}";
             $response = Http::withOptions([
                 'curl' => [CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4]
             ])->timeout(20)->post($url, [
@@ -690,7 +691,8 @@ class LlmAdminController extends Controller
 
         try {
             $model = config('services.gemini.model', 'gemini-3.5-flash');
-            $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$key}";
+            $baseUrl = config('services.gemini.base_url', 'https://generativelanguage.googleapis.com');
+            $url = "{$baseUrl}/v1beta/models/{$model}:generateContent?key={$key}";
             $response = Http::withOptions([
                 'curl' => [CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4]
             ])->timeout(12)->post($url, [
@@ -740,7 +742,8 @@ class LlmAdminController extends Controller
     private function getGeminiEmbedding(string $text, string $key): ?array
     {
         try {
-            $url = "https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key={$key}";
+            $baseUrl = config('services.gemini.base_url', 'https://generativelanguage.googleapis.com');
+            $url = "{$baseUrl}/v1beta/models/text-embedding-004:embedContent?key={$key}";
             $response = Http::withOptions([
                 'curl' => [CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4]
             ])->timeout(5)->post($url, [
