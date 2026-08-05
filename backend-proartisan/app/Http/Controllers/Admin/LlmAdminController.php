@@ -229,7 +229,7 @@ class LlmAdminController extends Controller
 
         // VLM analysis using real Gemini 1.5 Flash if image is provided
         if (!empty($validated['image_b64']) || !empty($validated['image_url'])) {
-            $geminiKey = env('GEMINI_API_KEY');
+            $geminiKey = config('services.gemini.api_key');
             if ($geminiKey) {
                 $base64 = '';
                 $mimeType = 'image/jpeg';
@@ -288,8 +288,8 @@ class LlmAdminController extends Controller
         }
 
         $ragMatches = null;
-        $geminiKey = env('GEMINI_API_KEY');
-        $qdrantUrl = env('QDRANT_URL');
+        $geminiKey = config('services.gemini.api_key');
+        $qdrantUrl = config('services.qdrant.url');
 
         if (!empty($qdrantUrl) && !empty($geminiKey) && !empty($queryTags)) {
             $vector = $this->getGeminiEmbedding(implode(' ', $queryTags), $geminiKey);
@@ -460,8 +460,8 @@ class LlmAdminController extends Controller
         $userMsgLower = strtolower($userMsg);
 
         $ragMatches = null;
-        $geminiKey = env('GEMINI_API_KEY');
-        $qdrantUrl = env('QDRANT_URL');
+        $geminiKey = config('services.gemini.api_key');
+        $qdrantUrl = config('services.qdrant.url');
 
         if (!empty($qdrantUrl) && !empty($geminiKey)) {
             $vector = $this->getGeminiEmbedding($userMsg, $geminiKey);
@@ -544,7 +544,7 @@ class LlmAdminController extends Controller
             ];
         }
 
-        $geminiKey = env('GEMINI_API_KEY');
+        $geminiKey = config('services.gemini.api_key');
         $reply = "";
 
         if ($geminiKey) {
@@ -757,9 +757,9 @@ class LlmAdminController extends Controller
 
     private function queryQdrant(array $vector, int $limit = 3): ?array
     {
-        $url = env('QDRANT_URL');
-        $apiKey = env('QDRANT_API_KEY');
-        $collection = env('QDRANT_COLLECTION', 'btp_rules');
+        $url = config('services.qdrant.url');
+        $apiKey = config('services.qdrant.api_key');
+        $collection = config('services.qdrant.collection', 'btp_rules');
 
         if (empty($url)) {
             return null;
