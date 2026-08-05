@@ -25,5 +25,5 @@ plugins {
 
 include(":app")
 
-rootProject.name = "monartisanpro-app-android-nested"
+rootProject.name = "frontend_flutter_android"
 

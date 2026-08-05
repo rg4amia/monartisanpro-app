@@ -47,25 +47,28 @@ subprocess.run("flutter pub get", shell=True)
 
 # 3. Compilation officielle via Flutter Tool (regénère proprement le Kernel AOT)
 print("\n[3/5] Compilation Flutter APK Release...")
-flutter_build_cmd = "flutter build apk --release --no-tree-shake-icons"
+flutter_build_cmd = "flutter build apk --release --split-per-abi --no-tree-shake-icons"
 result = subprocess.run(flutter_build_cmd, shell=True)
 
 if result.returncode != 0:
     print("\n[!] Erreur lors du build Flutter.")
     sys.exit(1)
 
-# 4. Copie de l'APK vers la racine du projet
-print("\n[4/5] Copie de l'APK genere...")
+# 4. Copie des APKs générés vers la racine du projet
+print("\n[4/5] Copie des APKs generes...")
 build_out_dir = os.path.join(FLUTTER_DIR, "build", "app", "outputs", "flutter-apk")
-release_apk = os.path.join(build_out_dir, "app-release.apk")
 
-if os.path.exists(release_apk):
-    target_apk = os.path.join(PROJECT_ROOT, "prosartisan-production.apk")
-    shutil.copy2(release_apk, target_apk)
-    size_mb = os.path.getsize(target_apk) / (1024 * 1024)
-    print(f"\n[OK] SUCCES ! APK de production genere avec succes :")
-    print(f" -> Fichier : {target_apk}")
-    print(f" -> Taille  : {size_mb:.2f} MB")
-else:
-    print("\n[!] Erreur : Fichier APK introuvable.")
+copied_any = False
+if os.path.exists(build_out_dir):
+    for filename in os.listdir(build_out_dir):
+        if filename.endswith(".apk") and "release" in filename:
+            source_path = os.path.join(build_out_dir, filename)
+            target_path = os.path.join(PROJECT_ROOT, filename)
+            shutil.copy2(source_path, target_path)
+            size_mb = os.path.getsize(target_path) / (1024 * 1024)
+            print(f" -> Copie réussie : {target_path} ({size_mb:.2f} MB)")
+            copied_any = True
+
+if not copied_any:
+    print("\n[!] Erreur : Aucun fichier APK généré trouvé.")
     sys.exit(1)
