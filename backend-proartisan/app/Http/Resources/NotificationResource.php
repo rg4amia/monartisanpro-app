@@ -14,7 +14,7 @@ class NotificationResource extends JsonResource
             'type'      => $this->type,
             'title'     => $this->title,
             'message'   => $this->body,
-            'data'      => $this->data_json ?? [],
+            'data'      => empty($this->data_json) ? new \stdClass() : $this->data_json,
             'read'      => $this->isRead(),
             'isRead'    => $this->isRead(),
             'readAt'    => $this->read_at?->toIso8601String(),
