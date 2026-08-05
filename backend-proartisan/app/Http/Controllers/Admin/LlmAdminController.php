@@ -701,12 +701,12 @@ class LlmAdminController extends Controller
 
             if ($response->successful()) {
                 return $response->json('candidates.0.content.parts.0.text') ?? "Désolé, je n'ai pas pu formuler de réponse.";
+            } else {
+                return "Erreur API Gemini (Status " . $response->status() . "): " . $response->body();
             }
         } catch (\Exception $e) {
-            // fallback below
+            return "Exception Gemini: " . $e->getMessage();
         }
-
-        return "Erreur lors de la connexion à l'intelligence artificielle Gemini.";
     }
 
     private function localChatFallback(string $userMsg, array $ragMatches): string
