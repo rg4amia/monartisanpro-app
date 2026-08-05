@@ -609,7 +609,8 @@ class LlmAdminController extends Controller
         $prompt .= "Ne retourne aucun texte en dehors du JSON.";
 
         try {
-            $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={$key}";
+            $model = config('services.gemini.model', 'gemini-3.5-flash');
+            $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$key}";
             $response = Http::timeout(20)->post($url, [
                 'contents' => [
                     [
@@ -686,7 +687,8 @@ class LlmAdminController extends Controller
         }
 
         try {
-            $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={$key}";
+            $model = config('services.gemini.model', 'gemini-3.5-flash');
+            $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$key}";
             $response = Http::timeout(12)->post($url, [
                 'contents' => [
                     [
