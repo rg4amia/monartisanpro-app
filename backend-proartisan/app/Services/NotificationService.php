@@ -23,9 +23,12 @@ class NotificationService
             'data_json' => $data,
         ]);
 
-        // 2. Push Notification (FCM)
-        if ($user->fcm_token) {
-            $this->sendPush($user->fcm_token, $title, $body, $data);
+        // 2. Push Notification via OneSignal (basé sur l'ID utilisateur)
+        try {
+            $oneSignal = app(\App\Services\OneSignalService::class);
+            $oneSignal->sendToUser((string) $user->id, $title, $body, $data);
+        } catch (\Exception $e) {
+            Log::error("Erreur lors de l'appel OneSignal dans NotificationService : " . $e->getMessage());
         }
 
         // 3. SMS pour les types critiques (OTP, Paiement, Alerte fraude)
