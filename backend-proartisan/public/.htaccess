@@ -1,7 +1,31 @@
+# Désactiver le cache pour les fichiers stratégiques de l'IA
+<FilesMatch "\.(html|js|json|css)$">
+    <IfModule mod_headers.c>
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+        Header set Pragma "no-cache"
+        Header set Expires 0
+    </IfModule>
+</FilesMatch>
+
+# Désactiver spécifiquement le CDN Hostinger sur ces assets
+<FilesMatch "(client\.js|db\.js|config\.js|client\.html)$">
+    <IfModule mod_headers.c>
+        Header set X-HCDN-Cache-Control "no-cache"
+    </IfModule>
+</FilesMatch>
+
+# Configuration CORS pour autoriser l'app mobile
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Headers "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+    Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+</IfModule>
+
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes
     </IfModule>
+
 
     RewriteEngine On
 

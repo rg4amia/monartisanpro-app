@@ -4,7 +4,7 @@
  * Gère la communication API, la synthèse/reconnaissance vocale et les simulations offline/3G.
  */
 
-import { dbInstance } from "./db.js?v=2";
+import { dbInstance } from "./db.js?v=3";
 
 function determineTagsFromFilename(filename) {
   const name = (filename || "").toLowerCase();
