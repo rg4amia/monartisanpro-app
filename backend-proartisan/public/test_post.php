@@ -38,7 +38,7 @@ function test_model($model, $key) {
         'Content-Type: application/json',
         'User-Agent: Mozilla/5.0'
     ]);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 12);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 25);
     curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
 
     $response = curl_exec($ch);
@@ -52,7 +52,7 @@ function test_model($model, $key) {
     ];
 }
 
-$models = ['gemini-2.0-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-3.5-flash'];
+$models = ['gemini-3.1-flash-lite', 'gemini-3.6-flash', 'gemini-3.5-flash'];
 
 foreach ($models as $m) {
     echo "=== Test Model: {$m} ===\n";
