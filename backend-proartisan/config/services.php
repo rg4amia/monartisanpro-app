@@ -102,4 +102,9 @@ return [
         'collection' => env('QDRANT_COLLECTION', 'btp_rules'),
     ],
 
+    'onesignal' => [
+        'app_id' => env('ONESIGNAL_APP_ID'),
+        'rest_api_key' => env('ONESIGNAL_REST_API_KEY'),
+    ],
+
 ];
