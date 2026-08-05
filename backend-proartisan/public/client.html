@@ -17,7 +17,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ProsArtisan Mobile - Assistant Chantier</title>
-  <link rel="stylesheet" href="client.css">
+  <link rel="stylesheet" href="client.css?v=4">
   <!-- Tailwind CDN uniquement pour les utilitaires de grille rapides de premier niveau -->
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
@@ -218,7 +218,7 @@
           <!-- Suggestion pills -->
           <div class="p-2 border-t border-white/5 bg-slate-900/50">
             <div class="text-[8px] text-slate-500 uppercase tracking-wider mb-1.5 font-bold">Suggestions :</div>
-            <div class="flex flex-wrap gap-1.5" id="chat-suggestions">
+            <div class="flex flex-nowrap gap-1.5" id="chat-suggestions">
               <!-- JS filled suggestions -->
             </div>
           </div>
@@ -300,7 +300,7 @@
 
   </div>
 
-  <script type="module" src="client.js?v=3"></script>
+  <script type="module" src="client.js?v=4"></script>
 </body>
 
 </html>
