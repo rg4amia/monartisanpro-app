@@ -454,6 +454,14 @@ class LlmAdminController extends Controller
             'trade' => 'nullable|string',
         ]);
 
+        // Rate limiting check
+        if (!\App\Services\AiMonitoringService::checkUserLimit()) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Quota d\'interactions journalier atteint. Réessayez demain.'
+            ], 429);
+        }
+
         $userMsg = trim($validated['message']);
 
         $trade = $validated['trade'] ?? 'Maçon';
@@ -609,14 +617,14 @@ class LlmAdminController extends Controller
         $prompt .= "Ne retourne aucun texte en dehors du JSON.";
 
         try {
-            $model = config('services.gemini.model', 'gemini-3.5-flash');
+            $model = config('services.gemini.model', 'gemini-3.6-flash');
             $baseUrl = config('services.gemini.base_url', 'https://generativelanguage.googleapis.com');
             $url = "{$baseUrl}/v1beta/models/{$model}:generateContent?key={$key}";
             $response = Http::withHeaders([
                 'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
             ])->withOptions([
                 'curl' => [CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4]
-            ])->timeout(35)->post($url, [
+            ])->timeout(60)->post($url, [
                 'contents' => [
                     [
                         'parts' => [
@@ -691,15 +699,16 @@ class LlmAdminController extends Controller
             $prompt .= "\nRéponds de manière professionnelle et concrète, adaptée à la réalité des chantiers en Côte d'Ivoire. Si sa question est totalement hors-sujet ou n'a aucun rapport avec le BTP, la construction ou son métier, rappelle-lui gentiment et poliment ton rôle de guide de chantier.";
         }
 
+        $startTime = microtime(true);
+        $model = config('services.gemini.model', 'gemini-3.6-flash');
         try {
-            $model = config('services.gemini.model', 'gemini-3.5-flash');
             $baseUrl = config('services.gemini.base_url', 'https://generativelanguage.googleapis.com');
             $url = "{$baseUrl}/v1beta/models/{$model}:generateContent?key={$key}";
             $response = Http::withHeaders([
                 'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
             ])->withOptions([
                 'curl' => [CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4]
-            ])->timeout(30)->post($url, [
+            ])->timeout(60)->post($url, [
                 'contents' => [
                     [
                         'parts' => [
@@ -709,12 +718,20 @@ class LlmAdminController extends Controller
                 ]
             ]);
 
+            $responseTimeMs = (microtime(true) - $startTime) * 1000;
             if ($response->successful()) {
+                $promptTokens = $response->json('usageMetadata.promptTokenCount') ?? 0;
+                $completionTokens = $response->json('usageMetadata.candidatesTokenCount') ?? 0;
+                \App\Services\AiMonitoringService::log($model, 'chat', $promptTokens, $completionTokens, $responseTimeMs, 200);
+
                 return $response->json('candidates.0.content.parts.0.text') ?? "Désolé, je n'ai pas pu formuler de réponse.";
             } else {
+                \App\Services\AiMonitoringService::log($model, 'chat', 0, 0, $responseTimeMs, $response->status(), $response->body());
                 return "Erreur API Gemini (Status " . $response->status() . "): " . $response->body();
             }
         } catch (\Exception $e) {
+            $responseTimeMs = (microtime(true) - $startTime) * 1000;
+            \App\Services\AiMonitoringService::log($model, 'chat', 0, 0, $responseTimeMs, 500, $e->getMessage());
             return "Exception Gemini: " . $e->getMessage();
         }
     }
@@ -745,6 +762,8 @@ class LlmAdminController extends Controller
 
     private function getGeminiEmbedding(string $text, string $key): ?array
     {
+        $startTime = microtime(true);
+        $model = 'models/text-embedding-004';
         try {
             $baseUrl = config('services.gemini.base_url', 'https://generativelanguage.googleapis.com');
             $url = "{$baseUrl}/v1beta/models/text-embedding-004:embedContent?key={$key}";
@@ -761,11 +780,18 @@ class LlmAdminController extends Controller
                 ]
             ]);
 
+            $responseTimeMs = (microtime(true) - $startTime) * 1000;
             if ($response->successful()) {
+                $promptTokens = ceil(strlen($text) / 4);
+                \App\Services\AiMonitoringService::log($model, 'embedding', $promptTokens, 0, $responseTimeMs, 200);
                 return $response->json('embedding.values');
+            } else {
+                \App\Services\AiMonitoringService::log($model, 'embedding', 0, 0, $responseTimeMs, $response->status(), $response->body());
             }
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error("Failed to generate embedding: " . $e->getMessage());
+            $responseTimeMs = (microtime(true) - $startTime) * 1000;
+            \App\Services\AiMonitoringService::log($model, 'embedding', 0, 0, $responseTimeMs, 500, $e->getMessage());
+            \Illuminate\Support\Facades\Log::error('Gemini Embedding Exception: ' . $e->getMessage());
         }
         return null;
     }
@@ -780,6 +806,7 @@ class LlmAdminController extends Controller
             return null;
         }
 
+        $startTime = microtime(true);
         try {
             $request = Http::timeout(5);
             if (!empty($apiKey)) {
@@ -792,7 +819,9 @@ class LlmAdminController extends Controller
                 'with_payload' => true
             ]);
 
+            $responseTimeMs = (microtime(true) - $startTime) * 1000;
             if ($response->successful()) {
+                \App\Services\AiMonitoringService::log('qdrant', 'search', 0, 0, $responseTimeMs, 200);
                 $points = $response->json('result') ?? [];
                 $matches = [];
                 foreach ($points as $point) {
@@ -801,8 +830,12 @@ class LlmAdminController extends Controller
                     }
                 }
                 return $matches;
+            } else {
+                \App\Services\AiMonitoringService::log('qdrant', 'search', 0, 0, $responseTimeMs, $response->status(), $response->body());
             }
         } catch (\Exception $e) {
+            $responseTimeMs = (microtime(true) - $startTime) * 1000;
+            \App\Services\AiMonitoringService::log('qdrant', 'search', 0, 0, $responseTimeMs, 500, $e->getMessage());
             \Illuminate\Support\Facades\Log::error("Failed to query Qdrant: " . $e->getMessage());
         }
         return null;
