@@ -53,7 +53,7 @@ class AiDashboardController extends Controller
         // 5. Settings
         $settings = DB::table('ai_settings')->pluck('value', 'key');
 
-        return Inertia::render('admin/AiDashboard', [
+        return Inertia::render('admin/ai-dashboard', [
             'stats' => [
                 'total_cost' => (float)$totalCost,
                 'total_requests' => $totalRequests,
