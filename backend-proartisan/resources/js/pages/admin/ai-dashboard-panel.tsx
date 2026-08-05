@@ -92,7 +92,10 @@ export default function AiDashboardPanel({ stats, costsByModel, dailyUsage, logs
                     <div className="mt-2 text-2xl font-bold text-slate-800 dark:text-slate-100">
                         ${stats.total_cost.toFixed(4)}
                     </div>
-                    <p className="mt-1 text-xs text-slate-500">Calculé sur les tarifs des tokens Gemini</p>
+                    <p className="mt-1 text-sm font-semibold text-indigo-600 dark:text-indigo-400">
+                        ~{Math.round(stats.total_cost * 600).toLocaleString('fr-FR')} FCFA
+                    </p>
+                    <p className="mt-0.5 text-[10px] text-slate-400">Sur la base de 1 USD = 600 FCFA</p>
                 </div>
 
                 {/* Requests */}
@@ -303,7 +306,7 @@ export default function AiDashboardPanel({ stats, costsByModel, dailyUsage, logs
                                                 {(log.response_time_ms / 1000).toFixed(2)}s
                                             </td>
                                             <td className="py-3 px-4 text-right font-mono text-xs text-indigo-600 dark:text-indigo-400">
-                                                ${costVal.toFixed(5)}
+                                                ${costVal.toFixed(5)} <span className="text-[10px] text-slate-400 dark:text-slate-500">({(costVal * 600).toFixed(2)} F)</span>
                                             </td>
                                         </tr>
                                     );
