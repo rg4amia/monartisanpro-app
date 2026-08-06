@@ -203,7 +203,15 @@ class _ArtisanSelectionMapState extends State<ArtisanSelectionMap> {
       _placemarkIndex[placemark] = artisan;
 
       final listener = _ArtisanTapListener((mapObject, point) {
-        final tapped = _placemarkIndex[mapObject as mk.PlacemarkMapObject];
+        ArtisanModel? tapped;
+        for (final entry in _placemarkIndex.entries) {
+          final entryPoint = entry.key.geometry;
+          if ((entryPoint.latitude - point.latitude).abs() < 0.0001 &&
+              (entryPoint.longitude - point.longitude).abs() < 0.0001) {
+            tapped = entry.value;
+            break;
+          }
+        }
         if (tapped == null) {
           return false;
         }
