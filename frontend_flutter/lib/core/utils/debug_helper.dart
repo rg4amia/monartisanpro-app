@@ -1,3 +1,4 @@
+// ignore_for_file: avoid_print
 import '../storage/storage_service.dart';
 
 class DebugHelper {
