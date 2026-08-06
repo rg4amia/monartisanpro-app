@@ -23,7 +23,7 @@ class NotificationService extends GetxService {
       }
 
       // Initialiser OneSignal
-      const appId = String.fromEnvironment('ONESIGNAL_APP_ID', defaultValue: 'YOUR_ONESIGNAL_APP_ID');
+      const appId = String.fromEnvironment('ONESIGNAL_APP_ID', defaultValue: '00d061c8-977b-405a-a207-e2d87846670b');
       OneSignal.initialize(appId);
 
       // Demander la permission de recevoir des notifications
