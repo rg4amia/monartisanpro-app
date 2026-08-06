@@ -1251,7 +1251,7 @@ class _JalonCard extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: StatefulBuilder(
-            builder: (context, setState) => Column(
+            builder: (dialogContext, setState) => Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Icon(Icons.payment, color: _Palette.primary, size: 36),
@@ -1311,7 +1311,9 @@ class _JalonCard extends StatelessWidget {
                           );
                           if (success) {
                             Get.find<MissionsController>().loadMission(jalon.missionId, forceRefresh: true);
-                            showOtpValidationDialog(context, jalon);
+                            if (context.mounted) {
+                              showOtpValidationDialog(context, jalon);
+                            }
                           }
                         },
                         child: const Text('Payer'),

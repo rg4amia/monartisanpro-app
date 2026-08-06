@@ -22,7 +22,6 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
   double surgeMultiplier = 1.0;
   
   double _promoDiscount = 0.0;
-  String? _appliedPromoCode;
   
   /// Flag réactif pour éviter toute double soumission après succès.
   final _orderSubmitted = false.obs;
@@ -63,7 +62,6 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
     if (code == 'PROS225') {
       setState(() {
         _promoDiscount = controller.subtotal * 0.10;
-        _appliedPromoCode = code;
       });
       Get.snackbar(
         'Code promo',
