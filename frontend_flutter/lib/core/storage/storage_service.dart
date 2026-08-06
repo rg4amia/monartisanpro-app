@@ -3,9 +3,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:uuid/uuid.dart';
 
 class StorageService {
-  static const FlutterSecureStorage _secure = FlutterSecureStorage(
-    aOptions: AndroidOptions(encryptedSharedPreferences: true),
-  );
+  static const FlutterSecureStorage _secure = FlutterSecureStorage();
   static final GetStorage _box = GetStorage();
 
   // ── Secure storage (token) ──────────────────────────────────────────────────
