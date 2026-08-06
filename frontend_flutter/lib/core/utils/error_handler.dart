@@ -121,8 +121,10 @@ class ErrorHandler {
       case DioExceptionType.badCertificate:
         return 'Certificat SSL invalide';
       
+      case DioExceptionType.transformTimeout:
+        return 'Délai de connexion dépassé';
+      
       case DioExceptionType.unknown:
-      default:
         return 'Erreur de connexion';
     }
   }
