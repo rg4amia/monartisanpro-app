@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:yandex_maps_mapkit/mapkit_factory.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../core/services/notification_service.dart';
 import 'routes/app_pages.dart';
 import 'routes/app_routes.dart';
 
@@ -19,6 +20,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     mapkit.onStart();
+    Get.put(NotificationService(), permanent: true);
   }
 
   @override

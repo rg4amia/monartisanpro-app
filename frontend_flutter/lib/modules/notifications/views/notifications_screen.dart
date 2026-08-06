@@ -308,7 +308,7 @@ class _NotificationGroup extends StatelessWidget {
               final notification = notifications[index];
               return _NotificationTile(
                 notification: notification,
-                onTap: () => controller.markRead(notification.id),
+                onTap: () => controller.onNotificationTap(notification),
                 onDismiss: () => controller.markRead(notification.id),
               );
             },
