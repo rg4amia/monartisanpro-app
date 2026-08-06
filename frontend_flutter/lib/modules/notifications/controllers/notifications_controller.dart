@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import '../../../core/services/notification_service.dart';
 import '../../../data/models/notification_model.dart';
 import '../../../data/repositories/notification_repository.dart';
 
@@ -80,5 +81,15 @@ class NotificationsController extends GetxController {
               data: n.data,
             ))
         .toList();
+  }
+
+  Future<void> onNotificationTap(NotificationModel notification) async {
+    // Marquer comme lu sur le serveur et localement
+    await markRead(notification.id);
+    
+    // Rediriger vers l'information concernée si présente
+    if (notification.data != null) {
+      Get.find<NotificationService>().routeToTarget(notification.data!);
+    }
   }
 }
