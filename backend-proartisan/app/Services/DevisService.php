@@ -121,6 +121,7 @@ class DevisService
             'artisan_id'  => $artisan->id,
             'materials_required' => $materialsRequired,
             'intervention_type_id' => $interventionTypeId,
+            'commission_service_ratio' => \App\Models\Setting::getLaborCommissionForArtisan($artisan),
             'lignes_json' => $payload['lignes_json'],
             'jalons_json' => $payload['jalons_json'],
             'statut'      => 'soumis',
@@ -204,7 +205,7 @@ class DevisService
 
             // 4. Création des jalons depuis jalons_json (convertis en TTC)
             if (! $devis->mission->jalons()->exists()) {
-                $commissionService = \App\Models\Setting::getValueByKey('commission_service', 0.10);
+                $commissionService = $devis->commission_service_ratio !== null ? (float) $devis->commission_service_ratio : 0.10;
                 foreach ($devis->jalons_json as $jalonData) {
                     $montantTtc = (int) round($jalonData['montant'] * (1 + $commissionService));
                     Jalon::create([
