@@ -87,9 +87,11 @@ class NotificationsController extends GetxController {
     // Marquer comme lu sur le serveur et localement
     await markRead(notification.id);
     
-    // Rediriger vers l'information concernée si présente
-    if (notification.data != null) {
-      Get.find<NotificationService>().routeToTarget(notification.data!);
-    }
+    // Combiner le type principal et les données additionnelles
+    final Map<String, dynamic> routingData = {
+      'type': notification.type,
+      ...?notification.data,
+    };
+    Get.find<NotificationService>().routeToTarget(routingData);
   }
 }
