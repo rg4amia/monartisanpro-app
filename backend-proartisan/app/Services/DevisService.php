@@ -21,7 +21,7 @@ class DevisService
      */
     public function create(Mission $mission, User $artisan, array $data): Devis
     {
-        $payload = $this->normalizePayload($data);
+        $payload = $this->normalizePayload($data, $artisan);
 
         // RÈGLE : Un artisan ne peut pas soumettre plusieurs devis tant que le précédent n'est pas refusé
         $existingArtisanDevis = Devis::where('mission_id', $mission->id)
@@ -40,11 +40,73 @@ class DevisService
             throw new \InvalidArgumentException("Cette mission a déjà un devis en cours d'examen par le client.");
         }
 
+        $materialsRequired = filter_var($payload['materials_required'] ?? true, FILTER_VALIDATE_BOOLEAN);
+        $interventionTypeId = $payload['intervention_type_id'] ?? null;
+
+        // 1. If materials_required is true, must select articles from supplier catalog
+        if ($materialsRequired) {
+            $hasCatalogMaterial = collect($payload['lignes_json'])
+                ->where('type', 'mat')
+                ->where('source', 'catalog')
+                ->isNotEmpty();
+            if (!$hasCatalogMaterial) {
+                throw new \InvalidArgumentException("Le devis doit contenir au moins un article d'un fournisseur agréé car l'acquisition de matériel est requise.");
+            }
+        } else {
+            // If materials_required is false, intervention_type_id must be specified
+            if (empty($interventionTypeId)) {
+                throw new \InvalidArgumentException("Veuillez indiquer le type d'intervention pour ce devis sans matériel.");
+            }
+        }
+
+        // 2. Validate Labor (Main d'œuvre - MO) obligation
+        $requiresLabor = true;
+        if (!$materialsRequired && !empty($interventionTypeId)) {
+            $intType = \App\Models\InterventionType::find($interventionTypeId);
+            if ($intType) {
+                $requiresLabor = (bool) $intType->requires_labor;
+            }
+        }
+        
+        if ($requiresLabor) {
+            $hasMo = collect($payload['lignes_json'])
+                ->where('type', 'mo')
+                ->isNotEmpty();
+            $moSum = collect($payload['lignes_json'])
+                ->where('type', 'mo')
+                ->sum('montant');
+            if (!$hasMo || $moSum <= 0) {
+                throw new \InvalidArgumentException("La main d'œuvre est obligatoire pour ce devis.");
+            }
+        }
+
+        // 3. Night Mode / Artisan Stock check
         $isNightMode = now()->hour >= 18 || now()->hour < 6;
-        if (!$isNightMode) {
-            foreach ($payload['lignes_json'] as $ligne) {
-                if (($ligne['source'] ?? '') === 'artisan_stock') {
-                    throw new \InvalidArgumentException('Le stock artisan ne peut être utilisé que pendant le mode nuit (18h-06h).');
+        foreach ($payload['lignes_json'] as $ligne) {
+            if (($ligne['type'] ?? '') === 'mat') {
+                $isArtisanStock = ($ligne['source'] ?? '') === 'artisan_stock' || !empty($ligne['artisan_stock_id']);
+                if ($isArtisanStock) {
+                    // Check if it's strictly night mode
+                    if (!$isNightMode) {
+                        throw new \InvalidArgumentException("L'utilisation du stock de matériel de l'artisan est strictement réservée au mode nuit (18h-06h).");
+                    }
+                    
+                    if (empty($ligne['artisan_stock_id'])) {
+                        throw new \InvalidArgumentException("Veuillez spécifier l'identifiant du stock de l'artisan pour l'article : " . ($ligne['description'] ?? ''));
+                    }
+                    
+                    $stock = \App\Models\ArtisanStock::where('id', $ligne['artisan_stock_id'])
+                        ->where('artisan_id', $artisan->id)
+                        ->first();
+                    
+                    if (!$stock) {
+                        throw new \InvalidArgumentException("L'article spécifié n'existe pas dans votre stock.");
+                    }
+                    
+                    $requestedQty = (int) ($ligne['quantity'] ?? 1);
+                    if ($stock->quantity < $requestedQty) {
+                        throw new \InvalidArgumentException("Quantité insuffisante en stock pour : {$stock->description} (disponible: {$stock->quantity}, demandé: {$requestedQty}).");
+                    }
                 }
             }
         }
@@ -57,6 +119,8 @@ class DevisService
         $devis = Devis::create([
             'mission_id'  => $mission->id,
             'artisan_id'  => $artisan->id,
+            'materials_required' => $materialsRequired,
+            'intervention_type_id' => $interventionTypeId,
             'lignes_json' => $payload['lignes_json'],
             'jalons_json' => $payload['jalons_json'],
             'statut'      => 'soumis',
@@ -73,14 +137,16 @@ class DevisService
         return $devis;
     }
 
-    public function normalizePayload(array $data): array
+    public function normalizePayload(array $data, User $artisan): array
     {
         $lignes = collect($data['lignes_json'] ?? $data['lignes'] ?? [])
-            ->map(fn (array $ligne) => $this->normalizeLigne($ligne))
+            ->map(fn (array $ligne) => $this->normalizeLigne($ligne, $artisan))
             ->values()
             ->all();
 
         return [
+            'materials_required' => isset($data['materials_required']) ? filter_var($data['materials_required'], FILTER_VALIDATE_BOOLEAN) : true,
+            'intervention_type_id' => isset($data['intervention_type_id']) ? (int) $data['intervention_type_id'] : null,
             'lignes_json' => $lignes,
             'jalons_json' => $data['jalons_json'] ?? $data['jalons'] ?? [],
         ];
@@ -189,7 +255,7 @@ class DevisService
         );
     }
 
-    private function normalizeLigne(array $ligne): array
+    private function normalizeLigne(array $ligne, User $artisan): array
     {
         $type = $ligne['type'] ?? 'mo';
         $montant = (int) ($ligne['montant'] ?? 0);
@@ -228,6 +294,13 @@ class DevisService
 
         if (! empty($ligne['artisan_stock_id'])) {
             $normalized['artisan_stock_id'] = (int) $ligne['artisan_stock_id'];
+            $stock = \App\Models\ArtisanStock::where('id', $ligne['artisan_stock_id'])
+                ->where('artisan_id', $artisan->id)
+                ->first();
+            if ($stock) {
+                $normalized['condition'] = $stock->condition;
+                $normalized['source'] = 'artisan_stock';
+            }
         }
 
         return $normalized;

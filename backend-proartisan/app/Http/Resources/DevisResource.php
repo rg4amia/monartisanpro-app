@@ -14,6 +14,8 @@ class DevisResource extends JsonResource
             'missionId'    => $this->mission_id,
             'artisanId'    => $this->artisan_id,
             'statut'       => $this->statut,
+            'materialsRequired' => $this->materials_required,
+            'interventionTypeId' => $this->intervention_type_id,
             'missionStatus'=> $this->when(
                 $this->relationLoaded('mission'),
                 fn () => $this->mission->status

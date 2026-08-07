@@ -70,11 +70,13 @@ class DevisController extends Controller
         }
 
         $data = $request->validated();
-        $payload = $this->devisService->normalizePayload($data);
+        $payload = $this->devisService->normalizePayload($data, $request->user());
 
         $updateData = [
             'lignes_json' => $payload['lignes_json'] ?: $devis->lignes_json,
             'jalons_json' => $payload['jalons_json'] ?: $devis->jalons_json,
+            'materials_required' => isset($payload['materials_required']) ? $payload['materials_required'] : $devis->materials_required,
+            'intervention_type_id' => isset($payload['intervention_type_id']) ? $payload['intervention_type_id'] : $devis->intervention_type_id,
         ];
 
         $devis->update($updateData);

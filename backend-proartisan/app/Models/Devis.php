@@ -8,6 +8,7 @@ class Devis extends Model
 {
     protected $fillable = [
         'mission_id', 'artisan_id', 'lignes_json', 'jalons_json', 'statut', 'ratio_materiaux',
+        'materials_required', 'intervention_type_id',
     ];
 
     protected function casts(): array
@@ -15,6 +16,8 @@ class Devis extends Model
         return [
             'lignes_json'  => 'array',
             'jalons_json'  => 'array',
+            'materials_required' => 'boolean',
+            'intervention_type_id' => 'integer',
         ];
     }
 
@@ -28,6 +31,11 @@ class Devis extends Model
         return $this->belongsTo(User::class, 'artisan_id');
     }
 
+    public function interventionType()
+    {
+        return $this->belongsTo(InterventionType::class);
+    }
+
     public function getMontantTotalAttribute(): int
     {
         return $this->montant_materiaux + $this->montant_mo;
@@ -36,10 +44,17 @@ class Devis extends Model
     public function getMontantMateriauxAttribute(): int
     {
         $platformFeeRatio = \App\Models\Setting::getValueByKey('platform_fee_ratio', 0.03);
-        $rawMat = collect($this->lignes_json ?? [])
-            ->where('type', 'mat')
-            ->sum('montant');
-        return (int) round($rawMat * (1 + $platformFeeRatio));
+        $artisanStockFeeRatio = \App\Models\Setting::getValueByKey('commission_artisan_stock', 0.05);
+
+        $total = 0;
+        foreach ($this->lignes_json ?? [] as $ligne) {
+            if (($ligne['type'] ?? '') === 'mat') {
+                $isArtisanStock = ($ligne['source'] ?? '') === 'artisan_stock' || !empty($ligne['artisan_stock_id']);
+                $ratio = $isArtisanStock ? $artisanStockFeeRatio : $platformFeeRatio;
+                $total += (int) round(($ligne['montant'] ?? 0) * (1 + $ratio));
+            }
+        }
+        return $total;
     }
 
     public function getMontantMoAttribute(): int
