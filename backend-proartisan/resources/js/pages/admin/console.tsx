@@ -518,6 +518,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
     const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState<boolean>(false);
     const [evalSubTab, setEvalSubTab] = useState<'list' | 'artisans'>('list');
     const [selectedArtisanForLedger, setSelectedArtisanForLedger] = useState<ArtisanScoreItem | null>(null);
+    const [expandedSectors, setExpandedSectors] = useState<Record<number, boolean>>({});
 
     const [exchangeRates, setExchangeRates] = useState<{ usdToXof: number; eurToXof: number; eurToUsd: number } | null>(null);
     const [isOnline, setIsOnline] = useState(() => typeof navigator !== 'undefined' ? navigator.onLine : true);
@@ -2499,33 +2500,55 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                                                     className="admin-input mt-1 w-full rounded-xl px-3 py-2 text-sm font-semibold outline-none"
                                                                 />
                                                             </div>
-                                                        </div>
-
-                                                        <div className="pl-6 border-l-2 border-amber-200/50 space-y-3">
-                                                            <span className="text-[10px] font-bold text-slate-500 uppercase">Sous-catégories (Métiers)</span>
-                                                            <div className="grid gap-3 sm:grid-cols-2">
-                                                                {sector.trades && sector.trades.length > 0 ? (
-                                                                    sector.trades.map((trade) => (
-                                                                        <div key={trade.id} className="flex flex-col p-2 bg-white/40 border border-slate-100 rounded-xl">
-                                                                            <input
-                                                                                type="text"
-                                                                                defaultValue={trade.name}
-                                                                                onBlur={(e) => {
-                                                                                    if (e.target.value !== trade.name && e.target.value.trim() !== '') {
-                                                                                        router.put(`/admin/trades/${trade.id}`, {
-                                                                                            name: e.target.value,
-                                                                                        }, { preserveScroll: true });
-                                                                                    }
-                                                                                }}
-                                                                                className="admin-input w-full rounded-lg px-2 py-1 text-xs outline-none bg-transparent hover:bg-white focus:bg-white"
-                                                                            />
-                                                                        </div>
-                                                                    ))
-                                                                ) : (
-                                                                    <p className="text-xs text-[var(--admin-muted)]">Aucun métier associé.</p>
-                                                                )}
+                                                            <div className="pt-5">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setExpandedSectors(prev => ({ ...prev, [sector.id]: !prev[sector.id] }))}
+                                                                    className="p-2 rounded-xl border border-[var(--admin-border)] bg-white hover:bg-slate-100 transition flex items-center gap-1.5 text-xs text-[var(--admin-muted)] font-medium"
+                                                                >
+                                                                    <span>{sector.trades?.length ?? 0} sous-catégories</span>
+                                                                    <svg
+                                                                        xmlns="http://www.w3.org/2000/svg"
+                                                                        viewBox="0 0 20 20"
+                                                                        fill="currentColor"
+                                                                        className={cn(
+                                                                            "w-4 h-4 transition-transform duration-200",
+                                                                            expandedSectors[sector.id] ? "rotate-180" : ""
+                                                                        )}
+                                                                    >
+                                                                        <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+                                                                    </svg>
+                                                                </button>
                                                             </div>
                                                         </div>
+
+                                                        {expandedSectors[sector.id] && (
+                                                            <div className="pl-6 border-l-2 border-amber-200/50 space-y-3 pt-2">
+                                                                <span className="text-[10px] font-bold text-slate-500 uppercase">Sous-catégories (Métiers)</span>
+                                                                <div className="grid gap-3 sm:grid-cols-2">
+                                                                    {sector.trades && sector.trades.length > 0 ? (
+                                                                        sector.trades.map((trade) => (
+                                                                            <div key={trade.id} className="flex flex-col p-2 bg-white/40 border border-slate-100 rounded-xl">
+                                                                                <input
+                                                                                    type="text"
+                                                                                    defaultValue={trade.name}
+                                                                                    onBlur={(e) => {
+                                                                                        if (e.target.value !== trade.name && e.target.value.trim() !== '') {
+                                                                                            router.put(`/admin/trades/${trade.id}`, {
+                                                                                                name: e.target.value,
+                                                                                            }, { preserveScroll: true });
+                                                                                        }
+                                                                                    }}
+                                                                                    className="admin-input w-full rounded-lg px-2 py-1 text-xs outline-none bg-transparent hover:bg-white focus:bg-white"
+                                                                                />
+                                                                            </div>
+                                                                        ))
+                                                                    ) : (
+                                                                        <p className="text-xs text-[var(--admin-muted)]">Aucun métier associé.</p>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 ))
                                             ) : (
