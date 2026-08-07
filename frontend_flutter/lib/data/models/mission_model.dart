@@ -18,6 +18,7 @@ class MissionModel {
   final String? paymentStatus;
   final String paymentType;
   final String? statusGemini;
+  final bool hasDevis;
 
   const MissionModel({
     required this.id,
@@ -39,6 +40,7 @@ class MissionModel {
     this.paymentStatus,
     this.paymentType = 'total',
     this.statusGemini,
+    this.hasDevis = false,
   });
 
   bool get needsReferent => montantTotal > 2000000;
@@ -149,6 +151,7 @@ class MissionModel {
           (json['statusGemini'] ?? json['status'] ?? '').toString().isEmpty
           ? null
           : (json['statusGemini'] ?? json['status']).toString(),
+      hasDevis: json['has_devis'] == true || json['hasDevis'] == true,
     );
   }
 
@@ -172,6 +175,7 @@ class MissionModel {
     'paymentStatus': paymentStatus,
     'payment_type': paymentType,
     'statusGemini': statusGemini,
+    'has_devis': hasDevis,
   };
 
   MissionModel copyWith({
@@ -194,6 +198,7 @@ class MissionModel {
     String? paymentStatus,
     String? paymentType,
     String? statusGemini,
+    bool? hasDevis,
   }) {
     return MissionModel(
       id: id ?? this.id,
@@ -215,6 +220,7 @@ class MissionModel {
       paymentStatus: paymentStatus ?? this.paymentStatus,
       paymentType: paymentType ?? this.paymentType,
       statusGemini: statusGemini ?? this.statusGemini,
+      hasDevis: hasDevis ?? this.hasDevis,
     );
   }
 
