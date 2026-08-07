@@ -269,6 +269,11 @@ class DevisService
         $devis->update(['statut' => 'refuse']);
 
         $devis->loadMissing(['artisan', 'mission']);
+        
+        if ($devis->mission) {
+            $devis->mission->update(['artisan_id' => null]);
+        }
+
         $this->notificationService->send(
             $devis->artisan,
             'devis',
