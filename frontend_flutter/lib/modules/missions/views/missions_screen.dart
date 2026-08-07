@@ -408,6 +408,15 @@ class _MissionCard extends StatelessWidget {
     if (role == 'artisan') {
       switch (mission.status) {
         case 'en_attente':
+          if (mission.hasDevis) {
+            return _MissionAction(
+              label: 'Devis envoyé',
+              subtitle: 'Votre devis a été soumis. En attente de la décision du client.',
+              color: _Palette.muted,
+              icon: Icons.hourglass_empty_outlined,
+              onTap: null,
+            );
+          }
           return _MissionAction(
             label: 'Faire devis',
             subtitle: 'Chiffrage attendu pour debloquer la suite du workflow.',
@@ -556,7 +565,7 @@ class _MissionAction {
   final String subtitle;
   final Color color;
   final IconData icon;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 }
 
 class _EmptyState extends StatelessWidget {

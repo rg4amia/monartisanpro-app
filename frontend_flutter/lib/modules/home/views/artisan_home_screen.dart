@@ -945,6 +945,14 @@ class _MissionQueueCard extends StatelessWidget {
   _MissionAction _resolveAction(MissionModel mission) {
     switch (mission.status) {
       case 'en_attente':
+        if (mission.hasDevis) {
+          return _MissionAction(
+            label: 'Devis envoyé',
+            subtitle: 'Votre devis a été soumis. En attente de la décision du client.',
+            color: _Palette.muted,
+            onTap: null,
+          );
+        }
         return _MissionAction(
           label: 'Devis',
           subtitle:
@@ -998,7 +1006,7 @@ class _MissionAction {
   final String label;
   final String subtitle;
   final Color color;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 }
 
 class _MetaText extends StatelessWidget {

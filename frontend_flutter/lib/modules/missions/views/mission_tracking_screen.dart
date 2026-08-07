@@ -1521,7 +1521,7 @@ class _BottomActions extends StatelessWidget {
   }
 
   Widget _artisanActions() {
-    if (mission.status == 'en_attente' && devis == null) {
+    if (mission.status == 'en_attente' && devis == null && !mission.hasDevis) {
       return _ActionRow(
         primary: _ActionButtonConfig(
           label: 'Creer le devis',
