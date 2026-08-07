@@ -40,10 +40,19 @@ class DevisService
             throw new \InvalidArgumentException("Cette mission a déjà un devis en cours d'examen par le client.");
         }
 
-        $materialsRequired = filter_var($payload['materials_required'] ?? true, FILTER_VALIDATE_BOOLEAN);
+        // RÈGLE : Si l'artisan n'indique pas explicitement si le matériel est requis,
+        // on le déduit de la présence ou non de lignes de type 'mat' (matériaux) dans le devis.
+        $hasMaterials = collect($payload['lignes_json'] ?? [])
+            ->where('type', 'mat')
+            ->isNotEmpty();
+
+        $materialsRequired = isset($data['materials_required'])
+            ? filter_var($data['materials_required'], FILTER_VALIDATE_BOOLEAN)
+            : $hasMaterials;
+
         $interventionTypeId = $payload['intervention_type_id'] ?? null;
 
-        // 1. If materials_required is true, must select articles from supplier catalog
+        // 1. Si les matériaux sont requis, on doit sélectionner au moins un article du catalogue fournisseur agréé
         if ($materialsRequired) {
             $hasCatalogMaterial = collect($payload['lignes_json'])
                 ->where('type', 'mat')
@@ -53,11 +62,24 @@ class DevisService
                 throw new \InvalidArgumentException("Le devis doit contenir au moins un article d'un fournisseur agréé car l'acquisition de matériel est requise.");
             }
         } else {
-            // If materials_required is false, intervention_type_id must be specified
+            // Si pas de matériel requis et pas d'intervention_type_id fourni:
             if (empty($interventionTypeId)) {
-                throw new \InvalidArgumentException("Veuillez indiquer le type d'intervention pour ce devis sans matériel.");
+                // Si materials_required n'a pas été fourni explicitement (vieux client mobile),
+                // on applique un type d'intervention par défaut.
+                if (!isset($data['materials_required'])) {
+                    $defaultType = \App\Models\InterventionType::first();
+                    if ($defaultType) {
+                        $interventionTypeId = $defaultType->id;
+                    }
+                }
+                
+                // Si après cela c'est toujours vide
+                if (empty($interventionTypeId)) {
+                    throw new \InvalidArgumentException("Veuillez indiquer le type d'intervention pour ce devis sans matériel.");
+                }
             }
         }
+
 
         // 2. Validate Labor (Main d'œuvre - MO) obligation
         $requiresLabor = true;
