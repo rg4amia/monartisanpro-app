@@ -5,6 +5,8 @@ import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/utils/bypass_validator.dart';
+
 import '../../../core/storage/storage_service.dart';
 import '../../../data/models/devis_model.dart';
 import '../../../data/models/payment_model.dart';
@@ -397,6 +399,24 @@ class DevisController extends GetxController {
     if (jalons.isEmpty) {
       errorMsg.value = 'Ajoutez au moins un jalon au devis';
       return false;
+    }
+
+    // Détecter les tentatives de contournement sur les lignes du devis
+    for (final ligne in lignes) {
+      final err = BypassValidator.validate(ligne.description);
+      if (err != null) {
+        errorMsg.value = 'Ligne "${ligne.description}" : $err';
+        return false;
+      }
+    }
+
+    // Détecter les tentatives de contournement sur les jalons
+    for (final jalon in jalons) {
+      final err = BypassValidator.validate(jalon.description);
+      if (err != null) {
+        errorMsg.value = 'Jalon "${jalon.description}" : $err';
+        return false;
+      }
     }
 
     final totalJalons = jalons.fold(0, (sum, j) => sum + j.montant);

@@ -29,9 +29,7 @@ class MissionCacheService {
     await Hive.initFlutter();
 
     // ── CONFIGURATION DU CHIFFREMENT SECURISE ──────────────────────────────────
-    const secureStorage = FlutterSecureStorage(
-      aOptions: AndroidOptions(encryptedSharedPreferences: true),
-    );
+    const secureStorage = FlutterSecureStorage();
 
     // Récupérer ou générer la clé de chiffrement AES-256
     final containsEncryptionKey = await secureStorage.containsKey(key: 'hive_encryption_key');

@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../app/routes/app_routes.dart';
 import '../../../core/storage/storage_service.dart';
+import '../../../core/utils/bypass_validator.dart';
 import '../controllers/missions_controller.dart';
 
 // ─── Design Tokens ────────────────────────────────────────────────────────────
@@ -230,6 +231,17 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
                           Get.snackbar(
                             'Erreur',
                             'Veuillez fournir plus de détails',
+                          );
+                          return;
+                        }
+                        
+                        final bypassError = BypassValidator.validate(_descCtrl.text);
+                        if (bypassError != null) {
+                          Get.snackbar(
+                            'Sécurité',
+                            bypassError,
+                            backgroundColor: Colors.red[100],
+                            colorText: Colors.red[900],
                           );
                           return;
                         }
