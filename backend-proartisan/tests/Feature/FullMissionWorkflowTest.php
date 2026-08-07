@@ -87,6 +87,10 @@ class FullMissionWorkflowTest extends TestCase
                         'type' => 'mat',
                         'description' => 'Ciment Premium',
                         'montant' => 65000,
+                        'source' => 'catalog',
+                        'supplier_product_id' => $product->id,
+                        'quantity' => 2,
+                        'unit_price' => 32500,
                     ],
                     [
                         'type' => 'mo',
