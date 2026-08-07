@@ -221,19 +221,21 @@ class WalletService
             ]);
 
             // Crédit du wallet_materiaux de l'artisan
-            $this->credit(
-                $artisan,
-                WalletType::WALLET_MATERIAUX,
-                $montantMat,
-                "Séquestre matériaux - Mission #{$mission->id}",
-                [
-                    'mission_id' => $mission->id,
-                    'transaction_id' => $paiementTransaction->id,
-                    'type' => 'escrow_materiaux'
-                ]
-            );
+            if ($montantMat > 0) {
+                $this->credit(
+                    $artisan,
+                    WalletType::WALLET_MATERIAUX,
+                    $montantMat,
+                    "Séquestre matériaux - Mission #{$mission->id}",
+                    [
+                        'mission_id' => $mission->id,
+                        'transaction_id' => $paiementTransaction->id,
+                        'type' => 'escrow_materiaux'
+                    ]
+                );
+            }
 
-            if (!$isHybrid) {
+            if (!$isHybrid && $montantMo > 0) {
                 // Crédit du wallet_mo de l'artisan
                 $this->credit(
                     $artisan,
@@ -279,7 +281,10 @@ class WalletService
             ]);
 
             // Calcul de la commission MO (TTC -> HT)
-            $commissionService = \App\Models\Setting::getValueByKey('commission_service', 0.10);
+            $devis = \App\Models\Devis::where('mission_id', $mission->id)->where('statut', 'accepte')->first();
+            $commissionService = $devis && $devis->commission_service_ratio !== null 
+                ? (float) $devis->commission_service_ratio 
+                : \App\Models\Setting::getValueByKey('commission_service', 0.10);
             $commission = (int) round($jalon->montant * ($commissionService / (1 + $commissionService)));
             $gainNetArtisan = $jalon->montant - $commission;
 

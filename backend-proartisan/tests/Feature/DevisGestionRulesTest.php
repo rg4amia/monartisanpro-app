@@ -151,6 +151,7 @@ class DevisGestionRulesTest extends TestCase
             'mission_id' => $mission->id,
             'artisan_id' => $artisan->id,
             'statut' => 'soumis',
+            'commission_service_ratio' => 0.0,
             'lignes_json' => [
                 ['type' => 'mo', 'description' => 'Pose', 'montant' => 35000],
             ],
@@ -357,5 +358,97 @@ class DevisGestionRulesTest extends TestCase
         $responseNight->assertJsonPath('data.montantMateriaux', 2100);
 
         \Illuminate\Support\Carbon::setTestNow(); // Reset time
+    }
+
+    public function test_dynamic_labor_commission_based_on_artisan_trade(): void
+    {
+        // 1. Create client and artisan
+        $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
+        $artisan = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif']);
+
+        // 2. Set up Sector and Trade (e.g. Maçon)
+        $sector = \App\Models\Sector::create(['name' => 'Maçonnerie']);
+        $trade = \App\Models\Trade::create(['sector_id' => $sector->id, 'name' => 'Maçon gros œuvre']);
+
+        $artisan->artisanProfile()->create([
+            'sector_id' => $sector->id,
+            'trade_id' => $trade->id,
+            'intervient_la_nuit' => false,
+        ]);
+
+        // 3. Configure settings
+        // Global: 10% (0.10)
+        // Custom categories: {"macon": 0.05} (5%)
+        \App\Models\Setting::where('key', 'commission_service')->update(['value' => '0.10']);
+        \App\Models\Setting::where('key', 'commission_categories')->update(['value' => '{"macon": 0.05}']);
+
+        // Test helper directly first
+        $this->assertEquals(0.05, \App\Models\Setting::getLaborCommissionForArtisan($artisan));
+
+        // 4. Create a mission and submit a devis
+        $mission = Mission::create([
+            'client_id' => $client->id,
+            'description' => 'Test mission description for maçon',
+            'status' => 'draft',
+        ]);
+
+        $response = $this->actingAs($artisan)
+            ->postJson("/api/v1/missions/{$mission->id}/devis", [
+                'materials_required' => false,
+                'intervention_type_id' => 1,
+                'lignes' => [
+                    ['type' => 'mo', 'description' => 'Montage de mur', 'montant' => 100000],
+                ],
+                'jalons' => [
+                    ['ordre' => 1, 'description' => 'Jalon unique', 'montant' => 100000, 'date_cible' => now()->addDays(5)->toDateString()],
+                ],
+            ]);
+        $response->assertCreated();
+
+        // 5. Verify the commission saved on the devis is 0.05
+        $devisId = $response->json('data.id');
+        $devis = Devis::findOrFail($devisId);
+        $this->assertEquals(0.05, $devis->commission_service_ratio);
+
+        // 6. Verify total MO amount in response (should be 100000 * 1.05 = 105000)
+        $response->assertJsonPath('data.montantMo', 105000);
+        $response->assertJsonPath('data.montantTotal', 105000);
+
+        // 7. Accept the devis (requires a payment transaction)
+        $tx = Transaction::create([
+            'type' => 'acompte',
+            'montant' => 105000,
+            'wallet_source' => 'client_wallet',
+            'wallet_dest' => 'escrow_wallet',
+            'provider' => 'wave',
+            'statut' => 'confirme',
+            'reference_externe' => 'REF-MACON-TX',
+        ]);
+        $tx->metadata = ['devis_id' => $devis->id];
+        $tx->mission_id = $mission->id;
+        $tx->save();
+
+        // Call the service to accept
+        app(\App\Services\DevisService::class)->accept($devis, $tx);
+
+        // 8. Verify the created Jalon has 105000 as amount
+        $jalon = $mission->jalons()->first();
+        $this->assertEquals(105000, $jalon->montant);
+
+        // 9. Process payment of the Jalon and verify the calculated platform commission
+        // (105000 * 0.05 / 1.05 = 5000)
+        $artisan->wallet_mo = 105000;
+        $artisan->save();
+
+        app(\App\Services\WalletService::class)->releaseJalon($jalon);
+
+        // Check platform net gain transaction: Net gain should be 105000 - 5000 = 100000.
+        $this->assertDatabaseHas('transactions', [
+            'mission_id' => $mission->id,
+            'user_id' => $artisan->id,
+            'type' => 'liberation_jalon',
+            'montant' => 100000,
+            'statut' => 'confirme',
+        ]);
     }
 }

@@ -8,7 +8,7 @@ class Devis extends Model
 {
     protected $fillable = [
         'mission_id', 'artisan_id', 'lignes_json', 'jalons_json', 'statut', 'ratio_materiaux',
-        'materials_required', 'intervention_type_id',
+        'materials_required', 'intervention_type_id', 'commission_service_ratio',
     ];
 
     protected function casts(): array
@@ -18,6 +18,7 @@ class Devis extends Model
             'jalons_json'  => 'array',
             'materials_required' => 'boolean',
             'intervention_type_id' => 'integer',
+            'commission_service_ratio' => 'float',
         ];
     }
 
@@ -59,7 +60,14 @@ class Devis extends Model
 
     public function getMontantMoAttribute(): int
     {
-        $commissionService = \App\Models\Setting::getValueByKey('commission_service', 0.10);
+        if ($this->commission_service_ratio !== null) {
+            $commissionService = (float) $this->commission_service_ratio;
+        } else {
+            $commissionService = $this->artisan 
+                ? \App\Models\Setting::getLaborCommissionForArtisan($this->artisan)
+                : \App\Models\Setting::getValueByKey('commission_service', 0.10);
+        }
+
         $rawMo = collect($this->lignes_json ?? [])
             ->where('type', 'mo')
             ->sum('montant');
