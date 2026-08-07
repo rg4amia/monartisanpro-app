@@ -7,10 +7,26 @@ $kernel->bootstrap();
 use Illuminate\Support\Facades\Artisan;
 
 try {
-    echo "Running migrations...<br>";
-    $output = Artisan::call('migrate', ['--force' => true]);
-    echo "Exit code: " . $output . "<br>";
-    echo "<pre>" . htmlspecialchars(Artisan::output()) . "</pre>";
+    echo "Running target migrations...<br>";
+    
+    $paths = [
+        'database/migrations/2026_08_07_120000_create_intervention_types_table.php',
+        'database/migrations/2026_08_07_120100_add_intervention_fields_to_devis_table.php',
+        'database/migrations/2026_08_07_120200_seed_commission_artisan_stock_setting.php',
+        'database/migrations/2026_08_07_130000_add_commission_service_ratio_to_devis_table.php'
+    ];
+    
+    foreach ($paths as $path) {
+        echo "Running: $path ... ";
+        $output = Artisan::call('migrate', [
+            '--force' => true,
+            '--path' => $path
+        ]);
+        echo "Exit: " . $output . "<br>";
+        echo "<pre>" . htmlspecialchars(Artisan::output()) . "</pre><hr>";
+    }
+    
+    echo "Done!";
 } catch (\Exception $e) {
     echo "Error: " . $e->getMessage() . "<br>";
     echo "<pre>" . htmlspecialchars($e->getTraceAsString()) . "</pre>";
