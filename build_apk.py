@@ -30,6 +30,8 @@ print("Nettoyage force des repertoires temporaires...")
 dirs_to_clean = [
     os.path.join(FLUTTER_DIR, "build"),
     os.path.join(FLUTTER_DIR, ".dart_tool"),
+    os.path.join(FLUTTER_DIR, "android", "app", "build"),
+    os.path.join(FLUTTER_DIR, "android", ".gradle"),
     os.path.join(FLUTTER_DIR, "ios", "Flutter", "ephemeral"),
     os.path.join(FLUTTER_DIR, "linux", "flutter", "ephemeral"),
     os.path.join(FLUTTER_DIR, "macos", "Flutter", "ephemeral"),
@@ -56,7 +58,7 @@ if result.returncode != 0:
 
 # 4. Copie des APKs générés vers la racine du projet
 print("\n[4/5] Copie des APKs generes...")
-build_out_dir = os.path.join(FLUTTER_DIR, "build", "app", "outputs", "flutter-apk")
+build_out_dir = os.path.join(FLUTTER_DIR, "android", "app", "build", "outputs", "flutter-apk")
 
 copied_any = False
 if os.path.exists(build_out_dir):

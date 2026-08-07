@@ -10,7 +10,7 @@
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
 
     <application
-        android:label="ProsArtisan" android:name="${applicationName}" android:icon="@mipmap/ic_launcher" android:usesCleartextTraffic="true">
+        android:label="ProsArtisan" android:name="${applicationName}" android:icon="@mipmap/launcher_icon" android:usesCleartextTraffic="true">
         <!-- Yandex Maps API Key -->
         <meta-data android:name="com.yandex.maps.api_key" android:value="e8411c6c-7c2d-414b-9cb0-029fc7d5a71d"/>
 
