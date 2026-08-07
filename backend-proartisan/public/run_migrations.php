@@ -7,7 +7,7 @@ $kernel->bootstrap();
 use Illuminate\Support\Facades\Artisan;
 
 try {
-    echo "Running target migrations...<br>";
+    echo "Running target migrations individually...<br>";
     
     $paths = [
         'database/migrations/2026_08_07_120000_create_intervention_types_table.php',
@@ -18,15 +18,19 @@ try {
     
     foreach ($paths as $path) {
         echo "Running: $path ... ";
-        $output = Artisan::call('migrate', [
-            '--force' => true,
-            '--path' => $path
-        ]);
-        echo "Exit: " . $output . "<br>";
-        echo "<pre>" . htmlspecialchars(Artisan::output()) . "</pre><hr>";
+        try {
+            $output = Artisan::call('migrate', [
+                '--force' => true,
+                '--path' => $path
+            ]);
+            echo "Success! (Exit: " . $output . ")<br>";
+            echo "<pre>" . htmlspecialchars(Artisan::output()) . "</pre><hr>";
+        } catch (\Exception $eInner) {
+            echo "Failed: " . htmlspecialchars($eInner->getMessage()) . "<br><hr>";
+        }
     }
     
-    echo "Done!";
+    echo "All target migrations executed.";
 } catch (\Exception $e) {
     echo "Error: " . $e->getMessage() . "<br>";
     echo "<pre>" . htmlspecialchars($e->getTraceAsString()) . "</pre>";
