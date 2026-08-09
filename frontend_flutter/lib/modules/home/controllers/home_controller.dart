@@ -10,16 +10,21 @@ import '../../../data/repositories/artisan_repository.dart';
 import '../../../data/repositories/mission_repository.dart';
 import '../../../data/repositories/wallet_repository.dart';
 import '../../../data/repositories/user_repository.dart';
+import '../../../data/models/communication_model.dart';
+import '../../../data/repositories/communication_repository.dart';
 
 class HomeController extends GetxController {
   final ArtisanRepository _artisanRepo = ArtisanRepository();
   final MissionRepository _missionRepo = MissionRepository();
   final WalletRepository _walletRepo = WalletRepository();
   final UserRepository _userRepo = UserRepository();
+  final CommunicationRepository _communicationRepo = CommunicationRepository();
 
   final artisans = <ArtisanModel>[].obs;
   final artisanMissions = <MissionModel>[].obs;
   final activeMissions = <MissionModel>[].obs;
+  final announcements = <CommunicationModel>[].obs;
+  final tips = <CommunicationModel>[].obs;
   final isLoading = false.obs;
   final hasError = false.obs;
   final isMapLoading = false.obs;
@@ -328,6 +333,17 @@ class HomeController extends GetxController {
         final missions = await _missionRepo.getMissions(status: 'en_cours');
         activeMissions.value = missions;
         activeMissionsCount.value = missions.length;
+      }
+
+      // Load active communications (announcements & tips)
+      try {
+        final commsMap = await _communicationRepo.getActiveCommunications();
+        announcements.value = commsMap['annonces'] ?? [];
+        tips.value = commsMap['le_saviez_vous'] ?? [];
+      } catch (e) {
+        debugPrint('[HomeController] Error fetching active communications: $e');
+        announcements.clear();
+        tips.clear();
       }
   }
 

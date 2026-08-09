@@ -7,6 +7,7 @@ import '../../../core/utils/formatters.dart';
 import '../../../data/models/mission_model.dart';
 import '../../../shared/widgets/loading_shimmer.dart';
 import '../../notifications/controllers/notifications_controller.dart';
+import '../../../shared/widgets/communication_banner.dart';
 import '../controllers/home_controller.dart';
 
 class SupplierHomeScreen extends StatelessWidget {
@@ -53,6 +54,8 @@ class SupplierHomeScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        Obx(() => CommunicationBanner(announcements: controller.announcements)),
+                        Obx(() => LeSaviezVousCarousel(tips: controller.tips)),
                         Row(
                           children: [
                             Expanded(

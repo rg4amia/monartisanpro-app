@@ -91,4 +91,7 @@ class ApiEndpoints {
   static const String notifications = '/notifications';
   static String markNotificationRead(int id) => '/notifications/$id/read';
   static const String markAllRead = '/notifications/mark-all-read';
+
+  // Communications
+  static const String communicationsActive = '/communications/active';
 }

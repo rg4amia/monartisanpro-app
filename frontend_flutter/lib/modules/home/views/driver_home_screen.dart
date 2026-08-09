@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../data/models/mission_model.dart';
 import '../../notifications/controllers/notifications_controller.dart';
+import '../../../shared/widgets/communication_banner.dart';
 import '../controllers/home_controller.dart';
 
 class DriverHomeScreen extends StatefulWidget {
@@ -117,6 +118,14 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
             slivers: [
               SliverToBoxAdapter(child: _buildHeader()),
               SliverToBoxAdapter(child: _buildSubTabBar()),
+              SliverToBoxAdapter(
+                child: Obx(() => Column(
+                  children: [
+                    CommunicationBanner(announcements: controller.announcements),
+                    LeSaviezVousCarousel(tips: controller.tips),
+                  ],
+                )),
+              ),
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),

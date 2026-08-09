@@ -26,6 +26,7 @@ use App\Http\Controllers\Api\V1\TransactionController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\UploadController;
 use App\Http\Controllers\Api\V1\WebhookController;
+use App\Http\Controllers\Api\V1\CommunicationController;
 use App\Http\Controllers\Admin\LlmAdminController;
 use Illuminate\Support\Facades\Route;
 
@@ -202,6 +203,9 @@ Route::prefix('v1')->group(function () {
         Route::put('/notifications/{notification}/read', [NotificationController::class, 'markRead']);
         Route::post('/notifications/mark-all-read',      [NotificationController::class, 'markAllRead']);
 
+        // ── Communications (app mobile — publications actives) ─────────────
+        Route::get('/communications/active', [CommunicationController::class, 'activeForUser']);
+
         // ── SMS (Admin/Testing) ───────────────────────────────────────────────
         Route::prefix('sms')->group(function () {
             Route::post('/send',        [SmsController::class, 'send']);
@@ -233,6 +237,15 @@ Route::prefix('v1')->group(function () {
 
             Route::get('/users', [AdminController::class, 'users']);
             Route::get('/transactions', [AdminController::class, 'transactions']);
+
+            // ── Communications (gestion admin) ────────────────────────────────
+            Route::get('/communications', [CommunicationController::class, 'index']);
+            Route::post('/communications', [CommunicationController::class, 'store']);
+            Route::get('/communications/{communication}', [CommunicationController::class, 'show']);
+            Route::put('/communications/{communication}', [CommunicationController::class, 'update']);
+            Route::post('/communications/{communication}/publish', [CommunicationController::class, 'publish']);
+            Route::post('/communications/{communication}/cloturer', [CommunicationController::class, 'cloturer']);
+            Route::delete('/communications/{communication}', [CommunicationController::class, 'destroy']);
         });
     });
 });
