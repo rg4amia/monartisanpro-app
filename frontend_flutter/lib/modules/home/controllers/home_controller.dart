@@ -170,7 +170,6 @@ class HomeController extends GetxController {
 
   /// Nombre max de tentatives de chargement avant d'afficher l'erreur.
   static const int _maxRetries = 3;
-
   Future<void> _loadData() async {
     isLoading.value = true;
     hasError.value = false;
@@ -178,23 +177,20 @@ class HomeController extends GetxController {
     for (var attempt = 1; attempt <= _maxRetries; attempt++) {
       try {
         await _loadDataCore();
-        // Succès — on sort de la boucle de retry
         hasError.value = false;
+        isLoading.value = false;
         return;
       } catch (e) {
         debugPrint('[HomeController] Tentative $attempt/$_maxRetries échouée : $e');
         if (attempt < _maxRetries) {
-          // Backoff exponentiel : 2s, 4s
           await Future.delayed(Duration(seconds: 2 * attempt));
         } else {
           hasError.value = true;
+          isLoading.value = false;
         }
-      } finally {
-        isLoading.value = false;
       }
     }
   }
-
   /// Logique principale de chargement — extraite pour le retry.
   Future<void> _loadDataCore() async {
       await _getLocation();
