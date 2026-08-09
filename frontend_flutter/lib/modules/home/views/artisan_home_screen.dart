@@ -8,6 +8,7 @@ import '../../../data/models/mission_model.dart';
 import '../../../shared/widgets/loading_shimmer.dart';
 import '../../main_tab/controllers/main_tab_controller.dart';
 import '../../notifications/controllers/notifications_controller.dart';
+import '../../../shared/widgets/communication_banner.dart';
 import '../controllers/home_controller.dart';
 
 abstract class _Palette {
@@ -124,6 +125,8 @@ class ArtisanHomeScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      Obx(() => CommunicationBanner(announcements: controller.announcements)),
+                      Obx(() => LeSaviezVousCarousel(tips: controller.tips)),
                       _StatGrid(controller: controller),
                       const SizedBox(height: 24),
                       _QuickActions(controller: controller, missions: missions),

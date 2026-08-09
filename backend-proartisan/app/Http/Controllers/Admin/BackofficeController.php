@@ -9,6 +9,7 @@ use App\Http\Requests\Litige\ArbitrateLitigeRequest;
 use App\Models\FournisseurAgree;
 use App\Models\Litige;
 use App\Models\User;
+use App\Models\Communication;
 use App\Services\AdminService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -63,6 +64,11 @@ class BackofficeController extends Controller
     public function evaluations(): Response
     {
         return $this->renderPage('admin/evaluations');
+    }
+
+    public function communications(): Response
+    {
+        return $this->renderPage('admin/communications');
     }
 
     public function toggleScoreFreeze(Request $request, User $user): RedirectResponse
@@ -331,6 +337,10 @@ class BackofficeController extends Controller
             'scoreLedger' => $this->adminService->listScoreLedger(),
             'settingsList' => \App\Models\Setting::all(),
             'sectors' => \App\Models\Sector::with('trades')->get(),
+            'communications' => Communication::with('auteur:id,name,phone')
+                ->orderByDesc('updated_at')
+                ->limit(100)
+                ->get(),
             'allPermissions' => \App\Models\Permission::all(),
             'rolesPermissions' => [
                 'client' => \Illuminate\Support\Facades\DB::table('permission_role')

@@ -7,7 +7,7 @@ import LlmAdminPanel from './llm-admin-panel';
 import RolesPermissionsPanel from './roles-permissions-panel';
 import AiDashboardPanel from './ai-dashboard-panel';
 
-type AdminTab = 'dashboard' | 'kyc' | 'missions' | 'litiges' | 'users' | 'transactions' | 'settings' | 'llm_admin' | 'roles_permissions' | 'evaluations' | 'ai_dashboard';
+type AdminTab = 'dashboard' | 'kyc' | 'missions' | 'litiges' | 'users' | 'transactions' | 'settings' | 'llm_admin' | 'roles_permissions' | 'evaluations' | 'ai_dashboard' | 'communications';
 type ThemeMode = 'light' | 'dark';
 type Tone = 'amber' | 'green' | 'rose' | 'blue' | 'slate';
 
@@ -281,6 +281,20 @@ interface AdminPageProps {
     }>;
     rolesPermissions?: Record<string, string[]>;
     allPermissions?: Array<{ id: number; name: string; description: string; category: string }>;
+    communications?: Array<{
+        id: number;
+        type: 'annonce' | 'le_saviez_vous';
+        titre: string;
+        contenu: string;
+        cibles_json: string[];
+        statut: 'brouillon' | 'publie' | 'cloture';
+        auteur_id: number;
+        publie_at: string | null;
+        cloture_at: string | null;
+        created_at: string;
+        updated_at: string;
+        auteur?: { id: number; name: string; phone: string } | null;
+    }>;
 }
 
 const tabRoutes: Record<AdminTab, string> = {
@@ -295,6 +309,7 @@ const tabRoutes: Record<AdminTab, string> = {
     ai_dashboard: '/admin/ai-dashboard',
     roles_permissions: '/admin/roles-permissions',
     evaluations: '/admin/evaluations',
+    communications: '/admin/communications',
 };
 
 const tabMeta: Record<AdminTab, { description: string; label: string; section: string }> = {
@@ -353,6 +368,11 @@ const tabMeta: Record<AdminTab, { description: string; label: string; section: s
         section: 'QUALITÉ',
         description: 'Suivi de la réputation des artisans, calcul du score N\'Zassa et historiques des évaluations.',
     },
+    communications: {
+        label: 'Communications',
+        section: 'COMMUNICATION',
+        description: 'Gérez les annonces et astuces "Le saviez-vous ?" diffusées aux utilisateurs de la plateforme.',
+    },
 };
 
 const searchPlaceholders: Record<AdminTab, string> = {
@@ -367,6 +387,7 @@ const searchPlaceholders: Record<AdminTab, string> = {
     llm_admin: 'Rechercher une règle ou un document...',
     ai_dashboard: 'Rechercher un log ou un modèle...',
     evaluations: 'Rechercher une évaluation, un artisan ou un commentaire...',
+    communications: 'Rechercher une communication, un titre ou une cible...',
 };
 
 const quickDockTabs: AdminTab[] = ['dashboard', 'missions', 'users', 'settings'];
@@ -502,7 +523,7 @@ function sumAmount(items: AdminTransaction[]): number {
 export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
     const activeTab = initialTab;
     const { props } = usePage<AdminPageProps>();
-    const { auth, dashboard, errors, flash, fournisseurs, kycUsers, litiges, missions, transactions, users, settingsList, evaluationsList, artisansScores, scoreLedger } = props;
+    const { auth, dashboard, errors, flash, fournisseurs, kycUsers, litiges, missions, transactions, users, settingsList, evaluationsList, artisansScores, scoreLedger, communications } = props as AdminPageProps & { communications?: AdminPageProps['communications'] };
 
     const [themeMode, setThemeMode] = useState<ThemeMode>(() => {
         if (typeof window !== 'undefined' && window.localStorage) {
@@ -978,6 +999,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
             items: [
                 { id: 'settings', label: tabMeta.settings.label },
                 { id: 'roles_permissions', label: tabMeta.roles_permissions.label },
+                { count: (communications ?? []).filter(c => c.statut === 'publie').length, id: 'communications', label: tabMeta.communications.label },
             ],
         },
     ];
@@ -1071,6 +1093,15 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                 ];
             default:
                 return [];
+            case 'communications': {
+                const comms = communications ?? [];
+                return [
+                    { label: 'Total', tone: 'amber' as const, value: numberFormat.format(comms.length) },
+                    { label: 'Publi\u00e9es', tone: 'green' as const, value: numberFormat.format(comms.filter(c => c.statut === 'publie').length) },
+                    { label: 'Brouillons', tone: 'blue' as const, value: numberFormat.format(comms.filter(c => c.statut === 'brouillon').length) },
+                    { label: 'Cl\u00f4tur\u00e9es', tone: 'slate' as const, value: numberFormat.format(comms.filter(c => c.statut === 'cloture').length) },
+                ];
+            }
         }
     }, [
         activeTab,
@@ -1096,6 +1127,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         evaluationsList,
         artisansScores,
         props.allPermissions?.length,
+        communications,
     ]);
 
     const summaryCards = [
@@ -2799,6 +2831,155 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                             </DataTable>
                                         </Surface>
                                     )}
+                             ) : null}
+
+                            {activeTab === 'communications' ? (
+                                <section className="mt-5 space-y-5">
+                                    <Surface className="rounded-[32px] p-5 lg:p-6">
+                                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-[var(--admin-border)] pb-4 mb-4">
+                                            <div>
+                                                <SectionTitle>Gestion des Communications \u0026 Astuces</SectionTitle>
+                                                <p className="text-sm text-[var(--admin-text-soft)]">Publiez des annonces ou des astuces "Le saviez-vous ?" cibl\u00e9es par r\u00f4le.</p>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    // Ouvre un formulaire de cr\u00e9ation (nous utiliserons un simple prompt ou g\u00e9rerons un \u00e9tat d\u00e9di\u00e9 si requis)
+                                                    const titre = window.prompt("Titre de la communication :");
+                                                    if (!titre) return;
+                                                    const contenu = window.prompt("Contenu / Description :");
+                                                    if (!contenu) return;
+                                                    const type = window.confirm("Est-ce un 'Le saviez-vous ?' (Annuler pour Annonce)") ? 'le_saviez_vous' : 'annonce';
+                                                    const rolesStr = window.prompt("Espaces cibles (s\u00e9par\u00e9s par des virgules, ex: client,artisan,fournisseur,livreur) :", "client,artisan");
+                                                    if (!rolesStr) return;
+                                                    const cibles = rolesStr.split(',').map(r => r.trim()).filter(Boolean);
+
+                                                    router.post('/v1/admin/communications', {
+                                                        titre,
+                                                        contenu,
+                                                        type,
+                                                        cibles
+                                                    }, {
+                                                        preserveScroll: true,
+                                                        onSuccess: () => alert("Communication cr\u00e9\u00e9e en brouillon.")
+                                                    });
+                                                }}
+                                                className="rounded-full bg-[#ebb95e] text-[#241b16] px-4 py-2 text-sm font-semibold hover:opacity-90 transition flex items-center gap-2"
+                                            >
+                                                <PlusIcon className="h-4 w-4" /> Nouvelle publication
+                                            </button>
+                                        </div>
+
+                                        <div className="overflow-x-auto">
+                                            <DataTable>
+                                                <thead>
+                                                    <tr>
+                                                        <th>Titre</th>
+                                                        <th>Type</th>
+                                                        <th>Cibles</th>
+                                                        <th>Statut</th>
+                                                        <th>Auteur</th>
+                                                        <th>Dates</th>
+                                                        <th className="text-right">Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {(!communications || communications.length === 0) ? (
+                                                        <tr>
+                                                            <td colSpan={7} className="text-center py-8 text-[var(--admin-muted)]">
+                                                                Aucune communication enregistr\u00e9e.
+                                                            </td>
+                                                        </tr>
+                                                    ) : (
+                                                        communications.map((comm) => (
+                                                            <tr key={comm.id} className="hover:bg-white/10 transition">
+                                                                <td className="font-semibold text-[var(--admin-text)]">
+                                                                    <div>{comm.titre}</div>
+                                                                    <div className="text-xs text-[var(--admin-text-soft)] font-normal line-clamp-1 mt-1">{comm.contenu}</div>
+                                                                </td>
+                                                                <td>
+                                                                    <span className={cn(
+                                                                        "rounded-full px-2.5 py-1 text-xs font-semibold border",
+                                                                        comm.type === 'le_saviez_vous' 
+                                                                            ? "border-emerald-500 bg-emerald-500/10 text-emerald-400"
+                                                                            : "border-blue-500 bg-blue-500/10 text-blue-400"
+                                                                    )}>
+                                                                        {comm.type === 'le_saviez_vous' ? 'Le saviez-vous ?' : 'Annonce'}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="text-xs">
+                                                                    {comm.cibles_json.join(', ')}
+                                                                </td>
+                                                                <td>
+                                                                    <span className={cn(
+                                                                        "rounded-full px-2 py-0.5 text-xs font-bold border uppercase",
+                                                                        comm.statut === 'publie' ? "border-green-600 bg-green-900/20 text-green-400" :
+                                                                        comm.statut === 'cloture' ? "border-gray-600 bg-gray-900/20 text-gray-400" :
+                                                                        "border-yellow-600 bg-yellow-900/20 text-yellow-400"
+                                                                    )}>
+                                                                        {comm.statut}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="text-xs">
+                                                                    {comm.auteur?.name || 'Syst\u00e8me'}
+                                                                </td>
+                                                                <td className="text-xs text-[var(--admin-text-soft)]">
+                                                                    <div>Cr\u00e9\u00e9 : {new Date(comm.created_at).toLocaleDateString('fr-FR')}</div>
+                                                                    {comm.publie_at && <div>Publi\u00e9 : {new Date(comm.publie_at).toLocaleDateString('fr-FR')}</div>}
+                                                                    {comm.cloture_at && <div>Cl\u00f4tur\u00e9 : {new Date(comm.cloture_at).toLocaleDateString('fr-FR')}</div>}
+                                                                </td>
+                                                                <td className="text-right">
+                                                                    <div className="flex justify-end gap-1.5">
+                                                                        {comm.statut === 'brouillon' && (
+                                                                            <>
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={() => {
+                                                                                        if (window.confirm("Publier cette communication imm\u00e9diatement ?")) {
+                                                                                            router.post(`/v1/admin/communications/${comm.id}/publish`, {}, { preserveScroll: true });
+                                                                                        }
+                                                                                    }}
+                                                                                    className="rounded-lg bg-green-600 text-white px-2.5 py-1 text-xs font-semibold hover:bg-green-700 transition"
+                                                                                >
+                                                                                    Publier
+                                                                                </button>
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={() => {
+                                                                                        if (window.confirm("Supprimer ce brouillon ?")) {
+                                                                                            router.delete(`/v1/admin/communications/${comm.id}`, { preserveScroll: true });
+                                                                                        }
+                                                                                    }}
+                                                                                    className="rounded-lg bg-rose-600 text-white px-2.5 py-1 text-xs font-semibold hover:bg-rose-700 transition"
+                                                                                >
+                                                                                    Supprimer
+                                                                                </button>
+                                                                            </>
+                                                                        )}
+                                                                        {comm.statut === 'publie' && (
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => {
+                                                                                    if (window.confirm("Cl\u00f4turer cette publication ? Elle n'appara\u00eet pas plus sur les applications cibles.")) {
+                                                                                        router.post(`/v1/admin/communications/${comm.id}/cloturer`, {}, { preserveScroll: true });
+                                                                                    }
+                                                                                }}
+                                                                                className="rounded-lg bg-gray-600 text-white px-2.5 py-1 text-xs font-semibold hover:bg-gray-700 transition"
+                                                                            >
+                                                                                Cl\u00f4turer
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        ))
+                                                    )}
+                                                </tbody>
+                                            </DataTable>
+                                        </div>
+                                    </Surface>
+                                </section>
+                            ) : null}
                                 </section>
                             ) : null}
                         </main>
@@ -3748,6 +3929,8 @@ function TabIcon({ className = 'h-5 w-5', tab }: { className?: string; tab: Admi
             return <SettingsIcon className={className} />;
         case 'evaluations':
             return <StarIcon className={className} />;
+        case 'communications':
+            return <BellIcon className={className} />;
         default:
             return <DashboardIcon className={className} />;
     }

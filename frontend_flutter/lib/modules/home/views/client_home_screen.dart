@@ -5,6 +5,7 @@ import '../../../app/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/artisan_card.dart';
 import '../../../shared/widgets/loading_shimmer.dart';
+import '../../../shared/widgets/communication_banner.dart';
 import '../../notifications/controllers/notifications_controller.dart';
 import '../controllers/home_controller.dart';
 
@@ -99,6 +100,8 @@ class ClientHomeScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           const _MissionSearchCard(),
+                          Obx(() => CommunicationBanner(announcements: controller.announcements)),
+                          Obx(() => LeSaviezVousCarousel(tips: controller.tips)),
                           if (controller.isNightModeActive) ...[
                             const SizedBox(height: 16),
                             _NightModeBanner(),
