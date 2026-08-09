@@ -31,6 +31,9 @@ class User extends Authenticatable
         'device_fingerprint',
         'score_frozen',
         'google_2fa_secret',
+        'cnmci_number',
+        'cnmci_card_url',
+        'cnmci_status',
     ];
 
     protected $hidden = ['password', 'remember_token', 'position', 'google_2fa_secret'];
@@ -232,5 +235,15 @@ class User extends Authenticatable
         );
 
         return $row ? ['lat' => (float) $row->lat, 'lng' => (float) $row->lng] : null;
+    }
+
+    public function isCnmciVerified(): bool
+    {
+        return $this->cnmci_status === 'valide';
+    }
+
+    public function scopeCnmciVerified($query)
+    {
+        return $query->where('cnmci_status', 'valide');
     }
 }

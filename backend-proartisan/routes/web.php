@@ -69,6 +69,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
         Route::post('/kyc/{user}/review', [BackofficeController::class, 'reviewKyc'])->name('kyc.review');
+        Route::post('/kyc/{user}/cnmci-review', [BackofficeController::class, 'reviewCnmci'])->name('kyc.cnmci-review');
         Route::post('/litiges/{litige}/resolve', [BackofficeController::class, 'resolveLitige'])->name('litiges.resolve');
         Route::get('/litiges/{litige}/invoice', [BackofficeController::class, 'downloadInvoice'])->name('litiges.invoice');
         Route::post('/fournisseurs/{fournisseur}/review', [BackofficeController::class, 'reviewFournisseur'])->name('fournisseurs.review');

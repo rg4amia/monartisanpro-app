@@ -258,6 +258,15 @@ interface AdminPageProps {
     flash?: FlashMessages;
     fournisseurs: FournisseurItem[];
     kycUsers: KycUser[];
+    cnmciUsers?: Array<{
+        id: number;
+        name: string;
+        phone: string;
+        cnmci_number?: string | null;
+        cnmci_card_url?: string | null;
+        cnmci_status: string;
+        created_at: string;
+    }>;
     litiges: LitigeItem[];
     missions: AdminMission[];
     transactions: AdminTransaction[];
@@ -523,7 +532,7 @@ function sumAmount(items: AdminTransaction[]): number {
 export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
     const activeTab = initialTab;
     const { props } = usePage<AdminPageProps>();
-    const { auth, dashboard, errors, flash, fournisseurs, kycUsers, litiges, missions, transactions, users, settingsList, evaluationsList, artisansScores, scoreLedger, communications } = props as AdminPageProps & { communications?: AdminPageProps['communications'] };
+    const { auth, dashboard, errors, flash, fournisseurs, kycUsers, cnmciUsers = [], litiges, missions, transactions, users, settingsList, evaluationsList, artisansScores, scoreLedger, communications } = props as AdminPageProps & { communications?: AdminPageProps['communications'] };
 
     const [themeMode, setThemeMode] = useState<ThemeMode>(() => {
         if (typeof window !== 'undefined' && window.localStorage) {
@@ -1262,6 +1271,12 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         submitAction(`/admin/fournisseurs/${fournisseur.id}/review`, { decision });
     };
 
+    const handleCnmciDecision = (userId: number, decision: 'valide' | 'rejete'): void => {
+        if (window.confirm(`Confirmer la décision : ${decision === 'valide' ? 'Valider' : 'Rejeter'} cette affiliation CNMCI ?`)) {
+            submitAction(`/admin/kyc/${userId}/cnmci-review`, { decision });
+        }
+    };
+
     const handleToggleScoreFreeze = (artisan: ArtisanScoreItem): void => {
         const action = artisan.score_frozen ? 'dégeler' : 'geler';
         if (window.confirm(`Voulez-vous vraiment ${action} le score de l'artisan ${artisan.name} ?`)) {
@@ -1862,6 +1877,62 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                                                         className={actionButtonClass('danger')}
                                                                     >
                                                                         Suspendre
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        ))
+                                                    )}
+                                                </div>
+                                            </Surface>
+
+                                            <Surface className="rounded-[32px] p-5 lg:p-6">
+                                                <SectionTitle
+                                                    description="Vérifiez le numéro d'artisan et la carte CNMCI soumis par les artisans."
+                                                    title="Certifications CNMCI"
+                                                />
+
+                                                <div className="mt-5 space-y-3">
+                                                    {cnmciUsers.length === 0 ? (
+                                                        <EmptyState description="Aucune affiliation CNMCI en attente." title="File CNMCI vide" />
+                                                    ) : (
+                                                        cnmciUsers.map((artisan) => (
+                                                            <div key={artisan.id} className="rounded-[24px] border border-[var(--admin-border)] bg-white/60 p-4">
+                                                                <p className="text-sm font-semibold text-[var(--admin-text)]">{artisan.name}</p>
+                                                                <p className="mt-0.5 text-xs text-[var(--admin-muted)]">{artisan.phone}</p>
+                                                                
+                                                                <div className="mt-2 bg-[#fdfaf3] border border-[#f5ebcf] rounded-xl p-3">
+                                                                    <p className="text-xs text-[var(--admin-text-soft)]">
+                                                                        <strong className="text-[var(--admin-text)]">Numéro CNMCI :</strong> {artisan.cnmci_number || 'Non renseigné'}
+                                                                    </p>
+                                                                    {artisan.cnmci_card_url && (
+                                                                        <a
+                                                                            href={artisan.cnmci_card_url}
+                                                                            target="_blank"
+                                                                            rel="noreferrer"
+                                                                            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#8b6732] hover:underline mt-2"
+                                                                        >
+                                                                            <span>Voir l'image de la carte</span>
+                                                                            <span className="text-[10px]">↗</span>
+                                                                        </a>
+                                                                    )}
+                                                                </div>
+
+                                                                <div className="mt-4 flex gap-2">
+                                                                    <button
+                                                                        type="button"
+                                                                        disabled={actionLoading}
+                                                                        onClick={() => handleCnmciDecision(artisan.id, 'valide')}
+                                                                        className={actionButtonClass('success')}
+                                                                    >
+                                                                        Valider
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        disabled={actionLoading}
+                                                                        onClick={() => handleCnmciDecision(artisan.id, 'rejete')}
+                                                                        className={actionButtonClass('danger')}
+                                                                    >
+                                                                        Rejeter
                                                                     </button>
                                                                 </div>
                                                             </div>

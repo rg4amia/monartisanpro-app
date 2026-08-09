@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/update_profile_controller.dart';
+import '../../../core/network/api_endpoints.dart';
 
 // ─── Design Tokens ────────────────────────────────────────────────────────────
 abstract class _C {
@@ -224,6 +225,8 @@ class _FormSection extends StatelessWidget {
             children: [
               const SizedBox(height: 24),
               _CategorySelectionCard(controller: controller),
+              const SizedBox(height: 24),
+              _CnmciCard(controller: controller),
               const SizedBox(height: 24),
               _NightModeCard(controller: controller),
             ],
@@ -590,6 +593,225 @@ class _BottomActions extends StatelessWidget {
                     ),
                   ),
           )),
+    );
+  }
+}
+
+class _CnmciCard extends StatelessWidget {
+  final UpdateProfileController controller;
+  const _CnmciCard({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _C.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _C.subtle),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFFDF8EE),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.card_membership_outlined,
+                  color: Color(0xFFD97706),
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 14),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Affiliation CNMCI',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: _C.ink,
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'Chambre Nationale des Métiers de CI',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: _C.muted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          
+          // Statut de certification actuel
+          Obx(() {
+            final status = controller.cnmciStatus.value;
+            if (status == 'non_renseigne') return const SizedBox.shrink();
+            
+            Color badgeBg = const Color(0xFFF3F4F6);
+            Color badgeText = const Color(0xFF4B5563);
+            String label = 'Non renseigné';
+            IconData icon = Icons.info_outline;
+
+            if (status == 'en_attente') {
+              badgeBg = const Color(0xFFFEF3C7);
+              badgeText = const Color(0xFFD97706);
+              label = 'Validation en cours';
+              icon = Icons.hourglass_empty;
+            } else if (status == 'valide') {
+              badgeBg = const Color(0xFFD1FAE5);
+              badgeText = const Color(0xFF059669);
+              label = 'Artisan Certifié CNMCI';
+              icon = Icons.verified;
+            } else if (status == 'rejete') {
+              badgeBg = const Color(0xFFFEE2E2);
+              badgeText = const Color(0xFFDC2626);
+              label = 'Certification rejetée';
+              icon = Icons.cancel_outlined;
+            }
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: badgeBg,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  children: [
+                    Icon(icon, color: badgeText, size: 16),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        label,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: badgeText,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
+
+          _InputField(
+            label: 'Numéro de carte artisan',
+            controller: controller.cnmciNumberController,
+            icon: Icons.numbers_outlined,
+            hint: 'Ex: CNM-XXXXXXXX',
+          ),
+          const SizedBox(height: 16),
+          
+          const Text(
+            'Photo de la carte artisan',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: _C.ink,
+            ),
+          ),
+          const SizedBox(height: 8),
+          
+          Obx(() {
+            final localPath = controller.cnmciCardImagePath.value;
+            final remoteUrl = controller.cnmciCardUrl.value;
+            
+            Widget imageWidget;
+            if (localPath != null) {
+              imageWidget = Image.file(
+                File(localPath),
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: 160,
+              );
+            } else if (remoteUrl != null && remoteUrl.isNotEmpty) {
+              final serverBase = ApiEndpoints.baseUrl.replaceAll('/api/v1', '').replaceAll('/v1', '');
+              final fullUrl = remoteUrl.startsWith('http') 
+                ? remoteUrl 
+                : '$serverBase$remoteUrl';
+              imageWidget = Image.network(
+                fullUrl,
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: 160,
+                errorBuilder: (context, error, stackTrace) {
+                  return const Center(child: Icon(Icons.broken_image, size: 40));
+                },
+              );
+            } else {
+              return GestureDetector(
+                onTap: controller.pickCnmciCardImage,
+                child: Container(
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9FAFB),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: _C.subtle, style: BorderStyle.solid),
+                  ),
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.add_a_photo_outlined, color: _C.primary, size: 28),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Joindre la photo de la carte',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: _C.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }
+            
+            return ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Stack(
+                children: [
+                  imageWidget,
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: GestureDetector(
+                      onTap: controller.pickCnmciCardImage,
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: const BoxDecoration(
+                          color: Colors.black54,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.edit, color: Colors.white, size: 16),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
     );
   }
 }

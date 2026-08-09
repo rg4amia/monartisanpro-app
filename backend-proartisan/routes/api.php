@@ -95,6 +95,7 @@ Route::prefix('v1')->group(function () {
         Route::put('/users/{user}',          [UserController::class, 'update']);
         Route::put('/users/{user}/location', [UserController::class, 'updateLocation']);
         Route::put('/users/{user}/role',     [UserController::class, 'setRole']);
+        Route::post('/users/{user}/cnmci',   [UserController::class, 'updateCnmci']);
 
         // ── Artisans ──────────────────────────────────────────────────────────
         Route::get('/artisans',              [ArtisanController::class, 'nearby'])->middleware('kyc.verified');

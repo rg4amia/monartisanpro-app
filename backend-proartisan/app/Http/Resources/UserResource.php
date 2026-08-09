@@ -25,6 +25,9 @@ class UserResource extends JsonResource
             'walletMo'         => $this->wallet_mo,
             'cguAcceptedAt'    => $this->cgu_accepted_at?->toIso8601String(),
             'position'         => $coords,
+            'cnmciNumber'      => $this->cnmci_number,
+            'cnmciCardUrl'     => $this->cnmci_card_url,
+            'cnmciStatus'      => $this->cnmci_status,
             'nightInterventionAvailable' => (bool) ($artisanProfile?->intervient_la_nuit ?? false),
             'artisanProfile'   => $this->when(
                 $this->role === 'artisan' && $this->relationLoaded('artisanProfile'),
