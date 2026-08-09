@@ -11,6 +11,8 @@ use App\Models\Litige;
 use App\Models\User;
 use App\Models\Communication;
 use App\Services\AdminService;
+use App\Services\CommunicationService;
+use App\Http\Requests\Admin\StoreCommunicationRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -69,6 +71,52 @@ class BackofficeController extends Controller
     public function communications(): Response
     {
         return $this->renderPage('admin/communications');
+    }
+
+    public function storeCommunication(StoreCommunicationRequest $request, CommunicationService $service): RedirectResponse
+    {
+        $service->store($request->validated(), $request->user());
+        return back()->with('success', 'Communication créée en brouillon.');
+    }
+
+    public function updateCommunication(StoreCommunicationRequest $request, Communication $communication, CommunicationService $service): RedirectResponse
+    {
+        try {
+            $service->update($communication, $request->validated());
+            return back()->with('success', 'Communication modifiée.');
+        } catch (\LogicException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    public function destroyCommunication(Communication $communication, CommunicationService $service): RedirectResponse
+    {
+        try {
+            $service->destroy($communication);
+            return back()->with('success', 'Communication supprimée.');
+        } catch (\LogicException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    public function publishCommunication(Communication $communication, CommunicationService $service): RedirectResponse
+    {
+        try {
+            $service->publish($communication);
+            return back()->with('success', 'Communication publiée.');
+        } catch (\LogicException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    public function cloturerCommunication(Communication $communication, CommunicationService $service): RedirectResponse
+    {
+        try {
+            $service->cloturer($communication);
+            return back()->with('success', 'Communication clôturée (désactivée).');
+        } catch (\LogicException $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 
     public function toggleScoreFreeze(Request $request, User $user): RedirectResponse

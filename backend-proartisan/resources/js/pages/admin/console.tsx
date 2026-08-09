@@ -755,7 +755,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
     const handleCommSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
         event.preventDefault();
         if (editingComm) {
-            commForm.put(`/v1/communications/${editingComm.id}`, {
+            commForm.put(`/admin/communications/${editingComm.id}`, {
                 preserveScroll: true,
                 onSuccess: () => {
                     setCommModalOpen(false);
@@ -763,7 +763,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                 },
             });
         } else {
-            commForm.post('/v1/communications', {
+            commForm.post('/admin/communications', {
                 preserveScroll: true,
                 onSuccess: () => {
                     setCommModalOpen(false);
@@ -2975,15 +2975,15 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                                                                     openEditCommModal(comm);
                                                                                 } else if (action === 'publish') {
                                                                                     if (window.confirm("Publier cette communication ?")) {
-                                                                                        router.post(`/v1/communications/${comm.id}/publish`, {}, { preserveScroll: true });
+                                                                                        router.post(`/admin/communications/${comm.id}/publish`, {}, { preserveScroll: true });
                                                                                     }
                                                                                 } else if (action === 'cloturer') {
                                                                                     if (window.confirm("Cl\u00f4turer (d\u00e9sactiver) cette publication ?")) {
-                                                                                        router.post(`/v1/communications/${comm.id}/cloturer`, {}, { preserveScroll: true });
+                                                                                        router.post(`/admin/communications/${comm.id}/cloturer`, {}, { preserveScroll: true });
                                                                                     }
                                                                                 } else if (action === 'delete') {
                                                                                     if (window.confirm("Supprimer d\u00e9finitivement cette communication ?")) {
-                                                                                        router.delete(`/v1/communications/${comm.id}`, { preserveScroll: true });
+                                                                                        router.delete(`/admin/communications/${comm.id}`, { preserveScroll: true });
                                                                                     }
                                                                                 }
                                                                                 e.target.value = ""; // reset selection
