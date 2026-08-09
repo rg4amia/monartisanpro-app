@@ -591,6 +591,15 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
     const [selectedMissionForDetails, setSelectedMissionForDetails] = useState<AdminMission | null>(null);
     const [selectedTransactionForDetails, setSelectedTransactionForDetails] = useState<AdminTransaction | null>(null);
 
+    const [commModalOpen, setCommModalOpen] = useState<boolean>(false);
+    const [editingComm, setEditingComm] = useState<any>(null);
+    const commForm = useForm({
+        type: 'annonce',
+        titre: '',
+        contenu: '',
+        cibles: [] as string[],
+    });
+
     const userForm = useForm({
         name: '',
         phone: '',
@@ -714,6 +723,52 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         if (window.confirm(`Êtes-vous sûr de vouloir supprimer définitivement l'utilisateur ${user.name} ? Cette action est irréversible.`)) {
             router.delete(`/admin/users/${user.id}`, {
                 preserveScroll: true,
+            });
+        }
+    };
+
+    const openCreateCommModal = (): void => {
+        setEditingComm(null);
+        commForm.reset();
+        commForm.clearErrors();
+        commForm.setData({
+            type: 'annonce',
+            titre: '',
+            contenu: '',
+            cibles: [],
+        });
+        setCommModalOpen(true);
+    };
+
+    const openEditCommModal = (comm: any): void => {
+        setEditingComm(comm);
+        commForm.clearErrors();
+        commForm.setData({
+            type: comm.type,
+            titre: comm.titre,
+            contenu: comm.contenu,
+            cibles: comm.cibles_json,
+        });
+        setCommModalOpen(true);
+    };
+
+    const handleCommSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
+        event.preventDefault();
+        if (editingComm) {
+            commForm.put(`/v1/admin/communications/${editingComm.id}`, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setCommModalOpen(false);
+                    commForm.reset();
+                },
+            });
+        } else {
+            commForm.post('/v1/admin/communications', {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setCommModalOpen(false);
+                    commForm.reset();
+                },
             });
         }
     };
@@ -2844,27 +2899,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                             </div>
                                             <button
                                                 type="button"
-                                                onClick={() => {
-                                                    // Ouvre un formulaire de cr\u00e9ation (nous utiliserons un simple prompt ou g\u00e9rerons un \u00e9tat d\u00e9di\u00e9 si requis)
-                                                    const titre = window.prompt("Titre de la communication :");
-                                                    if (!titre) return;
-                                                    const contenu = window.prompt("Contenu / Description :");
-                                                    if (!contenu) return;
-                                                    const type = window.confirm("Est-ce un 'Le saviez-vous ?' (Annuler pour Annonce)") ? 'le_saviez_vous' : 'annonce';
-                                                    const rolesStr = window.prompt("Espaces cibles (s\u00e9par\u00e9s par des virgules, ex: client,artisan,fournisseur,livreur) :", "client,artisan");
-                                                    if (!rolesStr) return;
-                                                    const cibles = rolesStr.split(',').map(r => r.trim()).filter(Boolean);
-
-                                                    router.post('/v1/admin/communications', {
-                                                        titre,
-                                                        contenu,
-                                                        type,
-                                                        cibles
-                                                    }, {
-                                                        preserveScroll: true,
-                                                        onSuccess: () => alert("Communication cr\u00e9\u00e9e en brouillon.")
-                                                    });
-                                                }}
+                                                onClick={openCreateCommModal}
                                                 className="rounded-full bg-[#ebb95e] text-[#241b16] px-4 py-2 text-sm font-semibold hover:opacity-90 transition flex items-center gap-2"
                                             >
                                                 <PlusIcon className="h-4 w-4" /> Nouvelle publication
@@ -2930,46 +2965,36 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                                                     {comm.cloture_at && <div>Cl\u00f4tur\u00e9 : {new Date(comm.cloture_at).toLocaleDateString('fr-FR')}</div>}
                                                                 </td>
                                                                 <td className="text-right">
-                                                                    <div className="flex justify-end gap-1.5">
-                                                                        {comm.statut === 'brouillon' && (
-                                                                            <>
-                                                                                <button
-                                                                                    type="button"
-                                                                                    onClick={() => {
-                                                                                        if (window.confirm("Publier cette communication imm\u00e9diatement ?")) {
-                                                                                            router.post(`/v1/admin/communications/${comm.id}/publish`, {}, { preserveScroll: true });
-                                                                                        }
-                                                                                    }}
-                                                                                    className="rounded-lg bg-green-600 text-white px-2.5 py-1 text-xs font-semibold hover:bg-green-700 transition"
-                                                                                >
-                                                                                    Publier
-                                                                                </button>
-                                                                                <button
-                                                                                    type="button"
-                                                                                    onClick={() => {
-                                                                                        if (window.confirm("Supprimer ce brouillon ?")) {
-                                                                                            router.delete(`/v1/admin/communications/${comm.id}`, { preserveScroll: true });
-                                                                                        }
-                                                                                    }}
-                                                                                    className="rounded-lg bg-rose-600 text-white px-2.5 py-1 text-xs font-semibold hover:bg-rose-700 transition"
-                                                                                >
-                                                                                    Supprimer
-                                                                                </button>
-                                                                            </>
-                                                                        )}
-                                                                        {comm.statut === 'publie' && (
-                                                                            <button
-                                                                                type="button"
-                                                                                onClick={() => {
-                                                                                    if (window.confirm("Cl\u00f4turer cette publication ? Elle n'appara\u00eet pas plus sur les applications cibles.")) {
+                                                                    <div className="flex justify-end">
+                                                                        <select
+                                                                            className="admin-input rounded-xl text-xs py-1 px-2.5 outline-none cursor-pointer"
+                                                                            defaultValue=""
+                                                                            onChange={(e) => {
+                                                                                const action = e.target.value;
+                                                                                if (action === 'edit') {
+                                                                                    openEditCommModal(comm);
+                                                                                } else if (action === 'publish') {
+                                                                                    if (window.confirm("Publier cette communication ?")) {
+                                                                                        router.post(`/v1/admin/communications/${comm.id}/publish`, {}, { preserveScroll: true });
+                                                                                    }
+                                                                                } else if (action === 'cloturer') {
+                                                                                    if (window.confirm("Cl\u00f4turer (d\u00e9sactiver) cette publication ?")) {
                                                                                         router.post(`/v1/admin/communications/${comm.id}/cloturer`, {}, { preserveScroll: true });
                                                                                     }
-                                                                                }}
-                                                                                className="rounded-lg bg-gray-600 text-white px-2.5 py-1 text-xs font-semibold hover:bg-gray-700 transition"
-                                                                            >
-                                                                                Cl\u00f4turer
-                                                                            </button>
-                                                                        )}
+                                                                                } else if (action === 'delete') {
+                                                                                    if (window.confirm("Supprimer d\u00e9finitivement cette communication ?")) {
+                                                                                        router.delete(`/v1/admin/communications/${comm.id}`, { preserveScroll: true });
+                                                                                    }
+                                                                                }
+                                                                                e.target.value = ""; // reset selection
+                                                                            }}
+                                                                        >
+                                                                            <option value="" disabled>Actions...</option>
+                                                                            {comm.statut === 'brouillon' && <option value="edit">Modifier</option>}
+                                                                            {comm.statut === 'brouillon' && <option value="publish">Publier</option>}
+                                                                            {comm.statut === 'publie' && <option value="cloturer">D\u00e9sactiver</option>}
+                                                                            {comm.statut === 'brouillon' && <option value="delete">Supprimer</option>}
+                                                                        </select>
                                                                     </div>
                                                                 </td>
                                                             </tr>
@@ -2997,6 +3022,127 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                         </footer>
                     </div>
                 </div>
+
+                {commModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                        <div className="admin-panel admin-surface w-full max-w-[550px] rounded-[32px] border p-6 lg:p-8 shadow-2xl relative">
+                            <div className="flex items-center justify-between border-b border-[var(--admin-border)] pb-4">
+                                <h2 className="text-xl font-bold text-[var(--admin-text)]">
+                                    {editingComm ? 'Modifier la publication' : 'Créer une publication'}
+                                </h2>
+                                <button
+                                    type="button"
+                                    onClick={() => setCommModalOpen(false)}
+                                    className="rounded-full p-2 text-[var(--admin-muted)] hover:bg-white/10 hover:text-[var(--admin-text)] transition"
+                                    title="Fermer"
+                                    aria-label="Fermer"
+                                >
+                                    <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                        <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleCommSubmit} className="mt-6 space-y-4">
+                                <label className="block space-y-1">
+                                    <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Type de communication</span>
+                                    <select
+                                        value={commForm.data.type}
+                                        onChange={(e) => commForm.setData('type', e.target.value)}
+                                        className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none"
+                                        required
+                                    >
+                                        <option value="annonce">Communication interne</option>
+                                        <option value="le_saviez_vous">Le saviez-vous ?</option>
+                                    </select>
+                                </label>
+
+                                <label className="block space-y-1">
+                                    <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Intitulé / Titre</span>
+                                    <input
+                                        type="text"
+                                        value={commForm.data.titre}
+                                        onChange={(e) => commForm.setData('titre', e.target.value)}
+                                        className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none"
+                                        required
+                                    />
+                                </label>
+
+                                <label className="block space-y-1">
+                                    <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Description / Contenu</span>
+                                    <textarea
+                                        value={commForm.data.contenu}
+                                        onChange={(e) => commForm.setData('contenu', e.target.value)}
+                                        className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none h-24 resize-none"
+                                        required
+                                    />
+                                </label>
+
+                                <div className="space-y-1">
+                                    <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Espaces cibles</span>
+                                    <div className="grid grid-cols-2 gap-2 mt-2">
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={commForm.data.cibles.includes('client') && commForm.data.cibles.includes('artisan') && commForm.data.cibles.includes('livreur') && commForm.data.cibles.includes('fournisseur')}
+                                                onChange={(e) => {
+                                                    if (e.target.checked) {
+                                                        commForm.setData('cibles', ['client', 'artisan', 'livreur', 'fournisseur']);
+                                                    } else {
+                                                        commForm.setData('cibles', []);
+                                                    }
+                                                }}
+                                                className="rounded border-[var(--admin-border)]"
+                                            />
+                                            <span className="text-sm text-[var(--admin-text)]">TOUS</span>
+                                        </label>
+                                        {['client', 'artisan', 'livreur', 'fournisseur'].map((role) => (
+                                            <label key={role} className="flex items-center gap-2 cursor-pointer capitalize">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={commForm.data.cibles.includes(role)}
+                                                    onChange={(e) => {
+                                                        if (e.target.checked) {
+                                                            commForm.setData('cibles', [...commForm.data.cibles, role]);
+                                                        } else {
+                                                            commForm.setData('cibles', commForm.data.cibles.filter((r) => r !== role));
+                                                        }
+                                                    }}
+                                                    className="rounded border-[var(--admin-border)]"
+                                                />
+                                                <span className="text-sm text-[var(--admin-text)]">
+                                                    {role === 'client' ? 'Clients' : role === 'artisan' ? 'Artisans' : role === 'livreur' ? 'Livreur' : 'Fournisseur'}
+                                                </span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="pt-2 border-t border-[var(--admin-border)] flex justify-between text-xs text-[var(--admin-text-soft)]">
+                                    <div>Auteur : <strong>{auth.user?.name || 'Admin'}</strong></div>
+                                    <div>Date : <strong>{new Date().toLocaleDateString('fr-FR')}</strong></div>
+                                </div>
+
+                                <div className="pt-4 flex justify-end gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setCommModalOpen(false)}
+                                        className="rounded-full border border-[var(--admin-border)] px-5 py-2.5 text-sm font-semibold hover:bg-white/10 transition"
+                                    >
+                                        Annuler
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={commForm.processing}
+                                        className="rounded-full bg-[#ebb95e] text-[#241b16] px-6 py-2.5 text-sm font-semibold hover:opacity-90 transition disabled:opacity-50"
+                                    >
+                                        Enregistrer Brouillon
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
 
                 {userModalOpen && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
