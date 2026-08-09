@@ -150,6 +150,27 @@ class BackofficeController extends Controller
         return back()->with('success', 'Dossier KYC traité avec succès.');
     }
 
+    public function reviewCnmci(Request $request, User $user): RedirectResponse
+    {
+        if ($user->role !== 'artisan') {
+            return back()->with('error', 'Seuls les artisans peuvent posséder un profil CNMCI.');
+        }
+
+        $data = $request->validate([
+            'decision' => ['required', 'in:valide,rejete'],
+        ]);
+
+        $user->update([
+            'cnmci_status' => $data['decision'],
+        ]);
+
+        $msg = $data['decision'] === 'valide'
+            ? 'Affiliation CNMCI validée avec succès.'
+            : 'Affiliation CNMCI rejetée.';
+
+        return back()->with('success', $msg);
+    }
+
     public function resolveLitige(ArbitrateLitigeRequest $request, Litige $litige): RedirectResponse
     {
         $this->adminService->resolveLitige(
@@ -376,6 +397,10 @@ class BackofficeController extends Controller
             'dashboard' => $this->adminService->dashboard(),
             'fournisseurs' => $this->adminService->pendingFournisseurs(60)->items(),
             'kycUsers' => $this->adminService->pendingKyc(null, 60)->items(),
+            'cnmciUsers' => User::where('role', 'artisan')
+                ->where('cnmci_status', 'en_attente')
+                ->orderByDesc('updated_at')
+                ->get(),
             'litiges' => $this->adminService->listLitiges(null, 60)->items(),
             'missions' => $this->adminService->listMissions(null, null, 100)->items(),
             'transactions' => $this->adminService->listTransactions(null, null, 100)->items(),

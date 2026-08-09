@@ -15,6 +15,8 @@ class ArtisanModel {
   final bool isGoldenMarker;
   final bool nightInterventionAvailable;
   final String? kycStatus;
+  final String? cnmciNumber;
+  final String cnmciStatus;
   final Map<String, double>? location;
   final String? locationLabel;
   final String? commune;
@@ -47,6 +49,8 @@ class ArtisanModel {
     this.joinedDate,
     this.role,
     this.price,
+    this.cnmciNumber,
+    this.cnmciStatus = 'non_renseigne',
   });
 
   factory ArtisanModel.fromJson(Map<String, dynamic> json) {
@@ -95,6 +99,8 @@ class ArtisanModel {
       ),
       role: json['role'] as String?,
       price: json['price'] as String?,
+      cnmciNumber: json['cnmciNumber'] as String?,
+      cnmciStatus: (json['cnmciStatus'] ?? json['cnmci_status']) as String? ?? 'non_renseigne',
     );
   }
 
@@ -122,7 +128,11 @@ class ArtisanModel {
     'joinedDate': joinedDate?.toIso8601String(),
     'role': role,
     'price': price,
+    'cnmciNumber': cnmciNumber,
+    'cnmciStatus': cnmciStatus,
   };
+
+  bool get isCnmciVerified => cnmciStatus == 'valide';
 
   static Map<String, double>? _parseLocation(Map<String, dynamic> json) {
     final value = json['location'];

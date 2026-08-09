@@ -1,8 +1,32 @@
+import 'package:dio/dio.dart';
 import '../../core/network/api_client.dart';
 import '../../core/network/api_endpoints.dart';
 
 class UserRepository {
   final ApiClient _client = ApiClient();
+
+  Future<Map<String, dynamic>> updateCnmci({
+    required int userId,
+    String? cnmciNumber,
+    String? cardImagePath,
+  }) async {
+    final formData = FormData();
+    if (cnmciNumber != null) {
+      formData.fields.add(MapEntry('cnmci_number', cnmciNumber));
+    }
+    if (cardImagePath != null) {
+      formData.files.add(MapEntry(
+        'cnmci_card',
+        await MultipartFile.fromFile(cardImagePath, filename: 'cnmci_card.jpg'),
+      ));
+    }
+
+    final response = await _client.postMultipart(
+      ApiEndpoints.updateCnmci(userId),
+      formData,
+    );
+    return response.data as Map<String, dynamic>;
+  }
 
   Future<Map<String, dynamic>> updateProfile({
     required int userId,

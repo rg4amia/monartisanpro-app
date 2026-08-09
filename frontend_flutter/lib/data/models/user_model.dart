@@ -16,6 +16,9 @@ class UserModel {
   final String? tradeName;
   final bool nightInterventionAvailable;
   final String? cguAcceptedAt;
+  final String? cnmciNumber;
+  final String? cnmciCardUrl;
+  final String cnmciStatus;
 
   const UserModel({
     required this.id,
@@ -35,10 +38,14 @@ class UserModel {
     this.sectorName,
     this.tradeName,
     this.cguAcceptedAt,
+    this.cnmciNumber,
+    this.cnmciCardUrl,
+    this.cnmciStatus = 'non_renseigne',
   });
 
   bool get isKycActif => kycStatus == 'actif';
   bool get isGoldenMarker => scoreProsArtisan > 65;
+  bool get isCnmciVerified => cnmciStatus == 'valide';
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     final artisanProfile = json['artisanProfile'] as Map<String, dynamic>?;
@@ -72,6 +79,9 @@ class UserModel {
       sectorName: artisanProfile != null ? artisanProfile['sector'] as String? : null,
       tradeName: artisanProfile != null ? artisanProfile['trade'] as String? : null,
       cguAcceptedAt: json['cguAcceptedAt'] as String?,
+      cnmciNumber: json['cnmciNumber'] as String?,
+      cnmciCardUrl: json['cnmciCardUrl'] as String?,
+      cnmciStatus: json['cnmciStatus'] as String? ?? 'non_renseigne',
     );
   }
 
@@ -93,6 +103,9 @@ class UserModel {
         'sectorName': sectorName,
         'tradeName': tradeName,
         'cguAcceptedAt': cguAcceptedAt,
+        'cnmciNumber': cnmciNumber,
+        'cnmciCardUrl': cnmciCardUrl,
+        'cnmciStatus': cnmciStatus,
       };
 
   static bool _parseBool(dynamic value) {

@@ -84,6 +84,37 @@ class ArtisanCard extends StatelessWidget {
                             ],
                           ),
                         ),
+                      if (artisan.isCnmciVerified)
+                        Container(
+                          margin: const EdgeInsets.only(left: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFD1FAE5),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.verified,
+                                size: 10,
+                                color: Color(0xFF059669),
+                              ),
+                              SizedBox(width: 2),
+                              Text(
+                                'CNMCI',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: Color(0xFF059669),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                     ],
                   ),
                   if (artisan.trade != null)

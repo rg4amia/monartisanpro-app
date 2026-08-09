@@ -70,15 +70,17 @@ class ArtisanProfileScreen extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
+                              Wrap(
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                spacing: 8,
+                                runSpacing: 6,
                                 children: [
                                   Text(a.name ?? 'Artisan',
                                       style: const TextStyle(
                                           fontSize: 22,
                                           fontWeight: FontWeight.w800,
                                           color: AppColors.textPrimary)),
-                                  if (a.isGoldenMarker) ...[
-                                    const SizedBox(width: 8),
+                                  if (a.isGoldenMarker)
                                     Container(
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 8, vertical: 3),
@@ -87,6 +89,7 @@ class ArtisanProfileScreen extends StatelessWidget {
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: const Row(
+                                        mainAxisSize: MainAxisSize.min,
                                         children: [
                                           Icon(Icons.star,
                                               size: 12,
@@ -100,7 +103,29 @@ class ArtisanProfileScreen extends StatelessWidget {
                                         ],
                                       ),
                                     ),
-                                  ],
+                                  if (a.isCnmciVerified)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFD1FAE5),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: const Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(Icons.verified,
+                                              size: 12,
+                                              color: Color(0xFF059669)),
+                                          SizedBox(width: 3),
+                                          Text('Certifié CNMCI',
+                                              style: TextStyle(
+                                                  fontSize: 11,
+                                                  color: Color(0xFF059669),
+                                                  fontWeight: FontWeight.w600)),
+                                        ],
+                                      ),
+                                    ),
                                 ],
                               ),
                               if (a.trade != null)

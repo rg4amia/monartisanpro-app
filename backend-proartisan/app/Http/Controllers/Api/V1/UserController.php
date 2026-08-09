@@ -147,4 +147,54 @@ class UserController extends Controller
             'data'    => new UserResource($user->fresh()->load('artisanProfile.sector', 'artisanProfile.trade')),
         ]);
     }
+
+    public function updateCnmci(Request $request, User $user): JsonResponse
+    {
+        if ($request->user()->id !== $user->id && $request->user()->role !== 'admin') {
+            abort(403, 'Accès refusé.');
+        }
+
+        if ($user->role !== 'artisan') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Seuls les artisans peuvent s\'affilier à la CNMCI.',
+            ], 422);
+        }
+
+        $data = $request->validate([
+            'cnmci_number' => ['nullable', 'string', 'max:100'],
+            'cnmci_card' => ['nullable', 'file', 'image', 'max:4096'],
+        ]);
+
+        $updateData = [];
+
+        if (array_key_exists('cnmci_number', $data)) {
+            $updateData['cnmci_number'] = $data['cnmci_number'];
+        }
+
+        if ($request->hasFile('cnmci_card')) {
+            $file = $request->file('cnmci_card');
+            $path = $file->store('cnmci', 'public');
+            $updateData['cnmci_card_url'] = '/storage/' . $path;
+        }
+
+        $numberVal = array_key_exists('cnmci_number', $updateData) ? $updateData['cnmci_number'] : $user->cnmci_number;
+        $cardVal = array_key_exists('cnmci_card_url', $updateData) ? $updateData['cnmci_card_url'] : $user->cnmci_card_url;
+
+        if (empty($numberVal) && empty($cardVal)) {
+            $updateData['cnmci_status'] = 'non_renseigne';
+        } else {
+            if ($user->cnmci_status === 'non_renseigne' || $user->cnmci_status === 'rejete' || isset($updateData['cnmci_card_url']) || (isset($updateData['cnmci_number']) && $updateData['cnmci_number'] !== $user->cnmci_number)) {
+                $updateData['cnmci_status'] = 'en_attente';
+            }
+        }
+
+        $user->update($updateData);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Informations CNMCI mises à jour, en attente de validation.',
+            'data'    => new UserResource($user->fresh()->load('artisanProfile.sector', 'artisanProfile.trade')),
+        ]);
+    }
 }

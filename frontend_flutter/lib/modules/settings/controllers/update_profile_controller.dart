@@ -24,6 +24,12 @@ class UpdateProfileController extends GetxController {
   final nightInterventionsEnabled = false.obs;
   final profileImagePath = Rx<String?>(null);
 
+  // CNMCI
+  final cnmciNumberController = TextEditingController();
+  final cnmciStatus = 'non_renseigne'.obs;
+  final cnmciCardUrl = Rx<String?>(null);
+  final cnmciCardImagePath = Rx<String?>(null);
+
   // Localisation
   final selectedLatitude = Rxn<double>();
   final selectedLongitude = Rxn<double>();
@@ -76,6 +82,10 @@ class UpdateProfileController extends GetxController {
       selectedTradeId.value = user.tradeId;
       selectedSectorName.value = user.sectorName;
       selectedTradeName.value = user.tradeName;
+
+      cnmciNumberController.text = user.cnmciNumber ?? '';
+      cnmciStatus.value = user.cnmciStatus;
+      cnmciCardUrl.value = user.cnmciCardUrl;
 
       StorageService.saveRole(user.role);
       StorageService.saveName(user.name ?? nameController.text.trim());
@@ -181,6 +191,89 @@ class UpdateProfileController extends GetxController {
     }
   }
 
+  Future<void> pickCnmciCardImage() async {
+    try {
+      final source = await Get.bottomSheet<ImageSource>(
+        Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE5E7EB),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Choisir la photo de la carte CNMCI',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF111827),
+                ),
+              ),
+              const SizedBox(height: 20),
+              _SourceOption(
+                icon: Icons.camera_alt,
+                label: 'Prendre une photo',
+                onTap: () => Get.back(result: ImageSource.camera),
+              ),
+              const SizedBox(height: 12),
+              _SourceOption(
+                icon: Icons.photo_library,
+                label: 'Choisir depuis la galerie',
+                onTap: () => Get.back(result: ImageSource.gallery),
+              ),
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: () => Get.back(),
+                child: const Text('Annuler'),
+              ),
+            ],
+          ),
+        ),
+        isDismissible: true,
+        enableDrag: true,
+      );
+
+      if (source == null) return;
+
+      final image = await _picker.pickImage(
+        source: source,
+        imageQuality: 85,
+        maxWidth: 1024,
+        maxHeight: 1024,
+      );
+
+      if (image != null) {
+        cnmciCardImagePath.value = image.path;
+        Get.snackbar(
+          'Carte CNMCI sélectionnée',
+          'La photo de votre carte sera téléchargée lors de l\'enregistrement',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: const Color(0xFFD1FAE5),
+          colorText: const Color(0xFF10B981),
+        );
+      }
+    } catch (e) {
+      Get.snackbar(
+        'Erreur',
+        'Échec du choix de l\'image : ${e.toString()}',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: const Color(0xFFFEE2E2),
+        colorText: const Color(0xFFEF4444),
+      );
+    }
+  }
+
   Future<void> selectCategoryAndSubcategory() async {
     final result = await Get.toNamed(Routes.services);
     if (result != null && result is Map) {
@@ -233,6 +326,14 @@ class UpdateProfileController extends GetxController {
         tradeId: isArtisan.value ? selectedTradeId.value : null,
       );
 
+      if (isArtisan.value && (cnmciNumberController.text.isNotEmpty || cnmciCardImagePath.value != null)) {
+        await _userRepo.updateCnmci(
+          userId: userId,
+          cnmciNumber: cnmciNumberController.text.trim(),
+          cardImagePath: cnmciCardImagePath.value,
+        );
+      }
+
       // Si une localisation a été spécifiée sur la carte, on la met à jour
       if (selectedLatitude.value != null && selectedLongitude.value != null) {
         await _userRepo.updateLocation(
@@ -283,6 +384,7 @@ class UpdateProfileController extends GetxController {
     nameController.dispose();
     phoneController.dispose();
     emailController.dispose();
+    cnmciNumberController.dispose();
     super.onClose();
   }
 }
