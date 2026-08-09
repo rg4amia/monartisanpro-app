@@ -80,6 +80,16 @@ class StorageService {
   static void saveDriverWalletBalance(int val) => _box.write('drv_wallet', val);
   static int? getDriverWalletBalance() => _box.read<int>('drv_wallet');
 
+  // ── Notifications Preferences ───────────────────────────────────────────────
+  static const String _notificationsEnabledKey = 'notifications_enabled';
+  static const String _notificationSoundEnabledKey = 'notification_sound_enabled';
+
+  static void setNotificationsEnabled(bool value) => _box.write(_notificationsEnabledKey, value);
+  static bool areNotificationsEnabled() => _box.read<bool>(_notificationsEnabledKey) ?? true;
+
+  static void setNotificationSoundEnabled(bool value) => _box.write(_notificationSoundEnabledKey, value);
+  static bool isNotificationSoundEnabled() => _box.read<bool>(_notificationSoundEnabledKey) ?? true;
+
   // ── Clear all ───────────────────────────────────────────────────────────────
   static Future<void> clearAll() async {
     await clearToken();

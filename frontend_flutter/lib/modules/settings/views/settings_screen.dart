@@ -273,10 +273,159 @@ class _MenuList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const orangeAccent = Color(0xFFF97316);
+    const orangeAccentLight = Color(0xFFFFF3EB);
+    
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Section Paramètres
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: _C.surface,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: _C.subtle),
+              boxShadow: [
+                BoxShadow(
+                  color: _C.ink.withValues(alpha: 0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.settings_outlined,
+                      color: orangeAccent,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 12),
+                    const Text(
+                      'Paramètres',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: _C.ink,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                
+                // Notifications switch Row
+                Obx(() => Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: orangeAccentLight,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.notifications_none_outlined,
+                        color: orangeAccent,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Notifications',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: _C.ink,
+                            ),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            'Activer/désactiver toutes les notifications',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: _C.muted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Switch(
+                      value: controller.notificationsEnabled.value,
+                      onChanged: controller.toggleNotifications,
+                      activeColor: orangeAccent,
+                      activeTrackColor: orangeAccent.withValues(alpha: 0.3),
+                    ),
+                  ],
+                )),
+                
+                const SizedBox(height: 16),
+                const Divider(height: 1, color: _C.subtle),
+                const SizedBox(height: 16),
+                
+                // Son switch Row
+                Obx(() => Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: orangeAccentLight,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.volume_up_outlined,
+                        color: orangeAccent,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Son',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: _C.ink,
+                            ),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            'Activer le son des notifications',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: _C.muted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Switch(
+                      value: controller.notificationSoundEnabled.value,
+                      onChanged: controller.toggleNotificationSound,
+                      activeColor: orangeAccent,
+                      activeTrackColor: orangeAccent.withValues(alpha: 0.3),
+                    ),
+                  ],
+                )),
+              ],
+            ),
+          ),
+          
+          const SizedBox(height: 20),
+          
           _MenuItem(
             icon: Icons.person_outline,
             iconBg: _C.primaryLight,
@@ -286,16 +435,7 @@ class _MenuList extends StatelessWidget {
             onTap: () => Get.toNamed(Routes.updateProfile),
           ),
           const SizedBox(height: 12),
-          _MenuItem(
-            icon: Icons.credit_card_outlined,
-            iconBg: _C.primaryLight,
-            iconColor: _C.primary,
-            title: 'Modes de Paiement',
-            subtitle: 'Cartes, Mobile Money, Portefeuilles',
-            onTap: () {},
-          ),
-          const SizedBox(height: 12),
-          _MenuItem(
+          Obx(() => _MenuItem(
             icon: Icons.shield_outlined,
             iconBg: _C.successLight,
             iconColor: _C.success,
@@ -305,16 +445,7 @@ class _MenuList extends StatelessWidget {
             onTap: controller.kycStatus.value != 'actif'
                 ? () => Get.toNamed(Routes.kycCni)
                 : null,
-          ),
-          const SizedBox(height: 12),
-          _MenuItem(
-            icon: Icons.help_outline,
-            iconBg: _C.primaryLight,
-            iconColor: _C.primary,
-            title: 'Centre d\'aide',
-            subtitle: 'FAQs et support client',
-            onTap: () {},
-          ),
+          )),
           const SizedBox(height: 12),
           _MenuItem(
             icon: Icons.phone_android_outlined,
@@ -325,13 +456,98 @@ class _MenuList extends StatelessWidget {
             onTap: () => _showChangePhoneDialog(context, controller),
           ),
           const SizedBox(height: 12),
+          
+          // Conditions d'utilisation
+          _MenuItem(
+            icon: Icons.assignment_outlined,
+            iconBg: const Color(0xFFF3E8FF),
+            iconColor: const Color(0xFF9333EA),
+            title: 'Conditions d\'utilisation',
+            subtitle: 'Nos conditions générales d\'utilisation',
+            onTap: () {
+              Get.dialog(
+                AlertDialog(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  title: const Text('Conditions d\'utilisation'),
+                  content: const SingleChildScrollView(
+                    child: Text('En utilisant les services de ProsArtisan, vous acceptez sans réserve nos CGU visant à garantir la sécurité et la qualité des travaux réalisés sur le chantier.'),
+                  ),
+                  actions: [
+                    TextButton(onPressed: () => Get.back(), child: const Text('Fermer')),
+                  ],
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+          
+          // Politique de confidentialité
+          _MenuItem(
+            icon: Icons.security_outlined,
+            iconBg: const Color(0xFFDCFCE7),
+            iconColor: const Color(0xFF16A34A),
+            title: 'Politique de confidentialité',
+            subtitle: 'Traitement et protection de vos données',
+            onTap: () {
+              Get.dialog(
+                AlertDialog(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  title: const Text('Politique de confidentialité'),
+                  content: const SingleChildScrollView(
+                    child: Text('ProsArtisan s\'engage à protéger la confidentialité de vos données personnelles, de vos positions géographiques cryptées, et des fichiers KYC transmis.'),
+                  ),
+                  actions: [
+                    TextButton(onPressed: () => Get.back(), child: const Text('Fermer')),
+                  ],
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+          
+          // Aide et support
+          _MenuItem(
+            icon: Icons.help_outline_outlined,
+            iconBg: const Color(0xFFFFF3EB),
+            iconColor: const Color(0xFFD97706),
+            title: 'Aide et support',
+            subtitle: 'FAQs et support client d\'assistance',
+            onTap: () {
+              Get.dialog(
+                AlertDialog(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  title: const Text('Aide et support'),
+                  content: const Text('Besoin d\'assistance pour un jalon ou un paiement ? Contactez notre support disponible 7j/7 depuis notre centre d\'appel.'),
+                  actions: [
+                    TextButton(onPressed: () => Get.back(), child: const Text('Fermer')),
+                  ],
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+          
+          // Déconnexion
           _MenuItem(
             icon: Icons.logout,
-            iconBg: _C.dangerLight,
-            iconColor: _C.danger,
+            iconBg: const Color(0xFFFEE2E2),
+            iconColor: const Color(0xFFDC2626),
             title: 'Déconnexion',
             subtitle: 'Se déconnecter de votre compte',
+            titleColor: const Color(0xFFDC2626),
             onTap: () => _confirmLogout(context, controller),
+          ),
+          const SizedBox(height: 12),
+          
+          // Supprimer mon compte
+          _MenuItem(
+            icon: Icons.person_remove_outlined,
+            iconBg: const Color(0xFFFEE2E2),
+            iconColor: const Color(0xFFDC2626),
+            title: 'Supprimer mon compte',
+            subtitle: 'Supprimer définitivement vos données',
+            titleColor: const Color(0xFFDC2626),
+            onTap: () => _confirmDeleteAccount(context, controller),
           ),
         ],
       ),
@@ -361,6 +577,40 @@ class _MenuList extends StatelessWidget {
               ),
             ),
             child: const Text('Déconnexion'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmDeleteAccount(BuildContext context, SettingsController controller) {
+    Get.dialog(
+      AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Suppression de compte',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: const Text(
+          'Attention : Cette action est irréversible et supprimera définitivement votre compte, vos coordonnées et votre historique sur la plateforme ProsArtisan. Souhaitez-vous continuer ?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('Annuler'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Get.back();
+              controller.deleteAccount();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _C.danger,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text('Supprimer définitivement'),
           ),
         ],
       ),
@@ -522,6 +772,7 @@ class _MenuItem extends StatelessWidget {
   final String subtitle;
   final Widget? trailing;
   final VoidCallback? onTap;
+  final Color? titleColor;
 
   const _MenuItem({
     required this.icon,
@@ -531,6 +782,7 @@ class _MenuItem extends StatelessWidget {
     required this.subtitle,
     this.trailing,
     this.onTap,
+    this.titleColor,
   });
 
   @override
@@ -569,10 +821,10 @@ class _MenuItem extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: _C.ink,
+                      color: titleColor ?? _C.ink,
                     ),
                   ),
                   const SizedBox(height: 2),

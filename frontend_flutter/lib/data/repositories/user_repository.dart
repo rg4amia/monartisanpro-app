@@ -78,4 +78,9 @@ class UserRepository {
     final response = await _client.get(ApiEndpoints.dashboard);
     return response.data as Map<String, dynamic>;
   }
+
+  Future<Map<String, dynamic>> deleteAccount({required int userId}) async {
+    final response = await _client.delete(ApiEndpoints.updateUser(userId));
+    return response.data as Map<String, dynamic>;
+  }
 }
