@@ -3,12 +3,14 @@ import '../../../app/routes/app_routes.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/mission_repository.dart';
 import '../../../data/repositories/wallet_repository.dart';
+import '../../../data/repositories/user_repository.dart';
 import '../../../core/storage/storage_service.dart';
 
 class SettingsController extends GetxController {
   final AuthRepository _authRepo = AuthRepository();
   final WalletRepository _walletRepo = WalletRepository();
   final MissionRepository _missionRepo = MissionRepository();
+  final UserRepository _userRepo = UserRepository();
 
   final userName = ''.obs;
   final userPhone = ''.obs;
@@ -18,6 +20,9 @@ class SettingsController extends GetxController {
   final ordersCount = 0.obs;
   final isLoading = false.obs;
 
+  final notificationsEnabled = true.obs;
+  final notificationSoundEnabled = true.obs;
+
   @override
   void onInit() {
     super.onInit();
@@ -25,7 +30,36 @@ class SettingsController extends GetxController {
     userPhone.value = StorageService.getPhone() ?? '';
     userRole.value = StorageService.getRole() ?? '';
     kycStatus.value = StorageService.getKycStatus() ?? 'en_attente';
+    notificationsEnabled.value = StorageService.areNotificationsEnabled();
+    notificationSoundEnabled.value = StorageService.isNotificationSoundEnabled();
     _loadData();
+  }
+
+  void toggleNotifications(bool value) {
+    notificationsEnabled.value = value;
+    StorageService.setNotificationsEnabled(value);
+  }
+
+  void toggleNotificationSound(bool value) {
+    notificationSoundEnabled.value = value;
+    StorageService.setNotificationSoundEnabled(value);
+  }
+
+  Future<void> deleteAccount() async {
+    final userId = StorageService.getUserId();
+    if (userId == null) return;
+    isLoading.value = true;
+    try {
+      await _userRepo.deleteAccount(userId: userId);
+      await StorageService.clearAll();
+      Get.offAllNamed(Routes.login);
+    } catch (_) {
+      // Ignorer silencieusement en cas d'erreur de réseau ou autre
+      await StorageService.clearAll();
+      Get.offAllNamed(Routes.login);
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   Future<void> _loadData() async {

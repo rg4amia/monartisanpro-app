@@ -197,4 +197,19 @@ class UserController extends Controller
             'data'    => new UserResource($user->fresh()->load('artisanProfile.sector', 'artisanProfile.trade')),
         ]);
     }
+
+    public function destroy(Request $request, User $user): JsonResponse
+    {
+        if ($request->user()->id !== $user->id && $request->user()->role !== 'admin') {
+            abort(403, 'Accès refusé.');
+        }
+
+        $user->tokens()->delete();
+        $user->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Votre compte a été supprimé avec succès.',
+        ]);
+    }
 }
