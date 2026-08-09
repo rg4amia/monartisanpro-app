@@ -2831,6 +2831,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                             </DataTable>
                                         </Surface>
                                     )}
+                                </section>
                              ) : null}
 
                             {activeTab === 'communications' ? (
@@ -2978,8 +2979,6 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                             </DataTable>
                                         </div>
                                     </Surface>
-                                </section>
-                            ) : null}
                                 </section>
                             ) : null}
                         </main>
