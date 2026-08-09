@@ -1,8 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import '../../data/models/communication_model.dart';
-import '../../core/theme/app_colors.dart';
+
 
 class CommunicationBanner extends StatelessWidget {
   final List<CommunicationModel> announcements;
@@ -19,7 +18,7 @@ class CommunicationBanner extends StatelessWidget {
     return Column(
       children: announcements.map((announcement) {
         return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          margin: const EdgeInsets.only(bottom: 8),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
@@ -140,7 +139,7 @@ class _LeSaviezVousCarouselState extends State<LeSaviezVousCarousel> {
     if (widget.tips.isEmpty) return const SizedBox.shrink();
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      margin: const EdgeInsets.only(top: 4, bottom: 12),
       height: 140,
       decoration: BoxDecoration(
         gradient: const LinearGradient(

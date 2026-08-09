@@ -119,13 +119,17 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
               SliverToBoxAdapter(child: _buildHeader()),
               SliverToBoxAdapter(child: _buildSubTabBar()),
               SliverToBoxAdapter(
-                child: Obx(() => Column(
-                  children: [
-                    CommunicationBanner(announcements: controller.announcements),
-                    LeSaviezVousCarousel(tips: controller.tips),
-                  ],
+                child: Obx(() => Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    children: [
+                      CommunicationBanner(announcements: controller.announcements),
+                      LeSaviezVousCarousel(tips: controller.tips),
+                    ],
+                  ),
                 )),
               ),
+
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
