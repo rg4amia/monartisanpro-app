@@ -754,6 +754,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
 
     const handleCommSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
         event.preventDefault();
+        if (commForm.processing) return;
         if (editingComm) {
             commForm.put(`/admin/communications/${editingComm.id}`, {
                 preserveScroll: true,
