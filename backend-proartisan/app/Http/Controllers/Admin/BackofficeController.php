@@ -130,7 +130,7 @@ class BackofficeController extends Controller
         ]);
 
         $status = $user->score_frozen ? 'gelé' : 'dégelé';
-        return back()->with('success', "Le score N'Zassa de l'artisan {$user->name} a été {$status} avec succès.");
+        return back()->with('success', "Le score ProsArtisan de l'artisan {$user->name} a été {$status} avec succès.");
     }
 
     public function llmAdmin(): Response

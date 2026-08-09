@@ -1706,7 +1706,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                         </Surface>
 
                                         <Surface className="rounded-[32px] p-5 lg:p-6">
-                                            <SectionTitle description="Comptes artisans les plus solides pour le matching et le micro-crédit." title="Top Score N'Zassa" />
+                                            <SectionTitle description="Comptes artisans les plus solides pour le matching et le micro-crédit." title="Top Score ProsArtisan" />
                                             <div className="mt-5 space-y-3">
                                                 {analytics.topArtisans.length === 0 ? (
                                                     <EmptyState description="Aucun artisan scoré pour l’instant." title="Pas de classement" />
@@ -2770,7 +2770,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                                     : 'text-[var(--admin-text-soft)] hover:bg-white/40'
                                             )}
                                         >
-                                            Scores N'Zassa Artisans ({analytics.filteredArtisansScores.length})
+                                            Scores ProsArtisan Artisans ({analytics.filteredArtisansScores.length})
                                         </button>
                                     </div>
 
@@ -2787,7 +2787,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                                         <th>Évaluateur (Client)</th>
                                                         <th>Évalué (Artisan)</th>
                                                         <th>Note Générale</th>
-                                                        <th>Critères N'Zassa (F / I / Q / R)</th>
+                                                        <th>Critères ProsArtisan (F / I / Q / R)</th>
                                                         <th>Commentaire</th>
                                                         <th>Date</th>
                                                     </tr>
@@ -2867,13 +2867,13 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                         <Surface className="rounded-[32px] p-5 lg:p-6">
                                             <SectionTitle
                                                 description="Administration des réputations d'artisans. Gelez les scores pour geler les droits au micro-crédit en cas de litige."
-                                                title="Scores N'Zassa des Artisans"
+                                                title="Scores ProsArtisan des Artisans"
                                             />
                                             <DataTable className="mt-5">
                                                 <thead>
                                                     <tr>
                                                         <th>Artisan</th>
-                                                        <th>Score N'Zassa</th>
+                                                        <th>Score ProsArtisan</th>
                                                         <th>Évaluations reçues</th>
                                                         <th>Moyennes critères (F / I / Q / R)</th>
                                                         <th>Statut du Score</th>
@@ -3338,7 +3338,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <label className="block space-y-1">
-                                        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Gel de Score N'Zassa</span>
+                                        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Gel de Score ProsArtisan</span>
                                         <select
                                             value={userForm.data.score_frozen ? 'oui' : 'non'}
                                             onChange={(e) => userForm.setData('score_frozen', e.target.value === 'oui')}
@@ -3449,7 +3449,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                             <div className="flex items-center justify-between border-b border-[var(--admin-border)] pb-4">
                                 <div>
                                     <h2 className="text-xl font-bold text-[var(--admin-text)]">
-                                        Historique N'Zassa : {selectedArtisanForLedger.name}
+                                        Historique ProsArtisan : {selectedArtisanForLedger.name}
                                     </h2>
                                     <p className="text-xs text-[var(--admin-muted)] mt-1">
                                         Score actuel : {selectedArtisanForLedger.score_nzassa}/100 • {selectedArtisanForLedger.score_frozen ? 'Score Gelé' : 'Score Dynamique'}
