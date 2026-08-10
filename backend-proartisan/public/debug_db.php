@@ -24,6 +24,13 @@ $db = isset($env['DB_DATABASE']) ? $env['DB_DATABASE'] : '';
 $user = isset($env['DB_USERNAME']) ? $env['DB_USERNAME'] : '';
 $pass = isset($env['DB_PASSWORD']) ? $env['DB_PASSWORD'] : '';
 
+echo "Debug Env Info:<br>";
+echo "DB_HOST: " . htmlspecialchars($host) . "<br>";
+echo "DB_PORT: " . htmlspecialchars($port) . "<br>";
+echo "DB_DATABASE: " . htmlspecialchars($db) . "<br>";
+echo "DB_USERNAME: " . htmlspecialchars($user) . "<br>";
+echo "DB_PASSWORD length: " . strlen($pass) . "<br><br>";
+
 // Hostinger DB_HOST optimization
 if ($host === '127.0.0.1') {
     $host = 'localhost';
