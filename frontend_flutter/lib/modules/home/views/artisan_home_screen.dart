@@ -114,7 +114,6 @@ class ArtisanHomeScreen extends StatelessWidget {
             );
           }
 
-          final missions = controller.prioritizedArtisanMissions;
           return CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
@@ -125,15 +124,15 @@ class ArtisanHomeScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Obx(() => CommunicationBanner(announcements: controller.announcements)),
-                      Obx(() => LeSaviezVousCarousel(tips: controller.tips)),
-                      Obx(() => _StatGrid(controller: controller)),
+                      CommunicationBanner(announcements: controller.announcements),
+                      LeSaviezVousCarousel(tips: controller.tips),
+                      _StatGrid(controller: controller),
                       const SizedBox(height: 24),
-                      Obx(() => _QuickActions(controller: controller, missions: controller.prioritizedArtisanMissions)),
+                      _QuickActions(controller: controller, missions: controller.prioritizedArtisanMissions),
                       const SizedBox(height: 24),
-                      Obx(() => _WorkflowReminder(controller: controller)),
+                      _WorkflowReminder(controller: controller),
                       const SizedBox(height: 24),
-                      Obx(() => _MissionQueue(controller: controller, missions: controller.prioritizedArtisanMissions)),
+                      _MissionQueue(controller: controller, missions: controller.prioritizedArtisanMissions),
                     ],
                   ),
                 ),
