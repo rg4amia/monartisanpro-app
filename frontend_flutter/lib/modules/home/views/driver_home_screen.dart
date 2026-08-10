@@ -8,6 +8,7 @@ import '../../../data/models/mission_model.dart';
 import '../../notifications/controllers/notifications_controller.dart';
 import '../../../shared/widgets/communication_banner.dart';
 import '../controllers/home_controller.dart';
+import 'delivery_route_planner_screen.dart';
 
 class DriverHomeScreen extends StatefulWidget {
   const DriverHomeScreen({super.key});
@@ -25,19 +26,31 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
   final _basePriceCtrl = TextEditingController();
   final _priceKmCtrl = TextEditingController();
   final _addressCtrl = TextEditingController();
+  final _gpsCtrl = TextEditingController();
   String _selectedVehicle = 'Moto';
-  String _gpsCoords = '';
   bool _loadingGeo = false;
 
   @override
   void initState() {
     super.initState();
     _plateCtrl.text = controller.driverPlate.value;
-    _basePriceCtrl.text = controller.driverBasePrice.value.toString();
-    _priceKmCtrl.text = controller.driverPriceKm.value.toString();
     _addressCtrl.text = controller.driverAddress.value;
     _selectedVehicle = controller.driverVehicle.value;
-    _gpsCoords = controller.driverGpsCoords.value;
+    _gpsCtrl.text = controller.driverGpsCoords.value;
+    _updatePricingForVehicle(_selectedVehicle);
+  }
+
+  void _updatePricingForVehicle(String vehicle) {
+    if (vehicle == 'Moto') {
+      _basePriceCtrl.text = '1000';
+      _priceKmCtrl.text = '200';
+    } else if (vehicle == 'Tricycle') {
+      _basePriceCtrl.text = '1500';
+      _priceKmCtrl.text = '300';
+    } else if (vehicle == 'Camionnette') {
+      _basePriceCtrl.text = '2500';
+      _priceKmCtrl.text = '500';
+    }
   }
 
   @override
@@ -46,6 +59,7 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
     _basePriceCtrl.dispose();
     _priceKmCtrl.dispose();
     _addressCtrl.dispose();
+    _gpsCtrl.dispose();
     super.dispose();
   }
 
@@ -63,7 +77,7 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
         ),
       );
       setState(() {
-        _gpsCoords = '${pos.latitude.toStringAsFixed(6)}, ${pos.longitude.toStringAsFixed(6)}';
+        _gpsCtrl.text = '${pos.latitude.toStringAsFixed(6)}, ${pos.longitude.toStringAsFixed(6)}';
       });
       Get.snackbar(
         'GPS synchronisé',
@@ -94,7 +108,7 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
       basePrice,
       priceKm,
       _addressCtrl.text,
-      _gpsCoords,
+      _gpsCtrl.text,
     );
     Get.snackbar(
       'Véhicule mis à jour',
@@ -604,30 +618,49 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
             value: '${mission.clientName ?? 'Client'} (${mission.location ?? 'Cocody'})',
           ),
           const SizedBox(height: 16),
-          if (rawStatus == 'driver_assigned' || rawStatus == 'prepared')
-            ElevatedButton.icon(
-              onPressed: () => _promptPickupCode(mission),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.warning,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(double.infinity, 44),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => Get.to(() => DeliveryRoutePlannerScreen(mission: mission)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.driver,
+                    side: const BorderSide(color: AppColors.driver),
+                    minimumSize: const Size(0, 44),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  icon: const Icon(Icons.map_outlined, size: 18),
+                  label: const Text('Itinéraire', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                ),
               ),
-              icon: const Icon(Icons.check_circle_outline, size: 18),
-              label: const Text('Confirmer Enlèvement au Magasin', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
-            )
-          else
-            ElevatedButton.icon(
-              onPressed: () => _promptDropoffCode(mission),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.success,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(double.infinity, 44),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              const SizedBox(width: 10),
+              Expanded(
+                child: rawStatus == 'driver_assigned' || rawStatus == 'prepared'
+                    ? ElevatedButton.icon(
+                        onPressed: () => _promptPickupCode(mission),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.warning,
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size(0, 44),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        icon: const Icon(Icons.check_circle_outline, size: 18),
+                        label: const Text('Enlèvement', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
+                      )
+                    : ElevatedButton.icon(
+                        onPressed: () => _promptDropoffCode(mission),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.success,
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size(0, 44),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        icon: const Icon(Icons.check_circle, size: 18),
+                        label: const Text('Livraison', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
+                      ),
               ),
-              icon: const Icon(Icons.check_circle, size: 18),
-              label: const Text('Valider Livraison chez le Client', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
-            ),
+            ],
+          ),
         ],
       ),
     );
@@ -860,7 +893,12 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
               DropdownMenuItem(value: 'Camionnette', child: Text('Camionnette')),
             ],
             onChanged: (val) {
-              if (val != null) setState(() => _selectedVehicle = val);
+              if (val != null) {
+                setState(() {
+                  _selectedVehicle = val;
+                  _updatePricingForVehicle(val);
+                });
+              }
             },
           ),
           const SizedBox(height: 16),
@@ -877,9 +915,13 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
               Expanded(
                 child: TextField(
                   controller: _basePriceCtrl,
+                  readOnly: true,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
                     labelText: 'Frais fixes (FCFA)',
+                    helperText: 'Géré par la plateforme',
+                    fillColor: AppColors.background,
+                    filled: true,
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
@@ -888,9 +930,13 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
               Expanded(
                 child: TextField(
                   controller: _priceKmCtrl,
+                  readOnly: true,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
                     labelText: 'Frais par Km (FCFA)',
+                    helperText: 'Géré par la plateforme',
+                    fillColor: AppColors.background,
+                    filled: true,
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
@@ -943,18 +989,16 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AppColors.border),
+                TextField(
+                  controller: _gpsCtrl,
+                  decoration: InputDecoration(
+                    labelText: 'Coordonnées GPS (Ex: 5.3482, -4.0169)',
+                    fillColor: AppColors.surface,
+                    filled: true,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    hintText: 'lat, lng',
                   ),
-                  child: Text(
-                    _gpsCoords.isEmpty ? 'Aucune position GPS enregistrée' : _gpsCoords,
-                    style: const TextStyle(fontFamily: 'monospace', fontSize: 12, color: AppColors.textPrimary),
-                  ),
+                  style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
                 ),
                 const SizedBox(height: 12),
                 TextField(

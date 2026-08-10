@@ -462,6 +462,22 @@ class HomeController extends GetxController {
     StorageService.saveDriverPriceKm(kmVal);
     StorageService.saveDriverAddress(addr);
     StorageService.saveDriverGps(gps);
+
+    final userId = StorageService.getUserId();
+    if (userId != null && gps.isNotEmpty) {
+      try {
+        final parts = gps.split(',');
+        if (parts.length == 2) {
+          final lat = double.tryParse(parts[0].trim());
+          final lng = double.tryParse(parts[1].trim());
+          if (lat != null && lng != null) {
+            _userRepo.updateLocation(userId: userId, lat: lat, lng: lng);
+          }
+        }
+      } catch (e) {
+        debugPrint('Erreur lors de la synchronisation GPS: $e');
+      }
+    }
   }
 
   void handleAcceptDelivery(MissionModel mission) {
