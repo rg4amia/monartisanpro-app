@@ -54,44 +54,37 @@ class SupplierHomeScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Obx(() => CommunicationBanner(announcements: controller.announcements)),
-                        Obx(() => LeSaviezVousCarousel(tips: controller.tips)),
-                        Obx(() {
-                          final innerMissions = controller.activeMissions;
-                          final innerPayableTomorrow = innerMissions.fold<int>(
-                            0,
-                            (sum, mission) => sum + mission.montantMateriaux,
-                          );
-                          return Row(
-                            children: [
-                              Expanded(
-                                child: _MetricCard(
-                                  title: 'Collectes actives',
-                                  value: '${innerMissions.length}',
-                                  subtitle: 'J-Codes à traiter',
-                                  color: AppColors.success,
-                                  background: AppColors.supplierSoft,
-                                  icon: Icons.local_shipping_outlined,
-                                ),
+                        CommunicationBanner(announcements: controller.announcements),
+                        LeSaviezVousCarousel(tips: controller.tips),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _MetricCard(
+                                title: 'Collectes actives',
+                                value: '${missions.length}',
+                                subtitle: 'J-Codes à traiter',
+                                color: AppColors.success,
+                                background: AppColors.supplierSoft,
+                                icon: Icons.local_shipping_outlined,
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _MetricCard(
-                                  title: 'Paiements J+1',
-                                  value: Formatters.fcfa(innerPayableTomorrow),
-                                  subtitle: 'Montants matériaux',
-                                  color: AppColors.accent,
-                                  background: AppColors.artisanSoft,
-                                  icon: Icons.payments_outlined,
-                                ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _MetricCard(
+                                title: 'Paiements J+1',
+                                value: Formatters.fcfa(payableTomorrow),
+                                subtitle: 'Montants matériaux',
+                                color: AppColors.accent,
+                                background: AppColors.artisanSoft,
+                                icon: Icons.payments_outlined,
                               ),
-                            ],
-                          );
-                        }),
+                            ),
+                          ],
+                        ),
                         const SizedBox(height: 24),
                         const _SectionTitle(title: 'Actions prioritaires'),
                         const SizedBox(height: 12),
-                        Obx(() => _PrimaryScannerCard(missionCount: controller.activeMissions.length)),
+                        _PrimaryScannerCard(missionCount: controller.activeMissions.length),
                         const SizedBox(height: 12),
                         OutlinedButton.icon(
                            onPressed: () => Get.toNamed(Routes.supplierCatalog),
@@ -107,22 +100,18 @@ class SupplierHomeScreen extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        Obx(() {
-                          final innerMissions = controller.activeMissions;
-                          if (innerMissions.isEmpty) {
-                            return const _SupplierEmptyState();
-                          }
-                          return Column(
-                            children: innerMissions
-                                .map(
-                                  (mission) => Padding(
-                                    padding: const EdgeInsets.only(bottom: 12),
-                                    child: _SupplierMissionCard(mission: mission),
-                                  ),
-                                )
-                                .toList(),
-                          );
-                        }),
+                        missions.isEmpty
+                            ? const _SupplierEmptyState()
+                            : Column(
+                                children: missions
+                                    .map(
+                                      (mission) => Padding(
+                                        padding: const EdgeInsets.only(bottom: 12),
+                                        child: _SupplierMissionCard(mission: mission),
+                                      ),
+                                    )
+                                    .toList(),
+                              ),
                         const SizedBox(height: 24),
                         const _SectionTitle(title: 'Rappel conformité'),
                         const SizedBox(height: 12),
