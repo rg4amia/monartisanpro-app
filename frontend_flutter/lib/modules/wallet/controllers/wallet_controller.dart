@@ -25,7 +25,7 @@ class WalletController extends GetxController {
       // and GET /api/v1/transactions returns transaction history
       
       final balanceResponse = await _apiClient.get(ApiEndpoints.walletBalance);
-      final balance = WalletBalance.fromJson(balanceResponse.data);
+      final balance = WalletBalance.fromJson(balanceResponse.data['data']);
       walletMateriaux.value = balance.walletMateriaux;
       walletMo.value = balance.walletMo;
 
