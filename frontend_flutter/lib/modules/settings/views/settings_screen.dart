@@ -14,7 +14,6 @@ abstract class _C {
   static const success = Color(0xFF10B981);
   static const successLight = Color(0xFFD1FAE5);
   static const danger = Color(0xFFEF4444);
-  static const dangerLight = Color(0xFFFEE2E2);
   static const ink = Color(0xFF111827);
   static const muted = Color(0xFF6B7280);
   static const subtle = Color(0xFFE5E7EB);
@@ -362,7 +361,7 @@ class _MenuList extends StatelessWidget {
                     Switch(
                       value: controller.notificationsEnabled.value,
                       onChanged: controller.toggleNotifications,
-                      activeColor: orangeAccent,
+                      activeThumbColor: orangeAccent,
                       activeTrackColor: orangeAccent.withValues(alpha: 0.3),
                     ),
                   ],
@@ -415,7 +414,7 @@ class _MenuList extends StatelessWidget {
                     Switch(
                       value: controller.notificationSoundEnabled.value,
                       onChanged: controller.toggleNotificationSound,
-                      activeColor: orangeAccent,
+                      activeThumbColor: orangeAccent,
                       activeTrackColor: orangeAccent.withValues(alpha: 0.3),
                     ),
                   ],

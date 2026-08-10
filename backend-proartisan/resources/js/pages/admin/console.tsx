@@ -3,9 +3,9 @@ import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
 import { cn } from '@/lib/utils';
+import AiDashboardPanel from './ai-dashboard-panel';
 import LlmAdminPanel from './llm-admin-panel';
 import RolesPermissionsPanel from './roles-permissions-panel';
-import AiDashboardPanel from './ai-dashboard-panel';
 
 type AdminTab = 'dashboard' | 'kyc' | 'missions' | 'litiges' | 'users' | 'transactions' | 'settings' | 'llm_admin' | 'roles_permissions' | 'evaluations' | 'ai_dashboard' | 'communications';
 type ThemeMode = 'light' | 'dark';
@@ -2965,10 +2965,10 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                 <section className="mt-5 space-y-5">
                                     <Surface className="rounded-[32px] p-5 lg:p-6">
                                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-[var(--admin-border)] pb-4 mb-4">
-                                            <div>
-                                                <SectionTitle>Gestion des Communications \u0026 Astuces</SectionTitle>
-                                                <p className="text-sm text-[var(--admin-text-soft)]">Publiez des annonces ou des astuces "Le saviez-vous ?" cibl\u00e9es par r\u00f4le.</p>
-                                            </div>
+                                            <SectionTitle 
+                                                title="Gestion des Communications & Astuces" 
+                                                description="Publiez des annonces ou des astuces &quot;Le saviez-vous ?&quot; ciblées par rôle." 
+                                            />
                                             <button
                                                 type="button"
                                                 onClick={openCreateCommModal}
