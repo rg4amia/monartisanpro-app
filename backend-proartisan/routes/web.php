@@ -103,4 +103,15 @@ Route::prefix('admin')->name('admin.')->group(function () {
 Route::get('/pay', [\App\Http\Controllers\Api\V1\PaymentController::class, 'showMockPay'])->name('payment.mock.pay');
 Route::post('/pay/validate', [\App\Http\Controllers\Api\V1\PaymentController::class, 'validateMockPay'])->name('payment.mock.validate');
 
+Route::get('/run-migrations-secure', function() {
+    if (request('token') === 'prosartisan_secret_migrate_2026') {
+        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        return response()->json([
+            'status' => 'success',
+            'output' => \Illuminate\Support\Facades\Artisan::output(),
+        ]);
+    }
+    abort(403);
+});
+
 // Trigger deploy: SSH test 7
