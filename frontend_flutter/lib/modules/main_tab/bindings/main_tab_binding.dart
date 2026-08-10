@@ -5,6 +5,7 @@ import '../../jcode/controllers/jcode_controller.dart';
 import '../../missions/controllers/missions_controller.dart';
 import '../../notifications/controllers/notifications_controller.dart';
 import '../../settings/controllers/settings_controller.dart';
+import '../../wallet/controllers/wallet_controller.dart';
 
 class MainTabBinding extends Bindings {
   @override
@@ -15,5 +16,6 @@ class MainTabBinding extends Bindings {
     Get.lazyPut<MissionsController>(() => MissionsController());
     Get.lazyPut<NotificationsController>(() => NotificationsController());
     Get.lazyPut<SettingsController>(() => SettingsController());
+    Get.lazyPut<WalletController>(() => WalletController());
   }
 }

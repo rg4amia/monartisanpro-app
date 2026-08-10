@@ -19,6 +19,7 @@ const roleLabels: Record<string, string> = {
     fournisseur: 'Fournisseur',
     referent: 'Référent',
     admin: 'Administrateur (Accès Total)',
+    livreur: 'Livreur',
 };
 
 const categoryLabels: Record<string, string> = {

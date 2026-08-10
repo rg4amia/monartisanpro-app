@@ -46,7 +46,7 @@ class AdminService
     {
         return User::query()
             ->where('kyc_status', 'en_attente')
-            ->whereIn('role', ['client', 'artisan', 'fournisseur'])
+            ->whereIn('role', ['client', 'artisan', 'fournisseur', 'livreur'])
             ->when($role, fn ($q) => $q->where('role', $role))
             ->with(['kycDocuments' => fn ($q) => $q->orderByDesc('created_at')])
             ->orderByDesc('created_at')

@@ -431,6 +431,7 @@ const roleLabels: Record<string, string> = {
     client: 'Client',
     fournisseur: 'Fournisseur',
     referent: 'Référent',
+    livreur: 'Livreur',
 };
 
 const kycStatusLabels: Record<string, string> = {
@@ -3863,6 +3864,7 @@ function RoleBadge({ role }: { role: string }) {
         client: 'blue',
         fournisseur: 'slate',
         referent: 'rose',
+        livreur: 'amber',
     };
 
     return <span className={cn('rounded-full border px-3 py-1 text-xs font-semibold', toneBadgeClasses(toneMap[role] ?? 'slate'))}>{roleLabels[role] ?? role}</span>;
