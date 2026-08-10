@@ -11,7 +11,9 @@ class WalletScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<WalletController>();
+    final controller = Get.isRegistered<WalletController>()
+        ? Get.find<WalletController>()
+        : Get.put(WalletController());
 
     return Scaffold(
       backgroundColor: AppColors.background,
