@@ -279,7 +279,7 @@ class _LoginScreenState extends State<LoginScreen>
               Icons.person_outline_rounded,
               '👩‍💼',
               _selectedProfile.value == 'CLIENT',
-              appSettings.isBlockedAll('CLIENT'),
+              appSettings.isBlocked('CLIENT', isNewUser: false),
               () {
                 _selectedProfile.value = 'CLIENT';
                 _c.role.value = 'client';
@@ -291,7 +291,7 @@ class _LoginScreenState extends State<LoginScreen>
               Icons.construction_outlined,
               '👨‍🔧',
               _selectedProfile.value == 'ARTISAN',
-              appSettings.isBlockedAll('ARTISAN'),
+              appSettings.isBlocked('ARTISAN', isNewUser: false),
               () {
                 _selectedProfile.value = 'ARTISAN';
                 _c.role.value = 'artisan';
@@ -303,7 +303,7 @@ class _LoginScreenState extends State<LoginScreen>
               Icons.warehouse_outlined,
               '🏭',
               _selectedProfile.value == 'FOURNISSEUR',
-              appSettings.isBlockedAll('FOURNISSEUR'),
+              appSettings.isBlocked('FOURNISSEUR', isNewUser: false),
               () {
                 _selectedProfile.value = 'FOURNISSEUR';
                 _c.role.value = 'fournisseur';
@@ -315,7 +315,7 @@ class _LoginScreenState extends State<LoginScreen>
               Icons.local_shipping_outlined,
               '🚚',
               _selectedProfile.value == 'LIVREUR',
-              appSettings.isBlockedAll('LIVREUR'),
+              appSettings.isBlocked('LIVREUR', isNewUser: false),
               () {
                 _selectedProfile.value = 'LIVREUR';
                 _c.role.value = 'driver';
@@ -340,7 +340,7 @@ class _LoginScreenState extends State<LoginScreen>
       onTap: isBlocked ? () {
         Get.snackbar(
           'Accès désactivé', 
-          appSettings.disabledMessage.value,
+          appSettings.getDisabledMessage(label),
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.red.withOpacity(0.9),
           colorText: Colors.white,

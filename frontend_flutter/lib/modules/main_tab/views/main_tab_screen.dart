@@ -17,15 +17,28 @@ import '../../settings/views/settings_screen.dart';
 import '../../wallet/views/wallet_screen.dart';
 import '../controllers/main_tab_controller.dart';
 
+import '../../../data/services/app_settings_service.dart';
+import '../../../shared/widgets/maintenance_overlay.dart';
+
 class MainTabScreen extends StatelessWidget {
   const MainTabScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final c = Get.find<MainTabController>();
+    final appSettings = Get.find<AppSettingsService>();
 
     return Obx(() {
       final role = c.role.value ?? 'client';
+
+      // Check if space is blocked
+      if (appSettings.isBlocked(role, isNewUser: false)) {
+        return MaintenanceOverlay(
+          role: role,
+          onRefresh: () => appSettings.fetchSettings(),
+        );
+      }
+
       final isFournisseur = role == 'fournisseur';
       final isArtisan = role == 'artisan';
       final isDriver = role == 'driver' || role == 'livreur' || role == 'LIVREUR';

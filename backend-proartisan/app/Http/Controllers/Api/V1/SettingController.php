@@ -20,7 +20,11 @@ class SettingController extends Controller
                 'block_artisan',
                 'block_fournisseur',
                 'block_livreur',
-                'app_access_disabled_message'
+                'app_access_disabled_message',
+                'app_access_disabled_message_client',
+                'app_access_disabled_message_artisan',
+                'app_access_disabled_message_fournisseur',
+                'app_access_disabled_message_livreur',
             ])
             ->pluck('value', 'key');
 
@@ -32,6 +36,10 @@ class SettingController extends Controller
                 'block_fournisseur' => $settings->get('block_fournisseur', 'none'),
                 'block_livreur' => $settings->get('block_livreur', 'none'),
                 'app_access_disabled_message' => $settings->get('app_access_disabled_message', 'L\'accès à cet espace est temporairement restreint suite à une opération de maintenance de nos services. Nous vous prions de nous excuser pour la gêne occasionnée et vous remercions de votre patience.'),
+                'app_access_disabled_message_client' => $settings->get('app_access_disabled_message_client', 'L\'accès à l\'espace client est temporairement indisponible pour maintenance. Veuillez nous excuser pour la gêne occasionnée.'),
+                'app_access_disabled_message_artisan' => $settings->get('app_access_disabled_message_artisan', 'L\'accès à l\'espace artisan est temporairement suspendu. Nos équipes interviennent rapidement. Merci de votre patience.'),
+                'app_access_disabled_message_fournisseur' => $settings->get('app_access_disabled_message_fournisseur', 'L\'espace fournisseur est en cours de mise à jour technique. L\'accès sera rétabli sous peu.'),
+                'app_access_disabled_message_livreur' => $settings->get('app_access_disabled_message_livreur', 'L\'espace de livraison est momentanément inaccessible. Merci de réessayer d\'ici quelques instants.'),
             ],
         ]);
     }
@@ -47,6 +55,10 @@ class SettingController extends Controller
             'block_fournisseur' => 'required|in:none,new,old,all',
             'block_livreur' => 'required|in:none,new,old,all',
             'app_access_disabled_message' => 'nullable|string',
+            'app_access_disabled_message_client' => 'nullable|string',
+            'app_access_disabled_message_artisan' => 'nullable|string',
+            'app_access_disabled_message_fournisseur' => 'nullable|string',
+            'app_access_disabled_message_livreur' => 'nullable|string',
         ]);
 
         foreach ($validated as $key => $value) {
