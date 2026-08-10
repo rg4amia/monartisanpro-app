@@ -113,34 +113,36 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
         child: RefreshIndicator(
           onRefresh: controller.refresh,
           color: AppColors.driver,
-          child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            slivers: [
-              SliverToBoxAdapter(child: _buildHeader()),
-              SliverToBoxAdapter(child: _buildSubTabBar()),
-              SliverToBoxAdapter(
-                child: Obx(() => Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    children: [
-                      CommunicationBanner(announcements: controller.announcements),
-                      LeSaviezVousCarousel(tips: controller.tips),
-                    ],
-                  ),
-                )),
-              ),
-
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 250),
-                    child: _buildTabContent(),
+          child: Obx(() {
+            return CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                SliverToBoxAdapter(child: _buildHeader()),
+                SliverToBoxAdapter(child: _buildSubTabBar()),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      children: [
+                        CommunicationBanner(announcements: controller.announcements),
+                        LeSaviezVousCarousel(tips: controller.tips),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
+
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 250),
+                      child: _buildTabContent(),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }),
         ),
       ),
     );
@@ -219,7 +221,7 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
                       child: const Icon(Icons.notifications_outlined, color: Colors.white),
                     ),
                   ),
-                  Obx(() {
+                  (() {
                     final unread = Get.isRegistered<NotificationsController>()
                         ? Get.find<NotificationsController>().unreadCount
                         : 0;
@@ -249,7 +251,7 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
                         ),
                       ),
                     );
-                  }),
+                  })(),
                 ],
               ),
             ],
@@ -335,25 +337,25 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
           Row(
             children: [
               Expanded(
-                child: Obx(() => _buildStatCard(
-                      title: 'Mon Portefeuille',
-                      value: Formatters.fcfa(controller.walletMo.value),
-                      subtitle: 'Solde disponible',
-                      color: AppColors.primary,
-                      background: AppColors.secondary,
-                      icon: Icons.account_balance_wallet_outlined,
-                    )),
+                child: _buildStatCard(
+                  title: 'Mon Portefeuille',
+                  value: Formatters.fcfa(controller.walletMo.value),
+                  subtitle: 'Solde disponible',
+                  color: AppColors.primary,
+                  background: AppColors.secondary,
+                  icon: Icons.account_balance_wallet_outlined,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Obx(() => _buildStatCard(
+                child: _buildStatCard(
                   title: 'Score Fluidité',
                   value: '${controller.fluidityScore.value} pts',
                   subtitle: 'Statut : ${controller.fluidityStatus}',
                   color: controller.fluidityScore.value > 150 ? Colors.amber.shade700 : AppColors.driver,
                   background: controller.fluidityScore.value > 150 ? Colors.amber.shade50 : AppColors.driverSoft,
                   icon: controller.fluidityScore.value > 150 ? Icons.workspace_premium_rounded : Icons.military_tech,
-                )),
+                ),
               ),
             ],
           ),
@@ -466,63 +468,61 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
 
   // ── Tab 2: Requests / Deliveries ───────────────────────────────────────────
   Widget _buildRequestsTab() {
+    final active = controller.driverActiveMissions;
+    final available = controller.driverAvailableMissions;
+
     return KeyedSubtree(
       key: const ValueKey('requests'),
-      child: Obx(() {
-        final active = controller.driverActiveMissions;
-        final available = controller.driverAvailableMissions;
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Section 1: Active Deliveries
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Courses actives (${active.length})',
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
-                  ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Section 1: Active Deliveries
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Courses actives (${active.length})',
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
                 ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            if (active.isEmpty)
-              _buildEmptyDeliveriesCard('Aucune course active en cours.')
-            else
-              Column(
-                children: active.map((m) => _buildActiveDeliveryCard(m)).toList(),
               ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          if (active.isEmpty)
+            _buildEmptyDeliveriesCard('Aucune course active en cours.')
+          else
+            Column(
+              children: active.map((m) => _buildActiveDeliveryCard(m)).toList(),
+            ),
 
-            const SizedBox(height: 24),
+          const SizedBox(height: 24),
 
-            // Section 2: Available Deliveries
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Courses disponibles (${available.length})',
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
-                  ),
+          // Section 2: Available Deliveries
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Courses disponibles (${available.length})',
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
                 ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            if (available.isEmpty)
-              _buildEmptyDeliveriesCard('Aucune course de livraison disponible.')
-            else
-              Column(
-                children: available.map((m) => _buildAvailableDeliveryCard(m)).toList(),
               ),
-          ],
-        );
-      }),
+            ],
+          ),
+          const SizedBox(height: 10),
+          if (available.isEmpty)
+            _buildEmptyDeliveriesCard('Aucune course de livraison disponible.')
+          else
+            Column(
+              children: available.map((m) => _buildAvailableDeliveryCard(m)).toList(),
+            ),
+        ],
+      ),
     );
   }
 
