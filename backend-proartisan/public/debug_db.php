@@ -14,7 +14,11 @@ foreach ($lines as $line) {
     if (strpos(trim($line), '#') === 0) continue;
     $parts = explode('=', $line, 2);
     if (count($parts) === 2) {
-        $env[trim($parts[0])] = trim($parts[1]);
+        $val = trim($parts[1]);
+        if (preg_match('/^["\'](.*)["\']$/', $val, $matches)) {
+            $val = $matches[1];
+        }
+        $env[trim($parts[0])] = $val;
     }
 }
 
