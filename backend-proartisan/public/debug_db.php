@@ -21,6 +21,19 @@ foreach ($lines as $line) {
 $host = isset($env['DB_HOST']) ? $env['DB_HOST'] : 'localhost';
 $port = isset($env['DB_PORT']) ? $env['DB_PORT'] : '3306';
 $db = isset($env['DB_DATABASE']) ? $env['DB_DATABASE'] : '';
+
+echo "Live .env DB configs:<br>";
+foreach ($lines as $line) {
+    if (strpos(trim($line), 'DB_') === 0) {
+        $parts = explode('=', $line, 2);
+        if ($parts[0] === 'DB_PASSWORD') {
+            echo "DB_PASSWORD=***** (length: " . strlen($parts[1]) . ")<br>";
+        } else {
+            echo htmlspecialchars($line) . "<br>";
+        }
+    }
+}
+echo "<br>";
 $user = isset($env['DB_USERNAME']) ? $env['DB_USERNAME'] : '';
 $pass = isset($env['DB_PASSWORD']) ? $env['DB_PASSWORD'] : '';
 $hostsToTry = ['127.0.0.1', 'localhost'];
