@@ -103,22 +103,4 @@ Route::prefix('admin')->name('admin.')->group(function () {
 Route::get('/pay', [\App\Http\Controllers\Api\V1\PaymentController::class, 'showMockPay'])->name('payment.mock.pay');
 Route::post('/pay/validate', [\App\Http\Controllers\Api\V1\PaymentController::class, 'validateMockPay'])->name('payment.mock.validate');
 
-Route::get('/run-migrations-secure', function() {
-    if (request('token') === 'prosartisan_secret_migrate_2026') {
-        try {
-            \Illuminate\Support\Facades\DB::statement('ALTER TABLE users ADD deleted_at TIMESTAMP NULL DEFAULT NULL');
-            return response()->json([
-                'status' => 'success',
-                'message' => 'deleted_at column added successfully!',
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => $e->getMessage(),
-            ], 500);
-        }
-    }
-    abort(403);
-});
-
 // Trigger deploy: SSH test 7
