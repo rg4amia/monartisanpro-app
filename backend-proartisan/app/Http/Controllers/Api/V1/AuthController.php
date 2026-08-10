@@ -47,7 +47,8 @@ class AuthController extends Controller
                 }
 
                 if ($shouldBlock) {
-                    $msg = \App\Models\Setting::getValueByKey('app_access_disabled_message', 'L\'accès à cet espace est temporairement restreint suite à une opération de maintenance de nos services. Nous vous prions de nous excuser pour la gêne occasionnée et vous remercions de votre patience.');
+                    $msg = \App\Models\Setting::getValueByKey('app_access_disabled_message_' . $role)
+                        ?: \App\Models\Setting::getValueByKey('app_access_disabled_message', 'L\'accès à cet espace est temporairement restreint suite à une opération de maintenance de nos services. Nous vous prions de nous excuser pour la gêne occasionnée et vous remercions de votre patience.');
                     return response()->json([
                         'success' => false,
                         'message' => $msg,
@@ -112,7 +113,8 @@ class AuthController extends Controller
             }
 
             if ($shouldBlock) {
-                $msg = \App\Models\Setting::getValueByKey('app_access_disabled_message', 'L\'accès à cet espace est temporairement restreint suite à une opération de maintenance de nos services. Nous vous prions de nous excuser pour la gêne occasionnée et vous remercions de votre patience.');
+                $msg = \App\Models\Setting::getValueByKey('app_access_disabled_message_' . $role)
+                    ?: \App\Models\Setting::getValueByKey('app_access_disabled_message', 'L\'accès à cet espace est temporairement restreint suite à une opération de maintenance de nos services. Nous vous prions de nous excuser pour la gêne occasionnée et vous remercions de votre patience.');
                 return response()->json([
                     'success' => false,
                     'message' => $msg,
@@ -159,7 +161,8 @@ class AuthController extends Controller
         }
 
         if ($shouldBlock) {
-            $msg = \App\Models\Setting::getValueByKey('app_access_disabled_message', 'L\'accès à cet espace est temporairement restreint suite à une opération de maintenance de nos services. Nous vous prions de nous excuser pour la gêne occasionnée et vous remercions de votre patience.');
+            $msg = \App\Models\Setting::getValueByKey('app_access_disabled_message_' . $role)
+                ?: \App\Models\Setting::getValueByKey('app_access_disabled_message', 'L\'accès à cet espace est temporairement restreint suite à une opération de maintenance de nos services. Nous vous prions de nous excuser pour la gêne occasionnée et vous remercions de votre patience.');
             return response()->json([
                 'success' => false,
                 'message' => $msg,

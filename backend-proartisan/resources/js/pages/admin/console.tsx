@@ -2526,7 +2526,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                                                     <option value="old">Bloquer Anciens</option>
                                                                     <option value="all">Bloquer Tous</option>
                                                                 </select>
-                                                            ) : setting.key === 'app_access_disabled_message' ? (
+                                                                                            ) : setting.key === 'app_access_disabled_message' || setting.key.startsWith('app_access_disabled_message_') ? (
                                                                 <textarea
                                                                     defaultValue={setting.value}
                                                                     onBlur={(e) => {
