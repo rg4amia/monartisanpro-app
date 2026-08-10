@@ -26,7 +26,7 @@ class RegisterRequest extends FormRequest
                 }
             ],
             'name'  => ['required', 'string', 'min:2', 'max:100'],
-            'role'  => ['required', 'string', 'in:client,artisan,fournisseur'],
+            'role'  => ['required', 'string', 'in:client,artisan,fournisseur,driver,livreur'],
             'device_fingerprint' => ['nullable', 'string'],
             'sector_id' => ['sometimes', 'nullable', 'exists:sectors,id'],
             'trade_id' => [
@@ -58,7 +58,7 @@ class RegisterRequest extends FormRequest
             'name.required'  => 'Le nom complet est obligatoire.',
             'name.min'       => 'Le nom doit comporter au moins 2 caractères.',
             'role.required'  => 'Le rôle est obligatoire.',
-            'role.in'        => 'Le rôle doit être client, artisan ou fournisseur.',
+            'role.in'        => 'Le rôle doit être client, artisan, fournisseur, livreur ou driver.',
             'cgu_accepted.required' => 'Vous devez accepter les conditions générales d\'utilisation.',
             'cgu_accepted.accepted' => 'Vous devez accepter les conditions générales d\'utilisation.',
         ];

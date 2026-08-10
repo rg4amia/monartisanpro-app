@@ -148,10 +148,11 @@ class AuthController extends Controller
      */
     public function register(RegisterRequest $request): JsonResponse
     {
-        $role = strtolower($request->validated('role'));
-        if ($role === 'driver') {
-            $role = 'livreur';
+        $data = $request->validated();
+        if (strtolower($data['role']) === 'driver') {
+            $data['role'] = 'livreur';
         }
+        $role = $data['role'];
 
         $blockStatus = \App\Models\Setting::getValueByKey('block_' . $role, 'none');
         $shouldBlock = false;
@@ -172,7 +173,7 @@ class AuthController extends Controller
         $user = $this->authService->findOrCreateByPhone($request->phone);
 
         // Met à jour le profil utilisateur
-        $user = $this->authService->register($user, $request->validated());
+        $user = $this->authService->register($user, $data);
 
         // Génère un token d'authentification
         $token = $this->authService->createToken($user, $request->input('device_fingerprint'));
