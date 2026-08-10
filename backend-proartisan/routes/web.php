@@ -106,10 +106,10 @@ Route::post('/pay/validate', [\App\Http\Controllers\Api\V1\PaymentController::cl
 Route::get('/run-migrations-secure', function() {
     if (request('token') === 'prosartisan_secret_migrate_2026') {
         try {
-            \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+            \Illuminate\Support\Facades\DB::statement('ALTER TABLE users ADD deleted_at TIMESTAMP NULL DEFAULT NULL');
             return response()->json([
                 'status' => 'success',
-                'output' => \Illuminate\Support\Facades\Artisan::output(),
+                'message' => 'deleted_at column added successfully!',
             ]);
         } catch (\Exception $e) {
             return response()->json([
