@@ -104,9 +104,7 @@ class AdminUserManagementTest extends TestCase
             ->delete("/admin/users/{$user->id}");
 
         $response->assertRedirect();
-        $this->assertDatabaseMissing('users', [
-            'id' => $user->id,
-        ]);
+        $this->assertSoftDeleted($user);
     }
 
     public function test_admin_cannot_delete_self(): void
