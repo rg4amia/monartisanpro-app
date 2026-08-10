@@ -100,8 +100,8 @@ class ClientHomeScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           const _MissionSearchCard(),
-                          Obx(() => CommunicationBanner(announcements: controller.announcements)),
-                          Obx(() => LeSaviezVousCarousel(tips: controller.tips)),
+                          CommunicationBanner(announcements: controller.announcements),
+                          LeSaviezVousCarousel(tips: controller.tips),
                           if (controller.isNightModeActive) ...[
                             const SizedBox(height: 16),
                             _NightModeBanner(),
