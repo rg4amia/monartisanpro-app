@@ -959,16 +959,22 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Row(
-                      children: [
-                        Icon(Icons.location_on, color: AppColors.primary, size: 20),
-                        SizedBox(width: 6),
-                        Text(
-                          'Localisation Actuelle (GPS)',
-                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
-                        ),
-                      ],
+                    const Expanded(
+                      child: Row(
+                        children: [
+                          Icon(Icons.location_on, color: AppColors.primary, size: 20),
+                          SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              'Localisation Actuelle (GPS)',
+                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
+                    const SizedBox(width: 8),
                     ElevatedButton.icon(
                       onPressed: _loadingGeo ? null : _handleGeoLocation,
                       style: ElevatedButton.styleFrom(
