@@ -956,45 +956,6 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Expanded(
-                      child: Row(
-                        children: [
-                          Icon(Icons.location_on, color: AppColors.primary, size: 20),
-                          SizedBox(width: 6),
-                          Expanded(
-                            child: Text(
-                              'Localisation Actuelle (GPS)',
-                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    ElevatedButton.icon(
-                      onPressed: _loadingGeo ? null : _handleGeoLocation,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      ),
-                      icon: _loadingGeo
-                          ? const SizedBox(
-                              width: 12,
-                              height: 12,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                            )
-                          : const Icon(Icons.my_location, size: 14),
-                      label: const Text('GPS', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
                 TextField(
                   controller: _gpsCtrl,
                   decoration: InputDecoration(
@@ -1003,6 +964,17 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
                     filled: true,
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     hintText: 'lat, lng',
+                    suffixIcon: IconButton(
+                      icon: _loadingGeo
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                            )
+                          : const Icon(Icons.my_location, color: AppColors.primary),
+                      onPressed: _loadingGeo ? null : _handleGeoLocation,
+                      tooltip: 'Obtenir ma position GPS',
+                    ),
                   ),
                   style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
                 ),
