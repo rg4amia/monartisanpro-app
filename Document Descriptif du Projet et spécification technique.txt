@@ -1,150 +1,22 @@
-Document Descriptif du Projet : ProsArtisan
-1. Présentation Générale
-ProsArtisan est une plateforme numérique innovante (application mobile/web) conçue pour révolutionner le secteur du bâtiment, du dépannage et de la quincaillerie en Côte d'Ivoire. Elle agit comme un tiers de confiance mettant en relation directe cinq acteurs clés : les clients (particuliers ou entreprises), les artisans certifiés, les fournisseurs de matériaux (quincailleries), les livreurs indépendants, et l'administration de la plateforme.
-L'objectif principal est de sécuriser les transactions financières, de garantir la qualité des prestations, et de fluidifier l'approvisionnement en matériaux grâce à un écosystème logistique intégré et dopé à l'Intelligence Artificielle.
-2. Architecture des Utilisateurs (Rôles)
-L'application est structurée autour de profils distincts, chacun disposant d'un tableau de bord et d'outils spécifiques :
-1. Le Client : Cherche un professionnel pour un dépannage/chantier ou souhaite acheter du matériel de construction.
-2. L'Artisan / Pro : Propose ses services (Plomberie, Électricité, Peinture, etc.), élabore des devis et exécute les travaux.
-3. Le Fournisseur (Quincaillerie) : Digitalise son catalogue de produits, reçoit des commandes directes ou fournit le matériel nécessaire aux chantiers des artisans.
-4. Le Livreur (Logistique) : Un profil spécial d'artisan dédié à l'acheminement sécurisé des commandes entre les fournisseurs et les clients.
-5. L'Administrateur (Super Admin) : Supervise la plateforme, gère la médiation des litiges et configure le modèle économique (commissions).
-3. Fonctionnalités Clés par Profil
-3.1. Espace Client
-* Annuaire et Géolocalisation : Recherche d'artisans et de fournisseurs à proximité grâce aux coordonnées GPS.
-* Assistant IA de Diagnostic : Outil permettant au client de décrire son problème ; l'IA déduit la catégorie du problème, évalue l'urgence et donne des conseils de sécurité.
-* Boutique en ligne & Panier : Achat de matériaux directement depuis le catalogue des fournisseurs avec option "Retrait en magasin" ou "Livraison à domicile".
-* Demande de Devis sur-mesure : Possibilité d'envoyer des listes de besoins spécifiques aux fournisseurs hors catalogue.
-* Suivi de Chantier & Validation : Signature numérique des devis, validation des étapes (jalons) via code OTP (One-Time Password).
-* Évaluation et Litiges : Système de notation par étoiles et module de déclaration de litiges (avec preuve photo) pour bloquer les fonds en cas d'insatisfaction.
-3.2. Espace Artisan
-* Profil Certifié : Inscription stricte (Photo, CNI, Carte d'artisan).
-* Gestion des Devis assistée par IA : L'IA suggère les matériaux nécessaires et estime le coût de la main-d'œuvre selon la description du problème.
-* Achat de Matériaux Intégré : L'artisan intègre directement les catalogues des fournisseurs partenaires dans son devis.
-* Preuves d'Exécution : Téléversement de photos géolocalisées pour prouver la récupération du matériel et la fin des travaux.
-3.3. Espace Fournisseur
-* Profil Commercial Sécurisé : Renseignements légaux obligatoires (RCCM, Compte Contribuable).
-* Gestion de Catalogue IA : Création d'articles simplifiée avec calcul automatique du prix de vente (basé sur la marge) et génération de descriptions commerciales par l'IA.
-* Scanner QR/Code : Outil de validation permettant de scanner les codes des livreurs (LIVREUR-XXXX), des clients (RETRAIT-XXXX) ou des artisans (PA-XXXX) pour sécuriser la remise des colis.
-* Portefeuille Virtuel (Wallet) : Suivi des revenus et demandes de retrait vers Mobile Money.
-3.4. Espace Livreur (Logistique)
-* Radar de Courses : Réception des demandes de livraison dans sa zone géographique.
-* Workflow Sécurisé en 3 étapes :
-1. Scan du code chez le fournisseur pour récupérer le colis.
-2. Prise de photo géolocalisée du colis en guise d'état des lieux.
-3. Présentation d'un code de réception unique au client final pour validation et paiement de la course.
-3.5. Espace Administrateur
-* Contrôle Financier : Tableau de bord affichant les revenus cumulés de la plateforme séparés par catégorie (Chantiers vs Achats/Livraisons).
-* Configuration des Commissions : Paramétrage dynamique des marges prélevées par la plateforme :
-o % sur la main-d'œuvre des artisans.
-o % sur les frais de livraison.
-o % sur la vente de matériaux.
-* Médiation : Visualisation centralisée des litiges déclarés par les clients avec blocage conservatoire des fonds.
-4. Modules Transversaux & Innovations Techniques
-* Le Compte Séquestre (Escrow) : Pilier de la confiance de la plateforme. Le client paie à l'avance, mais l'argent est conservé par la plateforme. Les fonds ne sont libérés aux fournisseurs et artisans/livreurs qu'après validation numérique stricte des jalons (Photos, Scan de code, OTP).
-* L'Intelligence Artificielle (Gemini) : L'IA agit comme un assistant polyvalent : elle diagnostique les pannes pour les clients, chiffre les devis pour les artisans, et rédige les fiches produits pour les fournisseurs.
-* Paiement Digital : Intégration simulée des API Mobile Money locales (Wave, Orange Money) pour les dépôts et les retraits de fonds.
-* Système de Sécurité & Récupération : Module de mot de passe oublié avec simulation de code OTP sécurisé.
-5. Flux Métiers Principaux (Workflows)
-5.1. Workflow d'un Chantier (Prestation de service)
-1. Demande : Le client contacte l'artisan.
-2. Devis : L'artisan chiffre le devis (Main d'œuvre + Matériaux via un fournisseur choisi).
-3. Paiement Séquestre : Le client valide et paie la totalité. Les fonds sont mis sous séquestre (Frais de service déduits). Un code retrait matériel est généré.
-4. Jalon 1 (Matériel) : L'artisan donne le code au fournisseur. Le fournisseur scanne. L'artisan prend une photo. Le fournisseur est immédiatement payé.
-5. Jalon 2 (Travaux) : L'artisan termine et prend une photo. Le client valide sur place avec un code OTP (ou signale un litige).
-6. Clôture : L'artisan reçoit le paiement de sa main d'œuvre. Le client le note.
-5.2. Workflow E-commerce avec Livraison
-1. Commande : Le client met des articles au panier, choisit la livraison et paie sous séquestre (Matériel + Livraison + Commission plateforme).
-2. Préparation : Le fournisseur prépare la commande. Un livreur est assigné.
-3. Récupération : Le livreur présente son code (LIVREUR-XXXX) au fournisseur. Le livreur prend une photo de preuve. La part du matériel est versée au fournisseur.
-4. Livraison : Le livreur arrive chez le client. Le client scanne le code (RECEPTION-XXXX) du livreur. La part de la livraison est versée au livreur.
-6. Modèle Économique
-ProsArtisan se rémunère en prélevant des frais de service (paramétrables par l'administration) sur les flux financiers transitant par la plateforme :
-* Frais perçus lors du paiement des devis d'artisans.
-* Frais perçus sur les achats directs de matériaux.
-* Frais perçus sur la logistique des livraisons.
-7. Perspectives
-ProsArtisan se positionne comme l'application "Tout-en-un" incontournable du BTP et des services à domicile, alliant la puissance du e-commerce B2B/B2C, la rigueur d'un service logistique de pointe, et la modernité des outils d'Intelligence Artificielle.
+Document Descriptif du Projet et spÃ©cification technique â€” ProsArtisan
 
+Pour consulter la version complÃ¨te, structurÃ©e et Ã  jour de ce PRD en Markdown, veuillez vous rÃ©fÃ©rer au fichier PRD.md (file:///c:/Users/Utilisateur/Documents/GitHub/monartisanpro-app/PRD.md).
 
+RÃ©sumÃ© des spÃ©cifications fonctionnelles :
 
+1. Vision & Acteurs :
+- Client : Exprime ses besoins, paie par Wave/Orange Money sous sÃ©questre, valide les jalons par OTP.
+- Artisan : Ã‰tablit les devis, gÃ©nÃ¨re des J-Codes pour rÃ©cupÃ©rer le matÃ©riel, exÃ©cute les travaux et soumet les jalons avec photos.
+- Fournisseur (Quincaillerie) : Livrer les matÃ©riaux aprÃ¨s scan J-Code valide Ã  moins de 100m de sa boutique.
+- Livreur (Driver) : Accepte les courses via le radar gÃ©olocalisÃ© (jusqu'Ã  10 km). Sa rÃ©munÃ©ration est calculÃ©e dynamiquement selon la distance/durÃ©e Maps et le type de vÃ©hicule. Le colis est rÃ©cupÃ©rÃ© grÃ¢ce au "pickup_code" et livrÃ© au client grÃ¢ce au "reception_code", sÃ©curisant la libÃ©ration des fonds.
+- RÃ©fÃ©rent de zone : Valide physiquement les grands comptes (> 2 000 000 FCFA).
+- Admin : Arbitre les litiges et valide les KYC.
 
+2. Flux & Anti-Fraude :
+- KYC Obligatoire pour toute transaction.
+- Ratio de fragmentation des fonds bloquÃ© et immuable dÃ¨s l'acceptation du devis.
+- Smart Token J-Code PA-XXXX avec vÃ©rification GPS stricte.
+- LibÃ©ration progressive de la main d'Å“uvre par OTP client Ã  chaque jalon validÃ©.
+- Score de RÃ©putation N'Zassa : StockÃ© sous le champ "score_prosartisan" (0 Ã  1000) et gÃ©rÃ© en Event Sourcing, il dÃ©termine l'accÃ¨s au micro-crÃ©dit d'urgence.
 
-
-
-
-Spécifications Techniques et Architecturales : ProsArtisan
-Ce document vise à fournir aux équipes de développement les directives techniques, l'architecture globale, et la logique métier nécessaires à la réalisation de la plateforme ProsArtisan.
-1. Architecture Globale & Stack Technique Recommandée
-Pour garantir la scalabilité, la réactivité en temps réel et la compatibilité multiplateforme, une architecture orientée microservices ou un monolithe modulaire basé sur le Cloud est recommandée.
-1.1. Frontend (Application Mobile & Web)
-* Technologie Mobile : React Native (Expo) ou Flutter pour cibler iOS et Android avec une seule base de code.
-* Technologie Web (Admin/Fournisseur) : React.js ou Next.js avec Tailwind CSS pour un design responsif et moderne.
-* Gestion de l'état : Redux Toolkit, Zustand ou React Query.
-* Cartographie : Google Maps SDK ou Mapbox pour le tracking GPS des livreurs et la géolocalisation des artisans/fournisseurs.
-* Scanner : Bibliothèques natives de scan QR/Code-barres (ex: expo-barcode-scanner).
-1.2. Backend (Serveur & API)
-* Langage/Framework : Node.js (Express/NestJS) ou Python (Django/FastAPI).
-* Architecture API : RESTful API ou GraphQL.
-* Authentification : JWT (JSON Web Tokens) couplé à un système de validation OTP (One-Time Password) via SMS (ex: Twilio ou Firebase Auth).
-* Temps réel : WebSockets (Socket.io) pour les notifications push, le chat intégré et le suivi de livraison.
-1.3. Base de Données (Database)
-* Type : PostgreSQL (SQL) recommandé pour la robustesse des transactions financières (ACID) et les relations complexes (Clients -> Commandes -> Fournisseurs -> Livreurs).
-* Stockage Fichiers : Amazon S3, Google Cloud Storage ou Firebase Storage pour les photos de profil, preuves d'intervention et images du catalogue.
-1.4. Intégrations Tierces (Third-Party APIs)
-* Intelligence Artificielle : API Google Gemini (ex: gemini-2.5-flash) pour l'analyse des pannes, la cotation des devis et la génération de descriptions produits (via requêtes structurées en JSON).
-* Paiement (Mobile Money) : API des passerelles de paiement locales en Côte d'Ivoire (Wave, Orange Money, MTN Money, ou un agrégateur comme CinetPay / Bizao).
-2. Modélisation des Données (Entités Principales)
-Voici la structure conceptuelle des données à implémenter.
-2.1. User (Utilisateur)
-* Champs communs : id, name, phone (unique), email, password_hash, role (ENUM: client, artisan, supplier, driver, admin), gps_coordinates, wallet_balance, is_verified.
-* Spécifique Artisan/Livreur : category, hourly_rate, skills_description, cni_document_url, certification_badges.
-* Spécifique Fournisseur : company_name, rccm, tax_account_number (CC), sector.
-2.2. Product (Catalogue Fournisseur)
-* id, supplier_id, sku, name, description, category, cost_price, margin, sale_price, stock_quantity, image_url.
-2.3. Job (Chantier / Intervention)
-* id, client_id, artisan_id, problem_description, status (ENUM: pending_quote, quote_received, funded, completed, disputed).
-* materials_cost, labor_cost, platform_fee, total_cost.
-* tokens: material_pickup_code, client_validation_otp.
-2.4. Order (Commande E-commerce)
-* id, client_id, supplier_id, driver_id (nullable), delivery_mode (ENUM: pickup, delivery).
-* subtotal, delivery_cost, platform_fee, total_amount.
-* status (ENUM: paid, prepared, driver_assigned, driver_picked_up, shipping, delivered, disputed).
-* pickup_code, delivery_code, reception_code.
-2.5. Dispute (Litige)
-* id, reporter_id (client), target_type (job ou order), target_id, reason, description, evidence_url, status (open, investigating, resolved, refunded).
-3. Logique Métier Complexe (Core Business Logic)
-L'équipe backend doit accorder une attention particulière aux moteurs d'états (State Machines) gérant les flux financiers et logistiques.
-3.1. Le Système de "Compte Séquestre" (Escrow Ledger)
-Le compte séquestre n'est pas un compte bancaire externe par transaction, mais un Ledger (livre de comptes interne) géré dans la base de données.
-1. Encaissement (Cash-In) : Le client paie via Mobile Money. Les fonds arrivent sur le compte bancaire de la plateforme. En BDD, le solde séquestre de la commande (escrow_balance) est crédité.
-2. Verrouillage : Les fonds sont marqués comme non-retirables pour toutes les parties.
-3. Libération (Payout Trigger) :
-o Scan du material_pickup_code + Photo -> Libère la part "Matériaux" sur le wallet_balance du fournisseur.
-o Validation OTP finale par le client -> Libère la part "Main d'œuvre" sur le wallet_balance de l'artisan (ou du livreur).
-4. Décaissement (Cash-Out) : L'artisan/fournisseur demande un retrait de son wallet_balance via l'API Mobile Money.
-3.2. Configuration Dynamique des Commissions
-* Créer une table Platform_Settings contenant les variables : fee_percent_labor, fee_percent_material, fee_percent_delivery.
-* Contrainte de calcul : Lors de la validation d'un panier ou d'un devis, le backend doit figer le pourcentage en vigueur au moment T et le sauvegarder dans la table Order ou Job (champ platform_fee_amount). Cela évite qu'une modification future du pourcentage par l'admin ne corrompe l'historique comptable.
-3.3. Gestion des Litiges (Kill Switch)
-* Si un appel API POST /api/disputes est déclenché par le client.
-* Action Backend :
-1. L'état du Job ou de l'Order passe immédiatement à disputed.
-2. Geler (Freeze) toute fonction de libération de fonds (Payout Trigger) liée à cet ID, même si un code OTP correct est fourni par la suite.
-3. Déclencher une alerte au panel Admin.
-4. Spécifications du Workflow par Code (QR / OTP)
-La sécurité des remises repose sur une vérification croisée. Les développeurs devront implémenter des endpoints de validation stricts :
-* Scénario Livreur (Pickup Fournisseur) :
-o Endpoint : POST /api/orders/{id}/verify-pickup
-o Payload attendu : { code: "LIVREUR-XXXX", supplier_id: 12 }
-o Règle : Le serveur vérifie que la commande est en statut prepared, que le code correspond, et que le supplier_id est le bon. Si OK -> Changement de statut -> Trigger de paiement fournisseur.
-* Scénario Client (Réception Livreur / Validation Fin de Chantier) :
-o Endpoint : POST /api/jobs/{id}/verify-completion ou POST /api/orders/{id}/verify-delivery
-o Payload attendu : { code: "RECEPTION-XXXX", client_id: 45 }
-o Règle : Libère les fonds de main d'œuvre ou de livraison.
-5. Sécurité et Conformité
-* Hachage obligatoire des mots de passe (ex: bcrypt ou argon2).
-* Protection des routes API par des middlewares vérifiant les rôles (ex: Seul un utilisateur avec role=supplier peut appeler POST /api/products).
-* Validation stricte des fichiers téléversés (limitation de taille et vérification du type MIME image/jpeg, image/png) pour empêcher l'injection de scripts via les photos de preuves.
-* Implémentation d'une idempotence sur les endpoints de paiement (pour éviter qu'une double requête réseau ne débite le client deux fois ou ne paie l'artisan deux fois).
-
+Voir le fichier PRD.md pour le dÃ©tail complet de l'analyse fonctionnelle de A Ã  Z (points forts et faibles observÃ©s par phase, y compris logistique livreurs).

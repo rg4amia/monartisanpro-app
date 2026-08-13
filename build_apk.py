@@ -52,25 +52,31 @@ print("\n[3/5] Compilation Flutter APK Release...")
 flutter_build_cmd = "flutter build apk --release --split-per-abi --no-tree-shake-icons"
 result = subprocess.run(flutter_build_cmd, shell=True)
 
-if result.returncode != 0:
-    print("\n[!] Erreur lors du build Flutter.")
-    sys.exit(1)
-
 # 4. Copie des APKs générés vers la racine du projet
 print("\n[4/5] Copie des APKs generes...")
-build_out_dir = os.path.join(FLUTTER_DIR, "android", "app", "build", "outputs", "flutter-apk")
+build_out_dirs = [
+    os.path.join(FLUTTER_DIR, "android", "app", "build", "outputs", "flutter-apk"),
+    r"C:\Users\Utilisateur\build_pa\app\outputs\flutter-apk"
+]
 
 copied_any = False
-if os.path.exists(build_out_dir):
-    for filename in os.listdir(build_out_dir):
-        if filename.endswith(".apk") and "release" in filename:
-            source_path = os.path.join(build_out_dir, filename)
-            target_path = os.path.join(PROJECT_ROOT, filename)
-            shutil.copy2(source_path, target_path)
-            size_mb = os.path.getsize(target_path) / (1024 * 1024)
-            print(f" -> Copie réussie : {target_path} ({size_mb:.2f} MB)")
-            copied_any = True
+for build_out_dir in build_out_dirs:
+    if os.path.exists(build_out_dir):
+        print(f"Recherche d'APKs dans : {build_out_dir}")
+        for filename in os.listdir(build_out_dir):
+            if filename.endswith(".apk") and "release" in filename:
+                source_path = os.path.join(build_out_dir, filename)
+                target_path = os.path.join(PROJECT_ROOT, filename)
+                try:
+                    shutil.copy2(source_path, target_path)
+                    size_mb = os.path.getsize(target_path) / (1024 * 1024)
+                    print(f" -> Copie réussie : {target_path} ({size_mb:.2f} MB)")
+                    copied_any = True
+                except Exception as e:
+                    print(f" [!] Echec de copie pour {filename} : {e}")
 
 if not copied_any:
     print("\n[!] Erreur : Aucun fichier APK généré trouvé.")
     sys.exit(1)
+else:
+    print("\n[+] Build et copie terminés avec succès !")

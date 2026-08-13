@@ -38,6 +38,7 @@ class DevisPaymentFlowTest extends TestCase
             'mission_id' => $mission->id,
             'artisan_id' => $artisan->id,
             'statut' => 'soumis',
+            'commission_service_ratio' => 0.00,
             'lignes_json' => [
                 ['type' => 'mat', 'description' => 'Carrelage', 'montant' => 65000],
                 ['type' => 'mo', 'description' => 'Pose', 'montant' => 35000],
@@ -121,6 +122,7 @@ class DevisPaymentFlowTest extends TestCase
             'mission_id' => $mission->id,
             'artisan_id' => $artisan->id,
             'statut' => 'soumis',
+            'commission_service_ratio' => 0.00,
             'lignes_json' => [
                 ['type' => 'mat', 'description' => 'Béton', 'montant' => 1500000],
                 ['type' => 'mo', 'description' => 'Main d\'oeuvre', 'montant' => 1000000],
@@ -194,6 +196,7 @@ class DevisPaymentFlowTest extends TestCase
             'mission_id' => $mission->id,
             'artisan_id' => $artisan->id,
             'statut' => 'soumis',
+            'commission_service_ratio' => 0.00,
             'lignes_json' => [
                 ['type' => 'mo', 'description' => 'Pose de tuiles', 'montant' => 80000],
             ],
@@ -241,6 +244,7 @@ class DevisPaymentFlowTest extends TestCase
             'mission_id' => $mission->id,
             'artisan_id' => $artisan->id,
             'statut' => 'soumis',
+            'commission_service_ratio' => 0.00,
             'lignes_json' => [
                 ['type' => 'mo', 'description' => 'Tâche unique', 'montant' => 50000],
             ],
