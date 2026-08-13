@@ -244,9 +244,19 @@ class _TransactionTile extends StatelessWidget {
                     color: AppColors.textPrimary,
                   ),
                 ),
-                const SizedBox(height: 4),
                 Text(
-                  date != null ? DateFormat("dd MMM yyyy 'à' HH:mm", 'fr_FR').format(date) : '',
+                  (() {
+                    if (date == null) return '';
+                    try {
+                      return DateFormat("dd MMM yyyy 'à' HH:mm", 'fr_FR').format(date);
+                    } catch (_) {
+                      try {
+                        return DateFormat("dd/MM/yyyy HH:mm").format(date);
+                      } catch (e) {
+                        return date.toString();
+                      }
+                    }
+                  })(),
                   style: const TextStyle(
                     fontSize: 12,
                     color: AppColors.textSecondary,
