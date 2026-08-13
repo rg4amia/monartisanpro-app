@@ -246,7 +246,7 @@ class _TransactionTile extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  date != null ? DateFormat('dd MMM yyyy à HH:mm').format(date) : '',
+                  date != null ? DateFormat("dd MMM yyyy 'à' HH:mm", 'fr_FR').format(date) : '',
                   style: const TextStyle(
                     fontSize: 12,
                     color: AppColors.textSecondary,
