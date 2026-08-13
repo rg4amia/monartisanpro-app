@@ -19,6 +19,27 @@ os.system("taskkill /f /im adb.exe 2>nul")
 os.system("taskkill /f /im dart.exe 2>nul")
 time.sleep(1)
 
+# Clean up existing APK files at the root of the project and build_pa to avoid stale files
+print("Nettoyage des APKs existants a la racine du projet...")
+for f in os.listdir(PROJECT_ROOT):
+    if f.endswith(".apk"):
+        try:
+            os.remove(os.path.join(PROJECT_ROOT, f))
+            print(f" -> Supprime : {f}")
+        except Exception as e:
+            print(f" [!] Impossible de supprimer {f} : {e}")
+
+build_pa_apk_dir = r"C:\Users\Utilisateur\build_pa\app\outputs\flutter-apk"
+if os.path.exists(build_pa_apk_dir):
+    print(f"Nettoyage des APKs existants dans {build_pa_apk_dir}...")
+    for f in os.listdir(build_pa_apk_dir):
+        if f.endswith(".apk"):
+            try:
+                os.remove(os.path.join(build_pa_apk_dir, f))
+                print(f" -> Supprime : {f}")
+            except Exception as e:
+                print(f" [!] Impossible de supprimer {f} dans build_pa : {e}")
+
 # Stop gradle daemons to release file locks
 print("Arret des Gradle Daemons...")
 android_dir = os.path.join(FLUTTER_DIR, "android")
@@ -36,6 +57,7 @@ dirs_to_clean = [
     os.path.join(FLUTTER_DIR, "linux", "flutter", "ephemeral"),
     os.path.join(FLUTTER_DIR, "macos", "Flutter", "ephemeral"),
     os.path.join(FLUTTER_DIR, "windows", "flutter", "ephemeral"),
+    r"C:\Users\Utilisateur\build_pa\app\outputs\flutter-apk",
 ]
 for d in dirs_to_clean:
     if os.path.exists(d):
@@ -49,7 +71,7 @@ subprocess.run("flutter pub get", shell=True)
 
 # 3. Compilation officielle via Flutter Tool (regénère proprement le Kernel AOT)
 print("\n[3/5] Compilation Flutter APK Release...")
-flutter_build_cmd = "flutter build apk --release --split-per-abi --no-tree-shake-icons"
+flutter_build_cmd = "flutter build apk --release --no-tree-shake-icons"
 result = subprocess.run(flutter_build_cmd, shell=True)
 
 # 4. Copie des APKs générés vers la racine du projet
@@ -66,17 +88,31 @@ for build_out_dir in build_out_dirs:
         for filename in os.listdir(build_out_dir):
             if filename.endswith(".apk") and "release" in filename:
                 source_path = os.path.join(build_out_dir, filename)
-                target_path = os.path.join(PROJECT_ROOT, filename)
-                try:
-                    shutil.copy2(source_path, target_path)
-                    size_mb = os.path.getsize(target_path) / (1024 * 1024)
-                    print(f" -> Copie réussie : {target_path} ({size_mb:.2f} MB)")
-                    copied_any = True
-                except Exception as e:
-                    print(f" [!] Echec de copie pour {filename} : {e}")
+                target_paths = [
+                    os.path.join(PROJECT_ROOT, "prosartisan-app.apk"),
+                    os.path.join(r"C:\Users\Utilisateur\build_pa\app\outputs\flutter-apk\prosartisan-app.apk")
+                ]
+                for target_path in target_paths:
+                    target_dir = os.path.dirname(target_path)
+                    try:
+                        os.makedirs(target_dir, exist_ok=True)
+                        shutil.copy2(source_path, target_path)
+                        size_mb = os.path.getsize(target_path) / (1024 * 1024)
+                        print(f" -> Copie réussie : {target_path} ({size_mb:.2f} MB)")
+                        copied_any = True
+                    except Exception as e:
+                        print(f" [!] Echec de copie pour {filename} vers {target_path} : {e}")
 
 if not copied_any:
     print("\n[!] Erreur : Aucun fichier APK généré trouvé.")
     sys.exit(1)
 else:
+    # Delete app-release.apk if it exists to avoid user downloading cached version
+    for p in [os.path.join(PROJECT_ROOT, "app-release.apk"), os.path.join(r"C:\Users\Utilisateur\build_pa\app\outputs\flutter-apk", "app-release.apk")]:
+        if os.path.exists(p):
+            try:
+                os.remove(p)
+                print(f" -> Supprime (nettoyage cache) : {p}")
+            except Exception as e:
+                print(f" [!] Impossible de supprimer {p} : {e}")
     print("\n[+] Build et copie terminés avec succès !")
