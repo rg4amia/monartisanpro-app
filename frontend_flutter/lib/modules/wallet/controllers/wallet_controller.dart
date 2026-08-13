@@ -5,7 +5,7 @@ import '../../../core/network/api_endpoints.dart';
 import '../../../data/models/transaction_model.dart';
 
 class WalletController extends GetxController {
-  final ApiClient _apiClient = Get.find<ApiClient>();
+  final ApiClient _apiClient = ApiClient();
 
   final isLoading = true.obs;
   final walletMateriaux = 0.obs;
