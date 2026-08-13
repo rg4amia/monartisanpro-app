@@ -57,7 +57,7 @@ dirs_to_clean = [
     os.path.join(FLUTTER_DIR, "linux", "flutter", "ephemeral"),
     os.path.join(FLUTTER_DIR, "macos", "Flutter", "ephemeral"),
     os.path.join(FLUTTER_DIR, "windows", "flutter", "ephemeral"),
-    r"C:\Users\Utilisateur\build_pa\app\outputs\flutter-apk",
+    r"C:\Users\Utilisateur\build_pa",
 ]
 for d in dirs_to_clean:
     if os.path.exists(d):
