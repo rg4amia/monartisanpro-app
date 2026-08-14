@@ -137,7 +137,7 @@ Le système gère également un flux de livraison de matériaux en 3 étapes :
 ### Formule mathématique du Score N'Zassa
 Le score d'un artisan $S(t)$ est calculé sur une échelle de 0 à 1000 :
 $$S(t) = \min\left(1000, \max\left(0, S_{base} + \sum_{k} (\omega_k \cdot E_k \cdot C_k) - \Delta(t)\right)\right)$$
-* $S_{base}$ : Score de départ (300 pour un nouvel artisan validé).
+* $S_{base}$ : Score de départ (0 par défaut pour tout nouvel artisan non évalué).
 * $E_k$ : Valeur de l'événement $k$ (ex: $+10$ pour jalon à l'heure, $-300$ pour abandon de chantier).
 * $\omega_k$ : Coefficient de pondération selon la catégorie (Fiabilité, Intégrité, Qualité, Réactivité).
 * $C_k$ : Facteur de crédibilité du client évaluateur (0.1 pour un nouveau client à 1.5 pour un partenaire B2B).

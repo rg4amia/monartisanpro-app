@@ -706,19 +706,12 @@ class _ActionButtons extends StatelessWidget {
                       ),
                       child: Row(
                         children: [
-                          Radio<String>(
-                            value: 'total',
-                            groupValue: paymentType,
-                            onChanged: (v) {
-                              setState(() {
-                                paymentType = v!;
-                                if (totalGeneralTtc >= 2000000) {
-                                  selectedProvider = 'virement_bancaire';
-                                }
-                              });
-                            },
-                            activeColor: _C.primary,
+                          Icon(
+                            paymentType == 'total' ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+                            color: paymentType == 'total' ? _C.primary : _C.muted,
+                            size: 22,
                           ),
+                          const SizedBox(width: 8),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -761,19 +754,12 @@ class _ActionButtons extends StatelessWidget {
                       ),
                       child: Row(
                         children: [
-                          Radio<String>(
-                            value: 'hybrid',
-                            groupValue: paymentType,
-                            onChanged: (v) {
-                              setState(() {
-                                paymentType = v!;
-                                if (montantMateriaux >= 2000000) {
-                                  selectedProvider = 'virement_bancaire';
-                                }
-                              });
-                            },
-                            activeColor: _C.primary,
+                          Icon(
+                            paymentType == 'hybrid' ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+                            color: paymentType == 'hybrid' ? _C.primary : _C.muted,
+                            size: 22,
                           ),
+                          const SizedBox(width: 8),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,

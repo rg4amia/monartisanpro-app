@@ -106,18 +106,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     double bubble1Left = -100 + (scrollPosition * 120);
     double bubble1Top = -50 + (scrollPosition * 40);
     Color bubble1Color = Color.lerp(
-      const Color(0xFFFDB750).withOpacity(0.18),
-      const Color(0xFF5B5FEF).withOpacity(0.12),
+      const Color(0xFFFDB750).withValues(alpha: 0.18),
+      const Color(0xFF5B5FEF).withValues(alpha: 0.12),
       scrollPosition / (_pages.length - 1),
-    ) ?? const Color(0xFFFDB750).withOpacity(0.15);
+    ) ?? const Color(0xFFFDB750).withValues(alpha: 0.15);
 
     double bubble2Right = -80 - (scrollPosition * 60);
     double bubble2Bottom = 80 + (scrollPosition * 90);
     Color bubble2Color = Color.lerp(
-      const Color(0xFF5B5FEF).withOpacity(0.12),
-      const Color(0xFF4CAF50).withOpacity(0.18),
+      const Color(0xFF5B5FEF).withValues(alpha: 0.12),
+      const Color(0xFF4CAF50).withValues(alpha: 0.18),
       scrollPosition / (_pages.length - 1),
-    ) ?? const Color(0xFF5B5FEF).withOpacity(0.12);
+    ) ?? const Color(0xFF5B5FEF).withValues(alpha: 0.12);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -148,9 +148,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       _currentPage > 0
                           ? Container(
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.6),
+                                color: Colors.white.withValues(alpha: 0.6),
                                 shape: BoxShape.circle,
-                                border: Border.all(color: Colors.black.withOpacity(0.06)),
+                                border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
                               ),
                               child: IconButton(
                                 icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF1A1A1A), size: 18),
@@ -227,7 +227,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                 borderRadius: BorderRadius.circular(4),
                                 boxShadow: isSelected ? [
                                   BoxShadow(
-                                    color: _pages[index].accentColor.withOpacity(0.35),
+                                    color: _pages[index].accentColor.withValues(alpha: 0.35),
                                     blurRadius: 8,
                                     offset: const Offset(0, 3),
                                   )
@@ -248,14 +248,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           gradient: LinearGradient(
                             colors: [
                               _pages[_currentPage].accentColor,
-                              Color.alphaBlend(Colors.black.withOpacity(0.12), _pages[_currentPage].accentColor),
+                              Color.alphaBlend(Colors.black.withValues(alpha: 0.12), _pages[_currentPage].accentColor),
                             ],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: _pages[_currentPage].accentColor.withOpacity(0.35),
+                              color: _pages[_currentPage].accentColor.withValues(alpha: 0.35),
                               blurRadius: 18,
                               offset: const Offset(0, 8),
                             )
@@ -332,7 +332,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ? null 
                       : [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.04),
+                            color: Colors.black.withValues(alpha: 0.04),
                             blurRadius: 24,
                             offset: const Offset(0, 10),
                           ),
@@ -407,11 +407,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         width: 140,
         height: 140,
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.85),
+          color: Colors.white.withValues(alpha: 0.85),
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: page.accentColor.withOpacity(0.2),
+              color: page.accentColor.withValues(alpha: 0.2),
               blurRadius: 20,
               offset: const Offset(0, 8),
             )
@@ -439,7 +439,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           border: Border.all(color: const Color(0xFFF0E4D3), width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFD4B37D).withOpacity(0.12),
+              color: const Color(0xFFD4B37D).withValues(alpha: 0.12),
               blurRadius: 28,
               offset: const Offset(0, 12),
             ),
@@ -456,7 +456,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   width: 60,
                   height: 60,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFDB750).withOpacity(0.12),
+                    color: const Color(0xFFFDB750).withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                     border: Border.all(color: const Color(0xFFFDB750), width: 2),
                   ),
@@ -646,7 +646,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             border: Border.all(color: border, width: 2.5),
             boxShadow: [
               BoxShadow(
-                color: border.withOpacity(0.18),
+                color: border.withValues(alpha: 0.18),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               )

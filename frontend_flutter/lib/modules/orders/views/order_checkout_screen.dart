@@ -245,7 +245,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
                       setState(() => deliveryMode = set.first);
                     },
                     style: SegmentedButton.styleFrom(
-                      selectedBackgroundColor: AppColors.primary.withOpacity(0.12),
+                      selectedBackgroundColor: AppColors.primary.withValues(alpha: 0.12),
                       selectedForegroundColor: AppColors.primary,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),

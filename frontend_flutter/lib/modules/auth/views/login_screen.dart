@@ -195,7 +195,7 @@ class _LoginScreenState extends State<LoginScreen>
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primary.withOpacity(0.15),
+                  color: AppColors.primary.withValues(alpha: 0.15),
                   blurRadius: 24,
                   offset: const Offset(0, 8),
                 ),
@@ -436,7 +436,7 @@ class _LoginScreenState extends State<LoginScreen>
           'Accès désactivé', 
           appSettings.getDisabledMessage(label),
           snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red.withOpacity(0.9),
+          backgroundColor: Colors.red.withValues(alpha: 0.9),
           colorText: Colors.white,
           margin: const EdgeInsets.all(16),
         );
@@ -590,7 +590,7 @@ class _LoginScreenState extends State<LoginScreen>
               return Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: activeColor.withOpacity(0.08),
+                  color: activeColor.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -620,7 +620,7 @@ class _LoginScreenState extends State<LoginScreen>
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: activeColor.withOpacity(0.04),
+                  color: activeColor.withValues(alpha: 0.04),
                   blurRadius: 10,
                   offset: const Offset(0, 3),
                 ),
@@ -637,7 +637,7 @@ class _LoginScreenState extends State<LoginScreen>
                       bottomLeft: Radius.circular(16),
                     ),
                     border: Border.all(
-                      color: _selectedProfile.value != null ? activeColor.withOpacity(0.6) : _Dt.border,
+                      color: _selectedProfile.value != null ? activeColor.withValues(alpha: 0.6) : _Dt.border,
                       width: 1.5,
                     ),
                   ),
@@ -694,7 +694,7 @@ class _LoginScreenState extends State<LoginScreen>
                           bottomRight: Radius.circular(16),
                         ),
                         borderSide: BorderSide(
-                          color: _selectedProfile.value != null ? activeColor.withOpacity(0.6) : _Dt.border,
+                          color: _selectedProfile.value != null ? activeColor.withValues(alpha: 0.6) : _Dt.border,
                           width: 1.5,
                         ),
                       ),
@@ -704,7 +704,7 @@ class _LoginScreenState extends State<LoginScreen>
                           bottomRight: Radius.circular(16),
                         ),
                         borderSide: BorderSide(
-                          color: _selectedProfile.value != null ? activeColor.withOpacity(0.6) : _Dt.border,
+                          color: _selectedProfile.value != null ? activeColor.withValues(alpha: 0.6) : _Dt.border,
                           width: 1.5,
                         ),
                       ),
@@ -738,15 +738,15 @@ class _LoginScreenState extends State<LoginScreen>
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              activeColor.withOpacity(0.06),
-              activeColor.withOpacity(0.02),
+              activeColor.withValues(alpha: 0.06),
+              activeColor.withValues(alpha: 0.02),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: activeColor.withOpacity(0.18),
+            color: activeColor.withValues(alpha: 0.18),
             width: 1.5,
           ),
         ),
@@ -756,7 +756,7 @@ class _LoginScreenState extends State<LoginScreen>
             Container(
               padding: const EdgeInsets.all(7),
               decoration: BoxDecoration(
-                color: activeColor.withOpacity(0.12),
+                color: activeColor.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -828,7 +828,7 @@ class _LoginScreenState extends State<LoginScreen>
       final canContinue =
           _selectedProfile.value != null && _c.phone.value.length >= 14;
       final activeColor = _roleColor(_selectedProfile.value);
-      final darkActiveColor = Color.alphaBlend(Colors.black.withOpacity(0.15), activeColor);
+      final darkActiveColor = Color.alphaBlend(Colors.black.withValues(alpha: 0.15), activeColor);
 
       return AnimatedContainer(
         duration: const Duration(milliseconds: 300),
@@ -846,7 +846,7 @@ class _LoginScreenState extends State<LoginScreen>
           boxShadow: canContinue
               ? [
                   BoxShadow(
-                    color: activeColor.withOpacity(0.35),
+                    color: activeColor.withValues(alpha: 0.35),
                     blurRadius: 16,
                     offset: const Offset(0, 8),
                   ),

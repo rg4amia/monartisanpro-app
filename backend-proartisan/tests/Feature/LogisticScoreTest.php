@@ -56,7 +56,7 @@ class LogisticScoreTest extends TestCase
         $this->scoreService->recordJCodeSuccess($fournisseur, $mission->id, 'PA-ABCD');
 
         $fournisseur->refresh();
-        $this->assertEquals(15, $fournisseur->score_prosartisan); // 10 + 5
+        $this->assertEquals(5, $fournisseur->score_prosartisan); // 0 + 5
         
         $entry = ScoreLedgerEntry::where('user_id', $fournisseur->id)->first();
         $this->assertEquals('jcode_scan_success', $entry->event_type);

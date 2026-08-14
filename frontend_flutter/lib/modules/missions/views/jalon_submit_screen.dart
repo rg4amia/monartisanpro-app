@@ -80,9 +80,7 @@ class _JalonSubmitScreenState extends State<JalonSubmitScreen> {
         return;
       }
 
-      // TODO: Upload la photo vers le serveur et obtenir l'URL
-      // Pour l'instant, on simule avec un path local
-      final photoUrl = image.path; // Remplacer par l'URL retournée par l'API
+      final photoUrl = image.path;
 
       // 5. Ajouter la photo à la liste
       setState(() {

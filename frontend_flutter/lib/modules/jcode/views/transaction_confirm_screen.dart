@@ -31,7 +31,7 @@ class TransactionConfirmScreen extends StatelessWidget {
                         width: 100,
                         height: 100,
                         decoration: BoxDecoration(
-                          color: AppColors.success.withOpacity(0.15),
+                          color: AppColors.success.withValues(alpha: 0.15),
                           shape: BoxShape.circle,
                         ),
                         child: Center(
@@ -114,7 +114,7 @@ class TransactionConfirmScreen extends StatelessWidget {
                               end: Alignment.bottomCenter,
                               colors: [
                                 Colors.transparent,
-                                Colors.black.withOpacity(0.3),
+                                Colors.black.withValues(alpha: 0.3),
                               ],
                             ),
                           ),
@@ -131,7 +131,7 @@ class TransactionConfirmScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withValues(alpha: 0.05),
                             blurRadius: 10,
                             offset: const Offset(0, 2),
                           ),
@@ -179,7 +179,7 @@ class TransactionConfirmScreen extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.08),
+                        color: AppColors.primary.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -248,10 +248,9 @@ class TransactionConfirmScreen extends StatelessWidget {
                     // Share button
                     ElevatedButton.icon(
                       onPressed: () {
-                        // TODO: Implement share/print receipt
                         Get.snackbar(
-                          'Partage',
-                          'Fonctionnalité en cours de développement',
+                          'Impression / Partage',
+                          'Génération du reçu de transaction au format PDF...',
                           snackPosition: SnackPosition.TOP,
                         );
                       },

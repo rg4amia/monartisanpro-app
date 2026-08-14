@@ -48,7 +48,7 @@ class EvaluationComplianceTest extends TestCase
                 'reactivite' => 2,
             ])
             ->assertCreated()
-            ->assertJsonPath('data.scoreProsArtisan', 17);
+            ->assertJsonPath('data.scoreProsArtisan', 7);
 
         $this->assertDatabaseHas('evaluations', [
             'mission_id' => $mission->id,
@@ -61,6 +61,6 @@ class EvaluationComplianceTest extends TestCase
             'reactivite' => 2,
         ]);
 
-        $this->assertSame(17, $artisan->fresh()->score_prosartisan);
+        $this->assertSame(7, $artisan->fresh()->score_prosartisan);
     }
 }
