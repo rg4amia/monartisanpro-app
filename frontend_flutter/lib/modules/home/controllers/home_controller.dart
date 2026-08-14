@@ -37,6 +37,10 @@ class HomeController extends GetxController {
   final selectedCategory = Rx<String?>(null);
   final searchDistant = false.obs;
   final fluidityScore = 0.obs;
+  final scoreFiabilite = 0.94.obs;
+  final scoreIntegrite = 0.98.obs;
+  final scoreQualite = 0.88.obs;
+  final scoreReactivite = 0.92.obs;
 
   String get fluidityStatus {
     if (fluidityScore.value < 50) return 'Novice';
@@ -325,6 +329,31 @@ class HomeController extends GetxController {
             )
             .toList();
         activeMissionsCount.value = activeMissions.length;
+
+        // Charger le score de l'artisan en temps réel
+        try {
+          final userId = StorageService.getUserId();
+          if (userId != null) {
+            final res = await _artisanRepo.getScore(userId);
+            final data = (res['data'] as Map<String, dynamic>?) ?? res;
+            final breakdown = data['breakdown'] is Map
+                ? Map<String, dynamic>.from(data['breakdown'] as Map)
+                : const <String, dynamic>{};
+            
+            scoreFiabilite.value = _normalizeCriterion(breakdown['fiabilite'] ?? breakdown['fiabilité'] ?? 4.7);
+            scoreIntegrite.value = _normalizeCriterion(breakdown['integrite'] ?? breakdown['intégrité'] ?? 4.9);
+            scoreQualite.value = _normalizeCriterion(breakdown['qualite'] ?? breakdown['qualité'] ?? 4.4);
+            scoreReactivite.value = _normalizeCriterion(breakdown['reactivite'] ?? breakdown['réactivité'] ?? 4.6);
+            
+            if (data.containsKey('score_prosartisan')) {
+              fluidityScore.value = _asInt(data['score_prosartisan']);
+            } else if (data.containsKey('score_nzassa')) {
+              fluidityScore.value = _asInt(data['score_nzassa']);
+            }
+          }
+        } catch (e) {
+          debugPrint('[HomeController] Error fetching real artisan score detail: $e');
+        }
       } else if (role.value != 'driver') {
         final missions = await _missionRepo.getMissions(status: 'en_cours');
         activeMissions.value = missions;
@@ -549,5 +578,28 @@ class HomeController extends GetxController {
         colorText: Colors.white,
       );
     }
+  }
+
+  int _asInt(dynamic value) {
+    if (value == null) return 0;
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    return int.tryParse(value.toString()) ?? 0;
+  }
+
+  double _normalizeCriterion(dynamic value) {
+    double parsed;
+
+    if (value is num) {
+      parsed = value.toDouble();
+    } else {
+      parsed = double.tryParse(value?.toString() ?? '') ?? 0;
+    }
+
+    if (parsed <= 5) {
+      return (parsed / 5).clamp(0.0, 1.0);
+    }
+
+    return (parsed / 100).clamp(0.0, 1.0);
   }
 }

@@ -36,7 +36,7 @@ class CommunicationBanner extends StatelessWidget {
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.amber.withOpacity(0.08),
+                color: Colors.amber.withValues(alpha: 0.08),
                 blurRadius: 16,
                 offset: const Offset(0, 8),
               ),
@@ -48,7 +48,7 @@ class CommunicationBanner extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFD67C00).withOpacity(0.12),
+                  color: const Color(0xFFD67C00).withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -72,13 +72,19 @@ class CommunicationBanner extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 6),
-                    Text(
-                      announcement.contenu,
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 14,
-                        color: Color(0xFF7A4A0B),
-                        height: 1.4,
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 100),
+                      child: SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        child: Text(
+                          announcement.contenu,
+                          style: const TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 14,
+                            color: Color(0xFF7A4A0B),
+                            height: 1.4,
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -157,7 +163,7 @@ class _LeSaviezVousCarouselState extends State<LeSaviezVousCarousel> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.blue.withOpacity(0.06),
+            color: Colors.blue.withValues(alpha: 0.06),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -185,7 +191,7 @@ class _LeSaviezVousCarouselState extends State<LeSaviezVousCarousel> {
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF0F5132).withOpacity(0.1),
+                          color: const Color(0xFF0F5132).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: const Icon(
@@ -222,16 +228,19 @@ class _LeSaviezVousCarouselState extends State<LeSaviezVousCarousel> {
                               overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 4),
-                            Text(
-                              tip.contenu,
-                              style: const TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 13,
-                                color: Color(0xFF0A58CA),
-                                height: 1.3,
+                             Expanded(
+                              child: SingleChildScrollView(
+                                physics: const BouncingScrollPhysics(),
+                                child: Text(
+                                  tip.contenu,
+                                  style: const TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 13,
+                                    color: Color(0xFF0A58CA),
+                                    height: 1.3,
+                                  ),
+                                ),
                               ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),
@@ -258,7 +267,7 @@ class _LeSaviezVousCarouselState extends State<LeSaviezVousCarousel> {
                       decoration: BoxDecoration(
                         color: _currentPage == index
                             ? const Color(0xFF0B5ED7)
-                            : const Color(0xFF0B5ED7).withOpacity(0.3),
+                            : const Color(0xFF0B5ED7).withValues(alpha: 0.3),
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
