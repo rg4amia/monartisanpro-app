@@ -126,6 +126,7 @@ class ArtisanHomeScreen extends StatelessWidget {
                     children: [
                       CommunicationBanner(announcements: controller.announcements),
                       LeSaviezVousCarousel(tips: controller.tips),
+                      _ProsArtisanScoreCard(controller: controller),
                       _StatGrid(controller: controller),
                       const SizedBox(height: 24),
                       _QuickActions(controller: controller, missions: controller.prioritizedArtisanMissions),
@@ -141,6 +142,206 @@ class ArtisanHomeScreen extends StatelessWidget {
           );
         }),
       ),
+    );
+  }
+}
+
+class _ProsArtisanScoreCard extends StatelessWidget {
+  const _ProsArtisanScoreCard({required this.controller});
+
+  final HomeController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final score = controller.fluidityScore.value;
+    final isEligible = score >= 700;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 24),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: _Palette.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: _Palette.subtle),
+        boxShadow: [
+          BoxShadow(
+            color: _Palette.ink.withValues(alpha: 0.03),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: _Palette.primary.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.stars_rounded, color: _Palette.primary, size: 20),
+                  ),
+                  const SizedBox(width: 10),
+                  const Text(
+                    "Score ProsArtisan & Avis",
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: _Palette.ink,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: isEligible ? _Palette.success.withOpacity(0.1) : _Palette.muted.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      isEligible ? Icons.bolt_rounded : Icons.lock_outline_rounded,
+                      color: isEligible ? _Palette.success : _Palette.muted,
+                      size: 14,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      isEligible ? 'Crédit Éligible' : 'Crédit Bloqué',
+                      style: TextStyle(
+                        color: isEligible ? _Palette.success : _Palette.muted,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(
+                flex: 4,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Text(
+                          '$score',
+                          style: const TextStyle(
+                            fontSize: 36,
+                            fontWeight: FontWeight.w950,
+                            color: _Palette.ink,
+                            letterSpacing: -1,
+                          ),
+                        ),
+                        const SizedBox(width: 2),
+                        const Text(
+                          '/1000',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: _Palette.muted,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: LinearProgressIndicator(
+                        value: score / 1000,
+                        backgroundColor: _Palette.subtle,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          isEligible ? _Palette.success : _Palette.warning,
+                        ),
+                        minHeight: 8,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Note en hausse (+15 pts)',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: _Palette.success,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 24),
+              Expanded(
+                flex: 5,
+                child: Column(
+                  children: [
+                    _buildProsArtisanDetailRow('Fiabilité (40%)', 0.94),
+                    const SizedBox(height: 4),
+                    _buildProsArtisanDetailRow('Intégrité (30%)', 0.98),
+                    const SizedBox(height: 4),
+                    _buildProsArtisanDetailRow('Qualité (20%)', 0.88),
+                    const SizedBox(height: 4),
+                    _buildProsArtisanDetailRow('Réactivité (10%)', 0.92),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const Divider(height: 1),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              const Icon(Icons.info_outline_rounded, color: _Palette.muted, size: 14),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  isEligible
+                      ? 'Félicitations ! Votre excellent score vous donne accès au micro-crédit d\'urgence.'
+                      : 'Atteignez un score de 700 pour débloquer le micro-crédit de trésorerie.',
+                  style: const TextStyle(
+                    fontSize: 10.5,
+                    color: _Palette.muted,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProsArtisanDetailRow(String metric, double value) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            metric,
+            style: const TextStyle(fontSize: 10.5, color: _Palette.muted, fontWeight: FontWeight.w600),
+          ),
+        ),
+        const SizedBox(width: 8),
+        SizedBox(
+          width: 32,
+          child: Text(
+            '${(value * 100).toInt()}%',
+            style: const TextStyle(fontSize: 10.5, color: _Palette.ink, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.right,
+          ),
+        ),
+      ],
     );
   }
 }

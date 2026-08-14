@@ -68,6 +68,16 @@ class AppSettingsService extends GetxService {
     return false;
   }
 
+  bool isHidden(String role) {
+    String status = 'none';
+    if (role.toLowerCase() == 'client') status = blockClient.value;
+    if (role.toLowerCase() == 'artisan') status = blockArtisan.value;
+    if (role.toLowerCase() == 'fournisseur') status = blockFournisseur.value;
+    if (role.toLowerCase() == 'driver' || role.toLowerCase() == 'livreur') status = blockLivreur.value;
+
+    return status == 'hidden';
+  }
+
   String getDisabledMessage(String role) {
     if (role.toLowerCase() == 'client') return disabledMessageClient.value;
     if (role.toLowerCase() == 'artisan') return disabledMessageArtisan.value;
