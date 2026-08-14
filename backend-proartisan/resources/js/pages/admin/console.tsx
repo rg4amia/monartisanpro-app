@@ -2574,7 +2574,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                         />
 
                                         {/* Nouvelles créations */}
-                                        <div className="mt-6 grid gap-6 md:grid-cols-2 p-5 rounded-2xl border border-[var(--admin-border)] bg-amber-50/20">
+                                        <div className="mt-6 grid gap-6 lg:grid-cols-2 p-5 rounded-2xl border border-[var(--admin-border)] bg-amber-50/20">
                                             {/* Création Catégorie */}
                                             <form onSubmit={(e) => {
                                                 e.preventDefault();
@@ -2588,13 +2588,13 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                                 }
                                             }} className="space-y-3">
                                                 <h4 className="font-semibold text-sm text-[var(--admin-text)]">Créer une catégorie</h4>
-                                                <div className="flex gap-2">
+                                                <div className="flex flex-col sm:flex-row gap-2">
                                                     <input
                                                         type="text"
                                                         placeholder="Nom de la catégorie (ex: Électricité)"
-                                                        className="admin-input flex-1 rounded-xl px-3 py-2 text-sm outline-none bg-white border border-[var(--admin-border)]"
+                                                        className="admin-input flex-1 rounded-xl px-3 py-2 text-sm outline-none bg-white border border-[var(--admin-border)] w-full"
                                                     />
-                                                    <button type="submit" className="admin-button admin-button--primary text-xs py-2 px-3">
+                                                    <button type="submit" className="admin-button admin-button--primary text-xs py-2.5 px-4 shrink-0 w-full sm:w-auto">
                                                         Ajouter
                                                     </button>
                                                 </div>
@@ -2617,9 +2617,9 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                                 }
                                             }} className="space-y-3">
                                                 <h4 className="font-semibold text-sm text-[var(--admin-text)]">Créer une sous-catégorie</h4>
-                                                <div className="flex gap-2">
+                                                <div className="flex flex-col sm:flex-row gap-2">
                                                     <select
-                                                        className="admin-input rounded-xl px-3 py-2 text-sm outline-none bg-white border border-[var(--admin-border)]"
+                                                        className="admin-input rounded-xl px-3 py-2 text-sm outline-none bg-white border border-[var(--admin-border)] w-full sm:w-1/3"
                                                         defaultValue=""
                                                         required
                                                     >
@@ -2631,10 +2631,10 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                                     <input
                                                         type="text"
                                                         placeholder="Nom du métier (ex: Bobineur)"
-                                                        className="admin-input flex-1 rounded-xl px-3 py-2 text-sm outline-none bg-white border border-[var(--admin-border)]"
+                                                        className="admin-input flex-1 rounded-xl px-3 py-2 text-sm outline-none bg-white border border-[var(--admin-border)] w-full"
                                                         required
                                                     />
-                                                    <button type="submit" className="admin-button admin-button--primary text-xs py-2 px-3">
+                                                    <button type="submit" className="admin-button admin-button--primary text-xs py-2.5 px-4 shrink-0 w-full sm:w-auto">
                                                         Ajouter
                                                     </button>
                                                 </div>
