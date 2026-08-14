@@ -52,7 +52,7 @@ class ArtisanHomeScreen extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: _Palette.danger.withOpacity(0.1),
+                          color: _Palette.danger.withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -177,31 +177,38 @@ class _ProsArtisanScoreCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: _Palette.primary.withOpacity(0.1),
-                      shape: BoxShape.circle,
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: _Palette.primary.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.stars_rounded, color: _Palette.primary, size: 20),
                     ),
-                    child: const Icon(Icons.stars_rounded, color: _Palette.primary, size: 20),
-                  ),
-                  const SizedBox(width: 10),
-                  const Text(
-                    "Score ProsArtisan & Avis",
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: _Palette.ink,
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: Text(
+                        "Score ProsArtisan & Avis",
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: _Palette.ink,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: isEligible ? _Palette.success.withOpacity(0.1) : _Palette.muted.withOpacity(0.1),
+                  color: isEligible ? _Palette.success.withValues(alpha: 0.1) : _Palette.muted.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
@@ -286,13 +293,13 @@ class _ProsArtisanScoreCard extends StatelessWidget {
                 flex: 5,
                 child: Column(
                   children: [
-                    _buildProsArtisanDetailRow('Fiabilité (40%)', 0.94),
+                    _buildProsArtisanDetailRow('Fiabilité (40%)', controller.scoreFiabilite.value),
                     const SizedBox(height: 4),
-                    _buildProsArtisanDetailRow('Intégrité (30%)', 0.98),
+                    _buildProsArtisanDetailRow('Intégrité (30%)', controller.scoreIntegrite.value),
                     const SizedBox(height: 4),
-                    _buildProsArtisanDetailRow('Qualité (20%)', 0.88),
+                    _buildProsArtisanDetailRow('Qualité (20%)', controller.scoreQualite.value),
                     const SizedBox(height: 4),
-                    _buildProsArtisanDetailRow('Réactivité (10%)', 0.92),
+                    _buildProsArtisanDetailRow('Réactivité (10%)', controller.scoreReactivite.value),
                   ],
                 ),
               ),
