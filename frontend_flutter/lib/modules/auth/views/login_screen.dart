@@ -266,64 +266,111 @@ class _LoginScreenState extends State<LoginScreen>
   Widget _buildProfileSelection() {
     final appSettings = Get.find<AppSettingsService>();
 
-    return Obx(() => GridView.count(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisCount: 2,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: 1.25,
-          children: [
-            _buildProfileCard(
-              'CLIENT',
-              Icons.person_outline_rounded,
-              '👩‍💼',
-              _selectedProfile.value == 'CLIENT',
-              appSettings.isBlocked('CLIENT', isNewUser: false),
-              () {
-                _selectedProfile.value = 'CLIENT';
-                _c.role.value = 'client';
-                HapticFeedback.mediumImpact();
-              },
+    return Obx(() {
+      final List<Widget> visibleCards = [];
+
+      if (!appSettings.isHidden('CLIENT')) {
+        visibleCards.add(
+          _buildProfileCard(
+            'CLIENT',
+            Icons.person_outline_rounded,
+            '👩‍💼',
+            _selectedProfile.value == 'CLIENT',
+            appSettings.isBlocked('CLIENT', isNewUser: false),
+            () {
+              _selectedProfile.value = 'CLIENT';
+              _c.role.value = 'client';
+              HapticFeedback.mediumImpact();
+            },
+          ),
+        );
+      }
+
+      if (!appSettings.isHidden('ARTISAN')) {
+        visibleCards.add(
+          _buildProfileCard(
+            'ARTISAN',
+            Icons.construction_outlined,
+            '👨‍🔧',
+            _selectedProfile.value == 'ARTISAN',
+            appSettings.isBlocked('ARTISAN', isNewUser: false),
+            () {
+              _selectedProfile.value = 'ARTISAN';
+              _c.role.value = 'artisan';
+              HapticFeedback.mediumImpact();
+            },
+          ),
+        );
+      }
+
+      if (!appSettings.isHidden('FOURNISSEUR')) {
+        visibleCards.add(
+          _buildProfileCard(
+            'FOURNISSEUR',
+            Icons.warehouse_outlined,
+            '🏭',
+            _selectedProfile.value == 'FOURNISSEUR',
+            appSettings.isBlocked('FOURNISSEUR', isNewUser: false),
+            () {
+              _selectedProfile.value = 'FOURNISSEUR';
+              _c.role.value = 'fournisseur';
+              HapticFeedback.mediumImpact();
+            },
+          ),
+        );
+      }
+
+      if (!appSettings.isHidden('LIVREUR')) {
+        visibleCards.add(
+          _buildProfileCard(
+            'LIVREUR',
+            Icons.local_shipping_outlined,
+            '🚚',
+            _selectedProfile.value == 'LIVREUR',
+            appSettings.isBlocked('LIVREUR', isNewUser: false),
+            () {
+              _selectedProfile.value = 'LIVREUR';
+              _c.role.value = 'driver';
+              HapticFeedback.mediumImpact();
+            },
+          ),
+        );
+      }
+
+      if (visibleCards.isEmpty) {
+        return const Center(
+          child: Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Text(
+              'Aucune option d\'accès disponible actuellement.',
+              style: TextStyle(
+                color: Colors.red,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+              textAlign: TextAlign.center,
             ),
-            _buildProfileCard(
-              'ARTISAN',
-              Icons.construction_outlined,
-              '👨‍🔧',
-              _selectedProfile.value == 'ARTISAN',
-              appSettings.isBlocked('ARTISAN', isNewUser: false),
-              () {
-                _selectedProfile.value = 'ARTISAN';
-                _c.role.value = 'artisan';
-                HapticFeedback.mediumImpact();
-              },
-            ),
-            _buildProfileCard(
-              'FOURNISSEUR',
-              Icons.warehouse_outlined,
-              '🏭',
-              _selectedProfile.value == 'FOURNISSEUR',
-              appSettings.isBlocked('FOURNISSEUR', isNewUser: false),
-              () {
-                _selectedProfile.value = 'FOURNISSEUR';
-                _c.role.value = 'fournisseur';
-                HapticFeedback.mediumImpact();
-              },
-            ),
-            _buildProfileCard(
-              'LIVREUR',
-              Icons.local_shipping_outlined,
-              '🚚',
-              _selectedProfile.value == 'LIVREUR',
-              appSettings.isBlocked('LIVREUR', isNewUser: false),
-              () {
-                _selectedProfile.value = 'LIVREUR';
-                _c.role.value = 'driver';
-                HapticFeedback.mediumImpact();
-              },
-            ),
-          ],
-        ));
+          ),
+        );
+      }
+
+      // Automatically centers and justifies the remaining icons depending on visibility status
+      return Center(
+        child: Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          alignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: visibleCards.map((card) {
+            return SizedBox(
+              width: 165,
+              height: 132,
+              child: card,
+            );
+          }).toList(),
+        ),
+      );
+    });
   }
 
   Widget _buildProfileCard(

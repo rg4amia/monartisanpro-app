@@ -84,6 +84,14 @@ const audienceCards = [
         icon: 'store' as const,
         tone: 'clay' as const,
     },
+    {
+        badge: 'Livreur',
+        title: 'Sécuriser le transport de matériaux avec double code',
+        text: "Le livreur reçoit les opportunités de courses locales et garantit sa rémunération à la livraison.",
+        points: ['Calcul dynamique du prix de course', 'Code de retrait quincaillerie (pickup)', 'Code de réception client (reception)'],
+        icon: 'gps' as const,
+        tone: 'gold' as const,
+    },
 ];
 
 const flowSteps = [
@@ -230,6 +238,7 @@ const adminHighlights = [
 
 export default function Welcome() {
     const currentYear = new Date().getFullYear();
+    const [visibleRoles, setVisibleRoles] = useState<string[]>(['Client', 'Artisan', 'Fournisseur', 'Livreur']);
 
     return (
         <>
@@ -405,10 +414,40 @@ export default function Welcome() {
                                     text="ProsArtisan ne vend pas seulement de la mise en relation. La plateforme structure les droits, les preuves et les paiements pour tous les intervenants."
                                 />
 
-                                <div className="mt-10 grid gap-6 lg:grid-cols-3">
-                                    {audienceCards.map((card) => (
-                                        <AudienceCard key={card.badge} {...card} />
+                                {/* Interactive Visibility Controls */}
+                                <div className="mt-8 flex flex-wrap items-center justify-center gap-6 p-5 rounded-[24px] border border-[var(--landing-border)] bg-white/60 backdrop-blur-md max-w-2xl mx-auto">
+                                    <span className="text-sm font-bold text-[var(--landing-ink)]">Afficher / Masquer :</span>
+                                    {['Client', 'Artisan', 'Fournisseur', 'Livreur'].map(role => (
+                                        <label key={role} className="flex items-center gap-2.5 cursor-pointer text-sm font-semibold text-[var(--landing-copy)] hover:text-[var(--landing-ink)] transition select-none">
+                                            <input
+                                                type="checkbox"
+                                                checked={visibleRoles.includes(role)}
+                                                onChange={(e) => {
+                                                    if (e.target.checked) {
+                                                        setVisibleRoles([...visibleRoles, role]);
+                                                    } else {
+                                                        setVisibleRoles(visibleRoles.filter(r => r !== role));
+                                                    }
+                                                }}
+                                                className="h-4 w-4 rounded border-[var(--landing-border)] text-[#b77918] focus:ring-[#b77918] transition cursor-pointer"
+                                            />
+                                            {role}
+                                        </label>
                                     ))}
+                                </div>
+
+                                {/* Autolayout dynamic flex grid */}
+                                <div className="mt-10 flex flex-wrap justify-center gap-6">
+                                    {audienceCards
+                                        .filter(card => visibleRoles.includes(card.badge))
+                                        .map((card) => (
+                                            <div 
+                                                key={card.badge} 
+                                                className="w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.33%-16px)] xl:w-[calc(25%-18px)] max-w-[350px] flex shrink-0 grow justify-center transition-all duration-300"
+                                            >
+                                                <AudienceCard {...card} />
+                                            </div>
+                                        ))}
                                 </div>
                             </div>
                         </section>

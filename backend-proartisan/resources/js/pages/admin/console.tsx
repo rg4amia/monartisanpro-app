@@ -2526,6 +2526,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                                                     <option value="new">Bloquer Nouveaux</option>
                                                                     <option value="old">Bloquer Anciens</option>
                                                                     <option value="all">Bloquer Tous</option>
+                                                                    <option value="hidden">Masquer l'icône (Mobile)</option>
                                                                 </select>
                                                                                             ) : setting.key === 'app_access_disabled_message' || setting.key.startsWith('app_access_disabled_message_') ? (
                                                                 <textarea

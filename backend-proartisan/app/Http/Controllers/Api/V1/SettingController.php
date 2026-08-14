@@ -50,10 +50,10 @@ class SettingController extends Controller
     public function updateAppAccess(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'block_client' => 'required|in:none,new,old,all',
-            'block_artisan' => 'required|in:none,new,old,all',
-            'block_fournisseur' => 'required|in:none,new,old,all',
-            'block_livreur' => 'required|in:none,new,old,all',
+            'block_client' => 'required|in:none,new,old,all,hidden',
+            'block_artisan' => 'required|in:none,new,old,all,hidden',
+            'block_fournisseur' => 'required|in:none,new,old,all,hidden',
+            'block_livreur' => 'required|in:none,new,old,all,hidden',
             'app_access_disabled_message' => 'nullable|string',
             'app_access_disabled_message_client' => 'nullable|string',
             'app_access_disabled_message_artisan' => 'nullable|string',
