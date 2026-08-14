@@ -355,22 +355,66 @@ class _LoginScreenState extends State<LoginScreen>
       }
 
       // Automatically centers and justifies the remaining icons depending on visibility status
+      final screenWidth = MediaQuery.of(context).size.width;
+      // 40 is horizontal padding (20 on each side), 12 is the spacing between cards
+      final double itemWidth = (screenWidth - 40 - 12) / 2;
+      // We want to preserve aspect ratio of 1.25, so height = width / 1.25
+      final double itemHeight = itemWidth / 1.25;
+
+      // 4 items: 2x2 Grid
+      if (visibleCards.length == 4) {
+        return GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: 2,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          childAspectRatio: 1.25,
+          children: visibleCards,
+        );
+      }
+
+      // 3 items: 2 on first row, 1 centered on second row
+      if (visibleCards.length == 3) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Expanded(child: SizedBox(height: itemHeight, child: visibleCards[0])),
+                const SizedBox(width: 12),
+                Expanded(child: SizedBox(height: itemHeight, child: visibleCards[1])),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Center(
+              child: SizedBox(
+                width: itemWidth,
+                height: itemHeight,
+                child: visibleCards[2],
+              ),
+            ),
+          ],
+        );
+      }
+
+      // 2 items: 1 row of 2
+      if (visibleCards.length == 2) {
+        return Row(
+          children: [
+            Expanded(child: SizedBox(height: itemHeight, child: visibleCards[0])),
+            const SizedBox(width: 12),
+            Expanded(child: SizedBox(height: itemHeight, child: visibleCards[1])),
+          ],
+        );
+      }
+
+      // 1 item: centered
       return Center(
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 350),
-          child: Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            alignment: WrapAlignment.center,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: visibleCards.map((card) {
-              return SizedBox(
-                width: 165,
-                height: 132,
-                child: card,
-              );
-            }).toList(),
-          ),
+        child: SizedBox(
+          width: itemWidth,
+          height: itemHeight,
+          child: visibleCards[0],
         ),
       );
     });
