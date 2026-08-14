@@ -1,4 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
+import { useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 
 const landingTheme: CSSProperties = {
@@ -426,7 +427,7 @@ export default function Welcome() {
                                                     if (e.target.checked) {
                                                         setVisibleRoles([...visibleRoles, role]);
                                                     } else {
-                                                        setVisibleRoles(visibleRoles.filter(r => r !== role));
+                                                        setVisibleRoles(visibleRoles.filter((r: string) => r !== role));
                                                     }
                                                 }}
                                                 className="h-4 w-4 rounded border-[var(--landing-border)] text-[#b77918] focus:ring-[#b77918] transition cursor-pointer"
