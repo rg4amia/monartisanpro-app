@@ -1267,29 +1267,32 @@ class _JalonCard extends StatelessWidget {
                   style: const TextStyle(fontSize: 12, color: _Palette.muted),
                 ),
                 const SizedBox(height: 16),
-                RadioListTile<String>(
+                ListTile(
+                  leading: const Icon(Icons.waves, color: _Palette.primary),
                   title: const Text('Wave CI', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                  secondary: const Icon(Icons.waves, color: _Palette.primary),
-                  value: 'wave',
-                  groupValue: selectedProvider,
-                  onChanged: (v) => setState(() => selectedProvider = v!),
-                  activeColor: _Palette.primary,
+                  trailing: Icon(
+                    selectedProvider == 'wave' ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+                    color: selectedProvider == 'wave' ? _Palette.primary : _Palette.muted,
+                  ),
+                  onTap: () => setState(() => selectedProvider = 'wave'),
                 ),
-                RadioListTile<String>(
+                ListTile(
+                  leading: const Icon(Icons.phone_android, color: _Palette.primary),
                   title: const Text('Orange Money CI', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                  secondary: const Icon(Icons.phone_android, color: _Palette.primary),
-                  value: 'orange_money',
-                  groupValue: selectedProvider,
-                  onChanged: (v) => setState(() => selectedProvider = v!),
-                  activeColor: _Palette.primary,
+                  trailing: Icon(
+                    selectedProvider == 'orange_money' ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+                    color: selectedProvider == 'orange_money' ? _Palette.primary : _Palette.muted,
+                  ),
+                  onTap: () => setState(() => selectedProvider = 'orange_money'),
                 ),
-                RadioListTile<String>(
+                ListTile(
+                  leading: const Icon(Icons.account_balance, color: _Palette.primary),
                   title: const Text('Virement Bancaire', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                  secondary: const Icon(Icons.account_balance, color: _Palette.primary),
-                  value: 'virement_bancaire',
-                  groupValue: selectedProvider,
-                  onChanged: (v) => setState(() => selectedProvider = v!),
-                  activeColor: _Palette.primary,
+                  trailing: Icon(
+                    selectedProvider == 'virement_bancaire' ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+                    color: selectedProvider == 'virement_bancaire' ? _Palette.primary : _Palette.muted,
+                  ),
+                  onTap: () => setState(() => selectedProvider = 'virement_bancaire'),
                 ),
                 const SizedBox(height: 20),
                 Row(

@@ -262,9 +262,9 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
               margin: const EdgeInsets.only(right: 12),
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: _modeColor.withOpacity(0.15),
+                color: _modeColor.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: _modeColor.withOpacity(0.3)),
+                border: Border.all(color: _modeColor.withValues(alpha: 0.3)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,

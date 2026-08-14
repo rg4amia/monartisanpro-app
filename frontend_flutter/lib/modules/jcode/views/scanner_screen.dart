@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../core/theme/app_colors.dart';
 import '../controllers/jcode_controller.dart';
@@ -89,8 +90,16 @@ class ScannerScreen extends GetView<JcodeController> {
                       children: [
                         _ActionButton(
                           icon: Icons.photo_library,
-                          onTap: () {
-                            // TODO: Pick from gallery
+                          onTap: () async {
+                            final picker = ImagePicker();
+                            final image = await picker.pickImage(source: ImageSource.gallery);
+                            if (image != null) {
+                              Get.snackbar(
+                                'Galerie',
+                                'Photo sélectionnée : ${image.name}',
+                                snackPosition: SnackPosition.BOTTOM,
+                              );
+                            }
                           },
                         ),
                         const SizedBox(width: 24),

@@ -171,7 +171,6 @@ class UpdateProfileController extends GetxController {
 
       if (image != null) {
         profileImagePath.value = image.path;
-        // TODO: Upload to server when backend endpoint is ready
         Get.snackbar(
           'Photo sélectionnée',
           'La photo de profil sera téléchargée lors de l\'enregistrement',

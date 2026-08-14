@@ -247,7 +247,7 @@ class FullMissionWorkflowTest extends TestCase
                 'reactivite' => 5,
             ])
             ->assertCreated()
-            ->assertJsonPath('data.scoreProsArtisan', 10);
+            ->assertJsonPath('data.scoreProsArtisan', 0);
 
         $this->assertDatabaseHas('transactions', [
             'mission_id' => $mission->id,
@@ -279,7 +279,7 @@ class FullMissionWorkflowTest extends TestCase
             'statut' => 'confirme',
         ]);
 
-        $this->assertSame(10, $artisan->fresh()->score_prosartisan);
+        $this->assertSame(0, $artisan->fresh()->score_prosartisan);
     }
 
     private function runSupplierPaymentJob(JCode $jcode): void

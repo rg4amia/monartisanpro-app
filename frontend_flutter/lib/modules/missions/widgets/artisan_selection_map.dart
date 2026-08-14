@@ -650,9 +650,9 @@ class _MapSummaryCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: const Color(0xFFC0842C).withOpacity(0.08),
+                color: const Color(0xFFC0842C).withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFC0842C).withOpacity(0.2)),
+                border: Border.all(color: const Color(0xFFC0842C).withValues(alpha: 0.2)),
               ),
               child: const Row(
                 children: [

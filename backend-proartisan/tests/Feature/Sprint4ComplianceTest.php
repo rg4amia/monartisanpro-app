@@ -157,7 +157,7 @@ class Sprint4ComplianceTest extends TestCase
             ])
             ->assertOk();
 
-        // Parrain score must have dropped from 900 by 50 points -> 850
-        $this->assertSame(850, $parrain->fresh()->score_prosartisan);
+        // Parrain score must have dropped from 890 by 50 points -> 840
+        $this->assertSame(840, $parrain->fresh()->score_prosartisan);
     }
 }

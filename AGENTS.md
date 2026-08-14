@@ -125,7 +125,7 @@ CREATE TABLE users (
   phone         VARCHAR(20) NOT NULL UNIQUE,
   role          ENUM('client','artisan','fournisseur','referent','admin') NOT NULL,
   kyc_status    ENUM('en_attente','actif','rejete') NOT NULL DEFAULT 'en_attente',
-  score_nzassa  TINYINT UNSIGNED NOT NULL DEFAULT 0,  -- 0 à 100
+  score_prosartisan INT UNSIGNED NOT NULL DEFAULT 0,  -- Score 0 à 1000 (0 par défaut)
   wallet_materiaux BIGINT NOT NULL DEFAULT 0,          -- FCFA, entiers
   wallet_mo        BIGINT NOT NULL DEFAULT 0,          -- FCFA, entiers
   position      POINT SRID 4326 NULL,                  -- coordonnées GPS (lat/lng)
@@ -294,6 +294,7 @@ SELECT ST_X(position) AS lng, ST_Y(position) AS lat FROM users WHERE id = :id;
 6. **Floutage GPS artisan** : ne jamais retourner la position exacte au client — appliquer un offset aléatoire de ~50 m en PHP avant de sérialiser la réponse
 7. **Montants FCFA** : toujours `BIGINT`, jamais de `FLOAT` ou `DOUBLE` pour les montants financiers
 8. **Colonnes JSON** : utiliser `JSON` MySQL (pas de texte brut), toujours valider le schéma en PHP avant insertion
+9. **Score & Notation par défaut** : Tout nouvel artisan sans évaluation démarre avec un score initial de 0 sur 1000 et des sous-critères (Fiabilité, Intégrité, Qualité, Réactivité) à 0%.
 
 ---
 
