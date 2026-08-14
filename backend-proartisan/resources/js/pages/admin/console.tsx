@@ -111,7 +111,7 @@ interface AdminUser {
     phone: string;
     role: string;
     kyc_status: string;
-    score_nzassa: number;
+    score_prosartisan: number;
     created_at: string;
     missions_client_count: number;
     missions_artisan_count: number;
@@ -166,7 +166,7 @@ interface AdminEvaluation {
         id: number;
         name: string;
         phone: string;
-        score_nzassa: number;
+        score_prosartisan: number;
         score_frozen: boolean;
     } | null;
 }
@@ -175,7 +175,7 @@ interface ArtisanScoreItem {
     id: number;
     name: string;
     phone: string;
-    score_nzassa: number;
+    score_prosartisan: number;
     score_frozen: boolean;
     evaluations_recues_count: number;
     evaluations_recues_avg_fiabilite?: number | string | null;
@@ -831,7 +831,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         const filteredUsers = users.filter((user) =>
             deferredSearch === ''
                 ? true
-                : normalizeSearch([user.id, user.name, user.email, user.phone, user.role, user.kyc_status, user.score_nzassa]).includes(
+                : normalizeSearch([user.id, user.name, user.email, user.phone, user.role, user.kyc_status, user.score_prosartisan]).includes(
                     deferredSearch,
                 ),
         );
@@ -880,7 +880,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         const highRiskDisputes = filteredLitiges.filter((litige) => (litige.mission.montant_total ?? 0) >= 2_000_000);
         const topArtisans = [...users]
             .filter((user) => user.role === 'artisan')
-            .sort((left, right) => right.score_nzassa - left.score_nzassa)
+            .sort((left, right) => right.score_prosartisan - left.score_prosartisan)
             .slice(0, 5);
         const urgentKyc = [...filteredKyc]
             .sort((left, right) => new Date(left.created_at).getTime() - new Date(right.created_at).getTime())
@@ -994,7 +994,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                     artisan.id,
                     artisan.name,
                     artisan.phone,
-                    artisan.score_nzassa,
+                    artisan.score_prosartisan,
                 ]).includes(deferredSearch),
         );
 
@@ -1719,7 +1719,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                                                 <p className="text-xs text-[var(--admin-muted)]">{artisan.phone}</p>
                                                             </div>
                                                             <span className={cn('rounded-full border px-3 py-1 text-xs font-semibold', toneBadgeClasses('blue'))}>
-                                                                {artisan.score_nzassa}/100
+                                                                {artisan.score_prosartisan}/1000
                                                             </span>
                                                         </div>
                                                     ))
@@ -2227,7 +2227,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                                                     <div className="flex flex-col gap-1">
                                                                         <div className="flex items-center gap-1.5">
                                                                             <span className="font-semibold text-[var(--admin-text)]">
-                                                                                {user.score_nzassa} pts
+                                                                                {user.score_prosartisan} pts
                                                                             </span>
                                                                             {user.score_frozen ? (
                                                                                 <span className="rounded-full bg-[#fbe0da] px-1.5 py-0.5 text-[10px] font-semibold text-[#c55e50] border border-[#f2c1ba]">
@@ -2338,7 +2338,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                                                 <p className="text-xs text-[var(--admin-muted)]">{artisan.phone}</p>
                                                             </div>
                                                             <span className={cn('rounded-full border px-3 py-1 text-xs font-semibold', toneBadgeClasses('green'))}>
-                                                                {artisan.score_nzassa}/100
+                                                                {artisan.score_prosartisan}/1000
                                                             </span>
                                                         </div>
                                                     ))}
@@ -2899,15 +2899,15 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                                                 <td>
                                                                     <span className={cn(
                                                                         'rounded-full border px-3 py-1 text-xs font-bold',
-                                                                        artisan.score_nzassa >= 70
+                                                                        artisan.score_prosartisan >= 700
                                                                             ? 'border-green-300 bg-green-50 text-green-700'
-                                                                            : artisan.score_nzassa >= 40
+                                                                            : artisan.score_prosartisan >= 400
                                                                                 ? 'border-amber-300 bg-amber-50 text-amber-700'
                                                                                 : 'border-rose-300 bg-rose-50 text-rose-700'
                                                                     )}>
-                                                                        {artisan.score_nzassa} / 100
+                                                                        {artisan.score_prosartisan} / 1000
                                                                     </span>
-                                                                    {artisan.score_nzassa >= 70 && (
+                                                                    {artisan.score_prosartisan >= 700 && (
                                                                         <span className="ml-2 inline-flex items-center rounded bg-yellow-100 px-2 py-0.5 text-[10px] font-semibold text-yellow-800">
                                                                             Micro-crédit éligible
                                                                         </span>
@@ -3454,7 +3454,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                         Historique ProsArtisan : {selectedArtisanForLedger.name}
                                     </h2>
                                     <p className="text-xs text-[var(--admin-muted)] mt-1">
-                                        Score actuel : {selectedArtisanForLedger.score_nzassa}/100 • {selectedArtisanForLedger.score_frozen ? 'Score Gelé' : 'Score Dynamique'}
+                                        Score actuel : {selectedArtisanForLedger.score_prosartisan}/1000 • {selectedArtisanForLedger.score_frozen ? 'Score Gelé' : 'Score Dynamique'}
                                     </p>
                                 </div>
                                 <button

@@ -31,7 +31,7 @@ class ScoreService
         'casse_materiel'             => -100,
     ];
 
-    private const BASE_SCORE = 10;
+    private const BASE_SCORE = 0;
     private const MIN_SCORE  = 0;
     private const MAX_SCORE  = 1000;
 

@@ -209,7 +209,7 @@ class HomeController extends GetxController {
         walletMo.value = 0;
       }
       
-      fluidityScore.value = StorageService.getScoreProsArtisan() ?? 10; // Default 10 if not set yet
+      fluidityScore.value = StorageService.getScoreProsArtisan() ?? 0; // Default 0 if not set yet
 
       try {
         final rawResponse = await _userRepo.getDashboardStats();
