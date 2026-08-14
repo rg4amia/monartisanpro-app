@@ -167,7 +167,7 @@ class _BalanceCards extends StatelessWidget {
                 Formatters.fcfa(controller.walletMo.value),
                 style: const TextStyle(
                   color: Colors.white,
-                  fontWeight: FontWeight.w950,
+                  fontWeight: FontWeight.w900,
                   fontSize: 36,
                   letterSpacing: -0.5,
                 ),

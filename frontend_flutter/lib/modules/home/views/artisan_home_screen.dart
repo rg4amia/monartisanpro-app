@@ -241,7 +241,7 @@ class _ProsArtisanScoreCard extends StatelessWidget {
                           '$score',
                           style: const TextStyle(
                             fontSize: 36,
-                            fontWeight: FontWeight.w950,
+                            fontWeight: FontWeight.w900,
                             color: _Palette.ink,
                             letterSpacing: -1,
                           ),

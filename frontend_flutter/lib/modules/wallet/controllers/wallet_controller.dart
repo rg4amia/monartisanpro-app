@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_endpoints.dart';
 import '../../../data/models/transaction_model.dart';
-import '../../../core/storage/storage_service.dart';
 
 class WalletController extends GetxController {
   final ApiClient _apiClient = ApiClient();

@@ -356,18 +356,21 @@ class _LoginScreenState extends State<LoginScreen>
 
       // Automatically centers and justifies the remaining icons depending on visibility status
       return Center(
-        child: Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          alignment: WrapAlignment.center,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: visibleCards.map((card) {
-            return SizedBox(
-              width: 165,
-              height: 132,
-              child: card,
-            );
-          }).toList(),
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 350),
+          child: Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: visibleCards.map((card) {
+              return SizedBox(
+                width: 165,
+                height: 132,
+                child: card,
+              );
+            }).toList(),
+          ),
         ),
       );
     });
