@@ -57,6 +57,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/roles-permissions', [BackofficeController::class, 'rolesPermissions'])->name('roles-permissions');
         Route::get('/communications', [BackofficeController::class, 'communications'])->name('communications');
         Route::get('/notifications', [BackofficeController::class, 'notifications'])->name('notifications');
+        Route::get('/promo-codes', [BackofficeController::class, 'promoCodes'])->name('promo-codes');
         Route::post('/communications', [BackofficeController::class, 'storeCommunication'])->name('communications.store');
         Route::put('/communications/{communication}', [BackofficeController::class, 'updateCommunication'])->name('communications.update');
         Route::delete('/communications/{communication}', [BackofficeController::class, 'destroyCommunication'])->name('communications.destroy');
@@ -76,6 +77,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/fournisseurs/{fournisseur}/review', [BackofficeController::class, 'reviewFournisseur'])->name('fournisseurs.review');
         Route::post('/notifications/{notification}/read', [BackofficeController::class, 'markNotificationRead'])->name('notifications.read');
         Route::post('/notifications/mark-all-read', [BackofficeController::class, 'markAllNotificationsRead'])->name('notifications.mark-all-read');
+        Route::post('/promo-codes', [BackofficeController::class, 'storePromoCode'])->name('promo-codes.store');
+        Route::put('/promo-codes/{promoCode}', [BackofficeController::class, 'updatePromoCode'])->name('promo-codes.update');
+        Route::delete('/promo-codes/{promoCode}', [BackofficeController::class, 'destroyPromoCode'])->name('promo-codes.destroy');
+        Route::post('/promo-codes/{promoCode}/toggle', [BackofficeController::class, 'togglePromoCode'])->name('promo-codes.toggle');
 
         Route::prefix('api/llm')->name('api.llm.')->group(function () {
             Route::get('/staging', [LlmAdminController::class, 'getStaging'])->name('staging.index');

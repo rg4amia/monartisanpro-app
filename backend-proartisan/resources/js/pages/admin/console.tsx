@@ -7,9 +7,25 @@ import AiDashboardPanel from './ai-dashboard-panel';
 import LlmAdminPanel from './llm-admin-panel';
 import RolesPermissionsPanel from './roles-permissions-panel';
 
-type AdminTab = 'dashboard' | 'kyc' | 'missions' | 'litiges' | 'notifications' | 'users' | 'transactions' | 'settings' | 'llm_admin' | 'roles_permissions' | 'evaluations' | 'ai_dashboard' | 'communications';
+type AdminTab = 'dashboard' | 'kyc' | 'missions' | 'litiges' | 'notifications' | 'users' | 'transactions' | 'settings' | 'llm_admin' | 'roles_permissions' | 'evaluations' | 'ai_dashboard' | 'communications' | 'promo_codes';
 type ThemeMode = 'light' | 'dark';
 type Tone = 'amber' | 'green' | 'rose' | 'blue' | 'slate';
+
+export interface PromoCodeItem {
+    id: number;
+    code: string;
+    description?: string | null;
+    discount_type: 'percent' | 'fixed';
+    discount_value: number;
+    min_order_amount: number;
+    max_discount_amount?: number | null;
+    usage_limit?: number | null;
+    used_count: number;
+    starts_at?: string | null;
+    expires_at?: string | null;
+    is_active: boolean;
+    created_at: string;
+}
 
 interface DashboardData {
     users_total: number;
@@ -275,6 +291,7 @@ interface AdminPageProps {
     artisansScores: ArtisanScoreItem[];
     scoreLedger: ScoreLedgerEntryItem[];
     financialKpis?: any;
+    promoCodes?: PromoCodeItem[];
     settingsList?: Array<{
         id: number;
         key: string;
@@ -336,6 +353,7 @@ const tabRoutes: Record<AdminTab, string> = {
     evaluations: '/admin/evaluations',
     communications: '/admin/communications',
     notifications: '/admin/notifications',
+    promo_codes: '/admin/promo-codes',
 };
 
 const tabMeta: Record<AdminTab, { description: string; label: string; section: string }> = {
@@ -343,6 +361,11 @@ const tabMeta: Record<AdminTab, { description: string; label: string; section: s
         label: "Vue d'ensemble",
         section: 'PILOTAGE',
         description: 'Lecture rapide de la santé opérationnelle, financière et terrain de ProsArtisan.',
+    },
+    promo_codes: {
+        label: 'Codes Promo',
+        section: 'MARKETING',
+        description: 'Gestion des campagnes promotionnelles, remises en pourcentage ou en montant fixe et plafonds.',
     },
     kyc: {
         label: 'KYC & Vérifications',
@@ -585,6 +608,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         artisansScores = [] as ArtisanScoreItem[],
         scoreLedger = [] as ScoreLedgerEntryItem[],
         financialKpis = {} as any,
+        promoCodes = [] as PromoCodeItem[],
         communications = [],
         adminNotifications = [] as AdminNotificationItem[],
         sectors = [],
@@ -943,6 +967,107 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         }
     };
 
+    const [promoModalOpen, setPromoModalOpen] = useState<boolean>(false);
+    const [editingPromo, setEditingPromo] = useState<PromoCodeItem | null>(null);
+
+    const promoForm = useForm({
+        code: '',
+        description: '',
+        discount_type: 'percent' as 'percent' | 'fixed',
+        discount_value: 10,
+        min_order_amount: 0,
+        max_discount_amount: 0,
+        usage_limit: 0,
+        starts_at: '',
+        expires_at: '',
+        is_active: true,
+    });
+
+    const openCreatePromoModal = (): void => {
+        setEditingPromo(null);
+        promoForm.reset();
+        promoForm.clearErrors();
+        promoForm.setData({
+            code: '',
+            description: '',
+            discount_type: 'percent',
+            discount_value: 10,
+            min_order_amount: 0,
+            max_discount_amount: 0,
+            usage_limit: 0,
+            starts_at: '',
+            expires_at: '',
+            is_active: true,
+        });
+        setPromoModalOpen(true);
+    };
+
+    const openEditPromoModal = (promo: PromoCodeItem): void => {
+        setEditingPromo(promo);
+        promoForm.clearErrors();
+        promoForm.setData({
+            code: promo.code,
+            description: promo.description || '',
+            discount_type: promo.discount_type,
+            discount_value: promo.discount_value,
+            min_order_amount: promo.min_order_amount || 0,
+            max_discount_amount: promo.max_discount_amount || 0,
+            usage_limit: promo.usage_limit || 0,
+            starts_at: promo.starts_at ? promo.starts_at.slice(0, 10) : '',
+            expires_at: promo.expires_at ? promo.expires_at.slice(0, 10) : '',
+            is_active: promo.is_active,
+        });
+        setPromoModalOpen(true);
+    };
+
+    const handlePromoSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
+        event.preventDefault();
+        if (promoForm.processing) return;
+
+        const payload: any = {
+            ...promoForm.data,
+            min_order_amount: Number(promoForm.data.min_order_amount) || 0,
+            max_discount_amount: Number(promoForm.data.max_discount_amount) || null,
+            usage_limit: Number(promoForm.data.usage_limit) || null,
+            starts_at: promoForm.data.starts_at || null,
+            expires_at: promoForm.data.expires_at || null,
+        };
+
+        if (editingPromo) {
+            promoForm.put(`/admin/promo-codes/${editingPromo.id}`, {
+                data: payload,
+                preserveScroll: true,
+                onSuccess: () => {
+                    setPromoModalOpen(false);
+                    promoForm.reset();
+                },
+            });
+        } else {
+            promoForm.post('/admin/promo-codes', {
+                data: payload,
+                preserveScroll: true,
+                onSuccess: () => {
+                    setPromoModalOpen(false);
+                    promoForm.reset();
+                },
+            });
+        }
+    };
+
+    const handleDeletePromo = (promo: PromoCodeItem): void => {
+        if (window.confirm(`Supprimer définitivement le code promo "${promo.code}" ?`)) {
+            router.delete(`/admin/promo-codes/${promo.id}`, {
+                preserveScroll: true,
+            });
+        }
+    };
+
+    const handleTogglePromo = (promo: PromoCodeItem): void => {
+        router.post(`/admin/promo-codes/${promo.id}/toggle`, {}, {
+            preserveScroll: true,
+        });
+    };
+
     useEffect(() => {
         if (typeof window === 'undefined') {
             return;
@@ -1157,6 +1282,18 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                 ]).includes(deferredSearch),
         );
 
+        const filteredPromoCodes = (promoCodes || []).filter((promo) =>
+            deferredSearch === ''
+                ? true
+                : normalizeSearch([
+                    promo.id,
+                    promo.code,
+                    promo.description,
+                    promo.discount_type,
+                    promo.discount_value,
+                ]).includes(deferredSearch),
+        );
+
         return {
             acompteTrend,
             activityTrend: operationsTrend,
@@ -1171,6 +1308,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
             filteredUsers,
             filteredEvaluations,
             filteredArtisansScores,
+            filteredPromoCodes,
             highRiskDisputes,
             missionStatusMetrics,
             monthlyUserCount,
@@ -1183,7 +1321,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
             urgentKyc,
             weeklyUserCount,
         };
-    }, [dashboard, deferredSearch, fournisseurs, kycUsers, litiges, missions, transactions, users, evaluationsList, artisansScores, now]);
+    }, [dashboard, deferredSearch, fournisseurs, kycUsers, litiges, missions, transactions, users, evaluationsList, artisansScores, promoCodes, now]);
 
     const totalUsers = dashboard.users_total ?? users.length;
     const artisansActifs = useMemo(() => dashboard.artisans_actifs ?? users.filter((user) => user.role === 'artisan' && user.kyc_status === 'actif').length, [dashboard.artisans_actifs, users]);
@@ -1226,12 +1364,20 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                 { id: 'settings', label: tabMeta.settings.label },
                 { id: 'roles_permissions', label: tabMeta.roles_permissions.label },
                 { count: (communications ?? []).filter(c => c.statut === 'publie').length, id: 'communications', label: tabMeta.communications.label },
+                { count: (promoCodes ?? []).filter(p => p.is_active).length, id: 'promo_codes', label: 'Codes Promo' },
             ],
         },
     ];
 
     const heroStats = useMemo(() => {
         switch (activeTab) {
+            case 'promo_codes':
+                return [
+                    { label: 'Codes Promo Total', tone: 'amber' as const, value: `${(promoCodes ?? []).length}` },
+                    { label: 'Codes Actifs', tone: 'green' as const, value: `${(promoCodes ?? []).filter(p => p.is_active).length}` },
+                    { label: 'Utilisations Totales', tone: 'blue' as const, value: `${(promoCodes ?? []).reduce((sum, p) => sum + (p.used_count || 0), 0)}` },
+                    { label: 'Campagnes Fixes & %', tone: 'slate' as const, value: `${(promoCodes ?? []).filter(p => p.discount_type === 'percent').length} % / ${(promoCodes ?? []).filter(p => p.discount_type === 'fixed').length} Fixe` },
+                ];
             case 'notifications':
                 return [
                     { label: 'Alertes globales', tone: 'amber' as const, value: `${liveNotifications.length}` },
@@ -3856,6 +4002,139 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                     </Surface>
                                 </section>
                             ) : null}
+
+                            {activeTab === 'promo_codes' ? (
+                                <section className="mt-5 space-y-5">
+                                    <Surface className="rounded-[32px] p-5 lg:p-6">
+                                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-[var(--admin-border)] pb-5">
+                                            <div>
+                                                <h3 className="text-xl font-bold text-[var(--admin-text)] flex items-center gap-2">
+                                                    <span>🏷️ Gestion des Codes Promo</span>
+                                                    <span className="rounded-full bg-[#ebb95e]/20 text-[#8a5d16] text-xs font-bold px-2.5 py-0.5">
+                                                        {analytics.filteredPromoCodes.length} code(s)
+                                                    </span>
+                                                </h3>
+                                                <p className="text-xs text-[var(--admin-text-soft)] mt-1">
+                                                    Configurez des remises applicables lors du paiement des commandes e-commerce matériaux & articles.
+                                                </p>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <button
+                                                    type="button"
+                                                    onClick={openCreatePromoModal}
+                                                    className="inline-flex items-center gap-2 rounded-full bg-[#ebb95e] text-[#241b16] px-5 py-2.5 text-xs font-bold hover:opacity-90 transition shadow-sm"
+                                                >
+                                                    <PlusIcon className="h-4 w-4" />
+                                                    Nouveau Code Promo
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-5 overflow-x-auto">
+                                            <DataTable>
+                                                <thead>
+                                                    <tr>
+                                                        <th className="py-3 px-4 text-left text-xs font-bold uppercase tracking-wider text-[var(--admin-muted)]">Code & Description</th>
+                                                        <th className="py-3 px-4 text-left text-xs font-bold uppercase tracking-wider text-[var(--admin-muted)]">Remise</th>
+                                                        <th className="py-3 px-4 text-left text-xs font-bold uppercase tracking-wider text-[var(--admin-muted)]">Conditions</th>
+                                                        <th className="py-3 px-4 text-left text-xs font-bold uppercase tracking-wider text-[var(--admin-muted)]">Utilisations</th>
+                                                        <th className="py-3 px-4 text-left text-xs font-bold uppercase tracking-wider text-[var(--admin-muted)]">Période</th>
+                                                        <th className="py-3 px-4 text-left text-xs font-bold uppercase tracking-wider text-[var(--admin-muted)]">Statut</th>
+                                                        <th className="py-3 px-4 text-right text-xs font-bold uppercase tracking-wider text-[var(--admin-muted)]">Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-[var(--admin-border)]">
+                                                    {analytics.filteredPromoCodes.length === 0 ? (
+                                                        <tr>
+                                                            <td colSpan={7} className="text-center py-10 text-[var(--admin-muted)]">
+                                                                Aucun code promo trouvé. Cliquez sur "Nouveau Code Promo" pour en créer un.
+                                                            </td>
+                                                        </tr>
+                                                    ) : (
+                                                        analytics.filteredPromoCodes.map((promo) => (
+                                                            <tr key={promo.id} className="hover:bg-white/10 dark:hover:bg-white/5 transition">
+                                                                <td className="py-3.5 px-4">
+                                                                    <div className="font-mono font-bold text-sm text-[var(--admin-text)] flex items-center gap-1.5">
+                                                                        <span className="px-2.5 py-0.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-300">
+                                                                            {promo.code}
+                                                                        </span>
+                                                                    </div>
+                                                                    {promo.description && (
+                                                                        <div className="text-xs text-[var(--admin-text-soft)] mt-1 max-w-xs truncate">
+                                                                            {promo.description}
+                                                                        </div>
+                                                                    )}
+                                                                </td>
+                                                                <td className="py-3.5 px-4 whitespace-nowrap">
+                                                                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
+                                                                        {promo.discount_type === 'percent' ? `-${promo.discount_value}%` : `-${money(promo.discount_value)}`}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="py-3.5 px-4 text-xs text-[var(--admin-text-soft)]">
+                                                                    <div>Min : <strong>{promo.min_order_amount > 0 ? money(promo.min_order_amount) : 'Aucun'}</strong></div>
+                                                                    {promo.max_discount_amount ? (
+                                                                        <div>Plafond : <strong>{money(promo.max_discount_amount)}</strong></div>
+                                                                    ) : null}
+                                                                </td>
+                                                                <td className="py-3.5 px-4 text-xs text-[var(--admin-text)] whitespace-nowrap">
+                                                                    <div className="font-bold">{promo.used_count} {promo.usage_limit ? `/ ${promo.usage_limit}` : 'utilisations'}</div>
+                                                                    {promo.usage_limit ? (
+                                                                        <div className="w-24 h-1.5 bg-black/10 rounded-full mt-1.5 overflow-hidden">
+                                                                            <div
+                                                                                className="h-full bg-[#ebb95e] rounded-full"
+                                                                                style={{ width: `${Math.min(100, (promo.used_count / promo.usage_limit) * 100)}%` }}
+                                                                            />
+                                                                        </div>
+                                                                    ) : null}
+                                                                </td>
+                                                                <td className="py-3.5 px-4 text-xs text-[var(--admin-text-soft)] whitespace-nowrap">
+                                                                    {promo.expires_at ? (
+                                                                        <div>Expire : <strong>{new Date(promo.expires_at).toLocaleDateString('fr-FR')}</strong></div>
+                                                                    ) : (
+                                                                        <span className="text-emerald-600 font-semibold">Illimitée</span>
+                                                                    )}
+                                                                </td>
+                                                                <td className="py-3.5 px-4 whitespace-nowrap">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleTogglePromo(promo)}
+                                                                        className={cn(
+                                                                            "rounded-full px-3 py-1 text-xs font-bold border transition cursor-pointer",
+                                                                            promo.is_active
+                                                                                ? "border-green-600/40 bg-green-500/15 text-green-700 dark:text-green-400 hover:bg-green-500/25"
+                                                                                : "border-red-600/40 bg-red-500/15 text-red-700 dark:text-red-400 hover:bg-red-500/25"
+                                                                        )}
+                                                                    >
+                                                                        {promo.is_active ? '● Actif' : '○ Inactif'}
+                                                                    </button>
+                                                                </td>
+                                                                <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                                                                    <div className="flex justify-end gap-2">
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => openEditPromoModal(promo)}
+                                                                            className="rounded-lg px-2.5 py-1 text-xs font-semibold bg-black/5 hover:bg-black/10 text-[var(--admin-text)] transition"
+                                                                        >
+                                                                            Modifier
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleDeletePromo(promo)}
+                                                                            className="rounded-lg px-2.5 py-1 text-xs font-semibold bg-red-500/10 hover:bg-red-500/20 text-red-600 transition"
+                                                                        >
+                                                                            Supprimer
+                                                                        </button>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        ))
+                                                    )}
+                                                </tbody>
+                                            </DataTable>
+                                        </div>
+                                    </Surface>
+                                </section>
+                            ) : null}
                         </main>
 
                         <footer className="px-4 pb-6 lg:px-7">
@@ -3987,6 +4266,158 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                         className="rounded-full bg-[#ebb95e] text-[#241b16] px-6 py-2.5 text-sm font-semibold hover:opacity-90 transition disabled:opacity-50"
                                     >
                                         Enregistrer Brouillon
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
+
+                {promoModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                        <div className="admin-panel admin-surface w-full max-w-[550px] rounded-[32px] border p-6 lg:p-8 shadow-2xl relative">
+                            <div className="flex items-center justify-between border-b border-[var(--admin-border)] pb-4">
+                                <h2 className="text-xl font-bold text-[var(--admin-text)]">
+                                    {editingPromo ? `Modifier le code ${editingPromo.code}` : 'Créer un nouveau code promo'}
+                                </h2>
+                                <button
+                                    type="button"
+                                    onClick={() => setPromoModalOpen(false)}
+                                    className="rounded-full p-2 text-[var(--admin-muted)] hover:bg-white/10 hover:text-[var(--admin-text)] transition"
+                                    title="Fermer"
+                                >
+                                    <CloseIcon className="h-5 w-5" />
+                                </button>
+                            </div>
+
+                            <form onSubmit={handlePromoSubmit} className="mt-6 space-y-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <label className="block space-y-1">
+                                        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Code Promo *</span>
+                                        <input
+                                            type="text"
+                                            value={promoForm.data.code}
+                                            onChange={(e) => promoForm.setData('code', e.target.value.toUpperCase())}
+                                            placeholder="ex: PROS225"
+                                            className="admin-input w-full rounded-2xl px-4 py-3 text-sm font-mono font-bold outline-none"
+                                            required
+                                        />
+                                    </label>
+
+                                    <label className="block space-y-1">
+                                        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Type de réduction *</span>
+                                        <select
+                                            value={promoForm.data.discount_type}
+                                            onChange={(e) => promoForm.setData('discount_type', e.target.value as 'percent' | 'fixed')}
+                                            className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none"
+                                        >
+                                            <option value="percent">Pourcentage (%)</option>
+                                            <option value="fixed">Montant fixe (FCFA)</option>
+                                        </select>
+                                    </label>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <label className="block space-y-1">
+                                        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">
+                                            Valeur de la réduction ({promoForm.data.discount_type === 'percent' ? '%' : 'FCFA'}) *
+                                        </span>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            value={promoForm.data.discount_value}
+                                            onChange={(e) => promoForm.setData('discount_value', Number(e.target.value))}
+                                            className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none"
+                                            required
+                                        />
+                                    </label>
+
+                                    <label className="block space-y-1">
+                                        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Montant min commande (FCFA)</span>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            value={promoForm.data.min_order_amount}
+                                            onChange={(e) => promoForm.setData('min_order_amount', Number(e.target.value))}
+                                            placeholder="0"
+                                            className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none"
+                                        />
+                                    </label>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <label className="block space-y-1">
+                                        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Plafond réduction (FCFA)</span>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            value={promoForm.data.max_discount_amount}
+                                            onChange={(e) => promoForm.setData('max_discount_amount', Number(e.target.value))}
+                                            placeholder="Optionnel"
+                                            className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none"
+                                        />
+                                    </label>
+
+                                    <label className="block space-y-1">
+                                        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Limite d'utilisations</span>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            value={promoForm.data.usage_limit}
+                                            onChange={(e) => promoForm.setData('usage_limit', Number(e.target.value))}
+                                            placeholder="Optionnel (ex: 500)"
+                                            className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none"
+                                        />
+                                    </label>
+                                </div>
+
+                                <label className="block space-y-1">
+                                    <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Description</span>
+                                    <input
+                                        type="text"
+                                        value={promoForm.data.description}
+                                        onChange={(e) => promoForm.setData('description', e.target.value)}
+                                        placeholder="Description de la campagne promotionnelle"
+                                        className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none"
+                                    />
+                                </label>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <label className="block space-y-1">
+                                        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Date d'expiration</span>
+                                        <input
+                                            type="date"
+                                            value={promoForm.data.expires_at}
+                                            onChange={(e) => promoForm.setData('expires_at', e.target.value)}
+                                            className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none"
+                                        />
+                                    </label>
+
+                                    <label className="flex items-center gap-3 pt-6 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={promoForm.data.is_active}
+                                            onChange={(e) => promoForm.setData('is_active', e.target.checked)}
+                                            className="rounded border-[var(--admin-border)] h-5 w-5"
+                                        />
+                                        <span className="text-sm font-semibold text-[var(--admin-text)]">Code Promo Actif</span>
+                                    </label>
+                                </div>
+
+                                <div className="pt-4 flex justify-end gap-3 border-t border-[var(--admin-border)]">
+                                    <button
+                                        type="button"
+                                        onClick={() => setPromoModalOpen(false)}
+                                        className="rounded-full border border-[var(--admin-border)] px-5 py-2.5 text-sm font-semibold hover:bg-white/10 transition"
+                                    >
+                                        Annuler
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={promoForm.processing}
+                                        className="rounded-full bg-[#ebb95e] text-[#241b16] px-6 py-2.5 text-sm font-semibold hover:opacity-90 transition disabled:opacity-50"
+                                    >
+                                        {editingPromo ? 'Mettre à jour' : 'Créer le Code Promo'}
                                     </button>
                                 </div>
                             </form>

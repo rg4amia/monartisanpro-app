@@ -28,6 +28,7 @@ class OrderController extends Controller
             'items.*.quantity' => 'required|integer|min:1',
             'vehicle_class' => 'nullable|string|in:moto,voiture,cargo',
             'surge_multiplier' => 'nullable|numeric|min:1.0|max:3.0',
+            'promo_code' => 'nullable|string|max:50',
         ]);
 
         if ($validator->fails()) {
@@ -69,7 +70,8 @@ class OrderController extends Controller
                 $request->items,
                 $request->delivery_mode,
                 $request->input('vehicle_class', 'moto'),
-                (float) $request->input('surge_multiplier', 1.0)
+                (float) $request->input('surge_multiplier', 1.0),
+                $request->input('promo_code')
             );
 
             return response()->json([

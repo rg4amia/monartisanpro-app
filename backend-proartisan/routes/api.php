@@ -49,6 +49,7 @@ Route::prefix('v1')->group(function () {
     });
 
     Route::get('/settings/app-access', [\App\Http\Controllers\Api\V1\SettingController::class, 'getAppAccess']);
+    Route::post('/promo-codes/verify', [\App\Http\Controllers\Api\V1\PromoCodeController::class, 'verify']);
 
     // ── Webhooks (sans authentification pour les callbacks externes) ─────────
     Route::prefix('webhooks')->middleware('throttle:webhook')->group(function () {
@@ -86,6 +87,10 @@ Route::prefix('v1')->group(function () {
         Route::post('/orders/{order}/prepared', [OrderController::class, 'markPrepared']);
         Route::post('/orders/{order}/verify-pickup', [OrderController::class, 'verifyPickup']);
         Route::post('/orders/{order}/verify-delivery', [OrderController::class, 'verifyDelivery']);
+
+        // ── Codes Promo ──────────────────────────────────────────────────────
+        Route::apiResource('promo-codes', \App\Http\Controllers\Api\V1\PromoCodeController::class)->except(['create', 'edit']);
+        Route::post('/promo-codes/{promoCode}/toggle', [\App\Http\Controllers\Api\V1\PromoCodeController::class, 'toggle']);
 
         // ── Logistique & Livraisons (Courses) ──────────────────────────────────
         Route::get('/deliveries/available', [DeliveryController::class, 'available'])->middleware('kyc.verified');
