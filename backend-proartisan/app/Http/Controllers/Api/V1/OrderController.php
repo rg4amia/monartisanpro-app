@@ -128,13 +128,13 @@ class OrderController extends Controller
     {
         $user = $request->user();
 
-        $query = Order::query()->with('items.product');
+        $query = Order::query()->with(['items.product', 'client', 'supplier.fournisseurAgree']);
 
         if ($user->role === 'client') {
             $query->where('client_id', $user->id);
         } elseif ($user->role === 'fournisseur') {
             $query->where('supplier_id', $user->id);
-        } elseif ($user->role === 'driver') {
+        } elseif (in_array($user->role, ['driver', 'livreur'])) {
             $query->where('driver_id', $user->id);
         } else {
             return response()->json([

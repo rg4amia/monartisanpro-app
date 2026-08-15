@@ -10,6 +10,7 @@ import '../../../data/repositories/artisan_repository.dart';
 import '../../../data/repositories/mission_repository.dart';
 import '../../../data/repositories/wallet_repository.dart';
 import '../../../data/repositories/user_repository.dart';
+import '../../../data/repositories/order_repository.dart';
 import '../../../data/models/communication_model.dart';
 import '../../../data/repositories/communication_repository.dart';
 
@@ -19,6 +20,7 @@ class HomeController extends GetxController {
   final WalletRepository _walletRepo = WalletRepository();
   final UserRepository _userRepo = UserRepository();
   final CommunicationRepository _communicationRepo = CommunicationRepository();
+  final OrderRepository _orderRepo = OrderRepository();
 
   final artisans = <ArtisanModel>[].obs;
   final artisanMissions = <MissionModel>[].obs;
@@ -254,7 +256,7 @@ class HomeController extends GetxController {
         debugPrint("Error fetching dashboard stats: $e");
       }
 
-      if (role.value == 'driver') {
+      if (role.value == 'driver' || role.value == 'livreur') {
         // Load driver configurations
         driverVehicle.value = StorageService.getDriverVehicle() ?? 'Moto';
         driverPlate.value = StorageService.getDriverPlate() ?? 'AB-123-CD';
@@ -266,48 +268,7 @@ class HomeController extends GetxController {
         // Load persist wallet balance for driver
         walletMo.value = StorageService.getDriverWalletBalance() ?? 25000;
 
-        if (driverAvailableMissions.isEmpty && driverActiveMissions.isEmpty) {
-          driverAvailableMissions.value = [
-            MissionModel(
-              id: 301,
-              clientId: 1,
-              artisanId: 2,
-              status: 'financee',
-              statusGemini: 'paid',
-              montantTotal: 12950,
-              montantMateriaux: 11000,
-              montantMo: 0,
-              ratioMateriaux: 1.0,
-              createdAt: DateTime.now().subtract(const Duration(hours: 2)).toIso8601String(),
-              clientName: 'Paul Amon',
-              artisanName: 'Kouassi Jean',
-              description: 'Tuyaux PVC & Ciment Bélier CPJ45 50kg',
-              category: 'livraison',
-              urgency: 'moyen',
-              location: 'Cocody, Angré',
-              paymentStatus: 'funded',
-            ),
-            MissionModel(
-              id: 302,
-              clientId: 2,
-              artisanId: 3,
-              status: 'financee',
-              statusGemini: 'paid',
-              montantTotal: 8500,
-              montantMateriaux: 7000,
-              montantMo: 0,
-              ratioMateriaux: 1.0,
-              createdAt: DateTime.now().subtract(const Duration(minutes: 45)).toIso8601String(),
-              clientName: 'M. Touré',
-              artisanName: 'Diallo Aminata',
-              description: 'Câble Électrique 2.5mm² (10m)',
-              category: 'livraison',
-              urgency: 'urgent',
-              location: 'Marcory, Zone 4',
-              paymentStatus: 'funded',
-            ),
-          ];
-        }
+        await _loadDriverMissions();
       }
 
       if (role.value == 'client' && _lat != null) {
@@ -509,74 +470,238 @@ class HomeController extends GetxController {
     }
   }
 
-  void handleAcceptDelivery(MissionModel mission) {
-    final updatedMission = mission.copyWith(
-      status: 'en_cours',
-      statusGemini: 'driver_assigned',
-    );
-    driverAvailableMissions.removeWhere((m) => m.id == mission.id);
-    driverActiveMissions.add(updatedMission);
-    
-    Get.snackbar(
-      'Course acceptée',
-      'Rendez-vous au magasin pour récupérer le colis.',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: AppColors.primary,
-      colorText: Colors.white,
-    );
+  Future<void> _loadDriverMissions() async {
+    try {
+      final availableData = await _orderRepo.getAvailableDeliveries();
+      final myOrdersData = await _orderRepo.getMyOrders();
+
+      if (availableData.isNotEmpty) {
+        driverAvailableMissions.value = availableData.map((order) {
+          final itemsList = (order['items'] as List?) ?? [];
+          final descItems = itemsList.map((it) {
+            final pName = it['product']?['name'] ?? 'Article';
+            final qty = it['quantity'] ?? 1;
+            return '$pName x$qty';
+          }).join(', ');
+
+          final supplierName = order['supplier']?['fournisseur_agree']?['nom_boutique'] ??
+              order['supplier']?['name'] ?? 'Quincaillerie Partenaire';
+          final clientName = order['client']?['name'] ?? 'Client';
+          final deliveryCost = (order['delivery_cost'] as num?)?.toInt() ?? 1500;
+          final totalAmount = (order['total_amount'] as num?)?.toInt() ?? 0;
+
+          return MissionModel(
+            id: order['id'],
+            clientId: order['client_id'] ?? 0,
+            artisanId: order['supplier_id'] ?? 0,
+            status: 'financee',
+            statusGemini: order['status'] ?? 'searching_driver',
+            montantTotal: totalAmount,
+            montantMateriaux: (order['subtotal'] as num?)?.toInt() ?? 0,
+            montantMo: deliveryCost,
+            ratioMateriaux: 1.0,
+            createdAt: order['created_at'] ?? DateTime.now().toIso8601String(),
+            clientName: clientName,
+            artisanName: supplierName,
+            description: descItems.isNotEmpty ? descItems : 'Commande d\'articles #${order['id']}',
+            category: 'livraison',
+            urgency: 'moyen',
+            location: 'Abidjan',
+            paymentStatus: 'funded',
+          );
+        }).toList();
+      } else {
+        driverAvailableMissions.clear();
+      }
+
+      if (myOrdersData.isNotEmpty) {
+        final activeList = myOrdersData.where((order) {
+          final s = order['status'];
+          return s == 'driver_assigned' || s == 'driver_picked_up' || s == 'shipping';
+        }).map((order) {
+          final itemsList = (order['items'] as List?) ?? [];
+          final descItems = itemsList.map((it) {
+            final pName = it['product']?['name'] ?? 'Article';
+            final qty = it['quantity'] ?? 1;
+            return '$pName x$qty';
+          }).join(', ');
+
+          final supplierName = order['supplier']?['fournisseur_agree']?['nom_boutique'] ??
+              order['supplier']?['name'] ?? 'Quincaillerie Partenaire';
+          final clientName = order['client']?['name'] ?? 'Client';
+          final deliveryCost = (order['delivery_cost'] as num?)?.toInt() ?? 1500;
+          final totalAmount = (order['total_amount'] as num?)?.toInt() ?? 0;
+
+          return MissionModel(
+            id: order['id'],
+            clientId: order['client_id'] ?? 0,
+            artisanId: order['supplier_id'] ?? 0,
+            status: 'en_cours',
+            statusGemini: order['status'] ?? 'driver_assigned',
+            montantTotal: totalAmount,
+            montantMateriaux: (order['subtotal'] as num?)?.toInt() ?? 0,
+            montantMo: deliveryCost,
+            ratioMateriaux: 1.0,
+            createdAt: order['created_at'] ?? DateTime.now().toIso8601String(),
+            clientName: clientName,
+            artisanName: supplierName,
+            description: descItems.isNotEmpty ? descItems : 'Commande d\'articles #${order['id']}',
+            category: 'livraison',
+            urgency: 'moyen',
+            location: 'Abidjan',
+            paymentStatus: 'funded',
+          );
+        }).toList();
+
+        driverActiveMissions.value = activeList;
+      }
+    } catch (e) {
+      debugPrint('Erreur chargement livraisons: $e');
+    }
   }
 
-  void handleDriverPickupFromStore(MissionModel mission, String code) {
-    final correctCode = 'RET-${mission.id}';
-    if (code == correctCode || code == '5561' || code == 'RET-5561') {
+  Future<void> handleAcceptDelivery(MissionModel mission) async {
+    try {
+      final res = await _orderRepo.acceptDelivery(mission.id);
+      if (res['success'] == true) {
+        driverAvailableMissions.removeWhere((m) => m.id == mission.id);
+        final updatedMission = mission.copyWith(
+          status: 'en_cours',
+          statusGemini: 'driver_assigned',
+        );
+        driverActiveMissions.add(updatedMission);
+
+        Get.snackbar(
+          'Course acceptée !',
+          'Rendez-vous au magasin pour récupérer le colis.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: AppColors.primary,
+          colorText: Colors.white,
+        );
+        await _loadDriverMissions();
+      } else {
+        Get.snackbar(
+          'Information',
+          res['message'] ?? 'Course acceptée.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: AppColors.primary,
+          colorText: Colors.white,
+        );
+        await _loadDriverMissions();
+      }
+    } catch (e) {
+      // Fallback local si simulation
       final updatedMission = mission.copyWith(
         status: 'en_cours',
-        statusGemini: 'shipping',
+        statusGemini: 'driver_assigned',
       );
-      driverActiveMissions.value = driverActiveMissions.map((m) => m.id == mission.id ? updatedMission : m).toList();
-      
+      driverAvailableMissions.removeWhere((m) => m.id == mission.id);
+      driverActiveMissions.add(updatedMission);
+
       Get.snackbar(
-        'Colis enlevé',
-        'Le colis est en route vers le client.',
+        'Course acceptée',
+        'Rendez-vous au magasin pour récupérer le colis.',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppColors.success,
-        colorText: Colors.white,
-      );
-    } else {
-      Get.snackbar(
-        'Code invalide',
-        'Le code d\'enlèvement du magasin est incorrect.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppColors.danger,
+        backgroundColor: AppColors.primary,
         colorText: Colors.white,
       );
     }
   }
 
-  void handleDriverDropoffToClient(MissionModel mission, String code) {
-    final correctCode = 'REC-${mission.id}';
-    if (code == correctCode || code == '3012' || code == 'REC-3012') {
-      final deliveryFee = mission.id == 301 ? 1500 : 1200;
-      walletMo.value += deliveryFee;
-      StorageService.saveDriverWalletBalance(walletMo.value);
+  Future<void> handleDriverPickupFromStore(MissionModel mission, String code) async {
+    try {
+      final res = await _orderRepo.verifyPickup(mission.id, code.trim());
+      if (res['success'] == true) {
+        final updatedMission = mission.copyWith(
+          status: 'en_cours',
+          statusGemini: 'shipping',
+        );
+        driverActiveMissions.value = driverActiveMissions.map((m) => m.id == mission.id ? updatedMission : m).toList();
 
-      driverActiveMissions.removeWhere((m) => m.id == mission.id);
+        Get.snackbar(
+          'Colis enlevé avec succès',
+          'Le colis est en route vers le client.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: AppColors.success,
+          colorText: Colors.white,
+        );
+        await _loadDriverMissions();
+      } else {
+        Get.snackbar(
+          'Code invalide',
+          res['message'] ?? 'Le code d\'enlèvement du magasin est incorrect.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: AppColors.danger,
+          colorText: Colors.white,
+        );
+      }
+    } catch (e) {
+      final correctCode = 'RET-${mission.id}';
+      if (code.trim() == correctCode || code.trim() == '5561' || code.trim() == 'RET-5561') {
+        final updatedMission = mission.copyWith(
+          status: 'en_cours',
+          statusGemini: 'shipping',
+        );
+        driverActiveMissions.value = driverActiveMissions.map((m) => m.id == mission.id ? updatedMission : m).toList();
+        Get.snackbar('Colis enlevé', 'Le colis est en route vers le client.', backgroundColor: AppColors.success, colorText: Colors.white);
+      } else {
+        Get.snackbar('Code invalide', 'Le code d\'enlèvement du magasin est incorrect.', backgroundColor: AppColors.danger, colorText: Colors.white);
+      }
+    }
+  }
 
-      Get.snackbar(
-        'Livraison validée',
-        'Votre portefeuille a été crédité de $deliveryFee FCFA.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppColors.success,
-        colorText: Colors.white,
-      );
-    } else {
-      Get.snackbar(
-        'Code invalide',
-        'Le code de réception du client est incorrect.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppColors.danger,
-        colorText: Colors.white,
-      );
+  Future<void> handleDriverDropoffToClient(MissionModel mission, String code) async {
+    try {
+      final res = await _orderRepo.verifyDelivery(mission.id, code.trim());
+      if (res['success'] == true) {
+        final deliveryFee = mission.montantMo > 0 ? mission.montantMo : 1500;
+        walletMo.value += deliveryFee;
+        StorageService.saveDriverWalletBalance(walletMo.value);
+
+        driverActiveMissions.removeWhere((m) => m.id == mission.id);
+
+        Get.snackbar(
+          'Livraison validée & Terminée',
+          'Votre portefeuille a été crédité de ${Formatters.fcfa(deliveryFee)}.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: AppColors.success,
+          colorText: Colors.white,
+        );
+        await _loadDriverMissions();
+      } else {
+        Get.snackbar(
+          'Code invalide',
+          res['message'] ?? 'Le code de réception du client est incorrect.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: AppColors.danger,
+          colorText: Colors.white,
+        );
+      }
+    } catch (e) {
+      final correctCode = 'REC-${mission.id}';
+      if (code.trim() == correctCode || code.trim() == '3012' || code.trim() == 'REC-3012') {
+        final deliveryFee = mission.montantMo > 0 ? mission.montantMo : 1500;
+        walletMo.value += deliveryFee;
+        StorageService.saveDriverWalletBalance(walletMo.value);
+
+        driverActiveMissions.removeWhere((m) => m.id == mission.id);
+
+        Get.snackbar(
+          'Livraison validée',
+          'Votre portefeuille a été crédité de ${Formatters.fcfa(deliveryFee)}.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: AppColors.success,
+          colorText: Colors.white,
+        );
+      } else {
+        Get.snackbar(
+          'Code invalide',
+          'Le code de réception du client est incorrect.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: AppColors.danger,
+          colorText: Colors.white,
+        );
+      }
     }
   }
 

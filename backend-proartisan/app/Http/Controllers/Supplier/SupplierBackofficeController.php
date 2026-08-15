@@ -34,7 +34,7 @@ class SupplierBackofficeController extends Controller
 
         // Commandes récentes
         $recentOrders = Order::where('supplier_id', $supplier->id)
-            ->with(['client'])
+            ->with(['client', 'items.product', 'driver'])
             ->latest()
             ->take(5)
             ->get();
@@ -73,7 +73,7 @@ class SupplierBackofficeController extends Controller
     {
         $supplier = $request->user();
         $orders = Order::where('supplier_id', $supplier->id)
-            ->with(['client', 'items.product'])
+            ->with(['client', 'items.product', 'driver'])
             ->latest()
             ->get();
 

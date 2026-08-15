@@ -97,4 +97,10 @@ class ApiEndpoints {
 
   // Communications
   static const String communicationsActive = '/communications/active';
+
+  // Livraisons & Courses
+  static const String deliveriesAvailable = '/deliveries/available';
+  static String acceptDelivery(int orderId) => '/deliveries/$orderId/accept';
+  static String orderVerifyPickup(int orderId) => '/orders/$orderId/verify-pickup';
+  static String orderVerifyDelivery(int orderId) => '/orders/$orderId/verify-delivery';
 }
