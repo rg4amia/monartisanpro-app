@@ -443,6 +443,7 @@ const searchPlaceholders: Record<AdminTab, string> = {
     evaluations: 'Rechercher une évaluation, un artisan ou un commentaire...',
     communications: 'Rechercher une communication, un titre ou une cible...',
     notifications: 'Rechercher une notification ou alerte...',
+    promo_codes: 'Rechercher un code promo, une description ou un type...',
 };
 
 const quickDockTabs: AdminTab[] = ['dashboard', 'missions', 'users', 'settings'];
@@ -1024,18 +1025,18 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         event.preventDefault();
         if (promoForm.processing) return;
 
-        const payload: any = {
+        promoForm.transform(() => ({
             ...promoForm.data,
+            code: promoForm.data.code.trim().toUpperCase(),
             min_order_amount: Number(promoForm.data.min_order_amount) || 0,
             max_discount_amount: Number(promoForm.data.max_discount_amount) || null,
             usage_limit: Number(promoForm.data.usage_limit) || null,
             starts_at: promoForm.data.starts_at || null,
             expires_at: promoForm.data.expires_at || null,
-        };
+        }));
 
         if (editingPromo) {
             promoForm.put(`/admin/promo-codes/${editingPromo.id}`, {
-                data: payload,
                 preserveScroll: true,
                 onSuccess: () => {
                     setPromoModalOpen(false);
@@ -1044,7 +1045,6 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
             });
         } else {
             promoForm.post('/admin/promo-codes', {
-                data: payload,
                 preserveScroll: true,
                 onSuccess: () => {
                     setPromoModalOpen(false);
