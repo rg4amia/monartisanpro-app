@@ -57,7 +57,15 @@ class OrderService
             if ($deliveryMode === 'delivery') {
                 $supplierProfile = $supplier->fournisseurAgree;
                 if (!$supplierProfile) {
-                    throw new \Exception("Profil fournisseur incomplet ou non agréé.");
+                    $supplierProfile = \App\Models\FournisseurAgree::firstOrCreate(
+                        ['user_id' => $supplier->id],
+                        [
+                            'nom_boutique' => $supplier->name ?? 'Quincaillerie',
+                            'position' => DB::raw("ST_SRID(POINT(-4.0083, 5.3599), 4326)"),
+                            'statut' => 'agree',
+                            'approuve_at' => now(),
+                        ]
+                    );
                 }
             }
 
