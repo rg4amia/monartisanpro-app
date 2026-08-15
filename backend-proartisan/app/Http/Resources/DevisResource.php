@@ -21,6 +21,7 @@ class DevisResource extends JsonResource
                 fn () => $this->mission->status
             ),
             'ratioMateriaux' => $this->ratio_materiaux !== null ? (float) $this->ratio_materiaux : null,
+            'commissionServiceRatio' => $this->commission_service_ratio !== null ? (float) $this->commission_service_ratio : null,
             'montantTotal' => $this->montant_total,
             'montantMateriaux' => $this->montant_materiaux,
             'montantMo' => $this->montant_mo,

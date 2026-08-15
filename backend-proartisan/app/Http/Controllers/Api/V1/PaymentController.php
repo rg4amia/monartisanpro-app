@@ -87,10 +87,8 @@ class PaymentController extends Controller
             $montantAttendu = $paymentType === 'hybrid' ? $devis->montant_materiaux : $devis->montant_total;
 
             if ($montant !== $montantAttendu) {
-                return response()->json([
-                    'success' => false,
-                    'message' => "Le montant du paiement ($montant FCFA) ne correspond pas au montant attendu ($montantAttendu FCFA).",
-                ], 422);
+                Log::warning("Paiement initié: ajustement automatique du montant client ($montant FCFA) au montant officiel devis ($montantAttendu FCFA).");
+                $montant = $montantAttendu;
             }
 
             $provider = PaymentProvider::from($request->provider);

@@ -133,6 +133,7 @@ class DevisModel {
   final String? artisanName;
   final String? missionStatus;
   final double? ratioMateriaux;
+  final double? commissionServiceRatio;
   final int? serverMontantTotal;
   final int? serverMontantMateriaux;
   final int? serverMontantMo;
@@ -148,6 +149,7 @@ class DevisModel {
     this.artisanName,
     this.missionStatus,
     this.ratioMateriaux,
+    this.commissionServiceRatio,
     this.serverMontantTotal,
     this.serverMontantMateriaux,
     this.serverMontantMo,
@@ -164,8 +166,11 @@ class DevisModel {
   int get montantMateriaux =>
       serverMontantMateriaux ?? (totalMat * 1.03).round();
 
-  int get montantMo =>
-      serverMontantMo ?? (totalMo * 1.10).round();
+  int get montantMo {
+    if (serverMontantMo != null) return serverMontantMo!;
+    final ratio = commissionServiceRatio ?? 0.10;
+    return (totalMo * (1 + ratio)).round();
+  }
 
   int get totalGeneralTtc =>
       serverMontantTotal ?? (montantMateriaux + montantMo);
@@ -193,6 +198,9 @@ class DevisModel {
         ),
         ratioMateriaux: _parseNullableDouble(
           json['ratioMateriaux'] ?? json['ratio_materiaux'],
+        ),
+        commissionServiceRatio: _parseNullableDouble(
+          json['commissionServiceRatio'] ?? json['commission_service_ratio'],
         ),
         serverMontantTotal: _parseNullableInt(
           json['montantTotal'] ?? json['montant_total'],
