@@ -26,6 +26,7 @@ class BackofficeController extends Controller
 
     public function dashboard(): Response
     {
+        Inertia::share('financialKpis', $this->adminService->getFinancialKpis());
         return $this->renderPage('admin/dashboard');
     }
 
@@ -51,6 +52,7 @@ class BackofficeController extends Controller
 
     public function transactions(): Response
     {
+        Inertia::share('financialKpis', $this->adminService->getFinancialKpis());
         return $this->renderPage('admin/transactions');
     }
 
