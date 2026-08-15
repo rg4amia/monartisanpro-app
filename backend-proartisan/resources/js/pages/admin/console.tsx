@@ -549,7 +549,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
     const activeTab = initialTab;
     const pageProps = usePage<AdminPageProps>().props;
     const {
-        auth,
+        auth = { user: null },
         dashboard = {
             users_total: 0,
             artisans_actifs: 0,
@@ -565,23 +565,23 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         },
         errors = {},
         flash = {},
-        fournisseurs = [],
-        kycUsers = [],
+        fournisseurs = [] as FournisseurItem[],
+        kycUsers = [] as KycUser[],
         cnmciUsers = [],
-        litiges = [],
-        missions = [],
-        transactions = [],
-        users = [],
+        litiges = [] as LitigeItem[],
+        missions = [] as AdminMission[],
+        transactions = [] as AdminTransaction[],
+        users = [] as AdminUser[],
         settingsList = [],
-        evaluationsList = [],
-        artisansScores = [],
-        scoreLedger = [],
+        evaluationsList = [] as AdminEvaluation[],
+        artisansScores = [] as ArtisanScoreItem[],
+        scoreLedger = [] as ScoreLedgerEntryItem[],
         communications = [],
-        adminNotifications = [],
+        adminNotifications = [] as AdminNotificationItem[],
         sectors = [],
         rolesPermissions = {},
         allPermissions = [],
-    } = (pageProps || {}) as any;
+    } = (pageProps || {}) as Partial<AdminPageProps>;
 
     const [notificationsOpen, setNotificationsOpen] = useState<boolean>(false);
     const [notifFilter, setNotifFilter] = useState<'all' | 'unread' | 'alerts'>('all');
@@ -834,7 +834,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
     };
 
     const handleToggleUserStatus = (user: AdminUser): void => {
-        if (auth.user?.phone === user.phone || auth.user?.email === user.email) {
+        if (auth?.user?.phone === user.phone || auth?.user?.email === user.email) {
             window.alert('Vous ne pouvez pas modifier votre propre statut.');
             return;
         }
@@ -875,7 +875,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
     };
 
     const handleDeleteUser = (user: AdminUser): void => {
-        if (auth.user?.phone === user.phone || auth.user?.email === user.email) {
+        if (auth?.user?.phone === user.phone || auth?.user?.email === user.email) {
             window.alert('Vous ne pouvez pas supprimer votre propre compte.');
             return;
         }
@@ -1439,8 +1439,8 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         }
     };
 
-    const adminName = auth.user?.name ?? 'Admin ProsArtisan';
-    const adminContact = auth.user?.email ?? auth.user?.phone ?? 'Administrateur';
+    const adminName = auth?.user?.name ?? 'Admin ProsArtisan';
+    const adminContact = auth?.user?.email ?? auth?.user?.phone ?? 'Administrateur';
 
     return (
         <>
@@ -3728,7 +3728,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                 </div>
 
                                 <div className="pt-2 border-t border-[var(--admin-border)] flex justify-between text-xs text-[var(--admin-text-soft)]">
-                                    <div>Auteur : <strong>{auth.user?.name || 'Admin'}</strong></div>
+                                    <div>Auteur : <strong>{auth?.user?.name || 'Admin'}</strong></div>
                                     <div>Date : <strong>{new Date().toLocaleDateString('fr-FR')}</strong></div>
                                 </div>
 
