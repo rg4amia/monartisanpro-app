@@ -34,7 +34,7 @@
 1. Le client décrit son problème. L'API **Gemini** analyse la demande, classe la catégorie, évalue l'urgence, et propose une estimation de prix.
 2. Le système recherche les artisans actifs dans un rayon $\le$ 2 km à l'aide de requêtes spatiales MySQL (`ST_Distance_Sphere`).
 3. La position GPS exacte de l'artisan est floutée d'environ 50 mètres pour préserver sa vie privée.
-4. Tri par **Score de Réputation N'Zassa** (enregistré sous la colonne `score_prosartisan` en BDD).
+4. Tri par **Score de Réputation ProsArtisan** (enregistré sous la colonne `score_prosartisan` en BDD).
 
 #### 🔍 Retours Observés
 * **Points Forts :**
@@ -103,9 +103,9 @@ Le système gère également un flux de livraison de matériaux en 3 étapes :
 
 ---
 
-### ⭐️ Phase 5 : Clôture & Score N'Zassa
+### ⭐️ Phase 5 : Clôture & Score ProsArtisan
 * Le client note l'artisan selon la pondération (Fiabilité 40%, Intégrité 30%, Qualité 20%, Réactivité 10%).
-* Le **Score N'Zassa** est mis à jour dans la colonne de base de données **`score_prosartisan`** (échelle 0 à 1000).
+* Le **Score ProsArtisan** est mis à jour dans la colonne de base de données **`score_prosartisan`** (échelle 0 à 1000).
 * Si le score $> 700$, l'artisan est éligible aux micro-crédits d'urgence.
 
 ---
@@ -120,7 +120,7 @@ Le système gère également un flux de livraison de matériaux en 3 étapes :
 | **Livreurs & Logistique** | • Radar étendu automatique.<br>• Formule dynamique Maps.<br>• Double code de sécurité (Pickup/Reception). | • Pas de réaffectation automatique du livreur. |
 | **J-Code & Anti-Fraude** | • Clôture GPS boutique < 100m. | • Signal GPS en intérieur capricieux. |
 | **Jalons & Libération** | • Validation progressive OTP.<br>• Contrôle physique > 2M FCFA. | • Risque de blocage client injoignable. |
-| **Score N'Zassa** | • Facteur clé d'accès au micro-crédit. | • Stored under `score_prosartisan` column. |
+| **Score ProsArtisan** | • Facteur clé d'accès au micro-crédit. | • Stored under `score_prosartisan` column. |
 
 ---
 
@@ -131,10 +131,10 @@ Le système gère également un flux de livraison de matériaux en 3 étapes :
 2. **Immuabilité du Ratio :** Ratio de fragmentation figé dès l'acceptation.
 3. **Géorepérage J-Code :** Distance scan-boutique $> 100\text{m}$ $\rightarrow$ Blocage automatique.
 4. **Validation de Livraison par Codes :** Aucun transfert de fonds logistique ou matériel sans validation des codes respectifs (`pickup_code` et `reception_code`).
-5. **Score N'Zassa (`score_prosartisan`) :** Archivage complet dans un Ledger d'événements pour audits bancaires et micro-crédits.
+5. **Score ProsArtisan (`score_prosartisan`) :** Archivage complet dans un Ledger d'événements pour audits bancaires et micro-crédits.
 6. **FCFA Entier :** Toutes les colonnes financières en `BIGINT`.
 
-### Formule mathématique du Score N'Zassa
+### Formule mathématique du Score ProsArtisan
 Le score d'un artisan $S(t)$ est calculé sur une échelle de 0 à 1000 :
 $$S(t) = \min\left(1000, \max\left(0, S_{base} + \sum_{k} (\omega_k \cdot E_k \cdot C_k) - \Delta(t)\right)\right)$$
 * $S_{base}$ : Score de départ (0 par défaut pour tout nouvel artisan non évalué).
@@ -161,7 +161,7 @@ $$S(t) = \min\left(1000, \max\left(0, S_{base} + \sum_{k} (\omega_k \cdot E_k \c
 7. **Bypass de Sécurité / Auto-Release 72h :** Si un jalon soumis reste sans réponse pendant 72h, il est validé automatiquement par le système, libérant ainsi les fonds de main-d'œuvre pour protéger la trésorerie de l'artisan.
 8. **Ajustements de Devis en cours de Mission (Avenants) :** Permettre la création d'avenants au devis initial (matériel supplémentaire imprévu) validés par le client, réajustant le séquestre sans avoir à annuler toute la mission.
 
-### ⭐️ Système de Réputation (Score N'Zassa)
+### ⭐️ Système de Réputation (Score ProsArtisan)
 9. **Indice de Crédibilité de l'Évaluateur ($C_k$) :** Pondérer la note laissée à l'artisan selon le profil du client (les avis des clients récurrents pèsent plus lourd pour éviter le dénigrement ou les faux avis).
-10. **Dégradation Temporelle ("La Rouille" $\Delta(t)$) :** Diminuer progressivement le Score N'Zassa si l'artisan reste inactif pendant plus de 60 jours afin de valoriser les profils actifs.
+10. **Dégradation Temporelle ("La Rouille" $\Delta(t)$) :** Diminuer progressivement le Score ProsArtisan si l'artisan reste inactif pendant plus de 60 jours afin de valoriser les profils actifs.
 

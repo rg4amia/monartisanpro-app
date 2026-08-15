@@ -162,14 +162,13 @@ class _ProsArtisanScoreCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: _Palette.surface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: _Palette.subtle),
-        boxShadow: [
-          BoxShadow(
-            color: _Palette.ink.withValues(alpha: 0.03),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        border: Border.all(
+          color: isEligible
+              ? AppColors.gold.withValues(alpha: 0.3)
+              : _Palette.subtle,
+          width: isEligible ? 1.5 : 1.0,
+        ),
+        boxShadow: AppColors.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -183,19 +182,27 @@ class _ProsArtisanScoreCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: _Palette.primary.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
+                        gradient: AppColors.gradientGold,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.gold.withValues(alpha: 0.3),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
-                      child: const Icon(Icons.stars_rounded, color: _Palette.primary, size: 20),
+                      child: const Icon(Icons.stars_rounded, color: Colors.white, size: 20),
                     ),
                     const SizedBox(width: 10),
                     const Expanded(
                       child: Text(
-                        "Score ProsArtisan & Avis",
+                        "Score ProsArtisan & Solvabilité",
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
                           color: _Palette.ink,
+                          letterSpacing: -0.2,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -206,25 +213,33 @@ class _ProsArtisanScoreCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: isEligible ? _Palette.success.withValues(alpha: 0.1) : _Palette.muted.withValues(alpha: 0.1),
+                  color: isEligible
+                      ? _Palette.success.withValues(alpha: 0.12)
+                      : _Palette.muted.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isEligible
+                        ? _Palette.success.withValues(alpha: 0.25)
+                        : Colors.transparent,
+                  ),
                 ),
                 child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      isEligible ? Icons.bolt_rounded : Icons.lock_outline_rounded,
+                      isEligible ? Icons.verified_rounded : Icons.lock_outline_rounded,
                       color: isEligible ? _Palette.success : _Palette.muted,
-                      size: 14,
+                      size: 13,
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      isEligible ? 'Crédit Éligible' : 'Crédit Bloqué',
+                      isEligible ? 'Crédit Débloqué (<2h)' : 'Seuil Crédit : 700',
                       style: TextStyle(
                         color: isEligible ? _Palette.success : _Palette.muted,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ],
@@ -234,117 +249,165 @@ class _ProsArtisanScoreCard extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Expanded(
-                flex: 4,
+              // Score Radial Display
+              Container(
+                width: 90,
+                height: 90,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.background,
+                  border: Border.all(
+                    color: isEligible ? AppColors.gold : _Palette.subtle,
+                    width: 3,
+                  ),
+                  boxShadow: [
+                    if (isEligible)
+                      BoxShadow(
+                        color: AppColors.gold.withValues(alpha: 0.2),
+                        blurRadius: 10,
+                        spreadRadius: 2,
+                      ),
+                  ],
+                ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
-                      children: [
-                        Text(
-                          '$score',
-                          style: const TextStyle(
-                            fontSize: 36,
-                            fontWeight: FontWeight.w900,
-                            color: _Palette.ink,
-                            letterSpacing: -1,
-                          ),
-                        ),
-                        const SizedBox(width: 2),
-                        const Text(
-                          '/1000',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: _Palette.muted,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: LinearProgressIndicator(
-                        value: score / 1000,
-                        backgroundColor: _Palette.subtle,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          isEligible ? _Palette.success : _Palette.warning,
-                        ),
-                        minHeight: 8,
+                    Text(
+                      '$score',
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w900,
+                        color: isEligible ? AppColors.gold : _Palette.ink,
+                        letterSpacing: -1,
                       ),
                     ),
-                    const SizedBox(height: 8),
                     const Text(
-                      'Note en hausse (+15 pts)',
+                      '/ 1000',
                       style: TextStyle(
-                        fontSize: 11,
-                        color: _Palette.success,
+                        fontSize: 10,
                         fontWeight: FontWeight.w700,
+                        color: _Palette.muted,
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 24),
+              const SizedBox(width: 20),
+              // 4 Pillars
               Expanded(
-                flex: 5,
                 child: Column(
                   children: [
-                    _buildProsArtisanDetailRow('Fiabilité (40%)', controller.scoreFiabilite.value),
-                    const SizedBox(height: 4),
-                    _buildProsArtisanDetailRow('Intégrité (30%)', controller.scoreIntegrite.value),
-                    const SizedBox(height: 4),
-                    _buildProsArtisanDetailRow('Qualité (20%)', controller.scoreQualite.value),
-                    const SizedBox(height: 4),
-                    _buildProsArtisanDetailRow('Réactivité (10%)', controller.scoreReactivite.value),
+                    _buildProsArtisanDetailRow(
+                      'Fiabilité',
+                      '40%',
+                      controller.scoreFiabilite.value,
+                      AppColors.tradePlumbing,
+                    ),
+                    const SizedBox(height: 6),
+                    _buildProsArtisanDetailRow(
+                      'Intégrité',
+                      '30%',
+                      controller.scoreIntegrite.value,
+                      _Palette.success,
+                    ),
+                    const SizedBox(height: 6),
+                    _buildProsArtisanDetailRow(
+                      'Qualité',
+                      '20%',
+                      controller.scoreQualite.value,
+                      AppColors.gold,
+                    ),
+                    const SizedBox(height: 6),
+                    _buildProsArtisanDetailRow(
+                      'Réactivité',
+                      '10%',
+                      controller.scoreReactivite.value,
+                      AppColors.tradeElectricity,
+                    ),
                   ],
                 ),
               ),
             ],
           ),
           const SizedBox(height: 16),
-          const Divider(height: 1),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              const Icon(Icons.info_outline_rounded, color: _Palette.muted, size: 14),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  isEligible
-                      ? 'Félicitations ! Votre excellent score vous donne accès au micro-crédit d\'urgence.'
-                      : 'Atteignez un score de 700 pour débloquer le micro-crédit de trésorerie.',
-                  style: const TextStyle(
-                    fontSize: 10.5,
-                    color: _Palette.muted,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppColors.background,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.info_outline_rounded,
+                  color: isEligible ? _Palette.success : _Palette.muted,
+                  size: 15,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    isEligible
+                        ? 'Accès garanti au micro-crédit d\'urgence pour approvisionnement en quincaillerie.'
+                        : 'Cumulez des avis 5 étoiles pour atteindre 700 et débloquer le crédit automatique.',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: _Palette.muted,
+                      height: 1.3,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildProsArtisanDetailRow(String metric, double value) {
+  Widget _buildProsArtisanDetailRow(
+    String metric,
+    String weight,
+    double value,
+    Color color,
+  ) {
+    final pct = (value * 100).toInt();
     return Row(
       children: [
-        Expanded(
+        SizedBox(
+          width: 72,
           child: Text(
-            metric,
-            style: const TextStyle(fontSize: 10.5, color: _Palette.muted, fontWeight: FontWeight.w600),
+            '$metric ($weight)',
+            style: const TextStyle(
+              fontSize: 11,
+              color: _Palette.muted,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: value.clamp(0.0, 1.0),
+              backgroundColor: _Palette.subtle,
+              valueColor: AlwaysStoppedAnimation<Color>(color),
+              minHeight: 6,
+            ),
           ),
         ),
         const SizedBox(width: 8),
         SizedBox(
           width: 32,
           child: Text(
-            '${(value * 100).toInt()}%',
-            style: const TextStyle(fontSize: 10.5, color: _Palette.ink, fontWeight: FontWeight.bold),
+            '$pct%',
+            style: const TextStyle(
+              fontSize: 11,
+              color: _Palette.ink,
+              fontWeight: FontWeight.w800,
+            ),
             textAlign: TextAlign.right,
           ),
         ),
@@ -718,21 +781,43 @@ class _QuickActions extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text(
-          'Actions rapides',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: _Palette.ink,
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Actions Prioritaires Terrain',
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+                color: _Palette.ink,
+                letterSpacing: -0.3,
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: AppColors.accent.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Text(
+                'One-Tap',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.accent,
+                ),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
         _ActionTile(
-          icon: Icons.receipt_long_outlined,
-          color: _Palette.warning,
+          icon: Icons.receipt_long_rounded,
+          gradient: AppColors.gradientElectricity,
+          badge: pendingMission != null ? 'À Chiffrer' : null,
           title: pendingMission == null
               ? 'Consulter les demandes'
-              : 'Creer le devis de la mission #${pendingMission.id}',
+              : 'Créer le devis de la mission #${pendingMission.id}',
           subtitle: pendingMission == null
               ? 'Ouvrir vos missions en attente de chiffrage'
               : pendingMission.description ?? 'Nouvelle demande client',
@@ -744,16 +829,17 @@ class _QuickActions extends StatelessWidget {
             }
           },
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
         _ActionTile(
-          icon: Icons.qr_code_2_outlined,
-          color: _Palette.primary,
+          icon: Icons.qr_code_2_rounded,
+          gradient: AppColors.gradientMasonry,
+          badge: fundedMission != null ? 'Retrait Prêt' : null,
           title: fundedMission == null
-              ? 'Ouvrir le module J-Code'
-              : 'Generer le J-Code de la mission #${fundedMission.id}',
+              ? 'Module J-Code Matériaux'
+              : 'Générer le J-Code de la mission #${fundedMission.id}',
           subtitle: fundedMission == null
-              ? 'Preparer une commande materiaux ou consulter un code actif'
-              : 'Mission financee, prete pour le retrait fournisseur',
+              ? 'Préparer une commande matériaux ou consulter un code actif'
+              : 'Mission financée, prête pour le retrait quincaillerie',
           onTap: () => Get.toNamed(
             Routes.jcode,
             arguments: fundedMission == null
@@ -761,16 +847,17 @@ class _QuickActions extends StatelessWidget {
                 : <String, dynamic>{'missionId': fundedMission.id},
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
         _ActionTile(
-          icon: Icons.construction_outlined,
-          color: _Palette.success,
+          icon: Icons.checklist_rtl_rounded,
+          gradient: AppColors.gradientPainting,
+          badge: ongoingMission != null ? 'En Cours' : null,
           title: ongoingMission == null
               ? 'Suivre mes chantiers'
               : 'Suivre le chantier #${ongoingMission.id}',
           subtitle: ongoingMission == null
               ? 'Voir les jalons, preuves photo et validations OTP'
-              : 'Avancement des jalons et deboursement main d\'oeuvre',
+              : 'Avancement des jalons et déboursement main d\'œuvre',
           onTap: () {
             if (ongoingMission != null) {
               Get.toNamed(Routes.missionTracking, arguments: ongoingMission);
@@ -779,12 +866,12 @@ class _QuickActions extends StatelessWidget {
             }
           },
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
         _ActionTile(
-          icon: Icons.storefront_outlined,
-          color: _Palette.primary,
-          title: 'Partenaires Fournisseurs',
-          subtitle: 'Consulter la liste des quincailleries agréées et leurs catalogues',
+          icon: Icons.store_rounded,
+          gradient: AppColors.gradientWelding,
+          title: 'Quincailleries Agréées',
+          subtitle: 'Consulter le réseau de quincailleries partenaires et leurs stocks',
           onTap: () => Get.toNamed(Routes.clientSuppliers),
         ),
       ],
@@ -812,77 +899,109 @@ class _QuickActions extends StatelessWidget {
 class _ActionTile extends StatelessWidget {
   const _ActionTile({
     required this.icon,
-    required this.color,
+    required this.gradient,
     required this.title,
     required this.subtitle,
     required this.onTap,
+    this.badge,
   });
 
   final IconData icon;
-  final Color color;
+  final LinearGradient gradient;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
+  final String? badge;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: _Palette.surface,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: color.withValues(alpha: 0.12)),
-          boxShadow: [
-            BoxShadow(
-              color: _Palette.ink.withValues(alpha: 0.04),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 46,
-              height: 46,
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Icon(icon, color: color, size: 22),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: _Palette.ink,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Ink(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: _Palette.surface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: _Palette.subtle),
+            boxShadow: AppColors.cardShadow,
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  gradient: gradient,
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                      color: gradient.colors.last.withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      height: 1.35,
-                      color: _Palette.muted,
-                    ),
-                  ),
-                ],
+                  ],
+                ),
+                child: Icon(icon, color: Colors.white, size: 24),
               ),
-            ),
-            const Icon(Icons.chevron_right, color: _Palette.muted),
-          ],
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            title,
+                            style: const TextStyle(
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.w800,
+                              color: _Palette.ink,
+                            ),
+                          ),
+                        ),
+                        if (badge != null) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppColors.accent.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              badge!,
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.accent,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        height: 1.35,
+                        color: _Palette.muted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Icon(Icons.arrow_forward_ios_rounded, color: _Palette.muted, size: 14),
+            ],
+          ),
         ),
       ),
     );

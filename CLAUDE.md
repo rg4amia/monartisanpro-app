@@ -60,9 +60,9 @@ routes/api.php
 - `JalonService` — cycle OTP → libération `wallet_mo`
 - `JCodeService` — tokens `PA-XXXX`, QR + USSD, vérification GPS fournisseur
 - `WalletService` — gestion `wallet_materiaux` / `wallet_mo`
-- `ScoreService` — calcul N'Zassa (4 composantes pondérées)
+- `ScoreService` — calcul ProsArtisan (4 composantes pondérées)
 
-**Constantes métier** : `config/prosartisan.php` — seuils GPS, TTL OTP, weights N'Zassa, seuil Référent.
+**Constantes métier** : `config/prosartisan.php` — seuils GPS, TTL OTP, weights ProsArtisan, seuil Référent.
 
 **Auth** : Sanctum Bearer tokens. Middleware `account.active` vérifie `kyc_status = 'actif'`. Routes publiques : `send-otp`, `verify-otp`, `register`, webhooks.
 

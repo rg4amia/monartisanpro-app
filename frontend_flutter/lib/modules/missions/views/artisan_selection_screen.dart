@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/models/artisan_model.dart';
-import '../../../shared/widgets/score_nzassa.dart';
+import '../../../shared/widgets/score_prosartisan.dart';
 import '../controllers/artisan_selection_controller.dart';
 import '../widgets/artisan_selection_map.dart';
 

@@ -63,7 +63,7 @@ Tu m'assistes sur le développement de **ProsArtisan**, une plateforme marketpla
 - **Gemini API** retourne : catégorie, urgence, estimation FCFA
 - Recherche artisans dans rayon ≤ 2 km via **ST_Distance_Sphere** (MySQL)
 - Position artisan floutée à 50 m via calcul d'offset aléatoire en PHP avant envoi au client
-- Tri par Score N'Zassa + badge "marqueur doré" pour artisans prioritaires
+- Tri par Score ProsArtisan + badge "marqueur doré" pour artisans prioritaires
 
 ### Phase 2 — Devis & Séquestre
 
@@ -92,12 +92,12 @@ Tu m'assistes sur le développement de **ProsArtisan**, une plateforme marketpla
 - Si montant mission > **2 000 000 FCFA** : visite physique du Référent requise avant libération
 - Cycle jusqu'au dernier jalon → statut `terminee`
 
-### Phase 5 — Clôture & Score N'Zassa
+### Phase 5 — Clôture & Score ProsArtisan
 
 - Artisan soumet fiche d'intervention (checklist + récapitulatif)
 - Client signe digitalement (doigt ou OTP SMS)
 - Client note l'artisan (1 à 5 étoiles)
-- **Calcul Score N'Zassa** (0–100) :
+- **Calcul Score ProsArtisan** (0–1000) :
   - Fiabilité : **40%**
   - Intégrité : **30%**
   - Qualité : **20%**
@@ -258,13 +258,13 @@ CREATE TABLE fournisseurs_agrees (
 
 ```sql
 -- Recherche artisans dans un rayon de 2 km autour d'un point (lat, lng)
-SELECT id, phone, score_nzassa,
+SELECT id, phone, score_prosartisan,
        ST_Distance_Sphere(position, ST_SRID(POINT(:lng, :lat), 4326)) AS distance_metres
 FROM users
 WHERE role = 'artisan'
   AND kyc_status = 'actif'
   AND ST_Distance_Sphere(position, ST_SRID(POINT(:lng, :lat), 4326)) <= 2000
-ORDER BY score_nzassa DESC, distance_metres ASC;
+ORDER BY score_prosartisan DESC, distance_metres ASC;
 
 -- Vérification GPS J-Code (fournisseur doit être à < 100 m de sa boutique)
 SELECT ST_Distance_Sphere(

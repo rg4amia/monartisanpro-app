@@ -124,7 +124,7 @@ class ArtisanController extends Controller
     }
 
     /**
-     * Score N'Zassa d'un artisan.
+     * Score ProsArtisan d'un artisan.
      */
     public function score(User $user): JsonResponse
     {

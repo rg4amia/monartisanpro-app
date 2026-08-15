@@ -52,7 +52,7 @@ flowchart TD
         BESOIN["Décrit son besoin\n(texte + photos)"]:::client
         GEMINI["🤖 API Gemini\nAnalyse : catégorie + urgence\n+ estimation FCFA"]:::ai
         GEOSEARCH["MySQL Spatial Search\nST_Distance_Sphere\nRayon ≤ 2 km\nMarqueurs dorés prioritaires\n(position floutée à 50 m)"]:::database
-        SELECT["Consulte profils\n& Score N'Zassa\nSélectionne un artisan"]:::client
+        SELECT["Consulte profils\n& Score ProsArtisan\nSélectionne un artisan"]:::client
         NOTIF_A["🔔 Notification\nNouvelle demande"]:::system
         DEVIS["Établit le Devis\nMO vs Matériaux\n+ jalons + durée"]:::artisan
         DEVIS_OK{"Client accepte\nle devis ?"}:::client
@@ -165,13 +165,13 @@ flowchart TD
     %% PHASE 5 — CLÔTURE & SCORING
     %% ═══════════════════════════════════════════════
 
-    subgraph REPUTATION ["📈 PHASE 5 — Clôture & Score N'Zassa"]
+    subgraph REPUTATION ["📈 PHASE 5 — Clôture & Score ProsArtisan"]
         direction TB
         CLOTURE["Soumet Fiche d'Intervention\n(check-list + récapitulatif)"]:::artisan
         SIGN_CLI["Signe digitalement\n(doigt ou OTP SMS)"]:::client
         MISSION_CLOSE["✅ Mission Clôturée\nstatut = terminée"]:::system
         NOTE["Attribue une note\n(1 à 5 étoiles)"]:::client
-        CALC_SCORE["⚙️ Calcul Score N'Zassa\nFiabilité 40% + Intégrité 30%\n+ Qualité 20% + Réactivité 10%"]:::database
+        CALC_SCORE["⚙️ Calcul Score ProsArtisan\nFiabilité 40% + Intégrité 30%\n+ Qualité 20% + Réactivité 10%"]:::database
         HISTO["Journal Score\nArchivé pour audit bancaire"]:::database
         ELIGIBLE{"Score > 70/100 ?"}:::system
         CREDIT["🏦 Accès Micro-crédit Urgence\nDéblocage < 2h"]:::system

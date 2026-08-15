@@ -390,7 +390,7 @@ const tabMeta: Record<AdminTab, { description: string; label: string; section: s
     evaluations: {
         label: 'Évaluations & Scores',
         section: 'QUALITÉ',
-        description: 'Suivi de la réputation des artisans, calcul du score N\'Zassa et historiques des évaluations.',
+        description: 'Suivi de la réputation des artisans, calcul du score ProsArtisan et historiques des évaluations.',
     },
     communications: {
         label: 'Communications',

@@ -898,7 +898,7 @@ class LlmAdminController extends Controller
                 $reply = "Une erreur est survenue lors de l'appel au service de médiation.";
             }
         } else {
-            $reply = "### Faits extraits\n- Litige initié sur la mission #{$mission->id} de type BTP.\n- Motif : {$litige->motif}.\n- Différend concernant l'exécution des travaux.\n\n### Analyse\n- Les émotions des parties altèrent la communication.\n- Absence d'éléments contradictoires immédiats.\n\n### Proposition de résolution recommandée\n- Nous recommandons de soumettre le cas au Jury N'Zassa ou de planifier une visite du Référent de zone pour valider la conformité technique de l'ouvrage.";
+            $reply = "### Faits extraits\n- Litige initié sur la mission #{$mission->id} de type BTP.\n- Motif : {$litige->motif}.\n- Différend concernant l'exécution des travaux.\n\n### Analyse\n- Les émotions des parties altèrent la communication.\n- Absence d'éléments contradictoires immédiats.\n\n### Proposition de résolution recommandée\n- Nous recommandons de soumettre le cas au Jury ProsArtisan ou de planifier une visite du Référent de zone pour valider la conformité technique de l'ouvrage.";
         }
 
         return response()->json([
