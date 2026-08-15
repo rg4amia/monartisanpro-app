@@ -274,6 +274,7 @@ interface AdminPageProps {
     evaluationsList: AdminEvaluation[];
     artisansScores: ArtisanScoreItem[];
     scoreLedger: ScoreLedgerEntryItem[];
+    financialKpis?: any;
     settingsList?: Array<{
         id: number;
         key: string;
@@ -583,6 +584,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         evaluationsList = [] as AdminEvaluation[],
         artisansScores = [] as ArtisanScoreItem[],
         scoreLedger = [] as ScoreLedgerEntryItem[],
+        financialKpis = {} as any,
         communications = [],
         adminNotifications = [] as AdminNotificationItem[],
         sectors = [],
@@ -2703,26 +2705,173 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                             ) : null}
 
                             {activeTab === 'transactions' ? (
-                                <section className="mt-5 space-y-5">
-                                    <div className="grid gap-4 xl:grid-cols-4">
-                                        <MetricCard description="Acomptes clients confirmés" tone="amber" trend="Argent séquestré" value={money(analytics.escrowAmount)}>
-                                            Wallet matériaux
+                                <section className="mt-5 space-y-6">
+                                    {/* 1. SOLDE GÉNÉRAL & COMPTE FINANCIER PROSARTISAN */}
+                                    <Surface className="rounded-[32px] p-5 lg:p-6 border border-[#e2d5c3]/60 bg-gradient-to-br from-white via-[#fcfaf7] to-[#f7f2ea]">
+                                        <SectionTitle
+                                            description="Solde global des commissions perçues, fonds séquestrés en cours et total distribué."
+                                            title="Solde Général & Compte Financier ProsArtisan"
+                                        />
+                                        <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                                            <MetricCard description="Commission cumulée (Chantiers + E-commerce)" tone="amber" trend="Revenus ProsArtisan" value={money(financialKpis?.solde_general?.total_commissions_cumulees ?? 0)}>
+                                                Solde Commissions
+                                            </MetricCard>
+                                            <MetricCard description="Main-d'œuvre réservée jalons" tone="blue" trend="Séquestre MO" value={money(financialKpis?.solde_general?.sequestre_mo_encours ?? analytics.escrowAmount)}>
+                                                Encours Séquestre MO
+                                            </MetricCard>
+                                            <MetricCard description="Achats matériaux en attente scan" tone="blue" trend="Séquestre Matériaux" value={money(financialKpis?.solde_general?.sequestre_materiaux_encours ?? 0)}>
+                                                Encours Matériaux
+                                            </MetricCard>
+                                            <MetricCard description="Artisans, fournisseurs et livreurs payés" tone="green" trend="Total Distribué" value={money(financialKpis?.solde_general?.total_libere_general ?? analytics.releasedAmount)}>
+                                                Total Libéré
+                                            </MetricCard>
+                                        </div>
+                                    </Surface>
+
+                                    {/* 2. KPIS RECOMMANDÉS PAR PROSARTISAN */}
+                                    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                                        <MetricCard description="Ratio missions entrées en arbitrage" tone={(financialKpis?.additional_kpis?.dispute_rate_percent ?? 0) > 5 ? "rose" : "green"} trend="Qualité réseau" value={`${financialKpis?.additional_kpis?.dispute_rate_percent ?? 0}%`}>
+                                            Taux de Litiges
                                         </MetricCard>
-                                        <MetricCard description="Paiements jalons et fournisseurs" tone="green" trend="Argent distribué" value={money(analytics.releasedAmount)}>
-                                            Fonds libérés
+                                        <MetricCard description="Ratio devis validés par les clients" tone="amber" trend="Conversion Devis" value={`${financialKpis?.additional_kpis?.devis_conversion_rate_percent ?? 0}%`}>
+                                            Taux de Conversion Devis
                                         </MetricCard>
-                                        <MetricCard description="Transactions en file ou en attente provider" tone="blue" trend="Suivi temps réel" value={numberFormat.format(analytics.pendingTransactions.length)}>
-                                            En attente
+                                        <MetricCard description="Montant moyen par chantier validé" tone="blue" trend="AOV Chantier" value={money(financialKpis?.additional_kpis?.aov_chantier ?? 0)}>
+                                            Panier Moyen Chantier
                                         </MetricCard>
-                                        <MetricCard description="Transactions à rejouer ou analyser" tone="rose" trend="Échecs" value={numberFormat.format(analytics.failedTransactions.length)}>
-                                            Échouées
+                                        <MetricCard description="Montant moyen par commande quincaillerie" tone="blue" trend="AOV Matériaux" value={money(financialKpis?.additional_kpis?.aov_ecommerce ?? 0)}>
+                                            Panier Moyen Matériaux
                                         </MetricCard>
                                     </div>
 
+                                    {/* 3. COMMISSIONS PAR CATÉGORIE DE MÉTIER ET PAR ANNÉE */}
+                                    <Surface className="rounded-[32px] p-5 lg:p-6">
+                                        <SectionTitle
+                                            description="Répartition des commissions de service perçues par secteur d'activité et par année."
+                                            title="Commissions par Catégorie de Métier & Année"
+                                        />
+                                        <DataTable className="mt-5">
+                                            <thead>
+                                                <tr>
+                                                    <th>Catégorie de Métier</th>
+                                                    <th>Année</th>
+                                                    <th>Missions Terminées</th>
+                                                    <th>Volume Brut Travaux</th>
+                                                    <th>Commission Nette ProsArtisan</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {(!financialKpis?.commissions_by_category_year || financialKpis.commissions_by_category_year.length === 0) ? (
+                                                    <tr>
+                                                        <td colSpan={5}>
+                                                            <EmptyState description="Aucune commission enregistrée par catégorie pour le moment." title="Aucune donnée métier" />
+                                                        </td>
+                                                    </tr>
+                                                ) : (
+                                                    financialKpis.commissions_by_category_year.map((row: any, idx: number) => (
+                                                        <tr key={idx} className="hover:bg-black/[0.02] transition">
+                                                            <td className="font-semibold text-[var(--admin-text)]">{row.category}</td>
+                                                            <td>
+                                                                <span className="inline-flex items-center rounded-md bg-[#8a6b3d]/10 px-2.5 py-1 text-xs font-bold text-[#8a6b3d]">
+                                                                    {row.year}
+                                                                </span>
+                                                            </td>
+                                                            <td className="text-sm text-[var(--admin-text-soft)]">{row.missions_count} mission(s)</td>
+                                                            <td className="text-sm font-semibold text-[var(--admin-text)]">{money(row.volume_brut)}</td>
+                                                            <td className="text-sm font-bold text-[#2e7d32]">{money(row.commission_net)}</td>
+                                                        </tr>
+                                                    ))
+                                                )}
+                                            </tbody>
+                                        </DataTable>
+                                    </Surface>
+
+                                    {/* 4. COMMISSIONS ET VOLUME PAR FOURNISSEUR & LIVREURS */}
+                                    <div className="grid gap-6 xl:grid-cols-2">
+                                        {/* TABLEAU FOURNISSEURS */}
+                                        <Surface className="rounded-[32px] p-5 lg:p-6">
+                                            <SectionTitle
+                                                description="Volume d'affaires matériaux et commissions générées par quincaillerie."
+                                                title="Commissions par Fournisseur"
+                                            />
+                                            <DataTable className="mt-5">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Boutique</th>
+                                                        <th>Commandes</th>
+                                                        <th>Volume Matériaux</th>
+                                                        <th>Commission 3%</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {(!financialKpis?.commissions_by_supplier || financialKpis.commissions_by_supplier.length === 0) ? (
+                                                        <tr>
+                                                            <td colSpan={4}>
+                                                                <EmptyState description="Aucune commande fournisseur enregistrée." title="Aucun fournisseur" />
+                                                            </td>
+                                                        </tr>
+                                                    ) : (
+                                                        financialKpis.commissions_by_supplier.map((sup: any) => (
+                                                            <tr key={sup.supplier_id} className="hover:bg-black/[0.02] transition">
+                                                                <td>
+                                                                    <p className="font-semibold text-[var(--admin-text)]">{sup.shop_name}</p>
+                                                                    <p className="text-xs text-[var(--admin-muted)]">{sup.supplier_phone}</p>
+                                                                </td>
+                                                                <td className="text-sm text-[var(--admin-text-soft)]">{sup.orders_count} commande(s)</td>
+                                                                <td className="text-sm font-semibold text-[var(--admin-text)]">{money(sup.volume_materiaux)}</td>
+                                                                <td className="text-sm font-bold text-[#8a6b3d]">{money(sup.commission_prosartisan)}</td>
+                                                            </tr>
+                                                        ))
+                                                    )}
+                                                </tbody>
+                                            </DataTable>
+                                        </Surface>
+
+                                        {/* TABLEAU LIVREURS */}
+                                        <Surface className="rounded-[32px] p-5 lg:p-6">
+                                            <SectionTitle
+                                                description="Volume de livraison et frais distribués aux livreurs."
+                                                title="Activité & Frais par Livreur"
+                                            />
+                                            <DataTable className="mt-5">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Livreur</th>
+                                                        <th>Livraisons</th>
+                                                        <th>Frais Générés</th>
+                                                        <th>Gains Libérés</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {(!financialKpis?.commissions_by_driver || financialKpis.commissions_by_driver.length === 0) ? (
+                                                        <tr>
+                                                            <td colSpan={4}>
+                                                                <EmptyState description="Aucun livreur enregistré ou course effectuée." title="Aucun livreur" />
+                                                            </td>
+                                                        </tr>
+                                                    ) : (
+                                                        financialKpis.commissions_by_driver.map((drv: any) => (
+                                                            <tr key={drv.driver_id} className="hover:bg-black/[0.02] transition">
+                                                                <td>
+                                                                    <p className="font-semibold text-[var(--admin-text)]">{drv.driver_name}</p>
+                                                                    <p className="text-xs text-[var(--admin-muted)]">{drv.driver_phone}</p>
+                                                                </td>
+                                                                <td className="text-sm text-[var(--admin-text-soft)]">{drv.deliveries_count} course(s)</td>
+                                                                <td className="text-sm font-semibold text-[var(--admin-text)]">{money(drv.total_frais_livraison)}</td>
+                                                                <td className="text-sm font-bold text-[#2e7d32]">{money(drv.gains_livreur_liberes)}</td>
+                                                            </tr>
+                                                        ))
+                                                    )}
+                                                </tbody>
+                                            </DataTable>
+                                        </Surface>
+                                    </div>
+
+                                    {/* 5. JOURNAL FINANCIER DES TRANSACTIONS */}
                                     <Surface className="rounded-[32px] p-5 lg:p-6">
                                         <SectionTitle
                                             description="Flux Wave, Orange Money et remboursements classés par statut."
-                                            title="Journal financier"
+                                            title="Journal financier des transactions"
                                         />
 
                                         <DataTable className="mt-5">
