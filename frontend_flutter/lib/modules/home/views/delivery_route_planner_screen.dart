@@ -108,16 +108,17 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
 
       // Tracé polyline
       try {
-        final poly = routes.addPolyline(mk.Polyline([
+        final poly = routes.addPolyline();
+        poly.geometry = mk.Polyline([
           mk.Point(latitude: _driverLat, longitude: _driverLng),
           mk.Point(
             latitude: (_driverLat + _supplierLat) / 2 + 0.002,
             longitude: (_driverLng + _supplierLng) / 2 - 0.001,
           ),
           mk.Point(latitude: _supplierLat, longitude: _supplierLng),
-        ]));
+        ]);
         poly.setStrokeColor(const Color(0xFFF59E0B)); // Orange
-        poly.setStrokeWidth(4.5);
+        poly.strokeWidth = 4.5;
       } catch (_) {}
 
       _focusCamera(
@@ -136,16 +137,17 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
 
       // Tracé polyline
       try {
-        final poly = routes.addPolyline(mk.Polyline([
+        final poly = routes.addPolyline();
+        poly.geometry = mk.Polyline([
           mk.Point(latitude: _supplierLat, longitude: _supplierLng),
           mk.Point(
             latitude: (_supplierLat + _clientLat) / 2 - 0.002,
             longitude: (_supplierLng + _clientLng) / 2 + 0.002,
           ),
           mk.Point(latitude: _clientLat, longitude: _clientLng),
-        ]));
+        ]);
         poly.setStrokeColor(const Color(0xFF10B981)); // Vert
-        poly.setStrokeWidth(4.5);
+        poly.strokeWidth = 4.5;
       } catch (_) {}
 
       _focusCamera(
