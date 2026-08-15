@@ -133,6 +133,9 @@ class DevisModel {
   final String? artisanName;
   final String? missionStatus;
   final double? ratioMateriaux;
+  final int? serverMontantTotal;
+  final int? serverMontantMateriaux;
+  final int? serverMontantMo;
 
   const DevisModel({
     required this.id,
@@ -145,6 +148,9 @@ class DevisModel {
     this.artisanName,
     this.missionStatus,
     this.ratioMateriaux,
+    this.serverMontantTotal,
+    this.serverMontantMateriaux,
+    this.serverMontantMo,
   });
 
   int get totalMo =>
@@ -155,9 +161,14 @@ class DevisModel {
 
   int get totalGeneral => totalMo + totalMat;
 
-  int get montantMateriaux => (totalMat * 1.03).round();
-  int get montantMo => (totalMo * 1.10).round();
-  int get totalGeneralTtc => montantMateriaux + montantMo;
+  int get montantMateriaux =>
+      serverMontantMateriaux ?? (totalMat * 1.03).round();
+
+  int get montantMo =>
+      serverMontantMo ?? (totalMo * 1.10).round();
+
+  int get totalGeneralTtc =>
+      serverMontantTotal ?? (montantMateriaux + montantMo);
 
   List<DevisLigne> get materialLines =>
       lignes.where((ligne) => ligne.isMaterial).toList();
@@ -166,22 +177,31 @@ class DevisModel {
         id: _parseInt(json['id']),
         missionId: _parseInt(json['missionId'] ?? json['mission_id']),
         artisanId: _parseInt(json['artisanId'] ?? json['artisan_id']),
-        lignes: (json['lignesJson'] as List<dynamic>? ?? const [])
+        lignes: (json['lignesJson'] as List<dynamic>? ?? json['lignes_json'] as List<dynamic>? ?? const [])
             .whereType<Map<String, dynamic>>()
             .map(DevisLigne.fromJson)
             .toList(),
-        jalons: (json['jalonsJson'] as List<dynamic>? ?? const [])
+        jalons: (json['jalonsJson'] as List<dynamic>? ?? json['jalons_json'] as List<dynamic>? ?? const [])
             .whereType<Map<String, dynamic>>()
             .map(DevisJalon.fromJson)
             .toList(),
         statut: (json['statut'] ?? '').toString(),
-        createdAt: (json['createdAt'] ?? '').toString(),
-        artisanName: json['artisanName'] as String?,
+        createdAt: (json['createdAt'] ?? json['created_at'] ?? '').toString(),
+        artisanName: (json['artisanName'] ?? json['artisan_name']) as String?,
         missionStatus: MissionModel.normalizeStatus(
           (json['missionStatus'] ?? json['mission_status'] ?? '').toString(),
         ),
         ratioMateriaux: _parseNullableDouble(
           json['ratioMateriaux'] ?? json['ratio_materiaux'],
+        ),
+        serverMontantTotal: _parseNullableInt(
+          json['montantTotal'] ?? json['montant_total'],
+        ),
+        serverMontantMateriaux: _parseNullableInt(
+          json['montantMateriaux'] ?? json['montant_materiaux'],
+        ),
+        serverMontantMo: _parseNullableInt(
+          json['montantMo'] ?? json['montant_mo'],
         ),
       );
 
@@ -196,6 +216,9 @@ class DevisModel {
         'artisanName': artisanName,
         'missionStatus': missionStatus,
         'ratioMateriaux': ratioMateriaux,
+        if (serverMontantTotal != null) 'montantTotal': serverMontantTotal,
+        if (serverMontantMateriaux != null) 'montantMateriaux': serverMontantMateriaux,
+        if (serverMontantMo != null) 'montantMo': serverMontantMo,
       };
 
   static int _parseInt(dynamic value) {
@@ -203,6 +226,13 @@ class DevisModel {
     if (value is int) return value;
     if (value is double) return value.toInt();
     return int.tryParse(value.toString()) ?? 0;
+  }
+
+  static int? _parseNullableInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    return int.tryParse(value.toString());
   }
 
   static double? _parseNullableDouble(dynamic value) {
