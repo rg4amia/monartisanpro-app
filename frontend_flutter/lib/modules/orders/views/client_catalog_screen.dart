@@ -197,15 +197,33 @@ class _ClientCatalogScreenState extends State<ClientCatalogScreen> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Icône de produit moderne
+                    // Image du produit avec fallback icône
                     Container(
                       height: 72,
                       width: 72,
                       decoration: BoxDecoration(
                         color: AppColors.primary.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
                       ),
-                      child: const Icon(Icons.build_circle_outlined, color: AppColors.primary, size: 32),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: (product.imageUrl != null && product.imageUrl!.trim().isNotEmpty)
+                            ? Image.network(
+                                product.imageUrl!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => const Icon(
+                                  Icons.build_circle_outlined,
+                                  color: AppColors.primary,
+                                  size: 32,
+                                ),
+                              )
+                            : const Icon(
+                                Icons.build_circle_outlined,
+                                color: AppColors.primary,
+                                size: 32,
+                              ),
+                      ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
