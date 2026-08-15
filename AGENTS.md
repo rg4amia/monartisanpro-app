@@ -295,6 +295,9 @@ SELECT ST_X(position) AS lng, ST_Y(position) AS lat FROM users WHERE id = :id;
 7. **Montants FCFA** : toujours `BIGINT`, jamais de `FLOAT` ou `DOUBLE` pour les montants financiers
 8. **Colonnes JSON** : utiliser `JSON` MySQL (pas de texte brut), toujours valider le schéma en PHP avant insertion
 9. **Score & Notation par défaut** : Tout nouvel artisan sans évaluation démarre avec un score initial de 0 sur 1000 et des sous-critères (Fiabilité, Intégrité, Qualité, Réactivité) à 0%.
+10. **Alignement du montant de paiement** : Le montant du devis calculé par le serveur (`$devis->montant_total`) fait autorité. En cas de léger décalage d'arrondi ou de commission côté client lors de l'initiation de paiement, le backend ajuste automatiquement la transaction au montant exact du devis sans bloquer l'utilisateur.
+11. **Protocoles de retour Deep Link (`intent://` / `prosartisan://`)** : La confirmation de paiement sur le web / simulateur doit exécuter le séquestre et déclencher une redirection vers l'Intent Android `intent://payment-result?transaction_id=...#Intent;scheme=prosartisan;package=com.prosartisan.app;end` pour rouvrir immédiatement l'application mobile.
+12. **Machine d'état des Jalons** : Un jalon ne peut être soumis que lorsqu'il est dans l'état `en_attente`. Dès que l'artisan soumet ses photos (`soumis`), la resoumission est bloquée (HTTP 422) et la validation par OTP client (ou visite Référent si > 2M FCFA) est requise.
 
 ---
 
