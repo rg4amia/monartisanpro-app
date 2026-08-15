@@ -166,6 +166,7 @@ class OrderController extends GetxController {
     required List<Map<String, dynamic>> items,
     String? vehicleClass,
     double? surgeMultiplier,
+    String? promoCode,
   }) async {
     if (isSubmitting.value) return false;
     isSubmitting.value = true;
@@ -178,18 +179,38 @@ class OrderController extends GetxController {
         items: items,
         vehicleClass: vehicleClass,
         surgeMultiplier: surgeMultiplier,
+        promoCode: promoCode,
       );
-      Get.snackbar('Succès', 'Commande e-commerce créée avec succès !');
+      Get.snackbar(
+        'Succès',
+        'Commande créée avec succès en compte séquestre !',
+        backgroundColor: const Color(0xFF24734F),
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+        duration: const Duration(seconds: 3),
+      );
       clearCart();
       return true;
     } on DioException catch (e) {
       errorMsg.value = _handleDioError(e);
-      Get.snackbar('Erreur', errorMsg.value ?? 'Impossible de créer la commande',
-          backgroundColor: Get.theme.colorScheme.error.withValues(alpha: 0.9),
-          colorText: Get.theme.colorScheme.onError);
+      Get.snackbar(
+        'Erreur',
+        errorMsg.value ?? 'Impossible de créer la commande',
+        backgroundColor: const Color(0xFFC55E50),
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+        duration: const Duration(seconds: 4),
+      );
       return false;
     } catch (e) {
-      errorMsg.value = 'Erreur inattendue';
+      errorMsg.value = 'Erreur inattendue : $e';
+      Get.snackbar(
+        'Erreur',
+        errorMsg.value!,
+        backgroundColor: const Color(0xFFC55E50),
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+      );
       return false;
     } finally {
       isSubmitting.value = false;
@@ -198,7 +219,12 @@ class OrderController extends GetxController {
 
   String _handleDioError(DioException e) {
     if (e.response != null) {
-      final data = e.response!.data;
+      dynamic data = e.response!.data;
+      if (data is String) {
+        try {
+          data = jsonDecode(data);
+        } catch (_) {}
+      }
       if (data is Map) {
         if (data.containsKey('errors')) {
           final errors = data['errors'] as Map;
@@ -207,13 +233,19 @@ class OrderController extends GetxController {
             if (firstError is List && firstError.isNotEmpty) {
               return firstError.first.toString();
             }
+            if (firstError is String) {
+              return firstError;
+            }
           }
         }
         if (data.containsKey('message')) {
-          return data['message'] as String;
+          return data['message'].toString();
         }
       }
-      return 'Erreur ${e.response?.statusCode}';
+      return 'Erreur ${e.response?.statusCode} du serveur';
+    }
+    if (e.message != null && e.message!.isNotEmpty) {
+      return 'Erreur réseau : ${e.message}';
     }
     return 'Erreur de connexion';
   }

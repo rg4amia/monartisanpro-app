@@ -23,9 +23,9 @@ class OrderService
     /**
      * Crée une commande et calcule les coûts associés.
      */
-    public function createOrder(User $client, User $supplier, array $items, string $deliveryMode, string $vehicleClass = 'moto', float $surgeMultiplier = 1.0): Order
+    public function createOrder(User $client, User $supplier, array $items, string $deliveryMode, string $vehicleClass = 'moto', float $surgeMultiplier = 1.0, ?string $promoCode = null): Order
     {
-        return DB::transaction(function () use ($client, $supplier, $items, $deliveryMode, $vehicleClass, $surgeMultiplier) {
+        return DB::transaction(function () use ($client, $supplier, $items, $deliveryMode, $vehicleClass, $surgeMultiplier, $promoCode) {
             $subtotal = 0;
             $itemsData = [];
 
@@ -69,7 +69,22 @@ class OrderService
                 }
             }
 
-            $totalAmount = $subtotal + $deliveryCost + $platformFee;
+            // 4. Calcul de la remise éventuelle liée au code promo
+            $discountAmount = 0;
+            if ($promoCode) {
+                $codeStr = strtoupper(trim($promoCode));
+                $appliedPromo = \App\Models\PromoCode::where('code', $codeStr)->first();
+                if ($appliedPromo) {
+                    try {
+                        $discountAmount = $appliedPromo->calculateDiscount($subtotal);
+                        $appliedPromo->increment('used_count');
+                    } catch (\Exception $e) {
+                        // En cas de non-éligibilité, on ne bloque pas
+                    }
+                }
+            }
+
+            $totalAmount = max(0, $subtotal + $deliveryCost + $platformFee - $discountAmount);
 
             // 4. Génération des codes de vérification uniques à 4 chiffres
             $codeSuffix = str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);

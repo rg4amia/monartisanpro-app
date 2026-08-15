@@ -10,6 +10,7 @@ class OrderRepository {
     required List<Map<String, dynamic>> items,
     String? vehicleClass,
     double? surgeMultiplier,
+    String? promoCode,
   }) async {
     final res = await _client.post(
       ApiEndpoints.orders,
@@ -19,6 +20,7 @@ class OrderRepository {
         'items': items,
         if (vehicleClass != null) 'vehicle_class': vehicleClass,
         if (surgeMultiplier != null) 'surge_multiplier': surgeMultiplier,
+        if (promoCode != null && promoCode.isNotEmpty) 'promo_code': promoCode,
       },
     );
     return res.data;

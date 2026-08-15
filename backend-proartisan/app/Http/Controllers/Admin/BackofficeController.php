@@ -81,6 +81,11 @@ class BackofficeController extends Controller
         return $this->renderPage('admin/notifications');
     }
 
+    public function promoCodes(): Response
+    {
+        return $this->renderPage('admin/promo-codes');
+    }
+
     public function storeCommunication(StoreCommunicationRequest $request, CommunicationService $service): RedirectResponse
     {
         $service->store($request->validated(), $request->user());
@@ -431,8 +436,8 @@ class BackofficeController extends Controller
             'users' => $this->adminService->listUsers(null, null, null, 100)->items(),
             'evaluationsList' => $this->adminService->listEvaluations(100)->items(),
             'artisansScores' => $this->adminService->listArtisansScores(),
-            'scoreLedger' => $this->adminService->listScoreLedger(),
             'settingsList' => \App\Models\Setting::all(),
+            'promoCodes' => \App\Models\PromoCode::orderByDesc('created_at')->get(),
             'sectors' => \App\Models\Sector::with('trades')->get(),
             'communications' => Communication::with('auteur:id,name,phone')
                 ->orderByDesc('updated_at')
@@ -550,5 +555,65 @@ class BackofficeController extends Controller
         }
 
         return redirect()->back()->with('success', 'Paramètres IA mis à jour avec succès.');
+    }
+
+    public function storePromoCode(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'code' => 'required|string|max:50|unique:promo_codes,code',
+            'description' => 'nullable|string|max:255',
+            'discount_type' => 'required|in:percent,fixed',
+            'discount_value' => 'required|integer|min:1',
+            'min_order_amount' => 'nullable|integer|min:0',
+            'max_discount_amount' => 'nullable|integer|min:0',
+            'usage_limit' => 'nullable|integer|min:1',
+            'starts_at' => 'nullable|date',
+            'expires_at' => 'nullable|date',
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        $validated['code'] = strtoupper(trim($validated['code']));
+        $validated['min_order_amount'] = $validated['min_order_amount'] ?? 0;
+        $validated['is_active'] = $request->boolean('is_active', true);
+
+        \App\Models\PromoCode::create($validated);
+
+        return back()->with('success', "Code promo {$validated['code']} créé avec succès.");
+    }
+
+    public function updatePromoCode(Request $request, \App\Models\PromoCode $promoCode): RedirectResponse
+    {
+        $validated = $request->validate([
+            'code' => 'required|string|max:50|unique:promo_codes,code,' . $promoCode->id,
+            'description' => 'nullable|string|max:255',
+            'discount_type' => 'required|in:percent,fixed',
+            'discount_value' => 'required|integer|min:1',
+            'min_order_amount' => 'nullable|integer|min:0',
+            'max_discount_amount' => 'nullable|integer|min:0',
+            'usage_limit' => 'nullable|integer|min:1',
+            'starts_at' => 'nullable|date',
+            'expires_at' => 'nullable|date',
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        $validated['code'] = strtoupper(trim($validated['code']));
+        $validated['is_active'] = $request->boolean('is_active', $promoCode->is_active);
+
+        $promoCode->update($validated);
+
+        return back()->with('success', "Code promo {$promoCode->code} mis à jour.");
+    }
+
+    public function destroyPromoCode(\App\Models\PromoCode $promoCode): RedirectResponse
+    {
+        $promoCode->delete();
+        return back()->with('success', 'Code promo supprimé.');
+    }
+
+    public function togglePromoCode(\App\Models\PromoCode $promoCode): RedirectResponse
+    {
+        $promoCode->update(['is_active' => !$promoCode->is_active]);
+        $status = $promoCode->is_active ? 'activé' : 'désactivé';
+        return back()->with('success', "Code promo {$promoCode->code} {$status}.");
     }
 }
