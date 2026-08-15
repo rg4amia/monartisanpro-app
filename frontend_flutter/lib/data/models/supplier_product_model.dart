@@ -36,11 +36,24 @@ class SupplierProductModel {
       stockQuantity: _parseInt(
         json['stockQuantity'] ?? json['stock_quantity'],
       ),
-      imageUrl: json['imageUrl']?.toString(),
+      imageUrl: _parseImageUrl(json['imageUrl'] ?? json['image_url']),
       isActive: (json['isActive'] ?? json['is_active']) as bool? ?? true,
       createdAt: json['createdAt']?.toString(),
       updatedAt: json['updatedAt']?.toString(),
     );
+  }
+
+  static String? _parseImageUrl(dynamic raw) {
+    if (raw == null) return null;
+    final str = raw.toString().trim();
+    if (str.isEmpty) return null;
+    if (str.startsWith('http://') || str.startsWith('https://')) {
+      return str;
+    }
+    if (str.startsWith('/')) {
+      return 'https://prosartisan.net$str';
+    }
+    return 'https://prosartisan.net/$str';
   }
 
   Map<String, dynamic> toRequestJson() => {
