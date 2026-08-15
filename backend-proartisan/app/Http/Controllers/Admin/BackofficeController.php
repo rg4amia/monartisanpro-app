@@ -10,6 +10,7 @@ use App\Models\FournisseurAgree;
 use App\Models\Litige;
 use App\Models\User;
 use App\Models\Communication;
+use App\Models\Notification;
 use App\Services\AdminService;
 use App\Services\CommunicationService;
 use App\Http\Requests\Admin\StoreCommunicationRequest;
@@ -191,6 +192,22 @@ class BackofficeController extends Controller
         );
 
         return back()->with('success', 'Décision fournisseur enregistrée.');
+    }
+
+    public function markNotificationRead(Notification $notification): RedirectResponse
+    {
+        $notification->update(['read_at' => now()]);
+        return back()->with('success', 'Notification marquée comme lue.');
+    }
+
+    public function markAllNotificationsRead(Request $request): RedirectResponse
+    {
+        Notification::where(function ($q) use ($request) {
+            $q->where('user_id', $request->user()->id)
+              ->orWhereNull('user_id');
+        })->whereNull('read_at')->update(['read_at' => now()]);
+
+        return back()->with('success', 'Toutes les notifications ont été marquées comme lues.');
     }
 
     public function storeUser(Request $request): RedirectResponse
@@ -413,6 +430,17 @@ class BackofficeController extends Controller
             'communications' => Communication::with('auteur:id,name,phone')
                 ->orderByDesc('updated_at')
                 ->limit(100)
+                ->get(),
+            'adminNotifications' => Notification::where(function ($q) {
+                    if (Auth::check()) {
+                        $q->where('user_id', Auth::id())
+                          ->orWhereNull('user_id');
+                    } else {
+                        $q->whereNull('user_id');
+                    }
+                })
+                ->orderByDesc('created_at')
+                ->limit(30)
                 ->get(),
             'allPermissions' => \App\Models\Permission::all(),
             'rolesPermissions' => [

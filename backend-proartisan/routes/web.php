@@ -73,6 +73,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/litiges/{litige}/resolve', [BackofficeController::class, 'resolveLitige'])->name('litiges.resolve');
         Route::get('/litiges/{litige}/invoice', [BackofficeController::class, 'downloadInvoice'])->name('litiges.invoice');
         Route::post('/fournisseurs/{fournisseur}/review', [BackofficeController::class, 'reviewFournisseur'])->name('fournisseurs.review');
+        Route::post('/notifications/{notification}/read', [BackofficeController::class, 'markNotificationRead'])->name('notifications.read');
+        Route::post('/notifications/mark-all-read', [BackofficeController::class, 'markAllNotificationsRead'])->name('notifications.mark-all-read');
 
         Route::prefix('api/llm')->name('api.llm.')->group(function () {
             Route::get('/staging', [LlmAdminController::class, 'getStaging'])->name('staging.index');
