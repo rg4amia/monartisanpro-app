@@ -1,4 +1,5 @@
 import '../../core/network/api_client.dart';
+import '../../core/network/api_endpoints.dart';
 
 class OrderRepository {
   final ApiClient _client = ApiClient();
@@ -11,7 +12,7 @@ class OrderRepository {
     double? surgeMultiplier,
   }) async {
     final res = await _client.post(
-      '/orders',
+      ApiEndpoints.orders,
       data: {
         'supplier_id': supplierId,
         'delivery_mode': deliveryMode,

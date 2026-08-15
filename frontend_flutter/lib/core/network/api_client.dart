@@ -126,9 +126,14 @@ class _ErrorLoggerInterceptor extends Interceptor {
 class _DynamicBaseUrlInterceptor extends Interceptor {
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    final latestBaseUrl = ApiEndpoints.baseUrl;
-    if (options.baseUrl != latestBaseUrl) {
-      options.baseUrl = latestBaseUrl;
+    var latestBaseUrl = ApiEndpoints.baseUrl;
+    if (!latestBaseUrl.endsWith('/')) {
+      latestBaseUrl = '$latestBaseUrl/';
+    }
+    options.baseUrl = latestBaseUrl;
+
+    if (options.path.startsWith('/') && !options.path.startsWith('//') && !options.path.startsWith('http')) {
+      options.path = options.path.substring(1);
     }
     handler.next(options);
   }

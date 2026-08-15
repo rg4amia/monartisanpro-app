@@ -30,11 +30,13 @@ class ApiEndpoints {
   static String artisan(int id) => '/artisans/$id';
   static String artisanScore(int id) => '/artisans/$id/score';
 
-  // Fournisseurs
+  // Fournisseurs & Commandes
   static const String fournisseurs = '/fournisseurs';
   static String fournisseurArticles(int id) => '/fournisseurs/$id/articles';
   static const String supplierProducts = '/supplier-products';
   static String supplierProduct(int id) => '/supplier-products/$id';
+  static const String orders = '/orders';
+  static String order(int id) => '/orders/$id';
 
   // Sectors
   static const String sectors = '/sectors';
