@@ -23,10 +23,12 @@ class SmsService
      */
     private function httpClient(): \Illuminate\Http\Client\PendingRequest
     {
-        $client = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $this->apiToken,
-            'Accept' => 'application/json',
-        ]);
+        $client = Http::timeout(4)
+            ->connectTimeout(3)
+            ->withHeaders([
+                'Authorization' => 'Bearer ' . $this->apiToken,
+                'Accept' => 'application/json',
+            ]);
 
         // Bypass SSL verification in local/testing (Windows WAMP cURL error 60)
         if (app()->environment('local', 'testing')) {

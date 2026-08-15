@@ -34,7 +34,11 @@ class NotificationService
         // 3. SMS pour les types critiques (OTP, Paiement, Alerte fraude)
         $criticalTypes = ['otp', 'payment', 'fraud_alert', 'litige'];
         if (in_array($type, $criticalTypes)) {
-            $this->sendSms($user->phone, "{$title}: {$body}");
+            try {
+                $this->sendSms($user->phone, "{$title}: {$body}");
+            } catch (\Throwable $e) {
+                Log::error("Erreur lors de l'envoi SMS dans NotificationService : " . $e->getMessage());
+            }
         }
     }
 
