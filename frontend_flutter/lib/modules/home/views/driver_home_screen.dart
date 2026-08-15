@@ -731,7 +731,7 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
 
   Widget _buildActiveDeliveryCard(MissionModel mission) {
     final rawStatus = mission.rawStatus;
-    final deliveryFee = mission.id == 301 ? 1500 : 1200;
+    final deliveryFee = mission.montantMo > 0 ? mission.montantMo : (mission.montantTotal > 0 ? (mission.montantTotal * 0.15).toInt() : 1500);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -955,7 +955,7 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
   }
 
   Widget _buildAvailableDeliveryCard(MissionModel mission) {
-    final deliveryFee = mission.id == 301 ? 1500 : 1200;
+    final deliveryFee = mission.montantMo > 0 ? mission.montantMo : (mission.montantTotal > 0 ? (mission.montantTotal * 0.15).toInt() : 1500);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),

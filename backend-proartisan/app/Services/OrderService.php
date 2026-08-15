@@ -204,7 +204,7 @@ class OrderService
             throw new \Exception("Cette course n'est plus disponible.");
         }
 
-        if ($driver->role !== 'driver') {
+        if (!in_array($driver->role, ['driver', 'livreur'])) {
             throw new \Exception("Seul un livreur peut accepter cette course.");
         }
 
@@ -591,39 +591,24 @@ class OrderService
     public function notifyDriversInArea(Order $order): void
     {
         $supplierProfile = $order->supplier->fournisseurAgree;
-        $supplierCoords = $supplierProfile?->getPositionCoords();
-        $clientCoords = $order->client->getPositionCoords();
+        $supplierName = $supplierProfile?->nom_boutique ?? ($order->supplier->name ?? 'le fournisseur');
+        $costFormatted = number_format($order->delivery_cost > 0 ? $order->delivery_cost : 1500, 0, ',', ' ');
 
-        $drivers = collect();
-
-        if (config('database.default') !== 'sqlite' && $supplierCoords && $clientCoords) {
-            $slng = $supplierCoords['lng'];
-            $slat = $supplierCoords['lat'];
-            $clng = $clientCoords['lng'];
-            $clat = $clientCoords['lat'];
-
-            // Trouver les livreurs dans un rayon de 10 km du fournisseur ET du client
-            $drivers = User::where('role', 'driver')
-                ->where('kyc_status', 'actif')
-                ->whereRaw("ST_Distance_Sphere(position, POINT(?, ?)) <= 10000", [$slng, $slat])
-                ->whereRaw("ST_Distance_Sphere(position, POINT(?, ?)) <= 10000", [$clng, $clat])
-                ->get();
-        }
-
-        // Si aucun livreur n'est trouvé dans la zone, on étend à tous les livreurs de la plateforme
-        if ($drivers->isEmpty()) {
-            $drivers = User::where('role', 'driver')
-                ->where('kyc_status', 'actif')
-                ->get();
-        }
+        // Trouver tous les livreurs de la plateforme
+        $drivers = User::whereIn('role', ['driver', 'livreur'])->get();
 
         foreach ($drivers as $driver) {
-            app(\App\Services\NotificationService::class)->send(
-                $driver,
-                'payment',
-                'Course de livraison disponible',
-                "Une nouvelle livraison de " . number_format($order->delivery_cost, 0, ',', ' ') . " FCFA est à effectuer pour la commande #{$order->id}."
-            );
+            try {
+                app(\App\Services\NotificationService::class)->send(
+                    $driver,
+                    'payment',
+                    'Course de livraison disponible',
+                    "Une nouvelle livraison de {$costFormatted} FCFA est disponible chez {$supplierName} (Commande #{$order->id}).",
+                    ['order_id' => $order->id, 'type' => 'delivery_request']
+                );
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("Notification livreur échouée pour user {$driver->id}: " . $e->getMessage());
+            }
         }
     }
 }

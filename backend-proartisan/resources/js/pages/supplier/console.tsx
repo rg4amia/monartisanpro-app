@@ -12,13 +12,16 @@ interface OrderItem {
     product?: {
         name: string;
         sku?: string;
+        image_url?: string;
     };
 }
 
 interface Order {
     id: number;
     client_id: number;
+    driver_id?: number | null;
     delivery_mode: 'pickup' | 'delivery';
+    vehicle_class?: string;
     status: 'paid' | 'prepared' | 'searching_driver' | 'driver_assigned' | 'driver_picked_up' | 'shipping' | 'delivered' | 'disputed';
     subtotal: number;
     delivery_cost: number;
@@ -28,6 +31,10 @@ interface Order {
     reception_code: string;
     created_at: string;
     client?: {
+        name: string;
+        phone: string;
+    };
+    driver?: {
         name: string;
         phone: string;
     };
@@ -843,49 +850,173 @@ export default function SupplierConsole({
 
             {/* MODAL: ORDER DETAIL & RETRAIT */}
             {selectedOrder && !isPickupModalOpen && (
-                <div className="fixed inset-0 bg-slate-950/80 flex items-center justify-center p-4 z-50">
-                    <div className="bg-slate-900 border border-slate-800 rounded-lg p-6 max-w-lg w-full space-y-4">
-                        <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-                            <h3 className="text-lg font-bold text-slate-100">Détail Commande #{selectedOrder.id}</h3>
-                            <button onClick={() => setSelectedOrder(null)} className="text-slate-500 hover:text-slate-350">&times;</button>
+                <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
+                    <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 max-w-2xl w-full space-y-5 my-8 shadow-2xl">
+                        {/* Header */}
+                        <div className="flex justify-between items-start border-b border-slate-800 pb-4">
+                            <div>
+                                <div className="flex items-center gap-3">
+                                    <h3 className="text-xl font-extrabold text-slate-100">
+                                        Commande #{selectedOrder.id}
+                                    </h3>
+                                    <span className={`inline-block px-2.5 py-0.5 rounded text-xs font-bold ${
+                                        selectedOrder.status === 'delivered' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' :
+                                        selectedOrder.status === 'paid' ? 'bg-blue-950 text-blue-400 border border-blue-800' :
+                                        selectedOrder.status === 'prepared' ? 'bg-amber-950 text-amber-400 border border-amber-800' :
+                                        selectedOrder.status === 'searching_driver' ? 'bg-indigo-950 text-indigo-400 border border-indigo-800 animate-pulse' :
+                                        selectedOrder.status === 'driver_assigned' || selectedOrder.status === 'driver_picked_up' || selectedOrder.status === 'shipping' ? 'bg-purple-950 text-purple-400 border border-purple-800' :
+                                        selectedOrder.status === 'disputed' ? 'bg-rose-950 text-rose-400 border border-rose-800' :
+                                        'bg-slate-800 text-slate-400'
+                                    }`}>
+                                        {selectedOrder.status === 'paid' ? 'Payée (En attente préparation)' :
+                                         selectedOrder.status === 'prepared' ? 'Prête pour retrait' :
+                                         selectedOrder.status === 'searching_driver' ? 'Recherche livreur...' :
+                                         selectedOrder.status === 'driver_assigned' ? 'Livreur assigné' :
+                                         selectedOrder.status === 'driver_picked_up' ? 'Colis récupéré par livreur' :
+                                         selectedOrder.status === 'shipping' ? 'En cours de livraison' :
+                                         selectedOrder.status === 'delivered' ? 'Livrée & Clôturée' :
+                                         selectedOrder.status === 'disputed' ? 'En Litige' : selectedOrder.status}
+                                    </span>
+                                </div>
+                                <div className="text-xs text-slate-500 mt-1">
+                                    Reçue le {new Date(selectedOrder.created_at).toLocaleString('fr-FR')}
+                                </div>
+                            </div>
+                            <button 
+                                onClick={() => setSelectedOrder(null)} 
+                                className="text-slate-400 hover:text-slate-200 text-2xl font-light leading-none p-1"
+                            >
+                                &times;
+                            </button>
                         </div>
 
-                        <div className="space-y-3">
-                            <div className="flex justify-between text-sm">
-                                <span className="text-slate-450">Client :</span>
-                                <span className="font-semibold text-slate-200">{selectedOrder.client?.name} ({selectedOrder.client?.phone})</span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                                <span className="text-slate-450">Mode de livraison :</span>
-                                <span className="capitalize font-semibold text-slate-200">{selectedOrder.delivery_mode === 'pickup' ? 'Retrait en boutique' : 'Livraison à domicile'}</span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                                <span className="text-slate-450">Statut :</span>
-                                <span className="font-semibold text-amber-500">{selectedOrder.status}</span>
-                            </div>
-
-                            <div className="border-t border-b border-slate-800 py-3 mt-4">
-                                <div className="text-xs font-semibold uppercase text-slate-500 tracking-wider mb-2">Articles commandés :</div>
-                                <div className="space-y-2">
-                                    {selectedOrder.items?.map(item => (
-                                        <div key={item.id} className="flex justify-between text-sm">
-                                            <span>{item.product?.name} <span className="text-slate-500">x{item.quantity}</span></span>
-                                            <span className="font-medium">{money(item.unit_price * item.quantity)}</span>
-                                        </div>
-                                    ))}
+                        {/* Info Grid (Client & Delivery) */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Client Info Card */}
+                            <div className="bg-slate-950/80 border border-slate-800/80 rounded-lg p-4 space-y-2">
+                                <div className="text-xs font-bold uppercase text-slate-500 tracking-wider">
+                                    Coordonnées Client
+                                </div>
+                                <div className="text-sm font-semibold text-slate-200">
+                                    {selectedOrder.client?.name || 'Client anonyme'}
+                                </div>
+                                <div className="text-xs text-slate-400 flex items-center gap-2">
+                                    <span>📞 {selectedOrder.client?.phone || 'N/A'}</span>
+                                    {selectedOrder.client?.phone && (
+                                        <a 
+                                            href={`tel:${selectedOrder.client.phone}`}
+                                            className="text-amber-500 hover:text-amber-400 font-semibold underline text-[11px]"
+                                        >
+                                            Appeler
+                                        </a>
+                                    )}
                                 </div>
                             </div>
 
-                            <div className="flex justify-between text-base font-bold text-slate-150 pt-2">
-                                <span>Total Matériaux :</span>
-                                <span className="text-amber-400">{money(selectedOrder.subtotal)}</span>
+                            {/* Delivery Info Card */}
+                            <div className="bg-slate-950/80 border border-slate-800/80 rounded-lg p-4 space-y-2">
+                                <div className="text-xs font-bold uppercase text-slate-500 tracking-wider">
+                                    Mode de Récupération
+                                </div>
+                                <div className="text-sm font-semibold text-slate-200 flex items-center gap-2">
+                                    <span>{selectedOrder.delivery_mode === 'pickup' ? '🏪 Retrait direct en boutique' : '🛵 Livraison à domicile'}</span>
+                                </div>
+                                {selectedOrder.delivery_mode === 'delivery' ? (
+                                    <div className="text-xs text-slate-400">
+                                        {selectedOrder.driver ? (
+                                            <div className="space-y-1">
+                                                <div>Livreur : <span className="font-semibold text-slate-300">{selectedOrder.driver.name}</span></div>
+                                                <div>Contact : <span className="font-semibold text-amber-500">{selectedOrder.driver.phone}</span></div>
+                                            </div>
+                                        ) : (
+                                            <div className="text-indigo-400 font-medium italic">
+                                                En attente d'acceptation par un livreur partenaire
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="text-xs text-slate-400">
+                                        Le client viendra retirer la marchandise avec son code de retrait.
+                                    </div>
+                                )}
                             </div>
                         </div>
 
+                        {/* Articles Table */}
+                        <div className="border border-slate-800 rounded-lg overflow-hidden">
+                            <div className="bg-slate-950 px-4 py-2.5 text-xs font-bold uppercase text-slate-400 border-b border-slate-800">
+                                Articles Commandés ({selectedOrder.items?.length || 0})
+                            </div>
+                            <div className="divide-y divide-slate-800 max-h-60 overflow-y-auto">
+                                {!selectedOrder.items || selectedOrder.items.length === 0 ? (
+                                    <div className="p-4 text-center text-xs text-slate-500">
+                                        Aucun détail d'article disponible pour cette commande.
+                                    </div>
+                                ) : (
+                                    selectedOrder.items.map(item => (
+                                        <div key={item.id} className="p-3 bg-slate-900/50 flex items-center justify-between gap-4 hover:bg-slate-800/30 transition">
+                                            <div className="flex items-center gap-3 min-w-0">
+                                                {item.product?.image_url ? (
+                                                    <img 
+                                                        src={item.product.image_url} 
+                                                        alt={item.product?.name || 'Article'} 
+                                                        className="w-11 h-11 rounded-lg border border-slate-800 object-cover shrink-0" 
+                                                    />
+                                                ) : (
+                                                    <div className="w-11 h-11 bg-slate-950 border border-slate-800 rounded-lg flex items-center justify-center text-[10px] text-slate-500 font-bold shrink-0">
+                                                        ART
+                                                    </div>
+                                                )}
+                                                <div className="min-w-0">
+                                                    <div className="font-semibold text-slate-200 text-sm truncate">
+                                                        {item.product?.name || `Produit #${item.supplier_product_id}`}
+                                                    </div>
+                                                    <div className="text-xs text-slate-400">
+                                                        SKU : {item.product?.sku || 'N/A'} • {money(item.unit_price)} l'unité
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="text-right shrink-0">
+                                                <div className="text-xs text-slate-400">
+                                                    Qté : <span className="font-bold text-slate-200">x{item.quantity}</span>
+                                                </div>
+                                                <div className="font-bold text-amber-400 text-sm">
+                                                    {money(item.unit_price * item.quantity)}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Financial Breakdown */}
+                        <div className="bg-slate-950/80 border border-slate-800/80 rounded-lg p-4 space-y-2">
+                            <div className="flex justify-between text-xs text-slate-400">
+                                <span>Sous-total articles :</span>
+                                <span className="font-semibold text-slate-200">{money(selectedOrder.subtotal)}</span>
+                            </div>
+                            {selectedOrder.delivery_cost > 0 && (
+                                <div className="flex justify-between text-xs text-slate-400">
+                                    <span>Frais de livraison :</span>
+                                    <span className="font-semibold text-slate-200">{money(selectedOrder.delivery_cost)}</span>
+                                </div>
+                            )}
+                            <div className="flex justify-between text-xs text-slate-400">
+                                <span>Frais de service / Séquestre :</span>
+                                <span className="font-semibold text-slate-200">{money(selectedOrder.platform_fee || 0)}</span>
+                            </div>
+                            <div className="border-t border-slate-800 pt-2 flex justify-between text-base font-extrabold">
+                                <span className="text-slate-100">Montant Total Payé :</span>
+                                <span className="text-amber-400 text-lg">{money(selectedOrder.total_amount || selectedOrder.subtotal)}</span>
+                            </div>
+                        </div>
+
+                        {/* Modal Footer Actions */}
                         <div className="flex justify-end gap-3 border-t border-slate-800 pt-4">
                             <button
                                 onClick={() => setSelectedOrder(null)}
-                                className="bg-slate-800 hover:bg-slate-700 font-medium px-4 py-2 rounded text-sm text-slate-300 transition"
+                                className="bg-slate-800 hover:bg-slate-700 font-semibold px-4 py-2 rounded-lg text-sm text-slate-300 transition"
                             >
                                 Fermer
                             </button>
@@ -893,7 +1024,7 @@ export default function SupplierConsole({
                             {selectedOrder.status === 'paid' && (
                                 <button
                                     onClick={() => markOrderAsPrepared(selectedOrder.id)}
-                                    className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-4 py-2 rounded text-sm transition"
+                                    className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-4 py-2 rounded-lg text-sm transition shadow-lg shadow-amber-500/20"
                                 >
                                     Marquer comme Prête
                                 </button>
@@ -902,7 +1033,7 @@ export default function SupplierConsole({
                             {(selectedOrder.status === 'prepared' && selectedOrder.delivery_mode === 'pickup') && (
                                 <button
                                     onClick={() => setIsPickupModalOpen(true)}
-                                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded text-sm transition"
+                                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-lg text-sm transition shadow-lg shadow-emerald-600/20"
                                 >
                                     Valider Retrait Boutique
                                 </button>
