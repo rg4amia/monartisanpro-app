@@ -290,6 +290,7 @@ interface AdminPageProps {
     }>;
     rolesPermissions?: Record<string, string[]>;
     allPermissions?: Array<{ id: number; name: string; description: string; category: string }>;
+    adminNotifications?: AdminNotificationItem[];
     communications?: Array<{
         id: number;
         type: 'annonce' | 'le_saviez_vous';
@@ -304,6 +305,20 @@ interface AdminPageProps {
         updated_at: string;
         auteur?: { id: number; name: string; phone: string } | null;
     }>;
+}
+
+interface AdminNotificationItem {
+    id: number | string;
+    user_id?: number | null;
+    type: string;
+    title: string;
+    body: string;
+    data_json?: Record<string, any> | null;
+    read_at?: string | null;
+    created_at: string;
+    updated_at?: string;
+    action_url?: string;
+    action_label?: string;
 }
 
 const tabRoutes: Record<AdminTab, string> = {
@@ -532,8 +547,95 @@ function sumAmount(items: AdminTransaction[]): number {
 
 export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
     const activeTab = initialTab;
-    const { props } = usePage<AdminPageProps>();
-    const { auth, dashboard, errors, flash, fournisseurs, kycUsers, cnmciUsers = [], litiges, missions, transactions, users, settingsList, evaluationsList, artisansScores, scoreLedger, communications } = props as AdminPageProps & { communications?: AdminPageProps['communications'] };
+    const { auth, dashboard, errors, flash, fournisseurs, kycUsers, cnmciUsers = [], litiges, missions, transactions, users, settingsList, evaluationsList, artisansScores, scoreLedger, communications, adminNotifications = [] } = props as AdminPageProps & { communications?: AdminPageProps['communications'] };
+
+    const [notificationsOpen, setNotificationsOpen] = useState<boolean>(false);
+    const [notifFilter, setNotifFilter] = useState<'all' | 'unread' | 'alerts'>('all');
+
+    const liveNotifications = useMemo<AdminNotificationItem[]>(() => {
+        const list: AdminNotificationItem[] = [];
+
+        if (adminNotifications && Array.isArray(adminNotifications)) {
+            list.push(...adminNotifications);
+        }
+
+        if (dashboard.kyc_en_attente > 0) {
+            list.push({
+                id: 'alert-kyc',
+                type: 'kyc',
+                title: 'Dossiers KYC en attente',
+                body: `${dashboard.kyc_en_attente} dossier(s) KYC requièrent une validation administrative.`,
+                read_at: null,
+                created_at: new Date().toISOString(),
+                action_url: tabRoutes.kyc,
+                action_label: 'Vérifier KYC',
+            });
+        }
+        if (dashboard.litiges_ouverts > 0) {
+            list.push({
+                id: 'alert-litiges',
+                type: 'litige',
+                title: 'Litiges ouverts',
+                body: `${dashboard.litiges_ouverts} litige(s) en attente d'arbitrage ou d'intervention.`,
+                read_at: null,
+                created_at: new Date().toISOString(),
+                action_url: tabRoutes.litiges,
+                action_label: 'Arbitrer litiges',
+            });
+        }
+        if (dashboard.recent_fraud_alerts > 0) {
+            list.push({
+                id: 'alert-fraud',
+                type: 'fraud',
+                title: 'Alertes Fraude / Écart GPS',
+                body: `${dashboard.recent_fraud_alerts} anomalie(s) détectée(s) lors de scans J-Code ou d'interventions.`,
+                read_at: null,
+                created_at: new Date().toISOString(),
+                action_url: tabRoutes.transactions,
+                action_label: 'Vérifier fraudes',
+            });
+        }
+        if (dashboard.referent_required_open > 0) {
+            list.push({
+                id: 'alert-referent',
+                type: 'referent',
+                title: 'Missions seuil Référent (> 2M)',
+                body: `${dashboard.referent_required_open} mission(s) dépassent 2 000 000 FCFA et exigent un visa terrain.`,
+                read_at: null,
+                created_at: new Date().toISOString(),
+                action_url: tabRoutes.missions,
+                action_label: 'Consulter missions',
+            });
+        }
+
+        return list;
+    }, [adminNotifications, dashboard]);
+
+    const unreadNotifsCount = useMemo(() => {
+        return liveNotifications.filter((n) => !n.read_at).length;
+    }, [liveNotifications]);
+
+    const filteredNotifs = useMemo(() => {
+        return liveNotifications.filter((n) => {
+            if (notifFilter === 'unread') return !n.read_at;
+            if (notifFilter === 'alerts') return ['kyc', 'litige', 'fraud', 'fraud_alert', 'referent'].includes(n.type);
+            return true;
+        });
+    }, [liveNotifications, notifFilter]);
+
+    const handleMarkAllNotifsRead = () => {
+        router.post('/admin/notifications/mark-all-read', {}, { preserveScroll: true });
+    };
+
+    const handleMarkNotifRead = (notif: AdminNotificationItem) => {
+        if (typeof notif.id === 'number') {
+            router.post(`/admin/notifications/${notif.id}/read`, {}, { preserveScroll: true });
+        }
+        if (notif.action_url) {
+            setNotificationsOpen(false);
+            router.visit(notif.action_url);
+        }
+    };
 
     const [themeMode, setThemeMode] = useState<ThemeMode>(() => {
         if (typeof window !== 'undefined' && window.localStorage) {
@@ -1491,15 +1593,203 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                         {themeMode === 'light' ? 'Sombre' : 'Clair'}
                                     </button>
 
-                                    <button
-                                        type="button"
-                                        className="relative rounded-2xl border border-transparent p-3 text-[var(--admin-muted)] transition hover:bg-white/55"
-                                        title="Notifications"
-                                        aria-label="Notifications"
-                                    >
-                                        <BellIcon className="h-5 w-5" />
-                                        <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-[#f15f57]" />
-                                    </button>
+                                    <div className="relative">
+                                        <button
+                                            type="button"
+                                            className={cn(
+                                                "relative rounded-2xl border p-3 text-[var(--admin-muted)] transition hover:bg-white/55",
+                                                notificationsOpen ? "border-[#ebb95e]/50 bg-white/70 text-[#241b16]" : "border-transparent"
+                                            )}
+                                            title="Notifications et alertes système"
+                                            aria-label="Notifications"
+                                            onClick={() => setNotificationsOpen((prev) => !prev)}
+                                        >
+                                            <BellIcon className="h-5 w-5" />
+                                            {unreadNotifsCount > 0 && (
+                                                <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#f15f57] px-1 text-[10px] font-extrabold text-white shadow-sm ring-2 ring-white">
+                                                    {unreadNotifsCount > 99 ? '99+' : unreadNotifsCount}
+                                                </span>
+                                            )}
+                                        </button>
+
+                                        {notificationsOpen && (
+                                            <>
+                                                {/* Backdrop for outside click */}
+                                                <div
+                                                    className="fixed inset-0 z-40"
+                                                    onClick={() => setNotificationsOpen(false)}
+                                                />
+
+                                                {/* Floating Popover Panel */}
+                                                <div className="absolute right-0 top-full mt-3 z-50 w-[360px] sm:w-[420px] max-w-[95vw] rounded-3xl border border-[var(--admin-border)] bg-[var(--admin-card)] shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150 overflow-hidden">
+                                                    {/* Header */}
+                                                    <div className="flex items-center justify-between border-b border-[var(--admin-border)]/60 bg-[var(--admin-card-header)]/80 px-4 py-3.5">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#ebb95e]/20 text-[#8a5d16]">
+                                                                <BellIcon className="h-4.5 w-4.5" />
+                                                            </div>
+                                                            <div>
+                                                                <h3 className="text-sm font-bold text-[var(--admin-text)]">Centre de Notifications</h3>
+                                                                <p className="text-[11px] text-[var(--admin-muted)]">
+                                                                    {unreadNotifsCount > 0 ? `${unreadNotifsCount} alerte(s) non lue(s)` : 'Toutes les alertes sont traitées'}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        {unreadNotifsCount > 0 && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={handleMarkAllNotifsRead}
+                                                                className="rounded-full bg-[#ebb95e]/15 px-2.5 py-1 text-[11px] font-semibold text-[#8a5d16] hover:bg-[#ebb95e]/25 transition"
+                                                                title="Marquer tout comme lu"
+                                                            >
+                                                                Tout marquer lu
+                                                            </button>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Filter Tabs */}
+                                                    <div className="flex border-b border-[var(--admin-border)]/40 bg-black/[0.02] px-3 py-2 gap-1.5 text-xs font-medium">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setNotifFilter('all')}
+                                                            className={cn(
+                                                                "rounded-xl px-2.5 py-1 transition",
+                                                                notifFilter === 'all' ? "bg-white text-[var(--admin-text)] font-semibold shadow-xs" : "text-[var(--admin-muted)] hover:text-[var(--admin-text)]"
+                                                            )}
+                                                        >
+                                                            Toutes ({liveNotifications.length})
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setNotifFilter('unread')}
+                                                            className={cn(
+                                                                "rounded-xl px-2.5 py-1 transition",
+                                                                notifFilter === 'unread' ? "bg-white text-[var(--admin-text)] font-semibold shadow-xs" : "text-[var(--admin-muted)] hover:text-[var(--admin-text)]"
+                                                            )}
+                                                        >
+                                                            Non lues ({unreadNotifsCount})
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setNotifFilter('alerts')}
+                                                            className={cn(
+                                                                "rounded-xl px-2.5 py-1 transition",
+                                                                notifFilter === 'alerts' ? "bg-white text-[var(--admin-text)] font-semibold shadow-xs" : "text-[var(--admin-muted)] hover:text-[var(--admin-text)]"
+                                                            )}
+                                                        >
+                                                            Alertes critiques
+                                                        </button>
+                                                    </div>
+
+                                                    {/* Notifications List */}
+                                                    <div className="max-h-[380px] overflow-y-auto divide-y divide-[var(--admin-border)]/40">
+                                                        {filteredNotifs.length === 0 ? (
+                                                            <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
+                                                                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 mb-2">
+                                                                    <CheckCircleIcon className="h-6 w-6" />
+                                                                </div>
+                                                                <p className="text-sm font-semibold text-[var(--admin-text)]">Aucune notification</p>
+                                                                <p className="text-xs text-[var(--admin-muted)] mt-0.5">Vous êtes parfaitement à jour sur toutes les activités du système.</p>
+                                                            </div>
+                                                        ) : (
+                                                            filteredNotifs.map((notif) => {
+                                                                const isUnread = !notif.read_at;
+                                                                return (
+                                                                    <div
+                                                                        key={notif.id}
+                                                                        className={cn(
+                                                                            "group flex items-start gap-3 p-3.5 transition hover:bg-black/[0.02]",
+                                                                            isUnread ? "bg-[#ebb95e]/[0.06]" : ""
+                                                                        )}
+                                                                    >
+                                                                        <div className="shrink-0 mt-0.5">
+                                                                            {notif.type === 'kyc' && (
+                                                                                <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-amber-500/15 text-amber-600">
+                                                                                    <ShieldIcon className="h-5 w-5" />
+                                                                                </div>
+                                                                            )}
+                                                                            {['litige', 'fraud', 'fraud_alert'].includes(notif.type) && (
+                                                                                <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-rose-500/15 text-rose-600">
+                                                                                    <AlertIcon className="h-5 w-5" />
+                                                                                </div>
+                                                                            )}
+                                                                            {['mission', 'referent'].includes(notif.type) && (
+                                                                                <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-blue-500/15 text-blue-600">
+                                                                                    <ClipboardIcon className="h-5 w-5" />
+                                                                                </div>
+                                                                            )}
+                                                                            {['payment', 'transaction'].includes(notif.type) && (
+                                                                                <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-emerald-500/15 text-emerald-600">
+                                                                                    <WalletIcon className="h-5 w-5" />
+                                                                                </div>
+                                                                            )}
+                                                                            {!['kyc', 'litige', 'fraud', 'fraud_alert', 'mission', 'referent', 'payment', 'transaction'].includes(notif.type) && (
+                                                                                <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[#ebb95e]/20 text-[#8a5d16]">
+                                                                                    <BellIcon className="h-5 w-5" />
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+
+                                                                        <div className="min-w-0 flex-1">
+                                                                            <div className="flex items-center justify-between gap-1 mb-0.5">
+                                                                                <p className={cn("text-xs font-semibold truncate", isUnread ? "text-[var(--admin-text)]" : "text-[var(--admin-text)]/80")}>
+                                                                                    {notif.title}
+                                                                                </p>
+                                                                                {isUnread && (
+                                                                                    <span className="h-2 w-2 rounded-full bg-[#f15f57] shrink-0" />
+                                                                                )}
+                                                                            </div>
+                                                                            <p className="text-xs text-[var(--admin-muted)] line-clamp-2 leading-relaxed">
+                                                                                {notif.body}
+                                                                            </p>
+                                                                            <div className="mt-2 flex items-center justify-between gap-2">
+                                                                                <span className="text-[10px] text-[var(--admin-muted)]">
+                                                                                    {new Date(notif.created_at).toLocaleDateString('fr-FR', {
+                                                                                        day: '2-digit',
+                                                                                        month: 'short',
+                                                                                        hour: '2-digit',
+                                                                                        minute: '2-digit',
+                                                                                    })}
+                                                                                </span>
+
+                                                                                <div className="flex items-center gap-1.5">
+                                                                                    {notif.action_url ? (
+                                                                                        <button
+                                                                                            type="button"
+                                                                                            onClick={() => handleMarkNotifRead(notif)}
+                                                                                            className="rounded-lg bg-[var(--admin-text)] text-[var(--admin-card)] px-2.5 py-1 text-[11px] font-semibold hover:opacity-90 transition cursor-pointer"
+                                                                                        >
+                                                                                            {notif.action_label || 'Consulter'}
+                                                                                        </button>
+                                                                                    ) : isUnread && typeof notif.id === 'number' && (
+                                                                                        <button
+                                                                                            type="button"
+                                                                                            onClick={() => handleMarkNotifRead(notif)}
+                                                                                            className="rounded-lg bg-black/5 hover:bg-black/10 text-[var(--admin-text)] px-2 py-1 text-[11px] font-semibold transition cursor-pointer"
+                                                                                        >
+                                                                                            Marquer lu
+                                                                                        </button>
+                                                                                    )}
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            })
+                                                        )}
+                                                    </div>
+
+                                                    {/* Footer */}
+                                                    <div className="border-t border-[var(--admin-border)]/60 bg-[var(--admin-card-header)]/50 px-4 py-2.5 text-center">
+                                                        <p className="text-[11px] text-[var(--admin-muted)] flex items-center justify-center gap-1.5">
+                                                            <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />
+                                                            Synchronisation temps réel active
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
 
                                     <div className="hidden items-center gap-3 rounded-3xl bg-white/50 px-3 py-2 sm:flex">
                                         <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#ebb95e] text-sm font-bold text-[#241b16]">
