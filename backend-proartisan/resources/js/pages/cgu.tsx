@@ -160,11 +160,11 @@ export default function Cgu() {
                     <section>
                         <h2 className="text-2xl font-bold text-[var(--landing-night)] mb-4 flex items-center gap-3">
                             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--landing-cream)] text-[var(--landing-gold-deep)] text-sm font-black">5</span>
-                            Responsabilités, Litiges et Score N'Zassa
+                            Responsabilités, Litiges et Score ProsArtisan
                         </h2>
                         <div className="space-y-4 text-[var(--landing-copy)] leading-relaxed">
                             <p>
-                                <strong>Score N'Zassa :</strong> Chaque artisan est évalué à la fin de sa mission pour calculer son Score N'Zassa (0 à 100), basé sur sa fiabilité, son intégrité, la qualité et sa réactivité. Ce score conditionne la visibilité de l'artisan et son accès aux micro-crédits d'urgence. Un score trop bas peut entraîner une suspension.
+                                <strong>Score ProsArtisan :</strong> Chaque artisan est évalué à la fin de sa mission pour calculer son Score ProsArtisan (0 à 1000), basé sur sa fiabilité, son intégrité, la qualité et sa réactivité. Ce score conditionne la visibilité de l'artisan et son accès aux micro-crédits d'urgence. Un score trop bas peut entraîner une suspension.
                             </p>
                             <p>
                                 <strong>Litiges :</strong> En cas de désaccord sur un chantier ou un paiement, un bouton "Signalement" permet de bloquer le séquestre et de faire intervenir un modérateur. Les décisions d'arbitrage de ProsArtisan (remboursement, gel, paiement) s'imposent aux parties dans un délai raisonnable.

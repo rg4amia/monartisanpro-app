@@ -49,7 +49,7 @@ class EvaluationController extends Controller
             'reactivite'   => $request->reactivite,
         ]);
 
-        // Recalcul Score N'Zassa
+        // Recalcul Score ProsArtisan
         $evalue = $evaluation->evalue;
         if ($evalue->isArtisan()) {
             $newScore = $this->scoreService->recalculate($evalue);

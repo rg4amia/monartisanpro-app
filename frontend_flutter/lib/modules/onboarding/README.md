@@ -2,7 +2,7 @@
 
 ## Vue d'ensemble
 
-Ce module gère le splash screen et le flow d'onboarding de l'application N'Zassa, basé sur les designs fournis.
+Ce module gère le splash screen et le flow d'onboarding de l'application ProsArtisan, basé sur les designs fournis.
 
 ## Structure
 
@@ -19,7 +19,7 @@ onboarding/
 
 ### 1. Splash Screen (`/splash`)
 
-- Affiche le logo N'Zassa avec shield et cœur
+- Affiche le logo ProsArtisan avec shield et cœur
 - Indicateur de chargement
 - Badge "SECURE CONNECTION"
 - Durée : 2 secondes
@@ -49,7 +49,7 @@ onboarding/
 - Illustration cadenas/wallet
 - Description : paiements sécurisés en séquestre
 
-**Page 3 : Trust with N'Zassa Score**
+**Page 3 : Trust with ProsArtisan Score**
 
 - Fond blanc
 - Card profile avec :

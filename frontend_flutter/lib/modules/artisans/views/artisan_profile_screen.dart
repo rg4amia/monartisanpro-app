@@ -6,7 +6,7 @@ import '../../../app/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../data/models/artisan_model.dart';
-import '../../../shared/widgets/score_nzassa.dart';
+import '../../../shared/widgets/score_prosartisan.dart';
 import '../../missions/controllers/missions_controller.dart';
 import '../../missions/controllers/artisan_selection_controller.dart';
 import '../controllers/artisan_controller.dart';

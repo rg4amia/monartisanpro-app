@@ -94,7 +94,7 @@ class AuthService
                 \App\Models\Notification::create([
                     'user_id' => $user->id,
                     'title'   => 'Alerte sécurité : Changement d\'appareil suspect',
-                    'body'    => 'Un changement suspect d\'appareil (IMEI) a été détecté. Votre Score N\'Zassa est gelé par mesure de sécurité.',
+                    'body'    => 'Un changement suspect d\'appareil (IMEI) a été détecté. Votre Score ProsArtisan est gelé par mesure de sécurité.',
                     'type'    => 'security_alert',
                 ]);
 

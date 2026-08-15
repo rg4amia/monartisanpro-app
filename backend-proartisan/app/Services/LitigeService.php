@@ -696,7 +696,7 @@ class LitigeService
             $this->notificationService->send(
                 $juror,
                 'jury_assignment',
-                'Arbitrage N\'Zassa requis',
+                'Arbitrage ProsArtisan requis',
                 "Vous avez été sélectionné comme juré pour évaluer de manière anonyme le litige #{$litige->id}.",
                 ['litige_id' => $litige->id]
             );
@@ -745,7 +745,7 @@ class LitigeService
 
             $this->arbitrate(null, $litige, [
                 'decision' => $decision,
-                'notes' => 'Résolution automatique par consensus du Jury N\'Zassa (Votes: ' . $conformeCount . ' CONFORME, ' . $nonConformeCount . ' NON_CONFORME).',
+                'notes' => 'Résolution automatique par consensus du Jury ProsArtisan (Votes: ' . $conformeCount . ' CONFORME, ' . $nonConformeCount . ' NON_CONFORME).',
                 'resolution_reason' => $decision === 'artisan' ? 'jury_consensual_conforme' : 'jury_consensual_non_conforme',
             ]);
         }

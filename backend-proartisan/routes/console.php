@@ -18,7 +18,7 @@ Schedule::command(AutoReleaseJalonsCommand::class)
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/auto-release-jalons.log'));
 
-// Dégradation temporelle du Score N'Zassa (« La Rouille »)
+// Dégradation temporelle du Score ProsArtisan (« La Rouille »)
 // Backlog Epic 12 — Inactivité ≥ 60 jours → −5 pts / semaine
 Schedule::command(DecayScoreCommand::class)
     ->daily()
