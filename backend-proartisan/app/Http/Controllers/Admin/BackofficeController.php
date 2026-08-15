@@ -74,6 +74,11 @@ class BackofficeController extends Controller
         return $this->renderPage('admin/communications');
     }
 
+    public function notifications(): Response
+    {
+        return $this->renderPage('admin/notifications');
+    }
+
     public function storeCommunication(StoreCommunicationRequest $request, CommunicationService $service): RedirectResponse
     {
         $service->store($request->validated(), $request->user());

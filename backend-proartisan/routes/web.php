@@ -56,6 +56,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/ai-dashboard/settings', [BackofficeController::class, 'updateAiSettings'])->name('ai-dashboard.settings.update');
         Route::get('/roles-permissions', [BackofficeController::class, 'rolesPermissions'])->name('roles-permissions');
         Route::get('/communications', [BackofficeController::class, 'communications'])->name('communications');
+        Route::get('/notifications', [BackofficeController::class, 'notifications'])->name('notifications');
         Route::post('/communications', [BackofficeController::class, 'storeCommunication'])->name('communications.store');
         Route::put('/communications/{communication}', [BackofficeController::class, 'updateCommunication'])->name('communications.update');
         Route::delete('/communications/{communication}', [BackofficeController::class, 'destroyCommunication'])->name('communications.destroy');

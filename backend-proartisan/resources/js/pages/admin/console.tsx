@@ -334,7 +334,7 @@ const tabRoutes: Record<AdminTab, string> = {
     roles_permissions: '/admin/roles-permissions',
     evaluations: '/admin/evaluations',
     communications: '/admin/communications',
-    notifications: '/admin/dashboard',
+    notifications: '/admin/notifications',
 };
 
 const tabMeta: Record<AdminTab, { description: string; label: string; section: string }> = {
