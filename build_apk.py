@@ -69,14 +69,15 @@ os.chdir(FLUTTER_DIR)
 subprocess.run("flutter clean", shell=True)
 subprocess.run("flutter pub get", shell=True)
 
-# 3. Compilation officielle via Flutter Tool (regénère proprement le Kernel AOT)
-print("\n[3/5] Compilation Flutter APK Release...")
-flutter_build_cmd = "flutter build apk --release --no-tree-shake-icons"
+# 3. Compilation officielle via Flutter Tool (regénère proprement le Kernel AOT pour toutes les architectures)
+print("\n[3/5] Compilation Flutter APK Release (Split-per-ABI + Universal)...")
+flutter_build_cmd = "flutter build apk --release --split-per-abi --no-tree-shake-icons"
 result = subprocess.run(flutter_build_cmd, shell=True)
 
 # 4. Copie des APKs générés vers la racine du projet
 print("\n[4/5] Copie des APKs generes...")
 build_out_dirs = [
+    os.path.join(FLUTTER_DIR, "build", "app", "outputs", "flutter-apk"),
     os.path.join(FLUTTER_DIR, "android", "app", "build", "outputs", "flutter-apk"),
     r"C:\Users\Utilisateur\build_pa\app\outputs\flutter-apk"
 ]
@@ -86,22 +87,26 @@ for build_out_dir in build_out_dirs:
     if os.path.exists(build_out_dir):
         print(f"Recherche d'APKs dans : {build_out_dir}")
         for filename in os.listdir(build_out_dir):
-            if filename.endswith(".apk") and "release" in filename:
+            if filename.endswith(".apk") and ("release" in filename or filename == "prosartisan-app.apk"):
                 source_path = os.path.join(build_out_dir, filename)
-                target_paths = [
-                    os.path.join(PROJECT_ROOT, "prosartisan-app.apk"),
-                    os.path.join(r"C:\Users\Utilisateur\build_pa\app\outputs\flutter-apk\prosartisan-app.apk")
-                ]
-                for target_path in target_paths:
-                    target_dir = os.path.dirname(target_path)
-                    try:
-                        os.makedirs(target_dir, exist_ok=True)
-                        shutil.copy2(source_path, target_path)
-                        size_mb = os.path.getsize(target_path) / (1024 * 1024)
-                        print(f" -> Copie réussie : {target_path} ({size_mb:.2f} MB)")
-                        copied_any = True
-                    except Exception as e:
-                        print(f" [!] Echec de copie pour {filename} vers {target_path} : {e}")
+                dest_name = filename
+                if filename == "app-release.apk":
+                    dest_name = "prosartisan-app-universal.apk"
+                elif filename == "app-arm64-v8a-release.apk":
+                    dest_name = "prosartisan-arm64-v8a.apk"
+                elif filename == "app-armeabi-v7a-release.apk":
+                    dest_name = "prosartisan-armeabi-v7a.apk"
+                elif filename == "app-x86_64-release.apk":
+                    dest_name = "prosartisan-x86_64.apk"
+                
+                target_path = os.path.join(PROJECT_ROOT, dest_name)
+                try:
+                    shutil.copy2(source_path, target_path)
+                    size_mb = os.path.getsize(target_path) / (1024 * 1024)
+                    print(f" -> Copie réussie : {target_path} ({size_mb:.2f} MB)")
+                    copied_any = True
+                except Exception as e:
+                    print(f" [!] Echec de copie pour {filename} vers {target_path} : {e}")
 
 if not copied_any:
     print("\n[!] Erreur : Aucun fichier APK généré trouvé.")

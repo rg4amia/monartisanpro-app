@@ -7,7 +7,7 @@ import AiDashboardPanel from './ai-dashboard-panel';
 import LlmAdminPanel from './llm-admin-panel';
 import RolesPermissionsPanel from './roles-permissions-panel';
 
-type AdminTab = 'dashboard' | 'kyc' | 'missions' | 'litiges' | 'users' | 'transactions' | 'settings' | 'llm_admin' | 'roles_permissions' | 'evaluations' | 'ai_dashboard' | 'communications';
+type AdminTab = 'dashboard' | 'kyc' | 'missions' | 'litiges' | 'notifications' | 'users' | 'transactions' | 'settings' | 'llm_admin' | 'roles_permissions' | 'evaluations' | 'ai_dashboard' | 'communications';
 type ThemeMode = 'light' | 'dark';
 type Tone = 'amber' | 'green' | 'rose' | 'blue' | 'slate';
 
@@ -334,6 +334,7 @@ const tabRoutes: Record<AdminTab, string> = {
     roles_permissions: '/admin/roles-permissions',
     evaluations: '/admin/evaluations',
     communications: '/admin/communications',
+    notifications: '/admin/dashboard',
 };
 
 const tabMeta: Record<AdminTab, { description: string; label: string; section: string }> = {
@@ -397,6 +398,11 @@ const tabMeta: Record<AdminTab, { description: string; label: string; section: s
         section: 'COMMUNICATION',
         description: 'Gérez les annonces et astuces "Le saviez-vous ?" diffusées aux utilisateurs de la plateforme.',
     },
+    notifications: {
+        label: 'Notifications & Alertes',
+        section: 'COMMUNICATION',
+        description: 'Centre de notifications système, alertes KYC, litiges et anomalies de sécurité de la plateforme.',
+    },
 };
 
 const searchPlaceholders: Record<AdminTab, string> = {
@@ -412,6 +418,7 @@ const searchPlaceholders: Record<AdminTab, string> = {
     ai_dashboard: 'Rechercher un log ou un modèle...',
     evaluations: 'Rechercher une évaluation, un artisan ou un commentaire...',
     communications: 'Rechercher une communication, un titre ou une cible...',
+    notifications: 'Rechercher une notification ou alerte...',
 };
 
 const quickDockTabs: AdminTab[] = ['dashboard', 'missions', 'users', 'settings'];
@@ -1198,6 +1205,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                 { count: kycPending, id: 'kyc', label: tabMeta.kyc.label },
                 { count: missionsInProgress, id: 'missions', label: tabMeta.missions.label },
                 { count: openDisputes, id: 'litiges', label: tabMeta.litiges.label },
+                { count: unreadNotifsCount, id: 'notifications', label: 'Notifications' },
                 { id: 'llm_admin', label: 'Administration LLM' },
                 { id: 'ai_dashboard', label: 'Suivi & Coûts IA' },
             ],
@@ -1222,6 +1230,13 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
 
     const heroStats = useMemo(() => {
         switch (activeTab) {
+            case 'notifications':
+                return [
+                    { label: 'Alertes globales', tone: 'amber' as const, value: `${liveNotifications.length}` },
+                    { label: 'Non lues', tone: 'rose' as const, value: `${unreadNotifsCount}` },
+                    { label: 'Dossiers KYC', tone: 'blue' as const, value: `${dashboard.kyc_en_attente ?? 0}` },
+                    { label: 'Litiges ouverts', tone: 'green' as const, value: `${dashboard.litiges_ouverts ?? 0}` },
+                ];
             case 'dashboard':
                 return [
                     { label: 'Utilisateurs', tone: 'amber' as const, value: numberFormat.format(totalUsers) },
@@ -3058,6 +3073,83 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                 </section>
                             ) : null}
 
+                            {activeTab === 'notifications' ? (
+                                <section className="mt-5 space-y-5">
+                                    <Surface className="rounded-[32px] p-5 lg:p-6">
+                                        <div className="flex items-center justify-between gap-4 pb-4 border-b border-[var(--admin-border)]">
+                                            <div>
+                                                <h3 className="text-lg font-bold text-[var(--admin-text)]">Centre de Notifications & Alertes</h3>
+                                                <p className="text-xs text-[var(--admin-text-soft)]">Toutes les alertes système, alertes KYC, litiges et anomalies de sécurité de la plateforme ProsArtisan.</p>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={handleMarkAllNotifsRead}
+                                                className="admin-button admin-button--secondary text-xs px-4 py-2"
+                                            >
+                                                Tout marquer comme lu ({unreadNotifsCount})
+                                            </button>
+                                        </div>
+
+                                        <div className="mt-4 flex gap-2 border-b border-[var(--admin-border)] pb-3">
+                                            <button
+                                                type="button"
+                                                onClick={() => setNotifFilter('all')}
+                                                className={cn('rounded-xl px-3 py-1.5 text-xs font-semibold transition', notifFilter === 'all' ? 'bg-[#ebb95e] text-[#241b16]' : 'text-[var(--admin-text-soft)] hover:bg-white/40')}
+                                            >
+                                                Toutes ({liveNotifications.length})
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setNotifFilter('unread')}
+                                                className={cn('rounded-xl px-3 py-1.5 text-xs font-semibold transition', notifFilter === 'unread' ? 'bg-[#ebb95e] text-[#241b16]' : 'text-[var(--admin-text-soft)] hover:bg-white/40')}
+                                            >
+                                                Non lues ({unreadNotifsCount})
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setNotifFilter('alerts')}
+                                                className={cn('rounded-xl px-3 py-1.5 text-xs font-semibold transition', notifFilter === 'alerts' ? 'bg-[#ebb95e] text-[#241b16]' : 'text-[var(--admin-text-soft)] hover:bg-white/40')}
+                                            >
+                                                Alertes critiques
+                                            </button>
+                                        </div>
+
+                                        <div className="mt-4 space-y-3">
+                                            {filteredNotifs.length > 0 ? (
+                                                filteredNotifs.map((n) => (
+                                                    <div key={n.id} className={cn('flex items-start justify-between gap-4 p-4 rounded-2xl border transition', !n.read_at ? 'bg-amber-500/10 border-amber-500/30' : 'bg-white/40 border-[var(--admin-border)]')}>
+                                                        <div className="flex gap-3">
+                                                            <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#f8e4bc] text-[#b77918]">
+                                                                <BellIcon className="h-5 w-5" />
+                                                            </div>
+                                                            <div>
+                                                                <div className="flex items-center gap-2">
+                                                                    <h4 className="text-sm font-bold text-[var(--admin-text)]">{n.title}</h4>
+                                                                    {!n.read_at && <span className="h-2 w-2 rounded-full bg-amber-500"></span>}
+                                                                </div>
+                                                                <p className="mt-1 text-xs text-[var(--admin-text-soft)]">{n.body}</p>
+                                                                <span className="mt-2 block text-[10px] text-[var(--admin-muted)]">{shortDate(n.created_at)}</span>
+                                                            </div>
+                                                        </div>
+                                                        {n.action_url && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleMarkNotifRead(n)}
+                                                                className="admin-button admin-button--primary text-xs px-3 py-1.5 shrink-0"
+                                                            >
+                                                                {n.action_label || 'Consulter'}
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <p className="py-8 text-center text-sm text-[var(--admin-text-soft)]">Aucune notification disponible.</p>
+                                            )}
+                                        </div>
+                                    </Surface>
+                                </section>
+                            ) : null}
+
                             {activeTab === 'roles_permissions' ? (
                                 <section className="mt-5">
                                     <RolesPermissionsPanel
@@ -4685,6 +4777,8 @@ function TabIcon({ className = 'h-5 w-5', tab }: { className?: string; tab: Admi
         case 'evaluations':
             return <StarIcon className={className} />;
         case 'communications':
+            return <BellIcon className={className} />;
+        case 'notifications':
             return <BellIcon className={className} />;
         default:
             return <DashboardIcon className={className} />;
