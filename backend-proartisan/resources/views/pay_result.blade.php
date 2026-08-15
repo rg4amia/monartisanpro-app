@@ -179,18 +179,30 @@
             <p class="subtitle">{{ $message }}</p>
         @endif
 
-        <a href="prosartisan://payment-result?transaction_id={{ $transaction->id }}&status={{ $statusStr }}&mission_id={{ $transaction->mission_id }}" class="btn btn-primary" id="return-btn">
+        <a href="intent://payment-result?transaction_id={{ $transaction->id }}&status={{ $statusStr }}&mission_id={{ $transaction->mission_id }}#Intent;scheme=prosartisan;package=com.prosartisan.app;end" onclick="triggerReturn(); return true;" class="btn btn-primary" id="return-btn">
             ⬅️ Retourner sur ProsArtisan
         </a>
     </div>
 
     <script>
-        const deepLink = "prosartisan://payment-result?transaction_id={{ $transaction->id }}&status={{ $statusStr }}&mission_id={{ $transaction->mission_id }}";
-        
-        // Redirection automatique vers l'application après 1.5 seconde
-        setTimeout(function() {
-            window.location.href = deepLink;
-        }, 1500);
+        const transactionId = "{{ $transaction->id }}";
+        const statusStr = "{{ $statusStr }}";
+        const missionId = "{{ $transaction->mission_id }}";
+
+        const intentUrl = "intent://payment-result?transaction_id=" + transactionId + "&status=" + statusStr + "&mission_id=" + missionId + "#Intent;scheme=prosartisan;package=com.prosartisan.app;end";
+        const customSchemeUrl = "prosartisan://payment-result?transaction_id=" + transactionId + "&status=" + statusStr + "&mission_id=" + missionId;
+
+        function triggerReturn() {
+            window.location.href = intentUrl;
+            setTimeout(function() {
+                window.location.href = customSchemeUrl;
+            }, 300);
+        }
+
+        // Auto trigger return on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            setTimeout(triggerReturn, 600);
+        });
     </script>
 </body>
 </html>
