@@ -548,7 +548,40 @@ function sumAmount(items: AdminTransaction[]): number {
 export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
     const activeTab = initialTab;
     const pageProps = usePage<AdminPageProps>().props;
-    const { auth, dashboard, errors, flash, fournisseurs, kycUsers, cnmciUsers = [], litiges, missions, transactions, users, settingsList, evaluationsList, artisansScores, scoreLedger, communications, adminNotifications = [] } = pageProps;
+    const {
+        auth,
+        dashboard = {
+            users_total: 0,
+            artisans_actifs: 0,
+            clients_actifs: 0,
+            fournisseurs_agrees: 0,
+            missions_en_cours: 0,
+            missions_en_litige: 0,
+            litiges_ouverts: 0,
+            kyc_en_attente: 0,
+            referent_required_open: 0,
+            recent_fraud_alerts: 0,
+            volume_transactions_24h: 0,
+        },
+        errors = {},
+        flash = {},
+        fournisseurs = [],
+        kycUsers = [],
+        cnmciUsers = [],
+        litiges = [],
+        missions = [],
+        transactions = [],
+        users = [],
+        settingsList = [],
+        evaluationsList = [],
+        artisansScores = [],
+        scoreLedger = [],
+        communications = [],
+        adminNotifications = [],
+        sectors = [],
+        rolesPermissions = {},
+        allPermissions = [],
+    } = (pageProps || {}) as any;
 
     const [notificationsOpen, setNotificationsOpen] = useState<boolean>(false);
     const [notifFilter, setNotifFilter] = useState<'all' | 'unread' | 'alerts'>('all');
@@ -1253,7 +1286,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
             case 'roles_permissions':
                 return [
                     { label: 'Rôles gérés', tone: 'amber' as const, value: '5 Rôles' },
-                    { label: 'Actions système', tone: 'green' as const, value: `${props.allPermissions?.length ?? 0} Actions` },
+                    { label: 'Actions système', tone: 'green' as const, value: `${allPermissions?.length ?? 0} Actions` },
                     { label: 'Sécurité d\'accès', tone: 'blue' as const, value: 'RBAC Actif' },
                     { label: 'Mode', tone: 'slate' as const, value: 'Cache Actif' },
                 ];
@@ -1309,7 +1342,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         volume24h,
         evaluationsList,
         artisansScores,
-        props.allPermissions?.length,
+        allPermissions?.length,
         communications,
     ]);
 
@@ -2929,7 +2962,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                                         required
                                                     >
                                                         <option value="" disabled>Sélectionner catégorie</option>
-                                                        {props.sectors?.map(s => (
+                                                        {sectors?.map(s => (
                                                             <option key={s.id} value={s.id}>{s.name}</option>
                                                         ))}
                                                     </select>
@@ -2947,8 +2980,8 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                         </div>
 
                                         <div className="mt-6 space-y-6">
-                                            {props.sectors && props.sectors.length > 0 ? (
-                                                props.sectors.map((sector) => (
+                                            {sectors && sectors.length > 0 ? (
+                                                sectors.map((sector) => (
                                                     <div key={sector.id} className="p-5 rounded-2xl border border-[var(--admin-border)] bg-white/60 space-y-4">
                                                         <div className="flex items-center justify-between gap-4">
                                                             <div className="flex-1">
@@ -3028,8 +3061,8 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                             {activeTab === 'roles_permissions' ? (
                                 <section className="mt-5">
                                     <RolesPermissionsPanel
-                                        allPermissions={props.allPermissions ?? []}
-                                        rolesPermissions={props.rolesPermissions ?? {}}
+                                        allPermissions={allPermissions ?? []}
+                                        rolesPermissions={rolesPermissions ?? {}}
                                     />
                                 </section>
                             ) : null}
@@ -3043,11 +3076,11 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                             {activeTab === 'ai_dashboard' ? (
                                 <section className="mt-5">
                                     <AiDashboardPanel
-                                        stats={props.stats as any}
-                                        costsByModel={props.costsByModel as any}
-                                        dailyUsage={props.dailyUsage as any}
-                                        logs={props.logs as any}
-                                        settings={props.settings as any}
+                                        stats={(pageProps as any).stats}
+                                        costsByModel={(pageProps as any).costsByModel}
+                                        dailyUsage={(pageProps as any).dailyUsage}
+                                        logs={(pageProps as any).logs}
+                                        settings={(pageProps as any).settings}
                                     />
                                 </section>
                             ) : null}
