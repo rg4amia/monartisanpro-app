@@ -120,7 +120,7 @@ class DevisController extends GetxController {
     final payment = await _paymentRepo.initiatePayment(
       missionId: target.missionId,
       devisId: target.id,
-      montant: target.totalGeneral,
+      montant: target.totalGeneralTtc,
       provider: 'wave',
       phone: phone,
     );
