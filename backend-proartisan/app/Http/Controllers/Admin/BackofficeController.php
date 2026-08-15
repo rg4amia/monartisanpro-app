@@ -422,6 +422,87 @@ class BackofficeController extends Controller
 
     private function renderPage(string $component): Response
     {
+        $promoCodes = [];
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('promo_codes')) {
+                $promoCodes = \App\Models\PromoCode::orderByDesc('created_at')->get();
+            }
+        } catch (\Throwable $e) {
+            $promoCodes = [];
+        }
+
+        $sectors = [];
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('sectors')) {
+                $sectors = \App\Models\Sector::with('trades')->get();
+            }
+        } catch (\Throwable $e) {
+            $sectors = [];
+        }
+
+        $settingsList = [];
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('settings')) {
+                $settingsList = \App\Models\Setting::all();
+            }
+        } catch (\Throwable $e) {
+            $settingsList = [];
+        }
+
+        $communications = [];
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('communications')) {
+                $communications = Communication::with('auteur:id,name,phone')
+                    ->orderByDesc('updated_at')
+                    ->limit(100)
+                    ->get();
+            }
+        } catch (\Throwable $e) {
+            $communications = [];
+        }
+
+        $adminNotifications = [];
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('notifications')) {
+                $adminNotifications = Notification::where(function ($q) {
+                        if (Auth::check()) {
+                            $q->where('user_id', Auth::id())
+                              ->orWhereNull('user_id');
+                        } else {
+                            $q->whereNull('user_id');
+                        }
+                    })
+                    ->orderByDesc('created_at')
+                    ->limit(30)
+                    ->get();
+            }
+        } catch (\Throwable $e) {
+            $adminNotifications = [];
+        }
+
+        $allPermissions = [];
+        $rolesPermissions = [
+            'client' => [],
+            'artisan' => [],
+            'fournisseur' => [],
+            'referent' => [],
+            'admin' => [],
+        ];
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('permissions') && \Illuminate\Support\Facades\Schema::hasTable('permission_role')) {
+                $allPermissions = \App\Models\Permission::all();
+                foreach (['client', 'artisan', 'fournisseur', 'referent', 'admin'] as $role) {
+                    $rolesPermissions[$role] = \Illuminate\Support\Facades\DB::table('permission_role')
+                        ->join('permissions', 'permission_role.permission_id', '=', 'permissions.id')
+                        ->where('permission_role.role', $role)
+                        ->pluck('permissions.name')
+                        ->toArray();
+                }
+            }
+        } catch (\Throwable $e) {
+            // fallback
+        }
+
         return Inertia::render($component, [
             'dashboard' => $this->adminService->dashboard(),
             'fournisseurs' => $this->adminService->pendingFournisseurs(60)->items(),
@@ -436,52 +517,13 @@ class BackofficeController extends Controller
             'users' => $this->adminService->listUsers(null, null, null, 100)->items(),
             'evaluationsList' => $this->adminService->listEvaluations(100)->items(),
             'artisansScores' => $this->adminService->listArtisansScores(),
-            'settingsList' => \App\Models\Setting::all(),
-            'promoCodes' => \App\Models\PromoCode::orderByDesc('created_at')->get(),
-            'sectors' => \App\Models\Sector::with('trades')->get(),
-            'communications' => Communication::with('auteur:id,name,phone')
-                ->orderByDesc('updated_at')
-                ->limit(100)
-                ->get(),
-            'adminNotifications' => Notification::where(function ($q) {
-                    if (Auth::check()) {
-                        $q->where('user_id', Auth::id())
-                          ->orWhereNull('user_id');
-                    } else {
-                        $q->whereNull('user_id');
-                    }
-                })
-                ->orderByDesc('created_at')
-                ->limit(30)
-                ->get(),
-            'allPermissions' => \App\Models\Permission::all(),
-            'rolesPermissions' => [
-                'client' => \Illuminate\Support\Facades\DB::table('permission_role')
-                    ->join('permissions', 'permission_role.permission_id', '=', 'permissions.id')
-                    ->where('permission_role.role', 'client')
-                    ->pluck('permissions.name')
-                    ->toArray(),
-                'artisan' => \Illuminate\Support\Facades\DB::table('permission_role')
-                    ->join('permissions', 'permission_role.permission_id', '=', 'permissions.id')
-                    ->where('permission_role.role', 'artisan')
-                    ->pluck('permissions.name')
-                    ->toArray(),
-                'fournisseur' => \Illuminate\Support\Facades\DB::table('permission_role')
-                    ->join('permissions', 'permission_role.permission_id', '=', 'permissions.id')
-                    ->where('permission_role.role', 'fournisseur')
-                    ->pluck('permissions.name')
-                    ->toArray(),
-                'referent' => \Illuminate\Support\Facades\DB::table('permission_role')
-                    ->join('permissions', 'permission_role.permission_id', '=', 'permissions.id')
-                    ->where('permission_role.role', 'referent')
-                    ->pluck('permissions.name')
-                    ->toArray(),
-                'admin' => \Illuminate\Support\Facades\DB::table('permission_role')
-                    ->join('permissions', 'permission_role.permission_id', '=', 'permissions.id')
-                    ->where('permission_role.role', 'admin')
-                    ->pluck('permissions.name')
-                    ->toArray(),
-            ],
+            'settingsList' => $settingsList,
+            'promoCodes' => $promoCodes,
+            'sectors' => $sectors,
+            'communications' => $communications,
+            'adminNotifications' => $adminNotifications,
+            'allPermissions' => $allPermissions,
+            'rolesPermissions' => $rolesPermissions,
         ]);
     }
 

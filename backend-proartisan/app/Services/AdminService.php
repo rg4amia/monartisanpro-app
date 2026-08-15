@@ -271,134 +271,177 @@ class AdminService
 
     public function getFinancialKpis(): array
     {
-        // 1. Solde Général & Séquestre
-        $adminUser = User::where('role', 'admin')->first();
-        $soldeGeneralAdmin = ($adminUser?->wallet_mo ?? 0) + ($adminUser?->wallet_materiaux ?? 0);
+        try {
+            // 1. Solde Général & Séquestre
+            $adminUser = User::where('role', 'admin')->first();
+            $soldeGeneralAdmin = ($adminUser?->wallet_mo ?? 0) + ($adminUser?->wallet_materiaux ?? 0);
 
-        // Transactions de commission plateforme
-        $totalCommissionChantiers = (int) DB::table('wallet_transactions')
-            ->where('description', 'like', '%Commission plateforme%')
-            ->orWhere('metadata->type', 'platform_commission')
-            ->sum('montant');
+            // Transactions de commission plateforme
+            $totalCommissionChantiers = 0;
+            if (\Illuminate\Support\Facades\Schema::hasTable('wallet_transactions')) {
+                $totalCommissionChantiers = (int) DB::table('wallet_transactions')
+                    ->where('description', 'like', '%Commission plateforme%')
+                    ->orWhere('metadata->type', 'platform_commission')
+                    ->sum('montant');
+            }
 
-        $totalCommissionEcommerce = (int) DB::table('orders')
-            ->whereIn('status', ['paid', 'prepared', 'searching_driver', 'driver_assigned', 'driver_picked_up', 'shipping', 'delivered'])
-            ->sum('platform_fee');
+            $totalCommissionEcommerce = 0;
+            if (\Illuminate\Support\Facades\Schema::hasTable('orders')) {
+                $totalCommissionEcommerce = (int) DB::table('orders')
+                    ->whereIn('status', ['paid', 'prepared', 'searching_driver', 'driver_assigned', 'driver_picked_up', 'shipping', 'delivered'])
+                    ->sum('platform_fee');
+            }
 
-        $soldeCumuleCommissions = $totalCommissionChantiers + $totalCommissionEcommerce;
+            $soldeCumuleCommissions = $totalCommissionChantiers + $totalCommissionEcommerce;
 
-        // Encours séquestre
-        $sequestreMoEncours = (int) User::where('role', 'artisan')->sum('wallet_mo');
-        $sequestreMateriauxEncours = (int) User::where('role', 'artisan')->sum('wallet_materiaux');
+            // Encours séquestre
+            $sequestreMoEncours = (int) User::where('role', 'artisan')->sum('wallet_mo');
+            $sequestreMateriauxEncours = (int) User::where('role', 'artisan')->sum('wallet_materiaux');
 
-        // Total libéré (Paiement des jalons + commandes livrées)
-        $totalLibereArtisans = (int) Jalon::where('statut', 'paye')->sum('montant');
-        $totalLibereFournisseurs = (int) Order::whereIn('status', ['prepared', 'delivered'])->sum('subtotal');
-        $totalLibereLivreurs = (int) Order::where('status', 'delivered')->sum('delivery_cost');
-        $totalLibereGeneral = $totalLibereArtisans + $totalLibereFournisseurs + $totalLibereLivreurs;
+            // Total libéré (Paiement des jalons + commandes livrées)
+            $totalLibereArtisans = \Illuminate\Support\Facades\Schema::hasTable('jalons') ? (int) Jalon::where('statut', 'paye')->sum('montant') : 0;
+            $totalLibereFournisseurs = \Illuminate\Support\Facades\Schema::hasTable('orders') ? (int) Order::whereIn('status', ['prepared', 'delivered'])->sum('subtotal') : 0;
+            $totalLibereLivreurs = \Illuminate\Support\Facades\Schema::hasTable('orders') ? (int) Order::where('status', 'delivered')->sum('delivery_cost') : 0;
+            $totalLibereGeneral = $totalLibereArtisans + $totalLibereFournisseurs + $totalLibereLivreurs;
 
-        // 2. Commissions par catégorie de métier et par année
-        $commissionsByCategoryYear = DB::table('jalons')
-            ->join('missions', 'jalons.mission_id', '=', 'missions.id')
-            ->leftJoin('devis', function ($join) {
-                $join->on('devis.mission_id', '=', 'missions.id')
-                     ->where('devis.statut', '=', 'accepte');
-            })
-            ->where('jalons.statut', '=', 'paye')
-            ->select(
-                DB::raw("COALESCE(NULLIF(missions.gemini_category, ''), 'Général / Divers') as category"),
-                DB::raw("YEAR(COALESCE(jalons.paye_at, jalons.updated_at)) as year"),
-                DB::raw("COUNT(DISTINCT missions.id) as missions_count"),
-                DB::raw("SUM(jalons.montant) as volume_brut"),
-                DB::raw("ROUND(SUM(jalons.montant * COALESCE(devis.commission_service_ratio, 0.10) / (1 + COALESCE(devis.commission_service_ratio, 0.10)))) as commission_net")
-            )
-            ->groupBy('category', 'year')
-            ->orderBy('year', 'desc')
-            ->orderBy('commission_net', 'desc')
-            ->get();
+            // 2. Commissions par catégorie de métier et par année
+            $commissionsByCategoryYear = collect([]);
+            if (\Illuminate\Support\Facades\Schema::hasTable('jalons') && \Illuminate\Support\Facades\Schema::hasTable('missions')) {
+                $commissionsByCategoryYear = DB::table('jalons')
+                    ->join('missions', 'jalons.mission_id', '=', 'missions.id')
+                    ->leftJoin('devis', function ($join) {
+                        $join->on('devis.mission_id', '=', 'missions.id')
+                             ->where('devis.statut', '=', 'accepte');
+                    })
+                    ->where('jalons.statut', '=', 'paye')
+                    ->select(
+                        DB::raw("COALESCE(NULLIF(missions.gemini_category, ''), 'Général / Divers') as category"),
+                        DB::raw("YEAR(COALESCE(jalons.paye_at, jalons.updated_at)) as year"),
+                        DB::raw("COUNT(DISTINCT missions.id) as missions_count"),
+                        DB::raw("SUM(jalons.montant) as volume_brut"),
+                        DB::raw("ROUND(SUM(jalons.montant * COALESCE(devis.commission_service_ratio, 0.10) / (1 + COALESCE(devis.commission_service_ratio, 0.10)))) as commission_net")
+                    )
+                    ->groupBy('category', 'year')
+                    ->orderBy('year', 'desc')
+                    ->orderBy('commission_net', 'desc')
+                    ->get();
+            }
 
-        // 3. Commissions et volume par Fournisseur (Quincailleries)
-        $commissionsBySupplier = DB::table('users')
-            ->where('users.role', '=', 'fournisseur')
-            ->leftJoin('fournisseurs_agrees', 'fournisseurs_agrees.user_id', '=', 'users.id')
-            ->leftJoin('orders', function ($join) {
-                $join->on('orders.supplier_id', '=', 'users.id')
-                     ->whereIn('orders.status', ['paid', 'prepared', 'searching_driver', 'driver_assigned', 'driver_picked_up', 'shipping', 'delivered']);
-            })
-            ->select(
-                'users.id as supplier_id',
-                'users.name as supplier_name',
-                'users.phone as supplier_phone',
-                DB::raw("COALESCE(fournisseurs_agrees.nom_boutique, users.name) as shop_name"),
-                DB::raw("COALESCE(fournisseurs_agrees.statut, 'en_attente') as agreement_status"),
-                DB::raw("COUNT(DISTINCT orders.id) as orders_count"),
-                DB::raw("COALESCE(SUM(orders.subtotal), 0) as volume_materiaux"),
-                DB::raw("COALESCE(SUM(orders.platform_fee), 0) as commission_prosartisan")
-            )
-            ->groupBy('users.id', 'users.name', 'users.phone', 'fournisseurs_agrees.nom_boutique', 'fournisseurs_agrees.statut')
-            ->orderByDesc('volume_materiaux')
-            ->get();
+            // 3. Commissions et volume par Fournisseur (Quincailleries)
+            $commissionsBySupplier = collect([]);
+            if (\Illuminate\Support\Facades\Schema::hasTable('orders') && \Illuminate\Support\Facades\Schema::hasTable('fournisseurs_agrees')) {
+                $commissionsBySupplier = DB::table('users')
+                    ->where('users.role', '=', 'fournisseur')
+                    ->leftJoin('fournisseurs_agrees', 'fournisseurs_agrees.user_id', '=', 'users.id')
+                    ->leftJoin('orders', function ($join) {
+                        $join->on('orders.supplier_id', '=', 'users.id')
+                             ->whereIn('orders.status', ['paid', 'prepared', 'searching_driver', 'driver_assigned', 'driver_picked_up', 'shipping', 'delivered']);
+                    })
+                    ->select(
+                        'users.id as supplier_id',
+                        'users.name as supplier_name',
+                        'users.phone as supplier_phone',
+                        DB::raw("COALESCE(fournisseurs_agrees.nom_boutique, users.name) as shop_name"),
+                        DB::raw("COALESCE(fournisseurs_agrees.statut, 'en_attente') as agreement_status"),
+                        DB::raw("COUNT(DISTINCT orders.id) as orders_count"),
+                        DB::raw("COALESCE(SUM(orders.subtotal), 0) as volume_materiaux"),
+                        DB::raw("COALESCE(SUM(orders.platform_fee), 0) as commission_prosartisan")
+                    )
+                    ->groupBy('users.id', 'users.name', 'users.phone', 'fournisseurs_agrees.nom_boutique', 'fournisseurs_agrees.statut')
+                    ->orderByDesc('volume_materiaux')
+                    ->get();
+            }
 
-        // 4. Commissions et activité par Livreur (Drivers)
-        $commissionsByDriver = DB::table('users')
-            ->where('users.role', '=', 'driver')
-            ->leftJoin('orders', function ($join) {
-                $join->on('orders.driver_id', '=', 'users.id')
-                     ->whereIn('orders.status', ['driver_assigned', 'driver_picked_up', 'shipping', 'delivered']);
-            })
-            ->select(
-                'users.id as driver_id',
-                'users.name as driver_name',
-                'users.phone as driver_phone',
-                DB::raw("COUNT(DISTINCT orders.id) as deliveries_count"),
-                DB::raw("COALESCE(SUM(orders.delivery_cost), 0) as total_frais_livraison"),
-                DB::raw("COALESCE(SUM(CASE WHEN orders.status = 'delivered' THEN orders.delivery_cost ELSE 0 END), 0) as gains_livreur_liberes")
-            )
-            ->groupBy('users.id', 'users.name', 'users.phone')
-            ->orderByDesc('deliveries_count')
-            ->get();
+            // 4. Commissions et activité par Livreur (Drivers)
+            $commissionsByDriver = collect([]);
+            if (\Illuminate\Support\Facades\Schema::hasTable('orders')) {
+                $commissionsByDriver = DB::table('users')
+                    ->where('users.role', '=', 'driver')
+                    ->leftJoin('orders', function ($join) {
+                        $join->on('orders.driver_id', '=', 'users.id')
+                             ->whereIn('orders.status', ['driver_assigned', 'driver_picked_up', 'shipping', 'delivered']);
+                    })
+                    ->select(
+                        'users.id as driver_id',
+                        'users.name as driver_name',
+                        'users.phone as driver_phone',
+                        DB::raw("COUNT(DISTINCT orders.id) as deliveries_count"),
+                        DB::raw("COALESCE(SUM(orders.delivery_cost), 0) as total_frais_livraison"),
+                        DB::raw("COALESCE(SUM(CASE WHEN orders.status = 'delivered' THEN orders.delivery_cost ELSE 0 END), 0) as gains_livreur_liberes")
+                    )
+                    ->groupBy('users.id', 'users.name', 'users.phone')
+                    ->orderByDesc('deliveries_count')
+                    ->get();
+            }
 
-        // 5. KPIs Recommandés Supplémentaires
-        $totalMissions = Mission::count();
-        $disputedMissions = Mission::where('status', 'disputed')->count();
-        $disputeRate = $totalMissions > 0 ? round(($disputedMissions / $totalMissions) * 100, 1) : 0.0;
+            // 5. KPIs Recommandés Supplémentaires
+            $totalMissions = Mission::count();
+            $disputedMissions = Mission::where('status', 'disputed')->count();
+            $disputeRate = $totalMissions > 0 ? round(($disputedMissions / $totalMissions) * 100, 1) : 0.0;
 
-        $totalDevisCount = DB::table('devis')->count();
-        $acceptedDevisCount = DB::table('devis')->where('statut', 'accepte')->count();
-        $devisConversionRate = $totalDevisCount > 0 ? round(($acceptedDevisCount / $totalDevisCount) * 100, 1) : 0.0;
+            $totalDevisCount = \Illuminate\Support\Facades\Schema::hasTable('devis') ? DB::table('devis')->count() : 0;
+            $acceptedDevisCount = \Illuminate\Support\Facades\Schema::hasTable('devis') ? DB::table('devis')->where('statut', 'accepte')->count() : 0;
+            $devisConversionRate = $totalDevisCount > 0 ? round(($acceptedDevisCount / $totalDevisCount) * 100, 1) : 0.0;
 
-        $avgChantierAmount = (int) round(Mission::whereNotNull('montant_total')->avg('montant_total') ?? 0);
-        $avgEcommerceAmount = (int) round(Order::avg('total_amount') ?? 0);
+            $avgChantierAmount = (int) round(Mission::whereNotNull('montant_total')->avg('montant_total') ?? 0);
+            $avgEcommerceAmount = \Illuminate\Support\Facades\Schema::hasTable('orders') ? (int) round(Order::avg('total_amount') ?? 0) : 0;
 
-        // Top 5 Artisans
-        $topArtisans = User::where('role', 'artisan')
-            ->orderByDesc('score_prosartisan')
-            ->take(5)
-            ->get(['id', 'name', 'phone', 'score_prosartisan', 'wallet_mo', 'wallet_materiaux']);
+            // Top 5 Artisans
+            $topArtisans = User::where('role', 'artisan')
+                ->orderByDesc('score_prosartisan')
+                ->take(5)
+                ->get(['id', 'name', 'phone', 'score_prosartisan', 'wallet_mo', 'wallet_materiaux']);
 
-        return [
-            'solde_general' => [
-                'solde_admin_wallet' => $soldeGeneralAdmin,
-                'total_commissions_cumulees' => $soldeCumuleCommissions,
-                'commissions_chantiers' => $totalCommissionChantiers,
-                'commissions_ecommerce' => $totalCommissionEcommerce,
-                'sequestre_mo_encours' => $sequestreMoEncours,
-                'sequestre_materiaux_encours' => $sequestreMateriauxEncours,
-                'total_libere_general' => $totalLibereGeneral,
-                'total_libere_artisans' => $totalLibereArtisans,
-                'total_libere_fournisseurs' => $totalLibereFournisseurs,
-                'total_libere_livreurs' => $totalLibereLivreurs,
-            ],
-            'commissions_by_category_year' => $commissionsByCategoryYear,
-            'commissions_by_supplier' => $commissionsBySupplier,
-            'commissions_by_driver' => $commissionsByDriver,
-            'additional_kpis' => [
-                'dispute_rate_percent' => $disputeRate,
-                'devis_conversion_rate_percent' => $devisConversionRate,
-                'aov_chantier' => $avgChantierAmount,
-                'aov_ecommerce' => $avgEcommerceAmount,
-                'top_artisans' => $topArtisans,
-            ],
-        ];
+            return [
+                'solde_general' => [
+                    'solde_admin_wallet' => $soldeGeneralAdmin,
+                    'total_commissions_cumulees' => $soldeCumuleCommissions,
+                    'commissions_chantiers' => $totalCommissionChantiers,
+                    'commissions_ecommerce' => $totalCommissionEcommerce,
+                    'sequestre_mo_encours' => $sequestreMoEncours,
+                    'sequestre_materiaux_encours' => $sequestreMateriauxEncours,
+                    'total_libere_general' => $totalLibereGeneral,
+                    'total_libere_artisans' => $totalLibereArtisans,
+                    'total_libere_fournisseurs' => $totalLibereFournisseurs,
+                    'total_libere_livreurs' => $totalLibereLivreurs,
+                ],
+                'commissions_by_category_year' => $commissionsByCategoryYear,
+                'commissions_by_supplier' => $commissionsBySupplier,
+                'commissions_by_driver' => $commissionsByDriver,
+                'additional_kpis' => [
+                    'dispute_rate_percent' => $disputeRate,
+                    'devis_conversion_rate_percent' => $devisConversionRate,
+                    'aov_chantier' => $avgChantierAmount,
+                    'aov_ecommerce' => $avgEcommerceAmount,
+                    'top_artisans' => $topArtisans,
+                ],
+            ];
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Erreur getFinancialKpis: ' . $e->getMessage());
+            return [
+                'solde_general' => [
+                    'solde_admin_wallet' => 0,
+                    'total_commissions_cumulees' => 0,
+                    'commissions_chantiers' => 0,
+                    'commissions_ecommerce' => 0,
+                    'sequestre_mo_encours' => 0,
+                    'sequestre_materiaux_encours' => 0,
+                    'total_libere_general' => 0,
+                    'total_libere_artisans' => 0,
+                    'total_libere_fournisseurs' => 0,
+                    'total_libere_livreurs' => 0,
+                ],
+                'commissions_by_category_year' => [],
+                'commissions_by_supplier' => [],
+                'commissions_by_driver' => [],
+                'additional_kpis' => [
+                    'dispute_rate_percent' => 0,
+                    'devis_conversion_rate_percent' => 0,
+                    'aov_chantier' => 0,
+                    'aov_ecommerce' => 0,
+                    'top_artisans' => [],
+                ],
+            ];
+        }
     }
 }
