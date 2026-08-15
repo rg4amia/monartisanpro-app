@@ -710,9 +710,9 @@ class PaymentController extends Controller
     }
 
     /**
-     * Valide ou échoue le paiement simulé.
+     * Valide ou échoue le paiement simulé avec application des protocoles de sécurité.
      */
-    public function validateMockPay(Request $request): \Illuminate\Http\RedirectResponse
+    public function validateMockPay(Request $request): \Illuminate\Contracts\View\View
     {
         $transactionId = $request->input('transaction_id');
         $action = $request->input('action'); // 'confirm' or 'fail'
@@ -725,9 +725,23 @@ class PaymentController extends Controller
                 'paid_at' => now(),
             ]);
 
+            // Protocol 1: Milestone / Jalon Payment Confirmation
             $this->handleJalonPaymentConfirmed($transaction);
 
+            // Protocol 2: Acompte / Escrow / Devis Acceptance Security Protocol
+            $devisId = $transaction->metadata['devis_id'] ?? null;
+            if ($devisId) {
+                $devis = Devis::find($devisId);
+                if ($devis && $devis->statut === 'soumis') {
+                    $devisService = app(\App\Services\DevisService::class);
+                    $devisService->accept($devis, $transaction);
+                    Log::info("[Paiement validé] Devis #{$devis->id} accepté et séquestre fragmenté pour la mission #{$devis->mission_id}");
+                }
+            }
+
             Log::info("Paiement simulé validé pour la transaction #{$transaction->id}");
+            $statusStr = 'success';
+            $message = 'Paiement confirmé avec succès ! Le séquestre a été sécurisé et la mission est financée.';
         } else {
             $transaction->update([
                 'statut' => PaymentStatus::ECHOUE,
@@ -735,8 +749,10 @@ class PaymentController extends Controller
                 'error_message' => 'Annulé par l\'utilisateur sur le simulateur.',
             ]);
             Log::info("Paiement simulé échoué pour la transaction #{$transaction->id}");
+            $statusStr = 'failed';
+            $message = 'Le paiement a été annulé par l\'utilisateur.';
         }
 
-        return response()->redirectToRoute('home');
+        return view('pay_result', compact('transaction', 'statusStr', 'message'));
     }
 }
