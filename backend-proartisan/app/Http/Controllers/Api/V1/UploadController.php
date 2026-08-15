@@ -20,8 +20,8 @@ class UploadController extends Controller
         // Stocke dans le dossier 'fileshare' du disque public
         $path = $file->store('fileshare', 'public');
 
-        // Récupère l'URL publique (chemin relatif)
-        $url = '/storage/' . $path;
+        // Récupère l'URL publique (chemin absolu)
+        $url = asset('storage/' . $path);
 
         return response()->json([
             'success' => true,

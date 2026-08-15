@@ -38,8 +38,10 @@ class OrderController extends Controller
             ], 422);
         }
 
+        $client = $request->user();
+        $lock = null;
+
         try {
-            $client = $request->user();
             if (! app()->environment('testing')) {
                 $lockKey = 'create_order_lock_' . $client->id;
                 $lock = \Illuminate\Support\Facades\Cache::lock($lockKey, 5);
@@ -76,10 +78,23 @@ class OrderController extends Controller
                 'data' => $order->load('items.product'),
             ], 201);
         } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Order creation error: ' . $e->getMessage(), [
+                'client_id' => $client?->id,
+                'supplier_id' => $request->supplier_id,
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
             ], 400);
+        } finally {
+            if ($lock) {
+                try {
+                    $lock->release();
+                } catch (\Exception $e) {
+                    // Ignore lock release exception if already expired
+                }
+            }
         }
     }
 

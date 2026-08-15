@@ -9,6 +9,11 @@ class SupplierProductResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $imageUrl = $this->image_url;
+        if ($imageUrl && !str_starts_with($imageUrl, 'http://') && !str_starts_with($imageUrl, 'https://')) {
+            $imageUrl = asset(ltrim($imageUrl, '/'));
+        }
+
         return [
             'id' => $this->id,
             'supplierId' => $this->supplier_id,
@@ -17,7 +22,7 @@ class SupplierProductResource extends JsonResource
             'description' => $this->description,
             'unitPrice' => $this->unit_price,
             'stockQuantity' => $this->stock_quantity,
-            'imageUrl' => $this->image_url,
+            'imageUrl' => $imageUrl,
             'isActive' => $this->is_active,
             'supplier' => $this->when(
                 $this->relationLoaded('supplier'),
