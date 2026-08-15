@@ -47,10 +47,12 @@ class OneSignalService
                 'data' => $data,
             ];
 
-            $response = Http::withHeaders([
-                'Authorization' => 'Basic ' . $this->restApiKey,
-                'Content-Type' => 'application/json',
-            ])->post($this->baseUrl, $payload);
+            $response = Http::timeout(3)
+                ->connectTimeout(2)
+                ->withHeaders([
+                    'Authorization' => 'Basic ' . $this->restApiKey,
+                    'Content-Type' => 'application/json',
+                ])->post($this->baseUrl, $payload);
 
             if ($response->successful()) {
                 Log::info("Notification OneSignal envoyée avec succès à l'utilisateur $userId");

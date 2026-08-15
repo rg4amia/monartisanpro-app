@@ -140,20 +140,28 @@ class OrderService
             ]);
 
             // Notification Fournisseur
-            app(\App\Services\NotificationService::class)->send(
-                $supplier,
-                'payment',
-                'Nouvelle commande reçue',
-                "La commande #{$order->id} d'un montant de " . number_format($order->subtotal, 0, ',', ' ') . " FCFA a été payée et est en attente de préparation."
-            );
+            try {
+                app(\App\Services\NotificationService::class)->send(
+                    $supplier,
+                    'payment',
+                    'Nouvelle commande reçue',
+                    "La commande #{$order->id} d'un montant de " . number_format($order->subtotal, 0, ',', ' ') . " FCFA a été payée et est en attente de préparation."
+                );
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("Notification fournisseur non bloquante : " . $e->getMessage());
+            }
 
             // Notification Client
-            app(\App\Services\NotificationService::class)->send(
-                $client,
-                'payment',
-                'Paiement commande confirmé',
-                "Votre paiement de " . number_format($order->total_amount, 0, ',', ' ') . " FCFA pour la commande #{$order->id} est sécurisé en compte séquestre."
-            );
+            try {
+                app(\App\Services\NotificationService::class)->send(
+                    $client,
+                    'payment',
+                    'Paiement commande confirmé',
+                    "Votre paiement de " . number_format($order->total_amount, 0, ',', ' ') . " FCFA pour la commande #{$order->id} est sécurisé en compte séquestre."
+                );
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("Notification client non bloquante : " . $e->getMessage());
+            }
 
             return $order;
         });
