@@ -1015,7 +1015,10 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
               ),
               const SizedBox(height: 8),
               ElevatedButton(
-                onPressed: () => controller.handleAcceptDelivery(mission),
+                onPressed: () async {
+                  await controller.handleAcceptDelivery(mission);
+                  Get.to(() => DeliveryRoutePlannerScreen(mission: mission));
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
