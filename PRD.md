@@ -133,6 +133,9 @@ Le système gère également un flux de livraison de matériaux en 3 étapes :
 4. **Validation de Livraison par Codes :** Aucun transfert de fonds logistique ou matériel sans validation des codes respectifs (`pickup_code` et `reception_code`).
 5. **Score ProsArtisan (`score_prosartisan`) :** Archivage complet dans un Ledger d'événements pour audits bancaires et micro-crédits.
 6. **FCFA Entier :** Toutes les colonnes financières en `BIGINT`.
+7. **Autorité Financière du Serveur & Alignement de Paiement :** Le serveur fait autorité sur le montant total du devis (`montant_total`). L'initiation de paiement ajuste automatiquement tout écart de commission ou d'arrondi client sans bloquer la transaction.
+8. **Redirection Négociée par Deep Link Android (`intent://`) :** Lors de la validation de paiement, le navigateur web exécute la fragmentation du séquestre et déclenche un Intent Android `intent://payment-result...#Intent;scheme=prosartisan;package=com.prosartisan.app;end` pour ramener l'utilisateur sur l’application mobile.
+9. **Verrouillage de Soumission des Jalons :** La soumission de photos par l'artisan fait passer le jalon de `en_attente` à `soumis`. Une seconde tentative de soumission est rejetée (HTTP 422) tant que le client n'a pas saisi le code OTP de validation.
 
 ### Formule mathématique du Score ProsArtisan
 Le score d'un artisan $S(t)$ est calculé sur une échelle de 0 à 1000 :
