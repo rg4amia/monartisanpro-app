@@ -547,7 +547,8 @@ function sumAmount(items: AdminTransaction[]): number {
 
 export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
     const activeTab = initialTab;
-    const { auth, dashboard, errors, flash, fournisseurs, kycUsers, cnmciUsers = [], litiges, missions, transactions, users, settingsList, evaluationsList, artisansScores, scoreLedger, communications, adminNotifications = [] } = props as AdminPageProps & { communications?: AdminPageProps['communications'] };
+    const pageProps = usePage<AdminPageProps>().props;
+    const { auth, dashboard, errors, flash, fournisseurs, kycUsers, cnmciUsers = [], litiges, missions, transactions, users, settingsList, evaluationsList, artisansScores, scoreLedger, communications, adminNotifications = [] } = pageProps;
 
     const [notificationsOpen, setNotificationsOpen] = useState<boolean>(false);
     const [notifFilter, setNotifFilter] = useState<'all' | 'unread' | 'alerts'>('all');
