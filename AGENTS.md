@@ -43,8 +43,9 @@ Tu m'assistes sur le développement de **ProsArtisan**, une plateforme marketpla
 | **Client** | Passe des commandes, paie, valide les jalons via OTP, note l'artisan |
 | **Artisan** | Reçoit des missions, génère des J-Codes matériaux, soumet les jalons |
 | **Fournisseur** | Quincaillerie agréée, scanne les J-Codes pour livrer les matériaux |
+| **Livreur (Driver)** | Transporteur agréé, prend en charge les livraisons matériaux quincaillerie $\rightarrow$ chantier, validé via codes pickup/reception |
 | **Référent de zone** | Valide physiquement les missions > 2 000 000 FCFA, arbitre les litiges |
-| **Administrateur** | Valide les KYC, approuve les partenaires, gère fraudes et litiges |
+| **Administrateur** | Valide les KYC, approuve les partenaires, gère fraudes, litiges et le suivi 360° des missions et livraisons |
 
 ---
 
@@ -298,6 +299,7 @@ SELECT ST_X(position) AS lng, ST_Y(position) AS lat FROM users WHERE id = :id;
 10. **Alignement du montant de paiement** : Le montant du devis calculé par le serveur (`$devis->montant_total`) fait autorité. En cas de léger décalage d'arrondi ou de commission côté client lors de l'initiation de paiement, le backend ajuste automatiquement la transaction au montant exact du devis sans bloquer l'utilisateur.
 11. **Protocoles de retour Deep Link (`intent://` / `prosartisan://`)** : La confirmation de paiement sur le web / simulateur doit exécuter le séquestre et déclencher une redirection vers l'Intent Android `intent://payment-result?transaction_id=...#Intent;scheme=prosartisan;package=com.prosartisan.app;end` pour rouvrir immédiatement l'application mobile.
 12. **Machine d'état des Jalons** : Un jalon ne peut être soumis que lorsqu'il est dans l'état `en_attente`. Dès que l'artisan soumet ses photos (`soumis`), la resoumission est bloquée (HTTP 422) et la validation par OTP client (ou visite Référent si > 2M FCFA) est requise.
+13. **Suivi 360° & Double-validation des Livraisons (Backoffice)** : Le module Missions du backoffice doit fournir un suivi temps réel croisé des livreurs, quincailleries, artisans et clients. La libération des fonds logistiques nécessite impérativement la validation du `pickup_code` (quincaillerie) et du `reception_code` (chantier/client), avec preuves photo.
 
 ---
 
