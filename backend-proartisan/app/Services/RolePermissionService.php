@@ -89,7 +89,7 @@ class RolePermissionService
      */
     private function validateRole(string $role): void
     {
-        $validRoles = ['client', 'artisan', 'fournisseur', 'referent', 'admin'];
+        $validRoles = ['client', 'artisan', 'fournisseur', 'referent', 'livreur', 'driver', 'admin'];
 
         if (! in_array($role, $validRoles)) {
             throw ValidationException::withMessages([

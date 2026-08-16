@@ -17,7 +17,7 @@ class AdminRolePermissionController extends Controller
      */
     public function index(): JsonResponse
     {
-        $roles = ['client', 'artisan', 'fournisseur', 'referent', 'admin'];
+        $roles = ['client', 'artisan', 'fournisseur', 'referent', 'livreur', 'admin'];
         $data = [];
 
         foreach ($roles as $role) {

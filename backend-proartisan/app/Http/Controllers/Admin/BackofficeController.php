@@ -486,12 +486,13 @@ class BackofficeController extends Controller
             'artisan' => [],
             'fournisseur' => [],
             'referent' => [],
+            'livreur' => [],
             'admin' => [],
         ];
         try {
             if (\Illuminate\Support\Facades\Schema::hasTable('permissions') && \Illuminate\Support\Facades\Schema::hasTable('permission_role')) {
                 $allPermissions = \App\Models\Permission::all();
-                foreach (['client', 'artisan', 'fournisseur', 'referent', 'admin'] as $role) {
+                foreach (['client', 'artisan', 'fournisseur', 'referent', 'livreur', 'admin'] as $role) {
                     $rolesPermissions[$role] = \Illuminate\Support\Facades\DB::table('permission_role')
                         ->join('permissions', 'permission_role.permission_id', '=', 'permissions.id')
                         ->where('permission_role.role', $role)
