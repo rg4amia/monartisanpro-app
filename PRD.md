@@ -153,10 +153,10 @@ $$S(t) = \min\left(1000, \max\left(0, S_{base} + \sum_{k} (\omega_k \cdot E_k \c
 Le module **Missions** du Backoffice administrateur (`/admin/missions`) intègre une gestion unifiée à deux sous-vues :
 1. **🔨 Chantiers & Missions Artisans** : Suivi des chantiers, diagnostics IA Gemini, devis, jalons, séquestres (35% MO / 65% Matériaux), audits Référent (> 2M FCFA) et litiges.
 2. **🛵 Livraisons Matériaux & Courses Livreurs** : Suivi tous azimuts de tous les livreurs et artisans :
-   - Metrics KPI en temps réel (Total livraisons, En transit, En attente coursier, Livrées & Réceptionnées).
-   - Filtres dynamiques par statut (`paid`, `prepared`, `searching_driver`, `driver_assigned`, `driver_picked_up`, `shipping`, `delivered`, `disputed`).
-   - Modale **Suivi 360°** : Timeline 4 étapes, fiches des 3 acteurs (Livreur, Artisan/Client destinataire, Quincaillerie expéditrice) avec boutons d'appel direct `tel:`, grille des matériaux commandés, ventilation des frais et preuves photographiques.
-   - Liaison croisée dans le détail d'une mission de chantier pour consulter instantanément les courses associées.
+   * Metrics KPI en temps réel (Total livraisons, En transit, En attente coursier, Livrées & Réceptionnées).
+   * Filtres dynamiques par statut (`paid`, `prepared`, `searching_driver`, `driver_assigned`, `driver_picked_up`, `shipping`, `delivered`, `disputed`).
+   * Modale **Suivi 360°** : Timeline 4 étapes, fiches des 3 acteurs (Livreur, Artisan/Client destinataire, Quincaillerie expéditrice) avec boutons d'appel direct `tel:`, grille des matériaux commandés, ventilation des frais et preuves photographiques.
+   * Liaison croisée dans le détail d'une mission de chantier pour consulter instantanément les courses associées.
 
 ---
 
