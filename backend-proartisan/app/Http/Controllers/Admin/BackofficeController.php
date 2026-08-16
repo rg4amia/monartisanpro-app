@@ -499,6 +499,10 @@ class BackofficeController extends Controller
                         ->toArray();
                 }
             }
+        } catch (\Throwable $e) {
+            // Keep default empty permissions
+        }
+
         $orders = [];
         try {
             if (\Illuminate\Support\Facades\Schema::hasTable('orders')) {
