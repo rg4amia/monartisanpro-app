@@ -136,6 +136,7 @@ Note : Pour les prestations chantiers de l'Artisan.
 7. **Autorité Financière du Serveur & Alignement de Paiement :** Le serveur fait autorité sur le montant total du devis (`montant_total`). L'initiation de paiement ajuste automatiquement tout écart de commission ou d'arrondi client sans bloquer la transaction.
 8. **Redirection Négociée par Deep Link Android (`intent://`) :** Lors de la validation de paiement, le navigateur web exécute la fragmentation du séquestre et déclenche un Intent Android `intent://payment-result...#Intent;scheme=prosartisan;package=com.prosartisan.app;end` pour ramener l'utilisateur sur l’application mobile.
 9. **Verrouillage de Soumission des Jalons :** La soumission de photos par l'artisan fait passer le jalon de `en_attente` à `soumis`. Une seconde tentative de soumission est rejetée (HTTP 422) tant que le client n'a pas saisi le code OTP de validation.
+10. **Suivi 360° & Contrôle Unifié des Livraisons en Backoffice :** Le module Missions du Backoffice offre un suivi temps réel croisé des livreurs, quincailleries, artisans et clients avec traçabilité complète des codes de sécurité (`pickup_code`/`reception_code`) et preuves photo.
 
 ### Formule mathématique du Score ProsArtisan
 Le score d'un artisan $S(t)$ est calculé sur une échelle de 0 à 1000 :
@@ -145,6 +146,17 @@ $$S(t) = \min\left(1000, \max\left(0, S_{base} + \sum_{k} (\omega_k \cdot E_k \c
 * $\omega_k$ : Coefficient de pondération selon la catégorie (Fiabilité, Intégrité, Qualité, Réactivité).
 * $C_k$ : Facteur de crédibilité du client évaluateur (0.1 pour un nouveau client à 1.5 pour un partenaire B2B).
 * $\Delta(t)$ : Pénalité d'inactivité ("La Rouille") s'appliquant après 60 jours sans chantier.
+
+---
+
+### 🖥️ Suivi 360° & Contrôle Backoffice (Module Missions & Livraisons)
+Le module **Missions** du Backoffice administrateur (`/admin/missions`) intègre une gestion unifiée à deux sous-vues :
+1. **🔨 Chantiers & Missions Artisans** : Suivi des chantiers, diagnostics IA Gemini, devis, jalons, séquestres (35% MO / 65% Matériaux), audits Référent (> 2M FCFA) et litiges.
+2. **🛵 Livraisons Matériaux & Courses Livreurs** : Suivi tous azimuts de tous les livreurs et artisans :
+   - Metrics KPI en temps réel (Total livraisons, En transit, En attente coursier, Livrées & Réceptionnées).
+   - Filtres dynamiques par statut (`paid`, `prepared`, `searching_driver`, `driver_assigned`, `driver_picked_up`, `shipping`, `delivered`, `disputed`).
+   - Modale **Suivi 360°** : Timeline 4 étapes, fiches des 3 acteurs (Livreur, Artisan/Client destinataire, Quincaillerie expéditrice) avec boutons d'appel direct `tel:`, grille des matériaux commandés, ventilation des frais et preuves photographiques.
+   - Liaison croisée dans le détail d'une mission de chantier pour consulter instantanément les courses associées.
 
 ---
 
