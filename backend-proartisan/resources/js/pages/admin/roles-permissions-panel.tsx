@@ -78,7 +78,7 @@ export default function RolesPermissionsPanel({
         });
     };
 
-    const roles = ['client', 'artisan', 'fournisseur', 'referent', 'admin'];
+    const roles = ['client', 'artisan', 'fournisseur', 'referent', 'livreur', 'admin'];
 
     return (
         <div className="grid gap-6 xl:grid-cols-4">

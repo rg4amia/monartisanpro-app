@@ -14,7 +14,7 @@ class RevokePermissionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'role' => ['required', 'string', 'in:client,artisan,fournisseur,referent,admin'],
+            'role' => ['required', 'string', 'in:client,artisan,fournisseur,referent,livreur,driver,admin'],
             'permission' => ['required', 'string', 'exists:permissions,name'],
         ];
     }
