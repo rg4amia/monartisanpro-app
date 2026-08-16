@@ -46,12 +46,16 @@ class AdminRolePermissionController extends Controller
     /**
      * Assigner une action/permission à un rôle.
      */
-    public function assign(AssignPermissionRequest $request): JsonResponse
+    public function assign(AssignPermissionRequest $request): JsonResponse|\Illuminate\Http\RedirectResponse
     {
         $this->rolePermissionService->assignPermissionToRole(
             $request->validated('role'),
             $request->validated('permission')
         );
+
+        if ($request->header('X-Inertia')) {
+            return back()->with('success', 'Action attribuée au rôle avec succès.');
+        }
 
         return response()->json([
             'success' => true,
@@ -62,12 +66,16 @@ class AdminRolePermissionController extends Controller
     /**
      * Révoquer une action/permission d'un rôle.
      */
-    public function revoke(RevokePermissionRequest $request): JsonResponse
+    public function revoke(RevokePermissionRequest $request): JsonResponse|\Illuminate\Http\RedirectResponse
     {
         $this->rolePermissionService->revokePermissionFromRole(
             $request->validated('role'),
             $request->validated('permission')
         );
+
+        if ($request->header('X-Inertia')) {
+            return back()->with('success', 'Action retirée du rôle avec succès.');
+        }
 
         return response()->json([
             'success' => true,
