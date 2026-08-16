@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
 import 'package:yandex_maps_mapkit/mapkit.dart' as mk;
 import 'package:yandex_maps_mapkit/yandex_map.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -42,6 +44,10 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
   late double _supplierLng;
   late double _clientLat;
   late double _clientLng;
+
+  String? _routeDistanceText;
+  String? _routeDurationText;
+  bool _isLoadingRoute = false;
 
   @override
   void initState() {
@@ -90,7 +96,66 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
     _updateMapElements();
   }
 
-  void _updateMapElements() {
+  /// Récupère la géométrie réelle du réseau routier via OSRM (Open Source Routing Machine)
+  Future<List<mk.Point>> _fetchRoadRoutePoints(double lat1, double lng1, double lat2, double lng2) async {
+    setState(() => _isLoadingRoute = true);
+    try {
+      final url = Uri.parse(
+        'https://router.project-osrm.org/route/v1/driving/$lng1,$lat1;$lng2,$lat2?overview=full&geometries=geojson',
+      );
+      final response = await http.get(url).timeout(const Duration(seconds: 4));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['code'] == 'Ok' && data['routes'] is List && (data['routes'] as List).isNotEmpty) {
+          final route = data['routes'][0];
+          final geometry = route['geometry'];
+          final coords = (geometry['coordinates'] as List?);
+
+          if (route['distance'] != null) {
+            final distKm = ((route['distance'] as num) / 1000).toStringAsFixed(1);
+            _routeDistanceText = '$distKm km';
+          }
+          if (route['duration'] != null) {
+            final durMin = ((route['duration'] as num) / 60).round();
+            _routeDurationText = '$durMin min';
+          }
+
+          if (coords != null && coords.isNotEmpty) {
+            return coords.map((c) {
+              final lng = (c[0] as num).toDouble();
+              final lat = (c[1] as num).toDouble();
+              return mk.Point(latitude: lat, longitude: lng);
+            }).toList();
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('[RoutePlanner] OSRM routing fallback: $e');
+    } finally {
+      if (mounted) setState(() => _isLoadingRoute = false);
+    }
+
+    // Fallback lissé avec waypoints virtuels suivant des angles de rue
+    final points = <mk.Point>[];
+    const steps = 12;
+    for (int i = 0; i <= steps; i++) {
+      final t = i / steps;
+      final latInterp = lat1 + (lat2 - lat1) * t;
+      final lngInterp = lng1 + (lng2 - lng1) * t;
+
+      // Création d'une courbure simulant un parcours en grille urbaine
+      final offsetLat = sin(t * pi) * 0.0025;
+      final offsetLng = cos(t * pi * 2) * 0.0015;
+
+      points.add(mk.Point(
+        latitude: latInterp + (i % 2 == 0 ? offsetLat : -offsetLat * 0.5),
+        longitude: lngInterp + offsetLng,
+      ));
+    }
+    return points;
+  }
+
+  Future<void> _updateMapElements() async {
     final pins = _pinsCollection;
     final routes = _routesCollection;
     if (pins == null || routes == null) return;
@@ -106,20 +171,13 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
       final pSupplier = pins.addPlacemark();
       pSupplier.geometry = mk.Point(latitude: _supplierLat, longitude: _supplierLng);
 
-      // Tracé polyline
+      final points = await _fetchRoadRoutePoints(_driverLat, _driverLng, _supplierLat, _supplierLng);
       try {
         final poly = routes.addPolyline();
-        poly.geometry = mk.Polyline([
-          mk.Point(latitude: _driverLat, longitude: _driverLng),
-          mk.Point(
-            latitude: (_driverLat + _supplierLat) / 2 + 0.002,
-            longitude: (_driverLng + _supplierLng) / 2 - 0.001,
-          ),
-          mk.Point(latitude: _supplierLat, longitude: _supplierLng),
-        ]);
+        poly.geometry = mk.Polyline(points);
         poly.setStrokeColor(const Color(0xFFF59E0B)); // Orange
         // ignore: deprecated_member_use
-        poly.strokeWidth = 4.5;
+        poly.strokeWidth = 5.0;
       } catch (_) {}
 
       _focusCamera(
@@ -136,20 +194,13 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
       final pClient = pins.addPlacemark();
       pClient.geometry = mk.Point(latitude: _clientLat, longitude: _clientLng);
 
-      // Tracé polyline
+      final points = await _fetchRoadRoutePoints(_supplierLat, _supplierLng, _clientLat, _clientLng);
       try {
         final poly = routes.addPolyline();
-        poly.geometry = mk.Polyline([
-          mk.Point(latitude: _supplierLat, longitude: _supplierLng),
-          mk.Point(
-            latitude: (_supplierLat + _clientLat) / 2 - 0.002,
-            longitude: (_supplierLng + _clientLng) / 2 + 0.002,
-          ),
-          mk.Point(latitude: _clientLat, longitude: _clientLng),
-        ]);
+        poly.geometry = mk.Polyline(points);
         poly.setStrokeColor(const Color(0xFF10B981)); // Vert
         // ignore: deprecated_member_use
-        poly.strokeWidth = 4.5;
+        poly.strokeWidth = 5.0;
       } catch (_) {}
 
       _focusCamera(
@@ -438,18 +489,41 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    isCompleted
-                        ? 'COURSE TERMINÉE'
-                        : isPickup
-                            ? 'ÉTAPE 1/2 • RETRAIT MATÉRIEL'
-                            : 'ÉTAPE 2/2 • LIVRAISON CLIENT',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 0.5,
-                      color: badgeColor,
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          isCompleted
+                              ? 'COURSE TERMINÉE'
+                              : isPickup
+                                  ? 'ÉTAPE 1/2 • RETRAIT MATÉRIEL'
+                                  : 'ÉTAPE 2/2 • LIVRAISON CLIENT',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.5,
+                            color: badgeColor,
+                          ),
+                        ),
+                      ),
+                      if (_routeDistanceText != null && !isCompleted) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: badgeColor.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            '$_routeDistanceText${_routeDurationText != null ? " • $_routeDurationText" : ""}',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: badgeColor,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                   const SizedBox(height: 2),
                   Text(
