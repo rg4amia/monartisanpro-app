@@ -118,6 +118,7 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
           mk.Point(latitude: _supplierLat, longitude: _supplierLng),
         ]);
         poly.setStrokeColor(const Color(0xFFF59E0B)); // Orange
+        // ignore: deprecated_member_use
         poly.strokeWidth = 4.5;
       } catch (_) {}
 
@@ -147,6 +148,7 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
           mk.Point(latitude: _clientLat, longitude: _clientLng),
         ]);
         poly.setStrokeColor(const Color(0xFF10B981)); // Vert
+        // ignore: deprecated_member_use
         poly.strokeWidth = 4.5;
       } catch (_) {}
 
