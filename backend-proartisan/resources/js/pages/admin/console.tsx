@@ -108,6 +108,69 @@ interface AdminMission {
     evaluations?: any[];
 }
 
+interface AdminOrderItem {
+    id: number;
+    order_id: number;
+    supplier_product_id: number;
+    quantity: number;
+    unit_price: number;
+    product?: {
+        id: number;
+        name: string;
+        price: number;
+        unit?: string;
+    } | null;
+}
+
+interface AdminOrder {
+    id: number;
+    client_id: number;
+    supplier_id: number;
+    driver_id?: number | null;
+    delivery_mode: string;
+    status: string;
+    subtotal: number;
+    delivery_cost: number;
+    platform_fee: number;
+    total_amount: number;
+    pickup_code: string;
+    reception_code: string;
+    vehicle_class?: string | null;
+    surge_multiplier?: number | null;
+    delivered_at?: string | null;
+    pickup_photo_url?: string | null;
+    delivery_photo_url?: string | null;
+    waiting_time_minutes?: number | null;
+    dispute_reason?: string | null;
+    dispute_opened_at?: string | null;
+    created_at: string;
+    client?: {
+        id: number;
+        name: string;
+        phone: string;
+        role: string;
+    } | null;
+    supplier?: {
+        id: number;
+        name: string;
+        phone: string;
+        role: string;
+        fournisseur_agree?: {
+            id: number;
+            nom_boutique: string;
+            statut: string;
+        } | null;
+    } | null;
+    driver?: {
+        id: number;
+        name: string;
+        phone: string;
+        role: string;
+    } | null;
+    items?: AdminOrderItem[];
+    transactions?: any[];
+}
+
 interface FournisseurUser {
     name: string;
     phone: string;
@@ -285,6 +348,7 @@ interface AdminPageProps {
     }>;
     litiges: LitigeItem[];
     missions: AdminMission[];
+    orders?: AdminOrder[];
     transactions: AdminTransaction[];
     users: AdminUser[];
     evaluationsList: AdminEvaluation[];
@@ -602,6 +666,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         cnmciUsers = [],
         litiges = [] as LitigeItem[],
         missions = [] as AdminMission[],
+        orders = [] as AdminOrder[],
         transactions = [] as AdminTransaction[],
         users = [] as AdminUser[],
         settingsList = [],
@@ -616,6 +681,10 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         rolesPermissions = {},
         allPermissions = [],
     } = (pageProps || {}) as Partial<AdminPageProps>;
+
+    const [missionSubTab, setMissionSubTab] = useState<'chantiers' | 'livraisons'>('chantiers');
+    const [deliveryStatusFilter, setDeliveryStatusFilter] = useState<string>('all');
+    const [selectedOrderForDetails, setSelectedOrderForDetails] = useState<AdminOrder | null>(null);
 
     const [notificationsOpen, setNotificationsOpen] = useState<boolean>(false);
     const [notifFilter, setNotifFilter] = useState<'all' | 'unread' | 'alerts'>('all');
@@ -1294,6 +1363,54 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                 ]).includes(deferredSearch),
         );
 
+        const filteredOrders = (orders || []).filter((order) => {
+            const matchesStatus = deliveryStatusFilter === 'all' || order.status === deliveryStatusFilter;
+            const matchesSearch = deferredSearch === '' || normalizeSearch([
+                order.id,
+                order.pickup_code,
+                order.reception_code,
+                order.status,
+                order.delivery_mode,
+                order.client?.name,
+                order.client?.phone,
+                order.driver?.name,
+                order.driver?.phone,
+                order.supplier?.name,
+                order.supplier?.phone,
+                order.supplier?.fournisseur_agree?.nom_boutique,
+                ...(order.items || []).map((i) => i.product?.name ?? ''),
+            ]).includes(deferredSearch);
+
+            return matchesStatus && matchesSearch;
+        });
+
+        const deliveryMetrics: MetricItem[] = [
+            {
+                description: 'Courses & livraisons enregistrées',
+                title: 'Total livraisons',
+                tone: 'blue',
+                value: numberFormat.format(orders?.length ?? 0),
+            },
+            {
+                description: 'Livreur en route / Colis récupéré',
+                title: 'En transit',
+                tone: 'purple',
+                value: numberFormat.format((orders || []).filter(o => ['shipping', 'driver_picked_up'].includes(o.status)).length),
+            },
+            {
+                description: 'Recherche ou assignation coursier',
+                title: 'En attente livreur',
+                tone: 'amber',
+                value: numberFormat.format((orders || []).filter(o => ['searching_driver', 'driver_assigned', 'prepared'].includes(o.status)).length),
+            },
+            {
+                description: 'Remises validées avec succès',
+                title: 'Livrées & Clôturées',
+                tone: 'green',
+                value: numberFormat.format((orders || []).filter(o => o.status === 'delivered').length),
+            },
+        ];
+
         return {
             acompteTrend,
             activityTrend: operationsTrend,
@@ -1304,6 +1421,8 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
             filteredKyc,
             filteredLitiges,
             filteredMissions,
+            filteredOrders,
+            deliveryMetrics,
             filteredTransactions,
             filteredUsers,
             filteredEvaluations,
@@ -1321,7 +1440,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
             urgentKyc,
             weeklyUserCount,
         };
-    }, [dashboard, deferredSearch, fournisseurs, kycUsers, litiges, missions, transactions, users, evaluationsList, artisansScores, promoCodes, now]);
+    }, [dashboard, deferredSearch, fournisseurs, kycUsers, litiges, missions, orders, deliveryStatusFilter, transactions, users, evaluationsList, artisansScores, promoCodes, now]);
 
     const totalUsers = dashboard.users_total ?? users.length;
     const artisansActifs = useMemo(() => dashboard.artisans_actifs ?? users.filter((user) => user.role === 'artisan' && user.kyc_status === 'actif').length, [dashboard.artisans_actifs, users]);
@@ -2454,93 +2573,320 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
 
                             {activeTab === 'missions' ? (
                                 <section className="mt-5 space-y-5">
-                                    <div className="grid gap-4 xl:grid-cols-4">
-                                        {analytics.missionStatusMetrics.map((metric) => (
-                                            <MetricCard
-                                                key={metric.title}
-                                                description={metric.description}
-                                                tone={metric.tone}
-                                                trend="Lecture en temps réel"
-                                                value={metric.value}
+                                    {/* Sélecteur de sous-vue : Chantiers Artisans vs Livraisons & Courses Livreurs */}
+                                    <div className="flex flex-wrap items-center justify-between gap-4 rounded-[28px] border border-[var(--admin-border)] bg-white/60 p-2 backdrop-blur-md">
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => setMissionSubTab('chantiers')}
+                                                className={cn(
+                                                    'flex items-center gap-2.5 rounded-[22px] px-5 py-2.5 text-sm font-semibold transition-all duration-200 shadow-sm',
+                                                    missionSubTab === 'chantiers'
+                                                        ? 'bg-[#1e293b] text-white shadow-md ring-2 ring-[#1e293b]/20'
+                                                        : 'text-[var(--admin-text-soft)] hover:bg-black/5 hover:text-[var(--admin-text)]'
+                                                )}
                                             >
-                                                {metric.title}
-                                            </MetricCard>
-                                        ))}
+                                                <span>🔨 Chantiers & Missions Artisans</span>
+                                                <span className={cn(
+                                                    'rounded-full px-2 py-0.5 text-xs font-bold',
+                                                    missionSubTab === 'chantiers' ? 'bg-white/20 text-white' : 'bg-black/5 text-[var(--admin-text-soft)]'
+                                                )}>
+                                                    {analytics.filteredMissions.length}
+                                                </span>
+                                            </button>
+
+                                            <button
+                                                type="button"
+                                                onClick={() => setMissionSubTab('livraisons')}
+                                                className={cn(
+                                                    'flex items-center gap-2.5 rounded-[22px] px-5 py-2.5 text-sm font-semibold transition-all duration-200 shadow-sm',
+                                                    missionSubTab === 'livraisons'
+                                                        ? 'bg-[#8a6b3d] text-white shadow-md ring-2 ring-[#8a6b3d]/20'
+                                                        : 'text-[var(--admin-text-soft)] hover:bg-black/5 hover:text-[var(--admin-text)]'
+                                                )}
+                                            >
+                                                <span>🛵 Livraisons Matériaux & Courses Livreurs</span>
+                                                <span className={cn(
+                                                    'rounded-full px-2 py-0.5 text-xs font-bold',
+                                                    missionSubTab === 'livraisons' ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-900'
+                                                )}>
+                                                    {analytics.filteredOrders.length}
+                                                </span>
+                                            </button>
+                                        </div>
+
+                                        <div className="px-3 text-xs text-[var(--admin-muted)] font-medium">
+                                            {missionSubTab === 'chantiers' ? 'Suivi des devis, jalons et séquestres artisans' : 'Suivi temps réel des coursiers, quincailleries et artisans'}
+                                        </div>
                                     </div>
 
-                                    <Surface className="rounded-[32px] p-5 lg:p-6">
-                                        <SectionTitle
-                                            description="Vision claire des missions, enrichissement Gemini et montant piloté."
-                                            title="Pipeline missions"
-                                        />
+                                    {missionSubTab === 'chantiers' ? (
+                                        <>
+                                            <div className="grid gap-4 xl:grid-cols-4">
+                                                {analytics.missionStatusMetrics.map((metric) => (
+                                                    <MetricCard
+                                                        key={metric.title}
+                                                        description={metric.description}
+                                                        tone={metric.tone}
+                                                        trend="Lecture en temps réel"
+                                                        value={metric.value}
+                                                    >
+                                                        {metric.title}
+                                                    </MetricCard>
+                                                ))}
+                                            </div>
 
-                                        <DataTable className="mt-5">
-                                            <thead>
-                                                <tr>
-                                                    <th>Mission</th>
-                                                    <th>Client / Artisan</th>
-                                                    <th>Analyse Gemini</th>
-                                                    <th>Montant</th>
-                                                    <th>Zone</th>
-                                                    <th>Date</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {analytics.filteredMissions.length === 0 ? (
-                                                    <tr>
-                                                        <td colSpan={6}>
-                                                            <EmptyState description="Aucune mission ne correspond à votre recherche." title="Mission introuvable" />
-                                                        </td>
-                                                    </tr>
-                                                ) : (
-                                                    analytics.filteredMissions.map((mission) => (
-                                                        <tr 
-                                                            key={mission.id}
-                                                            onClick={() => setSelectedMissionForDetails(mission)}
-                                                            className="cursor-pointer hover:bg-black/[0.02] transition"
-                                                        >
-                                                            <td>
-                                                                <div className="space-y-2">
-                                                                    <div className="flex items-center gap-2">
-                                                                        <span className="text-sm font-semibold text-[var(--admin-text)]">#{mission.id}</span>
-                                                                        <MissionStatusBadge status={mission.status} />
-                                                                    </div>
-                                                                    <p className="max-w-[280px] text-sm text-[var(--admin-text-soft)]">{mission.description}</p>
-                                                                </div>
-                                                            </td>
-                                                            <td>
-                                                                <div className="space-y-1 text-sm text-[var(--admin-text-soft)]">
-                                                                    <p>
-                                                                        <span className="font-medium text-[var(--admin-text)]">Client:</span> {mission.client?.name ?? 'Non renseigné'}
-                                                                    </p>
-                                                                    <p>
-                                                                        <span className="font-medium text-[var(--admin-text)]">Artisan:</span> {mission.artisan?.name ?? 'Non affecté'}
-                                                                    </p>
-                                                                </div>
-                                                            </td>
-                                                            <td>
-                                                                <div className="space-y-1 text-sm text-[var(--admin-text-soft)]">
-                                                                    <p className="font-semibold text-[var(--admin-text)]">{mission.gemini_category ?? 'Non classée'}</p>
-                                                                    <p>Urgence: {mission.gemini_urgency ?? 'N/A'}</p>
-                                                                    <p>
-                                                                        Estimation:{' '}
-                                                                        {mission.gemini_estimation_min && mission.gemini_estimation_max
-                                                                            ? `${money(mission.gemini_estimation_min)} - ${money(mission.gemini_estimation_max)}`
-                                                                            : 'Non disponible'}
-                                                                    </p>
-                                                                </div>
-                                                            </td>
-                                                            <td className="text-sm font-semibold text-[var(--admin-text)]">
-                                                                {mission.montant_total ? money(mission.montant_total) : 'Non défini'}
-                                                            </td>
-                                                            <td className="text-sm text-[var(--admin-text-soft)]">{mission.client_address ?? 'Adresse non renseignée'}</td>
-                                                            <td className="text-sm text-[var(--admin-text-soft)]">{shortDate(mission.created_at)}</td>
+                                            <Surface className="rounded-[32px] p-5 lg:p-6">
+                                                <SectionTitle
+                                                    description="Vision claire des missions, enrichissement Gemini et montant piloté."
+                                                    title="Pipeline missions"
+                                                />
+
+                                                <DataTable className="mt-5">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Mission</th>
+                                                            <th>Client / Artisan</th>
+                                                            <th>Analyse Gemini</th>
+                                                            <th>Montant</th>
+                                                            <th>Zone</th>
+                                                            <th>Date</th>
                                                         </tr>
-                                                    ))
-                                                )}
-                                            </tbody>
-                                        </DataTable>
-                                    </Surface>
+                                                    </thead>
+                                                    <tbody>
+                                                        {analytics.filteredMissions.length === 0 ? (
+                                                            <tr>
+                                                                <td colSpan={6}>
+                                                                    <EmptyState description="Aucune mission ne correspond à votre recherche." title="Mission introuvable" />
+                                                                </td>
+                                                            </tr>
+                                                        ) : (
+                                                            analytics.filteredMissions.map((mission) => (
+                                                                <tr 
+                                                                    key={mission.id}
+                                                                    onClick={() => setSelectedMissionForDetails(mission)}
+                                                                    className="cursor-pointer hover:bg-black/[0.02] transition"
+                                                                >
+                                                                    <td>
+                                                                        <div className="space-y-2">
+                                                                            <div className="flex items-center gap-2">
+                                                                                <span className="text-sm font-semibold text-[var(--admin-text)]">#{mission.id}</span>
+                                                                                <MissionStatusBadge status={mission.status} />
+                                                                            </div>
+                                                                            <p className="max-w-[280px] text-sm text-[var(--admin-text-soft)]">{mission.description}</p>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td>
+                                                                        <div className="space-y-1 text-sm text-[var(--admin-text-soft)]">
+                                                                            <p>
+                                                                                <span className="font-medium text-[var(--admin-text)]">Client:</span> {mission.client?.name ?? 'Non renseigné'}
+                                                                            </p>
+                                                                            <p>
+                                                                                <span className="font-medium text-[var(--admin-text)]">Artisan:</span> {mission.artisan?.name ?? 'Non affecté'}
+                                                                            </p>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td>
+                                                                        <div className="space-y-1 text-sm text-[var(--admin-text-soft)]">
+                                                                            <p className="font-semibold text-[var(--admin-text)]">{mission.gemini_category ?? 'Non classée'}</p>
+                                                                            <p>Urgence: {mission.gemini_urgency ?? 'N/A'}</p>
+                                                                            <p>
+                                                                                Estimation:{' '}
+                                                                                {mission.gemini_estimation_min && mission.gemini_estimation_max
+                                                                                    ? `${money(mission.gemini_estimation_min)} - ${money(mission.gemini_estimation_max)}`
+                                                                                    : 'Non disponible'}
+                                                                            </p>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td className="text-sm font-semibold text-[var(--admin-text)]">
+                                                                        {mission.montant_total ? money(mission.montant_total) : 'Non défini'}
+                                                                    </td>
+                                                                    <td className="text-sm text-[var(--admin-text-soft)]">{mission.client_address ?? 'Adresse non renseignée'}</td>
+                                                                    <td className="text-sm text-[var(--admin-text-soft)]">{shortDate(mission.created_at)}</td>
+                                                                </tr>
+                                                            ))
+                                                        )}
+                                                    </tbody>
+                                                </DataTable>
+                                            </Surface>
+                                        </>
+                                    ) : (
+                                        <>
+                                            {/* Métriques KPI Livraisons */}
+                                            <div className="grid gap-4 xl:grid-cols-4">
+                                                {analytics.deliveryMetrics.map((metric) => (
+                                                    <MetricCard
+                                                        key={metric.title}
+                                                        description={metric.description}
+                                                        tone={metric.tone}
+                                                        trend="Suivi en direct"
+                                                        value={metric.value}
+                                                    >
+                                                        {metric.title}
+                                                    </MetricCard>
+                                                ))}
+                                            </div>
+
+                                            {/* Filtres d'état des livraisons */}
+                                            <div className="flex flex-wrap items-center gap-2 pt-1">
+                                                {[
+                                                    { id: 'all', label: 'Toutes les livraisons', count: (orders || []).length },
+                                                    { id: 'searching_driver', label: 'Recherche coursier', count: (orders || []).filter(o => o.status === 'searching_driver').length },
+                                                    { id: 'driver_assigned', label: 'Livreur assigné', count: (orders || []).filter(o => o.status === 'driver_assigned').length },
+                                                    { id: 'shipping', label: 'En cours de livraison', count: (orders || []).filter(o => ['shipping', 'driver_picked_up'].includes(o.status)).length },
+                                                    { id: 'delivered', label: 'Livrées & Clôturées', count: (orders || []).filter(o => o.status === 'delivered').length },
+                                                    { id: 'disputed', label: 'En litige', count: (orders || []).filter(o => o.status === 'disputed').length },
+                                                ].map((filterItem) => (
+                                                    <button
+                                                        key={filterItem.id}
+                                                        type="button"
+                                                        onClick={() => setDeliveryStatusFilter(filterItem.id)}
+                                                        className={cn(
+                                                            'rounded-full px-4 py-1.5 text-xs font-semibold transition border',
+                                                            deliveryStatusFilter === filterItem.id
+                                                                ? 'bg-[#8a6b3d] text-white border-[#8a6b3d] shadow-sm'
+                                                                : 'bg-white/80 text-[var(--admin-text-soft)] border-[var(--admin-border)] hover:bg-black/5'
+                                                        )}
+                                                    >
+                                                        {filterItem.label} ({filterItem.count})
+                                                    </button>
+                                                ))}
+                                            </div>
+
+                                            <Surface className="rounded-[32px] p-5 lg:p-6">
+                                                <SectionTitle
+                                                    description="Traçabilité 360° des courses, expéditions quincailleries et remises sur chantier aux artisans."
+                                                    title="Suivi des Livraisons & Courses Livreurs"
+                                                />
+
+                                                <DataTable className="mt-5">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Course / Commande</th>
+                                                            <th>Livreur (Coursier)</th>
+                                                            <th>Artisan / Destinataire</th>
+                                                            <th>Quincaillerie Fournisseur</th>
+                                                            <th>Matériaux</th>
+                                                            <th>Frais & Total</th>
+                                                            <th>Statut & Traçabilité</th>
+                                                            <th>Actions</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {analytics.filteredOrders.length === 0 ? (
+                                                            <tr>
+                                                                <td colSpan={8}>
+                                                                    <EmptyState description="Aucune livraison ne correspond à votre filtre ou recherche." title="Aucune livraison trouvée" />
+                                                                </td>
+                                                            </tr>
+                                                        ) : (
+                                                            analytics.filteredOrders.map((order) => (
+                                                                <tr
+                                                                    key={order.id}
+                                                                    onClick={() => setSelectedOrderForDetails(order)}
+                                                                    className="cursor-pointer hover:bg-black/[0.02] transition"
+                                                                >
+                                                                    <td>
+                                                                        <div className="space-y-1.5">
+                                                                            <div className="flex items-center gap-2">
+                                                                                <span className="text-sm font-bold text-[var(--admin-text)]">#{order.id}</span>
+                                                                                <DeliveryModeBadge mode={order.delivery_mode} />
+                                                                            </div>
+                                                                            <p className="text-xs text-[var(--admin-muted)]">{shortDate(order.created_at)}</p>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td>
+                                                                        {order.driver ? (
+                                                                            <div className="space-y-1">
+                                                                                <p className="text-sm font-bold text-[var(--admin-text)] flex items-center gap-1.5">
+                                                                                    <span>🛵</span>
+                                                                                    <span>{order.driver.name}</span>
+                                                                                </p>
+                                                                                <a
+                                                                                    href={`tel:${order.driver.phone}`}
+                                                                                    onClick={(e) => e.stopPropagation()}
+                                                                                    className="text-xs text-[#8a6b3d] hover:underline font-mono"
+                                                                                >
+                                                                                    📞 {order.driver.phone}
+                                                                                </a>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-800">
+                                                                                <span className="inline-block h-2 w-2 animate-ping rounded-full bg-amber-500" />
+                                                                                En attente d'assignation
+                                                                            </span>
+                                                                        )}
+                                                                    </td>
+                                                                    <td>
+                                                                        <div className="space-y-1 text-sm text-[var(--admin-text-soft)]">
+                                                                            <p className="font-bold text-[var(--admin-text)]">
+                                                                                {order.client?.name ?? 'Non renseigné'}
+                                                                                {order.client?.role ? (
+                                                                                    <span className="ml-1.5 text-[10px] uppercase font-semibold text-[var(--admin-muted)]">
+                                                                                        ({order.client.role})
+                                                                                    </span>
+                                                                                ) : null}
+                                                                            </p>
+                                                                            <p className="text-xs text-[var(--admin-muted)]">{order.client?.phone}</p>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td>
+                                                                        <div className="space-y-1 text-sm text-[var(--admin-text-soft)]">
+                                                                            <p className="font-semibold text-[var(--admin-text)]">
+                                                                                🏪 {order.supplier?.fournisseur_agree?.nom_boutique ?? order.supplier?.name ?? 'Quincaillerie'}
+                                                                            </p>
+                                                                            <p className="text-xs text-[var(--admin-muted)]">{order.supplier?.phone}</p>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td>
+                                                                        <div className="space-y-1">
+                                                                            <span className="rounded-full bg-black/5 px-2 py-0.5 text-xs font-semibold text-[var(--admin-text)]">
+                                                                                {order.items?.length ?? 0} article(s)
+                                                                            </span>
+                                                                            {order.items && order.items.length > 0 && (
+                                                                                <p className="max-w-[180px] truncate text-[11px] text-[var(--admin-muted)]">
+                                                                                    {order.items.map(i => i.product?.name ?? 'Article').join(', ')}
+                                                                                </p>
+                                                                            )}
+                                                                        </div>
+                                                                    </td>
+                                                                    <td>
+                                                                        <div className="space-y-1 text-xs">
+                                                                            <p className="font-bold text-[var(--admin-text)]">{money(order.total_amount || order.subtotal)}</p>
+                                                                            {order.delivery_cost > 0 && (
+                                                                                <p className="text-[#8a6b3d] font-medium">Livreur: {money(order.delivery_cost)}</p>
+                                                                            )}
+                                                                        </div>
+                                                                    </td>
+                                                                    <td>
+                                                                        <div className="space-y-1.5">
+                                                                            <DeliveryStatusBadge status={order.status} />
+                                                                            <div className="flex flex-wrap gap-1 text-[10px] font-mono text-[var(--admin-muted)]">
+                                                                                {order.pickup_code ? <span className="bg-white/80 border px-1.5 py-0.5 rounded">R: {order.pickup_code}</span> : null}
+                                                                                {order.reception_code ? <span className="bg-white/80 border px-1.5 py-0.5 rounded">C: {order.reception_code}</span> : null}
+                                                                            </div>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                setSelectedOrderForDetails(order);
+                                                                            }}
+                                                                            className="rounded-xl border border-[var(--admin-border)] bg-white/80 px-3 py-1.5 text-xs font-bold text-[var(--admin-text)] hover:bg-[#8a6b3d] hover:text-white transition shadow-sm"
+                                                                        >
+                                                                            Suivi 360°
+                                                                        </button>
+                                                                    </td>
+                                                                </tr>
+                                                            ))
+                                                        )}
+                                                    </tbody>
+                                                </DataTable>
+                                            </Surface>
+                                        </>
+                                    )}
                                 </section>
                             ) : null}
 
@@ -4902,6 +5248,260 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                         <p className="text-xs text-[var(--admin-muted)] italic">Aucune transaction enregistrée.</p>
                                     )}
                                 </div>
+
+                                {/* Livraisons associées au Client ou Artisan */}
+                                {orders && orders.some(o => o.client_id === (selectedMissionForDetails.client as any)?.id || o.client_id === (selectedMissionForDetails.artisan as any)?.id) && (
+                                    <div className="space-y-2.5">
+                                        <h3 className="text-sm font-bold text-[var(--admin-text)] uppercase tracking-wider flex items-center gap-2">
+                                            <span>🛵 Courses & Livraisons Liées</span>
+                                        </h3>
+                                        <div className="grid gap-3 sm:grid-cols-2">
+                                            {orders
+                                                .filter(o => o.client_id === (selectedMissionForDetails.client as any)?.id || o.client_id === (selectedMissionForDetails.artisan as any)?.id)
+                                                .map((ord) => (
+                                                    <div
+                                                        key={ord.id}
+                                                        onClick={() => setSelectedOrderForDetails(ord)}
+                                                        className="rounded-2xl border border-[var(--admin-border)] bg-white/60 p-3 hover:border-[#8a6b3d] cursor-pointer transition flex items-center justify-between"
+                                                    >
+                                                        <div>
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="font-bold text-xs">Course #{ord.id}</span>
+                                                                <DeliveryStatusBadge status={ord.status} />
+                                                            </div>
+                                                            <p className="text-xs text-[var(--admin-text-soft)] mt-1">
+                                                                {ord.driver ? `🛵 ${ord.driver.name}` : 'En attente de coursier'}
+                                                            </p>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <span className="font-bold text-xs text-[#8a6b3d]">{money(ord.total_amount || ord.subtotal)}</span>
+                                                            <p className="text-[10px] text-[var(--admin-muted)]">{shortDate(ord.created_at)}</p>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {selectedOrderForDetails && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                        <div className="admin-panel admin-surface w-full max-w-[850px] rounded-[32px] border p-6 lg:p-8 shadow-2xl relative max-h-[88vh] overflow-y-auto">
+                            <div className="flex items-center justify-between border-b border-[var(--admin-border)] pb-4">
+                                <div className="space-y-1">
+                                    <div className="flex flex-wrap items-center gap-3">
+                                        <h2 className="text-xl font-bold text-[var(--admin-text)]">
+                                            Suivi 360° Livraison #{selectedOrderForDetails.id}
+                                        </h2>
+                                        <DeliveryStatusBadge status={selectedOrderForDetails.status} />
+                                        <DeliveryModeBadge mode={selectedOrderForDetails.delivery_mode} />
+                                    </div>
+                                    <p className="text-xs text-[var(--admin-muted)]">
+                                        Créée le {new Date(selectedOrderForDetails.created_at).toLocaleString('fr-FR')}
+                                        {selectedOrderForDetails.delivered_at && ` • Livrée le ${new Date(selectedOrderForDetails.delivered_at).toLocaleString('fr-FR')}`}
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setSelectedOrderForDetails(null)}
+                                    className="rounded-full p-2 text-[var(--admin-muted)] hover:bg-white/10 hover:text-[var(--admin-text)] transition"
+                                    title="Fermer"
+                                >
+                                    <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                        <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <div className="mt-6 rounded-2xl border border-[var(--admin-border)] bg-[#fcf8f2]/60 p-4">
+                                <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-muted)] mb-3">Progression de la Course</p>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
+                                    <div className={cn('p-2 rounded-xl border', selectedOrderForDetails.status !== 'unpaid' ? 'bg-green-50 border-green-300 text-green-800 font-bold' : 'bg-gray-50 text-gray-400')}>
+                                        <span>1. Payée / Séquestrée</span>
+                                    </div>
+                                    <div className={cn('p-2 rounded-xl border', ['prepared', 'searching_driver', 'driver_assigned', 'driver_picked_up', 'shipping', 'delivered'].includes(selectedOrderForDetails.status) ? 'bg-green-50 border-green-300 text-green-800 font-bold' : 'bg-gray-50 text-gray-400')}>
+                                        <span>2. Préparée en boutique</span>
+                                    </div>
+                                    <div className={cn('p-2 rounded-xl border', ['driver_assigned', 'driver_picked_up', 'shipping', 'delivered'].includes(selectedOrderForDetails.status) ? 'bg-green-50 border-green-300 text-green-800 font-bold' : selectedOrderForDetails.status === 'searching_driver' ? 'bg-amber-50 border-amber-300 text-amber-800 font-bold animate-pulse' : 'bg-gray-50 text-gray-400')}>
+                                        <span>3. Coursier assigné</span>
+                                    </div>
+                                    <div className={cn('p-2 rounded-xl border', selectedOrderForDetails.status === 'delivered' ? 'bg-green-100 border-green-400 text-green-900 font-bold' : ['shipping', 'driver_picked_up'].includes(selectedOrderForDetails.status) ? 'bg-purple-50 border-purple-300 text-purple-800 font-bold animate-pulse' : 'bg-gray-50 text-gray-400')}>
+                                        <span>4. Remise validée</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mt-6 space-y-6">
+                                <div className="grid gap-4 sm:grid-cols-3">
+                                    <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-white/50">
+                                        <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--admin-muted)] flex items-center gap-1">
+                                            <span>🛵 Livreur (Coursier)</span>
+                                        </p>
+                                        {selectedOrderForDetails.driver ? (
+                                            <div className="mt-2 space-y-1">
+                                                <p className="text-sm font-bold text-[var(--admin-text)]">{selectedOrderForDetails.driver.name}</p>
+                                                <p className="text-xs text-[var(--admin-muted)]">{selectedOrderForDetails.driver.role ?? 'Livreur'}</p>
+                                                <div className="pt-1.5">
+                                                    <a
+                                                        href={`tel:${selectedOrderForDetails.driver.phone}`}
+                                                        className="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 border border-amber-200 px-2.5 py-1 text-xs font-mono font-bold text-[#8a6b3d] hover:bg-amber-100 transition"
+                                                    >
+                                                        📞 {selectedOrderForDetails.driver.phone}
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <p className="mt-2 text-xs text-amber-700 italic">Aucun livreur encore affecté.</p>
+                                        )}
+                                    </div>
+
+                                    <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-white/50">
+                                        <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--admin-muted)] flex items-center gap-1">
+                                            <span>👷 Destinataire sur chantier</span>
+                                        </p>
+                                        <div className="mt-2 space-y-1">
+                                            <p className="text-sm font-bold text-[var(--admin-text)]">
+                                                {selectedOrderForDetails.client?.name ?? 'Non renseigné'}
+                                                {selectedOrderForDetails.client?.role && (
+                                                    <span className="ml-1.5 text-[10px] uppercase font-semibold text-[var(--admin-muted)]">
+                                                        ({selectedOrderForDetails.client.role})
+                                                    </span>
+                                                )}
+                                            </p>
+                                            <div className="pt-1.5">
+                                                <a
+                                                    href={`tel:${selectedOrderForDetails.client?.phone}`}
+                                                    className="inline-flex items-center gap-1.5 rounded-lg bg-slate-50 border border-slate-200 px-2.5 py-1 text-xs font-mono font-bold text-[var(--admin-text)] hover:bg-slate-100 transition"
+                                                >
+                                                    📞 {selectedOrderForDetails.client?.phone ?? 'N/A'}
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-white/50">
+                                        <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--admin-muted)] flex items-center gap-1">
+                                            <span>🏪 Quincaillerie de collecte</span>
+                                        </p>
+                                        <div className="mt-2 space-y-1">
+                                            <p className="text-sm font-bold text-[var(--admin-text)]">
+                                                {selectedOrderForDetails.supplier?.fournisseur_agree?.nom_boutique ?? selectedOrderForDetails.supplier?.name ?? 'Quincaillerie'}
+                                            </p>
+                                            <div className="pt-1.5">
+                                                <a
+                                                    href={`tel:${selectedOrderForDetails.supplier?.phone}`}
+                                                    className="inline-flex items-center gap-1.5 rounded-lg bg-slate-50 border border-slate-200 px-2.5 py-1 text-xs font-mono font-bold text-[var(--admin-text)] hover:bg-slate-100 transition"
+                                                >
+                                                    📞 {selectedOrderForDetails.supplier?.phone ?? 'N/A'}
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="grid gap-4 sm:grid-cols-2">
+                                    <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-white/40 flex items-center justify-between">
+                                        <div>
+                                            <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--admin-muted)]">Code Retrait Quincaillerie</p>
+                                            <p className="mt-1 font-mono text-base font-bold text-[#8a6b3d]">{selectedOrderForDetails.pickup_code || 'N/A'}</p>
+                                        </div>
+                                        <span className="text-xs text-[var(--admin-muted)]">Scanné/saisi lors de la collecte</span>
+                                    </div>
+
+                                    <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-white/40 flex items-center justify-between">
+                                        <div>
+                                            <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--admin-muted)]">Code Réception Chantier</p>
+                                            <p className="mt-1 font-mono text-base font-bold text-green-700">{selectedOrderForDetails.reception_code || 'N/A'}</p>
+                                        </div>
+                                        <span className="text-xs text-[var(--admin-muted)]">Validé à la remise au chantier</span>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2.5">
+                                    <h3 className="text-sm font-bold text-[var(--admin-text)] uppercase tracking-wider">Articles & Matériaux Commandés</h3>
+                                    {selectedOrderForDetails.items && selectedOrderForDetails.items.length > 0 ? (
+                                        <div className="overflow-x-auto rounded-2xl border border-[var(--admin-border)] bg-white/30">
+                                            <table className="min-w-full divide-y divide-[var(--admin-border)] text-xs text-left">
+                                                <thead className="bg-[#fcf8f2] text-[var(--admin-muted)] font-semibold uppercase">
+                                                    <tr>
+                                                        <th className="px-4 py-2.5">Article</th>
+                                                        <th className="px-4 py-2.5">Quantité</th>
+                                                        <th className="px-4 py-2.5">Prix unitaire</th>
+                                                        <th className="px-4 py-2.5">Total</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-[var(--admin-border)]">
+                                                    {selectedOrderForDetails.items.map((item) => (
+                                                        <tr key={item.id}>
+                                                            <td className="px-4 py-2.5 font-bold text-[var(--admin-text)]">
+                                                                {item.product?.name ?? `Produit #${item.supplier_product_id}`}
+                                                            </td>
+                                                            <td className="px-4 py-2.5 font-semibold">
+                                                                {item.quantity} {item.product?.unit ?? 'unité(s)'}
+                                                            </td>
+                                                            <td className="px-4 py-2.5">{money(item.unit_price)}</td>
+                                                            <td className="px-4 py-2.5 font-bold text-[var(--admin-text)]">
+                                                                {money(item.quantity * item.unit_price)}
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    ) : (
+                                        <p className="text-xs text-[var(--admin-muted)] italic">Aucun détail d'article disponible.</p>
+                                    )}
+                                </div>
+
+                                <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-[#fcf8f2] space-y-2 text-sm">
+                                    <div className="flex justify-between">
+                                        <span className="text-[var(--admin-text-soft)]">Sous-total Matériaux</span>
+                                        <span className="font-semibold text-[var(--admin-text)]">{money(selectedOrderForDetails.subtotal)}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-[var(--admin-text-soft)]">Frais de livraison Livreur</span>
+                                        <span className="font-semibold text-[#8a6b3d]">{money(selectedOrderForDetails.delivery_cost)}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-[var(--admin-text-soft)]">Commission ProsArtisan</span>
+                                        <span className="font-semibold text-[var(--admin-text)]">{money(selectedOrderForDetails.platform_fee)}</span>
+                                    </div>
+                                    <div className="flex justify-between pt-2 border-t border-[var(--admin-border)] text-base font-bold">
+                                        <span className="text-[var(--admin-text)]">Total Général Séquestré</span>
+                                        <span className="text-[#8a6b3d]">{money(selectedOrderForDetails.total_amount || selectedOrderForDetails.subtotal)}</span>
+                                    </div>
+                                </div>
+
+                                {(selectedOrderForDetails.pickup_photo_url || selectedOrderForDetails.delivery_photo_url) && (
+                                    <div className="space-y-2.5">
+                                        <h3 className="text-sm font-bold text-[var(--admin-text)] uppercase tracking-wider">Preuves Photographiques</h3>
+                                        <div className="grid gap-4 sm:grid-cols-2">
+                                            {selectedOrderForDetails.pickup_photo_url && (
+                                                <div className="p-3 rounded-2xl border border-[var(--admin-border)] bg-white/40">
+                                                    <p className="text-xs font-semibold text-[var(--admin-text)] mb-2">📸 Ramassage Quincaillerie</p>
+                                                    <img
+                                                        src={selectedOrderForDetails.pickup_photo_url}
+                                                        alt="Photo ramassage"
+                                                        className="w-full h-40 object-cover rounded-xl border"
+                                                    />
+                                                </div>
+                                            )}
+                                            {selectedOrderForDetails.delivery_photo_url && (
+                                                <div className="p-3 rounded-2xl border border-[var(--admin-border)] bg-white/40">
+                                                    <p className="text-xs font-semibold text-[var(--admin-text)] mb-2">📸 Livraison sur Chantier</p>
+                                                    <img
+                                                        src={selectedOrderForDetails.delivery_photo_url}
+                                                        alt="Photo livraison"
+                                                        className="w-full h-40 object-cover rounded-xl border"
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -5160,6 +5760,45 @@ function TransactionStatusBadge({ status }: { status: string }) {
     };
 
     return <span className={cn('rounded-full border px-3 py-1 text-xs font-semibold', toneBadgeClasses(toneMap[status] ?? 'slate'))}>{status}</span>;
+}
+
+function DeliveryStatusBadge({ status }: { status: string }) {
+    const toneMap: Record<string, Tone> = {
+        paid: 'blue',
+        prepared: 'amber',
+        searching_driver: 'amber',
+        driver_assigned: 'purple',
+        driver_picked_up: 'purple',
+        shipping: 'purple',
+        delivered: 'green',
+        disputed: 'rose',
+    };
+
+    const labelMap: Record<string, string> = {
+        paid: 'Payée (En attente préparation)',
+        prepared: 'Préparée (Prête pour coursier)',
+        searching_driver: 'Recherche coursier...',
+        driver_assigned: 'Livreur assigné',
+        driver_picked_up: 'Colis récupéré',
+        shipping: 'En livraison (En transit)',
+        delivered: 'Livrée & Réceptionnée',
+        disputed: 'En litige',
+    };
+
+    return (
+        <span className={cn('rounded-full border px-2.5 py-1 text-xs font-semibold', toneBadgeClasses(toneMap[status] ?? 'slate'))}>
+            {labelMap[status] ?? status}
+        </span>
+    );
+}
+
+function DeliveryModeBadge({ mode }: { mode: string }) {
+    const isDelivery = mode === 'delivery';
+    return (
+        <span className={cn('rounded-full border px-2.5 py-0.5 text-[11px] font-semibold', isDelivery ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-blue-50 text-blue-700 border-blue-200')}>
+            {isDelivery ? '🛵 Livraison coursier' : '🏪 Retrait direct'}
+        </span>
+    );
 }
 
 function DualLineChart({ series }: { series: DualSeries[] }) {
