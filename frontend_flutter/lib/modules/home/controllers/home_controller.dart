@@ -555,6 +555,8 @@ class HomeController extends GetxController {
         }).toList();
 
         driverActiveMissions.value = activeList;
+      } else {
+        driverActiveMissions.clear();
       }
     } catch (e) {
       debugPrint('Erreur chargement livraisons: $e');

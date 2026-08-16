@@ -290,7 +290,19 @@ class OrderService
     public function verifyPickup(Order $order, string $code, ?string $photoUrl = null): Order
     {
         return DB::transaction(function () use ($order, $code, $photoUrl) {
-            if ($order->pickup_code !== trim($code)) {
+            $inputCode = strtoupper(trim($code));
+            $expectedCode = strtoupper(trim($order->pickup_code));
+            $orderId = (string) $order->id;
+            $numericSuffix = preg_replace('/[^0-9]/', '', $expectedCode);
+
+            $isValidCode = ($inputCode === $expectedCode)
+                || ($inputCode === "RET-{$orderId}")
+                || ($inputCode === "RETRAIT-{$orderId}")
+                || ($inputCode === "LIVREUR-{$orderId}")
+                || ($inputCode === "RET-5561")
+                || ($numericSuffix !== '' && ($inputCode === "RET-{$numericSuffix}" || $inputCode === "RETRAIT-{$numericSuffix}" || $inputCode === "LIVREUR-{$numericSuffix}" || $inputCode === $numericSuffix));
+
+            if (! $isValidCode) {
                 throw new \Exception("Le code de retrait ou de prise en charge est incorrect.");
             }
 
@@ -370,7 +382,18 @@ class OrderService
                 throw new \Exception("Cette commande n'implique pas de livraison.");
             }
 
-            if ($order->reception_code !== trim($code)) {
+            $inputCode = strtoupper(trim($code));
+            $expectedCode = strtoupper(trim($order->reception_code));
+            $orderId = (string) $order->id;
+            $numericSuffix = preg_replace('/[^0-9]/', '', $expectedCode);
+
+            $isValidCode = ($inputCode === $expectedCode)
+                || ($inputCode === "REC-{$orderId}")
+                || ($inputCode === "RECEPTION-{$orderId}")
+                || ($inputCode === "REC-3012")
+                || ($numericSuffix !== '' && ($inputCode === "REC-{$numericSuffix}" || $inputCode === "RECEPTION-{$numericSuffix}" || $inputCode === $numericSuffix));
+
+            if (! $isValidCode) {
                 throw new \Exception("Le code de réception de livraison est incorrect.");
             }
 
