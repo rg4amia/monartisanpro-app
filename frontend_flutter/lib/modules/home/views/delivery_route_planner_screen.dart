@@ -336,12 +336,17 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(
-          'Course #${widget.mission.id} (${Formatters.fcfa(deliveryFee)})',
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          'Course #${widget.mission.id} • ${Formatters.fcfa(deliveryFee)}',
+          style: const TextStyle(
+            color: Color(0xFF1E293B),
+            fontWeight: FontWeight.w800,
+            fontSize: 16,
+          ),
         ),
         backgroundColor: Colors.white,
-        foregroundColor: AppColors.textPrimary,
-        elevation: 1,
+        foregroundColor: const Color(0xFF1E293B),
+        iconTheme: const IconThemeData(color: Color(0xFF1E293B)),
+        elevation: 1.5,
         actions: [
           IconButton(
             icon: const Icon(Icons.my_location_rounded, color: AppColors.primary),
@@ -353,13 +358,15 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
       body: Stack(
         children: [
           // ── Map Canvas ──
-          YandexMap(onMapCreated: _onMapCreated),
+          Positioned.fill(
+            child: YandexMap(onMapCreated: _onMapCreated),
+          ),
           if (!_mapReady)
             const Center(child: CircularProgressIndicator(color: AppColors.driver)),
 
           // ── Top Phase Indicator HUD ──
           Positioned(
-            top: 16,
+            top: 12,
             left: 16,
             right: 16,
             child: _buildTopHud(),
@@ -369,7 +376,7 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
           Positioned(
             left: 16,
             right: 16,
-            bottom: 16,
+            bottom: 20,
             child: _buildBottomPanel(),
           ),
         ],
@@ -381,123 +388,119 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
     final isPickup = _currentPhase == DeliveryPhase.pickup;
     final isCompleted = _currentPhase == DeliveryPhase.completed;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.95),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.12),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: isCompleted
-                  ? AppColors.success.withValues(alpha: 0.15)
-                  : isPickup
-                      ? AppColors.warning.withValues(alpha: 0.15)
-                      : AppColors.success.withValues(alpha: 0.15),
-              shape: BoxShape.circle,
+    final badgeColor = isCompleted
+        ? AppColors.success
+        : isPickup
+            ? const Color(0xFFD97706)
+            : AppColors.success;
+
+    final targetName = isPickup
+        ? (widget.mission.artisanName?.isNotEmpty == true ? widget.mission.artisanName! : 'Quincaillerie Partenaire')
+        : (widget.mission.clientName?.isNotEmpty == true ? widget.mission.clientName! : 'Client');
+
+    return Material(
+      elevation: 6,
+      borderRadius: BorderRadius.circular(16),
+      color: Colors.white,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.border.withValues(alpha: 0.8)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: badgeColor.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                isCompleted
+                    ? Icons.check_circle_rounded
+                    : isPickup
+                        ? Icons.storefront_rounded
+                        : Icons.delivery_dining_rounded,
+                color: badgeColor,
+                size: 22,
+              ),
             ),
-            child: Icon(
-              isCompleted
-                  ? Icons.check_circle_rounded
-                  : isPickup
-                      ? Icons.storefront_rounded
-                      : Icons.delivery_dining_rounded,
-              color: isCompleted
-                  ? AppColors.success
-                  : isPickup
-                      ? AppColors.warning
-                      : AppColors.success,
-              size: 22,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  isCompleted
-                      ? 'COURSE TERMINÉE'
-                      : isPickup
-                          ? 'ÉTAPE 1/2 : RETRAIT MATÉRIEL'
-                          : 'ÉTAPE 2/2 : LIVRAISON CLIENT',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.5,
-                    color: isCompleted
-                        ? AppColors.success
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    isCompleted
+                        ? 'COURSE TERMINÉE'
                         : isPickup
-                            ? AppColors.warning
-                            : AppColors.success,
+                            ? 'ÉTAPE 1/2 • RETRAIT MATÉRIEL'
+                            : 'ÉTAPE 2/2 • LIVRAISON CLIENT',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.5,
+                      color: badgeColor,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  isCompleted
-                      ? 'Livraison validée avec succès !'
-                      : isPickup
-                          ? 'Itinéraire vers ${widget.mission.artisanName ?? 'la Quincaillerie'}'
-                          : 'Itinéraire vers ${widget.mission.clientName ?? 'le Client'}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
+                  const SizedBox(height: 2),
+                  Text(
+                    isCompleted ? 'Livraison effectuée avec succès' : 'Vers : $targetName',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF0F172A),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildBottomPanel() {
     if (_currentPhase == DeliveryPhase.completed) {
-      return Card(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        elevation: 10,
+      return Material(
+        elevation: 8,
+        borderRadius: BorderRadius.circular(20),
         color: Colors.white,
         child: Padding(
           padding: const EdgeInsets.all(20.0),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 50),
+              const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 52),
               const SizedBox(height: 10),
               const Text(
                 'Course Livrée avec Succès !',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
               ),
               const SizedBox(height: 6),
-              Text(
-                'Votre compte a été crédité du montant de la course.',
+              const Text(
+                'Votre compte a été crédité du montant de la livraison.',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
               ),
               const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
+                height: 48,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   onPressed: () => Get.back(),
                   child: const Text('Retour à mes courses', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
@@ -510,65 +513,90 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
     }
 
     final isPickup = _currentPhase == DeliveryPhase.pickup;
+    final targetName = isPickup
+        ? (widget.mission.artisanName?.isNotEmpty == true ? widget.mission.artisanName! : 'Quincaillerie Partenaire')
+        : (widget.mission.clientName?.isNotEmpty == true ? widget.mission.clientName! : 'Client');
 
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      elevation: 10,
+    return Material(
+      elevation: 8,
+      borderRadius: BorderRadius.circular(20),
       color: Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.all(18.0),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16.0),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.border),
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Details Header
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        isPickup ? 'POINT DE DÉPART (MAGASIN)' : 'POINT D\'ARRIVÉE (CLIENT)',
-                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.textSecondary),
+                        isPickup ? 'POINT D\'ENLÈVEMENT (MAGASIN)' : 'DESTINATION (CLIENT)',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textSecondary,
+                          letterSpacing: 0.4,
+                        ),
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 3),
                       Text(
-                        isPickup
-                            ? (widget.mission.artisanName ?? 'Quincaillerie Partenaire')
-                            : (widget.mission.clientName ?? 'Client'),
-                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                        targetName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF0F172A),
+                        ),
                       ),
                     ],
                   ),
                 ),
-                OutlinedButton.icon(
-                  onPressed: () {
-                    if (isPickup) {
-                      _launchExternalNavigation(_supplierLat, _supplierLng, 'Fournisseur');
-                    } else {
-                      _launchExternalNavigation(_clientLat, _clientLng, 'Client');
-                    }
-                  },
-                  icon: const Icon(Icons.navigation_outlined, size: 16),
-                  label: const Text('GPS', style: TextStyle(fontWeight: FontWeight.bold)),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.primary,
-                    side: const BorderSide(color: AppColors.primary),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                const SizedBox(width: 10),
+                SizedBox(
+                  height: 36,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      if (isPickup) {
+                        _launchExternalNavigation(_supplierLat, _supplierLng, 'Fournisseur');
+                      } else {
+                        _launchExternalNavigation(_clientLat, _clientLng, 'Client');
+                      }
+                    },
+                    icon: const Icon(Icons.navigation_rounded, size: 15),
+                    label: const Text('GPS', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      elevation: 0,
+                    ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
 
             // Description articles
             Container(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: AppColors.background,
+                color: const Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
               ),
               child: Row(
                 children: [
@@ -576,10 +604,16 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      widget.mission.description ?? 'Articles divers commandés',
+                      widget.mission.description?.isNotEmpty == true
+                          ? widget.mission.description!
+                          : 'Articles commandés #${widget.mission.id}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w600),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF334155),
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ],
@@ -592,9 +626,9 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
               height: 48,
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: isPickup ? AppColors.warning : AppColors.success,
+                  backgroundColor: isPickup ? const Color(0xFFF59E0B) : const Color(0xFF10B981),
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   elevation: 0,
                 ),
                 onPressed: isPickup ? _promptPickupValidation : _promptDeliveryValidation,
