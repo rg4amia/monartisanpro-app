@@ -52,6 +52,13 @@ jobs:
         working-directory: ./backend-proartisan
         run: composer install --no-dev --optimize-autoloader
 
+      - name: Setup Environment
+        working-directory: ./backend-proartisan
+        run: |
+          if [ ! -f .env ]; then
+            cp .env.example .env 2>/dev/null || touch .env
+          fi
+
       - name: Install Node dependencies
         working-directory: ./backend-proartisan
         run: npm ci
