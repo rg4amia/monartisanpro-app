@@ -117,6 +117,14 @@ class PermissionSeeder extends Seeder
                 'litige.view', 'litige.arbitrate', 'litige.vote',
                 'kyc.upload', 'transactions.view'
             ],
+            'livreur' => [
+                'orders.view', 'deliveries.manage', 'jcode.view',
+                'kyc.upload', 'transactions.view', 'parrainage.create', 'parrainage.view'
+            ],
+            'driver' => [
+                'orders.view', 'deliveries.manage', 'jcode.view',
+                'kyc.upload', 'transactions.view', 'parrainage.create', 'parrainage.view'
+            ],
         ];
 
         // Insertion des associations role <-> permission
