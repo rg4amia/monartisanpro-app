@@ -473,43 +473,51 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
 
   Widget _buildBottomPanel() {
     if (_currentPhase == DeliveryPhase.completed) {
-      return Material(
-        elevation: 8,
-        borderRadius: BorderRadius.circular(20),
-        color: Colors.white,
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 52),
-              const SizedBox(height: 10),
-              const Text(
-                'Course Livrée avec Succès !',
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
-              ),
-              const SizedBox(height: 6),
-              const Text(
-                'Votre compte a été crédité du montant de la livraison.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  onPressed: () => Get.back(),
-                  child: const Text('Retour à mes courses', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20.0),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.border),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.12),
+              blurRadius: 14,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 52),
+            const SizedBox(height: 10),
+            const Text(
+              'Course Livrée avec Succès !',
+              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Votre compte a été crédité du montant de la livraison.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
+                onPressed: () => Get.back(),
+                child: const Text('Retour à mes courses', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       );
     }
@@ -519,130 +527,137 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
         ? (widget.mission.artisanName?.isNotEmpty == true ? widget.mission.artisanName! : 'Quincaillerie Partenaire')
         : (widget.mission.clientName?.isNotEmpty == true ? widget.mission.clientName! : 'Client');
 
-    return Material(
-      elevation: 8,
-      borderRadius: BorderRadius.circular(20),
-      color: Colors.white,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(16.0),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Details Header
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.12),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Details Header
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      isPickup ? 'POINT D\'ENLÈVEMENT (MAGASIN)' : 'DESTINATION (CLIENT)',
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textSecondary,
+                        letterSpacing: 0.4,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      targetName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              InkWell(
+                onTap: () {
+                  if (isPickup) {
+                    _launchExternalNavigation(_supplierLat, _supplierLng, 'Fournisseur');
+                  } else {
+                    _launchExternalNavigation(_clientLat, _clientLng, 'Client');
+                  }
+                },
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        isPickup ? 'POINT D\'ENLÈVEMENT (MAGASIN)' : 'DESTINATION (CLIENT)',
-                        style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textSecondary,
-                          letterSpacing: 0.4,
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        targetName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF0F172A),
-                        ),
-                      ),
+                      Icon(Icons.navigation_rounded, size: 14, color: Colors.white),
+                      SizedBox(width: 4),
+                      Text('GPS', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
                     ],
                   ),
                 ),
-                const SizedBox(width: 10),
-                SizedBox(
-                  height: 36,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      if (isPickup) {
-                        _launchExternalNavigation(_supplierLat, _supplierLng, 'Fournisseur');
-                      } else {
-                        _launchExternalNavigation(_clientLat, _clientLng, 'Client');
-                      }
-                    },
-                    icon: const Icon(Icons.navigation_rounded, size: 15),
-                    label: const Text('GPS', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      elevation: 0,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Description articles
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.inventory_2_outlined, size: 16, color: AppColors.textSecondary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    widget.mission.description?.isNotEmpty == true
+                        ? widget.mission.description!
+                        : 'Articles commandés #${widget.mission.id}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF334155),
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 10),
+          ),
+          const SizedBox(height: 14),
 
-            // Description articles
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+          // Primary Action Button
+          SizedBox(
+            height: 48,
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isPickup ? const Color(0xFFF59E0B) : const Color(0xFF10B981),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                elevation: 0,
               ),
-              child: Row(
-                children: [
-                  const Icon(Icons.inventory_2_outlined, size: 16, color: AppColors.textSecondary),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      widget.mission.description?.isNotEmpty == true
-                          ? widget.mission.description!
-                          : 'Articles commandés #${widget.mission.id}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF334155),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
+              onPressed: isPickup ? _promptPickupValidation : _promptDeliveryValidation,
+              icon: Icon(isPickup ? Icons.qr_code_scanner_rounded : Icons.check_circle_outline, size: 20),
+              label: Text(
+                isPickup ? 'Valider l\'Enlèvement Magasin' : 'Valider la Livraison Client',
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
               ),
             ),
-            const SizedBox(height: 14),
-
-            // Primary Action Button
-            SizedBox(
-              height: 48,
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: isPickup ? const Color(0xFFF59E0B) : const Color(0xFF10B981),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  elevation: 0,
-                ),
-                onPressed: isPickup ? _promptPickupValidation : _promptDeliveryValidation,
-                icon: Icon(isPickup ? Icons.qr_code_scanner_rounded : Icons.check_circle_outline, size: 20),
-                label: Text(
-                  isPickup ? 'Valider l\'Enlèvement Magasin' : 'Valider la Livraison Client',
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
