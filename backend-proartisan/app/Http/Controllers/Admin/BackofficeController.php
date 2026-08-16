@@ -499,8 +499,13 @@ class BackofficeController extends Controller
                         ->toArray();
                 }
             }
+        $orders = [];
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('orders')) {
+                $orders = $this->adminService->listOrders(null, null, null, 150)->items();
+            }
         } catch (\Throwable $e) {
-            // fallback
+            $orders = [];
         }
 
         return Inertia::render($component, [
@@ -513,6 +518,7 @@ class BackofficeController extends Controller
                 ->get(),
             'litiges' => $this->adminService->listLitiges(null, 60)->items(),
             'missions' => $this->adminService->listMissions(null, null, 100)->items(),
+            'orders' => $orders,
             'transactions' => $this->adminService->listTransactions(null, null, 100)->items(),
             'users' => $this->adminService->listUsers(null, null, null, 100)->items(),
             'evaluationsList' => $this->adminService->listEvaluations(100)->items(),

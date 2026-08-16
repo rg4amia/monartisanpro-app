@@ -169,6 +169,37 @@ class AdminService
             ->paginate($perPage);
     }
 
+    public function listOrders(?string $status = null, ?string $mode = null, ?string $query = null, int $perPage = 100): LengthAwarePaginator
+    {
+        if (!\Illuminate\Support\Facades\Schema::hasTable('orders')) {
+            return new \Illuminate\Pagination\LengthAwarePaginator([], 0, $perPage);
+        }
+
+        return Order::query()
+            ->with([
+                'client:id,name,phone,role',
+                'supplier:id,name,phone,role',
+                'supplier.fournisseurAgree:id,user_id,nom_boutique,statut',
+                'driver:id,name,phone,role',
+                'items.product:id,name,price,unit',
+                'transactions',
+            ])
+            ->when($status, fn ($q) => $q->where('status', $status))
+            ->when($mode, fn ($q) => $q->where('delivery_mode', $mode))
+            ->when($query, function ($q) use ($query) {
+                $q->where(function ($sub) use ($query) {
+                    $sub->where('id', $query)
+                        ->orWhere('pickup_code', 'like', "%{$query}%")
+                        ->orWhere('reception_code', 'like', "%{$query}%")
+                        ->orWhereHas('client', fn ($u) => $u->where('name', 'like', "%{$query}%")->orWhere('phone', 'like', "%{$query}%"))
+                        ->orWhereHas('driver', fn ($u) => $u->where('name', 'like', "%{$query}%")->orWhere('phone', 'like', "%{$query}%"))
+                        ->orWhereHas('supplier', fn ($u) => $u->where('name', 'like', "%{$query}%")->orWhere('phone', 'like', "%{$query}%"));
+                });
+            })
+            ->orderByDesc('created_at')
+            ->paginate($perPage);
+    }
+
     public function resolveLitige(User $admin, Litige $litige, array $payload): Litige
     {
         return $this->litigeService->arbitrate($admin, $litige, $payload);
