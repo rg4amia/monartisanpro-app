@@ -303,6 +303,8 @@ SELECT ST_X(position) AS lng, ST_Y(position) AS lat FROM users WHERE id = :id;
 14. **RBAC & Rôle Livreur dans le Backoffice** : Le système de permissions (`permissions` & `permission_role`) supporte les 6 rôles (`client`, `artisan`, `fournisseur`, `referent`, `livreur`, `admin`). Toutes les réponses d'attribution/révocation de rôle dans l'administration Inertia.js doivent intercepter le header `X-Inertia` et retourner un `back()`.
 15. **Itinéraire Routier OSRM & Trajet Précis** : Le module itinéraire du livreur génère des tracés réels suivant la carte routière via OSRM (`router.project-osrm.org`) avec calcul dynamique de la distance ($km$) et du temps estimé ($min$).
 16. **Validation Souple des Codes Logistiques** : Les méthodes `verifyPickup` et `verifyDelivery` de `OrderService` doivent valider les codes de livraison aussi bien sur leur valeur brute générée que sur les formats raccourcis/tests (`RET-16`, `REC-16`) pour assurer la mise à jour effective du statut `delivered` en base de données.
+17. **Visualisation Interactive des Médias du Sinistre** : L'artisan accède aux photos/vidéos fournies par le client lors du diagnostic pour concevoir son devis (`DevisCreationScreen`) et suivre le chantier (`MissionTrackingScreen`). La galerie interactive supporte le zoom interactif sur les images et l'ouverture native des vidéos.
+18. **Intégrité de Traitement des Devis & KYC Livreur** : L'acceptation de devis nécessite une transaction d'acompte confirmée et appariée. Un devis ne peut être accepté/refusé s'il n'est plus à l'état `soumis`. Le rôle livreur est assujetti au middleware de restriction de sécurité `kyc.verified` pour lister et accepter des courses.
 
 ---
 
