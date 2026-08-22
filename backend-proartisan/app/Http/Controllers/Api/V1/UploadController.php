@@ -12,7 +12,7 @@ class UploadController extends Controller
     public function upload(Request $request): JsonResponse
     {
         $request->validate([
-            'file' => 'required|file|mimes:jpeg,jpg,png,webp,pdf|max:10240', // 10MB max
+            'file' => 'required|file|mimes:jpeg,jpg,png,webp,pdf,mp4,mov,avi,mkv,3gp,m4v|max:25600', // 25MB max
         ]);
 
         $file = $request->file('file');

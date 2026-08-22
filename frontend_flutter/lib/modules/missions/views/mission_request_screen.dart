@@ -258,6 +258,8 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
                             'latitude': _latitude.value,
                             'longitude': _longitude.value,
                             'nightIntervention': _nightIntervention.value,
+                            'photos': _photos.toList(),
+                            'video': _video.value,
                           },
                         );
                       },

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../data/models/devis_model.dart';
@@ -251,9 +253,150 @@ class _InfoCard extends StatelessWidget {
                 ),
             ],
           ),
+          if (mission?.photos != null && mission!.photos.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            const Divider(color: _C.subtle),
+            const SizedBox(height: 12),
+            const Text(
+              'Visuels transmis par le client :',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: _C.ink,
+              ),
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              height: 90,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: mission!.photos.length,
+                separatorBuilder: (context, index) => const SizedBox(width: 10),
+                itemBuilder: (context, index) {
+                  final mediaUrl = mission!.photos[index];
+                  final isVideo = _isVideoUrl(mediaUrl);
+
+                  return GestureDetector(
+                    onTap: () => _openMedia(context, mediaUrl, isVideo),
+                    child: Container(
+                      width: 90,
+                      height: 90,
+                      decoration: BoxDecoration(
+                        color: Colors.black12,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: _C.subtle),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.04),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            if (isVideo)
+                              Container(
+                                color: Colors.grey[800],
+                                child: const Center(
+                                  child: CircleAvatar(
+                                    backgroundColor: Colors.white24,
+                                    radius: 20,
+                                    child: Icon(
+                                      Icons.play_arrow_rounded,
+                                      color: Colors.white,
+                                      size: 24,
+                                    ),
+                                  ),
+                                ),
+                              )
+                            else
+                              CachedNetworkImage(
+                                imageUrl: mediaUrl,
+                                fit: BoxFit.cover,
+                                placeholder: (context, url) => const Center(
+                                  child: SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  ),
+                                ),
+                                errorWidget: (context, url, error) => const Center(
+                                  child: Icon(Icons.broken_image_outlined, size: 24),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
         ],
       ),
     );
+  }
+
+  bool _isVideoUrl(String url) {
+    final path = url.toLowerCase();
+    return path.endsWith('.mp4') ||
+        path.endsWith('.mov') ||
+        path.endsWith('.avi') ||
+        path.endsWith('.mkv') ||
+        path.endsWith('.3gp') ||
+        path.endsWith('.m4v');
+  }
+
+  void _openMedia(BuildContext context, String url, bool isVideo) {
+    if (isVideo) {
+      launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    } else {
+      Get.dialog(
+        Dialog.fullscreen(
+          backgroundColor: Colors.black,
+          child: Stack(
+            children: [
+              InteractiveViewer(
+                minScale: 0.5,
+                maxScale: 4.0,
+                child: Center(
+                  child: CachedNetworkImage(
+                    imageUrl: url,
+                    fit: BoxFit.contain,
+                    placeholder: (context, url) => const CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                    errorWidget: (context, url, error) => const Icon(
+                      Icons.broken_image_outlined,
+                      color: Colors.white70,
+                      size: 48,
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 20,
+                right: 20,
+                child: SafeArea(
+                  child: IconButton(
+                    icon: const CircleAvatar(
+                      backgroundColor: Colors.black45,
+                      child: Icon(Icons.close, color: Colors.white),
+                    ),
+                    onPressed: () => Get.back(),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
   }
 }
 

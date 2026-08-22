@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../app/routes/app_routes.dart';
 import '../../../core/utils/error_handler.dart';
@@ -23,6 +24,8 @@ class ArtisanSelectionController extends GetxController {
   final nightIntervention = false.obs;
   final artisans = <ArtisanModel>[].obs;
   final searchDistant = false.obs;
+  final photos = <XFile>[].obs;
+  final video = Rx<XFile?>(null);
 
   void toggleSearchDistant() {
     searchDistant.value = !searchDistant.value;
@@ -49,6 +52,8 @@ class ArtisanSelectionController extends GetxController {
     final nextLocationAddress = (data['locationAddress'] ?? '').toString();
     final nextLocationDetail = (data['locationDetail'] ?? '').toString();
     final nextNightIntervention = _parseBool(data['nightIntervention']);
+    final nextPhotos = data['photos'] as List<XFile>? ?? [];
+    final nextVideo = data['video'] as XFile?;
 
     final hasSamePayload = _initializedFromArgs &&
         selectedCategory.value == nextCategory &&
@@ -75,6 +80,8 @@ class ArtisanSelectionController extends GetxController {
     locationAddress.value = nextLocationAddress;
     locationDetail.value = nextLocationDetail;
     nightIntervention.value = nextNightIntervention;
+    photos.value = nextPhotos;
+    video.value = nextVideo;
 
     _loadNearbyArtisans();
   }
@@ -92,6 +99,18 @@ class ArtisanSelectionController extends GetxController {
 
     isLoading.value = true;
     try {
+      // 1. Upload files first (if any)
+      final List<String> uploadedUrls = [];
+      for (final photo in photos) {
+        final url = await missionsController.uploadFile(photo.path);
+        uploadedUrls.add(url);
+      }
+      if (video.value != null) {
+        final url = await missionsController.uploadFile(video.value!.path);
+        uploadedUrls.add(url);
+      }
+
+      // 2. Call createMission with the list of URLs
       final mission = await missionsController.createMission(
         artisanId: artisan.id,
         description: missionDescription.value,
@@ -106,6 +125,7 @@ class ArtisanSelectionController extends GetxController {
         lng: clientLongitude.value != 0.0 ? clientLongitude.value : null,
         location:
             locationAddress.value.isNotEmpty ? locationAddress.value : null,
+        photos: uploadedUrls.isNotEmpty ? uploadedUrls : null,
       );
 
       if (mission != null) {

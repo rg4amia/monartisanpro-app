@@ -144,6 +144,7 @@ class MissionRepository {
     double? lat,
     double? lng,
     String? location,
+    List<String>? photos,
     Map<String, dynamic>? additionalData,
   }) async {
     final payload = {
@@ -156,6 +157,7 @@ class MissionRepository {
       if (lat != null) 'lat': lat,
       if (lng != null) 'lng': lng,
       if (location != null) 'location_address': location,
+      if (photos != null) 'photos': photos,
       if (additionalData != null) ...additionalData,
     };
 
@@ -173,6 +175,18 @@ class MissionRepository {
     }
 
     return MissionModel.fromJson(missionData);
+  }
+
+  /// Upload un fichier (image/vidéo) et retourne son URL publique
+  Future<String> uploadFile(String filePath) async {
+    final formData = FormData.fromMap({
+      'file': await MultipartFile.fromFile(
+        filePath,
+        filename: filePath.split('/').last,
+      ),
+    });
+    final res = await _client.postMultipart('/upload', formData);
+    return res.data['url'] as String;
   }
 
   /// Demande une estimation IA Gemini pour une mission
