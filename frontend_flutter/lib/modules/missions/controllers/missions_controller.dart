@@ -194,6 +194,7 @@ class MissionsController extends GetxController {
   /// [category] - Catégorie des travaux
   /// [urgency] - Niveau d'urgence (faible, moyen, urgent)
   /// [location] - Localisation optionnelle
+  /// [photos] - Liste des URLs des photos/vidéos uploadées
   Future<MissionModel?> createMission({
     required int artisanId,
     required String description,
@@ -204,6 +205,7 @@ class MissionsController extends GetxController {
     double? lat,
     double? lng,
     String? location,
+    List<String>? photos,
   }) async {
     isLoading.value = true;
     errorMsg.value = null;
@@ -219,6 +221,7 @@ class MissionsController extends GetxController {
         lat: lat,
         lng: lng,
         location: location,
+        photos: photos,
       );
 
       // Invalider le cache pour forcer le refresh
@@ -260,6 +263,11 @@ class MissionsController extends GetxController {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  /// Téléverse un fichier (image/vidéo) sur le serveur
+  Future<String> uploadFile(String filePath) async {
+    return await _repo.uploadFile(filePath);
   }
 
   /// Artisan accepte la demande de devis

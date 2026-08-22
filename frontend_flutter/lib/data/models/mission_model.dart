@@ -19,6 +19,7 @@ class MissionModel {
   final String paymentType;
   final String? statusGemini;
   final bool hasDevis;
+  final List<String> photos;
 
   const MissionModel({
     required this.id,
@@ -41,6 +42,7 @@ class MissionModel {
     this.paymentType = 'total',
     this.statusGemini,
     this.hasDevis = false,
+    this.photos = const [],
   });
 
   bool get needsReferent => montantTotal > 2000000;
@@ -152,6 +154,10 @@ class MissionModel {
           ? null
           : (json['statusGemini'] ?? json['status']).toString(),
       hasDevis: json['has_devis'] == true || json['hasDevis'] == true,
+      photos: (json['photos'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
     );
   }
 
@@ -176,6 +182,7 @@ class MissionModel {
     'payment_type': paymentType,
     'statusGemini': statusGemini,
     'has_devis': hasDevis,
+    'photos': photos,
   };
 
   MissionModel copyWith({
@@ -199,6 +206,7 @@ class MissionModel {
     String? paymentType,
     String? statusGemini,
     bool? hasDevis,
+    List<String>? photos,
   }) {
     return MissionModel(
       id: id ?? this.id,
@@ -221,6 +229,7 @@ class MissionModel {
       paymentType: paymentType ?? this.paymentType,
       statusGemini: statusGemini ?? this.statusGemini,
       hasDevis: hasDevis ?? this.hasDevis,
+      photos: photos ?? this.photos,
     );
   }
 
