@@ -281,4 +281,104 @@ class DevisPaymentFlowTest extends TestCase
         $this->assertSame($txId1, $txId2);
         $this->assertDatabaseCount('transactions', 1);
     }
+
+    public function test_devis_processing_validation_rules_and_restrictions(): void
+    {
+        $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
+        $otherUser = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
+        $artisan = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif']);
+
+        $mission = Mission::create([
+            'client_id' => $client->id,
+            'artisan_id' => null,
+            'description' => 'Test validations',
+            'status' => 'draft',
+        ]);
+
+        $devis = Devis::create([
+            'mission_id' => $mission->id,
+            'artisan_id' => $artisan->id,
+            'statut' => 'soumis',
+            'commission_service_ratio' => 0.00,
+            'lignes_json' => [
+                ['type' => 'mo', 'description' => 'Tâche', 'montant' => 50000],
+            ],
+            'jalons_json' => [
+                ['ordre' => 1, 'description' => 'Etape 1', 'montant' => 50000, 'date_cible' => '2026-03-25'],
+            ],
+        ]);
+
+        // 1. Another user tries to accept or refuse -> should fail with 403
+        $this->actingAs($otherUser)
+            ->postJson("/api/v1/devis/{$devis->id}/accept", ['transaction_id' => 1])
+            ->assertStatus(403);
+
+        $this->actingAs($otherUser)
+            ->postJson("/api/v1/devis/{$devis->id}/refuse")
+            ->assertStatus(403);
+
+        // 2. Accept with a pending (unconfirmed) transaction -> should fail with 422
+        $txPending = Transaction::create([
+            'mission_id' => $mission->id,
+            'user_id' => $client->id,
+            'type' => 'acompte',
+            'montant' => 50000,
+            'wallet_source' => 'client_wallet',
+            'wallet_dest' => 'escrow_wallet',
+            'provider' => 'wave',
+            'statut' => 'en_attente',
+        ]);
+        $txPending->metadata = ['devis_id' => $devis->id];
+        $txPending->save();
+
+        $this->actingAs($client)
+            ->postJson("/api/v1/devis/{$devis->id}/accept", ['transaction_id' => $txPending->id])
+            ->assertStatus(422);
+
+        // 3. Accept with a confirmed transaction but matching a different devis -> should fail with 422
+        $txWrongDevis = Transaction::create([
+            'mission_id' => $mission->id,
+            'user_id' => $client->id,
+            'type' => 'acompte',
+            'montant' => 50000,
+            'wallet_source' => 'client_wallet',
+            'wallet_dest' => 'escrow_wallet',
+            'provider' => 'wave',
+            'statut' => 'confirme',
+        ]);
+        $txWrongDevis->metadata = ['devis_id' => 9999]; // different devis
+        $txWrongDevis->save();
+
+        $this->actingAs($client)
+            ->postJson("/api/v1/devis/{$devis->id}/accept", ['transaction_id' => $txWrongDevis->id])
+            ->assertStatus(422);
+
+        // 4. Refuse the devis
+        $this->actingAs($client)
+            ->postJson("/api/v1/devis/{$devis->id}/refuse")
+            ->assertOk();
+
+        // 5. Try to accept a refused devis -> should fail with 422
+        $txConfirmed = Transaction::create([
+            'mission_id' => $mission->id,
+            'user_id' => $client->id,
+            'type' => 'acompte',
+            'montant' => 50000,
+            'wallet_source' => 'client_wallet',
+            'wallet_dest' => 'escrow_wallet',
+            'provider' => 'wave',
+            'statut' => 'confirme',
+        ]);
+        $txConfirmed->metadata = ['devis_id' => $devis->id];
+        $txConfirmed->save();
+
+        $this->actingAs($client)
+            ->postJson("/api/v1/devis/{$devis->id}/accept", ['transaction_id' => $txConfirmed->id])
+            ->assertStatus(422);
+
+        // 6. Try to refuse an already refused devis -> should fail with 422
+        $this->actingAs($client)
+            ->postJson("/api/v1/devis/{$devis->id}/refuse")
+            ->assertStatus(422);
+    }
 }

@@ -93,8 +93,8 @@ Route::prefix('v1')->group(function () {
         Route::post('/promo-codes/{promoCode}/toggle', [\App\Http\Controllers\Api\V1\PromoCodeController::class, 'toggle']);
 
         // ── Logistique & Livraisons (Courses) ──────────────────────────────────
-        Route::get('/deliveries/available', [DeliveryController::class, 'available']);
-        Route::post('/deliveries/{order}/accept', [DeliveryController::class, 'accept']);
+        Route::get('/deliveries/available', [DeliveryController::class, 'available'])->middleware('kyc.verified');
+        Route::post('/deliveries/{order}/accept', [DeliveryController::class, 'accept'])->middleware('kyc.verified');
 
         // ── Utilisateurs ─────────────────────────────────────────────────────
         Route::put('/users/{user}',          [UserController::class, 'update']);

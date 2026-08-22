@@ -184,10 +184,12 @@ class DevisGestionRulesTest extends TestCase
             ->assertSee('Simulation de Paiement');
 
         // Post confirmation
-        $this->post(route('payment.mock.validate'), [
+        $responseVal = $this->post(route('payment.mock.validate'), [
             'transaction_id' => $transactionId,
             'action' => 'confirm',
-        ])->assertRedirect(route('home'));
+        ]);
+        $responseVal->assertStatus(200);
+        $responseVal->assertSee('payment-result');
 
         // Check payment status again - should be confirmed
         $responseStatus2 = $this->actingAs($client)
