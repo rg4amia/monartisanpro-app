@@ -290,4 +290,97 @@ class GeminiService
             'jalons' => $jalons,
         ];
     }
+
+    /**
+     * Analyse un fichier média (photo/vidéo) pour repérer les contacts, adresses, localisations.
+     */
+    public function analyzeMediaForSensitiveData(\Illuminate\Http\UploadedFile $file): array
+    {
+        if (empty($this->apiKey) || config('app.env') === 'testing') {
+            // Dans l'environnement de test ou sans clé, on fait une simulation souple.
+            // On rejette si le nom du fichier contient le mot clé "sensitive", "contact" ou "address"
+            $fileName = strtolower($file->getClientOriginalName());
+            if (str_contains($fileName, 'sensitive') || str_contains($fileName, 'contact') || str_contains($fileName, 'address')) {
+                return [
+                    'contains_sensitive_data' => true,
+                    'details' => 'Le fichier contient des indications interdites (détecté par simulation).',
+                ];
+            }
+            return [
+                'contains_sensitive_data' => false,
+                'details' => '',
+            ];
+        }
+
+        try {
+            $mimeType = $file->getMimeType();
+            $isImage = str_starts_with($mimeType, 'image/');
+            $isVideo = str_starts_with($mimeType, 'video/');
+
+            if (!$isImage && !$isVideo) {
+                return [
+                    'contains_sensitive_data' => false,
+                    'details' => '',
+                ];
+            }
+
+            $base64Data = base64_encode(file_get_contents($file->getPathname()));
+
+            $prompt = "Analyse cette image ou vidéo. Tu devez repérer et rejeter tout élément qui contient des coordonnées personnelles, professionnelles ou des indications de localisation précise.
+            
+            Détecte et signale comme INTERDIT (contains_sensitive_data = true) si tu trouves :
+            - Un numéro de téléphone (ex: +225, 07, 05, 01, etc.)
+            - Une adresse email ou un contact de réseau social (Facebook, WhatsApp, Instagram, etc.)
+            - Une adresse physique écrite ou une localisation précise (nom de rue, coordonnées GPS écrites, plaque d'immatriculation lisible, adresse postale, etc.)
+
+            Retourne obligatoirement ce format JSON uniquement:
+            {
+              \"contains_sensitive_data\": true|false,
+              \"details\": \"Raison succincte en français si true\"
+            }";
+
+            $response = Http::withHeaders([
+                'User-Agent' => 'Mozilla/5.0'
+            ])->withOptions([
+                'curl' => [CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4]
+            ])->post("https://generativelanguage.googleapis.com/v1beta/models/{$this->model}:generateContent?key={$this->apiKey}", [
+                'contents' => [
+                    [
+                        'parts' => [
+                            [
+                                'inlineData' => [
+                                    'mimeType' => $mimeType,
+                                    'data' => $base64Data,
+                                ]
+                            ],
+                            [
+                                'text' => $prompt
+                            ]
+                        ]
+                    ]
+                ],
+                'generationConfig' => [
+                    'response_mime_type' => 'application/json',
+                ]
+            ]);
+
+            if ($response->successful()) {
+                $result = json_decode($response->json()['candidates'][0]['content']['parts'][0]['text'], true);
+                return [
+                    'contains_sensitive_data' => (bool) ($result['contains_sensitive_data'] ?? false),
+                    'details' => $result['details'] ?? '',
+                ];
+            }
+
+            Log::error('Gemini Media API Error', ['body' => $response->body()]);
+        } catch (\Exception $e) {
+            Log::error('Gemini Media Exception', ['message' => $e->getMessage()]);
+        }
+
+        // En cas d'erreur de communication, on tolère pour éviter de bloquer l'expérience utilisateur
+        return [
+            'contains_sensitive_data' => false,
+            'details' => '',
+        ];
+    }
 }

@@ -17,6 +17,17 @@ class UploadController extends Controller
 
         $file = $request->file('file');
 
+        // Analyse par l'IA Gemini pour interdire les coordonnées / adresses / localisation
+        $gemini = app(\App\Services\GeminiService::class);
+        $analysis = $gemini->analyzeMediaForSensitiveData($file);
+
+        if ($analysis['contains_sensitive_data']) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Fichier rejeté : ' . $analysis['details'],
+            ], 422);
+        }
+
         // Stocke dans le dossier 'fileshare' du disque public
         $path = $file->store('fileshare', 'public');
 
