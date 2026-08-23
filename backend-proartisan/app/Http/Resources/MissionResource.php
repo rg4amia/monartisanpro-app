@@ -41,9 +41,9 @@ class MissionResource extends JsonResource
             'ratioMateriaux' => $this->ratio_materiaux,
             'referentRequired' => $this->referent_required,
             'paymentStatus' => $this->mapPaymentStatus(),
-            'location' => $this->client_address,
-            'clientAddress' => $this->client_address,
-            'clientCoordinates' => $this->client_latitude !== null && $this->client_longitude !== null ? [
+            'location' => $this->shouldRevealClientDetails($request) ? $this->client_address : null,
+            'clientAddress' => $this->shouldRevealClientDetails($request) ? $this->client_address : null,
+            'clientCoordinates' => $this->shouldRevealClientDetails($request) && $this->client_latitude !== null && $this->client_longitude !== null ? [
                 'lat' => $this->client_latitude,
                 'lng' => $this->client_longitude,
             ] : null,
@@ -51,7 +51,11 @@ class MissionResource extends JsonResource
             'requestedTradeId' => $this->requested_trade_id,
             'client' => $this->when(
                 $this->relationLoaded('client'),
-                fn () => ['id' => $this->client->id, 'name' => $this->client->name, 'phone' => $this->client->phone]
+                fn () => [
+                    'id' => $this->client->id,
+                    'name' => $this->client->name,
+                    'phone' => $this->shouldRevealClientDetails($request) ? $this->client->phone : null
+                ]
             ),
             'artisan' => $this->when(
                 $this->relationLoaded('artisan') && $this->artisan,
@@ -126,5 +130,41 @@ class MissionResource extends JsonResource
             'cancelled', 'annulee' => 'refunded',
             default => 'pending',
         };
+    }
+
+    /**
+     * Détermine si les informations privées du client doivent être révélées.
+     */
+    private function shouldRevealClientDetails(Request $request): bool
+    {
+        $user = $request->user();
+        if (!$user) {
+            return false;
+        }
+
+        // L'admin a accès à tout
+        if ($user->role === 'admin') {
+            return true;
+        }
+
+        // Le client a accès à sa propre mission
+        if ($user->id === $this->client_id) {
+            return true;
+        }
+
+        // L'artisan affecté a accès si la mission est financée/payée
+        if ($user->id === $this->artisan_id) {
+            $statusStr = (string) $this->status;
+            $paidStatuses = [
+                'funded_locked', 'financee',
+                'in_progress', 'en_cours',
+                'pending_approval',
+                'completed', 'terminee',
+                'disputed', 'litige'
+            ];
+            return in_array($statusStr, $paidStatuses, true);
+        }
+
+        return false;
     }
 }

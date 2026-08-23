@@ -20,6 +20,9 @@ class MissionModel {
   final String? statusGemini;
   final bool hasDevis;
   final List<String> photos;
+  final String? clientPhone;
+  final double? clientLatitude;
+  final double? clientLongitude;
 
   const MissionModel({
     required this.id,
@@ -43,9 +46,20 @@ class MissionModel {
     this.statusGemini,
     this.hasDevis = false,
     this.photos = const [],
+    this.clientPhone,
+    this.clientLatitude,
+    this.clientLongitude,
   });
 
   bool get needsReferent => montantTotal > 2000000;
+
+  bool get isPaid {
+    return paymentStatus == 'funded' ||
+        status == 'financee' ||
+        status == 'en_cours' ||
+        status == 'terminee' ||
+        status == 'litige';
+  }
 
   String get rawStatus => statusGemini ?? status;
 
@@ -158,6 +172,13 @@ class MissionModel {
               ?.map((e) => e.toString())
               .toList() ??
           [],
+      clientPhone: (client?['phone'] ?? json['clientPhone'])?.toString(),
+      clientLatitude: json['clientCoordinates'] is Map<String, dynamic>
+          ? double.tryParse((json['clientCoordinates'] as Map<String, dynamic>)['lat'].toString())
+          : (json['clientLatitude'] != null ? double.tryParse(json['clientLatitude'].toString()) : null),
+      clientLongitude: json['clientCoordinates'] is Map<String, dynamic>
+          ? double.tryParse((json['clientCoordinates'] as Map<String, dynamic>)['lng'].toString())
+          : (json['clientLongitude'] != null ? double.tryParse(json['clientLongitude'].toString()) : null),
     );
   }
 
@@ -183,6 +204,9 @@ class MissionModel {
     'statusGemini': statusGemini,
     'has_devis': hasDevis,
     'photos': photos,
+    'clientPhone': clientPhone,
+    'clientLatitude': clientLatitude,
+    'clientLongitude': clientLongitude,
   };
 
   MissionModel copyWith({
@@ -207,6 +231,9 @@ class MissionModel {
     String? statusGemini,
     bool? hasDevis,
     List<String>? photos,
+    String? clientPhone,
+    double? clientLatitude,
+    double? clientLongitude,
   }) {
     return MissionModel(
       id: id ?? this.id,
@@ -230,6 +257,9 @@ class MissionModel {
       statusGemini: statusGemini ?? this.statusGemini,
       hasDevis: hasDevis ?? this.hasDevis,
       photos: photos ?? this.photos,
+      clientPhone: clientPhone ?? this.clientPhone,
+      clientLatitude: clientLatitude ?? this.clientLatitude,
+      clientLongitude: clientLongitude ?? this.clientLongitude,
     );
   }
 
