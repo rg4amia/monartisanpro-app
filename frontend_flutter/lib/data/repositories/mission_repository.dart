@@ -410,6 +410,42 @@ class MissionRepository {
     }
   }
 
+  /// Upload de preuves supplémentaires pour un jalon (artisan)
+  Future<void> uploadJalonPhotos(int jalonId, List<Map<String, dynamic>> localFiles, {int? missionId}) async {
+    final Map<String, dynamic> formMap = {};
+    for (int i = 0; i < localFiles.length; i++) {
+      final fileMap = localFiles[i];
+      final path = fileMap['url'] as String;
+      formMap['photos[$i][photo]'] = await MultipartFile.fromFile(
+        path,
+        filename: path.split('/').last,
+      );
+      formMap['photos[$i][latitude]'] = fileMap['lat'];
+      formMap['photos[$i][longitude]'] = fileMap['lng'];
+      if (fileMap['description'] != null) {
+        formMap['photos[$i][description]'] = fileMap['description'];
+      }
+    }
+    final formData = FormData.fromMap(formMap);
+    await _client.postMultipart(ApiEndpoints.uploadJalonPhotos(jalonId), formData);
+
+    if (missionId != null) {
+      await _cache.invalidate('jalons_$missionId');
+    }
+  }
+
+  /// Le client accepte directement les preuves de travail et valide le jalon sans OTP
+  Future<void> acceptJalonProofs(int jalonId, {int? missionId}) async {
+    await _client.post(ApiEndpoints.acceptJalonProofs(jalonId));
+
+    if (missionId != null) {
+      await _cache.invalidate('jalons_$missionId');
+      await _cache.invalidate('mission_$missionId');
+      await _cache.invalidate('all');
+      await _cache.invalidate('en_cours');
+    }
+  }
+
   /// Invalide tout le cache (utile après déconnexion)
   Future<void> clearCache() async {
     await initCache();

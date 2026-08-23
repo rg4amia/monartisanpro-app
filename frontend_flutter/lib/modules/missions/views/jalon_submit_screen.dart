@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
@@ -9,8 +10,8 @@ import '../../../core/utils/formatters.dart';
 import '../../../data/models/jalon_model.dart';
 import '../controllers/missions_controller.dart';
 
-/// Écran de soumission d'un jalon par l'artisan
-/// Permet de capturer des photos géolocalisées et de soumettre le jalon pour validation client
+/// Écran de soumission de preuves de jalon par l'artisan
+/// Permet de capturer des photos/vidéos géolocalisées et de soumettre le jalon
 class JalonSubmitScreen extends StatefulWidget {
   const JalonSubmitScreen({super.key});
 
@@ -32,8 +33,71 @@ class _JalonSubmitScreenState extends State<JalonSubmitScreen> {
     _jalon = Get.arguments as JalonModel?;
   }
 
-  /// Capture une photo avec géolocalisation
-  Future<void> _capturePhoto() async {
+  /// Affiche le menu pour choisir le type de preuve à ajouter
+  void _showPickOptions() {
+    Get.bottomSheet(
+      Container(
+        padding: const EdgeInsets.all(20),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Ajouter une preuve de travail',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 20),
+            ListTile(
+              leading: const Icon(Icons.camera_alt, color: AppColors.primary),
+              title: const Text('Prendre une photo'),
+              onTap: () {
+                Get.back();
+                _addProof(isVideo: false, fromCamera: true);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library, color: AppColors.primary),
+              title: const Text('Choisir une photo depuis la galerie'),
+              onTap: () {
+                Get.back();
+                _addProof(isVideo: false, fromCamera: false);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.videocam, color: AppColors.primary),
+              title: const Text('Enregistrer une vidéo'),
+              onTap: () {
+                Get.back();
+                _addProof(isVideo: true, fromCamera: true);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.video_library, color: AppColors.primary),
+              title: const Text('Choisir une vidéo depuis la galerie'),
+              onTap: () {
+                Get.back();
+                _addProof(isVideo: true, fromCamera: false);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Capture ou choisit une preuve (photo ou vidéo) avec géolocalisation
+  Future<void> _addProof({required bool isVideo, required bool fromCamera}) async {
     if (_jalon == null) return;
 
     setState(() => _isCapturing = true);
@@ -68,33 +132,42 @@ class _JalonSubmitScreenState extends State<JalonSubmitScreen> {
         ),
       );
 
-      // 4. Capturer la photo
-      final XFile? image = await _picker.pickImage(
-        source: ImageSource.camera,
-        imageQuality: 80,
-        maxWidth: 1920,
-      );
+      // 4. Capturer ou sélectionner le fichier
+      XFile? file;
+      if (isVideo) {
+        file = await _picker.pickVideo(
+          source: fromCamera ? ImageSource.camera : ImageSource.gallery,
+          maxDuration: const Duration(seconds: 60),
+        );
+      } else {
+        file = await _picker.pickImage(
+          source: fromCamera ? ImageSource.camera : ImageSource.gallery,
+          imageQuality: 80,
+          maxWidth: 1920,
+        );
+      }
 
-      if (image == null) {
+      if (file == null) {
         setState(() => _isCapturing = false);
         return;
       }
 
-      final photoUrl = image.path;
+      final filePath = file.path;
 
-      // 5. Ajouter la photo à la liste
+      // 5. Ajouter la preuve à la liste
       setState(() {
         _photos.add({
-          'url': photoUrl,
+          'url': filePath,
           'lat': position.latitude,
           'lng': position.longitude,
           'taken_at': DateTime.now().toIso8601String(),
+          'is_video': isVideo,
         });
       });
 
       Get.snackbar(
-        'Photo ajoutée',
-        'Photo géolocalisée capturée avec succès',
+        isVideo ? 'Vidéo ajoutée' : 'Photo ajoutée',
+        'Preuve géolocalisée enregistrée avec succès',
         snackPosition: SnackPosition.BOTTOM,
         duration: const Duration(seconds: 2),
       );
@@ -105,13 +178,12 @@ class _JalonSubmitScreenState extends State<JalonSubmitScreen> {
     }
   }
 
-  /// Soumet le jalon avec les photos
+  /// Soumet le jalon avec les photos (nouvelle soumission)
   Future<void> _submitJalon() async {
     if (_jalon == null) return;
 
-    // Validation : au moins une photo requise
     if (_photos.isEmpty) {
-      _showError('Veuillez ajouter au moins une photo du travail réalisé');
+      _showError('Veuillez ajouter au moins une preuve du travail réalisé');
       return;
     }
 
@@ -125,11 +197,38 @@ class _JalonSubmitScreenState extends State<JalonSubmitScreen> {
       );
 
       if (success) {
-        // Retour à l'écran précédent après succès
         Get.back(result: true);
       }
     } catch (e) {
       _showError('Erreur lors de la soumission: $e');
+    } finally {
+      setState(() => _isSubmitting = false);
+    }
+  }
+
+  /// Envoie des preuves supplémentaires (jalon déjà soumis)
+  Future<void> _uploadAdditionalProofs() async {
+    if (_jalon == null) return;
+
+    if (_photos.isEmpty) {
+      _showError('Veuillez ajouter au moins une nouvelle preuve à envoyer');
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      final controller = Get.find<MissionsController>();
+      final success = await controller.uploadJalonPhotos(
+        _jalon!.id,
+        _photos,
+      );
+
+      if (success) {
+        Get.back(result: true);
+      }
+    } catch (e) {
+      _showError('Erreur lors de l\'envoi des preuves: $e');
     } finally {
       setState(() => _isSubmitting = false);
     }
@@ -157,10 +256,12 @@ class _JalonSubmitScreenState extends State<JalonSubmitScreen> {
       );
     }
 
+    final isAlreadySubmitted = _jalon!.isSubmitted;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Soumettre le jalon'),
+        title: Text(isAlreadySubmitted ? 'Ajouter des preuves' : 'Soumettre le jalon'),
         elevation: 0,
         backgroundColor: Colors.white,
       ),
@@ -215,10 +316,9 @@ class _JalonSubmitScreenState extends State<JalonSubmitScreen> {
                             Text(
                               'Jalon ${_jalon!.ordre}',
                               style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.textPrimary,
-                              ),
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textPrimary),
                             ),
                             Text(
                               Formatters.fcfa(_jalon!.montant),
@@ -263,7 +363,9 @@ class _JalonSubmitScreenState extends State<JalonSubmitScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Prenez des photos du travail réalisé. La géolocalisation sera automatiquement enregistrée.',
+                      isAlreadySubmitted
+                          ? 'Vous pouvez envoyer autant de photos ou vidéos de preuve supplémentaires que nécessaire pour justifier les travaux.'
+                          : 'Prenez des photos ou vidéos du travail réalisé. La géolocalisation sera automatiquement enregistrée.',
                       style: TextStyle(
                         fontSize: 13,
                         color: AppColors.primary.withValues(alpha: 0.9),
@@ -276,9 +378,9 @@ class _JalonSubmitScreenState extends State<JalonSubmitScreen> {
             ),
             const SizedBox(height: 24),
 
-            // Photos Section
+            // Preuves Section
             const Text(
-              'Photos du travail',
+              'Preuves du travail',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
@@ -287,7 +389,7 @@ class _JalonSubmitScreenState extends State<JalonSubmitScreen> {
             ),
             const SizedBox(height: 12),
 
-            // Photo Grid
+            // Photo/Video Grid
             if (_photos.isNotEmpty)
               GridView.builder(
                 shrinkWrap: true,
@@ -299,6 +401,10 @@ class _JalonSubmitScreenState extends State<JalonSubmitScreen> {
                 ),
                 itemCount: _photos.length,
                 itemBuilder: (context, index) {
+                  final photo = _photos[index];
+                  final isVideo = photo['is_video'] == true;
+                  final path = photo['url'] as String;
+
                   return Stack(
                     children: [
                       Container(
@@ -310,12 +416,34 @@ class _JalonSubmitScreenState extends State<JalonSubmitScreen> {
                         ),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(8),
-                          child: const Center(
-                            child: Icon(
-                              Icons.image,
-                              color: AppColors.primary,
-                              size: 40,
-                            ),
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              isVideo
+                                  ? Container(
+                                      color: Colors.grey[200],
+                                      child: const Center(
+                                        child: Icon(
+                                          Icons.play_circle_fill,
+                                          color: AppColors.primary,
+                                          size: 40,
+                                        ),
+                                      ),
+                                    )
+                                  : Image.file(
+                                      File(path),
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return const Center(
+                                          child: Icon(
+                                            Icons.broken_image,
+                                            color: Colors.grey,
+                                            size: 40,
+                                          ),
+                                        );
+                                      },
+                                    ),
+                            ],
                           ),
                         ),
                       ),
@@ -346,11 +474,11 @@ class _JalonSubmitScreenState extends State<JalonSubmitScreen> {
               ),
             const SizedBox(height: 16),
 
-            // Add Photo Button
+            // Add File Button
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
-                onPressed: _isCapturing ? null : _capturePhoto,
+                onPressed: _isCapturing ? null : _showPickOptions,
                 icon: _isCapturing
                     ? const SizedBox(
                         width: 20,
@@ -359,7 +487,7 @@ class _JalonSubmitScreenState extends State<JalonSubmitScreen> {
                       )
                     : const Icon(Icons.add_a_photo),
                 label: Text(
-                  _isCapturing ? 'Capture en cours...' : 'Ajouter une photo',
+                  _isCapturing ? 'Capture en cours...' : 'Ajouter une photo ou vidéo',
                 ),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
@@ -389,7 +517,9 @@ class _JalonSubmitScreenState extends State<JalonSubmitScreen> {
           ],
         ),
         child: ElevatedButton(
-          onPressed: (_isSubmitting || _photos.isEmpty) ? null : _submitJalon,
+          onPressed: (_isSubmitting || _photos.isEmpty)
+              ? null
+              : (isAlreadySubmitted ? _uploadAdditionalProofs : _submitJalon),
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
             foregroundColor: Colors.white,
@@ -409,9 +539,9 @@ class _JalonSubmitScreenState extends State<JalonSubmitScreen> {
                     color: Colors.white,
                   ),
                 )
-              : const Text(
-                  'Soumettre le jalon',
-                  style: TextStyle(
+              : Text(
+                  isAlreadySubmitted ? 'Envoyer les preuves' : 'Soumettre le jalon',
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),

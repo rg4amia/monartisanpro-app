@@ -441,6 +441,87 @@ class MissionsController extends GetxController {
     }
   }
 
+  /// Upload de preuves supplémentaires pour un jalon (artisan)
+  Future<bool> uploadJalonPhotos(int jalonId, List<Map<String, dynamic>> localFiles) async {
+    isSubmittingJalon.value = true;
+    errorMsg.value = null;
+
+    try {
+      await _repo.uploadJalonPhotos(
+        jalonId,
+        localFiles,
+        missionId: currentMission.value?.id,
+      );
+
+      // Recharger la mission en arrière-plan
+      if (currentMission.value != null) {
+        await loadMission(
+          currentMission.value!.id,
+          showLoader: false,
+          forceRefresh: true,
+        );
+      }
+
+      Get.snackbar(
+        'Preuves envoyées',
+        'Preuves supplémentaires uploadées avec succès.',
+        snackPosition: SnackPosition.TOP,
+        duration: const Duration(seconds: 3),
+      );
+
+      return true;
+    } on DioException catch (e) {
+      errorMsg.value = _handleDioError(e);
+      _showErrorSnackbar('Échec de l\'upload: ${errorMsg.value}');
+      return false;
+    } catch (e) {
+      _showErrorSnackbar('Impossible d\'uploader les preuves');
+      return false;
+    } finally {
+      isSubmittingJalon.value = false;
+    }
+  }
+
+  /// Le client accepte directement les preuves de travail et valide le jalon sans OTP
+  Future<bool> acceptJalonProofs(int jalonId) async {
+    isSubmittingJalon.value = true;
+    errorMsg.value = null;
+
+    try {
+      await _repo.acceptJalonProofs(
+        jalonId,
+        missionId: currentMission.value?.id,
+      );
+
+      // Recharger la mission en arrière-plan
+      if (currentMission.value != null) {
+        await loadMission(
+          currentMission.value!.id,
+          showLoader: false,
+          forceRefresh: true,
+        );
+      }
+
+      Get.snackbar(
+        'Preuves acceptées',
+        'Le jalon a été validé avec succès.',
+        snackPosition: SnackPosition.TOP,
+        duration: const Duration(seconds: 3),
+      );
+
+      return true;
+    } on DioException catch (e) {
+      errorMsg.value = _handleDioError(e);
+      _showErrorSnackbar('Échec de la validation: ${errorMsg.value}');
+      return false;
+    } catch (e) {
+      _showErrorSnackbar('Impossible de valider le jalon');
+      return false;
+    } finally {
+      isSubmittingJalon.value = false;
+    }
+  }
+
   Future<bool> updateMissionStatus(int missionId, String status) async {
     isLoading.value = true;
     errorMsg.value = null;

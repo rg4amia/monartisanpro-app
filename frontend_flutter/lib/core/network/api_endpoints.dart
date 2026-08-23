@@ -70,6 +70,8 @@ class ApiEndpoints {
   static String submitJalon(int id) => '/jalons/$id/submit';
   static String requestOtp(int id) => '/jalons/$id/request-otp';
   static String validateOtp(int id) => '/jalons/$id/validate-otp';
+  static String uploadJalonPhotos(int id) => '/jalons/$id/photos';
+  static String acceptJalonProofs(int id) => '/jalons/$id/accept-proofs';
 
   // J-Codes
   static const String jcodes = '/jcodes';

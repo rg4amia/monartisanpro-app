@@ -134,23 +134,29 @@ class PhotoService
      */
     protected function validatePhotoFile(UploadedFile $photo): void
     {
-        // Taille max : 10 MB
-        $maxSize = 10 * 1024 * 1024;
+        // Taille max : 25 MB
+        $maxSize = 25 * 1024 * 1024;
 
         if ($photo->getSize() > $maxSize) {
-            throw new \Exception('La photo dépasse la taille maximale de 10 MB');
+            throw new \Exception('Le fichier dépasse la taille maximale de 25 MB');
         }
 
         // Types MIME autorisés
-        $allowedMimes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+        $allowedImageMimes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+        $allowedVideoMimes = ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/3gpp', 'video/x-m4v'];
+        $allowedMimes = array_merge($allowedImageMimes, $allowedVideoMimes);
+        
+        $mime = $photo->getMimeType();
 
-        if (!in_array($photo->getMimeType(), $allowedMimes)) {
-            throw new \Exception('Format de photo non supporté. Utilisez JPEG, PNG ou WebP');
+        if (!in_array($mime, $allowedMimes)) {
+            throw new \Exception('Format de fichier non supporté. Utilisez JPEG, PNG, WebP ou une vidéo standard (MP4, MOV, etc.)');
         }
 
-        // Vérifier que c'est bien une image
-        if (!@getimagesize($photo->getRealPath())) {
-            throw new \Exception('Le fichier n\'est pas une image valide');
+        // Si c'est une image, vérifier getimagesize
+        if (in_array($mime, $allowedImageMimes)) {
+            if (!@getimagesize($photo->getRealPath())) {
+                throw new \Exception('Le fichier n\'est pas une image valide');
+            }
         }
     }
 

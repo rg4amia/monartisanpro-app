@@ -149,6 +149,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/jalons/{jalon}/photos',        [JalonController::class, 'uploadPhotos'])->middleware(['can:jalon.upload-photos', 'kyc.verified']);
         Route::post('/jalons/{jalon}/request-otp',   [JalonController::class, 'requestOtp'])->middleware(['can:jalon.request-otp', 'kyc.verified']);
         Route::post('/jalons/{jalon}/validate-otp',  [JalonController::class, 'validateOtp'])->middleware(['can:jalon.validate-otp', 'kyc.verified']);
+        Route::post('/jalons/{jalon}/accept-proofs', [JalonController::class, 'acceptProofs'])->middleware(['can:jalon.validate-otp', 'kyc.verified']);
 
         // ── J-Codes ───────────────────────────────────────────────────────────
         Route::post('/jcodes',                       [JCodeController::class, 'store'])->middleware(['can:jcode.create', 'kyc.verified']);

@@ -23,7 +23,7 @@ class UploadJalonPhotosRequest extends FormRequest
     {
         return [
             'photos' => 'required|array|min:1|max:5',
-            'photos.*.photo' => 'required|image|mimes:jpeg,jpg,png,webp|max:10240', // 10MB max
+            'photos.*.photo' => 'required|file|mimetypes:image/jpeg,image/jpg,image/png,image/webp,video/mp4,video/quicktime,video/x-msvideo,video/3gpp,video/x-m4v|max:25600', // 25MB max
             'photos.*.latitude' => 'required|numeric|between:-90,90',
             'photos.*.longitude' => 'required|numeric|between:-180,180',
             'photos.*.description' => 'nullable|string|max:500',
@@ -38,13 +38,13 @@ class UploadJalonPhotosRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'photos.required' => 'Au moins une photo est requise',
-            'photos.min' => 'Au moins une photo est requise',
-            'photos.max' => 'Maximum 5 photos autorisées',
-            'photos.*.photo.required' => 'La photo est requise',
-            'photos.*.photo.image' => 'Le fichier doit être une image',
-            'photos.*.photo.mimes' => 'Format autorisé : JPEG, PNG ou WebP',
-            'photos.*.photo.max' => 'La photo ne doit pas dépasser 10 MB',
+            'photos.required' => 'Au moins une preuve est requise',
+            'photos.min' => 'Au moins une preuve est requise',
+            'photos.max' => 'Maximum 5 preuves autorisées',
+            'photos.*.photo.required' => 'Le fichier de preuve est requis',
+            'photos.*.photo.file' => 'Le champ doit être un fichier valide',
+            'photos.*.photo.mimetypes' => 'Format autorisé : JPEG, PNG, WebP, MP4, MOV, AVI, 3GP, M4V',
+            'photos.*.photo.max' => 'Le fichier ne doit pas dépasser 25 MB',
             'photos.*.latitude.required' => 'La latitude GPS est requise',
             'photos.*.latitude.between' => 'Latitude GPS invalide',
             'photos.*.longitude.required' => 'La longitude GPS est requise',

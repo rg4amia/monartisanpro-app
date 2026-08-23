@@ -226,4 +226,39 @@ class JalonService
             ['mission_id' => $jalon->mission_id, 'jalon_id' => $jalon->id]
         );
     }
+
+    /**
+     * Le client accepte directement les preuves de travail et valide le jalon sans OTP.
+     */
+    public function acceptProofs(Jalon $jalon): void
+    {
+        if ($jalon->mission->isFundsFrozen()) {
+            throw ValidationException::withMessages([
+                'jalon' => ['Les fonds de cette mission sont gelés en raison d\'un litige.'],
+            ]);
+        }
+
+        $jalon->update([
+            'statut'    => 'valide',
+            'valide_at' => now(),
+            'otp_code'  => null,
+        ]);
+
+        $seuil = config('prosartisan.mission.referent_threshold', 2000000);
+        if ($jalon->mission->montant_total > $seuil) {
+            $jalon->mission->update(['referent_required' => true]);
+            Log::info("[Référent requis - Acceptation Directe] Mission #{$jalon->mission_id} > {$seuil} FCFA");
+            return;
+        }
+
+        $this->walletService->releaseJalon($jalon);
+
+        $this->notificationService->send(
+            $jalon->mission->artisan,
+            'payment',
+            'Preuves acceptées !',
+            "Le client a accepté vos preuves pour le jalon #{$jalon->ordre}. Paiement en cours.",
+            ['mission_id' => $jalon->mission_id]
+        );
+    }
 }

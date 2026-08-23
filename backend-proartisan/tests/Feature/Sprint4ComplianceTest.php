@@ -160,4 +160,92 @@ class Sprint4ComplianceTest extends TestCase
         // Parrain score must have dropped from 890 by 50 points -> 840
         $this->assertSame(840, $parrain->fresh()->score_prosartisan);
     }
+
+    public function test_jalon_multiple_proofs_and_direct_acceptance(): void
+    {
+        /** @var User $client */
+        $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
+        /** @var User $artisan */
+        $artisan = User::factory()->create([
+            'role' => 'artisan',
+            'kyc_status' => 'actif',
+            'wallet_mo' => 100000,
+        ]);
+
+        $mission = Mission::create([
+            'client_id' => $client->id,
+            'artisan_id' => $artisan->id,
+            'description' => 'Menuiserie',
+            'status' => 'in_progress',
+            'montant_total' => 100000,
+            'montant_materiaux' => 50000,
+            'montant_mo' => 50000,
+            'ratio_materiaux' => 0.50,
+        ]);
+
+        $jalon = Jalon::create([
+            'mission_id' => $mission->id,
+            'ordre' => 1,
+            'description' => 'Pose des portes',
+            'montant' => 25000,
+            'statut' => 'en_attente',
+        ]);
+
+        // 1. Submit jalon initial proof -> transitions to 'soumis'
+        $this->actingAs($artisan)
+            ->putJson("/api/v1/jalons/{$jalon->id}/submit", [
+                'photos' => [
+                    [
+                        'url' => 'http://example.com/photo1.jpg',
+                        'lat' => 5.3,
+                        'lng' => -4.0,
+                    ]
+                ]
+            ])
+            ->assertOk();
+
+        $this->assertEquals('soumis', $jalon->fresh()->statut);
+
+        // 2. Upload additional proof (mock file upload)
+        \Illuminate\Support\Facades\Storage::fake('public');
+        $file = \Illuminate\Http\UploadedFile::fake()->image('photo2.jpg');
+
+        $responseUpload = $this->actingAs($artisan)
+            ->postJson("/api/v1/jalons/{$jalon->id}/photos", [
+                'photos' => [
+                    [
+                        'photo' => $file,
+                        'latitude' => 5.301,
+                        'longitude' => -4.001,
+                        'description' => 'Vue de face',
+                    ]
+                ]
+            ]);
+
+        $responseUpload->assertOk();
+        $this->assertCount(2, $jalon->fresh()->photos_json);
+
+        // 3. Client directly accepts proofs without OTP
+        $responseAccept = $this->actingAs($client)
+            ->postJson("/api/v1/jalons/{$jalon->id}/accept-proofs");
+
+        $responseAccept->assertOk();
+        
+        // Jalon status should now be validated ('paye' or 'valide' depending on execution flow)
+        $this->assertTrue(in_array($jalon->fresh()->statut, ['valide', 'paye']));
+
+        // 4. Try uploading photos again -> should be blocked because status is no longer en_attente or soumis
+        $file3 = \Illuminate\Http\UploadedFile::fake()->image('photo3.jpg');
+        $this->actingAs($artisan)
+            ->postJson("/api/v1/jalons/{$jalon->id}/photos", [
+                'photos' => [
+                    [
+                        'photo' => $file3,
+                        'latitude' => 5.3,
+                        'longitude' => -4.0,
+                    ]
+                ]
+            ])
+            ->assertStatus(400);
+    }
 }
