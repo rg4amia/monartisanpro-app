@@ -480,6 +480,42 @@ class BackofficeController extends Controller
             $adminNotifications = [];
         }
 
+        $allNotifications = [];
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('notifications')) {
+                $notifQuery = Notification::with('user:id,name,phone,role');
+
+                if ($search = request()->query('search_notification')) {
+                    $notifQuery->where(function ($q) use ($search) {
+                        $q->where('title', 'like', "%{$search}%")
+                          ->orWhere('body', 'like', "%{$search}%")
+                          ->orWhere('type', 'like', "%{$search}%")
+                          ->orWhereHas('user', function ($u) use ($search) {
+                              $u->where('name', 'like', "%{$search}%")
+                                ->orWhere('phone', 'like', "%{$search}%");
+                          });
+                    });
+                }
+
+                if ($role = request()->query('role_notification')) {
+                    $notifQuery->whereHas('user', function ($u) use ($role) {
+                        $u->where('role', $role);
+                    });
+                }
+
+                if ($type = request()->query('type_notification')) {
+                    $notifQuery->where('type', $type);
+                }
+
+                $allNotifications = $notifQuery->orderByDesc('created_at')
+                    ->paginate(50)
+                    ->withQueryString();
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error("Erreur listing notifications backoffice: " . $e->getMessage());
+            $allNotifications = [];
+        }
+
         $allPermissions = [];
         $rolesPermissions = [
             'client' => [],
@@ -533,6 +569,7 @@ class BackofficeController extends Controller
             'sectors' => $sectors,
             'communications' => $communications,
             'adminNotifications' => $adminNotifications,
+            'allNotifications' => $allNotifications,
             'allPermissions' => $allPermissions,
             'rolesPermissions' => $rolesPermissions,
         ]);
