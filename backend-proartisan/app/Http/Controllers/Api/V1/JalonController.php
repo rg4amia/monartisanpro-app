@@ -146,7 +146,7 @@ class JalonController extends Controller
             }
 
             // Vérifier que le jalon n'est pas déjà validé
-            if ($jalon->statut !== 'en_attente') {
+            if (!in_array($jalon->statut, ['en_attente', 'soumis'])) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Ce jalon ne peut plus recevoir de photos'
@@ -220,6 +220,57 @@ class JalonController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur lors de l\'upload des photos'
+            ], 500);
+        }
+    }
+
+    /**
+     * Le client accepte directement les preuves de travail et valide le jalon sans OTP.
+     * RÈGLE : libère les fonds du jalon et passe son statut à 'valide' / 'paye'.
+     */
+    public function acceptProofs(Request $request, Jalon $jalon): JsonResponse
+    {
+        $user = $request->user();
+
+        // Vérifier que l'utilisateur est bien le client de la mission
+        if ($jalon->mission->client_id !== $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Non autorisé. Seul le client de la mission peut accepter les preuves.'
+            ], 403);
+        }
+
+        // Vérifier que le jalon est bien soumis
+        if ($jalon->statut !== 'soumis') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Le jalon doit être au statut soumis pour pouvoir en accepter les preuves.'
+            ], 422);
+        }
+
+        try {
+            $this->jalonService->acceptProofs($jalon);
+            
+            $jalon->refresh();
+            $message = $jalon->mission->referent_required
+                ? 'Preuves acceptées. Un référent de zone doit confirmer physiquement avant le paiement (mission > 2 000 000 FCFA).'
+                : 'Preuves acceptées, jalon validé et paiement libéré vers l\'artisan.';
+
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'data'    => new JalonResource($jalon),
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de l\'acceptation des preuves'
             ], 500);
         }
     }

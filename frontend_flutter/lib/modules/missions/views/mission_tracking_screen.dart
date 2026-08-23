@@ -1356,6 +1356,77 @@ class _JalonCard extends StatelessWidget {
               height: 1.35,
             ),
           ),
+          if (jalon.photosJson != null && jalon.photosJson!.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            const Text(
+              'Preuves de réalisation :',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: _Palette.ink,
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 70,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: jalon.photosJson!.length,
+                separatorBuilder: (context, index) => const SizedBox(width: 8),
+                itemBuilder: (context, index) {
+                  final photo = jalon.photosJson![index];
+                  final url = photo['url'] as String? ?? '';
+                  final isVideo = _isPathVideo(url);
+                  return GestureDetector(
+                    onTap: () => _openMedia(context, url, isVideo),
+                    child: Container(
+                      width: 70,
+                      height: 70,
+                      decoration: BoxDecoration(
+                        color: Colors.black12,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: _Palette.subtle),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            if (isVideo)
+                              Container(
+                                color: Colors.grey[800],
+                                child: const Center(
+                                  child: Icon(
+                                    Icons.play_arrow_rounded,
+                                    color: Colors.white,
+                                    size: 24,
+                                  ),
+                                ),
+                              )
+                            else
+                              CachedNetworkImage(
+                                imageUrl: url,
+                                fit: BoxFit.cover,
+                                placeholder: (context, url) => const Center(
+                                  child: SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  ),
+                                ),
+                                errorWidget: (context, url, error) => const Center(
+                                  child: Icon(Icons.broken_image_outlined, size: 20),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
           if (role == 'artisan') ...[
             if (jalon.isPending) ...[
               const SizedBox(height: 12),
@@ -1412,32 +1483,76 @@ class _JalonCard extends StatelessWidget {
           ],
           if (role == 'client' && (jalon.isSubmitted || jalon.isPending)) ...[
             const SizedBox(height: 12),
-            Row(
+            Column(
               children: [
-                if (mission.paymentType == 'hybrid') ...[
-                  Expanded(
+                if (jalon.isSubmitted) ...[
+                  SizedBox(
+                    width: double.infinity,
                     child: ElevatedButton.icon(
-                      onPressed: () => _startJalonPaymentAndValidation(context, jalon),
-                      icon: const Icon(Icons.payment_rounded, size: 18),
-                      label: const Text('Financer'),
+                      onPressed: () async {
+                        final confirm = await Get.dialog<bool>(
+                          AlertDialog(
+                            title: const Text('Accepter les preuves ?'),
+                            content: const Text(
+                              'En acceptant ces preuves, vous validez la réalisation de ce jalon et débloquez le paiement pour l\'artisan.',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Get.back(result: false),
+                                child: const Text('Annuler'),
+                              ),
+                              ElevatedButton(
+                                onPressed: () => Get.back(result: true),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: _Palette.success,
+                                ),
+                                child: const Text('Accepter'),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (confirm == true) {
+                          await controller.acceptJalonProofs(jalon.id);
+                        }
+                      },
+                      icon: const Icon(Icons.verified_outlined, size: 18),
+                      label: const Text('Accepter les preuves'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: _Palette.primary,
+                        backgroundColor: _Palette.success,
                         foregroundColor: Colors.white,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(height: 8),
                 ],
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () => showOtpValidationDialog(context, jalon),
-                    icon: const Icon(Icons.check_circle_outline, size: 18),
-                    label: const Text('Valider OTP'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _Palette.success,
-                      foregroundColor: Colors.white,
+                Row(
+                  children: [
+                    if (mission.paymentType == 'hybrid') ...[
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () => _startJalonPaymentAndValidation(context, jalon),
+                          icon: const Icon(Icons.payment_rounded, size: 18),
+                          label: const Text('Financer'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _Palette.primary,
+                            foregroundColor: Colors.white,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => showOtpValidationDialog(context, jalon),
+                        icon: const Icon(Icons.sms_outlined, size: 18),
+                        label: const Text('Valider via OTP'),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: _Palette.success),
+                          foregroundColor: _Palette.success,
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ],
             ),
@@ -1600,6 +1715,61 @@ class _JalonCard extends StatelessWidget {
       message:
           'Ce jalon doit etre documente avec des photos geolocalisees avant soumission.',
     );
+  }
+
+  bool _isPathVideo(String path) {
+    return path.endsWith('.mp4') ||
+        path.endsWith('.mov') ||
+        path.endsWith('.avi') ||
+        path.endsWith('.3gp') ||
+        path.endsWith('.m4v');
+  }
+
+  void _openMedia(BuildContext context, String url, bool isVideo) {
+    if (isVideo) {
+      launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    } else {
+      Get.dialog(
+        Dialog.fullscreen(
+          backgroundColor: Colors.black,
+          child: Stack(
+            children: [
+              InteractiveViewer(
+                minScale: 0.5,
+                maxScale: 4.0,
+                child: Center(
+                  child: CachedNetworkImage(
+                    imageUrl: url,
+                    fit: BoxFit.contain,
+                    placeholder: (context, url) => const CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                    errorWidget: (context, url, error) => const Icon(
+                      Icons.broken_image_outlined,
+                      color: Colors.white70,
+                      size: 48,
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 20,
+                right: 20,
+                child: SafeArea(
+                  child: IconButton(
+                    icon: const CircleAvatar(
+                      backgroundColor: Colors.black45,
+                      child: Icon(Icons.close, color: Colors.white),
+                    ),
+                    onPressed: () => Get.back(),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
   }
 }
 
