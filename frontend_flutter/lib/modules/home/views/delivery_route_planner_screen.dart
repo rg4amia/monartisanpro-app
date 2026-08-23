@@ -47,7 +47,6 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
 
   String? _routeDistanceText;
   String? _routeDurationText;
-  bool _isLoadingRoute = false;
 
   @override
   void initState() {
@@ -98,7 +97,6 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
 
   /// Récupère la géométrie réelle du réseau routier via OSRM (Open Source Routing Machine)
   Future<List<mk.Point>> _fetchRoadRoutePoints(double lat1, double lng1, double lat2, double lng2) async {
-    setState(() => _isLoadingRoute = true);
     try {
       final url = Uri.parse(
         'https://router.project-osrm.org/route/v1/driving/$lng1,$lat1;$lng2,$lat2?overview=full&geometries=geojson',
@@ -131,8 +129,6 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
       }
     } catch (e) {
       debugPrint('[RoutePlanner] OSRM routing fallback: $e');
-    } finally {
-      if (mounted) setState(() => _isLoadingRoute = false);
     }
 
     // Fallback lissé avec waypoints virtuels suivant des angles de rue
