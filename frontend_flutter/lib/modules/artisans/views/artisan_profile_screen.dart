@@ -1,7 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:dio/dio.dart';
 
@@ -9,7 +8,6 @@ import '../../../app/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../data/models/artisan_model.dart';
-import '../../../data/repositories/artisan_repository.dart';
 import '../../../shared/widgets/score_prosartisan.dart';
 import '../../missions/controllers/missions_controller.dart';
 import '../../missions/controllers/artisan_selection_controller.dart';
@@ -602,7 +600,7 @@ void _showQuoteRequestModal(BuildContext context, ArtisanModel a) {
                     String errorMsg = 'Une erreur est survenue lors du téléversement ou de la création';
                     if (e is DioException) {
                       errorMsg = e.response?.data['message'] ?? e.message ?? errorMsg;
-                    } else if (e is dynamic && e.toString().contains('Fichier rejeté')) {
+                    } else if (e.toString().contains('Fichier rejeté')) {
                       errorMsg = e.toString();
                     }
                     
