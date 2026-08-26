@@ -13,6 +13,8 @@ class Order extends Model
         'client_id',
         'supplier_id',
         'driver_id',
+        'driver_assigned_at',
+        'driver_reassignment_count',
         'delivery_mode',
         'status',
         'subtotal',
@@ -34,14 +36,16 @@ class Order extends Model
     protected function casts(): array
     {
         return [
-            'subtotal'             => 'integer',
-            'delivery_cost'        => 'integer',
-            'platform_fee'         => 'integer',
-            'total_amount'         => 'integer',
-            'surge_multiplier'     => 'float',
-            'waiting_time_minutes' => 'integer',
-            'delivered_at'         => 'datetime',
-            'dispute_opened_at'    => 'datetime',
+            'subtotal'                  => 'integer',
+            'delivery_cost'             => 'integer',
+            'platform_fee'              => 'integer',
+            'total_amount'              => 'integer',
+            'surge_multiplier'          => 'float',
+            'waiting_time_minutes'      => 'integer',
+            'driver_reassignment_count' => 'integer',
+            'delivered_at'              => 'datetime',
+            'driver_assigned_at'        => 'datetime',
+            'dispute_opened_at'         => 'datetime',
         ];
     }
 
@@ -100,6 +104,18 @@ class Order extends Model
     public function isDelivered(): bool
     {
         return $this->status === 'delivered';
+    }
+
+    /**
+     * Vérifie si le livreur assigné a dépassé le délai d'inactivité.
+     */
+    public function isDriverStale(int $timeoutMinutes = 15): bool
+    {
+        if ($this->status !== 'driver_assigned' || !$this->driver_assigned_at) {
+            return false;
+        }
+
+        return now()->gte($this->driver_assigned_at->copy()->addMinutes($timeoutMinutes));
     }
 
     public function isDisputed(): bool

@@ -37,6 +37,13 @@ class DevisController extends Controller
             ], 403);
         }
 
+        if ($request->has('payment_phone')) {
+            $user->update([
+                'payment_phone' => $request->input('payment_phone'),
+                'preferred_payment_provider' => $request->input('preferred_payment_provider'),
+            ]);
+        }
+
         try {
             $devis = $this->devisService->create($mission, $user, $request->validated());
         } catch (\InvalidArgumentException $e) {

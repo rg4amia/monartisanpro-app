@@ -327,7 +327,7 @@ class WalletService
             $description = "Paiement jalon #{$jalon->ordre} mission #{$mission->id}";
 
             try {
-                $result = $this->transferToMobileMoney($provider, $artisan->phone, $gainNetArtisan, $description);
+                $result = $this->transferToMobileMoney($provider, $artisan->payment_phone ?? $artisan->phone, $gainNetArtisan, $description);
                 $transaction->update([
                     'reference_externe' => $result['id'] ?? $result['txnid'] ?? null,
                     'statut' => 'confirme',
@@ -495,7 +495,7 @@ class WalletService
             ]);
 
             try {
-                $result = $this->transferToMobileMoney($provider, $client->phone, $total, "Remboursement mission #{$mission->id}");
+                $result = $this->transferToMobileMoney($provider, $client->payment_phone ?? $client->phone, $total, "Remboursement mission #{$mission->id}");
                 $transaction->update([
                     'reference_externe' => $result['id'] ?? $result['txnid'] ?? null,
                     'statut' => 'confirme',
@@ -558,7 +558,7 @@ class WalletService
             ]);
 
             try {
-                $result = $this->transferToMobileMoney($provider, $artisan->phone, $amount, "Reglement litige mission #{$mission->id}");
+                $result = $this->transferToMobileMoney($provider, $artisan->payment_phone ?? $artisan->phone, $amount, "Reglement litige mission #{$mission->id}");
                 $transaction->update([
                     'reference_externe' => $result['id'] ?? $result['txnid'] ?? null,
                     'statut' => 'confirme',
@@ -623,7 +623,7 @@ class WalletService
             ]);
 
             try {
-                $result = $this->transferToMobileMoney($provider, $artisan->phone, $amount, "Liberation materiaux mission #{$mission->id}");
+                $result = $this->transferToMobileMoney($provider, $artisan->payment_phone ?? $artisan->phone, $amount, "Liberation materiaux mission #{$mission->id}");
                 $transaction->update([
                     'reference_externe' => $result['id'] ?? $result['txnid'] ?? null,
                     'statut' => 'confirme',

@@ -282,10 +282,10 @@ class JCodeService
         $description = "Paiement J-Code {$jcode->code} mission #{$jcode->mission_id}";
 
         if ($provider === 'orange_money') {
-            $result = app(OrangeMoneyService::class)->transferToMobileMoney($jcode->fournisseur->phone, $gainNetSupplier, $description);
+            $result = app(OrangeMoneyService::class)->transferToMobileMoney($jcode->fournisseur->payment_phone ?? $jcode->fournisseur->phone, $gainNetSupplier, $description);
             $reference = $result['txnid'] ?? null;
         } else {
-            $result = app(WaveService::class)->transferToMobileMoney($jcode->fournisseur->phone, $gainNetSupplier, $description);
+            $result = app(WaveService::class)->transferToMobileMoney($jcode->fournisseur->payment_phone ?? $jcode->fournisseur->phone, $gainNetSupplier, $description);
             $reference = $result['id'] ?? null;
         }
 

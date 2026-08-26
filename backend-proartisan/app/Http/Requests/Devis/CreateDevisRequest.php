@@ -15,7 +15,8 @@ class CreateDevisRequest extends FormRequest
 
     public function rules(): array
     {
-        return [
+        $user = $this->user();
+        $rules = [
             'materials_required'     => ['nullable', 'boolean'],
             'intervention_type_id'   => ['nullable', 'integer', 'exists:intervention_types,id'],
 
@@ -53,6 +54,16 @@ class CreateDevisRequest extends FormRequest
             'jalons.*.montant'       => ['required_with:jalons', 'integer', 'min:1000'],
             'jalons.*.date_cible'    => ['required_with:jalons', 'date', 'after:today'],
         ];
+
+        if ($user && !$user->payment_phone) {
+            $rules['payment_phone'] = ['required', 'string', 'max:20'];
+            $rules['preferred_payment_provider'] = ['required', 'in:wave,orange_money'];
+        } else {
+            $rules['payment_phone'] = ['nullable', 'string', 'max:20'];
+            $rules['preferred_payment_provider'] = ['nullable', 'in:wave,orange_money'];
+        }
+
+        return $rules;
     }
 
     public function messages(): array
