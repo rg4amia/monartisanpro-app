@@ -33,6 +33,8 @@ class UserFactory extends Factory
             'score_prosartisan' => 0,
             'wallet_materiaux' => 0,
             'wallet_mo' => 0,
+            'payment_phone' => '22507' . fake()->unique()->numerify('#######'),
+            'preferred_payment_provider' => 'wave',
             'remember_token' => Str::random(10),
         ];
     }

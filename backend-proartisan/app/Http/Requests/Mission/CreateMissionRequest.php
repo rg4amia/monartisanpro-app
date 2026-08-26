@@ -15,7 +15,8 @@ class CreateMissionRequest extends FormRequest
 
     public function rules(): array
     {
-        return [
+        $user = $this->user();
+        $rules = [
             'artisan_id'   => ['nullable', 'integer', 'exists:users,id'],
             'sector_id'    => ['nullable', 'integer', 'exists:sectors,id'],
             'trade_id'     => ['nullable', 'integer', 'exists:trades,id'],
@@ -27,6 +28,16 @@ class CreateMissionRequest extends FormRequest
             'photos'      => ['nullable', 'array', 'max:5'],
             'photos.*'    => ['string'],
         ];
+
+        if ($user && !$user->payment_phone) {
+            $rules['payment_phone'] = ['required', 'string', 'max:20'];
+            $rules['preferred_payment_provider'] = ['required', 'in:wave,orange_money'];
+        } else {
+            $rules['payment_phone'] = ['nullable', 'string', 'max:20'];
+            $rules['preferred_payment_provider'] = ['nullable', 'in:wave,orange_money'];
+        }
+
+        return $rules;
     }
 
     public function messages(): array

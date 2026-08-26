@@ -55,6 +55,26 @@ class DeliveryController extends Controller
             ], 403);
         }
 
+        if (!$user->payment_phone) {
+            $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+                'payment_phone' => ['required', 'string', 'max:20'],
+                'preferred_payment_provider' => ['required', 'in:wave,orange_money'],
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Veuillez associer votre numéro Mobile Money (Wave ou OM) pour accepter cette course.',
+                    'errors' => $validator->errors(),
+                ], 422);
+            }
+
+            $user->update([
+                'payment_phone' => $request->input('payment_phone'),
+                'preferred_payment_provider' => $request->input('preferred_payment_provider'),
+            ]);
+        }
+
         try {
             $this->orderService->assignDriver($order, $user);
 

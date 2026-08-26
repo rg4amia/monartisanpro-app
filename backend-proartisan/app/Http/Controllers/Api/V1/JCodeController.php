@@ -103,6 +103,13 @@ class JCodeController extends Controller
             ], 403);
         }
 
+        if ($request->has('payment_phone')) {
+            $user->update([
+                'payment_phone' => $request->input('payment_phone'),
+                'preferred_payment_provider' => $request->input('preferred_payment_provider'),
+            ]);
+        }
+
         $result = $this->jCodeService->scan(
             $jcode,
             $user,
@@ -110,11 +117,19 @@ class JCodeController extends Controller
             (float) $request->lng
         );
 
-        return response()->json([
-            'success'  => true,
-            'message'  => 'J-Code validé. Paiement J+1 garanti.',
-            'data'     => $result,
-        ]);
+        try {
+            return response()->json([
+                'success'  => true,
+                'message'  => 'J-Code valide. Paiement J+1 garanti.',
+                'data'     => $result,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('JSON encoding failed in JCodeController::scan', [
+                'data' => $result,
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
+        }
     }
 
     /**

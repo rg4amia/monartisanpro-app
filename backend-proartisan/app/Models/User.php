@@ -35,6 +35,8 @@ class User extends Authenticatable
         'cnmci_number',
         'cnmci_card_url',
         'cnmci_status',
+        'payment_phone',
+        'preferred_payment_provider',
     ];
 
     protected $hidden = ['password', 'remember_token', 'position', 'google_2fa_secret'];

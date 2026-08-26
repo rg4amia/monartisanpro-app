@@ -2,6 +2,7 @@
 
 use App\Console\Commands\AutoReleaseJalonsCommand;
 use App\Console\Commands\DecayScoreCommand;
+use App\Console\Commands\DriverWatchdogCommand;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -25,3 +26,11 @@ Schedule::command(DecayScoreCommand::class)
     ->withoutOverlapping()
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/decay-score.log'));
+
+// Watchdog Livreur : réaffectation automatique des courses inactives
+// PRD §5 — « Réaffectation Automatique de Livreur (Driver Fallback) »
+Schedule::command(DriverWatchdogCommand::class)
+    ->everyFiveMinutes()
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/driver-watchdog.log'));

@@ -240,6 +240,7 @@ class OrderService
         $order->update([
             'driver_id' => $driver->id,
             'status' => 'driver_assigned',
+            'driver_assigned_at' => now(),
             'delivery_cost' => $deliveryCost,
             'total_amount' => $order->subtotal + $order->platform_fee + $deliveryCost,
         ]);
@@ -283,6 +284,96 @@ class OrderService
 
     /**
      * Validation du code de retrait (chez le fournisseur).
+    /**
+     * Réaffecte automatiquement une commande dont le livreur est inactif.
+     * Retire le livreur actuel, remet la commande en `searching_driver`,
+     * applique une pénalité de score et relance le radar livreurs.
+     */
+    public function reassignDriver(Order $order, string $reason = 'inactivité'): Order
+    {
+        return DB::transaction(function () use ($order, $reason) {
+            $previousDriver = $order->driver;
+            $previousDriverId = $order->driver_id;
+
+            // 1. Détacher le livreur et remettre en recherche
+            $order->update([
+                'driver_id'                 => null,
+                'status'                    => 'searching_driver',
+                'driver_assigned_at'        => null,
+                'driver_reassignment_count' => $order->driver_reassignment_count + 1,
+            ]);
+
+            \Illuminate\Support\Facades\Log::warning('[DriverWatchdog] Réaffectation automatique', [
+                'order_id'          => $order->id,
+                'previous_driver'   => $previousDriverId,
+                'reason'            => $reason,
+                'reassignment_count'=> $order->driver_reassignment_count,
+            ]);
+
+            // 2. Pénalité de score pour le livreur retiré
+            if ($previousDriver) {
+                try {
+                    app(ScoreService::class)->recordEvent(
+                        $previousDriver,
+                        'livraison_retard',
+                        description: "Course #{$order->id} retirée automatiquement : {$reason}"
+                    );
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning(
+                        "[DriverWatchdog] Pénalité score non appliquée pour user {$previousDriverId}: " . $e->getMessage()
+                    );
+                }
+
+                // 3. Notification au livreur retiré
+                try {
+                    app(NotificationService::class)->send(
+                        $previousDriver,
+                        'fraud_alert',
+                        'Course retirée',
+                        "Votre course #{$order->id} vous a été retirée pour {$reason}. Veuillez être plus réactif."
+                    );
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning(
+                        "[DriverWatchdog] Notification livreur échouée: " . $e->getMessage()
+                    );
+                }
+            }
+
+            // 4. Notification au client
+            try {
+                app(NotificationService::class)->send(
+                    $order->client,
+                    'payment',
+                    'Changement de livreur',
+                    "Un nouveau livreur est recherché pour votre commande #{$order->id}. Nous nous excusons pour le délai."
+                );
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning(
+                    "[DriverWatchdog] Notification client échouée: " . $e->getMessage()
+                );
+            }
+
+            // 5. Alerte admin
+            try {
+                app(NotificationService::class)->sendAdmin(
+                    'fraud_alert',
+                    'Réaffectation livreur automatique',
+                    "La commande #{$order->id} a été réaffectée (tentative {$order->driver_reassignment_count}). Livreur retiré : #{$previousDriverId} — Motif : {$reason}.",
+                    ['order_id' => $order->id, 'previous_driver_id' => $previousDriverId]
+                );
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning(
+                    "[DriverWatchdog] Notification admin échouée: " . $e->getMessage()
+                );
+            }
+
+            // 6. Relancer le radar livreurs
+            $this->notifyDriversInArea($order);
+
+            return $order;
+        });
+    }
+
     /**
      * Validation du code de retrait (chez le fournisseur).
      * Libère immédiatement la part des matériaux au profit du fournisseur.
