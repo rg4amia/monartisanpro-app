@@ -283,8 +283,6 @@ class OrderService
     }
 
     /**
-     * Validation du code de retrait (chez le fournisseur).
-    /**
      * Réaffecte automatiquement une commande dont le livreur est inactif.
      * Retire le livreur actuel, remet la commande en `searching_driver`,
      * applique une pénalité de score et relance le radar livreurs.

@@ -9,6 +9,7 @@ class Devis extends Model
     protected $fillable = [
         'mission_id', 'artisan_id', 'lignes_json', 'jalons_json', 'statut', 'ratio_materiaux',
         'materials_required', 'intervention_type_id', 'commission_service_ratio',
+        'is_avenant', 'parent_devis_id',
     ];
 
     protected function casts(): array
@@ -19,6 +20,8 @@ class Devis extends Model
             'materials_required' => 'boolean',
             'intervention_type_id' => 'integer',
             'commission_service_ratio' => 'float',
+            'is_avenant' => 'boolean',
+            'parent_devis_id' => 'integer',
         ];
     }
 
@@ -35,6 +38,16 @@ class Devis extends Model
     public function interventionType()
     {
         return $this->belongsTo(InterventionType::class);
+    }
+
+    public function parentDevis()
+    {
+        return $this->belongsTo(Devis::class, 'parent_devis_id');
+    }
+
+    public function avenants()
+    {
+        return $this->hasMany(Devis::class, 'parent_devis_id');
     }
 
     public function getMontantTotalAttribute(): int

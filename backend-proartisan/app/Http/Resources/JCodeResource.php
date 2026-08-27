@@ -17,6 +17,8 @@ class JCodeResource extends JsonResource
             'ussdCode'   => $this->ussd_code,
             'montant'    => $this->montant,
             'tokenAmount'=> $this->montant,
+            'montantConsomme' => $this->montant_consomme ?? 0,
+            'montantRestant'  => $this->montant_restant,
             'statut'     => $this->statut,
             'missionId'  => $this->mission_id,
             'artisanId'  => $this->artisan_id,
@@ -36,6 +38,8 @@ class JCodeResource extends JsonResource
             'expiresAt'  => $this->expires_at?->toIso8601String(),
             'scannedAt'  => $this->scanned_at?->toIso8601String(),
             'isActif'    => $this->isActif(),
+            'isPartiallyConsumed' => $this->isPartiallyConsumed(),
+            'isFullyConsumed'     => $this->isFullyConsumed(),
             'paymentStatus' => $this->paiement_status,
             'ttlHeures'  => config('prosartisan.jcode.ttl_hours', 48),
         ];

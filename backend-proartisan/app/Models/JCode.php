@@ -11,7 +11,7 @@ class JCode extends Model
 
     protected $fillable = [
         'mission_id', 'artisan_id', 'fournisseur_id', 'code',
-        'qr_url', 'ussd_code', 'montant', 'statut', 'scanned_at', 'expires_at',
+        'qr_url', 'ussd_code', 'montant', 'montant_consomme', 'statut', 'scanned_at', 'expires_at',
         'photo_materiaux_url', 'photo_latitude', 'photo_longitude', 'photo_taken_at',
         'paiement_status', 'paye_at'
     ];
@@ -19,9 +19,10 @@ class JCode extends Model
     protected $hidden = ['position_scan'];
 
     protected $casts = [
-        'montant'    => 'integer',
-        'expires_at' => 'datetime',
-        'scanned_at' => 'datetime',
+        'montant'           => 'integer',
+        'montant_consomme'  => 'integer',
+        'expires_at'        => 'datetime',
+        'scanned_at'        => 'datetime',
         'photo_latitude' => 'float',
         'photo_longitude' => 'float',
         'photo_taken_at' => 'datetime',
@@ -50,7 +51,32 @@ class JCode extends Model
 
     public function isActif(): bool
     {
-        return $this->statut === 'actif' && $this->expires_at->isFuture();
+        return in_array($this->statut, ['actif', 'partiellement_utilise'])
+            && $this->expires_at->isFuture();
+    }
+
+    /**
+     * Montant restant disponible pour consommation partielle.
+     */
+    public function getMontantRestantAttribute(): int
+    {
+        return max(0, $this->montant - ($this->montant_consomme ?? 0));
+    }
+
+    /**
+     * Vérifie si le J-Code est entièrement consommé.
+     */
+    public function isFullyConsumed(): bool
+    {
+        return ($this->montant_consomme ?? 0) >= $this->montant;
+    }
+
+    /**
+     * Vérifie si le J-Code est partiellement consommé.
+     */
+    public function isPartiallyConsumed(): bool
+    {
+        return $this->statut === 'partiellement_utilise';
     }
 
     public function resolveRouteBinding($value, $field = null)

@@ -137,34 +137,30 @@ class JCodeService
 
     /**
      * Valide un J-Code lors du scan par le fournisseur.
+     * Supporte la consommation partielle : le fournisseur indique les items qu'il sert.
+     *
      * RÈGLE CRITIQUE : distance > 100 m → blocage + alerte admin.
+     *
+     * @param  array  $servedItems  [{jcode_item_id: int, quantity_served: int}, ...]
      */
-    public function scan(JCode $jcode, User $fournisseur, float $lat, float $lng): array
+    public function scan(JCode $jcode, User $fournisseur, float $lat, float $lng, array $servedItems = []): array
     {
         $jcode->loadMissing(['artisan', 'items.supplierProduct']);
 
         if (! $jcode->isActif()) {
             throw ValidationException::withMessages([
-                'code' => ['Ce J-Code est expiré ou déjà utilisé.'],
+                'code' => ['Ce J-Code est expiré ou déjà entièrement utilisé.'],
             ]);
         }
 
         $this->supplierCatalogService->ensureApprovedSupplier($fournisseur);
 
-        if ($jcode->fournisseur_id !== null && $jcode->fournisseur_id !== $fournisseur->id) {
-            throw ValidationException::withMessages([
-                'fournisseur' => ['Ce J-Code est réservé à un autre fournisseur.'],
-            ]);
-        }
-
-        // Vérification GPS obligatoire
+        // Vérification GPS obligatoire (pour CHAQUE fournisseur, à CHAQUE scan)
         $gpsCheck = $this->geoService->validateJCodeGps($fournisseur->id, $lat, $lng);
 
         if (! $gpsCheck['valid']) {
-            // RÈGLE : blocage + alerte automatique admin
             Log::warning("[GPS FRAUD ALERT] J-Code {$jcode->code} | Fournisseur #{$fournisseur->id} | Distance: {$gpsCheck['distance']} m (max: {$gpsCheck['max']} m)");
 
-            // En production : notifier l'admin immédiatement
             $this->notificationService->sendAdmin(
                 'alert',
                 'Tentative de fraude J-Code',
@@ -172,7 +168,6 @@ class JCodeService
                 ['jcode_id' => $jcode->id, 'fournisseur_id' => $fournisseur->id]
             );
 
-            // Enregistrer la tentative de fraude dans le Score Logistique du fournisseur
             $this->scoreService->recordGpsFraudAttempt($fournisseur, $jcode->mission_id, $jcode->code);
 
             throw ValidationException::withMessages([
@@ -180,63 +175,132 @@ class JCodeService
             ]);
         }
 
-        DB::transaction(function () use ($jcode, $fournisseur, $lat, $lng) {
-            $jcode->setPositionScan($lat, $lng);
-
+        // Si aucun article n'est spécifié, on sert tout ce qui reste disponible
+        if (empty($servedItems)) {
+            $servedItems = [];
             foreach ($jcode->items as $item) {
-                if ($item->source === 'catalog') {
-                    if (! $item->supplierProduct || $item->supplierProduct->supplier_id !== $fournisseur->id) {
-                        throw ValidationException::withMessages([
-                            'items' => ["L'article catalogue {$item->item_name} n'est plus valide pour ce fournisseur."],
-                        ]);
-                    }
-
-                    $this->supplierCatalogService->decrementStockForServedItem(
-                        $item->supplierProduct,
-                        $item->quantity,
-                    );
-                }
-
-                if ($item->status !== 'served') {
-                    $item->update(['status' => 'served']);
+                $remainingQty = $item->quantity - ($item->quantity_served ?? 0);
+                if ($remainingQty > 0) {
+                    $servedItems[] = [
+                        'jcode_item_id'   => $item->id,
+                        'quantity_served' => $remainingQty,
+                    ];
                 }
             }
+        }
+
+        // Indexer les items du J-Code par ID
+        $jcodeItemsById = $jcode->items->keyBy('id');
+        $montantServiCeScan = 0;
+
+        $scanResult = DB::transaction(function () use ($jcode, $fournisseur, $lat, $lng, $servedItems, $jcodeItemsById, &$montantServiCeScan) {
+            $jcode->setPositionScan($lat, $lng);
+
+            foreach ($servedItems as $served) {
+                $itemId = $served['jcode_item_id'];
+                $qtyServed = (int) $served['quantity_served'];
+
+                $item = $jcodeItemsById->get($itemId);
+
+                if (! $item) {
+                    throw ValidationException::withMessages([
+                        'served_items' => ["L'article #{$itemId} n'appartient pas à ce J-Code."],
+                    ]);
+                }
+
+                $remainingQty = $item->quantity - ($item->quantity_served ?? 0);
+
+                if ($qtyServed > $remainingQty) {
+                    throw ValidationException::withMessages([
+                        'served_items' => ["Quantité servie ({$qtyServed}) dépasse la quantité restante ({$remainingQty}) pour {$item->item_name}."],
+                    ]);
+                }
+
+                // Décrémenter le stock catalogue si applicable
+                if ($item->source === 'catalog') {
+                    if (! $item->supplierProduct || $item->supplierProduct->supplier_id !== $fournisseur->id) {
+                        // Item catalogue d'un autre fournisseur → custom-serve autorisé
+                        // Le fournisseur sert l'item même sans référence catalogue chez lui
+                    } else {
+                        $this->supplierCatalogService->decrementStockForServedItem(
+                            $item->supplierProduct,
+                            $qtyServed,
+                        );
+                    }
+                }
+
+                $montantItem = $item->unit_price * $qtyServed;
+                $montantServiCeScan += $montantItem;
+
+                $newQtyServed = ($item->quantity_served ?? 0) + $qtyServed;
+                $isFullyServed = ($newQtyServed >= $item->quantity);
+
+                $item->update([
+                    'quantity_served'       => $newQtyServed,
+                    'status'                => $isFullyServed ? 'served' : 'partial',
+                    'served_by_supplier_id' => $fournisseur->id,
+                ]);
+            }
+
+            // Mettre à jour le montant consommé total du J-Code
+            $newMontantConsomme = ($jcode->montant_consomme ?? 0) + $montantServiCeScan;
+            $isFullyConsumed = ($newMontantConsomme >= $jcode->montant);
 
             $jcode->update([
-                'fournisseur_id' => $fournisseur->id,
-                'statut' => 'utilise',
-                'scanned_at' => now(),
-                'paiement_status' => 'programme',
+                'montant_consomme' => $newMontantConsomme,
+                'statut'           => $isFullyConsumed ? 'utilise' : 'partiellement_utilise',
+                'scanned_at'       => now(),
+                'paiement_status'  => 'programme',
             ]);
+
+            return [
+                'fully_consumed' => $isFullyConsumed,
+            ];
         });
 
-        \App\Jobs\PaySupplierJob::dispatch($jcode->id)->delay(now()->addDay());
+        // Dispatcher le paiement J+1 pour le montant servi par CE fournisseur lors de CE scan
+        \App\Jobs\PaySupplierJob::dispatch(
+            $jcode->id,
+            $fournisseur->id,
+            $montantServiCeScan
+        )->delay(now()->addDay());
 
         $this->notificationService->send(
             $jcode->artisan,
             'validation',
-            'Matériaux livrés',
-            "Le fournisseur a validé votre J-Code {$jcode->code}. Paiement J+1 garanti.",
+            $scanResult['fully_consumed'] ? 'Matériaux entièrement livrés' : 'Matériaux partiellement livrés',
+            $scanResult['fully_consumed']
+                ? "Le fournisseur a validé votre J-Code {$jcode->code}. Tous les matériaux sont livrés. Paiement J+1 garanti."
+                : "Le fournisseur a servi une partie de votre J-Code {$jcode->code} ({$montantServiCeScan} FCFA). Solde restant : {$jcode->montant_restant} FCFA.",
             ['jcode_id' => $jcode->id, 'mission_id' => $jcode->mission_id]
         );
 
-        // Enregistrer le succès du scan dans le Score Logistique du fournisseur
         $this->scoreService->recordJCodeSuccess($fournisseur, $jcode->mission_id, $jcode->code);
 
         return [
-            'valid'    => true,
-            'distance' => $gpsCheck['distance'],
-            'montant'  => $jcode->montant,
-            'items_served' => $jcode->items->count(),
-            'artisan'  => ['id' => $jcode->artisan_id, 'name' => $jcode->artisan->name],
+            'valid'             => true,
+            'distance'          => $gpsCheck['distance'],
+            'montant_servi'     => $montantServiCeScan,
+            'montant_consomme'  => $jcode->montant_consomme,
+            'montant_restant'   => $jcode->montant_restant,
+            'statut'            => $jcode->statut,
+            'items_served'      => count($servedItems),
+            'fully_consumed'    => $scanResult['fully_consumed'],
+            'artisan'           => ['id' => $jcode->artisan_id, 'name' => $jcode->artisan->name],
         ];
     }
 
-    public function settleSupplierPayment(JCode $jcode, bool $force = false): void
+    /**
+     * Règle le paiement fournisseur pour un scan (total ou partiel).
+     *
+     * @param int|null $specificFournisseurId  Fournisseur à payer (pour scan partiel)
+     * @param int|null $montantServi           Montant servi lors de ce scan spécifique
+     */
+    public function settleSupplierPayment(JCode $jcode, ?int $specificFournisseurId = null, ?int $montantServi = null, bool $force = false): void
     {
         $jcode->loadMissing(['mission', 'artisan', 'fournisseur']);
 
-        if ($jcode->statut !== 'utilise' || $jcode->paiement_status === 'paye') {
+        if (! in_array($jcode->statut, ['utilise', 'partiellement_utilise']) || $jcode->paiement_status === 'paye') {
             return;
         }
 
@@ -245,25 +309,31 @@ class JCodeService
             return;
         }
 
-        // Calculer les commissions basées sur le montant HT du J-Code
+        // Déterminer le fournisseur et le montant à payer
+        $fournisseurId = $specificFournisseurId ?? $jcode->fournisseur_id;
+        $fournisseur = User::findOrFail($fournisseurId);
+        $montantBase = $montantServi ?? $jcode->montant;
+
+        // Calculer les commissions basées sur le montant servi
         $platformFeeRatio = \App\Models\Setting::getValueByKey('platform_fee_ratio', 0.03);
-        $debitTtc = (int) round($jcode->montant * (1 + $platformFeeRatio));
-        $platformFee = $debitTtc - $jcode->montant;
+        $debitTtc = (int) round($montantBase * (1 + $platformFeeRatio));
+        $platformFee = $debitTtc - $montantBase;
 
         $supplierCommissionRatio = \App\Models\Setting::getValueByKey('commission_fournisseur', 0.05);
-        $supplierCommission = (int) round($jcode->montant * $supplierCommissionRatio);
-        $gainNetSupplier = $jcode->montant - $supplierCommission;
+        $supplierCommission = (int) round($montantBase * $supplierCommissionRatio);
+        $gainNetSupplier = $montantBase - $supplierCommission;
 
         $this->walletService->debit(
             $jcode->artisan,
             \App\Enums\WalletType::WALLET_MATERIAUX,
             $debitTtc,
-            "Paiement fournisseur J-Code {$jcode->code}",
+            "Paiement fournisseur J-Code {$jcode->code} (partiel: {$montantBase} FCFA)",
             [
                 'mission_id' => $jcode->mission_id,
                 'jcode_id' => $jcode->id,
-                'fournisseur_id' => $jcode->fournisseur_id,
+                'fournisseur_id' => $fournisseurId,
                 'type' => 'paiement_fournisseur',
+                'montant_servi' => $montantBase,
             ]
         );
 
@@ -278,42 +348,49 @@ class JCodeService
             ]
         );
 
-        $provider = $jcode->fournisseur->preferred_payment_provider ?? 'wave';
-        $description = "Paiement J-Code {$jcode->code} mission #{$jcode->mission_id}";
+        $provider = $fournisseur->preferred_payment_provider ?? 'wave';
+        $description = "Paiement J-Code {$jcode->code} mission #{$jcode->mission_id} ({$montantBase} FCFA)";
 
         if ($provider === 'orange_money') {
-            $result = app(OrangeMoneyService::class)->transferToMobileMoney($jcode->fournisseur->payment_phone ?? $jcode->fournisseur->phone, $gainNetSupplier, $description);
+            $result = app(OrangeMoneyService::class)->transferToMobileMoney($fournisseur->payment_phone ?? $fournisseur->phone, $gainNetSupplier, $description);
             $reference = $result['txnid'] ?? null;
         } else {
-            $result = app(WaveService::class)->transferToMobileMoney($jcode->fournisseur->payment_phone ?? $jcode->fournisseur->phone, $gainNetSupplier, $description);
+            $result = app(WaveService::class)->transferToMobileMoney($fournisseur->payment_phone ?? $fournisseur->phone, $gainNetSupplier, $description);
             $reference = $result['id'] ?? null;
         }
 
         \App\Models\Transaction::create([
             'mission_id' => $jcode->mission_id,
-            'user_id' => $jcode->fournisseur_id,
+            'user_id' => $fournisseurId,
             'type' => 'paiement_fournisseur',
             'montant' => $gainNetSupplier,
             'wallet_source' => 'escrow_mission_' . $jcode->mission_id,
-            'wallet_dest' => 'supplier_mobile_money_' . $jcode->fournisseur_id,
+            'wallet_dest' => 'supplier_mobile_money_' . $fournisseurId,
             'provider' => $provider,
             'statut' => 'confirme',
             'reference_externe' => $reference,
-            'metadata' => ['jcode_id' => $jcode->id],
+            'metadata' => [
+                'jcode_id' => $jcode->id,
+                'montant_servi' => $montantBase,
+                'partial' => ($montantServi !== null),
+            ],
         ]);
 
         $this->notificationService->send(
-            $jcode->fournisseur,
+            $fournisseur,
             'payment',
             'Paiement J-Code recu',
-            "Vous avez recu {$jcode->montant} FCFA pour le J-Code {$jcode->code}.",
-            ['jcode_id' => $jcode->id, 'montant' => $jcode->montant]
+            "Vous avez recu {$gainNetSupplier} FCFA pour le J-Code {$jcode->code}.",
+            ['jcode_id' => $jcode->id, 'montant' => $gainNetSupplier]
         );
 
-        $jcode->update([
-            'paiement_status' => 'paye',
-            'paye_at' => now(),
-        ]);
+        // Marquer comme payé seulement si le J-Code est entièrement consommé
+        if ($jcode->isFullyConsumed()) {
+            $jcode->update([
+                'paiement_status' => 'paye',
+                'paye_at' => now(),
+            ]);
+        }
     }
 
     /**

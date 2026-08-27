@@ -181,7 +181,7 @@ Le module **Missions** du Backoffice administrateur (`/admin/missions`) intègre
 
 ### 🏗️ Gestion de Chantier & Jalons
 1. **Bypass de Sécurité / Auto-Release 72h :** Si un jalon soumis reste sans réponse pendant 72h, il est validé automatiquement par le système, libérant ainsi les fonds de main-d'œuvre pour protéger la trésorerie de l'artisan.
-2. **Ajustements de Devis en cours de Mission (Avenants) :** Permettre la création d'avenants au devis initial (matériel supplémentaire imprévu) validés par le client, réajustant le séquestre sans avoir à annuler toute la mission.
+2. **Ajustements de Devis en cours de Mission (Avenants) :** [COMPLÉTÉ] Permettre la création d'avenants au devis initial (matériel/main d'œuvre supplémentaire imprévu) validés par le client, réajustant le séquestre de façon incrémentale et insérant les jalons sans perturber le cycle de vie de la mission.
 
 ### ⭐️ Système de Réputation (Score ProsArtisan)
 1. **Indice de Crédibilité de l'Évaluateur ($C_k$) :** Pondérer la note laissée à l'artisan selon le profil du client (les avis des clients récurrents pèsent plus lourd pour éviter le dénigrement ou les faux avis).

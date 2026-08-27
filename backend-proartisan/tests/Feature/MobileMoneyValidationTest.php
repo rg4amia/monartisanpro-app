@@ -9,6 +9,7 @@ use App\Models\Order;
 use App\Models\User;
 use App\Models\FournisseurAgree;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class MobileMoneyValidationTest extends TestCase
@@ -106,6 +107,8 @@ class MobileMoneyValidationTest extends TestCase
 
     public function test_supplier_must_provide_mobile_money_when_scanning_jcode_if_missing(): void
     {
+        Queue::fake();
+
         /** @var User $client */
         $client = User::factory()->create(['name' => 'Client Test', 'role' => 'client', 'kyc_status' => 'actif']);
         /** @var User $artisan */

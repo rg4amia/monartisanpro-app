@@ -89,7 +89,7 @@ class JCodeController extends Controller
     }
 
     /**
-     * Fournisseur scanne le J-Code.
+     * Fournisseur scanne le J-Code (total ou partiel).
      * RÈGLE CRITIQUE : vérification GPS obligatoire (< 100 m).
      */
     public function scan(ScanJCodeRequest $request, JCode $jcode): JsonResponse
@@ -114,13 +114,16 @@ class JCodeController extends Controller
             $jcode,
             $user,
             (float) $request->lat,
-            (float) $request->lng
+            (float) $request->lng,
+            $request->validated('served_items') ?? [],
         );
 
         try {
             return response()->json([
                 'success'  => true,
-                'message'  => 'J-Code valide. Paiement J+1 garanti.',
+                'message'  => $result['fully_consumed']
+                    ? 'J-Code validé. Paiement J+1 garanti.'
+                    : 'J-Code partiellement valide. Solde restant : ' . $result['montant_restant'] . ' FCFA.',
                 'data'     => $result,
             ]);
         } catch (\Exception $e) {

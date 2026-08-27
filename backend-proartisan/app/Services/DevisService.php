@@ -23,21 +23,63 @@ class DevisService
     {
         $payload = $this->normalizePayload($data, $artisan);
 
-        // RÈGLE : Un artisan ne peut pas soumettre plusieurs devis tant que le précédent n'est pas refusé
-        $existingArtisanDevis = Devis::where('mission_id', $mission->id)
-            ->where('artisan_id', $artisan->id)
-            ->where('statut', '!=', 'refuse')
-            ->exists();
-        if ($existingArtisanDevis) {
-            throw new \InvalidArgumentException("Vous avez déjà soumis un devis pour cette mission. Vous devez attendre que le client le refuse ou l'accepte.");
-        }
+        $isAvenant = isset($data['is_avenant']) ? filter_var($data['is_avenant'], FILTER_VALIDATE_BOOLEAN) : false;
+        $initialDevis = null;
 
-        // RÈGLE : La mission concernée par un devis en attente ne doit plus pouvoir recevoir d'autres devis
-        $hasPendingDevis = Devis::where('mission_id', $mission->id)
-            ->where('statut', 'soumis')
-            ->exists();
-        if ($hasPendingDevis) {
-            throw new \InvalidArgumentException("Cette mission a déjà un devis en cours d'examen par le client.");
+        if ($isAvenant) {
+            // Un avenant requiert obligatoirement un devis initial accepté
+            $initialDevis = Devis::where('mission_id', $mission->id)
+                ->where('is_avenant', false)
+                ->where('statut', 'accepte')
+                ->first();
+            if (!$initialDevis) {
+                throw new \InvalidArgumentException("Impossible de créer un avenant sans devis initial accepté.");
+            }
+
+            // Seul l'artisan déjà assigné à la mission peut soumettre un avenant
+            if ($mission->artisan_id !== $artisan->id) {
+                throw new \InvalidArgumentException("Seul l'artisan assigné à cette mission peut créer un avenant.");
+            }
+
+            // Statuts de mission autorisés pour un avenant
+            $allowedStates = [
+                \App\States\Mission\FundedLockedState::class,
+                \App\States\Mission\InProgressState::class,
+                \App\States\Mission\PendingApprovalState::class,
+                \App\States\Mission\DisputedState::class,
+            ];
+            $currentStatusClass = get_class($mission->status);
+            if (!in_array($currentStatusClass, $allowedStates)) {
+                throw new \InvalidArgumentException("Impossible de créer un avenant pour une mission dans cet état.");
+            }
+
+            // Un seul avenant en attente d'examen à la fois
+            $hasPendingAvenant = Devis::where('mission_id', $mission->id)
+                ->where('is_avenant', true)
+                ->where('statut', 'soumis')
+                ->exists();
+            if ($hasPendingAvenant) {
+                throw new \InvalidArgumentException("Un avenant est déjà en cours d'examen pour cette mission.");
+            }
+        } else {
+            // RÈGLE INITIALE : Un artisan ne peut pas soumettre plusieurs devis tant que le précédent n'est pas refusé
+            $existingArtisanDevis = Devis::where('mission_id', $mission->id)
+                ->where('artisan_id', $artisan->id)
+                ->where('is_avenant', false)
+                ->where('statut', '!=', 'refuse')
+                ->exists();
+            if ($existingArtisanDevis) {
+                throw new \InvalidArgumentException("Vous avez déjà soumis un devis pour cette mission. Vous devez attendre que le client le refuse ou l'accepte.");
+            }
+
+            // RÈGLE INITIALE : La mission concernée par un devis en attente ne doit plus pouvoir recevoir d'autres devis
+            $hasPendingDevis = Devis::where('mission_id', $mission->id)
+                ->where('is_avenant', false)
+                ->where('statut', 'soumis')
+                ->exists();
+            if ($hasPendingDevis) {
+                throw new \InvalidArgumentException("Cette mission a déjà un devis en cours d'examen par le client.");
+            }
         }
 
         // RÈGLE : Si l'artisan n'indique pas explicitement si le matériel est requis,
@@ -147,13 +189,17 @@ class DevisService
             'lignes_json' => $payload['lignes_json'],
             'jalons_json' => $payload['jalons_json'],
             'statut'      => 'soumis',
+            'is_avenant'  => $isAvenant,
+            'parent_devis_id' => $isAvenant ? $initialDevis->id : null,
         ]);
 
         $this->notificationService->send(
             $mission->client,
-            'devis',
-            'Nouveau devis reçu',
-            "L'artisan {$artisan->name} vous a transmis un devis pour la mission #{$mission->id}.",
+            $isAvenant ? 'devis_avenant' : 'devis',
+            $isAvenant ? 'Nouvel avenant de devis reçu' : 'Nouveau devis reçu',
+            $isAvenant
+                ? "L'artisan {$artisan->name} a soumis un avenant pour la mission #{$mission->id}."
+                : "L'artisan {$artisan->name} vous a transmis un devis pour la mission #{$mission->id}.",
             ['mission_id' => $mission->id, 'devis_id' => $devis->id]
         );
 
@@ -203,7 +249,7 @@ class DevisService
                 throw new \InvalidArgumentException('Le paiement doit être confirmé avant d\'accepter le devis.');
             }
 
-            if ($devis->statut === 'accepte' && (string) $devis->mission->status === 'funded_locked') {
+            if ($devis->statut === 'accepte') {
                 return;
             }
 
@@ -222,40 +268,66 @@ class DevisService
                 'ratio_materiaux' => $ratioMat,
             ]);
 
-            // 3. Association artisan ↔ mission
-            $devis->mission->update(['artisan_id' => $devis->artisan_id]);
+            // 3. Association artisan ↔ mission (seulement pour devis initial)
+            if (!$devis->is_avenant) {
+                $devis->mission->update(['artisan_id' => $devis->artisan_id]);
+            }
 
             // 4. Création des jalons depuis jalons_json (convertis en TTC)
-            if (! $devis->mission->jalons()->exists()) {
-                $commissionService = $devis->commission_service_ratio !== null ? (float) $devis->commission_service_ratio : 0.10;
+            $commissionService = $devis->commission_service_ratio !== null ? (float) $devis->commission_service_ratio : 0.10;
+            if ($devis->is_avenant) {
+                $maxOrdre = $devis->mission->jalons()->max('ordre') ?? 0;
                 foreach ($devis->jalons_json as $jalonData) {
                     $montantTtc = (int) round($jalonData['montant'] * (1 + $commissionService));
                     Jalon::create([
                         'mission_id'  => $devis->mission_id,
-                        'ordre'       => $jalonData['ordre'],
+                        'ordre'       => $maxOrdre + $jalonData['ordre'],
                         'description' => $jalonData['description'],
                         'montant'     => $montantTtc,
                         'statut'      => 'en_attente',
                     ]);
                 }
+            } else {
+                if (! $devis->mission->jalons()->exists()) {
+                    foreach ($devis->jalons_json as $jalonData) {
+                        $montantTtc = (int) round($jalonData['montant'] * (1 + $commissionService));
+                        Jalon::create([
+                            'mission_id'  => $devis->mission_id,
+                            'ordre'       => $jalonData['ordre'],
+                            'description' => $jalonData['description'],
+                            'montant'     => $montantTtc,
+                            'statut'      => 'en_attente',
+                        ]);
+                    }
+                }
             }
 
             // 5. Fragmentation du séquestre
-            $this->walletService->fragmentEscrow(
-                $devis->mission,
-                $devis->mission->client,
-                $devis->artisan,
-                $montantTotal,
-                $ratioMat,
-                $paymentTransaction
-            );
+            if ($devis->is_avenant) {
+                $this->walletService->applyAvenantEscrow(
+                    $devis->mission,
+                    $devis,
+                    $paymentTransaction
+                );
+            } else {
+                $this->walletService->fragmentEscrow(
+                    $devis->mission,
+                    $devis->mission->client,
+                    $devis->artisan,
+                    $montantTotal,
+                    $ratioMat,
+                    $paymentTransaction
+                );
+            }
 
             // 6. Notifier l'artisan
             $this->notificationService->send(
                 $devis->artisan,
                 'payment',
-                'Devis validé et fonds séquestrés !',
-                "Votre devis pour la mission #{$devis->mission_id} a été approuvé. Les fonds sont disponibles et sécurisés en séquestre.",
+                $devis->is_avenant ? 'Avenant validé et fonds séquestrés !' : 'Devis validé et fonds séquestrés !',
+                $devis->is_avenant
+                    ? "Votre avenant pour la mission #{$devis->mission_id} a été approuvé. Les fonds supplémentaires sont disponibles et sécurisés en séquestre."
+                    : "Votre devis pour la mission #{$devis->mission_id} a été approuvé. Les fonds sont disponibles et sécurisés en séquestre.",
                 ['mission_id' => $devis->mission_id]
             );
         });

@@ -307,6 +307,7 @@ SELECT ST_X(position) AS lng, ST_Y(position) AS lat FROM users WHERE id = :id;
 18. **Intégrité de Traitement des Devis & KYC Livreur** : L'acceptation de devis nécessite une transaction d'acompte confirmée et appariée. Un devis ne peut être accepté/refusé s'il n'est plus à l'état `soumis`. Le rôle livreur est assujetti au middleware de restriction de sécurité `kyc.verified` pour lister et accepter des courses.
 19. **Gating de Protection des Coordonnées Client** : L'adresse géographique textuelle, le numéro de téléphone et la localisation précise sur carte (coordonnées GPS) du client doivent rester inaccessibles à l'artisan tant que le devis n'a pas été accepté et payé par le client (mission dans les états pré-financement `pending_artisan_acceptance`, `pending_funding`). Dès que le devis est validé et payé (`financee`/`funded_locked` ou ultérieur), ces informations sont révélées via l'API et déverrouillées sur le mobile.
 20. **Audit Trailing & Preuves d'Interactions en Backoffice** : Le centre d'audit du backoffice React/Inertia administrateur doit loguer et auditer toutes les notifications, SMS, alertes et OTP expédiés aux acteurs, avec recherche, pagination par lot et visualisation interactive des métadonnées JSON techniques pour servir de preuve en cas de litige.
+21. **Avenants de Devis & Séquestre Incrémental** : L'artisan peut soumettre un avenant de devis (is_avenant = true) pour une mission active. Lorsque le client valide et paie cet avenant (transaction acompte), le séquestre de la mission est réajusté de façon incrémentale, les portefeuilles de l'artisan sont crédités de l'avenant (sans réinitialiser les fonds existants), et les jalons de l'avenant sont insérés séquentiellement après les jalons existants (max ordre + 1).
 
 ---
 
@@ -328,3 +329,4 @@ SELECT ST_X(position) AS lng, ST_Y(position) AS lat FROM users WHERE id = :id;
 Le diagramme Mermaid complet `prosartisan_flux.mmd` est joint à cette conversation.
 Il décrit toutes les transitions d'état, les acteurs, les décisions et les flux financiers.
 Réfère-toi à ce diagramme pour toute question sur le comportement attendu du système.
+

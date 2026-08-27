@@ -10,6 +10,7 @@ use App\Models\Mission;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\WalletTransaction;
+use App\Models\Devis;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -256,6 +257,77 @@ class WalletService
                 'montant_materiaux' => $montantMat,
                 'montant_mo' => $montantMo,
                 'ratio_materiaux' => $ratioMat,
+            ]);
+        });
+    }
+
+    /**
+     * Applique les fonds d'un avenant de devis au séquestre (incrémentation).
+     */
+    public function applyAvenantEscrow(
+        Mission $mission,
+        Devis $avenant,
+        Transaction $paiementTransaction
+    ): void {
+        $montantTotal = $avenant->montant_total;
+        $montantMat   = $avenant->montant_materiaux;
+        $montantMo    = $avenant->montant_mo;
+
+        DB::transaction(function () use (
+            $mission,
+            $avenant,
+            $montantTotal,
+            $montantMat,
+            $montantMo,
+            $paiementTransaction
+        ) {
+            // Incrémentation des montants de la mission
+            $mission->update([
+                'montant_total'     => $mission->montant_total + $montantTotal,
+                'montant_materiaux' => $mission->montant_materiaux + $montantMat,
+                'montant_mo'        => $mission->montant_mo + $montantMo,
+            ]);
+
+            $artisan = $mission->artisan;
+
+            // Crédit du wallet_materiaux de l'artisan
+            if ($montantMat > 0) {
+                $this->credit(
+                    $artisan,
+                    WalletType::WALLET_MATERIAUX,
+                    $montantMat,
+                    "Séquestre matériaux (Avenant) - Mission #{$mission->id}",
+                    [
+                        'mission_id' => $mission->id,
+                        'transaction_id' => $paiementTransaction->id,
+                        'devis_id' => $avenant->id,
+                        'type' => 'escrow_materiaux_avenant'
+                    ]
+                );
+            }
+
+            // Crédit du wallet_mo de l'artisan
+            if ($montantMo > 0) {
+                $this->credit(
+                    $artisan,
+                    WalletType::WALLET_MO,
+                    $montantMo,
+                    "Séquestre main d'œuvre (Avenant) - Mission #{$mission->id}",
+                    [
+                        'mission_id' => $mission->id,
+                        'transaction_id' => $paiementTransaction->id,
+                        'devis_id' => $avenant->id,
+                        'type' => 'escrow_mo_avenant'
+                    ]
+                );
+            }
+
+            Log::info('Séquestre avenant appliqué', [
+                'mission_id' => $mission->id,
+                'avenant_id' => $avenant->id,
+                'montant_total_ajoute' => $montantTotal,
+                'montant_materiaux_ajoute' => $montantMat,
+                'montant_mo_ajoute' => $montantMo,
             ]);
         });
     }
