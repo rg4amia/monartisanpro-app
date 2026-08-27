@@ -9,6 +9,9 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Enums\WalletType;
+use App\Enums\WalletOperation;
+use App\Models\WalletTransaction;
 
 class User extends Authenticatable
 {
@@ -57,6 +60,36 @@ class User extends Authenticatable
 
     protected static function booted()
     {
+        static::created(function (User $user) {
+            $attrs = $user->getAttributes();
+            $mat = isset($attrs['wallet_materiaux']) ? (int) $attrs['wallet_materiaux'] : 0;
+            if ($mat > 0) {
+                WalletTransaction::create([
+                    'user_id' => $user->id,
+                    'wallet_type' => WalletType::WALLET_MATERIAUX->value,
+                    'operation' => WalletOperation::CREDIT,
+                    'montant' => $mat,
+                    'solde_avant' => 0,
+                    'solde_apres' => $mat,
+                    'description' => 'Solde initial (matériaux)',
+                    'cle_idempotence' => (string) \Illuminate\Support\Str::uuid(),
+                ]);
+            }
+            $mo = isset($attrs['wallet_mo']) ? (int) $attrs['wallet_mo'] : 0;
+            if ($mo > 0) {
+                WalletTransaction::create([
+                    'user_id' => $user->id,
+                    'wallet_type' => WalletType::WALLET_MO->value,
+                    'operation' => WalletOperation::CREDIT,
+                    'montant' => $mo,
+                    'solde_avant' => 0,
+                    'solde_apres' => $mo,
+                    'description' => 'Solde initial (main d\'œuvre)',
+                    'cle_idempotence' => (string) \Illuminate\Support\Str::uuid(),
+                ]);
+            }
+        });
+
         if (app()->runningUnitTests()) {
             return;
         }
@@ -158,6 +191,46 @@ class User extends Authenticatable
     public function getCoordinatesAttribute(): ?array
     {
         return $this->getPositionCoords();
+    }
+
+    /**
+     * Calcul dynamique du solde d'un portefeuille via le livre de comptes (Ledger)
+     */
+    public function getWalletBalance(WalletType $type): int
+    {
+        $transactions = WalletTransaction::where('user_id', $this->id)
+            ->where('wallet_type', $type->value)
+            ->get();
+
+        $balance = 0;
+        foreach ($transactions as $tx) {
+            if ($tx->operation->increasesBalance()) {
+                $balance += $tx->montant;
+            } elseif ($tx->operation->decreasesBalance()) {
+                $balance -= $tx->montant;
+            }
+        }
+        return $balance;
+    }
+
+    public function getWalletMateriauxAttribute(): int
+    {
+        return $this->getWalletBalance(WalletType::WALLET_MATERIAUX);
+    }
+
+    public function getWalletMoAttribute(): int
+    {
+        return $this->getWalletBalance(WalletType::WALLET_MO);
+    }
+
+    public function setWalletMateriauxAttribute($value): void
+    {
+        $this->attributes['wallet_materiaux'] = $value;
+    }
+
+    public function setWalletMoAttribute($value): void
+    {
+        $this->attributes['wallet_mo'] = $value;
     }
 
     public function isKycActif(): bool

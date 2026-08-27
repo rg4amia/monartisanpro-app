@@ -64,4 +64,30 @@ class WalletServiceComplianceTest extends TestCase
             'statut' => 'confirme' // Since WaveService returns success in testing
         ]);
     }
+
+    public function test_ledger_is_absolute_authority_of_balance()
+    {
+        $user = User::factory()->create(); // Initial balance is 0
+
+        // Let's create transactions
+        \App\Models\WalletTransaction::create([
+            'user_id' => $user->id,
+            'wallet_type' => \App\Enums\WalletType::WALLET_MO->value,
+            'operation' => \App\Enums\WalletOperation::CREDIT,
+            'montant' => 1000,
+            'solde_avant' => 0,
+            'solde_apres' => 1000,
+            'cle_idempotence' => (string) \Illuminate\Support\Str::uuid(),
+        ]);
+
+        $this->assertEquals(1000, $user->wallet_mo);
+
+        // Manually update the user's DB column to 5000 bypassing Eloquent events (raw DB query)
+        \Illuminate\Support\Facades\DB::table('users')
+            ->where('id', $user->id)
+            ->update(['wallet_mo' => 5000]);
+
+        // Reading the attribute on a fresh instance should still return 1000 (calculated from ledger)
+        $this->assertEquals(1000, $user->fresh()->wallet_mo);
+    }
 }

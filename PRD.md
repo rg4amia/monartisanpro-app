@@ -175,7 +175,7 @@ Le module **Missions** du Backoffice administrateur (`/admin/missions`) intègre
 3. **Mode Hors-Ligne pour les Livreurs :** [COMPLÉTÉ] Permettre au livreur de valider la récupération (prise en charge) ou la livraison via des requêtes USSD interactives ou instantanées (`*555*RET-123#`), ou par SMS crypté (ex: `RET-123`), dans les zones blanches à faible connectivité internet.
 
 ### 🛡️ Anti-Fraude, Sécurité & Finance (Ledger)
-1. **Ledger Financier Immuable (Double-Entry Ledger) :** Bannir la modification directe de la colonne `wallet_balance` en BDD. Tout mouvement d'argent doit être calculé dynamiquement à partir d'une table de transactions historiques immuable (`wallet_ledger_entries`) dotée de clés d'idempotence uniques pour éviter les doubles débits.
+1. **Ledger Financier Immuable (Double-Entry Ledger) :** [COMPLÉTÉ] L'autorité absolue des soldes de portefeuilles (`wallet_materiaux` and `wallet_mo`) a été inversée au profit du ledger immuable `wallet_transactions`. Les balances sont calculées dynamiquement par somme des crédits et débits de ledger, et toute modification directe hors-ledger des colonnes de la table `users` en base de données est interceptée/ignorée.
 2. **Circuit Breaker sur les APIs de Paiement :** Si Wave CI ou Orange Money CI subit une panne, le système doit basculer en mode dégradé, suspendre l'initiation de nouveaux paiements mobiles et afficher un message clair à l'utilisateur.
 3. **Device Fingerprinting (Empreinte Appareil) :** Lier le compte artisan/client à l'identifiant matériel unique du téléphone (Device UUID) pour empêcher les artisans bannis de recréer instantanément un compte sur le même appareil.
 
