@@ -331,4 +331,3 @@ SELECT ST_X(position) AS lng, ST_Y(position) AS lat FROM users WHERE id = :id;
 Le diagramme Mermaid complet `prosartisan_flux.mmd` est joint à cette conversation.
 Il décrit toutes les transitions d'état, les acteurs, les décisions et les flux financiers.
 Réfère-toi à ce diagramme pour toute question sur le comportement attendu du système.
-
