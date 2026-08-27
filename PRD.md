@@ -172,7 +172,7 @@ Le module **Missions** du Backoffice administrateur (`/admin/missions`) intègre
 ### 🚚 Logistique & Livreurs
 1. **Réaffectation Automatique de Livreur (Driver Fallback) :** Si un livreur accepte une course mais reste immobile pendant plus de 15 minutes ou s'éloigne du fournisseur, la course doit lui être retirée automatiquement et remise dans le radar.
 2. **Consommation Partielle du J-Code :** Permettre à l'artisan d'utiliser son J-Code chez plusieurs fournisseurs agréés si le premier n'a pas la totalité du stock disponible (débit partiel du séquestre matériel).
-3. **Mode Hors-Ligne pour les Livreurs :** Permettre au livreur de valider la récupération ou la livraison via des protocoles USSD ou SMS cryptés dans les zones blanches à faible connectivité internet.
+3. **Mode Hors-Ligne pour les Livreurs :** [COMPLÉTÉ] Permettre au livreur de valider la récupération (prise en charge) ou la livraison via des requêtes USSD interactives ou instantanées (`*555*RET-123#`), ou par SMS crypté (ex: `RET-123`), dans les zones blanches à faible connectivité internet.
 
 ### 🛡️ Anti-Fraude, Sécurité & Finance (Ledger)
 1. **Ledger Financier Immuable (Double-Entry Ledger) :** Bannir la modification directe de la colonne `wallet_balance` en BDD. Tout mouvement d'argent doit être calculé dynamiquement à partir d'une table de transactions historiques immuable (`wallet_ledger_entries`) dotée de clés d'idempotence uniques pour éviter les doubles débits.

@@ -28,6 +28,7 @@ use App\Http\Controllers\Api\V1\UploadController;
 use App\Http\Controllers\Api\V1\WebhookController;
 use App\Http\Controllers\Api\V1\CommunicationController;
 use App\Http\Controllers\Admin\LlmAdminController;
+use App\Http\Controllers\Api\V1\UssdController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -56,6 +57,10 @@ Route::prefix('v1')->group(function () {
         Route::post('/wave',         [WebhookController::class, 'wave']);
         Route::post('/orange-money', [WebhookController::class, 'orangeMoney']);
     });
+
+    // ── Validation Hors-Ligne USSD & SMS ─────────────────────────────────────
+    Route::post('/ussd',          [UssdController::class, 'handle']);
+    Route::post('/sms/incoming',  [UssdController::class, 'incomingSms']);
 
     // ─────────────────────────────────────────────────────────────────────────
     // ROUTES PROTÉGÉES (Sanctum token)
