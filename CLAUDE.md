@@ -146,3 +146,4 @@ lib/
 5. **Seuil Référent** : missions > 2 000 000 FCFA → validation physique obligatoire
 6. **Floutage GPS** : ne jamais retourner la position exacte d'un artisan au client
 7. **Avenants de devis** : l'acceptation et le paiement d'un avenant réajustent le séquestre de façon incrémentale, créditent les portefeuilles de l'artisan et créent les jalons additionnels sans réinitialiser ou perturber le statut de la mission.
+8. **Validation hors-ligne (USSD/SMS)** : Les requêtes hors-ligne de prise en charge et de livraison livreur doivent valider de façon identique les codes de retrait (`RET-ID`) et de réception (`REC-ID`) et rejeter tout appelant n'ayant pas le rôle `livreur` ou `admin`.
