@@ -17,6 +17,11 @@ class ScanJCodeRequest extends FormRequest
         $rules = [
             'lat' => ['required', 'numeric', 'between:-90,90'],
             'lng' => ['required', 'numeric', 'between:-180,180'],
+
+            // Items servis par le fournisseur lors de ce scan
+            'served_items'                   => ['nullable', 'array'],
+            'served_items.*.jcode_item_id'   => ['required', 'integer', 'exists:jcode_items,id'],
+            'served_items.*.quantity_served' => ['required', 'integer', 'min:1'],
         ];
 
         if ($user && !$user->payment_phone) {

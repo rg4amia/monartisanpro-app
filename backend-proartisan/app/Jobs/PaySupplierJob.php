@@ -20,7 +20,16 @@ class PaySupplierJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public function __construct(public int $jcodeId) {}
+    /**
+     * @param int      $jcodeId         ID du J-Code
+     * @param int|null $fournisseurId   Fournisseur spécifique à payer (consommation partielle)
+     * @param int|null $montantServi    Montant servi lors de ce scan (consommation partielle)
+     */
+    public function __construct(
+        public int $jcodeId,
+        public ?int $fournisseurId = null,
+        public ?int $montantServi = null,
+    ) {}
 
     public function handle(
         WalletService $walletService,
@@ -31,21 +40,25 @@ class PaySupplierJob implements ShouldQueue
     ): void {
         $jcode = JCode::with(['mission', 'artisan', 'fournisseur'])->findOrFail($this->jcodeId);
 
-        // Vérifier que le J-Code a bien été scanné
-        if ($jcode->statut !== 'utilise' || $jcode->paiement_status === 'paye') {
-            Log::warning("PaySupplierJob: J-Code #{$jcode->id} n'est pas utilisé, skip");
+        // Vérifier que le J-Code a bien été scanné (total ou partiel)
+        if (! in_array($jcode->statut, ['utilise', 'partiellement_utilise']) || $jcode->paiement_status === 'paye') {
+            Log::warning("PaySupplierJob: J-Code #{$jcode->id} n'est pas utilisé ou déjà payé, skip");
             return;
         }
 
         try {
-            $jCodeService->settleSupplierPayment($jcode);
+            $jCodeService->settleSupplierPayment(
+                $jcode,
+                $this->fournisseurId,
+                $this->montantServi,
+            );
         } catch (\Exception $e) {
             Log::error('Erreur lors du virement automatique fournisseur J+1', [
                 'jcode_id' => $jcode->id,
-                'fournisseur_id' => $jcode->fournisseur_id,
+                'fournisseur_id' => $this->fournisseurId ?? $jcode->fournisseur_id,
+                'montant_servi' => $this->montantServi,
                 'error' => $e->getMessage(),
             ]);
-            // On peut laisser le job échouer pour qu'il soit retenté par la queue si configuré
             throw $e;
         }
     }

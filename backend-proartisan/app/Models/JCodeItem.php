@@ -15,17 +15,20 @@ class JCodeItem extends Model
         'item_name',
         'item_sku',
         'quantity',
+        'quantity_served',
         'unit_price',
         'subtotal',
         'status',
+        'served_by_supplier_id',
     ];
 
     protected function casts(): array
     {
         return [
-            'quantity' => 'integer',
-            'unit_price' => 'integer',
-            'subtotal' => 'integer',
+            'quantity'        => 'integer',
+            'quantity_served' => 'integer',
+            'unit_price'      => 'integer',
+            'subtotal'        => 'integer',
         ];
     }
 
@@ -37,5 +40,18 @@ class JCodeItem extends Model
     public function supplierProduct()
     {
         return $this->belongsTo(SupplierProduct::class);
+    }
+
+    public function servedBySupplier()
+    {
+        return $this->belongsTo(User::class, 'served_by_supplier_id');
+    }
+
+    /**
+     * Quantité restante à servir pour cet item.
+     */
+    public function getRemainingQuantityAttribute(): int
+    {
+        return max(0, $this->quantity - ($this->quantity_served ?? 0));
     }
 }

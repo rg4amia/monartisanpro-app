@@ -16,9 +16,18 @@ class JCodeItemResource extends JsonResource
             'name' => $this->item_name,
             'sku' => $this->item_sku,
             'quantity' => $this->quantity,
+            'quantityServed' => $this->quantity_served ?? 0,
+            'remainingQuantity' => $this->remaining_quantity,
             'unitPrice' => $this->unit_price,
             'subtotal' => $this->subtotal,
             'status' => $this->status,
+            'servedBySupplier' => $this->when(
+                $this->served_by_supplier_id !== null,
+                fn () => [
+                    'id'   => $this->served_by_supplier_id,
+                    'name' => $this->servedBySupplier?->name,
+                ]
+            ),
         ];
     }
 }

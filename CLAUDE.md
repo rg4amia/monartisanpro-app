@@ -145,3 +145,4 @@ lib/
 4. **OTP jalons** : libération de fonds impossible sans OTP validé
 5. **Seuil Référent** : missions > 2 000 000 FCFA → validation physique obligatoire
 6. **Floutage GPS** : ne jamais retourner la position exacte d'un artisan au client
+7. **Avenants de devis** : l'acceptation et le paiement d'un avenant réajustent le séquestre de façon incrémentale, créditent les portefeuilles de l'artisan et créent les jalons additionnels sans réinitialiser ou perturber le statut de la mission.

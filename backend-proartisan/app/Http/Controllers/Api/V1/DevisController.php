@@ -143,10 +143,12 @@ class DevisController extends Controller
             ], 422);
         }
 
-        if ($devis->statut === 'accepte' && (string) $devis->mission->status === 'funded_locked') {
+        if ($devis->statut === 'accepte') {
             return response()->json([
                 'success' => true,
-                'message' => 'Ce devis est déjà accepté et financé.',
+                'message' => $devis->is_avenant
+                    ? 'Cet avenant est déjà accepté et financé.'
+                    : 'Ce devis est déjà accepté et financé.',
                 'data'    => new DevisResource($devis->fresh()->load(['artisan', 'mission'])),
             ]);
         }
@@ -162,7 +164,9 @@ class DevisController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Devis accepté. La mission est maintenant financée.',
+            'message' => $devis->is_avenant
+                ? 'Avenant accepté et séquestre mis à jour.'
+                : 'Devis accepté. La mission est maintenant financée.',
             'data'    => new DevisResource($devis->fresh()->load(['artisan', 'mission'])),
         ]);
     }

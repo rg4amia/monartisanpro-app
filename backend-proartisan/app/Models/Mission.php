@@ -135,7 +135,12 @@ class Mission extends Model
 
     public function devisAccepte()
     {
-        return $this->hasOne(Devis::class)->where('statut', 'accepte');
+        return $this->hasOne(Devis::class)->where('statut', 'accepte')->where('is_avenant', false);
+    }
+
+    public function devisAvenants()
+    {
+        return $this->hasMany(Devis::class)->where('is_avenant', true);
     }
 
     public function hasPendingDevis(): bool

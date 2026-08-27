@@ -19,6 +19,7 @@ class CreateDevisRequest extends FormRequest
         $rules = [
             'materials_required'     => ['nullable', 'boolean'],
             'intervention_type_id'   => ['nullable', 'integer', 'exists:intervention_types,id'],
+            'is_avenant'             => ['nullable', 'boolean'],
 
             'lignes_json'            => ['sometimes', 'array', 'min:1'],
             'lignes_json.*.type'     => ['required_with:lignes_json', 'in:mo,mat'],
