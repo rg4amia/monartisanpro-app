@@ -122,3 +122,89 @@ $response = Http::timeout(12)
 ```
 
 Si le timeout est dépassé, l'application attrapera proprement l'exception et basculera instantanément sur le **mode de secours local (Local Chat Fallback)**, évitant ainsi d'afficher un écran d'erreur noir ou un crash à l'artisan sur le chantier.
+
+---
+
+## 5. 🌐 Configuration Web de Production (Reverse Proxy Next.js + Laravel)
+
+Pour que le Front Office Next.js (tournant sur le port 3000) et le Backend Laravel (API & Admin) cohabitent sur le même serveur et le même nom de domaine, vous devez configurer le serveur web (Nginx ou Apache) pour rediriger le trafic de manière sélective.
+
+### Option A : Configuration Nginx (Recommandé pour VPS)
+
+Ajoutez ou modifiez le bloc `server` de votre configuration Nginx (`/etc/nginx/sites-available/prosartisan`) :
+
+```nginx
+server {
+    listen 80;
+    listen [::]:80;
+    server_name prosartisan.net www.prosartisan.net;
+    root /var/www/monartisanpro-app/backend-proartisan/public;
+
+    index index.php index.html;
+
+    charset utf-8;
+
+    # 1. API Laravel, Sanctum et Backoffice Admin
+    location /api {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location /admin {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location /sanctum {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location /storage {
+        alias /var/www/monartisanpro-app/backend-proartisan/storage/app/public;
+        access_log off;
+        log_not_found off;
+        expires max;
+    }
+
+    # 2. Exécution PHP pour Laravel
+    location ~ \.php$ {
+        fastcgi_pass unix:/var/run/php/php8.3-fpm.sock;
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+
+    # 3. Redirection par défaut vers le Front Office Next.js (Port 3000)
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    location ~ /\.(?!well-known).* {
+        deny all;
+    }
+}
+```
+
+### Option B : Configuration Apache (`.htaccess` / VirtualHost)
+
+Si vous utilisez un serveur Apache (Hostinger mutualisé ou VPS configuré avec Apache), vous pouvez utiliser le module `mod_proxy` pour rediriger le trafic. 
+
+Ajoutez ces règles dans le fichier `.htaccess` situé à la racine du dossier public de votre site (`public_html/`) :
+
+```apache
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # 1. Ne pas intercepter les requêtes pour l'API Laravel, le Backoffice Admin et le stockage
+    RewriteRule ^(api|admin|sanctum|storage) - [L]
+
+    # 2. Proxy vers le serveur Next.js sur le port 3000 pour tout le reste
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ http://127.0.0.1:3000/$1 [P,L]
+</IfModule>
+```
+
