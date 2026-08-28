@@ -566,16 +566,49 @@ class VitrineAdminController extends Controller
     {
         try {
             $settings = $request->validate([
-                'chiffres_cles_artisans' => 'nullable|string',
-                'chiffres_cles_utilisateurs' => 'nullable|string',
-                'chiffres_cles_missions' => 'nullable|string',
-                'chiffres_cles_metiers' => 'nullable|string',
+                // Chiffres clés
+                'chiffres_cles_artisans' => 'nullable|string|max:50',
+                'chiffres_cles_utilisateurs' => 'nullable|string|max:50',
+                'chiffres_cles_missions' => 'nullable|string|max:50',
+                'chiffres_cles_metiers' => 'nullable|string|max:50',
+
+                // Contact & Coordonnées
+                'contact_phone' => 'nullable|string|max:50',
+                'contact_email' => 'nullable|email|max:255',
+                'footer_address' => 'nullable|string|max:255',
+
+                // Réseaux sociaux
                 'lien_facebook' => 'nullable|string|max:255',
                 'lien_instagram' => 'nullable|string|max:255',
                 'lien_linkedin' => 'nullable|string|max:255',
-                'contact_phone' => 'nullable|string|max:50',
-                'contact_email' => 'nullable|email|max:255',
+                'lien_whatsapp' => 'nullable|string|max:255',
+                'lien_youtube' => 'nullable|string|max:255',
+                'lien_tiktok' => 'nullable|string|max:255',
+
+                // Footer - Identité & Textes
+                'footer_description' => 'nullable|string|max:1000',
+                'footer_badge_text' => 'nullable|string|max:100',
                 'presentation_mission' => 'nullable|string|max:5000',
+
+                // Footer - Titres de colonnes
+                'footer_services_title' => 'nullable|string|max:100',
+                'footer_sitemap_title' => 'nullable|string|max:100',
+                'footer_contact_title' => 'nullable|string|max:100',
+
+                // Footer - Services personnalisables
+                'footer_service_1_text' => 'nullable|string|max:150',
+                'footer_service_1_url' => 'nullable|string|max:255',
+                'footer_service_2_text' => 'nullable|string|max:150',
+                'footer_service_2_url' => 'nullable|string|max:255',
+                'footer_service_3_text' => 'nullable|string|max:150',
+                'footer_service_3_url' => 'nullable|string|max:255',
+                'footer_service_4_text' => 'nullable|string|max:150',
+                'footer_service_4_url' => 'nullable|string|max:255',
+
+                // Footer - Bas de page
+                'footer_copyright' => 'nullable|string|max:255',
+                'footer_cgu_label' => 'nullable|string|max:100',
+                'footer_slogan' => 'nullable|string|max:255',
             ]);
 
             foreach ($settings as $key => $value) {
