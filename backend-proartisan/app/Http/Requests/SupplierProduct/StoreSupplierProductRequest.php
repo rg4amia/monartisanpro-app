@@ -13,6 +13,26 @@ class StoreSupplierProductRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        $merge = [];
+        if ($this->has('unitPrice') && !$this->has('unit_price')) {
+            $merge['unit_price'] = $this->unitPrice;
+        }
+        if ($this->has('stockQuantity') && !$this->has('stock_quantity')) {
+            $merge['stock_quantity'] = $this->stockQuantity;
+        }
+        if ($this->has('imageUrl') && !$this->has('image_url')) {
+            $merge['image_url'] = $this->imageUrl;
+        }
+        if ($this->has('isActive') && !$this->has('is_active')) {
+            $merge['is_active'] = $this->isActive;
+        }
+        if (!empty($merge)) {
+            $this->merge($merge);
+        }
+    }
+
     public function rules(): array
     {
         return [

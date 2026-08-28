@@ -111,10 +111,14 @@ class SupplierCatalogService
 
     public function ensureApprovedSupplier(User $supplier): void
     {
-        if ($supplier->role !== 'fournisseur') {
+        if ($supplier->role !== 'fournisseur' && $supplier->role !== 'admin') {
             throw ValidationException::withMessages([
                 'supplier' => ['Ce compte n\'est pas un fournisseur.'],
             ]);
+        }
+
+        if ($supplier->role === 'admin') {
+            return;
         }
 
         $approved = $supplier->fournisseurAgree()

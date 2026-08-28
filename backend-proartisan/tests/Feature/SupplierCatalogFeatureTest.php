@@ -205,6 +205,46 @@ class SupplierCatalogFeatureTest extends TestCase
             ->assertJsonPath('errors.sku.0', 'Ce SKU existe déjà dans votre catalogue.');
     }
 
+    public function test_supplier_can_create_and_update_product_with_image_and_camel_case_keys(): void
+    {
+        [$supplier] = $this->makeApprovedSupplier();
+
+        $response = $this->actingAs($supplier)
+            ->postJson('/api/v1/supplier-products', [
+                'name' => 'Marteau professionnel',
+                'sku' => 'MAR-001',
+                'description' => 'Marteau à manche ergonomique',
+                'unitPrice' => 8500,
+                'stockQuantity' => 15,
+                'imageUrl' => 'https://example.com/marteau.jpg',
+                'isActive' => true,
+            ])
+            ->assertCreated()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.name', 'Marteau professionnel')
+            ->assertJsonPath('data.unitPrice', 8500)
+            ->assertJsonPath('data.unit_price', 8500)
+            ->assertJsonPath('data.stockQuantity', 15)
+            ->assertJsonPath('data.stock_quantity', 15)
+            ->assertJsonPath('data.imageUrl', 'https://example.com/marteau.jpg')
+            ->assertJsonPath('data.image_url', 'https://example.com/marteau.jpg')
+            ->assertJsonPath('data.isActive', true)
+            ->assertJsonPath('data.is_active', true);
+
+        $productId = $response->json('data.id');
+
+        $this->actingAs($supplier)
+            ->putJson("/api/v1/supplier-products/{$productId}", [
+                'unitPrice' => 9000,
+                'stockQuantity' => 20,
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.unitPrice', 9000)
+            ->assertJsonPath('data.unit_price', 9000)
+            ->assertJsonPath('data.stockQuantity', 20)
+            ->assertJsonPath('data.stock_quantity', 20);
+    }
+
     /**
      * @return array{0: User, 1: FournisseurAgree}
      */

@@ -38,7 +38,17 @@ export default function SupplierCatalog() {
     const loadProducts = async () => {
         try {
             const list = await api.getSupplierProducts();
-            setProducts(list);
+            const normalized: Product[] = (list || []).map((p: any) => ({
+                id: p.id,
+                name: p.name || 'Article sans nom',
+                sku: p.sku || '',
+                description: p.description || '',
+                unit_price: Number(p.unit_price ?? p.unitPrice ?? 0),
+                stock_quantity: Number(p.stock_quantity ?? p.stockQuantity ?? 0),
+                image_url: p.image_url ?? p.imageUrl ?? '',
+                is_active: p.is_active !== undefined ? Boolean(p.is_active) : (p.isActive !== undefined ? Boolean(p.isActive) : true),
+            }));
+            setProducts(normalized);
         } catch (err: any) {
             console.error(err);
             setError(err.message || 'Impossible de charger le catalogue');
@@ -103,14 +113,21 @@ export default function SupplierCatalog() {
         e.preventDefault();
         setFormLoading(true);
 
+        const cleanPrice = Math.max(0, parseInt(String(unitPrice), 10) || 0);
+        const cleanStock = Math.max(0, parseInt(String(stockQuantity), 10) || 0);
+
         const payload = {
-            name,
-            sku: sku || undefined,
-            description: description || undefined,
-            unit_price: unitPrice,
-            stock_quantity: stockQuantity,
-            image_url: imageUrl || undefined,
+            name: name.trim(),
+            sku: sku.trim() || undefined,
+            description: description.trim() || undefined,
+            unit_price: cleanPrice,
+            unitPrice: cleanPrice,
+            stock_quantity: cleanStock,
+            stockQuantity: cleanStock,
+            image_url: imageUrl.trim() || undefined,
+            imageUrl: imageUrl.trim() || undefined,
             is_active: isActive,
+            isActive: isActive,
         };
 
         try {
@@ -120,7 +137,7 @@ export default function SupplierCatalog() {
                 await api.createSupplierProduct(payload);
             }
             setIsModalOpen(false);
-            loadProducts();
+            await loadProducts();
         } catch (err: any) {
             alert(err.message || 'Une erreur est survenue lors de la sauvegarde.');
         } finally {
@@ -136,7 +153,7 @@ export default function SupplierCatalog() {
                 stock_quantity: product.stock_quantity,
                 is_active: !product.is_active,
             });
-            loadProducts();
+            await loadProducts();
         } catch (err: any) {
             alert(err.message || 'Une erreur est survenue');
         }
@@ -146,7 +163,7 @@ export default function SupplierCatalog() {
         if (confirm(`Êtes-vous sûr de vouloir archiver l'article "${product.name}" ?`)) {
             try {
                 await api.deleteSupplierProduct(product.id);
-                loadProducts();
+                await loadProducts();
             } catch (err: any) {
                 alert(err.message || 'Une erreur est survenue');
             }
@@ -311,7 +328,7 @@ export default function SupplierCatalog() {
                         {/* Body Form */}
                         <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-4">
                             <div>
-                                <label className="block text-slate-300 text-xs font-bold mb-1.5 uppercase">Nom de l'article</label>
+                                <label className="block text-slate-300 text-xs font-bold mb-1.5 uppercase">Nom de l'article *</label>
                                 <input
                                     type="text"
                                     value={name}
@@ -324,7 +341,7 @@ export default function SupplierCatalog() {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-slate-300 text-xs font-bold mb-1.5 uppercase">SKU / Code interne</label>
+                                    <label className="block text-slate-300 text-xs font-bold mb-1.5 uppercase">SKU / Référence</label>
                                     <input
                                         type="text"
                                         value={sku}
@@ -334,7 +351,7 @@ export default function SupplierCatalog() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-slate-300 text-xs font-bold mb-1.5 uppercase">Stock initial</label>
+                                    <label className="block text-slate-300 text-xs font-bold mb-1.5 uppercase">Stock disponible *</label>
                                     <input
                                         type="number"
                                         value={stockQuantity}
@@ -348,7 +365,7 @@ export default function SupplierCatalog() {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-slate-300 text-xs font-bold mb-1.5 uppercase">Prix (FCFA)</label>
+                                    <label className="block text-slate-300 text-xs font-bold mb-1.5 uppercase">Prix unitaire (FCFA) *</label>
                                     <input
                                         type="number"
                                         value={unitPrice}
@@ -359,13 +376,13 @@ export default function SupplierCatalog() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-slate-300 text-xs font-bold mb-1.5 uppercase">Statut initial</label>
+                                    <label className="block text-slate-300 text-xs font-bold mb-1.5 uppercase">Visibilité</label>
                                     <select
                                         value={isActive ? '1' : '0'}
                                         onChange={(e) => setIsActive(e.target.value === '1')}
                                         className="w-full bg-slate-950 border border-slate-800 text-white rounded-lg px-3 py-2.5 text-sm focus:border-amber-500 outline-none transition"
                                     >
-                                        <option value="1">Actif (Visible)</option>
+                                        <option value="1">Actif (Visible catalogue)</option>
                                         <option value="0">Désactivé (Masqué)</option>
                                     </select>
                                 </div>
@@ -390,10 +407,20 @@ export default function SupplierCatalog() {
                                         value={imageUrl}
                                         onChange={(e) => setImageUrl(e.target.value)}
                                         className="flex-1 bg-slate-950 border border-slate-800 text-white rounded-lg px-3 py-2.5 text-sm focus:border-amber-500 outline-none transition"
-                                        placeholder="URL de l'image ou uploadez un fichier"
+                                        placeholder="URL de l'image (ex: https://...)"
                                     />
-                                    <label className="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold px-3 py-2.5 rounded-lg text-xs cursor-pointer border border-slate-700 transition">
-                                        {uploading ? 'Upload...' : 'Fichier'}
+                                    <label className="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold px-3.5 py-2.5 rounded-lg text-xs cursor-pointer border border-slate-700 transition flex items-center gap-1.5">
+                                        {uploading ? (
+                                            <>
+                                                <span className="inline-block w-3 h-3 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                                                <span>Upload...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <span>📁</span>
+                                                <span>Importer</span>
+                                            </>
+                                        )}
                                         <input
                                             type="file"
                                             accept="image/*"
@@ -403,6 +430,29 @@ export default function SupplierCatalog() {
                                         />
                                     </label>
                                 </div>
+
+                                {imageUrl && (
+                                    <div className="mt-3 flex items-center gap-3 p-2 bg-slate-950 rounded-lg border border-slate-800">
+                                        <img
+                                            src={imageUrl}
+                                            alt="Aperçu"
+                                            className="w-14 h-14 object-cover rounded-lg border border-slate-700"
+                                            onError={(e) => {
+                                                (e.target as HTMLElement).style.display = 'none';
+                                            }}
+                                        />
+                                        <div className="flex-1 text-xs text-slate-400 truncate">
+                                            Aperçu de la photo
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setImageUrl('')}
+                                            className="text-xs text-rose-400 hover:text-rose-300 font-bold px-2 py-1"
+                                        >
+                                            Supprimer
+                                        </button>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="flex gap-3 pt-4 border-t border-slate-800/60">
