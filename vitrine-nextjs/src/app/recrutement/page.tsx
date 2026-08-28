@@ -12,7 +12,18 @@ export default function RecrutementPage() {
         const loadJobs = async () => {
             try {
                 const data = await api.getRecrutements();
-                setJobs(data);
+                const now = new Date();
+                now.setHours(0, 0, 0, 0);
+
+                // Ne conserver que les offres sans date limite OU dont la date limite >= aujourd'hui
+                const activeJobs = (data || []).filter(job => {
+                    if (!job.date_limite) return true;
+                    const limit = new Date(job.date_limite);
+                    limit.setHours(23, 59, 59, 999);
+                    return limit >= now;
+                });
+
+                setJobs(activeJobs);
             } catch (e) {
                 console.error('Error loading jobs:', e);
             } finally {

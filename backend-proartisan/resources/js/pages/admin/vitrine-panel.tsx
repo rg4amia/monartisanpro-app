@@ -1476,41 +1476,54 @@ function RecrutementsSubPanel({ recrutements }: { recrutements: any[] }) {
                         Aucune offre d'emploi en cours.
                     </div>
                 ) : (
-                    recrutements.map((job) => (
-                        <div key={job.id} className="border border-[var(--admin-border)] bg-white/40 rounded-2xl p-5 flex flex-col md:flex-row justify-between items-start gap-4">
-                            <div className="space-y-2">
-                                <div className="flex items-center gap-3">
-                                    <h4 className="text-lg font-bold text-[var(--admin-text)]">{job.titre}</h4>
-                                    <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold uppercase border border-blue-300">
-                                        {job.type_contrat.toUpperCase()}
-                                    </span>
-                                    {!job.actif && (
-                                        <span className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold border border-red-300">
-                                            Masqué
+                    recrutements.map((job) => {
+                        const isExpired = job.date_limite && new Date(job.date_limite + 'T23:59:59').getTime() < Date.now();
+                        return (
+                            <div key={job.id} className="border border-[var(--admin-border)] bg-white/40 rounded-2xl p-5 flex flex-col md:flex-row justify-between items-start gap-4">
+                                <div className="space-y-2">
+                                    <div className="flex items-center flex-wrap gap-2">
+                                        <h4 className="text-lg font-bold text-[var(--admin-text)]">{job.titre}</h4>
+                                        <span className="bg-blue-100 text-blue-700 px-3 py-0.5 rounded-full text-xs font-bold uppercase border border-blue-300">
+                                            {job.type_contrat.toUpperCase()}
                                         </span>
-                                    )}
+                                        {!job.actif ? (
+                                            <span className="bg-stone-100 text-stone-700 px-2.5 py-0.5 rounded-full text-xs font-semibold border border-stone-300">
+                                                ⚪ Masqué manuellement
+                                            </span>
+                                        ) : isExpired ? (
+                                            <span className="bg-rose-100 text-rose-800 px-2.5 py-0.5 rounded-full text-xs font-bold border border-rose-300 flex items-center gap-1">
+                                                <span className="h-1.5 w-1.5 rounded-full bg-rose-600"></span>
+                                                🔴 Expirée (Désactivée automatiquement du front office)
+                                            </span>
+                                        ) : (
+                                            <span className="bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full text-xs font-bold border border-emerald-300 flex items-center gap-1">
+                                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-600"></span>
+                                                🟢 En ligne sur le front
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="text-xs text-[var(--admin-muted)]">
+                                        Métier ciblé : <b>{job.metier}</b> • Lieu : {job.lieu} • Date limite : {job.date_limite ? new Date(job.date_limite).toLocaleDateString('fr-FR') : 'Aucune (Toujours active)'}
+                                    </p>
+                                    <p className="text-sm text-[var(--admin-text-soft)] line-clamp-3">{job.description}</p>
                                 </div>
-                                <p className="text-xs text-[var(--admin-muted)]">
-                                    Métier ciblé : <b>{job.metier}</b> • Lieu : {job.lieu} • Limite : {job.date_limite ? new Date(job.date_limite).toLocaleDateString('fr-FR') : 'Aucune'}
-                                </p>
-                                <p className="text-sm text-[var(--admin-text-soft)] line-clamp-3">{job.description}</p>
+                                <div className="flex gap-2 shrink-0 self-end md:self-start">
+                                    <button
+                                        onClick={() => openEdit(job)}
+                                        className="text-xs font-semibold text-[#b77918] bg-yellow-100 border border-yellow-300 hover:bg-yellow-200 px-3 py-1.5 rounded-xl transition"
+                                    >
+                                        Modifier
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(job.id)}
+                                        className="text-xs font-semibold text-red-600 bg-red-100 border border-red-300 hover:bg-red-200 px-3 py-1.5 rounded-xl transition"
+                                    >
+                                        Supprimer
+                                    </button>
+                                </div>
                             </div>
-                            <div className="flex gap-2 shrink-0 self-end md:self-start">
-                                <button
-                                    onClick={() => openEdit(job)}
-                                    className="text-xs font-semibold text-[#b77918] bg-yellow-100 border border-yellow-300 hover:bg-yellow-200 px-3 py-1.5 rounded-xl transition"
-                                >
-                                    Modifier
-                                </button>
-                                <button
-                                    onClick={() => handleDelete(job.id)}
-                                    className="text-xs font-semibold text-red-600 bg-red-100 border border-red-300 hover:bg-red-200 px-3 py-1.5 rounded-xl transition"
-                                >
-                                    Supprimer
-                                </button>
-                            </div>
-                        </div>
-                    ))
+                        );
+                    })
                 )}
             </div>
 
@@ -1594,6 +1607,9 @@ function RecrutementsSubPanel({ recrutements }: { recrutements: any[] }) {
                                         onChange={e => setData('date_limite', e.target.value)}
                                         className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm"
                                     />
+                                    <p className="text-[10px] text-amber-700 font-medium mt-1">
+                                        ⏱️ L'offre se désactivera automatiquement du Front Office dès que cette date sera dépassée.
+                                    </p>
                                 </div>
                             </div>
 
