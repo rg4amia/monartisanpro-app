@@ -10,8 +10,10 @@ export default function SupplierLayout({ children }: { children: React.ReactNode
     const [user, setUser] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
+    const isLoginPage = pathname ? pathname.startsWith('/supplier/login') : false;
+
     useEffect(() => {
-        if (pathname === '/supplier/login') {
+        if (isLoginPage) {
             setLoading(false);
             return;
         }
@@ -22,10 +24,14 @@ export default function SupplierLayout({ children }: { children: React.ReactNode
         if (!token || !storedUser) {
             router.push('/supplier/login');
         } else {
-            setUser(JSON.parse(storedUser));
+            try {
+                setUser(JSON.parse(storedUser));
+            } catch (e) {
+                console.error("Failed to parse supplier user", e);
+            }
             setLoading(false);
         }
-    }, [pathname, router]);
+    }, [isLoginPage, router]);
 
     const handleLogout = () => {
         localStorage.removeItem('supplier_token');
@@ -33,7 +39,11 @@ export default function SupplierLayout({ children }: { children: React.ReactNode
         router.push('/supplier/login');
     };
 
-    if (loading && pathname !== '/supplier/login') {
+    if (isLoginPage) {
+        return <>{children}</>;
+    }
+
+    if (loading) {
         return (
             <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center">
                 <div className="flex flex-col items-center gap-3">
@@ -42,10 +52,6 @@ export default function SupplierLayout({ children }: { children: React.ReactNode
                 </div>
             </div>
         );
-    }
-
-    if (pathname === '/supplier/login') {
-        return <>{children}</>;
     }
 
     const navigationItems = [
