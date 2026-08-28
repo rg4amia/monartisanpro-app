@@ -7,7 +7,19 @@ use App\Http\Controllers\Admin\VitrineAdminController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return redirect(env('FRONT_URL', 'https://www.prosartisan.net'));
+    $frontUrl = env('FRONT_URL', 'https://www.prosartisan.net');
+    
+    $frontHost = parse_url($frontUrl, PHP_URL_HOST);
+    $currentHost = request()->getHost();
+
+    $cleanFrontHost = str_replace('www.', '', (string) $frontHost);
+    $cleanCurrentHost = str_replace('www.', '', (string) $currentHost);
+
+    if ($cleanCurrentHost === $cleanFrontHost) {
+        return \Inertia\Inertia::render('welcome');
+    }
+
+    return redirect($frontUrl);
 })->name('home');
 
 Route::inertia('/cgu', 'cgu')->name('cgu');
