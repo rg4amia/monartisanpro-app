@@ -146,6 +146,8 @@ Route::prefix('v1')->group(function () {
         Route::put('/supplier-products/{supplierProduct}', [SupplierCatalogController::class, 'update'])->middleware(['can:supplier-products.manage', 'kyc.verified']);
         Route::delete('/supplier-products/{supplierProduct}', [SupplierCatalogController::class, 'destroy'])->middleware(['can:supplier-products.manage', 'kyc.verified']);
         Route::get('/supplier/dashboard', [SupplierDashboardController::class, 'dashboard'])->middleware('supplier.only');
+        Route::get('/supplier/orders', [SupplierDashboardController::class, 'orders'])->middleware('supplier.only');
+        Route::get('/supplier/litiges', [SupplierDashboardController::class, 'litiges'])->middleware('supplier.only');
 
         // ── Missions ──────────────────────────────────────────────────────────
         Route::get('/missions',                      [MissionController::class, 'index']);

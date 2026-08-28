@@ -13,17 +13,21 @@ class SupplierBackofficeTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_supplier_dashboard_redirect_on_login(): void
+    public function test_supplier_login_is_rejected_on_admin_login(): void
     {
         $supplier = User::factory()->create([
             'role' => 'fournisseur',
             'kyc_status' => 'actif',
+            'password' => bcrypt('password123'),
         ]);
 
-        $response = $this->actingAs($supplier)
-            ->get('/admin/login');
+        $response = $this->post('/admin/login', [
+            'identifier' => $supplier->phone,
+            'password' => 'password123',
+        ]);
 
-        $response->assertRedirect(route('supplier.dashboard'));
+        $response->assertSessionHasErrors('identifier');
+        $this->assertGuest();
     }
 
     public function test_supplier_cannot_access_admin_dashboard(): void
@@ -39,7 +43,7 @@ class SupplierBackofficeTest extends TestCase
         $response->assertForbidden();
     }
 
-    public function test_supplier_can_access_supplier_backoffice_views(): void
+    public function test_supplier_can_access_supplier_api_endpoints(): void
     {
         $supplier = User::factory()->create([
             'role' => 'fournisseur',
@@ -53,27 +57,33 @@ class SupplierBackofficeTest extends TestCase
             'approuve_at' => now(),
         ]);
 
-        $response = $this->actingAs($supplier)->get('/supplier/dashboard');
-        $response->assertOk();
+        // Dashboard statistics
+        $response = $this->actingAs($supplier, 'sanctum')->getJson('/api/v1/supplier/dashboard');
+        $response->assertOk()->assertJsonPath('success', true);
 
-        $response = $this->actingAs($supplier)->get('/supplier/catalog');
-        $response->assertOk();
+        // Orders list
+        $response = $this->actingAs($supplier, 'sanctum')->getJson('/api/v1/supplier/orders');
+        $response->assertOk()->assertJsonPath('success', true);
 
-        $response = $this->actingAs($supplier)->get('/supplier/orders');
-        $response->assertOk();
-
-        $response = $this->actingAs($supplier)->get('/supplier/litiges');
-        $response->assertOk();
+        // Litiges list
+        $response = $this->actingAs($supplier, 'sanctum')->getJson('/api/v1/supplier/litiges');
+        $response->assertOk()->assertJsonPath('success', true);
     }
 
-    public function test_client_cannot_access_supplier_backoffice(): void
+    public function test_client_cannot_access_supplier_api_endpoints(): void
     {
         $client = User::factory()->create([
             'role' => 'client',
             'kyc_status' => 'actif',
         ]);
 
-        $response = $this->actingAs($client)->get('/supplier/dashboard');
+        $response = $this->actingAs($client, 'sanctum')->getJson('/api/v1/supplier/dashboard');
+        $response->assertForbidden();
+
+        $response = $this->actingAs($client, 'sanctum')->getJson('/api/v1/supplier/orders');
+        $response->assertForbidden();
+
+        $response = $this->actingAs($client, 'sanctum')->getJson('/api/v1/supplier/litiges');
         $response->assertForbidden();
     }
 
@@ -101,7 +111,7 @@ class SupplierBackofficeTest extends TestCase
             'is_active' => true,
         ]);
 
-        $response = $this->actingAs($supplier)
+        $response = $this->actingAs($supplier, 'sanctum')
             ->getJson('/api/v1/supplier/dashboard');
 
         $response->assertOk()

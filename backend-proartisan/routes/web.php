@@ -4,30 +4,13 @@ use App\Http\Controllers\Admin\AuthenticatedSessionController;
 use App\Http\Controllers\Admin\BackofficeController;
 use App\Http\Controllers\Admin\LlmAdminController;
 use App\Http\Controllers\Admin\VitrineAdminController;
-use App\Http\Controllers\Supplier\SupplierBackofficeController;
 use Illuminate\Support\Facades\Route;
 
-Route::inertia('/', 'welcome')->name('home');
+Route::get('/', function () {
+    return redirect(env('FRONT_URL', 'https://www.prosartisan.net'));
+})->name('home');
+
 Route::inertia('/cgu', 'cgu')->name('cgu');
-
-Route::prefix('supplier')->name('supplier.')->group(function () {
-    Route::middleware(['auth', 'supplier.only'])->group(function () {
-        Route::get('/', fn() => redirect()->route('supplier.dashboard'))->name('index');
-        Route::get('/dashboard', [SupplierBackofficeController::class, 'dashboard'])->name('dashboard');
-        Route::get('/catalog', [SupplierBackofficeController::class, 'catalog'])->name('catalog');
-        Route::get('/orders', [SupplierBackofficeController::class, 'orders'])->name('orders');
-        Route::get('/litiges', [SupplierBackofficeController::class, 'litiges'])->name('litiges');
-
-        // Web Actions to bypass Sanctum on Web Backoffice
-        Route::post('/upload', [\App\Http\Controllers\Api\V1\UploadController::class, 'upload'])->name('upload');
-        Route::post('/products', [\App\Http\Controllers\Api\V1\SupplierCatalogController::class, 'store'])->name('products.store');
-        Route::put('/products/{supplierProduct}', [\App\Http\Controllers\Api\V1\SupplierCatalogController::class, 'update'])->name('products.update');
-        Route::delete('/products/{supplierProduct}', [\App\Http\Controllers\Api\V1\SupplierCatalogController::class, 'destroy'])->name('products.destroy');
-        Route::post('/orders/{order}/prepared', [\App\Http\Controllers\Api\V1\OrderController::class, 'markPrepared'])->name('orders.prepared');
-        Route::post('/orders/{order}/verify-pickup', [\App\Http\Controllers\Api\V1\OrderController::class, 'verifyPickup'])->name('orders.verify-pickup');
-        Route::post('/logout', [\App\Http\Controllers\Admin\AuthenticatedSessionController::class, 'destroy'])->name('logout');
-    });
-});
 
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::middleware('guest')->group(function () {

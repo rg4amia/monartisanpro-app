@@ -25,12 +25,10 @@ class AuthenticatedSessionController extends Controller
     public function create(Request $request): Response|RedirectResponse
     {
         if ($request->user()) {
-            if ($request->user()->role === 'admin') {
+            if (in_array($request->user()->role, ['admin', 'referent'])) {
                 return redirect()->route('admin.dashboard');
             }
-            if ($request->user()->role === 'fournisseur') {
-                return redirect()->route('supplier.dashboard');
-            }
+            Auth::guard('web')->logout();
         }
 
         return Inertia::render('admin/auth/login');
@@ -61,6 +59,12 @@ class AuthenticatedSessionController extends Controller
         if (! $user || ! $user->password || ! Hash::check($credentials['password'], $user->password)) {
             throw ValidationException::withMessages([
                 'identifier' => 'Identifiants invalides.',
+            ]);
+        }
+
+        if (! in_array($user->role, ['admin', 'referent'])) {
+            throw ValidationException::withMessages([
+                'identifier' => 'Accès réservé aux administrateurs de la plateforme.',
             ]);
         }
 
@@ -141,8 +145,7 @@ class AuthenticatedSessionController extends Controller
         session()->forget(['admin_2fa_user_id', 'admin_2fa_remember', 'admin_2fa_temp_secret']);
         $request->session()->regenerate();
 
-        $redirectRoute = $user->role === 'fournisseur' ? 'supplier.dashboard' : 'admin.dashboard';
-        return redirect()->intended(route($redirectRoute))
+        return redirect()->intended(route('admin.dashboard'))
             ->with('success', 'Connexion réussie.');
     }
 

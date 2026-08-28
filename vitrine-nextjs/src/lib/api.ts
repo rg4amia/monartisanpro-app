@@ -215,6 +215,60 @@ const MOCK_SETTINGS: Record<string, string> = {
     contact_email_vitrine: "contact@prosartisan.ci"
 };
 
+const AUTH_API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1/vitrine').replace('/vitrine', '');
+
+function getAuthToken(): string | null {
+    if (typeof window !== 'undefined') {
+        return localStorage.getItem('supplier_token');
+    }
+    return null;
+}
+
+async function fetchAuthApi<T>(
+    endpoint: string,
+    method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET',
+    body?: any
+): Promise<T> {
+    const token = getAuthToken();
+    const headers: Record<string, string> = {
+        'Accept': 'application/json',
+    };
+
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    if (body && !(body instanceof FormData)) {
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const config: RequestInit = {
+        method,
+        headers,
+    };
+
+    if (body) {
+        config.body = body instanceof FormData ? body : JSON.stringify(body);
+    }
+
+    const response = await fetch(`${AUTH_API_BASE_URL}${endpoint}`, config);
+
+    if (response.status === 401) {
+        if (typeof window !== 'undefined') {
+            localStorage.removeItem('supplier_token');
+            window.location.href = '/supplier/login';
+        }
+        throw new Error('Non authentifié');
+    }
+
+    const json = await response.json();
+    if (!json.success) {
+        throw new Error(json.message || 'Une erreur est survenue');
+    }
+
+    return json as T;
+}
+
 async function fetchFromApi<T>(endpoint: string, fallback: T): Promise<T> {
     try {
         const response = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -305,5 +359,51 @@ export const api = {
                 message: 'Votre message a été envoyé avec succès (mode simulé).'
             };
         }
+    },
+    // Espace Fournisseur APIs
+    async supplierSendOtp(phone: string): Promise<boolean> {
+        const res = await fetchAuthApi<{ success: boolean }>('/auth/send-otp', 'POST', { phone });
+        return res.success;
+    },
+    async supplierVerifyOtp(phone: string, otp: string): Promise<{ token: string; user: any }> {
+        const res = await fetchAuthApi<{ success: boolean; token: string; user: any }>('/auth/verify-otp', 'POST', { phone, otpCode: otp });
+        return { token: res.token, user: res.user };
+    },
+    async getSupplierDashboard(): Promise<any> {
+        const res = await fetchAuthApi<{ success: boolean; data: any }>('/supplier/dashboard');
+        return res.data;
+    },
+    async getSupplierProducts(): Promise<any[]> {
+        const res = await fetchAuthApi<{ success: boolean; data: any[] }>('/supplier-products');
+        return res.data;
+    },
+    async createSupplierProduct(data: any): Promise<any> {
+        return fetchAuthApi<any>('/supplier-products', 'POST', data);
+    },
+    async updateSupplierProduct(id: number, data: any): Promise<any> {
+        return fetchAuthApi<any>(`/supplier-products/${id}`, 'PUT', data);
+    },
+    async deleteSupplierProduct(id: number): Promise<any> {
+        return fetchAuthApi<any>(`/supplier-products/${id}`, 'DELETE');
+    },
+    async getSupplierOrders(): Promise<any[]> {
+        const res = await fetchAuthApi<{ success: boolean; data: any[] }>('/supplier/orders');
+        return res.data;
+    },
+    async markOrderPrepared(id: number): Promise<any> {
+        return fetchAuthApi<any>(`/orders/${id}/prepared`, 'POST');
+    },
+    async verifyOrderPickup(id: number, code: string): Promise<any> {
+        return fetchAuthApi<any>(`/orders/${id}/verify-pickup`, 'POST', { code });
+    },
+    async getSupplierLitiges(): Promise<any> {
+        const res = await fetchAuthApi<{ success: boolean; data: any }>('/supplier/litiges');
+        return res.data;
+    },
+    async uploadSupplierImage(file: File): Promise<string> {
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await fetchAuthApi<{ success: boolean; url: string }>('/upload', 'POST', formData);
+        return res.url;
     }
 };
