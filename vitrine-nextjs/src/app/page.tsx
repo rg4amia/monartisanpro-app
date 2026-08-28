@@ -73,9 +73,11 @@ export default function HomePage() {
     return (
       <div className="min-h-screen bg-[#fbf9f6] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-[#ebb95e] to-[#8a5d16] animate-spin flex items-center justify-center text-white font-extrabold text-xl">
-            PA
-          </div>
+          <img
+            src="/img/prosartisan-logo.png"
+            alt="ProsArtisan"
+            className="h-16 w-16 object-contain animate-pulse"
+          />
           <p className="text-sm font-bold text-[#746251] animate-pulse">Chargement de la vitrine...</p>
         </div>
       </div>
