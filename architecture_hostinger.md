@@ -207,4 +207,3 @@ Ajoutez ces règles dans le fichier `.htaccess` situé à la racine du dossier p
     RewriteRule ^(.*)$ http://127.0.0.1:3000/$1 [P,L]
 </IfModule>
 ```
-
