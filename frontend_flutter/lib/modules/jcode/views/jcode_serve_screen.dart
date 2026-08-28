@@ -6,7 +6,6 @@ import '../../../core/utils/formatters.dart';
 import '../../../data/models/jcode_item_model.dart';
 import '../../../data/models/jcode_model.dart';
 import '../controllers/jcode_controller.dart';
-import '../../../app/routes/app_routes.dart';
 
 class JcodeServeScreen extends StatefulWidget {
   const JcodeServeScreen({super.key});
@@ -234,7 +233,7 @@ class _JcodeServeScreenState extends State<JcodeServeScreen> {
                 ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, y: 5),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
                   color: jcode.isPartiallyUsed
                       ? Colors.orange.withValues(alpha: 0.2)
@@ -404,7 +403,7 @@ class _JcodeServeScreenState extends State<JcodeServeScreen> {
               ),
               if (!hasRemaining)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, y: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: AppColors.success.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(4),
