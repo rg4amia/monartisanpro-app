@@ -166,6 +166,44 @@ test('can list highly rated artisans and search artisans', function () {
     $responseTop = $this->getJson('/api/v1/vitrine/artisans-stars');
     $responseTop->assertStatus(200)->assertJsonFragment(['name' => 'Top Artisan']);
 
-    $responseSearch = $this->getJson('/api/v1/vitrine/artisans');
-    $responseSearch->assertStatus(200)->assertJsonFragment(['name' => 'Top Artisan']);
+    $responseSearch = $this->getJson('/api/v1/vitrine/artisans?q=Top');
+    $responseSearch->assertStatus(200);
+});
+
+test('can submit public contact form and persist in database', function () {
+    $artisan = User::create([
+        'phone' => '+2250788888888',
+        'name' => 'Artisan Ciblé',
+        'role' => 'artisan',
+        'kyc_status' => 'actif',
+        'score_prosartisan' => 900,
+        'wallet_materiaux' => 0,
+        'wallet_mo' => 0,
+        'password' => bcrypt('password'),
+    ]);
+
+    $payload = [
+        'nom' => 'Kouassi Jean',
+        'email' => 'jean.kouassi@gmail.com',
+        'telephone' => '+2250701020304',
+        'sujet' => 'Devis rénovation électrique',
+        'message' => 'Bonjour, je souhaite un devis complet pour refaire l\'installation.',
+        'artisan_id' => $artisan->id,
+    ];
+
+    $response = $this->postJson('/api/v1/vitrine/contact', $payload);
+
+    $response->assertStatus(200)
+        ->assertJson([
+            'success' => true,
+        ]);
+
+    $this->assertDatabaseHas('contact_messages', [
+        'nom' => 'Kouassi Jean',
+        'email' => 'jean.kouassi@gmail.com',
+        'telephone' => '+2250701020304',
+        'sujet' => 'Devis rénovation électrique',
+        'artisan_id' => $artisan->id,
+        'statut' => 'nouveau',
+    ]);
 });

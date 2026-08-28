@@ -362,7 +362,7 @@ export const api = {
         if (Array.isArray(data)) return data;
         return data.data || MOCK_ARTISANS;
     },
-    async sendContact(data: { nom: string; email: string; sujet: string; message: string }): Promise<{ success: boolean; message: string }> {
+    async sendContact(data: { nom: string; email: string; telephone?: string; sujet: string; message: string; artisan_id?: number | null }): Promise<{ success: boolean; message: string }> {
         try {
             const response = await fetch(`${getApiBaseUrl()}/contact`, {
                 method: 'POST',
@@ -372,13 +372,13 @@ export const api = {
             const json = await response.json();
             return {
                 success: json.success || false,
-                message: json.message || 'Envoi effectué.'
+                message: json.message || 'Votre message a été envoyé avec succès.'
             };
         } catch (e) {
             console.error('Contact submit error:', e);
             return {
-                success: true,
-                message: 'Votre message a été envoyé avec succès (mode simulé).'
+                success: false,
+                message: 'Impossible de joindre le serveur. Veuillez réessayer plus tard.'
             };
         }
     },

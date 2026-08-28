@@ -588,4 +588,61 @@ class VitrineAdminController extends Controller
             return back()->withErrors(['settings' => 'Impossible d\'enregistrer les paramètres : ' . $e->getMessage()]);
         }
     }
+
+    // =========================================================================
+    // 9. GESTION DES CONTACTS & REQUÊTES
+    // =========================================================================
+
+    public function updateContact(Request $request, \App\Models\ContactMessage $contact): RedirectResponse
+    {
+        try {
+            $validated = $request->validate([
+                'statut' => 'required|in:nouveau,en_cours,traite,archive',
+                'priorite' => 'nullable|in:basse,normale,urgente',
+                'notes_admin' => 'nullable|string|max:5000',
+            ]);
+
+            if ($validated['statut'] === 'traite' && $contact->statut !== 'traite') {
+                $validated['traite_at'] = now();
+                $validated['traite_par_user_id'] = $request->user()->id;
+            } elseif ($validated['statut'] !== 'traite' && $contact->statut === 'traite') {
+                $validated['traite_at'] = null;
+                $validated['traite_par_user_id'] = null;
+            }
+
+            $contact->update($validated);
+
+            return back()->with('success', 'Statut de la demande mis à jour.');
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Erreur updateContact: ' . $e->getMessage());
+            return back()->withErrors(['contact' => 'Impossible de mettre à jour la requête : ' . $e->getMessage()]);
+        }
+    }
+
+    public function replyContact(Request $request, \App\Models\ContactMessage $contact): RedirectResponse
+    {
+        try {
+            $validated = $request->validate([
+                'reponse_envoyee' => 'required|string|max:5000',
+                'notes_admin' => 'nullable|string|max:5000',
+            ]);
+
+            $validated['statut'] = 'traite';
+            $validated['traite_at'] = now();
+            $validated['traite_par_user_id'] = $request->user()->id;
+
+            $contact->update($validated);
+
+            return back()->with('success', 'Réponse enregistrée et requête marquée comme traitée.');
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Erreur replyContact: ' . $e->getMessage());
+            return back()->withErrors(['contact' => 'Impossible d\'enregistrer la réponse : ' . $e->getMessage()]);
+        }
+    }
+
+    public function destroyContact(\App\Models\ContactMessage $contact): RedirectResponse
+    {
+        $contact->delete();
+        return back()->with('success', 'Demande de contact supprimée.');
+    }
 }

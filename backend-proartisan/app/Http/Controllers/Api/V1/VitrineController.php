@@ -252,16 +252,29 @@ class VitrineController extends Controller
         $validated = $request->validate([
             'nom' => 'required|string|max:150',
             'email' => 'required|email|max:255',
+            'telephone' => 'nullable|string|max:30',
             'sujet' => 'required|string|max:255',
             'message' => 'required|string|max:5000',
+            'artisan_id' => 'nullable|exists:users,id',
         ]);
 
-        // Stocker ou envoyer par email (pour l'instant, on log)
-        \Log::channel('single')->info('Contact vitrine', $validated);
+        $validated['ip_address'] = $request->ip();
+        $validated['statut'] = 'nouveau';
+
+        $contact = \App\Models\ContactMessage::create($validated);
+
+        \Illuminate\Support\Facades\Log::channel('single')->info('Nouveau contact vitrine créé ID: ' . $contact->id, [
+            'nom' => $contact->nom,
+            'email' => $contact->email,
+            'sujet' => $contact->sujet,
+        ]);
 
         return response()->json([
             'success' => true,
-            'message' => 'Votre message a été envoyé avec succès.',
+            'message' => 'Votre message a été envoyé avec succès. Notre équipe vous répondra dans les plus brefs délais.',
+            'data' => [
+                'id' => $contact->id,
+            ],
         ]);
     }
 }

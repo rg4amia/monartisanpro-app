@@ -565,6 +565,7 @@ class BackofficeController extends Controller
         $vitrineRecrutements = [];
         $vitrinePopups = [];
         $vitrineSettings = [];
+        $contactMessages = [];
 
         try {
             if (\Illuminate\Support\Facades\Schema::hasTable('vitrine_slides')) {
@@ -576,6 +577,9 @@ class BackofficeController extends Controller
                 $vitrineRecrutements = VitrineRecrutement::latest()->get();
                 $vitrinePopups = VitrinePopup::latest()->get();
                 $vitrineSettings = VitrineSetting::all();
+            }
+            if (\Illuminate\Support\Facades\Schema::hasTable('contact_messages')) {
+                $contactMessages = \App\Models\ContactMessage::with(['artisan:id,name,phone', 'traitePar:id,name'])->latest()->get();
             }
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error("Erreur chargement vitrine backoffice: " . $e->getMessage());
@@ -612,6 +616,7 @@ class BackofficeController extends Controller
             'vitrineRecrutements' => $vitrineRecrutements,
             'vitrinePopups' => $vitrinePopups,
             'vitrineSettings' => $vitrineSettings,
+            'contactMessages' => $contactMessages,
         ]);
     }
 
