@@ -19,6 +19,7 @@ import '../../modules/jcode/views/jcode_screen.dart';
 import '../../modules/jcode/views/scanner_screen.dart';
 import '../../modules/jcode/views/supplier_catalog_screen.dart';
 import '../../modules/jcode/views/transaction_confirm_screen.dart';
+import '../../modules/jcode/views/jcode_serve_screen.dart';
 import '../../modules/litige/bindings/litige_binding.dart';
 import '../../modules/litige/bindings/litige_detail_binding.dart';
 import '../../modules/litige/views/litige_screen.dart';
@@ -148,6 +149,11 @@ class AppPages {
     GetPage(
       name: Routes.scanner,
       page: () => const ScannerScreen(),
+      binding: JcodeBinding(),
+    ),
+    GetPage(
+      name: Routes.jcodeServe,
+      page: () => const JcodeServeScreen(),
       binding: JcodeBinding(),
     ),
     GetPage(

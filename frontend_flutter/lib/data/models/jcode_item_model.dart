@@ -5,6 +5,7 @@ class JcodeItemModel {
   final String name;
   final String? sku;
   final int quantity;
+  final int quantityServed;
   final int unitPrice;
   final int subtotal;
   final String? status;
@@ -15,17 +16,24 @@ class JcodeItemModel {
     required this.quantity,
     required this.unitPrice,
     required this.subtotal,
+    this.quantityServed = 0,
     this.id,
     this.supplierProductId,
     this.sku,
     this.status,
   });
 
+  bool get isServed => status == 'served';
+  bool get isPartial => status == 'partial';
+  bool get isRequested => status == 'requested';
+  int get remainingQuantity => quantity - quantityServed;
+
   bool get isCatalog => source == 'catalog';
   bool get isCustom => source == 'custom';
 
   factory JcodeItemModel.fromJson(Map<String, dynamic> json) {
     final quantity = _parseInt(json['quantity']);
+    final quantityServed = _parseInt(json['quantityServed'] ?? json['quantity_served']);
     final unitPrice = _parseInt(json['unitPrice'] ?? json['unit_price']);
 
     return JcodeItemModel(
@@ -37,6 +45,7 @@ class JcodeItemModel {
       name: (json['name'] ?? json['item_name'] ?? '').toString(),
       sku: (json['sku'] ?? json['item_sku'])?.toString(),
       quantity: quantity,
+      quantityServed: quantityServed,
       unitPrice: unitPrice,
       subtotal: _parseInt(json['subtotal']) == 0
           ? quantity * unitPrice
@@ -52,6 +61,7 @@ class JcodeItemModel {
         'name': name,
         'sku': sku,
         'quantity': quantity,
+        'quantityServed': quantityServed,
         'unitPrice': unitPrice,
         'subtotal': subtotal,
         'status': status,
@@ -72,11 +82,13 @@ class JcodeItemModel {
     String? name,
     String? sku,
     int? quantity,
+    int? quantityServed,
     int? unitPrice,
     int? subtotal,
     String? status,
   }) {
     final nextQuantity = quantity ?? this.quantity;
+    final nextQuantityServed = quantityServed ?? this.quantityServed;
     final nextUnitPrice = unitPrice ?? this.unitPrice;
 
     return JcodeItemModel(
@@ -86,6 +98,7 @@ class JcodeItemModel {
       name: name ?? this.name,
       sku: sku ?? this.sku,
       quantity: nextQuantity,
+      quantityServed: nextQuantityServed,
       unitPrice: nextUnitPrice,
       subtotal: subtotal ?? (nextQuantity * nextUnitPrice),
       status: status ?? this.status,

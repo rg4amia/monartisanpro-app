@@ -47,10 +47,15 @@ class JcodeRepository {
     required String identifier,
     required double lat,
     required double lng,
+    List<Map<String, dynamic>>? servedItems,
   }) async {
     final res = await _client.post(
       ApiEndpoints.scanJcode(identifier),
-      data: {'lat': lat, 'lng': lng},
+      data: {
+        'lat': lat,
+        'lng': lng,
+        if (servedItems != null) 'served_items': servedItems,
+      },
     );
     return res.data as Map<String, dynamic>;
   }

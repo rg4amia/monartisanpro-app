@@ -10,6 +10,7 @@ class JcodeModel {
   final String? qrUrl;
   final String? ussdCode;
   final int montant;
+  final int montantConsomme;
   final String statut;
   final double? scanLat;
   final double? scanLng;
@@ -27,6 +28,7 @@ class JcodeModel {
     required this.montant,
     required this.statut,
     required this.expiresAt,
+    this.montantConsomme = 0,
     this.fournisseurId,
     this.qrUrl,
     this.ussdCode,
@@ -38,9 +40,11 @@ class JcodeModel {
     this.items = const [],
   });
 
-  bool get isActive => statut == 'actif';
+  bool get isActive => statut == 'actif' || statut == 'partiellement_utilise';
   bool get isUsed => statut == 'utilise';
   bool get isExpired => statut == 'expire';
+  bool get isPartiallyUsed => statut == 'partiellement_utilise';
+  int get montantRestant => montant - montantConsomme;
 
   factory JcodeModel.fromJson(Map<String, dynamic> json) {
     final artisan = json['artisan'] is Map<String, dynamic>
@@ -64,6 +68,7 @@ class JcodeModel {
       qrUrl: (json['qrUrl'] ?? json['qr_url']) as String?,
       ussdCode: (json['ussdCode'] ?? json['ussd_code']) as String?,
       montant: _parseInt(json['montant'] ?? json['tokenAmount']),
+      montantConsomme: _parseInt(json['montantConsomme'] ?? json['montant_consomme']),
       statut: (json['statut'] ?? json['status'] ?? '').toString(),
       scanLat: _parseDouble(json['scanLat'] ?? json['scan_lat']),
       scanLng: _parseDouble(json['scanLng'] ?? json['scan_lng']),
@@ -94,6 +99,7 @@ class JcodeModel {
         'qrUrl': qrUrl,
         'ussdCode': ussdCode,
         'montant': montant,
+        'montantConsomme': montantConsomme,
         'statut': statut,
         'scanLat': scanLat,
         'scanLng': scanLng,
