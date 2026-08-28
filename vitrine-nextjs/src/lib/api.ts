@@ -264,16 +264,24 @@ async function fetchAuthApi<T>(
     const response = await fetch(`${getAuthApiBaseUrl()}${endpoint}`, config);
 
     if (response.status === 401) {
-        if (typeof window !== 'undefined') {
+        if (typeof window !== 'undefined' && endpoint !== '/auth/verify-otp') {
             localStorage.removeItem('supplier_token');
             window.location.href = '/supplier/login';
         }
-        throw new Error('Non authentifié');
+        const json = await response.json().catch(() => ({}));
+        throw new Error(json.message || 'Identifiants ou code OTP invalide.');
     }
 
-    const json = await response.json();
-    if (!json.success) {
-        throw new Error(json.message || 'Une erreur est survenue');
+    const json = await response.json().catch(() => ({}));
+    if (!response.ok || !json.success) {
+        let errorMsg = json.message || 'Une erreur est survenue';
+        if (json.errors && typeof json.errors === 'object') {
+            const firstKey = Object.keys(json.errors)[0];
+            if (firstKey && Array.isArray(json.errors[firstKey]) && json.errors[firstKey][0]) {
+                errorMsg = json.errors[firstKey][0];
+            }
+        }
+        throw new Error(errorMsg);
     }
 
     return json as T;
@@ -372,11 +380,15 @@ export const api = {
     },
     // Espace Fournisseur APIs
     async supplierSendOtp(phone: string): Promise<boolean> {
-        const res = await fetchAuthApi<{ success: boolean }>('/auth/send-otp', 'POST', { phone });
+        const clean = phone.replace(/\s+/g, '');
+        const formatted = clean.startsWith('+') ? clean : (clean.startsWith('225') ? `+${clean}` : `+225${clean}`);
+        const res = await fetchAuthApi<{ success: boolean }>('/auth/send-otp', 'POST', { phone: formatted, role: 'fournisseur' });
         return res.success;
     },
     async supplierVerifyOtp(phone: string, otp: string): Promise<{ token: string; user: any }> {
-        const res = await fetchAuthApi<{ success: boolean; token: string; user: any }>('/auth/verify-otp', 'POST', { phone, otpCode: otp });
+        const clean = phone.replace(/\s+/g, '');
+        const formatted = clean.startsWith('+') ? clean : (clean.startsWith('225') ? `+${clean}` : `+225${clean}`);
+        const res = await fetchAuthApi<{ success: boolean; token: string; user: any }>('/auth/verify-otp', 'POST', { phone: formatted, otp: otp.trim(), otpCode: otp.trim() });
         return { token: res.token, user: res.user };
     },
     async getSupplierDashboard(): Promise<any> {

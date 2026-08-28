@@ -11,6 +11,21 @@ class SendOtpRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('phone')) {
+            $phone = preg_replace('/\s+/', '', (string) $this->phone);
+            if (str_starts_with($phone, '00225')) {
+                $phone = '+' . substr($phone, 2);
+            } elseif (str_starts_with($phone, '225')) {
+                $phone = '+' . $phone;
+            } elseif (preg_match('/^[0-9]{10}$/', $phone)) {
+                $phone = '+225' . $phone;
+            }
+            $this->merge(['phone' => $phone]);
+        }
+    }
+
     public function rules(): array
     {
         return [
