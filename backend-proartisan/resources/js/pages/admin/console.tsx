@@ -6,8 +6,9 @@ import { cn } from '@/lib/utils';
 import AiDashboardPanel from './ai-dashboard-panel';
 import LlmAdminPanel from './llm-admin-panel';
 import RolesPermissionsPanel from './roles-permissions-panel';
+import VitrinePanel from './vitrine-panel';
 
-type AdminTab = 'dashboard' | 'kyc' | 'missions' | 'litiges' | 'notifications' | 'users' | 'transactions' | 'settings' | 'llm_admin' | 'roles_permissions' | 'evaluations' | 'ai_dashboard' | 'communications' | 'promo_codes';
+type AdminTab = 'dashboard' | 'kyc' | 'missions' | 'litiges' | 'notifications' | 'users' | 'transactions' | 'settings' | 'llm_admin' | 'roles_permissions' | 'evaluations' | 'ai_dashboard' | 'communications' | 'promo_codes' | 'vitrine';
 type ThemeMode = 'light' | 'dark';
 type Tone = 'amber' | 'green' | 'rose' | 'blue' | 'slate';
 
@@ -387,6 +388,14 @@ interface AdminPageProps {
         updated_at: string;
         auteur?: { id: number; name: string; phone: string } | null;
     }>;
+    vitrineSlides?: any[];
+    vitrineArtisanDuMois?: any[];
+    vitrineArticles?: any[];
+    vitrineVideos?: any[];
+    vitrineFormations?: any[];
+    vitrineRecrutements?: any[];
+    vitrinePopups?: any[];
+    vitrineSettings?: any[];
 }
 
 interface AdminNotificationItem {
@@ -438,6 +447,7 @@ const tabRoutes: Record<AdminTab, string> = {
     communications: '/admin/communications',
     notifications: '/admin/notifications',
     promo_codes: '/admin/promo-codes',
+    vitrine: '/admin/vitrine',
 };
 
 const tabMeta: Record<AdminTab, { description: string; label: string; section: string }> = {
@@ -511,6 +521,11 @@ const tabMeta: Record<AdminTab, { description: string; label: string; section: s
         section: 'COMMUNICATION',
         description: 'Centre de notifications système, alertes KYC, litiges et anomalies de sécurité de la plateforme.',
     },
+    vitrine: {
+        label: 'CMS Vitrine',
+        section: 'COMMUNICATION',
+        description: 'Administration et gestion du contenu éditorial de la vitrine ProsArtisan.',
+    },
 };
 
 const searchPlaceholders: Record<AdminTab, string> = {
@@ -528,6 +543,7 @@ const searchPlaceholders: Record<AdminTab, string> = {
     communications: 'Rechercher une communication, un titre ou une cible...',
     notifications: 'Rechercher une notification ou alerte...',
     promo_codes: 'Rechercher un code promo, une description ou un type...',
+    vitrine: 'Rechercher un slide, article, vidéo ou formation...',
 };
 
 const quickDockTabs: AdminTab[] = ['dashboard', 'missions', 'users', 'settings'];
@@ -701,6 +717,14 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         sectors = [],
         rolesPermissions = {},
         allPermissions = [],
+        vitrineSlides = [],
+        vitrineArtisanDuMois = [],
+        vitrineArticles = [],
+        vitrineVideos = [],
+        vitrineFormations = [],
+        vitrineRecrutements = [],
+        vitrinePopups = [],
+        vitrineSettings = [],
     } = (pageProps || {}) as Partial<AdminPageProps>;
 
     const [missionSubTab, setMissionSubTab] = useState<'chantiers' | 'livraisons'>('chantiers');
@@ -1534,6 +1558,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                 { id: 'roles_permissions', label: tabMeta.roles_permissions.label },
                 { count: (communications ?? []).filter(c => c.statut === 'publie').length, id: 'communications', label: tabMeta.communications.label },
                 { count: (promoCodes ?? []).filter(p => p.is_active).length, id: 'promo_codes', label: 'Codes Promo' },
+                { id: 'vitrine', label: tabMeta.vitrine.label },
             ],
         },
     ];
@@ -1639,8 +1664,6 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                         value: numberFormat.format(artisansScores?.filter((a) => a.score_frozen).length ?? 0),
                     },
                 ];
-            default:
-                return [];
             case 'communications': {
                 const comms = communications ?? [];
                 return [
@@ -1650,6 +1673,15 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                     { label: 'Cl\u00f4tur\u00e9es', tone: 'slate' as const, value: numberFormat.format(comms.filter(c => c.statut === 'cloture').length) },
                 ];
             }
+            case 'vitrine':
+                return [
+                    { label: 'Slides', tone: 'amber' as const, value: `${(vitrineSlides ?? []).length}` },
+                    { label: 'Articles', tone: 'green' as const, value: `${(vitrineArticles ?? []).length}` },
+                    { label: 'Formations', tone: 'blue' as const, value: `${(vitrineFormations ?? []).length}` },
+                    { label: 'Vidéos & Recrut.', tone: 'slate' as const, value: `${(vitrineVideos ?? []).length} / ${(vitrineRecrutements ?? []).length}` },
+                ];
+            default:
+                return [];
         }
     }, [
         activeTab,
@@ -1676,6 +1708,11 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         artisansScores,
         allPermissions?.length,
         communications,
+        vitrineSlides,
+        vitrineArticles,
+        vitrineFormations,
+        vitrineVideos,
+        vitrineRecrutements,
     ]);
 
     const summaryCards = [
@@ -4727,6 +4764,22 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                     </Surface>
                                 </section>
                             ) : null}
+
+                            {activeTab === 'vitrine' ? (
+                                <section className="mt-5">
+                                    <VitrinePanel
+                                        vitrineSlides={vitrineSlides}
+                                        vitrineArtisanDuMois={vitrineArtisanDuMois}
+                                        vitrineArticles={vitrineArticles}
+                                        vitrineVideos={vitrineVideos}
+                                        vitrineFormations={vitrineFormations}
+                                        vitrineRecrutements={vitrineRecrutements}
+                                        vitrinePopups={vitrinePopups}
+                                        vitrineSettings={vitrineSettings}
+                                        users={users}
+                                    />
+                                </section>
+                            ) : null}
                         </main>
 
                         <footer className="px-4 pb-6 lg:px-7">
@@ -6245,6 +6298,8 @@ function TabIcon({ className = 'h-5 w-5', tab }: { className?: string; tab: Admi
             return <BellIcon className={className} />;
         case 'notifications':
             return <BellIcon className={className} />;
+        case 'vitrine':
+            return <ArchiveIcon className={className} />;
         default:
             return <DashboardIcon className={className} />;
     }

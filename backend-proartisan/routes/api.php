@@ -29,6 +29,7 @@ use App\Http\Controllers\Api\V1\WebhookController;
 use App\Http\Controllers\Api\V1\CommunicationController;
 use App\Http\Controllers\Admin\LlmAdminController;
 use App\Http\Controllers\Api\V1\UssdController;
+use App\Http\Controllers\Api\V1\VitrineController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -56,6 +57,23 @@ Route::prefix('v1')->group(function () {
     Route::prefix('webhooks')->middleware('throttle:webhook')->group(function () {
         Route::post('/wave',         [WebhookController::class, 'wave']);
         Route::post('/orange-money', [WebhookController::class, 'orangeMoney']);
+    });
+
+    // ── Vitrine publique (Front Office — sans authentification) ──────────────
+    Route::prefix('vitrine')->group(function () {
+        Route::get('/slides',            [VitrineController::class, 'slides']);
+        Route::get('/artisan-du-mois',   [VitrineController::class, 'artisanDuMois']);
+        Route::get('/artisans-stars',    [VitrineController::class, 'artisansStars']);
+        Route::get('/artisans',          [VitrineController::class, 'artisans']);
+        Route::get('/artisans/{id}',     [VitrineController::class, 'artisanShow']);
+        Route::get('/articles',          [VitrineController::class, 'articles']);
+        Route::get('/articles/{slug}',   [VitrineController::class, 'articleShow']);
+        Route::get('/videos',            [VitrineController::class, 'videos']);
+        Route::get('/formations',        [VitrineController::class, 'formations']);
+        Route::get('/recrutements',      [VitrineController::class, 'recrutements']);
+        Route::get('/popup',             [VitrineController::class, 'popup']);
+        Route::get('/settings',          [VitrineController::class, 'settings']);
+        Route::post('/contact',          [VitrineController::class, 'contact']);
     });
 
     // ── Validation Hors-Ligne USSD & SMS ─────────────────────────────────────
