@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X, ArrowRight, ShieldCheck, HeartHandshake } from 'lucide-react';
+import { Menu, X, ArrowRight, ShieldCheck, HeartHandshake, Store } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Navbar() {
@@ -91,6 +91,13 @@ export default function Navbar() {
                     {/* Desktop CTA */}
                     <div className="hidden lg:flex items-center gap-3">
                         <Link
+                            href="/supplier/login"
+                            className="text-[#746251] hover:text-[#8a5d16] border border-[#e6d3b2] hover:border-[#8a5d16] bg-white/60 hover:bg-[#f7efe2] text-xs font-bold px-4 py-2.5 rounded-full flex items-center gap-1.5 transition shadow-sm active:scale-95"
+                        >
+                            <Store className="h-3.5 w-3.5 text-[#8a5d16]" />
+                            <span>Espace Fournisseur</span>
+                        </Link>
+                        <Link
                             href="/contact"
                             className="bg-[#241b16] hover:bg-[#8a5d16] text-[#fbf9f6] text-xs font-bold px-5 py-3 rounded-full flex items-center gap-1.5 transition shadow-md hover:shadow-lg active:scale-95 transform"
                         >
@@ -135,6 +142,14 @@ export default function Navbar() {
                                 </Link>
                             ))}
                             <div className="pt-4 border-t border-[#e6d3b2]/20 flex flex-col gap-3">
+                                <Link
+                                    onClick={() => setIsOpen(false)}
+                                    href="/supplier/login"
+                                    className="w-full text-center border border-[#8a5d16] text-[#8a5d16] hover:bg-[#f7efe2] font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition text-sm"
+                                >
+                                    <Store className="h-4 w-4" />
+                                    <span>Espace Fournisseur (Quincaillerie)</span>
+                                </Link>
                                 <Link
                                     onClick={() => setIsOpen(false)}
                                     href="/contact"

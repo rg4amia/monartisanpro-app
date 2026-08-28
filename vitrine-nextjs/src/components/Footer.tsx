@@ -75,6 +75,11 @@ export default function Footer() {
                                 </Link>
                             </li>
                             <li>
+                                <Link href="/supplier/login" className="hover:text-[#ebb95e] font-semibold text-[#ebb95e]/90 transition flex items-center gap-1.5">
+                                    <span>🏪 Espace Fournisseur (Quincaillerie)</span>
+                                </Link>
+                            </li>
+                            <li>
                                 <Link href="/actualites" className="hover:text-[#ebb95e] transition">
                                     Actualités & Événements
                                 </Link>
