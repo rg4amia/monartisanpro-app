@@ -12,10 +12,7 @@ Route::get('/', function () {
     $frontHost = parse_url($frontUrl, PHP_URL_HOST);
     $currentHost = request()->getHost();
 
-    $cleanFrontHost = str_replace('www.', '', (string) $frontHost);
-    $cleanCurrentHost = str_replace('www.', '', (string) $currentHost);
-
-    if ($cleanCurrentHost === $cleanFrontHost) {
+    if ($currentHost === $frontHost) {
         return \Inertia\Inertia::render('welcome');
     }
 
