@@ -23,52 +23,70 @@ class VitrineAdminController extends Controller
 
     public function storeSlide(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'titre' => 'required|string|max:255',
-            'sous_titre' => 'nullable|string',
-            'image' => 'required_without:image_url|image|max:5120', // 5MB max
-            'image_url' => 'nullable|string',
-            'cta_texte' => 'nullable|string|max:100',
-            'cta_lien' => 'nullable|string|max:255',
-            'ordre' => 'required|integer|min:0',
-            'actif' => 'required|boolean',
-        ]);
+        try {
+            $validated = $request->validate([
+                'titre' => 'required|string|max:255',
+                'sous_titre' => 'nullable|string',
+                'image' => 'nullable|file|max:10240',
+                'image_url' => 'nullable|string',
+                'cta_texte' => 'nullable|string|max:100',
+                'cta_lien' => 'nullable|string|max:255',
+                'ordre' => 'nullable|integer|min:0',
+                'actif' => 'nullable',
+            ]);
 
-        if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('vitrine/slides', 'public');
-            $validated['image_url'] = '/storage/' . $path;
+            if ($request->hasFile('image') && $request->file('image')->isValid()) {
+                $path = $request->file('image')->store('vitrine/slides', 'public');
+                $validated['image_url'] = '/storage/' . $path;
+            }
+
+            unset($validated['image']);
+            $validated['ordre'] = (int) ($validated['ordre'] ?? 0);
+            $validated['actif'] = $request->has('actif') ? $request->boolean('actif') : true;
+
+            VitrineSlide::create($validated);
+
+            return back()->with('success', 'Slide créé avec succès.');
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Erreur storeSlide: ' . $e->getMessage());
+            return back()->withErrors(['slide' => 'Impossible de créer le slide : ' . $e->getMessage()]);
         }
-
-        unset($validated['image']);
-
-        VitrineSlide::create($validated);
-
-        return back()->with('success', 'Slide créé avec succès.');
     }
 
     public function updateSlide(Request $request, VitrineSlide $slide): RedirectResponse
     {
-        $validated = $request->validate([
-            'titre' => 'required|string|max:255',
-            'sous_titre' => 'nullable|string',
-            'image' => 'nullable|image|max:5120',
-            'image_url' => 'nullable|string',
-            'cta_texte' => 'nullable|string|max:100',
-            'cta_lien' => 'nullable|string|max:255',
-            'ordre' => 'required|integer|min:0',
-            'actif' => 'required|boolean',
-        ]);
+        try {
+            $validated = $request->validate([
+                'titre' => 'required|string|max:255',
+                'sous_titre' => 'nullable|string',
+                'image' => 'nullable|file|max:10240',
+                'image_url' => 'nullable|string',
+                'cta_texte' => 'nullable|string|max:100',
+                'cta_lien' => 'nullable|string|max:255',
+                'ordre' => 'nullable|integer|min:0',
+                'actif' => 'nullable',
+            ]);
 
-        if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('vitrine/slides', 'public');
-            $validated['image_url'] = '/storage/' . $path;
+            if ($request->hasFile('image') && $request->file('image')->isValid()) {
+                $path = $request->file('image')->store('vitrine/slides', 'public');
+                $validated['image_url'] = '/storage/' . $path;
+            }
+
+            unset($validated['image']);
+            if (isset($validated['ordre'])) {
+                $validated['ordre'] = (int) $validated['ordre'];
+            }
+            if ($request->has('actif')) {
+                $validated['actif'] = $request->boolean('actif');
+            }
+
+            $slide->update($validated);
+
+            return back()->with('success', 'Slide mis à jour.');
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Erreur updateSlide: ' . $e->getMessage());
+            return back()->withErrors(['slide' => 'Impossible de mettre à jour le slide : ' . $e->getMessage()]);
         }
-
-        unset($validated['image']);
-
-        $slide->update($validated);
-
-        return back()->with('success', 'Slide mis à jour.');
     }
 
     public function destroySlide(VitrineSlide $slide): RedirectResponse
@@ -83,16 +101,16 @@ class VitrineAdminController extends Controller
 
     public function storeArtisanDuMois(Request $request): RedirectResponse
     {
-        $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'mois' => 'required|string',
-            'photo' => 'nullable|file|max:5120',
-            'photo_override_url' => 'nullable|string',
-            'texte_editorial' => 'nullable|string',
-            'actif' => 'nullable',
-        ]);
-
         try {
+            $request->validate([
+                'user_id' => 'required|exists:users,id',
+                'mois' => 'required|string',
+                'photo' => 'nullable|file|max:10240',
+                'photo_override_url' => 'nullable|string',
+                'texte_editorial' => 'nullable|string',
+                'actif' => 'nullable',
+            ]);
+
             $moisInput = $request->input('mois');
             try {
                 $parsedMois = \Carbon\Carbon::parse($moisInput)->startOfMonth()->toDateString();
@@ -109,7 +127,6 @@ class VitrineAdminController extends Controller
 
             $actif = $request->has('actif') ? $request->boolean('actif') : true;
 
-            // Mettre à jour si le mois existe déjà, ou créer
             VitrineArtisanDuMois::updateOrCreate(
                 ['mois' => $parsedMois],
                 [
@@ -122,7 +139,7 @@ class VitrineAdminController extends Controller
 
             return back()->with('success', 'Artisan du mois configuré avec succès.');
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('Erreur configuration artisan du mois: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error('Erreur storeArtisanDuMois: ' . $e->getMessage());
             return back()->withErrors(['artisan_du_mois' => 'Impossible de configurer l\'artisan du mois : ' . $e->getMessage()]);
         }
     }
@@ -139,61 +156,75 @@ class VitrineAdminController extends Controller
 
     public function storeArticle(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'titre' => 'required|string|max:255',
-            'contenu' => 'required|string',
-            'image' => 'nullable|image|max:5120',
-            'image_url' => 'nullable|string',
-            'categorie' => 'required|in:actualite,evenement,temoignage,partenariat',
-            'publie' => 'required|boolean',
-        ]);
+        try {
+            $validated = $request->validate([
+                'titre' => 'required|string|max:255',
+                'contenu' => 'required|string',
+                'image' => 'nullable|file|max:10240',
+                'image_url' => 'nullable|string',
+                'categorie' => 'required|in:actualite,evenement,temoignage,partenariat',
+                'publie' => 'nullable',
+            ]);
 
-        if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('vitrine/articles', 'public');
-            $validated['image_url'] = '/storage/' . $path;
+            if ($request->hasFile('image') && $request->file('image')->isValid()) {
+                $path = $request->file('image')->store('vitrine/articles', 'public');
+                $validated['image_url'] = '/storage/' . $path;
+            }
+
+            unset($validated['image']);
+
+            $validated['auteur_id'] = $request->user()->id;
+            $validated['slug'] = Str::slug($validated['titre']) . '-' . Str::random(5);
+            $validated['publie'] = $request->has('publie') ? $request->boolean('publie') : true;
+
+            if ($validated['publie']) {
+                $validated['publie_at'] = now();
+            }
+
+            VitrineArticle::create($validated);
+
+            return back()->with('success', 'Article créé avec succès.');
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Erreur storeArticle: ' . $e->getMessage());
+            return back()->withErrors(['article' => 'Impossible de créer l\'article : ' . $e->getMessage()]);
         }
-
-        unset($validated['image']);
-
-        $validated['auteur_id'] = $request->user()->id;
-        $validated['slug'] = Str::slug($validated['titre']) . '-' . Str::random(5);
-
-        if ($validated['publie']) {
-            $validated['publie_at'] = now();
-        }
-
-        VitrineArticle::create($validated);
-
-        return back()->with('success', 'Article créé avec succès.');
     }
 
     public function updateArticle(Request $request, VitrineArticle $article): RedirectResponse
     {
-        $validated = $request->validate([
-            'titre' => 'required|string|max:255',
-            'contenu' => 'required|string',
-            'image' => 'nullable|image|max:5120',
-            'image_url' => 'nullable|string',
-            'categorie' => 'required|in:actualite,evenement,temoignage,partenariat',
-            'publie' => 'required|boolean',
-        ]);
+        try {
+            $validated = $request->validate([
+                'titre' => 'required|string|max:255',
+                'contenu' => 'required|string',
+                'image' => 'nullable|file|max:10240',
+                'image_url' => 'nullable|string',
+                'categorie' => 'required|in:actualite,evenement,temoignage,partenariat',
+                'publie' => 'nullable',
+            ]);
 
-        if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('vitrine/articles', 'public');
-            $validated['image_url'] = '/storage/' . $path;
+            if ($request->hasFile('image') && $request->file('image')->isValid()) {
+                $path = $request->file('image')->store('vitrine/articles', 'public');
+                $validated['image_url'] = '/storage/' . $path;
+            }
+
+            unset($validated['image']);
+
+            if ($request->has('publie')) {
+                $validated['publie'] = $request->boolean('publie');
+                if ($validated['publie'] && !$article->publie) {
+                    $validated['publie_at'] = now();
+                } elseif (!$validated['publie']) {
+                    $validated['publie_at'] = null;
+                }
+            }
+
+            $article->update($validated);
+
+            return back()->with('success', 'Article mis à jour.');
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Erreur updateArticle: ' . $e->getMessage());
+            return back()->withErrors(['article' => 'Impossible de mettre à jour l\'article : ' . $e->getMessage()]);
         }
-
-        unset($validated['image']);
-
-        if ($validated['publie'] && !$article->publie) {
-            $validated['publie_at'] = now();
-        } elseif (!$validated['publie']) {
-            $validated['publie_at'] = null;
-        }
-
-        $article->update($validated);
-
-        return back()->with('success', 'Article mis à jour.');
     }
 
     public function destroyArticle(VitrineArticle $article): RedirectResponse
@@ -208,52 +239,70 @@ class VitrineAdminController extends Controller
 
     public function storeVideo(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'titre' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'video_url' => 'required|string',
-            'thumbnail' => 'nullable|image|max:5120',
-            'thumbnail_url' => 'nullable|string',
-            'categorie' => 'required|in:capsule,formation,temoignage,evenement',
-            'ordre' => 'required|integer|min:0',
-            'actif' => 'required|boolean',
-        ]);
+        try {
+            $validated = $request->validate([
+                'titre' => 'required|string|max:255',
+                'description' => 'nullable|string',
+                'video_url' => 'required|string',
+                'thumbnail' => 'nullable|file|max:10240',
+                'thumbnail_url' => 'nullable|string',
+                'categorie' => 'required|in:capsule,formation,temoignage,evenement',
+                'ordre' => 'nullable|integer|min:0',
+                'actif' => 'nullable',
+            ]);
 
-        if ($request->hasFile('thumbnail')) {
-            $path = $request->file('thumbnail')->store('vitrine/videos', 'public');
-            $validated['thumbnail_url'] = '/storage/' . $path;
+            if ($request->hasFile('thumbnail') && $request->file('thumbnail')->isValid()) {
+                $path = $request->file('thumbnail')->store('vitrine/videos', 'public');
+                $validated['thumbnail_url'] = '/storage/' . $path;
+            }
+
+            unset($validated['thumbnail']);
+            $validated['ordre'] = (int) ($validated['ordre'] ?? 0);
+            $validated['actif'] = $request->has('actif') ? $request->boolean('actif') : true;
+
+            VitrineVideo::create($validated);
+
+            return back()->with('success', 'Vidéo ajoutée.');
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Erreur storeVideo: ' . $e->getMessage());
+            return back()->withErrors(['video' => 'Impossible d\'ajouter la vidéo : ' . $e->getMessage()]);
         }
-
-        unset($validated['thumbnail']);
-
-        VitrineVideo::create($validated);
-
-        return back()->with('success', 'Vidéo ajoutée.');
     }
 
     public function updateVideo(Request $request, VitrineVideo $video): RedirectResponse
     {
-        $validated = $request->validate([
-            'titre' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'video_url' => 'required|string',
-            'thumbnail' => 'nullable|image|max:5120',
-            'thumbnail_url' => 'nullable|string',
-            'categorie' => 'required|in:capsule,formation,temoignage,evenement',
-            'ordre' => 'required|integer|min:0',
-            'actif' => 'required|boolean',
-        ]);
+        try {
+            $validated = $request->validate([
+                'titre' => 'required|string|max:255',
+                'description' => 'nullable|string',
+                'video_url' => 'required|string',
+                'thumbnail' => 'nullable|file|max:10240',
+                'thumbnail_url' => 'nullable|string',
+                'categorie' => 'required|in:capsule,formation,temoignage,evenement',
+                'ordre' => 'nullable|integer|min:0',
+                'actif' => 'nullable',
+            ]);
 
-        if ($request->hasFile('thumbnail')) {
-            $path = $request->file('thumbnail')->store('vitrine/videos', 'public');
-            $validated['thumbnail_url'] = '/storage/' . $path;
+            if ($request->hasFile('thumbnail') && $request->file('thumbnail')->isValid()) {
+                $path = $request->file('thumbnail')->store('vitrine/videos', 'public');
+                $validated['thumbnail_url'] = '/storage/' . $path;
+            }
+
+            unset($validated['thumbnail']);
+            if (isset($validated['ordre'])) {
+                $validated['ordre'] = (int) $validated['ordre'];
+            }
+            if ($request->has('actif')) {
+                $validated['actif'] = $request->boolean('actif');
+            }
+
+            $video->update($validated);
+
+            return back()->with('success', 'Vidéo mise à jour.');
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Erreur updateVideo: ' . $e->getMessage());
+            return back()->withErrors(['video' => 'Impossible de mettre à jour la vidéo : ' . $e->getMessage()]);
         }
-
-        unset($validated['thumbnail']);
-
-        $video->update($validated);
-
-        return back()->with('success', 'Vidéo mise à jour.');
     }
 
     public function destroyVideo(VitrineVideo $video): RedirectResponse
@@ -268,68 +317,88 @@ class VitrineAdminController extends Controller
 
     public function storeFormation(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'titre' => 'required|string|max:255',
-            'description' => 'required|string',
-            'image' => 'nullable|image|max:5120',
-            'image_url' => 'nullable|string',
-            'date_debut' => 'required|date',
-            'date_fin' => 'nullable|date',
-            'lieu' => 'required|string|max:255',
-            'formateur' => 'nullable|string|max:255',
-            'places_total' => 'nullable|integer|min:0',
-            'tarif' => 'required|integer|min:0',
-            'lien_inscription' => 'nullable|string|max:255',
-            'actif' => 'required|boolean',
-        ]);
+        try {
+            $validated = $request->validate([
+                'titre' => 'required|string|max:255',
+                'description' => 'required|string',
+                'image' => 'nullable|file|max:10240',
+                'image_url' => 'nullable|string',
+                'date_debut' => 'required|date',
+                'date_fin' => 'nullable|date',
+                'lieu' => 'required|string|max:255',
+                'formateur' => 'nullable|string|max:255',
+                'places_total' => 'nullable|integer|min:0',
+                'tarif' => 'required|integer|min:0',
+                'lien_inscription' => 'nullable|string|max:255',
+                'actif' => 'nullable',
+            ]);
 
-        if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('vitrine/formations', 'public');
-            $validated['image_url'] = '/storage/' . $path;
+            if ($request->hasFile('image') && $request->file('image')->isValid()) {
+                $path = $request->file('image')->store('vitrine/formations', 'public');
+                $validated['image_url'] = '/storage/' . $path;
+            }
+
+            unset($validated['image']);
+
+            $validated['places_total'] = isset($validated['places_total']) ? (int) $validated['places_total'] : null;
+            $validated['places_restantes'] = $validated['places_total'];
+            $validated['tarif'] = (int) $validated['tarif'];
+            $validated['actif'] = $request->has('actif') ? $request->boolean('actif') : true;
+
+            VitrineFormation::create($validated);
+
+            return back()->with('success', 'Formation créée.');
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Erreur storeFormation: ' . $e->getMessage());
+            return back()->withErrors(['formation' => 'Impossible de créer la formation : ' . $e->getMessage()]);
         }
-
-        unset($validated['image']);
-
-        $validated['places_restantes'] = $validated['places_total'];
-
-        VitrineFormation::create($validated);
-
-        return back()->with('success', 'Formation créée.');
     }
 
     public function updateFormation(Request $request, VitrineFormation $formation): RedirectResponse
     {
-        $validated = $request->validate([
-            'titre' => 'required|string|max:255',
-            'description' => 'required|string',
-            'image' => 'nullable|image|max:5120',
-            'image_url' => 'nullable|string',
-            'date_debut' => 'required|date',
-            'date_fin' => 'nullable|date',
-            'lieu' => 'required|string|max:255',
-            'formateur' => 'nullable|string|max:255',
-            'places_total' => 'nullable|integer|min:0',
-            'tarif' => 'required|integer|min:0',
-            'lien_inscription' => 'nullable|string|max:255',
-            'actif' => 'required|boolean',
-        ]);
+        try {
+            $validated = $request->validate([
+                'titre' => 'required|string|max:255',
+                'description' => 'required|string',
+                'image' => 'nullable|file|max:10240',
+                'image_url' => 'nullable|string',
+                'date_debut' => 'required|date',
+                'date_fin' => 'nullable|date',
+                'lieu' => 'required|string|max:255',
+                'formateur' => 'nullable|string|max:255',
+                'places_total' => 'nullable|integer|min:0',
+                'tarif' => 'required|integer|min:0',
+                'lien_inscription' => 'nullable|string|max:255',
+                'actif' => 'nullable',
+            ]);
 
-        if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('vitrine/formations', 'public');
-            $validated['image_url'] = '/storage/' . $path;
+            if ($request->hasFile('image') && $request->file('image')->isValid()) {
+                $path = $request->file('image')->store('vitrine/formations', 'public');
+                $validated['image_url'] = '/storage/' . $path;
+            }
+
+            unset($validated['image']);
+
+            if (isset($validated['places_total'])) {
+                $newTotal = (int) $validated['places_total'];
+                $difference = $newTotal - ($formation->places_total ?? 0);
+                $validated['places_total'] = $newTotal;
+                $validated['places_restantes'] = max(0, ($formation->places_restantes ?? 0) + $difference);
+            }
+            if (isset($validated['tarif'])) {
+                $validated['tarif'] = (int) $validated['tarif'];
+            }
+            if ($request->has('actif')) {
+                $validated['actif'] = $request->boolean('actif');
+            }
+
+            $formation->update($validated);
+
+            return back()->with('success', 'Formation mise à jour.');
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Erreur updateFormation: ' . $e->getMessage());
+            return back()->withErrors(['formation' => 'Impossible de mettre à jour la formation : ' . $e->getMessage()]);
         }
-
-        unset($validated['image']);
-
-        // Ajuster places restantes
-        if (isset($validated['places_total'])) {
-            $difference = $validated['places_total'] - ($formation->places_total ?? 0);
-            $validated['places_restantes'] = max(0, ($formation->places_restantes ?? 0) + $difference);
-        }
-
-        $formation->update($validated);
-
-        return back()->with('success', 'Formation mise à jour.');
     }
 
     public function destroyFormation(VitrineFormation $formation): RedirectResponse
@@ -344,38 +413,54 @@ class VitrineAdminController extends Controller
 
     public function storeRecrutement(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'titre' => 'required|string|max:255',
-            'description' => 'required|string',
-            'metier' => 'required|string|max:150',
-            'lieu' => 'required|string|max:255',
-            'type_contrat' => 'required|in:cdi,cdd,stage,freelance,apprentissage',
-            'date_limite' => 'nullable|date',
-            'contact_email' => 'nullable|email|max:255',
-            'actif' => 'required|boolean',
-        ]);
+        try {
+            $validated = $request->validate([
+                'titre' => 'required|string|max:255',
+                'description' => 'required|string',
+                'metier' => 'required|string|max:150',
+                'lieu' => 'required|string|max:255',
+                'type_contrat' => 'required|in:cdi,cdd,stage,freelance,apprentissage',
+                'date_limite' => 'nullable|date',
+                'contact_email' => 'nullable|email|max:255',
+                'actif' => 'nullable',
+            ]);
 
-        VitrineRecrutement::create($validated);
+            $validated['actif'] = $request->has('actif') ? $request->boolean('actif') : true;
 
-        return back()->with('success', 'Offre de recrutement publiée.');
+            VitrineRecrutement::create($validated);
+
+            return back()->with('success', 'Offre de recrutement publiée.');
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Erreur storeRecrutement: ' . $e->getMessage());
+            return back()->withErrors(['recrutement' => 'Impossible de publier l\'offre : ' . $e->getMessage()]);
+        }
     }
 
     public function updateRecrutement(Request $request, VitrineRecrutement $recrutement): RedirectResponse
     {
-        $validated = $request->validate([
-            'titre' => 'required|string|max:255',
-            'description' => 'required|string',
-            'metier' => 'required|string|max:150',
-            'lieu' => 'required|string|max:255',
-            'type_contrat' => 'required|in:cdi,cdd,stage,freelance,apprentissage',
-            'date_limite' => 'nullable|date',
-            'contact_email' => 'nullable|email|max:255',
-            'actif' => 'required|boolean',
-        ]);
+        try {
+            $validated = $request->validate([
+                'titre' => 'required|string|max:255',
+                'description' => 'required|string',
+                'metier' => 'required|string|max:150',
+                'lieu' => 'required|string|max:255',
+                'type_contrat' => 'required|in:cdi,cdd,stage,freelance,apprentissage',
+                'date_limite' => 'nullable|date',
+                'contact_email' => 'nullable|email|max:255',
+                'actif' => 'nullable',
+            ]);
 
-        $recrutement->update($validated);
+            if ($request->has('actif')) {
+                $validated['actif'] = $request->boolean('actif');
+            }
 
-        return back()->with('success', 'Offre de recrutement mise à jour.');
+            $recrutement->update($validated);
+
+            return back()->with('success', 'Offre de recrutement mise à jour.');
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Erreur updateRecrutement: ' . $e->getMessage());
+            return back()->withErrors(['recrutement' => 'Impossible de mettre à jour l\'offre : ' . $e->getMessage()]);
+        }
     }
 
     public function destroyRecrutement(VitrineRecrutement $recrutement): RedirectResponse
@@ -390,54 +475,68 @@ class VitrineAdminController extends Controller
 
     public function storePopup(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'titre' => 'required|string|max:255',
-            'contenu' => 'nullable|string',
-            'image' => 'nullable|image|max:5120',
-            'image_url' => 'nullable|string',
-            'lien_cta' => 'nullable|string|max:255',
-            'texte_cta' => 'nullable|string|max:100',
-            'date_debut' => 'required|date',
-            'date_fin' => 'required|date|after:date_debut',
-            'actif' => 'required|boolean',
-        ]);
+        try {
+            $validated = $request->validate([
+                'titre' => 'required|string|max:255',
+                'contenu' => 'nullable|string',
+                'image' => 'nullable|file|max:10240',
+                'image_url' => 'nullable|string',
+                'lien_cta' => 'nullable|string|max:255',
+                'texte_cta' => 'nullable|string|max:100',
+                'date_debut' => 'required|date',
+                'date_fin' => 'required|date|after_or_equal:date_debut',
+                'actif' => 'nullable',
+            ]);
 
-        if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('vitrine/popups', 'public');
-            $validated['image_url'] = '/storage/' . $path;
+            if ($request->hasFile('image') && $request->file('image')->isValid()) {
+                $path = $request->file('image')->store('vitrine/popups', 'public');
+                $validated['image_url'] = '/storage/' . $path;
+            }
+
+            unset($validated['image']);
+            $validated['actif'] = $request->has('actif') ? $request->boolean('actif') : true;
+
+            VitrinePopup::create($validated);
+
+            return back()->with('success', 'Popup promotionnel créé.');
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Erreur storePopup: ' . $e->getMessage());
+            return back()->withErrors(['popup' => 'Impossible de créer le popup : ' . $e->getMessage()]);
         }
-
-        unset($validated['image']);
-
-        VitrinePopup::create($validated);
-
-        return back()->with('success', 'Popup promotionnel créé.');
     }
 
     public function updatePopup(Request $request, VitrinePopup $popup): RedirectResponse
     {
-        $validated = $request->validate([
-            'titre' => 'required|string|max:255',
-            'contenu' => 'nullable|string',
-            'image' => 'nullable|image|max:5120',
-            'image_url' => 'nullable|string',
-            'lien_cta' => 'nullable|string|max:255',
-            'texte_cta' => 'nullable|string|max:100',
-            'date_debut' => 'required|date',
-            'date_fin' => 'required|date|after:date_debut',
-            'actif' => 'required|boolean',
-        ]);
+        try {
+            $validated = $request->validate([
+                'titre' => 'required|string|max:255',
+                'contenu' => 'nullable|string',
+                'image' => 'nullable|file|max:10240',
+                'image_url' => 'nullable|string',
+                'lien_cta' => 'nullable|string|max:255',
+                'texte_cta' => 'nullable|string|max:100',
+                'date_debut' => 'required|date',
+                'date_fin' => 'required|date|after_or_equal:date_debut',
+                'actif' => 'nullable',
+            ]);
 
-        if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('vitrine/popups', 'public');
-            $validated['image_url'] = '/storage/' . $path;
+            if ($request->hasFile('image') && $request->file('image')->isValid()) {
+                $path = $request->file('image')->store('vitrine/popups', 'public');
+                $validated['image_url'] = '/storage/' . $path;
+            }
+
+            unset($validated['image']);
+            if ($request->has('actif')) {
+                $validated['actif'] = $request->boolean('actif');
+            }
+
+            $popup->update($validated);
+
+            return back()->with('success', 'Popup mis à jour.');
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Erreur updatePopup: ' . $e->getMessage());
+            return back()->withErrors(['popup' => 'Impossible de mettre à jour le popup : ' . $e->getMessage()]);
         }
-
-        unset($validated['image']);
-
-        $popup->update($validated);
-
-        return back()->with('success', 'Popup mis à jour.');
     }
 
     public function destroyPopup(VitrinePopup $popup): RedirectResponse
@@ -452,23 +551,28 @@ class VitrineAdminController extends Controller
 
     public function updateSettings(Request $request): RedirectResponse
     {
-        $settings = $request->validate([
-            'chiffres_cles_artisans' => 'required|string',
-            'chiffres_cles_utilisateurs' => 'required|string',
-            'chiffres_cles_missions' => 'required|string',
-            'chiffres_cles_metiers' => 'required|string',
-            'lien_facebook' => 'nullable|string|max:255',
-            'lien_instagram' => 'nullable|string|max:255',
-            'lien_linkedin' => 'nullable|string|max:255',
-            'contact_phone' => 'nullable|string|max:50',
-            'contact_email' => 'nullable|email|max:255',
-            'presentation_mission' => 'required|string|max:5000',
-        ]);
+        try {
+            $settings = $request->validate([
+                'chiffres_cles_artisans' => 'nullable|string',
+                'chiffres_cles_utilisateurs' => 'nullable|string',
+                'chiffres_cles_missions' => 'nullable|string',
+                'chiffres_cles_metiers' => 'nullable|string',
+                'lien_facebook' => 'nullable|string|max:255',
+                'lien_instagram' => 'nullable|string|max:255',
+                'lien_linkedin' => 'nullable|string|max:255',
+                'contact_phone' => 'nullable|string|max:50',
+                'contact_email' => 'nullable|email|max:255',
+                'presentation_mission' => 'nullable|string|max:5000',
+            ]);
 
-        foreach ($settings as $key => $value) {
-            VitrineSetting::set($key, $value ?? '');
+            foreach ($settings as $key => $value) {
+                VitrineSetting::set($key, $value ?? '');
+            }
+
+            return back()->with('success', 'Paramètres de la vitrine enregistrés.');
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Erreur updateSettings: ' . $e->getMessage());
+            return back()->withErrors(['settings' => 'Impossible d\'enregistrer les paramètres : ' . $e->getMessage()]);
         }
-
-        return back()->with('success', 'Paramètres de la vitrine enregistrés.');
     }
 }

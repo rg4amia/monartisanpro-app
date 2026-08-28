@@ -154,28 +154,20 @@ function SlidesSubPanel({ slides }: { slides: any[] }) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (editingSlide) {
-            // Laravel requires _method=PUT to handle multipart files in PUT requests, or we can use POST with _method=PUT
-            post(`/admin/vitrine/slides/${editingSlide.id}`, {
-                data: {
-                    ...data,
-                    _method: 'PUT'
-                },
-                preserveScroll: true,
-                onSuccess: () => {
-                    setIsOpen(false);
-                    reset();
-                }
-            });
-        } else {
-            post('/admin/vitrine/slides', {
-                preserveScroll: true,
-                onSuccess: () => {
-                    setIsOpen(false);
-                    reset();
-                }
-            });
-        }
+        const url = editingSlide
+            ? `/admin/vitrine/slides/${editingSlide.id}`
+            : '/admin/vitrine/slides';
+
+        post(url, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setIsOpen(false);
+                reset();
+            },
+            onError: (errs) => {
+                console.error('Erreur soumission slide:', errs);
+            }
+        });
     };
 
     const handleDelete = (id: number) => {
@@ -249,6 +241,14 @@ function SlidesSubPanel({ slides }: { slides: any[] }) {
                         </h4>
 
                         <form onSubmit={handleSubmit} className="space-y-4">
+                            {Object.keys(errors).length > 0 && (
+                                <div className="p-3 bg-red-100 border border-red-300 text-red-700 rounded-xl text-xs space-y-1">
+                                    {Object.values(errors).map((err, i) => (
+                                        <p key={i}>• {err}</p>
+                                    ))}
+                                </div>
+                            )}
+
                             <div>
                                 <label className="block text-xs font-bold text-[var(--admin-text)] mb-1">Titre *</label>
                                 <input
@@ -350,7 +350,7 @@ function SlidesSubPanel({ slides }: { slides: any[] }) {
                                     disabled={processing}
                                     className="rounded-xl px-4 py-2 text-sm font-semibold bg-[#ebb95e] text-[#241b16] hover:bg-[#e0ab4b] disabled:opacity-50"
                                 >
-                                    Sauvegarder
+                                    {processing ? 'Enregistrement...' : 'Sauvegarder'}
                                 </button>
                             </div>
                         </form>
@@ -469,6 +469,14 @@ function ArtisanDuMoisSubPanel({ admList, artisans }: { admList: any[]; artisans
                         </h4>
 
                         <form onSubmit={handleSubmit} className="space-y-4">
+                            {Object.keys(errors).length > 0 && (
+                                <div className="p-3 bg-red-100 border border-red-300 text-red-700 rounded-xl text-xs space-y-1">
+                                    {Object.values(errors).map((err, i) => (
+                                        <p key={i}>• {err}</p>
+                                    ))}
+                                </div>
+                            )}
+
                             <div>
                                 <label className="block text-xs font-bold text-[var(--admin-text)] mb-1">Choisir l'Artisan (Actif avec KYC validé) *</label>
                                 <select
@@ -558,7 +566,7 @@ function ArtisanDuMoisSubPanel({ admList, artisans }: { admList: any[]; artisans
                                     disabled={processing}
                                     className="rounded-xl px-4 py-2 text-sm font-semibold bg-[#ebb95e] text-[#241b16] hover:bg-[#e0ab4b] disabled:opacity-50"
                                 >
-                                    Sauvegarder
+                                    {processing ? 'Enregistrement...' : 'Sauvegarder'}
                                 </button>
                             </div>
                         </form>
@@ -606,27 +614,20 @@ function ArticlesSubPanel({ articles }: { articles: any[] }) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (editingArticle) {
-            post(`/admin/vitrine/articles/${editingArticle.id}`, {
-                data: {
-                    ...data,
-                    _method: 'PUT'
-                },
-                preserveScroll: true,
-                onSuccess: () => {
-                    setIsOpen(false);
-                    reset();
-                }
-            });
-        } else {
-            post('/admin/vitrine/articles', {
-                preserveScroll: true,
-                onSuccess: () => {
-                    setIsOpen(false);
-                    reset();
-                }
-            });
-        }
+        const url = editingArticle
+            ? `/admin/vitrine/articles/${editingArticle.id}`
+            : '/admin/vitrine/articles';
+
+        post(url, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setIsOpen(false);
+                reset();
+            },
+            onError: (errs) => {
+                console.error('Erreur soumission article:', errs);
+            }
+        });
     };
 
     const handleDelete = (id: number) => {
@@ -705,6 +706,14 @@ function ArticlesSubPanel({ articles }: { articles: any[] }) {
                         </h4>
 
                         <form onSubmit={handleSubmit} className="space-y-4">
+                            {Object.keys(errors).length > 0 && (
+                                <div className="p-3 bg-red-100 border border-red-300 text-red-700 rounded-xl text-xs space-y-1">
+                                    {Object.values(errors).map((err, i) => (
+                                        <p key={i}>• {err}</p>
+                                    ))}
+                                </div>
+                            )}
+
                             <div>
                                 <label className="block text-xs font-bold text-[var(--admin-text)] mb-1">Titre de l'article *</label>
                                 <input
@@ -791,7 +800,7 @@ function ArticlesSubPanel({ articles }: { articles: any[] }) {
                                     disabled={processing}
                                     className="rounded-xl px-4 py-2 text-sm font-semibold bg-[#ebb95e] text-[#241b16] hover:bg-[#e0ab4b] disabled:opacity-50"
                                 >
-                                    Sauvegarder
+                                    {processing ? 'Enregistrement...' : 'Sauvegarder'}
                                 </button>
                             </div>
                         </form>
@@ -843,27 +852,20 @@ function VideosSubPanel({ videos }: { videos: any[] }) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (editingVideo) {
-            post(`/admin/vitrine/videos/${editingVideo.id}`, {
-                data: {
-                    ...data,
-                    _method: 'PUT'
-                },
-                preserveScroll: true,
-                onSuccess: () => {
-                    setIsOpen(false);
-                    reset();
-                }
-            });
-        } else {
-            post('/admin/vitrine/videos', {
-                preserveScroll: true,
-                onSuccess: () => {
-                    setIsOpen(false);
-                    reset();
-                }
-            });
-        }
+        const url = editingVideo
+            ? `/admin/vitrine/videos/${editingVideo.id}`
+            : '/admin/vitrine/videos';
+
+        post(url, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setIsOpen(false);
+                reset();
+            },
+            onError: (errs) => {
+                console.error('Erreur soumission vidéo:', errs);
+            }
+        });
     };
 
     const handleDelete = (id: number) => {
@@ -937,6 +939,14 @@ function VideosSubPanel({ videos }: { videos: any[] }) {
                         </h4>
 
                         <form onSubmit={handleSubmit} className="space-y-4">
+                            {Object.keys(errors).length > 0 && (
+                                <div className="p-3 bg-red-100 border border-red-300 text-red-700 rounded-xl text-xs space-y-1">
+                                    {Object.values(errors).map((err, i) => (
+                                        <p key={i}>• {err}</p>
+                                    ))}
+                                </div>
+                            )}
+
                             <div>
                                 <label className="block text-xs font-bold text-[var(--admin-text)] mb-1">Titre de la vidéo *</label>
                                 <input
@@ -946,6 +956,7 @@ function VideosSubPanel({ videos }: { videos: any[] }) {
                                     className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm"
                                     required
                                 />
+                                {errors.titre && <p className="text-red-500 text-xs mt-1">{errors.titre}</p>}
                             </div>
 
                             <div>
@@ -958,7 +969,7 @@ function VideosSubPanel({ videos }: { videos: any[] }) {
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-[var(--admin-text)] mb-1">Lien de la Vidéo (YouTube Embed ou URL brute) *</label>
+                                <label className="block text-xs font-bold text-[var(--admin-text)] mb-1">Lien de la Vidéo (YouTube Embed ou URL) *</label>
                                 <input
                                     type="text"
                                     value={data.video_url}
@@ -967,6 +978,7 @@ function VideosSubPanel({ videos }: { videos: any[] }) {
                                     placeholder="Ex: https://www.youtube.com/watch?v=..."
                                     required
                                 />
+                                {errors.video_url && <p className="text-red-500 text-xs mt-1">{errors.video_url}</p>}
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
@@ -1039,7 +1051,7 @@ function VideosSubPanel({ videos }: { videos: any[] }) {
                                     disabled={processing}
                                     className="rounded-xl px-4 py-2 text-sm font-semibold bg-[#ebb95e] text-[#241b16] hover:bg-[#e0ab4b] disabled:opacity-50"
                                 >
-                                    Sauvegarder
+                                    {processing ? 'Enregistrement...' : 'Sauvegarder'}
                                 </button>
                             </div>
                         </form>
@@ -1099,27 +1111,20 @@ function FormationsSubPanel({ formations, money }: { formations: any[]; money: (
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (editingFormation) {
-            post(`/admin/vitrine/formations/${editingFormation.id}`, {
-                data: {
-                    ...data,
-                    _method: 'PUT'
-                },
-                preserveScroll: true,
-                onSuccess: () => {
-                    setIsOpen(false);
-                    reset();
-                }
-            });
-        } else {
-            post('/admin/vitrine/formations', {
-                preserveScroll: true,
-                onSuccess: () => {
-                    setIsOpen(false);
-                    reset();
-                }
-            });
-        }
+        const url = editingFormation
+            ? `/admin/vitrine/formations/${editingFormation.id}`
+            : '/admin/vitrine/formations';
+
+        post(url, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setIsOpen(false);
+                reset();
+            },
+            onError: (errs) => {
+                console.error('Erreur soumission formation:', errs);
+            }
+        });
     };
 
     const handleDelete = (id: number) => {
@@ -1199,6 +1204,14 @@ function FormationsSubPanel({ formations, money }: { formations: any[]; money: (
                         </h4>
 
                         <form onSubmit={handleSubmit} className="space-y-4">
+                            {Object.keys(errors).length > 0 && (
+                                <div className="p-3 bg-red-100 border border-red-300 text-red-700 rounded-xl text-xs space-y-1">
+                                    {Object.values(errors).map((err, i) => (
+                                        <p key={i}>• {err}</p>
+                                    ))}
+                                </div>
+                            )}
+
                             <div>
                                 <label className="block text-xs font-bold text-[var(--admin-text)] mb-1">Titre de la formation *</label>
                                 <input
@@ -1208,6 +1221,7 @@ function FormationsSubPanel({ formations, money }: { formations: any[]; money: (
                                     className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm"
                                     required
                                 />
+                                {errors.titre && <p className="text-red-500 text-xs mt-1">{errors.titre}</p>}
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
@@ -1220,6 +1234,7 @@ function FormationsSubPanel({ formations, money }: { formations: any[]; money: (
                                         className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm"
                                         required
                                     />
+                                    {errors.date_debut && <p className="text-red-500 text-xs mt-1">{errors.date_debut}</p>}
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-[var(--admin-text)] mb-1">Date fin</label>
@@ -1242,6 +1257,7 @@ function FormationsSubPanel({ formations, money }: { formations: any[]; money: (
                                         className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm"
                                         required
                                     />
+                                    {errors.lieu && <p className="text-red-500 text-xs mt-1">{errors.lieu}</p>}
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-[var(--admin-text)] mb-1">Formateur</label>
@@ -1273,6 +1289,7 @@ function FormationsSubPanel({ formations, money }: { formations: any[]; money: (
                                         className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm"
                                         required
                                     />
+                                    {errors.tarif && <p className="text-red-500 text-xs mt-1">{errors.tarif}</p>}
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-[var(--admin-text)] mb-1">Actif</label>
@@ -1315,6 +1332,7 @@ function FormationsSubPanel({ formations, money }: { formations: any[]; money: (
                                     className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm h-28"
                                     required
                                 />
+                                {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description}</p>}
                             </div>
 
                             <div className="flex justify-end gap-2 pt-4 border-t border-[var(--admin-border)]">
@@ -1330,7 +1348,7 @@ function FormationsSubPanel({ formations, money }: { formations: any[]; money: (
                                     disabled={processing}
                                     className="rounded-xl px-4 py-2 text-sm font-semibold bg-[#ebb95e] text-[#241b16] hover:bg-[#e0ab4b] disabled:opacity-50"
                                 >
-                                    Sauvegarder
+                                    {processing ? 'Enregistrement...' : 'Sauvegarder'}
                                 </button>
                             </div>
                         </form>
@@ -1382,27 +1400,20 @@ function RecrutementsSubPanel({ recrutements }: { recrutements: any[] }) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (editingRecrutement) {
-            post(`/admin/vitrine/recrutements/${editingRecrutement.id}`, {
-                data: {
-                    ...data,
-                    _method: 'PUT'
-                },
-                preserveScroll: true,
-                onSuccess: () => {
-                    setIsOpen(false);
-                    reset();
-                }
-            });
-        } else {
-            post('/admin/vitrine/recrutements', {
-                preserveScroll: true,
-                onSuccess: () => {
-                    setIsOpen(false);
-                    reset();
-                }
-            });
-        }
+        const url = editingRecrutement
+            ? `/admin/vitrine/recrutements/${editingRecrutement.id}`
+            : '/admin/vitrine/recrutements';
+
+        post(url, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setIsOpen(false);
+                reset();
+            },
+            onError: (errs) => {
+                console.error('Erreur soumission recrutement:', errs);
+            }
+        });
     };
 
     const handleDelete = (id: number) => {
@@ -1477,6 +1488,14 @@ function RecrutementsSubPanel({ recrutements }: { recrutements: any[] }) {
                         </h4>
 
                         <form onSubmit={handleSubmit} className="space-y-4">
+                            {Object.keys(errors).length > 0 && (
+                                <div className="p-3 bg-red-100 border border-red-300 text-red-700 rounded-xl text-xs space-y-1">
+                                    {Object.values(errors).map((err, i) => (
+                                        <p key={i}>• {err}</p>
+                                    ))}
+                                </div>
+                            )}
+
                             <div>
                                 <label className="block text-xs font-bold text-[var(--admin-text)] mb-1">Titre du poste *</label>
                                 <input
@@ -1486,6 +1505,7 @@ function RecrutementsSubPanel({ recrutements }: { recrutements: any[] }) {
                                     className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm"
                                     required
                                 />
+                                {errors.titre && <p className="text-red-500 text-xs mt-1">{errors.titre}</p>}
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
@@ -1499,6 +1519,7 @@ function RecrutementsSubPanel({ recrutements }: { recrutements: any[] }) {
                                         placeholder="Ex: Électricien, Maçon"
                                         required
                                     />
+                                    {errors.metier && <p className="text-red-500 text-xs mt-1">{errors.metier}</p>}
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-[var(--admin-text)] mb-1">Lieu *</label>
@@ -1510,6 +1531,7 @@ function RecrutementsSubPanel({ recrutements }: { recrutements: any[] }) {
                                         placeholder="Ex: Abidjan - Cocody"
                                         required
                                     />
+                                    {errors.lieu && <p className="text-red-500 text-xs mt-1">{errors.lieu}</p>}
                                 </div>
                             </div>
 
@@ -1572,6 +1594,7 @@ function RecrutementsSubPanel({ recrutements }: { recrutements: any[] }) {
                                     className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm h-32"
                                     required
                                 />
+                                {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description}</p>}
                             </div>
 
                             <div className="flex justify-end gap-2 pt-4 border-t border-[var(--admin-border)]">
@@ -1587,7 +1610,7 @@ function RecrutementsSubPanel({ recrutements }: { recrutements: any[] }) {
                                     disabled={processing}
                                     className="rounded-xl px-4 py-2 text-sm font-semibold bg-[#ebb95e] text-[#241b16] hover:bg-[#e0ab4b] disabled:opacity-50"
                                 >
-                                    Sauvegarder
+                                    {processing ? 'Enregistrement...' : 'Sauvegarder'}
                                 </button>
                             </div>
                         </form>
@@ -1641,27 +1664,20 @@ function PopupsSubPanel({ popups }: { popups: any[] }) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (editingPopup) {
-            post(`/admin/vitrine/popups/${editingPopup.id}`, {
-                data: {
-                    ...data,
-                    _method: 'PUT'
-                },
-                preserveScroll: true,
-                onSuccess: () => {
-                    setIsOpen(false);
-                    reset();
-                }
-            });
-        } else {
-            post('/admin/vitrine/popups', {
-                preserveScroll: true,
-                onSuccess: () => {
-                    setIsOpen(false);
-                    reset();
-                }
-            });
-        }
+        const url = editingPopup
+            ? `/admin/vitrine/popups/${editingPopup.id}`
+            : '/admin/vitrine/popups';
+
+        post(url, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setIsOpen(false);
+                reset();
+            },
+            onError: (errs) => {
+                console.error('Erreur soumission popup:', errs);
+            }
+        });
     };
 
     const handleDelete = (id: number) => {
@@ -1741,6 +1757,14 @@ function PopupsSubPanel({ popups }: { popups: any[] }) {
                         </h4>
 
                         <form onSubmit={handleSubmit} className="space-y-4">
+                            {Object.keys(errors).length > 0 && (
+                                <div className="p-3 bg-red-100 border border-red-300 text-red-700 rounded-xl text-xs space-y-1">
+                                    {Object.values(errors).map((err, i) => (
+                                        <p key={i}>• {err}</p>
+                                    ))}
+                                </div>
+                            )}
+
                             <div>
                                 <label className="block text-xs font-bold text-[var(--admin-text)] mb-1">Titre *</label>
                                 <input
@@ -1750,6 +1774,7 @@ function PopupsSubPanel({ popups }: { popups: any[] }) {
                                     className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm"
                                     required
                                 />
+                                {errors.titre && <p className="text-red-500 text-xs mt-1">{errors.titre}</p>}
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
@@ -1762,6 +1787,7 @@ function PopupsSubPanel({ popups }: { popups: any[] }) {
                                         className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm"
                                         required
                                     />
+                                    {errors.date_debut && <p className="text-red-500 text-xs mt-1">{errors.date_debut}</p>}
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-[var(--admin-text)] mb-1">Date fin de diffusion *</label>
@@ -1772,6 +1798,7 @@ function PopupsSubPanel({ popups }: { popups: any[] }) {
                                         className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm"
                                         required
                                     />
+                                    {errors.date_fin && <p className="text-red-500 text-xs mt-1">{errors.date_fin}</p>}
                                 </div>
                             </div>
 
@@ -1852,7 +1879,7 @@ function PopupsSubPanel({ popups }: { popups: any[] }) {
                                     disabled={processing}
                                     className="rounded-xl px-4 py-2 text-sm font-semibold bg-[#ebb95e] text-[#241b16] hover:bg-[#e0ab4b] disabled:opacity-50"
                                 >
-                                    Sauvegarder
+                                    {processing ? 'Enregistrement...' : 'Sauvegarder'}
                                 </button>
                             </div>
                         </form>
@@ -1887,7 +1914,7 @@ function SettingsSubPanel({ settings }: { settings: any[] }) {
         return map;
     }, [settings]);
 
-    const { data, setData, post, processing } = useForm({
+    const { data, setData, post, processing, errors } = useForm({
         chiffres_cles_artisans: settingsMap.chiffres_cles_artisans,
         chiffres_cles_utilisateurs: settingsMap.chiffres_cles_utilisateurs,
         chiffres_cles_missions: settingsMap.chiffres_cles_missions,
@@ -1902,12 +1929,25 @@ function SettingsSubPanel({ settings }: { settings: any[] }) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post('/admin/vitrine/settings', { preserveScroll: true });
+        post('/admin/vitrine/settings', {
+            preserveScroll: true,
+            onError: (errs) => {
+                console.error('Erreur soumission settings:', errs);
+            }
+        });
     };
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
             <h3 className="text-lg font-bold text-[var(--admin-text)] border-b pb-2">Paramètres de la Vitrine</h3>
+
+            {Object.keys(errors).length > 0 && (
+                <div className="p-3 bg-red-100 border border-red-300 text-red-700 rounded-xl text-xs space-y-1">
+                    {Object.values(errors).map((err, i) => (
+                        <p key={i}>• {err}</p>
+                    ))}
+                </div>
+            )}
 
             {/* Chiffres Cles */}
             <div className="space-y-4">
@@ -1921,7 +1961,6 @@ function SettingsSubPanel({ settings }: { settings: any[] }) {
                             onChange={e => setData('chiffres_cles_artisans', e.target.value)}
                             className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm font-semibold"
                             placeholder="Ex: 800"
-                            required
                         />
                     </div>
                     <div>
@@ -1932,7 +1971,6 @@ function SettingsSubPanel({ settings }: { settings: any[] }) {
                             onChange={e => setData('chiffres_cles_utilisateurs', e.target.value)}
                             className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm font-semibold"
                             placeholder="Ex: 3 000"
-                            required
                         />
                     </div>
                     <div>
@@ -1943,7 +1981,6 @@ function SettingsSubPanel({ settings }: { settings: any[] }) {
                             onChange={e => setData('chiffres_cles_missions', e.target.value)}
                             className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm font-semibold"
                             placeholder="Ex: 5 000"
-                            required
                         />
                     </div>
                     <div>
@@ -1954,7 +1991,6 @@ function SettingsSubPanel({ settings }: { settings: any[] }) {
                             onChange={e => setData('chiffres_cles_metiers', e.target.value)}
                             className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm font-semibold"
                             placeholder="Ex: 29"
-                            required
                         />
                     </div>
                 </div>
@@ -2016,7 +2052,6 @@ function SettingsSubPanel({ settings }: { settings: any[] }) {
                         value={data.presentation_mission}
                         onChange={e => setData('presentation_mission', e.target.value)}
                         className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm h-32"
-                        required
                     />
                 </div>
             </div>
@@ -2025,9 +2060,9 @@ function SettingsSubPanel({ settings }: { settings: any[] }) {
                 <button
                     type="submit"
                     disabled={processing}
-                    className="rounded-2xl px-6 py-2.5 text-sm font-semibold transition bg-[#ebb95e] text-[#241b16] hover:bg-[#e0ab4b] disabled:opacity-50"
+                    className="rounded-xl px-5 py-2.5 text-sm font-semibold bg-[#ebb95e] text-[#241b16] hover:bg-[#e0ab4b] disabled:opacity-50"
                 >
-                    Enregistrer les Paramètres
+                    {processing ? 'Enregistrement...' : 'Enregistrer les Paramètres'}
                 </button>
             </div>
         </form>
