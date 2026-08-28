@@ -9,6 +9,19 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { api, Slide, Artisan, ArtisanDuMois, Article, Video, Formation } from '@/lib/api';
 
+function formatEmbedUrl(rawUrl: string): string {
+  if (!rawUrl) return '';
+  const ytMatch = rawUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/))([\w-]{11})/);
+  if (ytMatch && ytMatch[1]) {
+    return `https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1&rel=0`;
+  }
+  const vimeoMatch = rawUrl.match(/vimeo\.com\/(\d+)/);
+  if (vimeoMatch && vimeoMatch[1]) {
+    return `https://player.vimeo.com/video/${vimeoMatch[1]}?autoplay=1`;
+  }
+  return rawUrl;
+}
+
 export default function HomePage() {
   const [slides, setSlides] = useState<Slide[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -392,56 +405,80 @@ export default function HomePage() {
         <section className="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
             <div className="space-y-4">
-              <span className="text-[11px] font-extrabold uppercase tracking-[0.24em] text-[#8a5d16]">capsules vidéo</span>
+              <span className="text-[11px] font-extrabold uppercase tracking-[0.24em] text-[#8a5d16]">médiathèque & capsules</span>
               <h2 className="text-3xl sm:text-4xl font-extrabold text-[#241b16] tracking-tight">
                 Vidéos & capsules d&apos;activités
               </h2>
             </div>
             <Link 
-              href="/actualites" 
+              href="/videos" 
               className="group inline-flex items-center gap-1.5 text-sm font-bold text-[#8a5d16] hover:text-[#241b16] transition"
             >
-              <span>Voir toutes les vidéos</span>
+              <span>Voir toute la médiathèque</span>
               <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition" />
             </Link>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {videos.map((video) => (
-              <div 
-                key={video.id}
-                className="bg-white border border-[#e6d3b2]/40 rounded-[28px] overflow-hidden shadow-sm hover:shadow-md transition group"
-              >
-                {/* Thumbnail space */}
-                <div className="relative aspect-video bg-zinc-950 overflow-hidden cursor-pointer" onClick={() => setActiveVideoUrl(video.video_url)}>
-                  <img
-                    src={video.thumbnail_url || 'https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?auto=format&fit=crop&w=600&q=80'}
-                    alt={video.titre}
-                    className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-                  />
-                  <div className="absolute inset-0 bg-black/35 flex items-center justify-center">
-                    <div className="h-14 w-14 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center text-[#8a5d16] shadow-lg group-hover:scale-110 transition duration-300">
-                      <Play className="h-6 w-6 fill-current translate-x-0.5" />
+            {videos.map((video) => {
+              const getCatBadge = (cat: string) => {
+                switch(cat) {
+                  case 'capsule': return 'Capsule Pédagogique';
+                  case 'formation': return 'Formation';
+                  case 'temoignage': return 'Témoignage';
+                  case 'evenement': return 'Événement';
+                  default: return cat;
+                }
+              };
+
+              return (
+                <div 
+                  key={video.id}
+                  className="bg-white border border-[#e6d3b2]/40 rounded-[28px] overflow-hidden shadow-sm hover:shadow-xl transition group flex flex-col justify-between"
+                >
+                  <div>
+                    {/* Thumbnail space */}
+                    <div className="relative aspect-video bg-zinc-950 overflow-hidden cursor-pointer" onClick={() => setActiveVideoUrl(video.video_url)}>
+                      <img
+                        src={video.thumbnail_url || 'https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?auto=format&fit=crop&w=600&q=80'}
+                        alt={video.titre}
+                        className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                      />
+                      <div className="absolute inset-0 bg-black/35 group-hover:bg-black/20 flex items-center justify-center transition">
+                        <div className="h-14 w-14 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center text-[#8a5d16] shadow-lg group-hover:scale-110 transition duration-300">
+                          <Play className="h-6 w-6 fill-current translate-x-0.5" />
+                        </div>
+                      </div>
+                      <span className="absolute top-4 left-4 px-3 py-1 bg-black/70 backdrop-blur-md rounded-full text-[10px] font-bold uppercase tracking-wider text-white">
+                        {getCatBadge(video.categorie)}
+                      </span>
+                    </div>
+                    
+                    {/* Info block */}
+                    <div className="p-6 space-y-2">
+                      <h3 className="font-extrabold text-[#241b16] text-base group-hover:text-[#8a5d16] transition line-clamp-1">
+                        {video.titre}
+                      </h3>
+                      {video.description && (
+                        <p className="text-xs text-[#746251] leading-relaxed line-clamp-2">
+                          {video.description}
+                        </p>
+                      )}
                     </div>
                   </div>
-                  <span className="absolute top-4 left-4 px-2.5 py-0.5 bg-black/60 rounded-md text-[9px] font-bold uppercase tracking-wider text-white">
-                    {video.categorie}
-                  </span>
+
+                  <div className="p-6 pt-0">
+                    <button
+                      onClick={() => setActiveVideoUrl(video.video_url)}
+                      className="w-full py-2.5 px-4 rounded-xl bg-[#f7efe2] hover:bg-[#ebb95e] text-[#241b16] text-xs font-extrabold flex items-center justify-center gap-2 transition"
+                    >
+                      <Play className="h-3.5 w-3.5 fill-current" />
+                      <span>Visionner</span>
+                    </button>
+                  </div>
                 </div>
-                
-                {/* Info block */}
-                <div className="p-6 space-y-2">
-                  <h3 className="font-extrabold text-[#241b16] text-sm group-hover:text-[#8a5d16] transition line-clamp-1">
-                    {video.titre}
-                  </h3>
-                  {video.description && (
-                    <p className="text-xs text-[#746251] leading-relaxed line-clamp-2">
-                      {video.description}
-                    </p>
-                  )}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
       )}
@@ -646,7 +683,7 @@ export default function HomePage() {
                 <XClose className="h-5 w-5" />
               </button>
               <iframe
-                src={activeVideoUrl}
+                src={formatEmbedUrl(activeVideoUrl)}
                 title="Lecture vidéo"
                 className="w-full h-full border-0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

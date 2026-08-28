@@ -28,6 +28,7 @@ export default function Navbar() {
         { name: 'Accueil', href: '/' },
         { name: 'Services', href: '/services' },
         { name: 'Artisans', href: '/artisans' },
+        { name: 'Vidéos', href: '/videos' },
         { name: 'Formations', href: '/formations' },
         { name: 'Actualités', href: '/actualites' },
         { name: 'Recrutement', href: '/recrutement' },
