@@ -96,6 +96,8 @@ class VitrineAdminController extends Controller
             $validated['photo_override_url'] = '/storage/' . $path;
         }
 
+        unset($validated['photo']);
+
         // Mettre à jour si le mois existe déjà, ou créer
         VitrineArtisanDuMois::updateOrCreate(
             ['mois' => $validated['mois']],
