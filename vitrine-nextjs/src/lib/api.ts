@@ -14,6 +14,10 @@ export interface Artisan {
     score_prosartisan: number;
     kyc_selfie_path: string | null;
     city?: string | null;
+    note_moyenne?: number;
+    total_avis?: number;
+    taux_succes?: number;
+    zone?: string;
 }
 
 export interface ArtisanDuMois {

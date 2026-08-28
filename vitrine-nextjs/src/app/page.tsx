@@ -229,7 +229,7 @@ export default function HomePage() {
                     </div>
                     <div className="flex items-center gap-1 px-2.5 py-1 bg-amber-500/10 border border-amber-500/20 rounded-lg text-amber-700 font-black text-xs">
                       <Star className="h-3.5 w-3.5 fill-current" />
-                      <span>{(artisanDuMois.artisan.score_prosartisan / 200).toFixed(1)}</span>
+                      <span>{artisanDuMois.artisan.note_moyenne ? artisanDuMois.artisan.note_moyenne.toFixed(1) : (artisanDuMois.artisan.score_prosartisan / 200).toFixed(1)}</span>
                     </div>
                   </div>
                 </div>
@@ -258,11 +258,11 @@ export default function HomePage() {
                 </div>
                 <div>
                   <p className="text-[10px] uppercase font-bold tracking-wider text-[#ebb95e]">Taux de succès</p>
-                  <p className="text-2xl font-black text-white">100%</p>
+                  <p className="text-2xl font-black text-white">{artisanDuMois.artisan.taux_succes !== undefined ? `${artisanDuMois.artisan.taux_succes}%` : '100%'}</p>
                 </div>
                 <div>
                   <p className="text-[10px] uppercase font-bold tracking-wider text-[#ebb95e]">Zone principale</p>
-                  <p className="text-lg font-bold text-white">Yopougon, Abidjan</p>
+                  <p className="text-lg font-bold text-white">{artisanDuMois.artisan.zone || 'Abidjan, Côte d\'Ivoire'}</p>
                 </div>
               </div>
             </div>
