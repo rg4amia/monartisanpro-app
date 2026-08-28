@@ -1952,12 +1952,44 @@ function SettingsSubPanel({ settings }: { settings: any[] }) {
             chiffres_cles_utilisateurs: '3000',
             chiffres_cles_missions: '5000',
             chiffres_cles_metiers: '29',
+            
+            // Coordonnées & Contact
+            contact_phone: '+225 07 00 00 00 00',
+            contact_email: 'contact@prosartisan.ci',
+            footer_address: "Plateau, Boulevard de la République, Abidjan, Côte d'Ivoire",
+            
+            // Réseaux sociaux
             lien_facebook: '',
             lien_instagram: '',
             lien_linkedin: '',
-            contact_phone: '+225 07 00 00 00 00',
-            contact_email: 'contact@prosartisan.ci',
-            presentation_mission: 'ProsArtisan connecte les particuliers aux meilleurs artisans qualifiés et quincailleries de Côte d’Ivoire...',
+            lien_whatsapp: '',
+            lien_youtube: '',
+            lien_tiktok: '',
+
+            // Identité Footer
+            footer_description: "Première plateforme de confiance en Côte d'Ivoire connectant clients, artisans et quincailleries agréées via un système de séquestre innovant et sécurisé.",
+            footer_badge_text: "Label Qualité & Confiance Ivoirien",
+            presentation_mission: "ProsArtisan connecte les particuliers aux meilleurs artisans qualifiés et quincailleries de Côte d’Ivoire...",
+
+            // Titres de colonnes
+            footer_services_title: "Nos Services",
+            footer_sitemap_title: "Plan du site",
+            footer_contact_title: "Contact & Support",
+
+            // Services
+            footer_service_1_text: "Mise en relation sécurisée",
+            footer_service_1_url: "/services",
+            footer_service_2_text: "Estimation des coûts par Gemini IA",
+            footer_service_2_url: "/services",
+            footer_service_3_text: "Formations & Labellisation",
+            footer_service_3_url: "/formations",
+            footer_service_4_text: "Micro-crédit d'urgence artisans",
+            footer_service_4_url: "/services",
+
+            // Bas de page
+            footer_copyright: "© 2026 ProsArtisan. Tous droits réservés.",
+            footer_cgu_label: "CGU & Mentions Légales",
+            footer_slogan: "Propulsé par Mobile Money (Wave & OM)",
         };
         settings.forEach((s) => {
             map[s.cle] = s.valeur;
@@ -1970,12 +2002,38 @@ function SettingsSubPanel({ settings }: { settings: any[] }) {
         chiffres_cles_utilisateurs: settingsMap.chiffres_cles_utilisateurs,
         chiffres_cles_missions: settingsMap.chiffres_cles_missions,
         chiffres_cles_metiers: settingsMap.chiffres_cles_metiers,
+        
+        contact_phone: settingsMap.contact_phone,
+        contact_email: settingsMap.contact_email,
+        footer_address: settingsMap.footer_address,
+
         lien_facebook: settingsMap.lien_facebook,
         lien_instagram: settingsMap.lien_instagram,
         lien_linkedin: settingsMap.lien_linkedin,
-        contact_phone: settingsMap.contact_phone,
-        contact_email: settingsMap.contact_email,
+        lien_whatsapp: settingsMap.lien_whatsapp,
+        lien_youtube: settingsMap.lien_youtube,
+        lien_tiktok: settingsMap.lien_tiktok,
+
+        footer_description: settingsMap.footer_description,
+        footer_badge_text: settingsMap.footer_badge_text,
         presentation_mission: settingsMap.presentation_mission,
+
+        footer_services_title: settingsMap.footer_services_title,
+        footer_sitemap_title: settingsMap.footer_sitemap_title,
+        footer_contact_title: settingsMap.footer_contact_title,
+
+        footer_service_1_text: settingsMap.footer_service_1_text,
+        footer_service_1_url: settingsMap.footer_service_1_url,
+        footer_service_2_text: settingsMap.footer_service_2_text,
+        footer_service_2_url: settingsMap.footer_service_2_url,
+        footer_service_3_text: settingsMap.footer_service_3_text,
+        footer_service_3_url: settingsMap.footer_service_3_url,
+        footer_service_4_text: settingsMap.footer_service_4_text,
+        footer_service_4_url: settingsMap.footer_service_4_url,
+
+        footer_copyright: settingsMap.footer_copyright,
+        footer_cgu_label: settingsMap.footer_cgu_label,
+        footer_slogan: settingsMap.footer_slogan,
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -1989,8 +2047,22 @@ function SettingsSubPanel({ settings }: { settings: any[] }) {
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-6">
-            <h3 className="text-lg font-bold text-[var(--admin-text)] border-b pb-2">Paramètres de la Vitrine</h3>
+        <form onSubmit={handleSubmit} className="space-y-8">
+            <div className="flex items-center justify-between border-b pb-4">
+                <div>
+                    <h3 className="text-lg font-bold text-[var(--admin-text)]">Paramètres de la Vitrine & du Footer</h3>
+                    <p className="text-xs text-[var(--admin-text-soft)] mt-0.5">
+                        Personnalisez l'ensemble des informations, textes, liens, coordonnées et réseaux sociaux affichés sur le Front Office.
+                    </p>
+                </div>
+                <button
+                    type="submit"
+                    disabled={processing}
+                    className="rounded-xl px-5 py-2.5 text-sm font-semibold bg-[#ebb95e] text-[#241b16] hover:bg-[#e0ab4b] disabled:opacity-50 shadow-sm"
+                >
+                    {processing ? 'Enregistrement...' : 'Enregistrer les Paramètres'}
+                </button>
+            </div>
 
             {Object.keys(errors).length > 0 && (
                 <div className="p-3 bg-red-100 border border-red-300 text-red-700 rounded-xl text-xs space-y-1">
@@ -2000,12 +2072,14 @@ function SettingsSubPanel({ settings }: { settings: any[] }) {
                 </div>
             )}
 
-            {/* Chiffres Cles */}
-            <div className="space-y-4">
-                <h4 className="text-sm font-bold text-[#b77918] uppercase tracking-wider">Chiffres Clés (Hero Page d'accueil)</h4>
+            {/* 1. CHIFFRES CLÉS */}
+            <div className="space-y-4 bg-white/40 border border-[var(--admin-border)] p-6 rounded-[24px]">
+                <h4 className="text-sm font-bold text-[#b77918] uppercase tracking-wider flex items-center gap-2">
+                    <span>📊</span> Chiffres Clés (Hero Vitrine)
+                </h4>
                 <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
                     <div>
-                        <label className="block text-xs font-medium text-[var(--admin-text)] mb-1">Nombre d'artisans</label>
+                        <label className="block text-xs font-semibold text-[var(--admin-text)] mb-1">Nombre d'artisans</label>
                         <input
                             type="text"
                             value={data.chiffres_cles_artisans}
@@ -2015,7 +2089,7 @@ function SettingsSubPanel({ settings }: { settings: any[] }) {
                         />
                     </div>
                     <div>
-                        <label className="block text-xs font-medium text-[var(--admin-text)] mb-1">Nombre d'utilisateurs</label>
+                        <label className="block text-xs font-semibold text-[var(--admin-text)] mb-1">Nombre d'utilisateurs</label>
                         <input
                             type="text"
                             value={data.chiffres_cles_utilisateurs}
@@ -2025,7 +2099,7 @@ function SettingsSubPanel({ settings }: { settings: any[] }) {
                         />
                     </div>
                     <div>
-                        <label className="block text-xs font-medium text-[var(--admin-text)] mb-1">Missions complétées</label>
+                        <label className="block text-xs font-semibold text-[var(--admin-text)] mb-1">Missions complétées</label>
                         <input
                             type="text"
                             value={data.chiffres_cles_missions}
@@ -2035,7 +2109,7 @@ function SettingsSubPanel({ settings }: { settings: any[] }) {
                         />
                     </div>
                     <div>
-                        <label className="block text-xs font-medium text-[var(--admin-text)] mb-1">Métiers répertoriés</label>
+                        <label className="block text-xs font-semibold text-[var(--admin-text)] mb-1">Métiers répertoriés</label>
                         <input
                             type="text"
                             value={data.chiffres_cles_metiers}
@@ -2047,62 +2121,305 @@ function SettingsSubPanel({ settings }: { settings: any[] }) {
                 </div>
             </div>
 
-            {/* Reseaux & Contact */}
-            <div className="space-y-4 pt-4 border-t border-[var(--admin-border)]">
-                <h4 className="text-sm font-bold text-[#b77918] uppercase tracking-wider">Contact & Réseaux Sociaux</h4>
+            {/* 2. FOOTER - IDENTITÉ & MARQUE */}
+            <div className="space-y-4 bg-white/40 border border-[var(--admin-border)] p-6 rounded-[24px]">
+                <h4 className="text-sm font-bold text-[#b77918] uppercase tracking-wider flex items-center gap-2">
+                    <span>🏢</span> Footer : Identité de Marque & Badge de Confiance
+                </h4>
                 <div className="grid gap-4 md:grid-cols-2">
-                    <div>
-                        <label className="block text-xs font-medium text-[var(--admin-text)] mb-1">Téléphone de contact</label>
-                        <input
-                            type="text"
-                            value={data.contact_phone}
-                            onChange={e => setData('contact_phone', e.target.value)}
-                            className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm"
-                            placeholder="+225 07 ..."
+                    <div className="md:col-span-2">
+                        <label className="block text-xs font-semibold text-[var(--admin-text)] mb-1">
+                            Texte de présentation sous le Logo Footer
+                        </label>
+                        <textarea
+                            rows={3}
+                            value={data.footer_description}
+                            onChange={e => setData('footer_description', e.target.value)}
+                            className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm resize-none"
+                            placeholder="Ex: Première plateforme de confiance en Côte d'Ivoire..."
                         />
                     </div>
                     <div>
-                        <label className="block text-xs font-medium text-[var(--admin-text)] mb-1">Email de contact officiel</label>
+                        <label className="block text-xs font-semibold text-[var(--admin-text)] mb-1">
+                            Texte du Badge de Confiance Footer
+                        </label>
                         <input
-                            type="email"
-                            value={data.contact_email}
-                            onChange={e => setData('contact_email', e.target.value)}
-                            className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm"
-                            placeholder="contact@prosartisan.ci"
+                            type="text"
+                            value={data.footer_badge_text}
+                            onChange={e => setData('footer_badge_text', e.target.value)}
+                            className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm font-semibold"
+                            placeholder="Ex: Label Qualité & Confiance Ivoirien"
                         />
                     </div>
                     <div>
-                        <label className="block text-xs font-medium text-[var(--admin-text)] mb-1">Lien Facebook</label>
+                        <label className="block text-xs font-semibold text-[var(--admin-text)] mb-1">
+                            Titre de la colonne Contact Footer
+                        </label>
                         <input
                             type="text"
-                            value={data.lien_facebook}
-                            onChange={e => setData('lien_facebook', e.target.value)}
+                            value={data.footer_contact_title}
+                            onChange={e => setData('footer_contact_title', e.target.value)}
                             className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm"
-                            placeholder="https://facebook.com/..."
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-xs font-medium text-[var(--admin-text)] mb-1">Lien Instagram</label>
-                        <input
-                            type="text"
-                            value={data.lien_instagram}
-                            onChange={e => setData('lien_instagram', e.target.value)}
-                            className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm"
-                            placeholder="https://instagram.com/..."
+                            placeholder="Ex: Contact & Support"
                         />
                     </div>
                 </div>
             </div>
 
-            {/* Mission Presentation */}
-            <div className="space-y-4 pt-4 border-t border-[var(--admin-border)]">
-                <h4 className="text-sm font-bold text-[#b77918] uppercase tracking-wider">Mission & Présentation de la Plateforme</h4>
+            {/* 3. FOOTER - COORDONNÉES & CONTACT */}
+            <div className="space-y-4 bg-white/40 border border-[var(--admin-border)] p-6 rounded-[24px]">
+                <h4 className="text-sm font-bold text-[#b77918] uppercase tracking-wider flex items-center gap-2">
+                    <span>📞</span> Footer : Coordonnées de Contact & Localisation
+                </h4>
+                <div className="grid gap-4 md:grid-cols-3">
+                    <div>
+                        <label className="block text-xs font-semibold text-[var(--admin-text)] mb-1">Téléphone officiel (Footer & Contact)</label>
+                        <input
+                            type="text"
+                            value={data.contact_phone}
+                            onChange={e => setData('contact_phone', e.target.value)}
+                            className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm font-semibold"
+                            placeholder="+225 07 00 00 00 00"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-semibold text-[var(--admin-text)] mb-1">Email officiel de support</label>
+                        <input
+                            type="email"
+                            value={data.contact_email}
+                            onChange={e => setData('contact_email', e.target.value)}
+                            className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm font-semibold"
+                            placeholder="contact@prosartisan.ci"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-semibold text-[var(--admin-text)] mb-1">Adresse géographique / Siège</label>
+                        <input
+                            type="text"
+                            value={data.footer_address}
+                            onChange={e => setData('footer_address', e.target.value)}
+                            className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm"
+                            placeholder="Plateau, Boulevard de la République, Abidjan"
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* 4. RÉSEAUX SOCIAUX */}
+            <div className="space-y-4 bg-white/40 border border-[var(--admin-border)] p-6 rounded-[24px]">
+                <h4 className="text-sm font-bold text-[#b77918] uppercase tracking-wider flex items-center gap-2">
+                    <span>🌐</span> Réseaux Sociaux Officiels
+                </h4>
+                <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+                    <div>
+                        <label className="block text-xs font-semibold text-[var(--admin-text)] mb-1">Lien Facebook</label>
+                        <input
+                            type="text"
+                            value={data.lien_facebook}
+                            onChange={e => setData('lien_facebook', e.target.value)}
+                            className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm"
+                            placeholder="https://facebook.com/prosartisan"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-semibold text-[var(--admin-text)] mb-1">Lien Instagram</label>
+                        <input
+                            type="text"
+                            value={data.lien_instagram}
+                            onChange={e => setData('lien_instagram', e.target.value)}
+                            className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm"
+                            placeholder="https://instagram.com/prosartisan"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-semibold text-[var(--admin-text)] mb-1">Lien LinkedIn</label>
+                        <input
+                            type="text"
+                            value={data.lien_linkedin}
+                            onChange={e => setData('lien_linkedin', e.target.value)}
+                            className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm"
+                            placeholder="https://linkedin.com/company/prosartisan"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-semibold text-[var(--admin-text)] mb-1">Lien WhatsApp Direct</label>
+                        <input
+                            type="text"
+                            value={data.lien_whatsapp}
+                            onChange={e => setData('lien_whatsapp', e.target.value)}
+                            className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm"
+                            placeholder="https://wa.me/2250700000000"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-semibold text-[var(--admin-text)] mb-1">Lien Chaîne YouTube</label>
+                        <input
+                            type="text"
+                            value={data.lien_youtube}
+                            onChange={e => setData('lien_youtube', e.target.value)}
+                            className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm"
+                            placeholder="https://youtube.com/@prosartisan"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-semibold text-[var(--admin-text)] mb-1">Lien TikTok</label>
+                        <input
+                            type="text"
+                            value={data.lien_tiktok}
+                            onChange={e => setData('lien_tiktok', e.target.value)}
+                            className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm"
+                            placeholder="https://tiktok.com/@prosartisan"
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* 5. SERVICES PERSONNALISABLES */}
+            <div className="space-y-4 bg-white/40 border border-[var(--admin-border)] p-6 rounded-[24px]">
+                <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-bold text-[#b77918] uppercase tracking-wider flex items-center gap-2">
+                        <span>🛠️</span> Footer : Liens de la Colonne Services
+                    </h4>
+                    <div className="w-64">
+                        <input
+                            type="text"
+                            value={data.footer_services_title}
+                            onChange={e => setData('footer_services_title', e.target.value)}
+                            className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-1.5 text-xs font-bold"
+                            placeholder="Titre : Nos Services"
+                        />
+                    </div>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2 p-3 bg-stone-50/60 rounded-xl border border-[var(--admin-border)]">
+                        <label className="block text-[11px] font-bold text-[var(--admin-text)]">Service 1 (Texte & URL)</label>
+                        <input
+                            type="text"
+                            value={data.footer_service_1_text}
+                            onChange={e => setData('footer_service_1_text', e.target.value)}
+                            className="w-full rounded-lg border border-[var(--admin-border)] px-2.5 py-1.5 text-xs"
+                            placeholder="Intitulé du service"
+                        />
+                        <input
+                            type="text"
+                            value={data.footer_service_1_url}
+                            onChange={e => setData('footer_service_1_url', e.target.value)}
+                            className="w-full rounded-lg border border-[var(--admin-border)] px-2.5 py-1.5 text-xs"
+                            placeholder="Lien / URL (/services)"
+                        />
+                    </div>
+                    <div className="space-y-2 p-3 bg-stone-50/60 rounded-xl border border-[var(--admin-border)]">
+                        <label className="block text-[11px] font-bold text-[var(--admin-text)]">Service 2 (Texte & URL)</label>
+                        <input
+                            type="text"
+                            value={data.footer_service_2_text}
+                            onChange={e => setData('footer_service_2_text', e.target.value)}
+                            className="w-full rounded-lg border border-[var(--admin-border)] px-2.5 py-1.5 text-xs"
+                            placeholder="Intitulé du service"
+                        />
+                        <input
+                            type="text"
+                            value={data.footer_service_2_url}
+                            onChange={e => setData('footer_service_2_url', e.target.value)}
+                            className="w-full rounded-lg border border-[var(--admin-border)] px-2.5 py-1.5 text-xs"
+                            placeholder="Lien / URL (/services)"
+                        />
+                    </div>
+                    <div className="space-y-2 p-3 bg-stone-50/60 rounded-xl border border-[var(--admin-border)]">
+                        <label className="block text-[11px] font-bold text-[var(--admin-text)]">Service 3 (Texte & URL)</label>
+                        <input
+                            type="text"
+                            value={data.footer_service_3_text}
+                            onChange={e => setData('footer_service_3_text', e.target.value)}
+                            className="w-full rounded-lg border border-[var(--admin-border)] px-2.5 py-1.5 text-xs"
+                            placeholder="Intitulé du service"
+                        />
+                        <input
+                            type="text"
+                            value={data.footer_service_3_url}
+                            onChange={e => setData('footer_service_3_url', e.target.value)}
+                            className="w-full rounded-lg border border-[var(--admin-border)] px-2.5 py-1.5 text-xs"
+                            placeholder="Lien / URL (/formations)"
+                        />
+                    </div>
+                    <div className="space-y-2 p-3 bg-stone-50/60 rounded-xl border border-[var(--admin-border)]">
+                        <label className="block text-[11px] font-bold text-[var(--admin-text)]">Service 4 (Texte & URL)</label>
+                        <input
+                            type="text"
+                            value={data.footer_service_4_text}
+                            onChange={e => setData('footer_service_4_text', e.target.value)}
+                            className="w-full rounded-lg border border-[var(--admin-border)] px-2.5 py-1.5 text-xs"
+                            placeholder="Intitulé du service"
+                        />
+                        <input
+                            type="text"
+                            value={data.footer_service_4_url}
+                            onChange={e => setData('footer_service_4_url', e.target.value)}
+                            className="w-full rounded-lg border border-[var(--admin-border)] px-2.5 py-1.5 text-xs"
+                            placeholder="Lien / URL (/services)"
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* 6. FOOTER - BAS DE PAGE & LÉGAL */}
+            <div className="space-y-4 bg-white/40 border border-[var(--admin-border)] p-6 rounded-[24px]">
+                <h4 className="text-sm font-bold text-[#b77918] uppercase tracking-wider flex items-center gap-2">
+                    <span>⚖️</span> Footer : Bas de page, Copyright & Mentions Légales
+                </h4>
+                <div className="grid gap-4 md:grid-cols-3">
+                    <div>
+                        <label className="block text-xs font-semibold text-[var(--admin-text)] mb-1">
+                            Texte Copyright
+                        </label>
+                        <input
+                            type="text"
+                            value={data.footer_copyright}
+                            onChange={e => setData('footer_copyright', e.target.value)}
+                            className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm"
+                            placeholder="© 2026 ProsArtisan. Tous droits réservés."
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-semibold text-[var(--admin-text)] mb-1">
+                            Libellé Lien Légal / CGU
+                        </label>
+                        <input
+                            type="text"
+                            value={data.footer_cgu_label}
+                            onChange={e => setData('footer_cgu_label', e.target.value)}
+                            className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm"
+                            placeholder="CGU & Mentions Légales"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-semibold text-[var(--admin-text)] mb-1">
+                            Slogan / Paiements Partenaires
+                        </label>
+                        <input
+                            type="text"
+                            value={data.footer_slogan}
+                            onChange={e => setData('footer_slogan', e.target.value)}
+                            className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm"
+                            placeholder="Propulsé par Mobile Money (Wave & OM)"
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* 7. MISSION GLOBALE */}
+            <div className="space-y-4 bg-white/40 border border-[var(--admin-border)] p-6 rounded-[24px]">
+                <h4 className="text-sm font-bold text-[#b77918] uppercase tracking-wider flex items-center gap-2">
+                    <span>📝</span> Présentation & Mission Globale de la Plateforme
+                </h4>
                 <div>
-                    <label className="block text-xs font-medium text-[var(--admin-text)] mb-1">Texte de Présentation (Page d'accueil & Accueil menu)</label>
+                    <label className="block text-xs font-semibold text-[var(--admin-text)] mb-1">
+                        Texte éditorial de présentation
+                    </label>
                     <textarea
                         value={data.presentation_mission}
                         onChange={e => setData('presentation_mission', e.target.value)}
-                        className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm h-32"
+                        className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm h-28 resize-none"
                     />
                 </div>
             </div>
@@ -2111,9 +2428,9 @@ function SettingsSubPanel({ settings }: { settings: any[] }) {
                 <button
                     type="submit"
                     disabled={processing}
-                    className="rounded-xl px-5 py-2.5 text-sm font-semibold bg-[#ebb95e] text-[#241b16] hover:bg-[#e0ab4b] disabled:opacity-50"
+                    className="rounded-xl px-6 py-3 text-sm font-bold bg-[#ebb95e] text-[#241b16] hover:bg-[#e0ab4b] disabled:opacity-50 shadow-md transition"
                 >
-                    {processing ? 'Enregistrement...' : 'Enregistrer les Paramètres'}
+                    {processing ? 'Enregistrement...' : 'Enregistrer tous les Paramètres'}
                 </button>
             </div>
         </form>
