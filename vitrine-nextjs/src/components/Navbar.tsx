@@ -50,10 +50,12 @@ export default function Navbar() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between">
                     {/* Logo */}
-                    <Link href="/" className="flex items-center gap-2 group">
-                        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#ebb95e] to-[#8a5d16] flex items-center justify-center text-white font-bold text-lg shadow-md group-hover:scale-105 transition transform">
-                            PA
-                        </div>
+                    <Link href="/" className="flex items-center gap-2.5 group">
+                        <img
+                            src="/img/prosartisan-logo.png"
+                            alt="ProsArtisan"
+                            className="h-10 w-10 object-contain group-hover:scale-105 transition transform"
+                        />
                         <div>
                             <span className="font-extrabold text-xl tracking-tight text-[#241b16] group-hover:text-[#8a5d16] transition">
                                 ProsArtisan

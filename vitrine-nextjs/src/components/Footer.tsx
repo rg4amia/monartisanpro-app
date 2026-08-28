@@ -12,10 +12,12 @@ export default function Footer() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
                     {/* Brand Section */}
                     <div className="space-y-4">
-                        <div className="flex items-center gap-2">
-                            <div className="h-9 w-9 rounded-lg bg-[#ebb95e] flex items-center justify-center text-[#241b16] font-bold text-base">
-                                PA
-                            </div>
+                        <div className="flex items-center gap-2.5">
+                            <img
+                                src="/img/prosartisan-logo.png"
+                                alt="ProsArtisan"
+                                className="h-9 w-9 object-contain"
+                            />
                             <span className="font-extrabold text-lg tracking-tight text-white">
                                 ProsArtisan
                             </span>

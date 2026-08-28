@@ -7,6 +7,11 @@ import PopupModal from "@/components/PopupModal";
 export const metadata: Metadata = {
   title: "ProsArtisan — Plateforme Artisanale de Confiance en Côte d'Ivoire",
   description: "Mise en relation avec des artisans qualifiés en Côte d'Ivoire. Séquestre sécurisé Wave & Orange Money, J-Codes matériaux, diagnostic IA et suivi de chantier.",
+  icons: {
+    icon: "/img/prosartisan-logo.png",
+    shortcut: "/img/prosartisan-logo.png",
+    apple: "/img/prosartisan-logo.png",
+  },
 };
 
 export default function RootLayout({
