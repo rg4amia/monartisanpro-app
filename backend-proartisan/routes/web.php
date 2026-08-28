@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AuthenticatedSessionController;
 use App\Http\Controllers\Admin\BackofficeController;
 use App\Http\Controllers\Admin\LlmAdminController;
+use App\Http\Controllers\Admin\VitrineAdminController;
 use App\Http\Controllers\Supplier\SupplierBackofficeController;
 use Illuminate\Support\Facades\Route;
 
@@ -81,6 +82,40 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::put('/promo-codes/{promoCode}', [BackofficeController::class, 'updatePromoCode'])->name('promo-codes.update');
         Route::delete('/promo-codes/{promoCode}', [BackofficeController::class, 'destroyPromoCode'])->name('promo-codes.destroy');
         Route::post('/promo-codes/{promoCode}/toggle', [BackofficeController::class, 'togglePromoCode'])->name('promo-codes.toggle');
+
+        // Vitrine CMS (Gestion du Front Office)
+        Route::get('/vitrine', [BackofficeController::class, 'vitrine'])->name('vitrine');
+
+        Route::prefix('vitrine')->name('vitrine.')->group(function () {
+            Route::post('/slides', [VitrineAdminController::class, 'storeSlide'])->name('slides.store');
+            Route::put('/slides/{slide}', [VitrineAdminController::class, 'updateSlide'])->name('slides.update');
+            Route::delete('/slides/{slide}', [VitrineAdminController::class, 'destroySlide'])->name('slides.destroy');
+
+            Route::post('/artisan-du-mois', [VitrineAdminController::class, 'storeArtisanDuMois'])->name('artisan-du-mois.store');
+            Route::delete('/artisan-du-mois/{adm}', [VitrineAdminController::class, 'destroyArtisanDuMois'])->name('artisan-du-mois.destroy');
+
+            Route::post('/articles', [VitrineAdminController::class, 'storeArticle'])->name('articles.store');
+            Route::put('/articles/{article}', [VitrineAdminController::class, 'updateArticle'])->name('articles.update');
+            Route::delete('/articles/{article}', [VitrineAdminController::class, 'destroyArticle'])->name('articles.destroy');
+
+            Route::post('/videos', [VitrineAdminController::class, 'storeVideo'])->name('videos.store');
+            Route::put('/videos/{video}', [VitrineAdminController::class, 'updateVideo'])->name('videos.update');
+            Route::delete('/videos/{video}', [VitrineAdminController::class, 'destroyVideo'])->name('videos.destroy');
+
+            Route::post('/formations', [VitrineAdminController::class, 'storeFormation'])->name('formations.store');
+            Route::put('/formations/{formation}', [VitrineAdminController::class, 'updateFormation'])->name('formations.update');
+            Route::delete('/formations/{formation}', [VitrineAdminController::class, 'destroyFormation'])->name('formations.destroy');
+
+            Route::post('/recrutements', [VitrineAdminController::class, 'storeRecrutement'])->name('recrutements.store');
+            Route::put('/recrutements/{recrutement}', [VitrineAdminController::class, 'updateRecrutement'])->name('recrutements.update');
+            Route::delete('/recrutements/{recrutement}', [VitrineAdminController::class, 'destroyRecrutement'])->name('recrutements.destroy');
+
+            Route::post('/popups', [VitrineAdminController::class, 'storePopup'])->name('popups.store');
+            Route::put('/popups/{popup}', [VitrineAdminController::class, 'updatePopup'])->name('popups.update');
+            Route::delete('/popups/{popup}', [VitrineAdminController::class, 'destroyPopup'])->name('popups.destroy');
+
+            Route::post('/settings', [VitrineAdminController::class, 'updateSettings'])->name('settings.update');
+        });
 
         Route::prefix('api/llm')->name('api.llm.')->group(function () {
             Route::get('/staging', [LlmAdminController::class, 'getStaging'])->name('staging.index');

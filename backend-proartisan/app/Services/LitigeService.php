@@ -731,7 +731,13 @@ class LitigeService
             'voted_at' => now(),
         ]);
 
-        $jure->increment('wallet_mo', $review->compensation);
+        $this->walletService->credit(
+            $jure,
+            WalletType::WALLET_MO,
+            $review->compensation,
+            "Indemnité de juré pour le litige #{$litige->id}",
+            ['litige_id' => $litige->id, 'jury_review_id' => $review->id]
+        );
 
         $votes = \App\Models\JuryReview::where('litige_id', $litige->id)
             ->whereNotNull('verdict')

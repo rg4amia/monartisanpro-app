@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
             SectorSeeder::class, // Secteurs + Métiers en premier
             UserSeeder::class,   // Users de test
             PermissionSeeder::class,
+            VitrineSeeder::class,
         ]);
     }
 }

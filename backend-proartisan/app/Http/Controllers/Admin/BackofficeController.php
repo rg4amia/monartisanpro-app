@@ -19,6 +19,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Models\Vitrine\VitrineSlide;
+use App\Models\Vitrine\VitrineArtisanDuMois;
+use App\Models\Vitrine\VitrineArticle;
+use App\Models\Vitrine\VitrineVideo;
+use App\Models\Vitrine\VitrineFormation;
+use App\Models\Vitrine\VitrineRecrutement;
+use App\Models\Vitrine\VitrinePopup;
+use App\Models\Vitrine\VitrineSetting;
 
 class BackofficeController extends Controller
 {
@@ -549,6 +557,30 @@ class BackofficeController extends Controller
             $orders = [];
         }
 
+        $vitrineSlides = [];
+        $vitrineArtisanDuMois = [];
+        $vitrineArticles = [];
+        $vitrineVideos = [];
+        $vitrineFormations = [];
+        $vitrineRecrutements = [];
+        $vitrinePopups = [];
+        $vitrineSettings = [];
+
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('vitrine_slides')) {
+                $vitrineSlides = VitrineSlide::ordered()->get();
+                $vitrineArtisanDuMois = VitrineArtisanDuMois::with('user:id,name,phone,role,score_prosartisan,trade')->get();
+                $vitrineArticles = VitrineArticle::with('auteur:id,name')->latest()->get();
+                $vitrineVideos = VitrineVideo::ordered()->get();
+                $vitrineFormations = VitrineFormation::orderBy('date_debut')->get();
+                $vitrineRecrutements = VitrineRecrutement::latest()->get();
+                $vitrinePopups = VitrinePopup::latest()->get();
+                $vitrineSettings = VitrineSetting::all();
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error("Erreur chargement vitrine backoffice: " . $e->getMessage());
+        }
+
         return Inertia::render($component, [
             'dashboard' => $this->adminService->dashboard(),
             'fournisseurs' => $this->adminService->pendingFournisseurs(60)->items(),
@@ -572,6 +604,14 @@ class BackofficeController extends Controller
             'allNotifications' => $allNotifications,
             'allPermissions' => $allPermissions,
             'rolesPermissions' => $rolesPermissions,
+            'vitrineSlides' => $vitrineSlides,
+            'vitrineArtisanDuMois' => $vitrineArtisanDuMois,
+            'vitrineArticles' => $vitrineArticles,
+            'vitrineVideos' => $vitrineVideos,
+            'vitrineFormations' => $vitrineFormations,
+            'vitrineRecrutements' => $vitrineRecrutements,
+            'vitrinePopups' => $vitrinePopups,
+            'vitrineSettings' => $vitrineSettings,
         ]);
     }
 
@@ -705,5 +745,10 @@ class BackofficeController extends Controller
         $promoCode->update(['is_active' => !$promoCode->is_active]);
         $status = $promoCode->is_active ? 'activé' : 'désactivé';
         return back()->with('success', "Code promo {$promoCode->code} {$status}.");
+    }
+
+    public function vitrine(): Response
+    {
+        return $this->renderPage('admin/vitrine');
     }
 }
