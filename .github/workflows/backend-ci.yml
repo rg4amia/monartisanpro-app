@@ -79,6 +79,8 @@ jobs:
           echo "✅ Assets built successfully"
 
       - name: Build Next.js Vitrine (Static Export)
+        env:
+          NEXT_PUBLIC_API_URL: https://prosartisan.net/api/v1/vitrine
         run: |
           cd vitrine-nextjs
           npm ci

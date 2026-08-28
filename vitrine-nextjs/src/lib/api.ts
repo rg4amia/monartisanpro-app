@@ -78,7 +78,19 @@ export interface Popup {
     texte_cta: string | null;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1/vitrine';
+export function getApiBaseUrl(): string {
+    if (process.env.NEXT_PUBLIC_API_URL) {
+        return process.env.NEXT_PUBLIC_API_URL;
+    }
+    if (typeof window !== 'undefined') {
+        return `${window.location.origin}/api/v1/vitrine`;
+    }
+    return 'https://prosartisan.net/api/v1/vitrine';
+}
+
+export function getAuthApiBaseUrl(): string {
+    return getApiBaseUrl().replace('/vitrine', '');
+}
 
 // Mock fallbacks if the API is offline
 const MOCK_SLIDES: Slide[] = [
@@ -215,8 +227,6 @@ const MOCK_SETTINGS: Record<string, string> = {
     contact_email_vitrine: "contact@prosartisan.ci"
 };
 
-const AUTH_API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1/vitrine').replace('/vitrine', '');
-
 function getAuthToken(): string | null {
     if (typeof window !== 'undefined') {
         return localStorage.getItem('supplier_token');
@@ -251,7 +261,7 @@ async function fetchAuthApi<T>(
         config.body = body instanceof FormData ? body : JSON.stringify(body);
     }
 
-    const response = await fetch(`${AUTH_API_BASE_URL}${endpoint}`, config);
+    const response = await fetch(`${getAuthApiBaseUrl()}${endpoint}`, config);
 
     if (response.status === 401) {
         if (typeof window !== 'undefined') {
@@ -271,7 +281,7 @@ async function fetchAuthApi<T>(
 
 async function fetchFromApi<T>(endpoint: string, fallback: T): Promise<T> {
     try {
-        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        const response = await fetch(`${getApiBaseUrl()}${endpoint}`, {
             next: { revalidate: 60 } // Cache 60 seconds
         });
         if (!response.ok) {
@@ -342,7 +352,7 @@ export const api = {
     },
     async sendContact(data: { nom: string; email: string; sujet: string; message: string }): Promise<{ success: boolean; message: string }> {
         try {
-            const response = await fetch(`${API_BASE_URL}/contact`, {
+            const response = await fetch(`${getApiBaseUrl()}/contact`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
