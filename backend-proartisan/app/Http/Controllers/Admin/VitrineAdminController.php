@@ -254,6 +254,8 @@ class VitrineAdminController extends Controller
             if ($request->hasFile('thumbnail') && $request->file('thumbnail')->isValid()) {
                 $path = $request->file('thumbnail')->store('vitrine/videos', 'public');
                 $validated['thumbnail_url'] = '/storage/' . $path;
+            } elseif (empty($validated['thumbnail_url'])) {
+                $validated['thumbnail_url'] = $this->extractYoutubeThumbnail($validated['video_url'] ?? '');
             }
 
             unset($validated['thumbnail']);
@@ -286,6 +288,8 @@ class VitrineAdminController extends Controller
             if ($request->hasFile('thumbnail') && $request->file('thumbnail')->isValid()) {
                 $path = $request->file('thumbnail')->store('vitrine/videos', 'public');
                 $validated['thumbnail_url'] = '/storage/' . $path;
+            } elseif (empty($validated['thumbnail_url']) && empty($video->thumbnail_url)) {
+                $validated['thumbnail_url'] = $this->extractYoutubeThumbnail($validated['video_url'] ?? '');
             }
 
             unset($validated['thumbnail']);
@@ -303,6 +307,15 @@ class VitrineAdminController extends Controller
             \Illuminate\Support\Facades\Log::error('Erreur updateVideo: ' . $e->getMessage());
             return back()->withErrors(['video' => 'Impossible de mettre à jour la vidéo : ' . $e->getMessage()]);
         }
+    }
+
+    private function extractYoutubeThumbnail(?string $url): ?string
+    {
+        if (!$url) return null;
+        if (preg_match('/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/))([\w-]{11})/', $url, $matches)) {
+            return 'https://img.youtube.com/vi/' . $matches[1] . '/hqdefault.jpg';
+        }
+        return null;
     }
 
     public function destroyVideo(VitrineVideo $video): RedirectResponse

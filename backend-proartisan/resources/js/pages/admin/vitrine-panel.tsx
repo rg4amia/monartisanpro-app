@@ -2,6 +2,15 @@ import React, { useState, useMemo } from 'react';
 import { useForm, router } from '@inertiajs/react';
 import { cn } from '@/lib/utils';
 
+function sanitizeUploadedFile(file: File | null): File | null {
+    if (!file) return null;
+    const cleanName = file.name
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-zA-Z0-9._-]/g, '_');
+    return new File([file], cleanName, { type: file.type });
+}
+
 interface VitrinePanelProps {
     vitrineSlides: any[];
     vitrineArtisanDuMois: any[];
@@ -275,7 +284,7 @@ function SlidesSubPanel({ slides }: { slides: any[] }) {
                                     <label className="block text-xs font-bold text-[var(--admin-text)] mb-1">Uploader une image</label>
                                     <input
                                         type="file"
-                                        onChange={e => setData('image', e.target.files ? e.target.files[0] : null)}
+                                        onChange={e => setData('image', sanitizeUploadedFile(e.target.files ? e.target.files[0] : null))}
                                         className="w-full text-xs"
                                     />
                                     {errors.image && <p className="text-red-500 text-xs mt-1">{errors.image}</p>}
@@ -525,7 +534,7 @@ function ArtisanDuMoisSubPanel({ admList, artisans }: { admList: any[]; artisans
                                     <label className="block text-xs font-bold text-[var(--admin-text)] mb-1">Photo Override (Optionnel)</label>
                                     <input
                                         type="file"
-                                        onChange={e => setData('photo', e.target.files ? e.target.files[0] : null)}
+                                        onChange={e => setData('photo', sanitizeUploadedFile(e.target.files ? e.target.files[0] : null))}
                                         className="w-full text-xs"
                                     />
                                     <p className="text-[10px] text-[var(--admin-muted)] mt-1">Si vide, utilise la photo KYC selfie de l'artisan.</p>
@@ -760,7 +769,7 @@ function ArticlesSubPanel({ articles }: { articles: any[] }) {
                                     <label className="block text-xs font-bold text-[var(--admin-text)] mb-1">Image de couverture</label>
                                     <input
                                         type="file"
-                                        onChange={e => setData('image', e.target.files ? e.target.files[0] : null)}
+                                        onChange={e => setData('image', sanitizeUploadedFile(e.target.files ? e.target.files[0] : null))}
                                         className="w-full text-xs"
                                     />
                                 </div>
@@ -986,7 +995,7 @@ function VideosSubPanel({ videos }: { videos: any[] }) {
                                     <label className="block text-xs font-bold text-[var(--admin-text)] mb-1">Image miniature (Thumbnail)</label>
                                     <input
                                         type="file"
-                                        onChange={e => setData('thumbnail', e.target.files ? e.target.files[0] : null)}
+                                        onChange={e => setData('thumbnail', sanitizeUploadedFile(e.target.files ? e.target.files[0] : null))}
                                         className="w-full text-xs"
                                     />
                                 </div>
@@ -1309,7 +1318,7 @@ function FormationsSubPanel({ formations, money }: { formations: any[]; money: (
                                     <label className="block text-xs font-bold text-[var(--admin-text)] mb-1">Image couverture</label>
                                     <input
                                         type="file"
-                                        onChange={e => setData('image', e.target.files ? e.target.files[0] : null)}
+                                        onChange={e => setData('image', sanitizeUploadedFile(e.target.files ? e.target.files[0] : null))}
                                         className="w-full text-xs"
                                     />
                                 </div>
@@ -1807,7 +1816,7 @@ function PopupsSubPanel({ popups }: { popups: any[] }) {
                                     <label className="block text-xs font-bold text-[var(--admin-text)] mb-1">Image promotionnelle</label>
                                     <input
                                         type="file"
-                                        onChange={e => setData('image', e.target.files ? e.target.files[0] : null)}
+                                        onChange={e => setData('image', sanitizeUploadedFile(e.target.files ? e.target.files[0] : null))}
                                         className="w-full text-xs"
                                     />
                                 </div>
