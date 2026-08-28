@@ -17,13 +17,18 @@ class SupplierProductResource extends JsonResource
         return [
             'id' => $this->id,
             'supplierId' => $this->supplier_id,
+            'supplier_id' => $this->supplier_id,
             'name' => $this->name,
             'sku' => $this->sku,
             'description' => $this->description,
             'unitPrice' => $this->unit_price,
+            'unit_price' => $this->unit_price,
             'stockQuantity' => $this->stock_quantity,
+            'stock_quantity' => $this->stock_quantity,
             'imageUrl' => $imageUrl,
-            'isActive' => $this->is_active,
+            'image_url' => $imageUrl,
+            'isActive' => (bool) $this->is_active,
+            'is_active' => (bool) $this->is_active,
             'supplier' => $this->when(
                 $this->relationLoaded('supplier'),
                 fn () => ['id' => $this->supplier->id, 'name' => $this->supplier->name, 'phone' => $this->supplier->phone]
