@@ -39,6 +39,8 @@ class VitrineAdminController extends Controller
             $validated['image_url'] = '/storage/' . $path;
         }
 
+        unset($validated['image']);
+
         VitrineSlide::create($validated);
 
         return back()->with('success', 'Slide créé avec succès.');
@@ -61,6 +63,8 @@ class VitrineAdminController extends Controller
             $path = $request->file('image')->store('vitrine/slides', 'public');
             $validated['image_url'] = '/storage/' . $path;
         }
+
+        unset($validated['image']);
 
         $slide->update($validated);
 
@@ -133,6 +137,8 @@ class VitrineAdminController extends Controller
             $validated['image_url'] = '/storage/' . $path;
         }
 
+        unset($validated['image']);
+
         $validated['auteur_id'] = $request->user()->id;
         $validated['slug'] = Str::slug($validated['titre']) . '-' . Str::random(5);
 
@@ -160,6 +166,8 @@ class VitrineAdminController extends Controller
             $path = $request->file('image')->store('vitrine/articles', 'public');
             $validated['image_url'] = '/storage/' . $path;
         }
+
+        unset($validated['image']);
 
         if ($validated['publie'] && !$article->publie) {
             $validated['publie_at'] = now();
@@ -200,6 +208,8 @@ class VitrineAdminController extends Controller
             $validated['thumbnail_url'] = '/storage/' . $path;
         }
 
+        unset($validated['thumbnail']);
+
         VitrineVideo::create($validated);
 
         return back()->with('success', 'Vidéo ajoutée.');
@@ -222,6 +232,8 @@ class VitrineAdminController extends Controller
             $path = $request->file('thumbnail')->store('vitrine/videos', 'public');
             $validated['thumbnail_url'] = '/storage/' . $path;
         }
+
+        unset($validated['thumbnail']);
 
         $video->update($validated);
 
@@ -260,6 +272,8 @@ class VitrineAdminController extends Controller
             $validated['image_url'] = '/storage/' . $path;
         }
 
+        unset($validated['image']);
+
         $validated['places_restantes'] = $validated['places_total'];
 
         VitrineFormation::create($validated);
@@ -288,6 +302,8 @@ class VitrineAdminController extends Controller
             $path = $request->file('image')->store('vitrine/formations', 'public');
             $validated['image_url'] = '/storage/' . $path;
         }
+
+        unset($validated['image']);
 
         // Ajuster places restantes
         if (isset($validated['places_total'])) {
@@ -375,6 +391,8 @@ class VitrineAdminController extends Controller
             $validated['image_url'] = '/storage/' . $path;
         }
 
+        unset($validated['image']);
+
         VitrinePopup::create($validated);
 
         return back()->with('success', 'Popup promotionnel créé.');
@@ -398,6 +416,8 @@ class VitrineAdminController extends Controller
             $path = $request->file('image')->store('vitrine/popups', 'public');
             $validated['image_url'] = '/storage/' . $path;
         }
+
+        unset($validated['image']);
 
         $popup->update($validated);
 
