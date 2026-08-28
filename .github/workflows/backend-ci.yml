@@ -76,6 +76,20 @@ jobs:
           fi
           echo "✅ Assets built successfully"
 
+      - name: Build Next.js Vitrine (Static Export)
+        run: |
+          cd vitrine-nextjs
+          npm ci
+          npm run build
+
+      - name: Verify Next.js build
+        run: |
+          if [ ! -d "vitrine-nextjs/out" ]; then
+            echo "❌ Next.js build failed"
+            exit 1
+          fi
+          echo "✅ Next.js static files built successfully"
+
       - name: Prepare deployment artifacts
         working-directory: ./backend-proartisan
         run: |
@@ -170,6 +184,17 @@ jobs:
           source: "backend-proartisan/public/build"
           target: "/home/${{ secrets.USERNAME }}/domains/prosartisan.net/public_html/monartisanpro-app"
 
+      - name: Copy Next.js static files via SCP
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOST }}
+          port: ${{ secrets.PORT }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          source: "vitrine-nextjs/out/**"
+          target: "/home/${{ secrets.USERNAME }}/domains/prosartisan.net/public_html"
+          strip_components: 2
+
       - name: Finalize Laravel configuration
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -217,13 +242,40 @@ jobs:
             # Configure root .htaccess to redirect to Laravel public folder
             echo "🔧 Configuring root .htaccess..."
             cat > "$PUBLIC_HTML/.htaccess" << 'EOF'
-            <IfModule mod_rewrite.c>
-            RewriteEngine On
-            # Redirect all requests to Laravel public folder
-            RewriteCond %{REQUEST_URI} !^/monartisanpro-app/backend-proartisan/public
-            RewriteRule ^(.*)$ /monartisanpro-app/backend-proartisan/public/$1 [L]
-            </IfModule>
-            EOF
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # 1. ROUTAGE DU SOUS-DOMAINE API (api.prosartisan.net)
+    RewriteCond %{HTTP_HOST} ^api\.prosartisan\.net$ [NC]
+    RewriteCond %{REQUEST_URI} !^/monartisanpro-app/backend-proartisan/public/
+    RewriteRule ^(.*)$ monartisanpro-app/backend-proartisan/public/$1 [L]
+
+    # 2. GESTION DES DOMAINES PRINCIPAUX (prosartisan.net / www.prosartisan.net)
+    RewriteCond %{HTTP_HOST} !^api\.prosartisan\.net$ [NC]
+    RewriteRule ^$ index.html [L]
+
+    # Gestion de la page de détail d'actualités dynamique
+    RewriteCond %{HTTP_HOST} !^api\.prosartisan\.net$ [NC]
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^actualites/([^/]+)/?$ actualites/details.html [L]
+
+    # Supprimer l'extension .html des URLs au premier niveau
+    RewriteCond %{HTTP_HOST} !^api\.prosartisan\.net$ [NC]
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{DOCUMENT_ROOT}/$1.html -f
+    RewriteRule ^([^/]+)/?$ $1.html [L]
+
+    # Supprimer l'extension .html des URLs au second niveau
+    RewriteCond %{HTTP_HOST} !^api\.prosartisan\.net$ [NC]
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{DOCUMENT_ROOT}/$1/$2.html -f
+    RewriteRule ^([^/]+)/([^/]+)/?$ $1/$2.html [L]
+</IfModule>
+EOF
             echo "✅ Root .htaccess configured"
             echo "✅ Deployment completed successfully!"
             echo "🌐 Site available at: https://prosartisan.net"
