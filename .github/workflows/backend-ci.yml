@@ -252,9 +252,9 @@ jobs:
             RewriteCond %{REQUEST_URI} !^/monartisanpro-app/backend-proartisan/public/
             RewriteRule ^(.*)$ monartisanpro-app/backend-proartisan/public/$1 [L]
 
-            # 2. ROUTAGE DE LARAVEL SUR LE DOMAINE PRINCIPAL (api, admin, sanctum, storage)
-            # Permet d'accéder au panel admin ou à l'API sur prosartisan.net/admin ou prosartisan.net/api
-            RewriteCond %{REQUEST_URI} ^/(api|admin|sanctum|storage) [NC]
+            # 2. ROUTAGE DE LARAVEL SUR LE DOMAINE PRINCIPAL (api, admin, sanctum, storage, build)
+            # Permet d'accéder au panel admin, à l'API et aux assets Vite
+            RewriteCond %{REQUEST_URI} ^/(api|admin|sanctum|storage|build) [NC]
             RewriteCond %{REQUEST_URI} !^/monartisanpro-app/backend-proartisan/public/
             RewriteRule ^(.*)$ monartisanpro-app/backend-proartisan/public/$1 [L]
 
