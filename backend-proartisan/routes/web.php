@@ -107,6 +107,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::delete('/popups/{popup}', [VitrineAdminController::class, 'destroyPopup'])->name('popups.destroy');
 
             Route::post('/settings', [VitrineAdminController::class, 'updateSettings'])->name('settings.update');
+
+            Route::match(['post', 'put'], '/contacts/{contact}', [VitrineAdminController::class, 'updateContact'])->name('contacts.update');
+            Route::post('/contacts/{contact}/reply', [VitrineAdminController::class, 'replyContact'])->name('contacts.reply');
+            Route::delete('/contacts/{contact}', [VitrineAdminController::class, 'destroyContact'])->name('contacts.destroy');
         });
 
         Route::prefix('api/llm')->name('api.llm.')->group(function () {

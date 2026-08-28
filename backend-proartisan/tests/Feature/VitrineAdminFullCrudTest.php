@@ -260,4 +260,48 @@ class VitrineAdminFullCrudTest extends TestCase
         $response->assertRedirect();
         $this->assertDatabaseHas('vitrine_settings', ['cle' => 'chiffres_cles_artisans', 'valeur' => '500+']);
     }
+
+    public function test_can_manage_and_reply_contact_requests(): void
+    {
+        $contact = \App\Models\ContactMessage::create([
+            'nom' => 'Adama Traoré',
+            'email' => 'adama@traore.ci',
+            'telephone' => '+2250102030405',
+            'sujet' => 'Problème de plomberie urgent',
+            'message' => 'Fuite sous l\'évier de cuisine.',
+            'statut' => 'nouveau',
+            'priorite' => 'normale',
+        ]);
+
+        // 1. Update status & notes
+        $this->actingAs($this->admin)->post("/admin/vitrine/contacts/{$contact->id}", [
+            'statut' => 'en_cours',
+            'priorite' => 'urgente',
+            'notes_admin' => 'Contacté le client pour fixer le RDV.',
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('contact_messages', [
+            'id' => $contact->id,
+            'statut' => 'en_cours',
+            'priorite' => 'urgente',
+            'notes_admin' => 'Contacté le client pour fixer le RDV.',
+        ]);
+
+        // 2. Reply to contact
+        $this->actingAs($this->admin)->post("/admin/vitrine/contacts/{$contact->id}/reply", [
+            'reponse_envoyee' => 'Un artisan va se présenter à 15h.',
+            'notes_admin' => 'Mission affectée à Kouamé.',
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('contact_messages', [
+            'id' => $contact->id,
+            'statut' => 'traite',
+            'reponse_envoyee' => 'Un artisan va se présenter à 15h.',
+            'traite_par_user_id' => $this->admin->id,
+        ]);
+
+        // 3. Delete contact
+        $this->actingAs($this->admin)->delete("/admin/vitrine/contacts/{$contact->id}")->assertRedirect();
+        $this->assertDatabaseMissing('contact_messages', ['id' => $contact->id]);
+    }
 }
