@@ -22,6 +22,7 @@ abstract class Routes {
   static const quoteBuilder = '/quote-builder';
   static const jcode = '/jcode';
   static const scanner = '/scanner';
+  static const jcodeServe = '/jcode-serve';
   static const supplierCatalog = '/supplier-catalog';
   static const transactionConfirm = '/transaction-confirm';
   static const score = '/score';

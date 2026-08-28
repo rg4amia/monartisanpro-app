@@ -173,6 +173,49 @@ void main() {
       expect(jcode.statut, 'actif');
     });
 
+    test('should create JcodeModel and JcodeItemModel from JSON with partial consumption fields', () {
+      final json = {
+        'id': 1,
+        'missionId': 10,
+        'artisanId': 5,
+        'code': 'PA-1234',
+        'montant': 50000,
+        'montantConsomme': 20000,
+        'statut': 'partiellement_utilise',
+        'expiresAt': '2026-03-01T12:00:00Z',
+        'items': [
+          {
+            'id': 1,
+            'source': 'custom',
+            'name': 'Ciment',
+            'quantity': 10,
+            'quantityServed': 4,
+            'unitPrice': 5000,
+            'subtotal': 50000,
+            'status': 'partial',
+          }
+        ]
+      };
+
+      final jcode = JcodeModel.fromJson(json);
+
+      expect(jcode.id, 1);
+      expect(jcode.montantConsomme, 20000);
+      expect(jcode.montantRestant, 30000);
+      expect(jcode.statut, 'partiellement_utilise');
+      expect(jcode.isPartiallyUsed, true);
+      expect(jcode.isActive, true);
+
+      expect(jcode.items.length, 1);
+      final item = jcode.items.first;
+      expect(item.quantity, 10);
+      expect(item.quantityServed, 4);
+      expect(item.remainingQuantity, 6);
+      expect(item.isPartial, true);
+      expect(item.isServed, false);
+      expect(item.isRequested, false);
+    });
+
     test('isActive should return correct value', () {
       const activeJcode = JcodeModel(
         id: 1,

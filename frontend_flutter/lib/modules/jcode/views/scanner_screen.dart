@@ -267,7 +267,7 @@ class ScannerScreen extends GetView<JcodeController> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: controller.isScanning.value
+                    child: (controller.isFetchingJcode.value || controller.isScanning.value)
                         ? const SizedBox(
                             height: 20,
                             width: 20,
@@ -301,26 +301,7 @@ class ScannerScreen extends GetView<JcodeController> {
   }
 
   Future<void> _doScan(String identifier) async {
-    try {
-      final permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        await Geolocator.requestPermission();
-      }
-      final pos = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-        ),
-      );
-      await controller.scanJcode(identifier, pos.latitude, pos.longitude);
-    } catch (e) {
-      Get.snackbar(
-        'Erreur GPS',
-        'Impossible d\'obtenir votre position',
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: AppColors.danger,
-        colorText: Colors.white,
-      );
-    }
+    await controller.loadJcodeForScanning(identifier);
   }
 
   String? _normalizeJcodeIdentifier(String raw) {

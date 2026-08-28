@@ -357,6 +357,22 @@ class JcodeController extends GetxController {
     }
   }
 
+  final scannedJcode = Rx<JcodeModel?>(null);
+  final isFetchingJcode = false.obs;
+
+  Future<void> loadJcodeForScanning(String identifier) async {
+    isFetchingJcode.value = true;
+    try {
+      final jcode = await _repo.getJcode(identifier);
+      scannedJcode.value = jcode;
+      Get.toNamed(Routes.jcodeServe, arguments: identifier);
+    } catch (e) {
+      _showError('J-Code introuvable', e);
+    } finally {
+      isFetchingJcode.value = false;
+    }
+  }
+
   Future<void> scanJcode(String identifier, double lat, double lng) async {
     isScanning.value = true;
     try {
@@ -375,6 +391,30 @@ class JcodeController extends GetxController {
         backgroundColor: const Color(0xFFE74C3C),
         colorText: Colors.white,
       );
+    } finally {
+      isScanning.value = false;
+    }
+  }
+
+  Future<void> submitPartialServe({
+    required String identifier,
+    required double lat,
+    required double lng,
+    required List<Map<String, dynamic>> servedItems,
+  }) async {
+    isScanning.value = true;
+    try {
+      final result = await _repo.scanJcode(
+        identifier: identifier,
+        lat: lat,
+        lng: lng,
+        servedItems: servedItems,
+      );
+      scanResult.value = result;
+      Get.offNamed(Routes.transactionConfirm, arguments: result);
+    } catch (e) {
+      _showError('Scan refusé', e);
+      rethrow;
     } finally {
       isScanning.value = false;
     }
