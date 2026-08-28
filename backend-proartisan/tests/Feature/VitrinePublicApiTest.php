@@ -113,18 +113,33 @@ test('can retrieve public formations', function () {
     $responseList->assertStatus(200)->assertJsonFragment(['titre' => 'Formation Test']);
 });
 
-test('can retrieve public recrutements', function () {
+test('can retrieve public recrutements and exclude expired offers', function () {
+    // 1. Offre active valide
     VitrineRecrutement::create([
-        'titre' => 'Offre Test',
+        'titre' => 'Offre Active Valide',
         'description' => 'Description de test',
         'metier' => 'Plombier',
         'lieu' => 'Cocody',
         'type_contrat' => 'cdi',
+        'date_limite' => now()->addDays(10)->toDateString(),
+        'actif' => true,
+    ]);
+
+    // 2. Offre expirée (date limite dépassée)
+    VitrineRecrutement::create([
+        'titre' => 'Offre Expiree Depassee',
+        'description' => 'Cette offre ne doit pas apparaitre',
+        'metier' => 'Électricien',
+        'lieu' => 'Yopougon',
+        'type_contrat' => 'cdd',
+        'date_limite' => now()->subDay()->toDateString(),
         'actif' => true,
     ]);
 
     $responseList = $this->getJson('/api/v1/vitrine/recrutements');
-    $responseList->assertStatus(200)->assertJsonFragment(['titre' => 'Offre Test']);
+    $responseList->assertStatus(200)
+        ->assertJsonFragment(['titre' => 'Offre Active Valide'])
+        ->assertJsonMissing(['titre' => 'Offre Expiree Depassee']);
 });
 
 test('can retrieve active popup', function () {
