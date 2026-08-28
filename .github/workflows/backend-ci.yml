@@ -5,11 +5,13 @@ on:
     branches: [master, develop, new-dev-inz]
     paths:
       - "backend-proartisan/**"
+      - "vitrine-nextjs/**"
       - ".github/workflows/backend-ci.yml"
   pull_request:
     branches: [master, develop, new-dev-inz]
     paths:
       - "backend-proartisan/**"
+      - "vitrine-nextjs/**"
       - ".github/workflows/backend-ci.yml"
   workflow_dispatch:
 
@@ -271,17 +273,23 @@ jobs:
             RewriteCond %{REQUEST_FILENAME} !-d
             RewriteRule ^actualites/([^/]+)/?$ actualites/details.html [L]
 
-            # Supprimer l'extension .html des URLs au premier niveau (ex: /supplier, /contact)
+            # Support des sous-dossiers avec index.html (ex: /supplier/login -> supplier/login/index.html)
             RewriteCond %{HTTP_HOST} !^api\.prosartisan\.net$ [NC]
-            RewriteCond %{REQUEST_FILENAME} !-f
-            RewriteCond %{REQUEST_FILENAME} !-d
+            RewriteCond %{DOCUMENT_ROOT}/$1/$2/index.html -f
+            RewriteRule ^([^/]+)/([^/]+)/?$ $1/$2/index.html [L]
+
+            # Support des dossiers racine avec index.html (ex: /supplier -> supplier/index.html)
+            RewriteCond %{HTTP_HOST} !^api\.prosartisan\.net$ [NC]
+            RewriteCond %{DOCUMENT_ROOT}/$1/index.html -f
+            RewriteRule ^([^/]+)/?$ $1/index.html [L]
+
+            # Supprimer l'extension .html des URLs au premier niveau (ex: /contact -> contact.html)
+            RewriteCond %{HTTP_HOST} !^api\.prosartisan\.net$ [NC]
             RewriteCond %{DOCUMENT_ROOT}/$1.html -f
             RewriteRule ^([^/]+)/?$ $1.html [L]
 
-            # Supprimer l'extension .html des URLs au second niveau (ex: /supplier/orders)
+            # Supprimer l'extension .html des URLs au second niveau (ex: /supplier/orders -> supplier/orders.html)
             RewriteCond %{HTTP_HOST} !^api\.prosartisan\.net$ [NC]
-            RewriteCond %{REQUEST_FILENAME} !-f
-            RewriteCond %{REQUEST_FILENAME} !-d
             RewriteCond %{DOCUMENT_ROOT}/$1/$2.html -f
             RewriteRule ^([^/]+)/([^/]+)/?$ $1/$2.html [L]
             </IfModule>
