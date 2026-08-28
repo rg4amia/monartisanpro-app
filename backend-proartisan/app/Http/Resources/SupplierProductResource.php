@@ -10,8 +10,20 @@ class SupplierProductResource extends JsonResource
     public function toArray(Request $request): array
     {
         $imageUrl = $this->image_url;
-        if ($imageUrl && !str_starts_with($imageUrl, 'http://') && !str_starts_with($imageUrl, 'https://')) {
-            $imageUrl = asset(ltrim($imageUrl, '/'));
+        if ($imageUrl) {
+            $imageUrl = trim($imageUrl);
+            if (str_starts_with($imageUrl, 'http://localhost') || str_starts_with($imageUrl, 'http://127.0.0.1')) {
+                $imageUrl = preg_replace('#^http://(localhost|127\.0\.0\.1)(:\d+)?#', 'https://prosartisan.net', $imageUrl);
+            }
+            if (str_starts_with($imageUrl, 'http://prosartisan.net')) {
+                $imageUrl = str_replace('http://', 'https://', $imageUrl);
+            }
+            if (!str_starts_with($imageUrl, 'http://') && !str_starts_with($imageUrl, 'https://')) {
+                $trimmed = ltrim($imageUrl, '/');
+                $imageUrl = str_starts_with($trimmed, 'storage/')
+                    ? 'https://prosartisan.net/' . $trimmed
+                    : 'https://prosartisan.net/storage/' . $trimmed;
+            }
         }
 
         return [

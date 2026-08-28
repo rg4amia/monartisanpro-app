@@ -14,6 +14,25 @@ interface Product {
     is_active: boolean;
 }
 
+function formatImageUrl(url?: string | null): string {
+    if (!url) return '';
+    let clean = url.trim();
+    if (!clean) return '';
+    if (clean.includes('localhost') || clean.includes('127.0.0.1')) {
+        clean = clean.replace(/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/, 'https://prosartisan.net');
+    }
+    if (clean.startsWith('http://prosartisan.net')) {
+        clean = clean.replace('http://', 'https://');
+    }
+    if (!clean.startsWith('http://') && !clean.startsWith('https://')) {
+        const trimmed = clean.replace(/^\/+/, '');
+        clean = trimmed.startsWith('storage/')
+            ? `https://prosartisan.net/${trimmed}`
+            : `https://prosartisan.net/storage/${trimmed}`;
+    }
+    return clean;
+}
+
 export default function SupplierCatalog() {
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
@@ -45,7 +64,7 @@ export default function SupplierCatalog() {
                 description: p.description || '',
                 unit_price: Number(p.unit_price ?? p.unitPrice ?? 0),
                 stock_quantity: Number(p.stock_quantity ?? p.stockQuantity ?? 0),
-                image_url: p.image_url ?? p.imageUrl ?? '',
+                image_url: formatImageUrl(p.image_url ?? p.imageUrl ?? ''),
                 is_active: p.is_active !== undefined ? Boolean(p.is_active) : (p.isActive !== undefined ? Boolean(p.isActive) : true),
             }));
             setProducts(normalized);
@@ -224,9 +243,12 @@ export default function SupplierCatalog() {
                             <div className="h-44 bg-slate-950 relative flex items-center justify-center border-b border-slate-800">
                                 {product.image_url ? (
                                     <img
-                                        src={product.image_url}
+                                        src={formatImageUrl(product.image_url)}
                                         alt={product.name}
                                         className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                            (e.target as HTMLElement).style.display = 'none';
+                                        }}
                                     />
                                 ) : (
                                     <span className="text-4xl">🛠️</span>
