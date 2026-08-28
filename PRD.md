@@ -144,6 +144,7 @@ Note : Pour les prestations chantiers de l'Artisan.
 15. **Sécurisation Multi-niveaux du Traitement des Devis :** L'acceptation du devis requiert obligatoirement une transaction d'acompte confirmée de même montant et explicitement liée à ce devis. Toute modification ou validation de devis est soumise aux vérifications strictes de rôle (exclusivité client), d'état (devis au statut `soumis`) et de sécurité.
 16. **Gating de Protection des Coordonnées Client (RGPD & Sécurité) :** Masquer les coordonnées GPS exactes, l'adresse textuelle et le numéro de téléphone du client tant que la mission n'a pas été acceptée et payée. Dès que le devis est validé et financé (statut `financee`/`funded_locked` ou ultérieur), ces coordonnées sont dévoilées via l'API et déverrouillées sur le mobile de l'artisan.
 17. **Audit Trailing & Preuves d'Interactions en Backoffice :** Le backoffice d'administration intègre un historique global complet de toutes les notifications, SMS, alertes et OTP expédiés par le système pour servir de preuve d'interaction et de journal d'audit en cas de litige, avec recherche, filtres par rôle/type et inspection des métadonnées JSON techniques.
+18. **Consommation Partielle de J-Code & Suivi par Item :** Le J-Code supporte les débits partiels auprès de plusieurs fournisseurs agréés. Le statut global du J-Code passe de `actif` à `partiellement_utilise` puis `utilise` une fois le montant total consommé. Le statut individuel des articles requis passe par `requested` $\rightarrow$ `partial` $\rightarrow$ `served` avec traçabilité complète du fournisseur ayant servi chaque article et décrémentation automatique des stocks.
 
 ### Formule mathématique du Score ProsArtisan
 Le score d'un artisan $S(t)$ est calculé sur une échelle de 0 à 1000 :
@@ -171,7 +172,7 @@ Le module **Missions** du Backoffice administrateur (`/admin/missions`) intègre
 
 ### 🚚 Logistique & Livreurs
 1. **Réaffectation Automatique de Livreur (Driver Fallback) :** Si un livreur accepte une course mais reste immobile pendant plus de 15 minutes ou s'éloigne du fournisseur, la course doit lui être retirée automatiquement et remise dans le radar.
-2. **Consommation Partielle du J-Code :** Permettre à l'artisan d'utiliser son J-Code chez plusieurs fournisseurs agréés si le premier n'a pas la totalité du stock disponible (débit partiel du séquestre matériel).
+2. **Consommation Partielle du J-Code :** [COMPLÉTÉ] Permettre à l'artisan d'utiliser son J-Code chez plusieurs fournisseurs agréés si le premier n'a pas la totalité du stock disponible (débit partiel du séquestre matériel), avec interface mobile de sélection de quantité et traçabilité par item.
 3. **Mode Hors-Ligne pour les Livreurs :** [COMPLÉTÉ] Permettre au livreur de valider la récupération (prise en charge) ou la livraison via des requêtes USSD interactives ou instantanées (`*555*RET-123#`), ou par SMS crypté (ex: `RET-123`), dans les zones blanches à faible connectivité internet.
 
 ### 🛡️ Anti-Fraude, Sécurité & Finance (Ledger)
