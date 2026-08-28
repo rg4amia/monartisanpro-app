@@ -31,7 +31,7 @@ export default function VitrinePanel({
 
     // Filter artisans to pick for "Artisan du Mois"
     const artisans = useMemo(() => {
-        return users.filter(u => u.role === 'artisan' && u.kyc_status === 'actif');
+        return (users || []).filter(u => u.role === 'artisan');
     }, [users]);
 
     // Format money helper
@@ -384,10 +384,14 @@ function ArtisanDuMoisSubPanel({ admList, artisans }: { admList: any[]; artisans
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         post('/admin/vitrine/artisan-du-mois', {
+            forceFormData: true,
             preserveScroll: true,
             onSuccess: () => {
                 setIsOpen(false);
                 reset();
+            },
+            onError: (err) => {
+                console.error('Erreur soumission artisan du mois:', err);
             }
         });
     };

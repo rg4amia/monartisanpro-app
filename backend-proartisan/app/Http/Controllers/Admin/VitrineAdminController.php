@@ -83,32 +83,48 @@ class VitrineAdminController extends Controller
 
     public function storeArtisanDuMois(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
+        $request->validate([
             'user_id' => 'required|exists:users,id',
-            'mois' => 'required|date',
-            'photo' => 'nullable|image|max:5120',
+            'mois' => 'required|string',
+            'photo' => 'nullable|file|max:5120',
             'photo_override_url' => 'nullable|string',
             'texte_editorial' => 'nullable|string',
-            'actif' => 'required|boolean',
+            'actif' => 'nullable',
         ]);
 
-        // Formater le mois au format Y-m-01
-        $validated['mois'] = \Carbon\Carbon::parse($validated['mois'])->startOfMonth()->toDateString();
+        try {
+            $moisInput = $request->input('mois');
+            try {
+                $parsedMois = \Carbon\Carbon::parse($moisInput)->startOfMonth()->toDateString();
+            } catch (\Throwable $e) {
+                $parsedMois = now()->startOfMonth()->toDateString();
+            }
 
-        if ($request->hasFile('photo')) {
-            $path = $request->file('photo')->store('vitrine/artisans', 'public');
-            $validated['photo_override_url'] = '/storage/' . $path;
+            $photoOverrideUrl = $request->input('photo_override_url') ?: null;
+
+            if ($request->hasFile('photo') && $request->file('photo')->isValid()) {
+                $path = $request->file('photo')->store('vitrine/artisans', 'public');
+                $photoOverrideUrl = '/storage/' . $path;
+            }
+
+            $actif = $request->has('actif') ? $request->boolean('actif') : true;
+
+            // Mettre à jour si le mois existe déjà, ou créer
+            VitrineArtisanDuMois::updateOrCreate(
+                ['mois' => $parsedMois],
+                [
+                    'user_id' => (int) $request->input('user_id'),
+                    'photo_override_url' => $photoOverrideUrl,
+                    'texte_editorial' => $request->input('texte_editorial') ?: null,
+                    'actif' => $actif,
+                ]
+            );
+
+            return back()->with('success', 'Artisan du mois configuré avec succès.');
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Erreur configuration artisan du mois: ' . $e->getMessage());
+            return back()->withErrors(['artisan_du_mois' => 'Impossible de configurer l\'artisan du mois : ' . $e->getMessage()]);
         }
-
-        unset($validated['photo']);
-
-        // Mettre à jour si le mois existe déjà, ou créer
-        VitrineArtisanDuMois::updateOrCreate(
-            ['mois' => $validated['mois']],
-            $validated
-        );
-
-        return back()->with('success', 'Artisan du mois configuré.');
     }
 
     public function destroyArtisanDuMois(VitrineArtisanDuMois $adm): RedirectResponse
