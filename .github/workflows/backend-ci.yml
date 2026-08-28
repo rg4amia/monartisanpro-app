@@ -247,11 +247,21 @@ jobs:
             RewriteBase /
 
             # 1. ROUTAGE DU SOUS-DOMAINE API (api.prosartisan.net)
+            # Redirige api.prosartisan.net vers Laravel public/
             RewriteCond %{HTTP_HOST} ^api\.prosartisan\.net$ [NC]
             RewriteCond %{REQUEST_URI} !^/monartisanpro-app/backend-proartisan/public/
             RewriteRule ^(.*)$ monartisanpro-app/backend-proartisan/public/$1 [L]
 
-            # 2. GESTION DES DOMAINES PRINCIPAUX (prosartisan.net / www.prosartisan.net)
+            # 2. ROUTAGE DE LARAVEL SUR LE DOMAINE PRINCIPAL (api, admin, sanctum, storage)
+            # Permet d'accéder au panel admin ou à l'API sur prosartisan.net/admin ou prosartisan.net/api
+            RewriteCond %{REQUEST_URI} ^/(api|admin|sanctum|storage) [NC]
+            RewriteCond %{REQUEST_URI} !^/monartisanpro-app/backend-proartisan/public/
+            RewriteRule ^(.*)$ monartisanpro-app/backend-proartisan/public/$1 [L]
+
+            # 3. GESTION DES DOMAINES PRINCIPAUX (prosartisan.net / www.prosartisan.net)
+            # Sert le Front Office statique Next.js (SSG)
+
+            # Ignorer ces règles si l'hôte est api.prosartisan.net
             RewriteCond %{HTTP_HOST} !^api\.prosartisan\.net$ [NC]
             RewriteRule ^$ index.html [L]
 
@@ -261,14 +271,14 @@ jobs:
             RewriteCond %{REQUEST_FILENAME} !-d
             RewriteRule ^actualites/([^/]+)/?$ actualites/details.html [L]
 
-            # Supprimer l'extension .html des URLs au premier niveau
+            # Supprimer l'extension .html des URLs au premier niveau (ex: /supplier, /contact)
             RewriteCond %{HTTP_HOST} !^api\.prosartisan\.net$ [NC]
             RewriteCond %{REQUEST_FILENAME} !-f
             RewriteCond %{REQUEST_FILENAME} !-d
             RewriteCond %{DOCUMENT_ROOT}/$1.html -f
             RewriteRule ^([^/]+)/?$ $1.html [L]
 
-            # Supprimer l'extension .html des URLs au second niveau
+            # Supprimer l'extension .html des URLs au second niveau (ex: /supplier/orders)
             RewriteCond %{HTTP_HOST} !^api\.prosartisan\.net$ [NC]
             RewriteCond %{REQUEST_FILENAME} !-f
             RewriteCond %{REQUEST_FILENAME} !-d
