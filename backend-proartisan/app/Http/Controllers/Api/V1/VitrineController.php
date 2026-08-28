@@ -28,18 +28,34 @@ class VitrineController extends Controller
     }
 
     /**
-     * Artisan du mois courant avec profil et photo.
+     * Artisan du mois courant avec profil, photo et métriques enrichies.
      */
     public function artisanDuMois(): JsonResponse
     {
         $adm = VitrineArtisanDuMois::actif()
-            ->with(['user:id,name,phone,role,score_prosartisan', 'user.artisanProfile.trade'])
+            ->with(['user:id,name,phone,role,score_prosartisan,commune_id', 'user.artisanProfile.trade', 'user.commune'])
             ->latest('mois')
             ->first();
 
         if (!$adm || !$adm->user) {
             return response()->json(['success' => true, 'data' => null]);
         }
+
+        $artisan = $adm->user;
+
+        // Calcul dynamique du taux de succès
+        $totalMissions = \App\Models\Mission::where('artisan_id', $artisan->id)->count();
+        $completedMissions = \App\Models\Mission::where('artisan_id', $artisan->id)->where('status', 'terminee')->count();
+        $tauxSucces = $totalMissions > 0 ? (int) round(($completedMissions / $totalMissions) * 100) : 100;
+
+        // Calcul note moyenne & total avis
+        $totalAvis = \App\Models\Evaluation::where('evalue_id', $artisan->id)->count();
+        $noteMoyenne = $totalAvis > 0
+            ? (float) \App\Models\Evaluation::where('evalue_id', $artisan->id)->avg('note')
+            : round(max(1.0, min(5.0, $artisan->score_prosartisan / 200)), 1);
+
+        // Zone principale
+        $zone = $artisan->commune?->nom ?? 'Abidjan, Côte d\'Ivoire';
 
         return response()->json([
             'success' => true,
@@ -49,10 +65,14 @@ class VitrineController extends Controller
                 'texte_editorial' => $adm->texte_editorial,
                 'photo_url' => $adm->photo_url, // Accesseur : override > KYC selfie
                 'artisan' => [
-                    'id' => $adm->user->id,
-                    'name' => $adm->user->name,
-                    'trade' => $adm->user->trade ?? 'Artisan Qualifié',
-                    'score_prosartisan' => $adm->user->score_prosartisan,
+                    'id' => $artisan->id,
+                    'name' => $artisan->name,
+                    'trade' => $artisan->trade ?? 'Artisan Qualifié',
+                    'score_prosartisan' => $artisan->score_prosartisan,
+                    'note_moyenne' => $noteMoyenne,
+                    'total_avis' => $totalAvis,
+                    'taux_succes' => $tauxSucces,
+                    'zone' => $zone,
                 ],
             ],
         ]);
