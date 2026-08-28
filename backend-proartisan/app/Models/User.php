@@ -322,4 +322,14 @@ class User extends Authenticatable
     {
         return $query->where('cnmci_status', 'valide');
     }
+
+    public function getTradeAttribute(): ?string
+    {
+        return $this->artisanProfile?->trade?->name ?? null;
+    }
+
+    public function getKycSelfiePathAttribute(): ?string
+    {
+        return $this->kycDocuments()->where('type', 'selfie')->latest()->value('file_url');
+    }
 }

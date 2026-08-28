@@ -33,11 +33,11 @@ class VitrineController extends Controller
     public function artisanDuMois(): JsonResponse
     {
         $adm = VitrineArtisanDuMois::actif()
-            ->moisCourant()
-            ->with('user:id,name,phone,role,score_prosartisan,kyc_selfie_path,trade')
+            ->with(['user:id,name,phone,role,score_prosartisan', 'user.artisanProfile.trade'])
+            ->latest('mois')
             ->first();
 
-        if (!$adm) {
+        if (!$adm || !$adm->user) {
             return response()->json(['success' => true, 'data' => null]);
         }
 
@@ -45,13 +45,13 @@ class VitrineController extends Controller
             'success' => true,
             'data' => [
                 'id' => $adm->id,
-                'mois' => $adm->mois->format('Y-m'),
+                'mois' => $adm->mois ? $adm->mois->format('Y-m') : now()->format('Y-m'),
                 'texte_editorial' => $adm->texte_editorial,
                 'photo_url' => $adm->photo_url, // Accesseur : override > KYC selfie
                 'artisan' => [
                     'id' => $adm->user->id,
                     'name' => $adm->user->name,
-                    'trade' => $adm->user->trade ?? null,
+                    'trade' => $adm->user->trade ?? 'Artisan Qualifié',
                     'score_prosartisan' => $adm->user->score_prosartisan,
                 ],
             ],
@@ -66,8 +66,9 @@ class VitrineController extends Controller
         $artisans = User::where('role', 'artisan')
             ->where('kyc_status', 'actif')
             ->where('score_prosartisan', '>=', 700)
+            ->with(['artisanProfile.trade', 'commune'])
             ->orderByDesc('score_prosartisan')
-            ->select('id', 'name', 'trade', 'score_prosartisan', 'kyc_selfie_path')
+            ->select('id', 'name', 'score_prosartisan', 'commune_id')
             ->paginate($request->input('per_page', 12));
 
         return response()->json(['success' => true, 'data' => $artisans]);
@@ -80,13 +81,18 @@ class VitrineController extends Controller
     {
         $query = User::where('role', 'artisan')
             ->where('kyc_status', 'actif')
-            ->select('id', 'name', 'trade', 'score_prosartisan', 'kyc_selfie_path', 'city');
+            ->with(['artisanProfile.trade', 'commune'])
+            ->select('id', 'name', 'score_prosartisan', 'commune_id');
 
         if ($metier = $request->input('metier')) {
-            $query->where('trade', $metier);
+            $query->whereHas('artisanProfile.trade', function ($q) use ($metier) {
+                $q->where('name', 'like', "%{$metier}%");
+            });
         }
         if ($ville = $request->input('ville')) {
-            $query->where('city', 'like', "%{$ville}%");
+            $query->whereHas('commune', function ($q) use ($ville) {
+                $q->where('nom', 'like', "%{$ville}%");
+            });
         }
         if ($noteMin = $request->input('note_min')) {
             $query->where('score_prosartisan', '>=', (int) $noteMin);
@@ -105,7 +111,8 @@ class VitrineController extends Controller
     {
         $artisan = User::where('role', 'artisan')
             ->where('kyc_status', 'actif')
-            ->select('id', 'name', 'trade', 'score_prosartisan', 'kyc_selfie_path', 'city', 'created_at')
+            ->with(['artisanProfile.trade', 'commune'])
+            ->select('id', 'name', 'score_prosartisan', 'commune_id', 'created_at')
             ->findOrFail($id);
 
         // Récupérer les évaluations publiques

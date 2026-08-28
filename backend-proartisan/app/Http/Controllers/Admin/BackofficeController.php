@@ -569,7 +569,7 @@ class BackofficeController extends Controller
         try {
             if (\Illuminate\Support\Facades\Schema::hasTable('vitrine_slides')) {
                 $vitrineSlides = VitrineSlide::ordered()->get();
-                $vitrineArtisanDuMois = VitrineArtisanDuMois::with('user:id,name,phone,role,score_prosartisan,trade')->get();
+                $vitrineArtisanDuMois = VitrineArtisanDuMois::with(['user:id,name,phone,role,score_prosartisan', 'user.artisanProfile.trade'])->get();
                 $vitrineArticles = VitrineArticle::with('auteur:id,name')->latest()->get();
                 $vitrineVideos = VitrineVideo::ordered()->get();
                 $vitrineFormations = VitrineFormation::orderBy('date_debut')->get();
