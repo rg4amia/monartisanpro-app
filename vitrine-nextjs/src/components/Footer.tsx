@@ -118,16 +118,13 @@ export default function Footer() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
                     {/* Brand Section */}
                     <div className="space-y-4">
-                        <div className="flex items-center gap-2.5">
+                        <Link href="/" className="inline-block bg-white/95 p-2 rounded-xl shadow-md transition hover:scale-105">
                             <img
                                 src="/img/prosartisan-logo.png"
-                                alt="ProsArtisan"
-                                className="h-9 w-9 object-contain"
+                                alt="ProsArtisan — Professionnel de l'Artisanat"
+                                className="h-9 w-auto object-contain"
                             />
-                            <span className="font-extrabold text-lg tracking-tight text-white">
-                                ProsArtisan
-                            </span>
-                        </div>
+                        </Link>
                         <p className="text-xs text-[#efe6da]/70 leading-relaxed">
                             {description}
                         </p>

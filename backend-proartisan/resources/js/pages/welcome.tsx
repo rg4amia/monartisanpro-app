@@ -260,8 +260,8 @@ export default function Welcome() {
                     <header className="sticky top-0 z-20 border-b border-[var(--landing-border)] bg-[rgba(246,239,229,0.84)] backdrop-blur-xl">
                         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
                             <div className="flex items-center gap-3">
-                                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--landing-gold)] shadow-[0_16px_30px_rgba(202,154,72,0.28)]">
-                                    <img src="/img/prosartisan-logo.png" alt="ProsArtisan" className="h-8 w-8 object-contain" />
+                                <div className="flex h-12 w-auto px-3 items-center justify-center rounded-2xl bg-white shadow-sm border border-[var(--landing-border)]">
+                                    <img src="/img/prosartisan-logo.png" alt="ProsArtisan" className="h-8 w-auto object-contain" />
                                 </div>
                                 <div>
                                     <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--landing-copy)]">Cote d'Ivoire</p>
@@ -661,8 +661,8 @@ export default function Welcome() {
                             <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr_0.8fr_0.8fr]">
                                 <div>
                                     <div className="flex items-center gap-3">
-                                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--landing-gold)] text-[var(--landing-ink)]">
-                                            <img src="/img/prosartisan-logo.png" alt="ProsArtisan" className="h-8 w-8 object-contain" />
+                                        <div className="flex h-12 w-auto px-3 items-center justify-center rounded-2xl bg-white text-[var(--landing-ink)] shadow-sm">
+                                            <img src="/img/prosartisan-logo.png" alt="ProsArtisan" className="h-8 w-auto object-contain" />
                                         </div>
                                         <div>
                                             <p className="text-lg font-semibold" style={{ fontFamily: '"Sora", sans-serif' }}>

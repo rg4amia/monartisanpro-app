@@ -8,10 +8,10 @@
 
     <title inertia>{{ config('app.name', 'Laravel') }}</title>
 
-    <link rel="icon" type="image/png" href="/img/prosartisan-logo.png?v=3">
-    <link rel="icon" href="/favicon.ico?v=3" sizes="any">
-    <link rel="icon" href="/favicon.svg?v=3" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=3">
+    <link rel="icon" type="image/png" href="/favicon.png?v=4">
+    <link rel="icon" href="/favicon.ico?v=4" sizes="any">
+    <link rel="icon" href="/favicon.svg?v=4" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=4">
 
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />

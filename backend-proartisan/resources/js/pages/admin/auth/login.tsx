@@ -61,8 +61,8 @@ export default function AdminLoginPage({ errors, flash }: LoginPageProps) {
                         <div className="grid w-full items-center gap-10 lg:grid-cols-[0.92fr_0.78fr]">
                             <div className="hidden lg:block">
                                 <div className="flex items-center gap-4">
-                                    <div className="flex h-16 w-16 items-center justify-center rounded-[22px] bg-[#ebb95e] text-[#241b16] shadow-[0_20px_50px_rgba(210,152,52,0.24)]">
-                                        <img src="/img/prosartisan-logo.png" alt="ProsArtisan" className="h-10 w-10 object-contain" />
+                                    <div className="flex h-16 w-auto px-4 items-center justify-center rounded-[22px] bg-white text-[#241b16] shadow-[0_12px_30px_rgba(0,0,0,0.08)] border border-[var(--admin-border)]">
+                                        <img src="/img/prosartisan-logo.png" alt="ProsArtisan" className="h-10 w-auto object-contain" />
                                     </div>
                                     <div>
                                         <p className="text-sm font-semibold uppercase tracking-[0.26em] text-[var(--admin-muted)]">ProsArtisan</p>
@@ -99,8 +99,8 @@ export default function AdminLoginPage({ errors, flash }: LoginPageProps) {
 
                             <section className="admin-panel admin-surface mx-auto w-full max-w-[520px] rounded-[34px] border p-7 lg:p-10">
                                 <div className="mx-auto mb-7 flex w-fit items-center gap-3 lg:hidden">
-                                    <div className="flex h-14 w-14 items-center justify-center rounded-[20px] bg-[#ebb95e] text-[#241b16] shadow-[0_18px_40px_rgba(210,152,52,0.24)]">
-                                        <img src="/img/prosartisan-logo.png" alt="ProsArtisan" className="h-8 w-8 object-contain" />
+                                    <div className="flex h-14 w-auto px-3.5 items-center justify-center rounded-[20px] bg-white text-[#241b16] shadow-[0_10px_25px_rgba(0,0,0,0.08)] border border-[var(--admin-border)]">
+                                        <img src="/img/prosartisan-logo.png" alt="ProsArtisan" className="h-8 w-auto object-contain" />
                                     </div>
                                     <div>
                                         <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--admin-muted)]">ProsArtisan</p>

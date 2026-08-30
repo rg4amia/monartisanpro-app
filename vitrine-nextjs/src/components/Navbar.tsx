@@ -51,20 +51,12 @@ export default function Navbar() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between">
                     {/* Logo */}
-                    <Link href="/" className="flex items-center gap-2.5 group">
+                    <Link href="/" className="flex items-center group py-1">
                         <img
                             src="/img/prosartisan-logo.png"
-                            alt="ProsArtisan"
-                            className="h-10 w-10 object-contain group-hover:scale-105 transition transform"
+                            alt="ProsArtisan — Professionnel de l'Artisanat"
+                            className="h-10 sm:h-12 w-auto object-contain group-hover:scale-105 transition transform drop-shadow-sm"
                         />
-                        <div>
-                            <span className="font-extrabold text-xl tracking-tight text-[#241b16] group-hover:text-[#8a5d16] transition">
-                                ProsArtisan
-                            </span>
-                            <span className="block text-[9px] font-bold tracking-widest text-[#8a5d16] uppercase">
-                                label de confiance
-                            </span>
-                        </div>
                     </Link>
 
                     {/* Desktop Navigation */}
