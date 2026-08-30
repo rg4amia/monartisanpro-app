@@ -456,13 +456,31 @@ class _MissionCard extends StatelessWidget {
       }
     }
 
-    if (mission.status == 'terminee' || mission.status == 'completed') {
+    if (mission.status == 'terminee' ||
+        mission.status == 'completed' ||
+        mission.rawStatus == 'terminee' ||
+        mission.rawStatus == 'completed' ||
+        mission.status.toLowerCase().contains('termin')) {
       return _MissionAction(
-        label: 'Évaluer',
-        subtitle: 'Donnez votre avis sur l\'artisan et les intervenants.',
+        label: '⭐ Noter l\'artisan',
+        subtitle: 'Travaux terminés. Évaluez la prestation de votre artisan.',
         color: const Color(0xFFF59E0B),
         icon: Icons.star_rounded,
-        onTap: () => Get.toNamed(Routes.missionTracking, arguments: mission),
+        onTap: () async {
+          final result = await Get.toNamed(
+            Routes.rating,
+            arguments: <String, dynamic>{
+              'missionId': mission.id,
+              'evalueId': mission.artisanId,
+              'targetName': mission.artisanName ?? 'Artisan',
+              'targetRole': 'artisan',
+              'targetSubtitle': mission.description ?? 'Mission #${mission.id}',
+            },
+          );
+          if (result == true) {
+            Get.find<MissionsController>().loadMissions();
+          }
+        },
       );
     }
 
