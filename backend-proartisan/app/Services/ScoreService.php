@@ -307,10 +307,8 @@ class ScoreService
 
     // ──────────────────────────────────────────────
     //  Recalcul pur à partir du Ledger
-    // ──────────────────────────────────────────────
-
     /**
-     * Somme toutes les entrées du Ledger et met à jour score_prosartisan.
+     * Somme les piliers d'évaluation et les entrées du Ledger pour mettre à jour score_prosartisan (0 à 1000).
      */
     public function recalculateFromLedger(User $artisan): int
     {
@@ -318,11 +316,33 @@ class ScoreService
             return $artisan->score_prosartisan;
         }
 
+        $row = DB::selectOne("
+            SELECT
+                AVG(fiabilite)  AS avg_fiabilite,
+                AVG(integrite)  AS avg_integrite,
+                AVG(qualite)    AS avg_qualite,
+                AVG(reactivite) AS avg_reactivite,
+                COUNT(*)        AS total_evaluations
+            FROM evaluations
+            WHERE evalue_id = ?
+        ", [$artisan->id]);
+
+        $evalScoreBase = 0;
+        if ($row && $row->total_evaluations > 0) {
+            $f = (float) ($row->avg_fiabilite ?? 0);
+            $i = (float) ($row->avg_integrite ?? 0);
+            $q = (float) ($row->avg_qualite ?? 0);
+            $r = (float) ($row->avg_reactivite ?? 0);
+
+            // Fiabilité (40% -> 400 pts) + Intégrité (30% -> 300 pts) + Qualité (20% -> 200 pts) + Réactivité (10% -> 100 pts)
+            $evalScoreBase = (int) round(($f / 5.0 * 400) + ($i / 5.0 * 300) + ($q / 5.0 * 200) + ($r / 5.0 * 100));
+        }
+
         $ledgerSum = (int) ScoreLedgerEntry::where('user_id', $artisan->id)
             ->selectRaw('SUM(points * credibility_factor) as total')
             ->value('total');
 
-        $newScore = min(self::MAX_SCORE, max(self::MIN_SCORE, self::BASE_SCORE + $ledgerSum));
+        $newScore = min(self::MAX_SCORE, max(self::MIN_SCORE, $evalScoreBase + $ledgerSum));
         $artisan->update(['score_prosartisan' => $newScore]);
 
         return $newScore;
