@@ -192,5 +192,11 @@ Le module **Missions** du Backoffice administrateur (`/admin/missions`) intègre
 2. **Ajustements de Devis en cours de Mission (Avenants) :** [COMPLÉTÉ] Permettre la création d'avenants au devis initial (matériel/main d'œuvre supplémentaire imprévu) validés par le client, réajustant le séquestre de façon incrémentale et insérant les jalons sans perturber le cycle de vie de la mission.
 
 ### ⭐️ Système de Réputation (Score ProsArtisan)
-1. **Indice de Crédibilité de l'Évaluateur ($C_k$) :** Pondérer la note laissée à l'artisan selon le profil du client (les avis des clients récurrents pèsent plus lourd pour éviter le dénigrement ou les faux avis).
-2. **Dégradation Temporelle ("La Rouille" $\Delta(t)$) :** Diminuer progressivement le Score ProsArtisan si l'artisan reste inactif pendant plus de 60 jours afin de valoriser les profils actifs.
+1. **Indice de Crédibilité de l'Évaluateur ($C_k$) :** [COMPLÉTÉ] Pondérer la note laissée à l'artisan selon le profil du client (0.1 pour un nouveau client, 1.0 pour un client vérifié récurrent, 1.5 pour un client B2B) afin d'éviter le dénigrement ou les faux avis.
+2. **Dégradation Temporelle ("La Rouille" $\Delta(t)$) :** [COMPLÉTÉ] Diminuer progressivement le Score ProsArtisan si l'artisan reste inactif pendant plus de 60 jours afin de valoriser les profils actifs.
+3. **Évaluation Multi-Acteurs & Notation Directe Mobile :** [COMPLÉTÉ] Évaluation indépendante de l'artisan, du livreur et de la quincaillerie sur mission terminée ou commande livrée. Accès direct via bouton d'action doré « ⭐ Noter l'artisan » sur les cartes de missions terminées dans l'application mobile, notation par sous-critères (Fiabilité, Intégrité, Qualité, Réactivité), recalcul instantané du score et journalisation d'audit dans `score_ledger_entries`.
+
+### ⚖️ Conformité, Confidentialité & RGPD / Loi CI n° 2013-450
+1. **Gestion du Consentement des Cookies Web :** [COMPLÉTÉ] Bandeau de consentement interactif et modale de personnalisation granulaire (Essentiels, Analytiques, Préférences) sur le front office web, mémorisation du choix en stockage local et modification permanente via le footer.
+2. **Acceptation et Consultation des CGU / Confidentialité :** [COMPLÉTÉ] Traçabilité de l'acceptation initiale en base de données (`cgu_accepted_at`, `privacy_policy_accepted_at`) et consultation permanente de la politique de confidentialité et des CGU sur web et mobile.
+
