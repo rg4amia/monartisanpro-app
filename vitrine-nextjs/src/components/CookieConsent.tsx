@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Cookie, ShieldCheck, Check, X, Settings2, ExternalLink } from 'lucide-react';
+import { Cookie, Check, X, Settings2, ExternalLink } from 'lucide-react';
 
 const STORAGE_KEY = 'prosartisan_cookie_consent_v1';
 
@@ -17,9 +17,32 @@ export default function CookieConsent() {
     const [isVisible, setIsVisible] = useState(false);
     const [showCustomize, setShowCustomize] = useState(false);
     
-    // Cookie preference switches
-    const [analyticsAllowed, setAnalyticsAllowed] = useState(true);
-    const [preferencesAllowed, setPreferencesAllowed] = useState(true);
+    // Cookie preference switches initialized from storage
+    const [analyticsAllowed, setAnalyticsAllowed] = useState<boolean>(() => {
+        if (typeof window !== 'undefined') {
+            try {
+                const stored = localStorage.getItem(STORAGE_KEY);
+                if (stored) {
+                    const parsed: CookiePreferences = JSON.parse(stored);
+                    return parsed.analytics ?? true;
+                }
+            } catch {}
+        }
+        return true;
+    });
+
+    const [preferencesAllowed, setPreferencesAllowed] = useState<boolean>(() => {
+        if (typeof window !== 'undefined') {
+            try {
+                const stored = localStorage.getItem(STORAGE_KEY);
+                if (stored) {
+                    const parsed: CookiePreferences = JSON.parse(stored);
+                    return parsed.preferences ?? true;
+                }
+            } catch {}
+        }
+        return true;
+    });
 
     useEffect(() => {
         // Check if consent has already been given
@@ -29,10 +52,6 @@ export default function CookieConsent() {
                 // Short delay for smooth slide-in
                 const timer = setTimeout(() => setIsVisible(true), 800);
                 return () => clearTimeout(timer);
-            } else {
-                const parsed: CookiePreferences = JSON.parse(stored);
-                setAnalyticsAllowed(parsed.analytics ?? true);
-                setPreferencesAllowed(parsed.preferences ?? true);
             }
         } catch {
             setIsVisible(true);
