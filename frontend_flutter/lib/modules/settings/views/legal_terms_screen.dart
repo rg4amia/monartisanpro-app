@@ -428,7 +428,7 @@ class _LegalTermsScreenState extends State<LegalTermsScreen> with SingleTickerPr
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Contact DPO officiel : dpo@prosartisan.ci',
+                      'Contact DPO officiel : dpo@prosartisan.net',
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF14532D),

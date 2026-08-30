@@ -233,7 +233,7 @@ export default function PolitiqueConfidentialitePage() {
                         <div className="p-4 rounded-2xl bg-[#faf8f5] border border-[#e6d3b2] flex items-center gap-3">
                             <Mail className="w-5 h-5 text-emerald-700 shrink-0" />
                             <span className="text-sm font-bold text-[#201712]">
-                                Courriel DPO : <a href="mailto:dpo@prosartisan.ci" className="text-emerald-700 hover:underline">dpo@prosartisan.ci</a>
+                                Courriel DPO : <a href="mailto:dpo@prosartisan.net" className="text-emerald-700 hover:underline">dpo@prosartisan.net</a>
                             </span>
                         </div>
                     </div>

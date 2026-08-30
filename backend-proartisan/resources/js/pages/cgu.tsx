@@ -354,7 +354,7 @@ export default function Cgu({ defaultTab = 'cgu' }: Props) {
                                         Conformément à la législation en vigueur (Loi n° 2013-450), tout utilisateur dispose d'un droit d’accès, de rectification, de limitation et de suppression de ses données ("droit à l'oubli").
                                     </p>
                                     <p>
-                                        Pour exercer ces droits, l'utilisateur peut formuler sa requête via l'application mobile ou contacter notre Délégué à la Protection des Données (DPO) à l'adresse officielle : <strong className="text-[var(--landing-night)]">dpo@prosartisan.ci</strong>.
+                                        Pour exercer ces droits, l'utilisateur peut formuler sa requête via l'application mobile ou contacter notre Délégué à la Protection des Données (DPO) à l'adresse officielle : <strong className="text-[var(--landing-night)]">dpo@prosartisan.net</strong>.
                                     </p>
                                 </div>
                             </section>
