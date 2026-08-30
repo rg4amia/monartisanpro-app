@@ -203,4 +203,3 @@ Le module **Missions** du Backoffice administrateur (`/admin/missions`) intègre
 ### ⚖️ Conformité, Confidentialité & RGPD / Loi CI n° 2013-450
 1. **Gestion du Consentement des Cookies Web :** [COMPLÉTÉ] Bandeau de consentement interactif et modale de personnalisation granulaire (Essentiels, Analytiques, Préférences) sur le front office web, mémorisation du choix en stockage local et modification permanente via le footer.
 2. **Acceptation et Consultation des CGU / Confidentialité :** [COMPLÉTÉ] Traçabilité de l'acceptation initiale en base de données (`cgu_accepted_at`, `privacy_policy_accepted_at`) et consultation permanente de la politique de confidentialité et des CGU sur web et mobile.
-
