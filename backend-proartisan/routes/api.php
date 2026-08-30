@@ -214,6 +214,9 @@ Route::prefix('v1')->group(function () {
 
         // ── Évaluations ───────────────────────────────────────────────────────
         Route::post('/evaluations', [EvaluationController::class, 'store']);
+        Route::get('/evaluations/my', [EvaluationController::class, 'myEvaluations']);
+        Route::get('/missions/{mission}/evaluations-status', [EvaluationController::class, 'actorsForMission']);
+        Route::get('/orders/{order}/evaluations-status', [EvaluationController::class, 'actorsForOrder']);
 
         // ── Commandes e-Commerce (Fournisseurs & Livraison) ─────────────────────
         Route::prefix('orders')->group(function () {

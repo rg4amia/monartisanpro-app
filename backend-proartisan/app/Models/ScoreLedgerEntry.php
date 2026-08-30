@@ -14,6 +14,7 @@ class ScoreLedgerEntry extends Model
         'credibility_factor',
         'evaluation_id',
         'mission_id',
+        'order_id',
         'description',
     ];
 
@@ -35,5 +36,10 @@ class ScoreLedgerEntry extends Model
     public function mission(): BelongsTo
     {
         return $this->belongsTo(Mission::class);
+    }
+
+    public function order(): BelongsTo
+    {
+        return $this->belongsTo(Order::class);
     }
 }
