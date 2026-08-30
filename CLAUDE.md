@@ -152,3 +152,5 @@ lib/
 11. **Gestion du Consentement des Cookies Web** : Le front office web propose un bandeau et une modale de gestion des cookies (Essentiels, Analytiques, Préférences) persistés localement avec lien permanent au footer.
 12. **Acceptation des CGU & Confidentialité** : Validation obligatoire dès l'inscription avec horodatage en base de données et accès permanent depuis chaque espace et le footer web.
 13. **Robustesse et Navigation de Notation** : Le bouton de notation d'un artisan est directement accessible sur la carte de mission terminée (`Routes.rating`). Le backend et l'application mobile traitent les critères d'évaluation de manière résiliente avec conversion de types sécurisée et fallback automatique.
+14. **Maturité et Excellence du Score ProsArtisan** : Le Score ProsArtisan (0-1000) applique un facteur de maturité progressive basé sur 10 missions minimum ($F_{\text{volume}} = \min(1.0, n/10)$) et exige au moins 3 critères avec 5 étoiles ($\ge 4.8/5$) pour dépasser 800 points et avoisiner 1000 points.
+
