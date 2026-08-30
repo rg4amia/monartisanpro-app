@@ -24,17 +24,16 @@ interface Props {
 }
 
 export default function Cgu({ defaultTab = 'cgu' }: Props) {
-    const [activeTab, setActiveTab] = useState<'cgu' | 'privacy'>(defaultTab);
-
-    useEffect(() => {
+    const [activeTab, setActiveTab] = useState<'cgu' | 'privacy'>(() => {
         if (typeof window !== 'undefined') {
             if (window.location.pathname.includes('politique') || window.location.pathname.includes('confidentialite')) {
-                setActiveTab('privacy');
+                return 'privacy';
             } else if (window.location.pathname.includes('cgu')) {
-                setActiveTab('cgu');
+                return 'cgu';
             }
         }
-    }, []);
+        return defaultTab;
+    });
 
     return (
         <div style={landingTheme} className="min-h-screen bg-[var(--landing-bg)] text-[var(--landing-ink)] font-sans antialiased selection:bg-[var(--landing-gold)] selection:text-white pb-24">

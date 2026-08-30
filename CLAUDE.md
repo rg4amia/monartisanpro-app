@@ -15,7 +15,7 @@ Déploiement production : Hostinger shared hosting via GitHub Actions (`.github/
 
 ## Backend (`backend-proartisan/`)
 
-### Commandes essentielles
+### Commandes essentielles Backend
 
 ```bash
 cd backend-proartisan
@@ -38,13 +38,13 @@ php artisan migrate:fresh --seed
 php artisan serve --port=8000
 ```
 
-### Architecture
+### Architecture Backend
 
 **Service Layer** : toute la logique métier est dans `app/Services/` — jamais dans les controllers. Les controllers font uniquement la validation + dispatch + réponse HTTP.
 
 **Couches** :
 
-```
+```text
 routes/api.php
   → app/Http/Controllers/V1/
       → app/Http/Requests/        (validation)
@@ -98,7 +98,7 @@ $table->dateTime('expires_at');  // ✅ pas timestamp()
 
 ## Frontend (`frontend_flutter/`)
 
-### Commandes essentielles
+### Commandes essentielles Frontend
 
 ```bash
 cd frontend_flutter
@@ -109,11 +109,11 @@ flutter test             # tests unitaires
 flutter build apk        # build Android release
 ```
 
-### Architecture
+### Architecture Frontend
 
 Pattern **GetX + Clean Architecture** :
 
-```
+```text
 lib/
   core/          # réseau (Dio), thème, services GPS/notifications, storage
   data/
