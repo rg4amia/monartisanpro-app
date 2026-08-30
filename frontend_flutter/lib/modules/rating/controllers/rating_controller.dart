@@ -157,14 +157,29 @@ class RatingController extends GetxController {
       return;
     }
 
+    if (evalueId <= 0) {
+      Get.snackbar(
+        'Intervenant non identifié',
+        'Impossible de déterminer l\'identifiant de l\'intervenant à évaluer.',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: const Color(0xFFEF4444),
+        colorText: Colors.white,
+      );
+      return;
+    }
+
     final resolvedFiabilite =
-        fiabilite.value == 0 ? selectedNote.value : fiabilite.value;
+        fiabilite.value == 0 ? (selectedNote.value > 0 ? selectedNote.value : 5) : fiabilite.value;
     final resolvedIntegrite =
-        integrite.value == 0 ? selectedNote.value : integrite.value;
+        integrite.value == 0 ? (selectedNote.value > 0 ? selectedNote.value : 5) : integrite.value;
     final resolvedQualite =
-        qualite.value == 0 ? selectedNote.value : qualite.value;
+        qualite.value == 0 ? (selectedNote.value > 0 ? selectedNote.value : 5) : qualite.value;
     final resolvedReactivite =
-        reactivite.value == 0 ? selectedNote.value : reactivite.value;
+        reactivite.value == 0 ? (selectedNote.value > 0 ? selectedNote.value : 5) : reactivite.value;
+
+    final resolvedNote = selectedNote.value > 0
+        ? selectedNote.value
+        : ((resolvedFiabilite + resolvedIntegrite + resolvedQualite + resolvedReactivite) / 4).round().clamp(1, 5);
 
     isLoading.value = true;
     try {
@@ -172,7 +187,7 @@ class RatingController extends GetxController {
         missionId: missionId,
         orderId: orderId,
         evalueId: evalueId,
-        note: selectedNote.value,
+        note: resolvedNote,
         commentaire: commentaire.value,
         fiabilite: resolvedFiabilite,
         integrite: resolvedIntegrite,
@@ -196,6 +211,7 @@ class RatingController extends GetxController {
         snackPosition: SnackPosition.TOP,
         backgroundColor: const Color(0xFFEF4444),
         colorText: Colors.white,
+        duration: const Duration(seconds: 5),
       );
     } catch (_) {
       Get.snackbar(
@@ -212,10 +228,22 @@ class RatingController extends GetxController {
 
   String _extractMessage(DioException e) {
     final data = e.response?.data;
-    if (data is Map && data['message'] is String) {
-      return data['message'] as String;
+    if (data is Map) {
+      if (data['message'] is String && (data['message'] as String).isNotEmpty) {
+        return data['message'] as String;
+      }
+      if (data['errors'] is Map) {
+        final errors = data['errors'] as Map;
+        if (errors.isNotEmpty) {
+          final firstError = errors.values.first;
+          if (firstError is List && firstError.isNotEmpty) {
+            return firstError.first.toString();
+          }
+          return firstError.toString();
+        }
+      }
     }
-    return 'Impossible d\'envoyer l\'évaluation.';
+    return e.message ?? 'Impossible d\'envoyer l\'évaluation.';
   }
 }
 

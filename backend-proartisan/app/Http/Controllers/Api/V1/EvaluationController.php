@@ -122,35 +122,61 @@ class EvaluationController extends Controller
             }
         }
 
-        $evaluation = Evaluation::create([
-            'mission_id'    => $mission?->id,
-            'order_id'      => $order?->id,
-            'evaluateur_id' => $user->id,
-            'evalue_id'     => $evalue->id,
-            'note'          => $request->note,
-            'commentaire'   => $request->commentaire,
-            'fiabilite'     => $request->fiabilite,
-            'integrite'     => $request->integrite,
-            'qualite'       => $request->qualite,
-            'reactivite'    => $request->reactivite,
-        ]);
+        try {
+            $evalData = [
+                'evaluateur_id' => $user->id,
+                'evalue_id'     => $evalue->id,
+                'note'          => (int) $request->note,
+                'commentaire'   => $request->commentaire,
+                'fiabilite'     => $request->fiabilite ? (int) $request->fiabilite : (int) $request->note,
+                'integrite'     => $request->integrite ? (int) $request->integrite : (int) $request->note,
+                'qualite'       => $request->qualite ? (int) $request->qualite : (int) $request->note,
+                'reactivite'    => $request->reactivite ? (int) $request->reactivite : (int) $request->note,
+            ];
 
-        // Recalcul Score ProsArtisan
-        if ($evalue->isArtisan()) {
-            $newScore = $this->scoreService->recalculate($evalue);
-        } elseif ($evalue->isFournisseur() || $evalue->isLivreur()) {
-            $newScore = $this->scoreService->recalculateLogistic($evalue);
+            if ($mission) {
+                $evalData['mission_id'] = $mission->id;
+            }
+            if ($order) {
+                $evalData['order_id'] = $order->id;
+            }
+
+            $evaluation = Evaluation::create($evalData);
+
+            // Recalcul Score ProsArtisan
+            $newScore = null;
+            try {
+                if ($evalue->isArtisan()) {
+                    $newScore = $this->scoreService->recalculate($evalue);
+                } elseif ($evalue->isFournisseur() || $evalue->isLivreur()) {
+                    $newScore = $this->scoreService->recalculateLogistic($evalue);
+                }
+            } catch (\Throwable $scoreEx) {
+                \Illuminate\Support\Facades\Log::warning("Score recalculation warning: " . $scoreEx->getMessage());
+                $newScore = $evalue->score_prosartisan;
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Évaluation enregistrée avec succès.',
+                'data'    => [
+                    'id'               => $evaluation->id,
+                    'note'             => $evaluation->note,
+                    'scoreProsArtisan' => $newScore ?? null,
+                ],
+            ], 201);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error("Erreur lors de l'enregistrement de l'évaluation: " . $e->getMessage(), [
+                'user_id' => $user->id,
+                'evalue_id' => $evalue->id,
+                'exception' => $e,
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de l\'enregistrement de votre évaluation : ' . $e->getMessage(),
+            ], 500);
         }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Évaluation enregistrée avec succès.',
-            'data'    => [
-                'id'               => $evaluation->id,
-                'note'             => $evaluation->note,
-                'scoreProsArtisan' => $newScore ?? null,
-            ],
-        ], 201);
     }
 
     /**
