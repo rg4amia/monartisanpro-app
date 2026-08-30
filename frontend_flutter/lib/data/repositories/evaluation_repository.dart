@@ -5,7 +5,8 @@ class EvaluationRepository {
   final ApiClient _client = ApiClient();
 
   Future<Map<String, dynamic>> submit({
-    required int missionId,
+    int? missionId,
+    int? orderId,
     required int evalueId,
     required int note,
     String? commentaire,
@@ -17,7 +18,8 @@ class EvaluationRepository {
     final res = await _client.post(
       ApiEndpoints.evaluations,
       data: {
-        'mission_id': missionId,
+        if (missionId != null && missionId > 0) 'mission_id': missionId,
+        if (orderId != null && orderId > 0) 'order_id': orderId,
         'evalue_id': evalueId,
         'note': note,
         'commentaire': commentaire == null || commentaire.trim().isEmpty
@@ -31,5 +33,35 @@ class EvaluationRepository {
     );
 
     return res.data as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>?> getMissionActors(int missionId) async {
+    try {
+      final res = await _client.get(ApiEndpoints.missionEvaluationsStatus(missionId));
+      if (res.data is Map && res.data['data'] is Map) {
+        return Map<String, dynamic>.from(res.data['data']);
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  Future<Map<String, dynamic>?> getOrderActors(int orderId) async {
+    try {
+      final res = await _client.get(ApiEndpoints.orderEvaluationsStatus(orderId));
+      if (res.data is Map && res.data['data'] is Map) {
+        return Map<String, dynamic>.from(res.data['data']);
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  Future<Map<String, dynamic>?> getMyEvaluations() async {
+    try {
+      final res = await _client.get(ApiEndpoints.myEvaluations);
+      if (res.data is Map && res.data['data'] is Map) {
+        return Map<String, dynamic>.from(res.data['data']);
+      }
+    } catch (_) {}
+    return null;
   }
 }

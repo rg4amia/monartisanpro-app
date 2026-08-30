@@ -91,6 +91,9 @@ class ApiEndpoints {
 
   // Evaluations
   static const String evaluations = '/evaluations';
+  static const String myEvaluations = '/evaluations/my';
+  static String missionEvaluationsStatus(int id) => '/missions/$id/evaluations-status';
+  static String orderEvaluationsStatus(int id) => '/orders/$id/evaluations-status';
 
   // Notifications
   static const String notifications = '/notifications';

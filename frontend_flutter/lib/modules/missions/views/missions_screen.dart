@@ -456,6 +456,16 @@ class _MissionCard extends StatelessWidget {
       }
     }
 
+    if (mission.status == 'terminee' || mission.status == 'completed') {
+      return _MissionAction(
+        label: 'Évaluer',
+        subtitle: 'Donnez votre avis sur l\'artisan et les intervenants.',
+        color: const Color(0xFFF59E0B),
+        icon: Icons.star_rounded,
+        onTap: () => Get.toNamed(Routes.missionTracking, arguments: mission),
+      );
+    }
+
     return _MissionAction(
       label: 'Ouvrir',
       subtitle: 'Consultez le detail complet et l\'avancement de la mission.',

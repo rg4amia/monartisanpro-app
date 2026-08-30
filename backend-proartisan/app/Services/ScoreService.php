@@ -120,7 +120,9 @@ class ScoreService
 
         $points = 0;
         $eventType = 'evaluation';
-        $desc = "Évaluation de prestation (mission #{$lastEvaluation->mission_id})";
+        $desc = $lastEvaluation->mission_id
+            ? "Évaluation de prestation (mission #{$lastEvaluation->mission_id})"
+            : "Évaluation de prestation (commande #{$lastEvaluation->order_id})";
 
         if ($avgScore >= 4.0) {
             $points = self::EVENT_POINTS['success_mission'];
@@ -138,6 +140,7 @@ class ScoreService
                 'credibility_factor' => $credibility,
                 'evaluation_id'      => $lastEvaluation->id,
                 'mission_id'         => $lastEvaluation->mission_id,
+                'order_id'           => $lastEvaluation->order_id,
                 'description'        => $desc,
             ]);
         }

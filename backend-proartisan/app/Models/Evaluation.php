@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Evaluation extends Model
 {
     protected $fillable = [
-        'mission_id', 'evaluateur_id', 'evalue_id', 'note', 'commentaire',
+        'mission_id', 'order_id', 'evaluateur_id', 'evalue_id', 'note', 'commentaire',
         'fiabilite', 'integrite', 'qualite', 'reactivite',
     ];
 
@@ -25,6 +25,11 @@ class Evaluation extends Model
     public function mission()
     {
         return $this->belongsTo(Mission::class);
+    }
+
+    public function order()
+    {
+        return $this->belongsTo(Order::class);
     }
 
     public function evaluateur()
