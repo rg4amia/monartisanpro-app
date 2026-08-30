@@ -43,7 +43,7 @@ Données comptables et transactionnelles : Conservées pendant 10 ans pour répo
 
 6. Droits des Utilisateurs
 Conformément à la législation en vigueur, tout utilisateur dispose d'un droit d'accès, de rectification, de limitation et de suppression de ses données ("droit à l'oubli").
-Pour exercer ces droits, l'utilisateur peut formuler sa requête via l'interface dédiée de l'application ou contacter le Délégué à la Protection des Données (DPO) à l'adresse : dpo@prosartisan.ci.
+Pour exercer ces droits, l'utilisateur peut formuler sa requête via l'interface dédiée de l'application ou contacter le Délégué à la Protection des Données (DPO) à l'adresse : dpo@prosartisan.net.
 
 Défi d'ingénierie :
 Le "droit à l'oubli" est un cauchemar technique dans une architecture relationnelle. Si un artisan demande la suppression totale de ses données, un simple "Soft Delete" (flag is_deleted = true) ne satisfait pas la loi, mais un "Hard Delete" brisera l'intégrité référentielle de ta base de données, notamment ton historique de transactions financières (qui doit être conservé 10 ans) et tes index vectoriels dans Qdrant.
