@@ -21,6 +21,7 @@ class UpdateProfileController extends GetxController {
   final isLoading = false.obs;
   final isProfileLoading = false.obs;
   final isArtisan = false.obs;
+  final isProActor = false.obs;
   final nightInterventionsEnabled = false.obs;
   final profileImagePath = Rx<String?>(null);
 
@@ -29,6 +30,10 @@ class UpdateProfileController extends GetxController {
   final cnmciStatus = 'non_renseigne'.obs;
   final cnmciCardUrl = Rx<String?>(null);
   final cnmciCardImagePath = Rx<String?>(null);
+
+  // Mobile Money pour reversement des gains (Artisans, Livreurs, Fournisseurs)
+  final paymentPhoneController = TextEditingController();
+  final selectedPaymentProvider = 'wave'.obs;
 
   // Localisation
   final selectedLatitude = Rxn<double>();
@@ -52,9 +57,10 @@ class UpdateProfileController extends GetxController {
   void _loadUserData() {
     nameController.text = StorageService.getName() ?? '';
     phoneController.text = StorageService.getPhone() ?? '';
-    isArtisan.value = StorageService.getRole() == 'artisan';
     final role = StorageService.getRole();
-    canEditLocation.value = role == 'artisan' || role == 'fournisseur' || role == 'driver' || role == 'LIVREUR';
+    isArtisan.value = role == 'artisan';
+    isProActor.value = role == 'artisan' || role == 'fournisseur' || role == 'driver' || role == 'livreur' || role == 'LIVREUR';
+    canEditLocation.value = isProActor.value;
   }
 
   Future<void> _loadCurrentProfile() async {
@@ -68,7 +74,8 @@ class UpdateProfileController extends GetxController {
       }
 
       isArtisan.value = user.role == 'artisan';
-      canEditLocation.value = user.role == 'artisan' || user.role == 'fournisseur' || user.role == 'driver' || user.role == 'LIVREUR';
+      isProActor.value = user.role == 'artisan' || user.role == 'fournisseur' || user.role == 'driver' || user.role == 'livreur' || user.role == 'LIVREUR';
+      canEditLocation.value = isProActor.value;
       
       if (user.lat != null && user.lng != null) {
         selectedLatitude.value = user.lat;
@@ -86,6 +93,11 @@ class UpdateProfileController extends GetxController {
       cnmciNumberController.text = user.cnmciNumber ?? '';
       cnmciStatus.value = user.cnmciStatus;
       cnmciCardUrl.value = user.cnmciCardUrl;
+
+      paymentPhoneController.text = user.paymentPhone ?? '';
+      if (user.preferredPaymentProvider != null && user.preferredPaymentProvider!.isNotEmpty) {
+        selectedPaymentProvider.value = user.preferredPaymentProvider!;
+      }
 
       StorageService.saveRole(user.role);
       StorageService.saveName(user.name ?? nameController.text.trim());
@@ -323,6 +335,10 @@ class UpdateProfileController extends GetxController {
             : null,
         sectorId: isArtisan.value ? selectedSectorId.value : null,
         tradeId: isArtisan.value ? selectedTradeId.value : null,
+        paymentPhone: paymentPhoneController.text.trim().isNotEmpty
+            ? paymentPhoneController.text.trim()
+            : null,
+        preferredPaymentProvider: selectedPaymentProvider.value,
       );
 
       if (isArtisan.value && (cnmciNumberController.text.isNotEmpty || cnmciCardImagePath.value != null)) {
@@ -384,6 +400,7 @@ class UpdateProfileController extends GetxController {
     phoneController.dispose();
     emailController.dispose();
     cnmciNumberController.dispose();
+    paymentPhoneController.dispose();
     super.onClose();
   }
 }

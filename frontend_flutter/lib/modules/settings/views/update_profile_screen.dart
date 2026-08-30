@@ -217,6 +217,19 @@ class _FormSection extends StatelessWidget {
           );
         }),
         Obx(() {
+          if (!controller.isProActor.value) {
+            return const SizedBox.shrink();
+          }
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 24),
+              _MobileMoneyPayoutCard(controller: controller),
+            ],
+          );
+        }),
+        Obx(() {
           if (!controller.isArtisan.value) {
             return const SizedBox.shrink();
           }
@@ -811,6 +824,167 @@ class _CnmciCard extends StatelessWidget {
             );
           }),
         ],
+      ),
+    );
+  }
+}
+
+// ─── Mobile Money Payout Card ────────────────────────────────────────────────
+class _MobileMoneyPayoutCard extends StatelessWidget {
+  final UpdateProfileController controller;
+
+  const _MobileMoneyPayoutCard({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _C.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _C.subtle),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFECFDF5),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.account_balance_wallet_rounded, color: Color(0xFF10B981), size: 20),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Reversement Mobile Money',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: _C.ink,
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'Compte de réception de vos gains',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: _C.muted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'Opérateur de paiement',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: _C.ink,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Obx(() {
+            final currentProvider = controller.selectedPaymentProvider.value;
+            return Row(
+              children: [
+                _buildProviderChip('wave', 'Wave', const Color(0xFF00A3FF), currentProvider == 'wave'),
+                const SizedBox(width: 8),
+                _buildProviderChip('orange_money', 'Orange', const Color(0xFFFF7900), currentProvider == 'orange_money'),
+                const SizedBox(width: 8),
+                _buildProviderChip('mtn_money', 'MTN', const Color(0xFFFFCC00), currentProvider == 'mtn_money'),
+                const SizedBox(width: 8),
+                _buildProviderChip('moov_money', 'Moov', const Color(0xFF005BA6), currentProvider == 'moov_money'),
+              ],
+            );
+          }),
+          const SizedBox(height: 16),
+          _InputField(
+            label: 'Numéro Mobile Money (10 chiffres)',
+            controller: controller.paymentPhoneController,
+            icon: Icons.phone_android_rounded,
+            hint: 'Ex: 0701020304',
+            keyboardType: TextInputType.phone,
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF9FAFB),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFE5E7EB)),
+            ),
+            child: const Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.info_outline_rounded, size: 16, color: _C.muted),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Ce numéro sera automatiquement crédité par ProsArtisan dès validation de vos jalons, livraisons ou retraits de matériel.',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: _C.muted,
+                      height: 1.3,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProviderChip(String providerKey, String label, Color color, bool isSelected) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => controller.selectedPaymentProvider.value = providerKey,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected ? color.withValues(alpha: 0.12) : const Color(0xFFF3F4F6),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected ? color : Colors.transparent,
+              width: 1.5,
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isSelected ? color : Colors.grey.shade400,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected ? color : _C.ink,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

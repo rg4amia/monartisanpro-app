@@ -38,6 +38,8 @@ class UserController extends Controller
             ],
             'bio' => ['sometimes', 'nullable', 'string'],
             'experience_years' => ['sometimes', 'integer', 'min:0', 'max:60'],
+            'payment_phone' => ['sometimes', 'nullable', 'string', 'regex:/^(\+225)?[0-9]{10}$/'],
+            'preferred_payment_provider' => ['sometimes', 'nullable', 'string', 'in:wave,orange_money,mtn_money,moov_money'],
         ]);
 
         if (array_key_exists('intervention_nuit', $data) || 

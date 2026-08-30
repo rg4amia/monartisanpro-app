@@ -15,9 +15,12 @@ class TransactionController extends Controller
         $user   = $request->user();
         $status = $request->query('status');
 
-        $query = Transaction::where('user_id', $user->id)
-            ->orWhereHas('mission', function ($q) use ($user) {
-                $q->where('client_id', $user->id)->orWhere('artisan_id', $user->id);
+        $query = Transaction::with(['mission.client'])
+            ->where(function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                  ->orWhereHas('mission', function ($mq) use ($user) {
+                      $mq->where('client_id', $user->id)->orWhere('artisan_id', $user->id);
+                  });
             });
 
         if ($status) {

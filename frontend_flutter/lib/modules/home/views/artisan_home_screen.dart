@@ -557,7 +557,7 @@ class _HeroHeader extends StatelessWidget {
                   child: GestureDetector(
                     onTap: () => Get.toNamed(Routes.wallet),
                     child: _HeroMetric(
-                      label: 'Gains disponibles',
+                      label: 'Gains disponibles ›',
                       value: Formatters.fcfa(controller.walletMo.value),
                     ),
                   ),
@@ -873,6 +873,14 @@ class _QuickActions extends StatelessWidget {
           title: 'Quincailleries Agréées',
           subtitle: 'Consulter le réseau de quincailleries partenaires et leurs stocks',
           onTap: () => Get.toNamed(Routes.clientSuppliers),
+        ),
+        const SizedBox(height: 12),
+        _ActionTile(
+          icon: Icons.account_balance_wallet_rounded,
+          gradient: const LinearGradient(colors: [Color(0xFF0D9488), Color(0xFF14B8A6)]),
+          title: 'Paiements Reçus & Portefeuille',
+          subtitle: 'Consulter tous les reversements Wave/Orange Money et jalons libérés',
+          onTap: () => Get.toNamed(Routes.wallet),
         ),
       ],
     );

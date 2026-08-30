@@ -34,6 +34,8 @@ class UserRepository {
     bool? nightInterventionAvailable,
     int? sectorId,
     int? tradeId,
+    String? paymentPhone,
+    String? preferredPaymentProvider,
   }) async {
     final response = await _client.put(
       ApiEndpoints.updateUser(userId),
@@ -43,6 +45,8 @@ class UserRepository {
           'intervention_nuit': nightInterventionAvailable,
         if (sectorId != null) 'sector_id': sectorId,
         if (tradeId != null) 'trade_id': tradeId,
+        if (paymentPhone != null) 'payment_phone': paymentPhone,
+        if (preferredPaymentProvider != null) 'preferred_payment_provider': preferredPaymentProvider,
       },
     );
     return response.data as Map<String, dynamic>;
