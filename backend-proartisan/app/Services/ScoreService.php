@@ -355,9 +355,15 @@ class ScoreService
             $evalScoreBase = (int) round($rawCriteriaScore * $volumeFactor);
         }
 
-        $ledgerSum = (int) ScoreLedgerEntry::where('user_id', $artisan->id)
-            ->selectRaw('SUM(points * credibility_factor) as total')
-            ->value('total');
+        $ledgerEntries = ScoreLedgerEntry::where('user_id', $artisan->id)->get();
+
+        if ($totalEvals === 0 && $ledgerEntries->isEmpty()) {
+            return (int) $artisan->score_prosartisan;
+        }
+
+        $ledgerSum = (int) $ledgerEntries->sum(function ($entry) {
+            return $entry->points * $entry->credibility_factor;
+        });
 
         $newScore = min(self::MAX_SCORE, max(self::MIN_SCORE, $evalScoreBase + $ledgerSum));
         $artisan->update(['score_prosartisan' => $newScore]);
@@ -406,6 +412,8 @@ class ScoreService
      */
     public function getScoreDetail(User $artisan): array
     {
+        $calculatedScore = $this->recalculateFromLedger($artisan);
+
         $row = DB::selectOne("
             SELECT
                 AVG(fiabilite)  AS avg_fiabilite,
@@ -422,8 +430,8 @@ class ScoreService
         $totalEvals = (int) ($row?->total_evaluations ?? 0);
 
         return [
-            'score_prosartisan'          => $artisan->score_prosartisan,
-            'micro_credit_eligible'      => $artisan->score_prosartisan >= $threshold,
+            'score_prosartisan'          => $calculatedScore,
+            'micro_credit_eligible'      => $calculatedScore >= $threshold,
             'total_evaluations'          => $totalEvals,
             'maturity_missions_target'   => 10,
             'maturity_missions_count'    => min(10, $totalEvals),

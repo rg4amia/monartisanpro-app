@@ -142,13 +142,15 @@ class DashboardController extends Controller
             ->whereIn('status', ['en_attente', 'financee', 'en_cours'])
             ->count();
 
+        $calculatedScore = app(\App\Services\ScoreService::class)->recalculateFromLedger($user);
+
         return [
             'accepted_devis_count' => $acceptedDevisCount,
             'refused_devis_count' => $refusedDevisCount,
             'disputes_count' => $disputesCount,
             'total_earnings' => (int) $totalEarnings,
             'active_missions_count' => $activeMissionsCount,
-            'score_prosartisan' => $user->score_prosartisan,
+            'score_prosartisan' => $calculatedScore,
             'wallet_mo' => $user->wallet_mo,
         ];
     }
