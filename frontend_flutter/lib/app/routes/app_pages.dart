@@ -54,6 +54,7 @@ import '../../modules/orders/views/client_suppliers_list_screen.dart';
 import '../../modules/orders/views/client_catalog_screen.dart';
 import '../../modules/wallet/bindings/wallet_binding.dart';
 import '../../modules/wallet/views/wallet_screen.dart';
+import '../../modules/settings/views/legal_terms_screen.dart';
 import 'app_routes.dart';
 
 class AppPages {
@@ -275,6 +276,18 @@ class AppPages {
       name: Routes.wallet,
       page: () => const WalletScreen(),
       binding: WalletBinding(),
+    ),
+    GetPage(
+      name: Routes.legalTerms,
+      page: () => const LegalTermsScreen(),
+    ),
+    GetPage(
+      name: Routes.cgu,
+      page: () => const LegalTermsScreen(initialTab: 0),
+    ),
+    GetPage(
+      name: Routes.privacyPolicy,
+      page: () => const LegalTermsScreen(initialTab: 1),
     ),
   ];
 }

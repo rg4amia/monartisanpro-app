@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../app/routes/app_routes.dart';
 import '../controllers/settings_controller.dart';
+import 'legal_terms_screen.dart';
 
 
 // ─── Design Tokens ────────────────────────────────────────────────────────────
@@ -462,21 +463,8 @@ class _MenuList extends StatelessWidget {
             iconBg: const Color(0xFFF3E8FF),
             iconColor: const Color(0xFF9333EA),
             title: 'Conditions d\'utilisation',
-            subtitle: 'Nos conditions générales d\'utilisation',
-            onTap: () {
-              Get.dialog(
-                AlertDialog(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  title: const Text('Conditions d\'utilisation'),
-                  content: const SingleChildScrollView(
-                    child: Text('En utilisant les services de ProsArtisan, vous acceptez sans réserve nos CGU visant à garantir la sécurité et la qualité des travaux réalisés sur le chantier.'),
-                  ),
-                  actions: [
-                    TextButton(onPressed: () => Get.back(), child: const Text('Fermer')),
-                  ],
-                ),
-              );
-            },
+            subtitle: 'Consulter nos conditions générales d\'utilisation',
+            onTap: () => Get.to(() => const LegalTermsScreen(initialTab: 0)),
           ),
           const SizedBox(height: 12),
           
@@ -486,21 +474,8 @@ class _MenuList extends StatelessWidget {
             iconBg: const Color(0xFFDCFCE7),
             iconColor: const Color(0xFF16A34A),
             title: 'Politique de confidentialité',
-            subtitle: 'Traitement et protection de vos données',
-            onTap: () {
-              Get.dialog(
-                AlertDialog(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  title: const Text('Politique de confidentialité'),
-                  content: const SingleChildScrollView(
-                    child: Text('ProsArtisan s\'engage à protéger la confidentialité de vos données personnelles, de vos positions géographiques cryptées, et des fichiers KYC transmis.'),
-                  ),
-                  actions: [
-                    TextButton(onPressed: () => Get.back(), child: const Text('Fermer')),
-                  ],
-                ),
-              );
-            },
+            subtitle: 'Protection des données et conformité ARTCI',
+            onTap: () => Get.to(() => const LegalTermsScreen(initialTab: 1)),
           ),
           const SizedBox(height: 12),
           

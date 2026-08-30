@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { api } from '@/lib/api';
 
 export default function SupplierLogin() {
@@ -223,6 +224,20 @@ export default function SupplierLogin() {
                         )}
                     </form>
                 )}
+
+                <div className="mt-8 pt-6 border-t border-slate-800/80 text-center flex items-center justify-center gap-3 text-xs text-slate-500">
+                    <Link href="/cgu" className="hover:text-amber-400 transition underline">
+                        CGU
+                    </Link>
+                    <span>•</span>
+                    <Link href="/politique-confidentialite" className="hover:text-amber-400 transition underline">
+                        Confidentialité
+                    </Link>
+                    <span>•</span>
+                    <Link href="/" className="hover:text-white transition">
+                        Accueil
+                    </Link>
+                </div>
             </div>
         </div>
     );

@@ -259,6 +259,16 @@ export default function Footer() {
                                 </Link>
                             </li>
                             <li>
+                                <Link href="/cgu" className="hover:text-[#ebb95e] transition">
+                                    Conditions Générales d'Utilisation (CGU)
+                                </Link>
+                            </li>
+                            <li>
+                                <Link href="/politique-confidentialite" className="hover:text-[#ebb95e] transition">
+                                    Politique de Confidentialité
+                                </Link>
+                            </li>
+                            <li>
                                 <Link href="/contact" className="hover:text-[#ebb95e] transition">
                                     Contact & Devis
                                 </Link>
@@ -294,8 +304,14 @@ export default function Footer() {
 
                 <div className="border-t border-[#e6d3b2]/10 mt-12 pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-[#efe6da]/60 gap-4">
                     <p>{copyright}</p>
-                    <div className="flex flex-wrap items-center gap-4">
-                        <Link href="/cgu" className="hover:text-white transition">{cguLabel}</Link>
+                    <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+                        <Link href="/cgu" className="hover:text-white transition">
+                            CGU & Conditions d'Utilisation
+                        </Link>
+                        <span>•</span>
+                        <Link href="/politique-confidentialite" className="hover:text-white transition">
+                            Politique de Confidentialité
+                        </Link>
                         <span>•</span>
                         <span>{slogan}</span>
                     </div>

@@ -60,4 +60,9 @@ abstract class Routes {
   static const clientSuppliers = '/client-suppliers';
   static const clientCatalog = '/client-catalog';
   static const wallet = '/wallet';
+
+  // Legal
+  static const legalTerms = '/legal-terms';
+  static const cgu = '/cgu';
+  static const privacyPolicy = '/politique-confidentialite';
 }
