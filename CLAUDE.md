@@ -151,3 +151,4 @@ lib/
 10. **Évaluation Multi-Acteurs** : Les clients évaluent distinctement l'artisan, le livreur et le fournisseur pour chaque mission terminée ou commande livrée, avec journalisation dans `score_ledger_entries`.
 11. **Gestion du Consentement des Cookies Web** : Le front office web propose un bandeau et une modale de gestion des cookies (Essentiels, Analytiques, Préférences) persistés localement avec lien permanent au footer.
 12. **Acceptation des CGU & Confidentialité** : Validation obligatoire dès l'inscription avec horodatage en base de données et accès permanent depuis chaque espace et le footer web.
+13. **Robustesse et Navigation de Notation** : Le bouton de notation d'un artisan est directement accessible sur la carte de mission terminée (`Routes.rating`). Le backend et l'application mobile traitent les critères d'évaluation de manière résiliente avec conversion de types sécurisée et fallback automatique.
