@@ -15,10 +15,11 @@
 ### 🎬 Phase 0 : Inscription, Authentification & KYC
 #### Workflow — Phase 0
 1. L'utilisateur télécharge l'application et s'inscrit en fournissant son numéro de téléphone (`+225` + 10 chiffres).
-2. Un code OTP à 4 chiffres lui est envoyé par SMS ou WhatsApp.
-3. Il sélectionne son rôle : `client`, `artisan`, `fournisseur`, ou `driver` (livreur).
-4. Pour pouvoir effectuer la moindre transaction, il doit soumettre son KYC (CNI + selfie).
-5. L'administrateur valide ou rejette le dossier $\rightarrow$ `kyc_status = actif`.
+2. Il accepte obligatoirement les CGU et la Politique de Confidentialité (horodatage persistant en base de données).
+3. Un code OTP à 4 chiffres lui est envoyé par SMS ou WhatsApp.
+4. Il sélectionne son rôle : `client`, `artisan`, `fournisseur`, ou `driver` (livreur).
+5. Pour pouvoir effectuer la moindre transaction, il doit soumettre son KYC (CNI + selfie).
+6. L'administrateur valide ou rejette le dossier $\rightarrow$ `kyc_status = actif`.
 
 #### 🔍 Retours Observés — Phase 0
 * **Points Forts :**
@@ -104,8 +105,11 @@ Note : Pour les prestations chantiers de l'Artisan.
 ---
 
 ### ⭐️ Phase 5 : Clôture & Score ProsArtisan
-* Le client note l'artisan selon la pondération (Fiabilité 40%, Intégrité 30%, Qualité 20%, Réactivité 10%).
-* Le **Score ProsArtisan** est mis à jour dans la colonne de base de données **`score_prosartisan`** (échelle 0 à 1000).
+* Le client évalue la mission et peut noter distinctement l'ensemble des acteurs intervenus :
+  * **L'Artisan** (Fiabilité 40%, Intégrité 30%, Qualité 20%, Réactivité 10%).
+  * **Le Livreur** (Ponctualité, Intégrité, Soin du colis, Courtoisie).
+  * **Le Fournisseur / Quincaillerie** (Disponibilité, Transparence, Qualité, Rapidité).
+* Le **Score ProsArtisan** est mis à jour dans la colonne de base de données **`score_prosartisan`** (échelle 0 à 1000) et journalisé dans `score_ledger_entries`.
 * Si le score $> 700$, l'artisan est éligible aux micro-crédits d'urgence.
 
 ---
@@ -145,6 +149,9 @@ Note : Pour les prestations chantiers de l'Artisan.
 16. **Gating de Protection des Coordonnées Client (RGPD & Sécurité) :** Masquer les coordonnées GPS exactes, l'adresse textuelle et le numéro de téléphone du client tant que la mission n'a pas été acceptée et payée. Dès que le devis est validé et financé (statut `financee`/`funded_locked` ou ultérieur), ces coordonnées sont dévoilées via l'API et déverrouillées sur le mobile de l'artisan.
 17. **Audit Trailing & Preuves d'Interactions en Backoffice :** Le backoffice d'administration intègre un historique global complet de toutes les notifications, SMS, alertes et OTP expédiés par le système pour servir de preuve d'interaction et de journal d'audit en cas de litige, avec recherche, filtres par rôle/type et inspection des métadonnées JSON techniques.
 18. **Consommation Partielle de J-Code & Suivi par Item :** Le J-Code supporte les débits partiels auprès de plusieurs fournisseurs agréés. Le statut global du J-Code passe de `actif` à `partiellement_utilise` puis `utilise` une fois le montant total consommé. Le statut individuel des articles requis passe par `requested` $\rightarrow$ `partial` $\rightarrow$ `served` avec traçabilité complète du fournisseur ayant servi chaque article et décrémentation automatique des stocks.
+19. **Évaluation Multi-Acteurs & Scoring Différencié :** Le client a la possibilité d'évaluer distinctement l'ensemble des intervenants ayant contribué à la réussite de son projet ou de sa commande : l'Artisan (travaux), le Livreur (transport & état du colis), et le Fournisseur (quincaillerie ayant fourni le matériel), avec critères d'évaluation adaptés et traçabilité dans le grand livre `score_ledger_entries`.
+20. **Gestion du Consentement des Cookies sur le Front Office Web (RGPD / Loi CI n° 2013-450) :** Lors de l'accès au front office web (vitrine Next.js & interface web), un bandeau interactif de recueil du consentement des cookies est présenté à l'utilisateur. Il permet d'accepter globalement, de refuser les cookies non essentiels ou de personnaliser ses préférences (Cookies techniques/essentiels, analytiques, préférences de navigation). Les choix sont persistés localement et modifiables à tout moment via le lien "Gestion des cookies" du footer.
+21. **Acceptation Obligatoire des CGU & Politique de Confidentialité :** À la première inscription sur l'application mobile ou sur le web, la validation explicite des Conditions Générales d'Utilisation et de la Politique de Confidentialité est enregistrée avec horodatage en base de données. Ces documents restent consultables à tout moment dans chaque espace applicatif et sur le footer du site web.
 
 ### Formule mathématique du Score ProsArtisan
 Le score d'un artisan $S(t)$ est calculé sur une échelle de 0 à 1000 :
