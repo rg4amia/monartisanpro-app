@@ -7,6 +7,9 @@ class TransactionModel {
   final String provider;
   final String statut;
   final String? referenceExterne;
+  final int? missionId;
+  final String? missionDescription;
+  final String? clientName;
   final String createdAt;
 
   const TransactionModel({
@@ -19,6 +22,9 @@ class TransactionModel {
     required this.statut,
     required this.createdAt,
     this.referenceExterne,
+    this.missionId,
+    this.missionDescription,
+    this.clientName,
   });
 
   factory TransactionModel.fromJson(Map<String, dynamic> json) =>
@@ -39,6 +45,9 @@ class TransactionModel {
                 .toString(),
         referenceExterne:
             (json['referenceExterne'] ?? json['reference_externe']) as String?,
+        missionId: json['missionId'] != null ? _parseInt(json['missionId']) : (json['mission_id'] != null ? _parseInt(json['mission_id']) : null),
+        missionDescription: (json['missionDescription'] ?? json['mission_description']) as String?,
+        clientName: (json['clientName'] ?? json['client_name']) as String?,
       );
 
   Map<String, dynamic> toJson() => {
@@ -51,6 +60,9 @@ class TransactionModel {
     'statut': statut,
     'createdAt': createdAt,
     'referenceExterne': referenceExterne,
+    'missionId': missionId,
+    'missionDescription': missionDescription,
+    'clientName': clientName,
   };
 
   static int _parseInt(dynamic value) {

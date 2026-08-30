@@ -19,6 +19,8 @@ class UserModel {
   final String? cnmciNumber;
   final String? cnmciCardUrl;
   final String cnmciStatus;
+  final String? paymentPhone;
+  final String? preferredPaymentProvider;
 
   const UserModel({
     required this.id,
@@ -41,6 +43,8 @@ class UserModel {
     this.cnmciNumber,
     this.cnmciCardUrl,
     this.cnmciStatus = 'non_renseigne',
+    this.paymentPhone,
+    this.preferredPaymentProvider,
   });
 
   bool get isKycActif => kycStatus == 'actif';
@@ -82,6 +86,8 @@ class UserModel {
       cnmciNumber: json['cnmciNumber'] as String?,
       cnmciCardUrl: json['cnmciCardUrl'] as String?,
       cnmciStatus: json['cnmciStatus'] as String? ?? 'non_renseigne',
+      paymentPhone: json['paymentPhone'] as String? ?? json['payment_phone'] as String?,
+      preferredPaymentProvider: json['preferredPaymentProvider'] as String? ?? json['preferred_payment_provider'] as String?,
     );
   }
 
@@ -106,6 +112,8 @@ class UserModel {
         'cnmciNumber': cnmciNumber,
         'cnmciCardUrl': cnmciCardUrl,
         'cnmciStatus': cnmciStatus,
+        'paymentPhone': paymentPhone,
+        'preferredPaymentProvider': preferredPaymentProvider,
       };
 
   static bool _parseBool(dynamic value) {
