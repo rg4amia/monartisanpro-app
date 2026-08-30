@@ -103,11 +103,13 @@ export default function SupplierLogin() {
 
             <div className="w-full max-w-md bg-slate-900/60 backdrop-blur-xl border border-slate-800 p-8 rounded-2xl shadow-2xl relative z-10">
                 <div className="flex flex-col items-center mb-8">
-                    <img
-                        src="/img/prosartisan-logo.png"
-                        alt="ProsArtisan"
-                        className="h-16 w-16 object-contain mb-3 drop-shadow-md"
-                    />
+                    <div className="bg-white/95 px-4 py-2 rounded-2xl mb-4 shadow-lg">
+                        <img
+                            src="/img/prosartisan-logo.png"
+                            alt="ProsArtisan — Professionnel de l'Artisanat"
+                            className="h-12 w-auto object-contain"
+                        />
+                    </div>
                     <h1 className="text-2xl font-bold tracking-tight text-white">Espace Fournisseur</h1>
                     <p className="text-slate-400 text-sm mt-1.5 text-center">
                         Accédez à votre console de vente et gérez vos stocks de quincaillerie.

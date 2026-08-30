@@ -66,14 +66,13 @@ export default function SupplierLayout({ children }: { children: React.ReactNode
             {/* Topbar */}
             <header className="bg-slate-900 border-b border-slate-800 px-6 py-3.5 flex items-center justify-between sticky top-0 z-30">
                 <div className="flex items-center gap-3">
-                    <img
-                        src="/img/prosartisan-logo.png"
-                        alt="ProsArtisan"
-                        className="h-8 w-8 object-contain"
-                    />
-                    <span className="font-extrabold text-white text-base tracking-tight hidden sm:inline">
-                        ProsArtisan
-                    </span>
+                    <div className="bg-white/95 px-2.5 py-1 rounded-lg flex items-center shadow-sm">
+                        <img
+                            src="/img/prosartisan-logo.png"
+                            alt="ProsArtisan — Professionnel de l'Artisanat"
+                            className="h-7 w-auto object-contain"
+                        />
+                    </div>
                     <span className="text-amber-500 font-semibold text-xs px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 uppercase tracking-wider">
                         Fournisseur
                     </span>

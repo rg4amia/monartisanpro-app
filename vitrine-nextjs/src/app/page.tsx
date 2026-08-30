@@ -88,8 +88,8 @@ export default function HomePage() {
         <div className="flex flex-col items-center gap-4">
           <img
             src="/img/prosartisan-logo.png"
-            alt="ProsArtisan"
-            className="h-16 w-16 object-contain animate-pulse"
+            alt="ProsArtisan — Professionnel de l'Artisanat"
+            className="h-14 w-auto object-contain animate-pulse"
           />
           <p className="text-sm font-bold text-[#746251] animate-pulse">Chargement de la vitrine...</p>
         </div>

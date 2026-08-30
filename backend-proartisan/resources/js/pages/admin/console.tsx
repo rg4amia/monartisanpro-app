@@ -1861,8 +1861,8 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                     )}>
                         <div className="flex items-center justify-between gap-3">
                             <div className="flex items-center gap-3">
-                                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#ebb95e] text-[#241b16] shadow-[0_16px_35px_rgba(210,152,52,0.24)]">
-                                    <img src="/img/prosartisan-logo.png" alt="ProsArtisan" className="h-8 w-8 object-contain" />
+                                <div className="flex h-12 w-auto px-2.5 items-center justify-center rounded-2xl bg-white text-[#241b16] shadow-sm border border-[var(--admin-border)]">
+                                    <img src="/img/prosartisan-logo.png" alt="ProsArtisan" className="h-7 w-auto object-contain" />
                                 </div>
                                 <div className="min-w-0">
                                     <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--admin-muted)]">ProsArtisan</p>
