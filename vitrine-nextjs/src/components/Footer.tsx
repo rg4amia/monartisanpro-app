@@ -119,6 +119,7 @@ export default function Footer() {
                     {/* Brand Section */}
                     <div className="space-y-4">
                         <Link href="/" className="inline-block bg-white/95 p-2 rounded-xl shadow-md transition hover:scale-105">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                                 src="/img/prosartisan-logo.png"
                                 alt="ProsArtisan — Professionnel de l'Artisanat"
@@ -260,7 +261,7 @@ export default function Footer() {
                             </li>
                             <li>
                                 <Link href="/cgu" className="hover:text-[#ebb95e] transition">
-                                    Conditions Générales d'Utilisation (CGU)
+                                    {cguLabel}
                                 </Link>
                             </li>
                             <li>
@@ -315,7 +316,7 @@ export default function Footer() {
                     <p>{copyright}</p>
                     <div className="flex flex-wrap items-center gap-3 sm:gap-4">
                         <Link href="/cgu" className="hover:text-white transition">
-                            CGU & Conditions d'Utilisation
+                            {cguLabel}
                         </Link>
                         <span>•</span>
                         <Link href="/politique-confidentialite" className="hover:text-white transition">
