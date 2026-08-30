@@ -73,10 +73,11 @@ class SupplierHomeScreen extends StatelessWidget {
                               child: _MetricCard(
                                 title: 'Paiements J+1',
                                 value: Formatters.fcfa(payableTomorrow),
-                                subtitle: 'Montants matériaux',
+                                subtitle: 'Montants matériaux ›',
                                 color: AppColors.accent,
                                 background: AppColors.artisanSoft,
                                 icon: Icons.payments_outlined,
+                                onTap: () => Get.toNamed(Routes.wallet),
                               ),
                             ),
                           ],
@@ -588,6 +589,7 @@ class _MetricCard extends StatelessWidget {
     required this.color,
     required this.background,
     required this.icon,
+    this.onTap,
   });
 
   final String title;
@@ -596,16 +598,19 @@ class _MetricCard extends StatelessWidget {
   final Color color;
   final Color background;
   final IconData icon;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.border),
-      ),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppColors.border),
+        ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -646,8 +651,9 @@ class _MetricCard extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 class _HeroMetric extends StatelessWidget {
