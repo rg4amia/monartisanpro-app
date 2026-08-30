@@ -45,16 +45,14 @@ export default function CookieConsent() {
     });
 
     useEffect(() => {
-        // Check if consent has already been given
+        let timer: ReturnType<typeof setTimeout> | null = null;
         try {
             const stored = localStorage.getItem(STORAGE_KEY);
             if (!stored) {
-                // Short delay for smooth slide-in
-                const timer = setTimeout(() => setIsVisible(true), 800);
-                return () => clearTimeout(timer);
+                timer = setTimeout(() => setIsVisible(true), 800);
             }
         } catch {
-            setIsVisible(true);
+            timer = setTimeout(() => setIsVisible(true), 800);
         }
 
         // Listener to allow reopening cookie settings from Footer or links
@@ -64,7 +62,10 @@ export default function CookieConsent() {
         };
 
         window.addEventListener('open-cookie-settings', handleOpenSettings);
-        return () => window.removeEventListener('open-cookie-settings', handleOpenSettings);
+        return () => {
+            if (timer) clearTimeout(timer);
+            window.removeEventListener('open-cookie-settings', handleOpenSettings);
+        };
     }, []);
 
     const savePreferences = (prefs: CookiePreferences) => {
