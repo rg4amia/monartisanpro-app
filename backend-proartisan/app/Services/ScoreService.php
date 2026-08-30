@@ -308,7 +308,7 @@ class ScoreService
     // ──────────────────────────────────────────────
     //  Recalcul pur à partir du Ledger
     /**
-     * Somme les piliers d'évaluation et les entrées du Ledger pour mettre à jour score_prosartisan (0 à 1000).
+     * Somme les piliers d'évaluation pondérés par la maturité (10 missions) et le Ledger pour score_prosartisan (0 à 1000).
      */
     public function recalculateFromLedger(User $artisan): int
     {
@@ -328,14 +328,31 @@ class ScoreService
         ", [$artisan->id]);
 
         $evalScoreBase = 0;
-        if ($row && $row->total_evaluations > 0) {
+        $totalEvals = (int) ($row?->total_evaluations ?? 0);
+
+        if ($row && $totalEvals > 0) {
             $f = (float) ($row->avg_fiabilite ?? 0);
             $i = (float) ($row->avg_integrite ?? 0);
             $q = (float) ($row->avg_qualite ?? 0);
             $r = (float) ($row->avg_reactivite ?? 0);
 
-            // Fiabilité (40% -> 400 pts) + Intégrité (30% -> 300 pts) + Qualité (20% -> 200 pts) + Réactivité (10% -> 100 pts)
-            $evalScoreBase = (int) round(($f / 5.0 * 400) + ($i / 5.0 * 300) + ($q / 5.0 * 200) + ($r / 5.0 * 100));
+            // Somme brute des 4 piliers : Fiabilité (400) + Intégrité (300) + Qualité (200) + Réactivité (100)
+            $rawCriteriaScore = ($f / 5.0 * 400) + ($i / 5.0 * 300) + ($q / 5.0 * 200) + ($r / 5.0 * 100);
+
+            // Condition d'excellence : Au moins 3 critères avec moyenne >= 4.8 / 5 pour dépasser 800
+            $countExcellence = 0;
+            if ($f >= 4.8) $countExcellence++;
+            if ($i >= 4.8) $countExcellence++;
+            if ($q >= 4.8) $countExcellence++;
+            if ($r >= 4.8) $countExcellence++;
+
+            if ($countExcellence < 3) {
+                $rawCriteriaScore = min(800, $rawCriteriaScore);
+            }
+
+            // Facteur de maturité : 10 missions nécessaires pour débloquer 100% du score potentiel
+            $volumeFactor = min(1.0, $totalEvals / 10.0);
+            $evalScoreBase = (int) round($rawCriteriaScore * $volumeFactor);
         }
 
         $ledgerSum = (int) ScoreLedgerEntry::where('user_id', $artisan->id)
@@ -385,7 +402,7 @@ class ScoreService
     // ──────────────────────────────────────────────
 
     /**
-     * Retourne le détail du score.
+     * Retourne le détail du score et les métriques de maturité.
      */
     public function getScoreDetail(User $artisan): array
     {
@@ -402,18 +419,22 @@ class ScoreService
         ", [$artisan->id]);
 
         $threshold = config('prosartisan.score_prosartisan.credit_threshold', 70);
+        $totalEvals = (int) ($row?->total_evaluations ?? 0);
 
         return [
-            'score_prosartisan'     => $artisan->score_prosartisan,
-            'micro_credit_eligible' => $artisan->score_prosartisan >= $threshold,
-            'total_evaluations'     => $row?->total_evaluations ?? 0,
-            'breakdown'             => [
+            'score_prosartisan'          => $artisan->score_prosartisan,
+            'micro_credit_eligible'      => $artisan->score_prosartisan >= $threshold,
+            'total_evaluations'          => $totalEvals,
+            'maturity_missions_target'   => 10,
+            'maturity_missions_count'    => min(10, $totalEvals),
+            'maturity_percentage'        => round(min(1.0, $totalEvals / 10.0) * 100, 1),
+            'breakdown'                  => [
                 'fiabilite'  => round((float) ($row?->avg_fiabilite ?? 0), 1),
                 'integrite'  => round((float) ($row?->avg_integrite ?? 0), 1),
                 'qualite'    => round((float) ($row?->avg_qualite ?? 0), 1),
                 'reactivite' => round((float) ($row?->avg_reactivite ?? 0), 1),
             ],
-            'average_rating' => round((float) ($row?->avg_note ?? 0), 1),
+            'average_rating'             => round((float) ($row?->avg_note ?? 0), 1),
         ];
     }
 
