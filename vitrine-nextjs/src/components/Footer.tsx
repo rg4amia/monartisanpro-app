@@ -269,6 +269,15 @@ export default function Footer() {
                                 </Link>
                             </li>
                             <li>
+                                <button
+                                    type="button"
+                                    onClick={() => window.dispatchEvent(new CustomEvent('open-cookie-settings'))}
+                                    className="hover:text-[#ebb95e] transition text-left flex items-center gap-1.5"
+                                >
+                                    <span>🍪 Gestion des cookies</span>
+                                </button>
+                            </li>
+                            <li>
                                 <Link href="/contact" className="hover:text-[#ebb95e] transition">
                                     Contact & Devis
                                 </Link>
@@ -312,6 +321,14 @@ export default function Footer() {
                         <Link href="/politique-confidentialite" className="hover:text-white transition">
                             Politique de Confidentialité
                         </Link>
+                        <span>•</span>
+                        <button
+                            type="button"
+                            onClick={() => window.dispatchEvent(new CustomEvent('open-cookie-settings'))}
+                            className="hover:text-white transition"
+                        >
+                            Gestion des cookies
+                        </button>
                         <span>•</span>
                         <span>{slogan}</span>
                     </div>
