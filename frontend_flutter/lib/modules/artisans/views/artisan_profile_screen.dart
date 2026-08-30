@@ -27,6 +27,10 @@ class ArtisanProfileScreen extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
         final a = c.artisan.value!;
+        final scoreData = c.score.value;
+        final rootData = (scoreData?['data'] as Map<String, dynamic>?) ?? scoreData;
+        final dynamicScore = (rootData?['score_prosartisan'] as num?)?.toInt() ?? a.scoreProsArtisan;
+
         return CustomScrollView(
           slivers: [
             // Photo header
@@ -182,7 +186,7 @@ class ArtisanProfileScreen extends StatelessWidget {
                           ),
                         ),
                         ScoreProsArtisan(
-                            score: a.scoreProsArtisan,
+                            score: dynamicScore,
                             size: ScoreSize.large,
                             showLabel: true),
                       ],
