@@ -1,0 +1,49 @@
+Politique de Confidentialité – ProsArtisan
+1. Préambule et Responsabilité du Traitement
+La présente politique définit la manière dont l'application ProsArtisan collecte, traite, stocke et protège les données à caractère personnel de ses utilisateurs (Clients et Artisans). ProsArtisan agit en tant que responsable de traitement exclusif de cet environnement. L'infrastructure de ProsArtisan opère dans une étanchéité absolue vis-à-vis de toute application institutionnelle tierce : aucune donnée utilisateur n'est synchronisée, partagée ou accessible par des démembrements administratifs ou des agences régionales.
+
+2. Nature des Données Collectées
+L'architecture de collecte obéit au principe de minimisation (seules les données strictement nécessaires au service sont requises) :
+
+Données d’identification : Noms, prénoms, numéros de téléphone (vérifiés par OTP), adresses e-mail. Pour les Artisans : copie numérisée de la pièce d'identité (CNI, Passeport).
+
+Données de localisation : Coordonnées GPS collectées uniquement lors de l'utilisation active de l'application, afin d'assurer le matching géographique entre la demande du Client et la position de l'Artisan.
+
+Données transactionnelles et financières : Historique des paiements, identifiants de transactions Mobile Money ou bancaires. ProsArtisan ne stocke pas les codes PIN ou mots de passe des portefeuilles électroniques.
+
+Données d'activité et IA : Historique des recherches, photographies des réalisations, évaluations, et requêtes textuelles. Les requêtes de recherche sont transformées en vecteurs pour alimenter notre moteur de recommandation, après anonymisation des identifiants directs.
+
+3. Finalités du Traitement
+Tes données ne sont pas commercialisées. Elles sont exploitées par nos algorithmes et nos équipes de modération pour :
+
+Authentifier les profils et lutter contre la fraude (usurpation d'identité, blanchiment).
+
+Générer des correspondances précises (matching) via notre moteur de recherche sémantique.
+
+Garantir la sécurité du mécanisme de paiement séquestre.
+
+Fournir des preuves numériques (photos, logs de géolocalisation, historique de chat interne) nécessaires à l'arbitrage en cas de litige sur la qualité ou l'achèvement des travaux.
+
+4. Partage et Transfert des Données
+Dans le cadre exclusif de l'exécution du service, certaines données chiffrées sont transmises à des tiers de confiance :
+
+Agrégateurs de paiement (Wave, Orange Money, MTN, Moov) : Pour l'exécution et la libération des fonds.
+
+Fournisseurs d'infrastructure Cloud : Pour l'hébergement sécurisé des bases de données et des fichiers médias.
+Tous les sous-traitants sont soumis à des clauses de confidentialité strictes. Aucune donnée n'est transférée en dehors de l'espace CEDEAO sans des garanties de sécurité équivalentes aux normes de l'ARTCI.
+
+5. Sécurité et Conservation
+Les flux de données sont sécurisés de bout en bout (protocoles TLS). Les pièces d'identité et les données sensibles sont chiffrées au repos dans nos bases de données.
+
+Données courantes : Conservées tant que le compte est actif.
+
+Données de géolocalisation : Purgées ou anonymisées 60 jours après la finalisation d'une prestation.
+
+Données comptables et transactionnelles : Conservées pendant 10 ans pour répondre aux obligations fiscales et légales ivoiriennes.
+
+6. Droits des Utilisateurs
+Conformément à la législation en vigueur, tout utilisateur dispose d'un droit d'accès, de rectification, de limitation et de suppression de ses données ("droit à l'oubli").
+Pour exercer ces droits, l'utilisateur peut formuler sa requête via l'interface dédiée de l'application ou contacter le Délégué à la Protection des Données (DPO) à l'adresse : dpo@prosartisan.ci.
+
+Défi d'ingénierie :
+Le "droit à l'oubli" est un cauchemar technique dans une architecture relationnelle. Si un artisan demande la suppression totale de ses données, un simple "Soft Delete" (flag is_deleted = true) ne satisfait pas la loi, mais un "Hard Delete" brisera l'intégrité référentielle de ta base de données, notamment ton historique de transactions financières (qui doit être conservé 10 ans) et tes index vectoriels dans Qdrant.

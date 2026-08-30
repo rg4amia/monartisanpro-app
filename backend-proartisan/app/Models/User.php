@@ -40,6 +40,7 @@ class User extends Authenticatable
         'cnmci_status',
         'payment_phone',
         'preferred_payment_provider',
+        'cgu_accepted_at',
     ];
 
     protected $hidden = ['password', 'remember_token', 'position', 'google_2fa_secret'];
@@ -49,6 +50,7 @@ class User extends Authenticatable
         return [
             'password'         => 'hashed',
             'blocked_at'       => 'datetime',
+            'cgu_accepted_at'  => 'datetime',
             'wallet_materiaux' => 'integer',
             'wallet_mo'        => 'integer',
             'score_prosartisan'=> 'integer',

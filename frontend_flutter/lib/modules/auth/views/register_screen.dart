@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:flutter/gestures.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/storage/storage_service.dart';
-import '../../../core/config/env_config.dart';
+import '../../settings/views/legal_terms_screen.dart';
 import '../controllers/auth_controller.dart';
 
 // ─── Design Tokens ───────────────────────────────────────────────────────────
@@ -491,37 +490,43 @@ class _RegisterScreenState extends State<RegisterScreen>
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: GestureDetector(
-            onTap: () {
-              _c.cguAccepted.value = !_c.cguAccepted.value;
-            },
-            child: RichText(
-              text: TextSpan(
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: _Dt.ink,
-                  fontWeight: FontWeight.w500,
-                  height: 1.5,
-                ),
-                children: [
-                  const TextSpan(text: 'J\'ai lu et j\'accepte les '),
-                  TextSpan(
-                    text: 'Conditions Générales d\'Utilisation',
-                    style: const TextStyle(
-                      color: _Dt.primary,
-                      fontWeight: FontWeight.w700,
-                      decoration: TextDecoration.underline,
-                    ),
-                    recognizer: TapGestureRecognizer()
-                      ..onTap = () async {
-                        final url = Uri.parse(EnvConfig.baseUrl.replaceAll('/api/v1', '/cgu'));
-                        if (await canLaunchUrl(url)) {
-                          await launchUrl(url, mode: LaunchMode.externalApplication);
-                        }
-                      },
-                  ),
-                ],
+          child: RichText(
+            text: TextSpan(
+              style: const TextStyle(
+                fontSize: 13,
+                color: _Dt.ink,
+                fontWeight: FontWeight.w500,
+                height: 1.5,
               ),
+              children: [
+                const TextSpan(text: 'J\'ai lu et j\'accepte les '),
+                TextSpan(
+                  text: 'Conditions Générales d\'Utilisation (CGU)',
+                  style: const TextStyle(
+                    color: _Dt.primary,
+                    fontWeight: FontWeight.w700,
+                    decoration: TextDecoration.underline,
+                  ),
+                  recognizer: TapGestureRecognizer()
+                    ..onTap = () {
+                      Get.to(() => const LegalTermsScreen(initialTab: 0));
+                    },
+                ),
+                const TextSpan(text: ' et la '),
+                TextSpan(
+                  text: 'Politique de Confidentialité',
+                  style: const TextStyle(
+                    color: _Dt.primary,
+                    fontWeight: FontWeight.w700,
+                    decoration: TextDecoration.underline,
+                  ),
+                  recognizer: TapGestureRecognizer()
+                    ..onTap = () {
+                      Get.to(() => const LegalTermsScreen(initialTab: 1));
+                    },
+                ),
+                const TextSpan(text: '.'),
+              ],
             ),
           ),
         ),

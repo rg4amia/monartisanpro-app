@@ -1,0 +1,48 @@
+Conditions Générales d'Utilisation – ProsArtisan
+1. Objet et Définition des Rôles
+
+Nature du Service : ProsArtisan est exclusivement une plateforme technologique d’intermédiation et de sécurisation financière.
+
+Indépendance : Aucun lien de subordination n'existe entre ProsArtisan et les artisans inscrits. ProsArtisan n’est ni employeur, ni maître d’œuvre, ni sous-traitant.
+
+Éligibilité : L’utilisation est réservée aux personnes majeures capables de contracter selon le droit ivoirien.
+
+2. Enrôlement et Identité (KYC)
+
+Vérification Stricte : Tout compte Artisan nécessite la soumission d’une pièce d'identité valide (CNI, Passeport, Attestation d'Identité) et d’un numéro de téléphone actif (Mobile Money).
+
+Exactitude des Données : L’utilisateur s’engage à fournir des informations réelles. L'usurpation d'identité ou la falsification de compétences entraîne une suspension immédiate et irrévocable, avec signalement potentiel aux autorités.
+
+3. Fonctionnement du Paiement Séquestre
+
+Sécurisation des Fonds : Pour valider une prestation, le Client s'acquitte du montant total via la plateforme (Mobile Money ou carte bancaire). Ces fonds sont placés sur un compte de cantonnement (séquestre) géré par ProsArtisan.
+
+Interdiction du Contournement : Toute transaction financière de main à main ou transfert direct (pour transport, achat de matériel imprévu, ou acompte) en dehors du système ProsArtisan est strictement interdite. En cas de violation, ProsArtisan décline toute responsabilité et se réserve le droit de bannir les utilisateurs impliqués.
+
+Libération des Fonds : Les fonds sont transférés à l’Artisan (déduction faite de la commission de la plateforme) uniquement après confirmation de l’achèvement des travaux par le Client via l'application.
+
+4. Engagements et Exécution des Prestations
+
+Obligations de l'Artisan : Ponctualité, conformité au devis validé, respect du domicile du client, et nettoyage du site après intervention. Tout retard abusif non justifié ou comportement inapproprié affectera son score de fiabilité.
+
+Obligations du Client : Fournir des spécifications claires, garantir l'accès au site d'intervention, et valider la fin des travaux de bonne foi dès leur achèvement.
+
+5. Gestion des Litiges et Arbitrage
+
+Gel des Fonds : En cas de désaccord sur la qualité ou l'achèvement de la prestation, le Client doit déclencher une procédure de litige dans l'application sous 24 heures. Les fonds restent séquestrés.
+
+Preuves Numériques : Les deux parties ont l'obligation de fournir des preuves via l'application (photos avant/après, historique des messages internes).
+
+Arbitrage ProsArtisan : Le support technique de ProsArtisan intervient comme médiateur de premier niveau pour trancher le litige sur la base des éléments numériques fournis.
+
+6. Propriété Intellectuelle et Données
+
+Cession de Droits : Les Artisans autorisent ProsArtisan à utiliser les photographies de leurs réalisations téléchargées sur l'application à des fins de promotion et de marketing.
+
+Confidentialité : Les utilisateurs s'interdisent de réutiliser les données personnelles (numéro de téléphone, adresse physique) obtenues via la plateforme à d'autres fins que l'exécution de la prestation convenue.
+
+7. Limitation de Responsabilité
+
+ProsArtisan garantit le fonctionnement de l'infrastructure de mise en relation et la traçabilité des paiements.
+
+ProsArtisan ne peut être tenu responsable des malfaçons, des dommages matériels ou corporels survenant lors de l'exécution de la prestation, ni des interruptions de service dues à des pannes de réseaux de télécommunications tiers.

@@ -19,7 +19,9 @@ Route::get('/', function () {
     return redirect($frontUrl);
 })->name('home');
 
-Route::inertia('/cgu', 'cgu')->name('cgu');
+Route::inertia('/cgu', 'cgu', ['defaultTab' => 'cgu'])->name('cgu');
+Route::inertia('/politique-confidentialite', 'cgu', ['defaultTab' => 'privacy'])->name('privacy');
+Route::inertia('/privacy', 'cgu', ['defaultTab' => 'privacy']);
 
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::middleware('guest')->group(function () {

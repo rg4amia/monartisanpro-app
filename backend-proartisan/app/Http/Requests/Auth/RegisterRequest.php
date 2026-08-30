@@ -45,8 +45,7 @@ class RegisterRequest extends FormRequest
                 }
             ],
             'bio' => ['sometimes', 'nullable', 'string'],
-            'experience_years' => ['sometimes', 'integer', 'min:0', 'max:60'],
-            'cgu_accepted' => ['required', 'accepted', 'boolean'],
+            'cgu_accepted' => ['required', 'accepted'],
         ];
     }
 
@@ -59,8 +58,8 @@ class RegisterRequest extends FormRequest
             'name.min'       => 'Le nom doit comporter au moins 2 caractères.',
             'role.required'  => 'Le rôle est obligatoire.',
             'role.in'        => 'Le rôle doit être client, artisan, fournisseur, livreur ou driver.',
-            'cgu_accepted.required' => 'Vous devez accepter les conditions générales d\'utilisation.',
-            'cgu_accepted.accepted' => 'Vous devez accepter les conditions générales d\'utilisation.',
+            'cgu_accepted.required' => 'Vous devez accepter les Conditions Générales d\'Utilisation et la Politique de Confidentialité.',
+            'cgu_accepted.accepted' => 'Vous devez accepter les Conditions Générales d\'Utilisation et la Politique de Confidentialité.',
         ];
     }
 }

@@ -684,7 +684,10 @@ export default function Welcome() {
                                         Flux metier
                                     </a>
                                     <a href="/cgu" className="transition hover:text-white">
-                                        Conditions d'utilisation
+                                        Conditions d'utilisation (CGU)
+                                    </a>
+                                    <a href="/politique-confidentialite" className="transition hover:text-white">
+                                        Politique de confidentialité
                                     </a>
                                     <a href="#backoffice" className="transition hover:text-white">
                                         Backoffice
