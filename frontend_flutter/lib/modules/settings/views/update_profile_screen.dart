@@ -217,10 +217,6 @@ class _FormSection extends StatelessWidget {
           );
         }),
         Obx(() {
-          if (!controller.isProActor.value) {
-            return const SizedBox.shrink();
-          }
-
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -837,114 +833,129 @@ class _MobileMoneyPayoutCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: _C.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _C.subtle),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFECFDF5),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.account_balance_wallet_rounded, color: Color(0xFF10B981), size: 20),
-              ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Reversement Mobile Money',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: _C.ink,
-                      ),
-                    ),
-                    SizedBox(height: 2),
-                    Text(
-                      'Compte de réception de vos gains',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: _C.muted,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'Opérateur de paiement',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: _C.ink,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Obx(() {
-            final currentProvider = controller.selectedPaymentProvider.value;
-            return Row(
+    return Obx(() {
+      final isPro = controller.isProActor.value;
+      final title = isPro ? 'Reversement Mobile Money' : 'Moyen de paiement Mobile Money';
+      final subtitle = isPro
+          ? 'Compte de réception de vos gains'
+          : 'Paiements de devis & remboursements';
+      final infoMessage = isPro
+          ? 'Ce numéro sera automatiquement crédité par ProsArtisan dès validation de vos jalons, livraisons ou retraits de matériel.'
+          : 'Ce numéro Mobile Money sera utilisé par défaut pour valider vos règlements et recevoir immédiatement vos remboursements en cas de litige.';
+
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: _C.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: _C.subtle),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                _buildProviderChip('wave', 'Wave', const Color(0xFF00A3FF), currentProvider == 'wave'),
-                const SizedBox(width: 8),
-                _buildProviderChip('orange_money', 'Orange', const Color(0xFFFF7900), currentProvider == 'orange_money'),
-                const SizedBox(width: 8),
-                _buildProviderChip('mtn_money', 'MTN', const Color(0xFFFFCC00), currentProvider == 'mtn_money'),
-                const SizedBox(width: 8),
-                _buildProviderChip('moov_money', 'Moov', const Color(0xFF005BA6), currentProvider == 'moov_money'),
-              ],
-            );
-          }),
-          const SizedBox(height: 16),
-          _InputField(
-            label: 'Numéro Mobile Money (10 chiffres)',
-            controller: controller.paymentPhoneController,
-            icon: Icons.phone_android_rounded,
-            hint: 'Ex: 0701020304',
-            keyboardType: TextInputType.phone,
-          ),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF9FAFB),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFFE5E7EB)),
-            ),
-            child: const Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(Icons.info_outline_rounded, size: 16, color: _C.muted),
-                SizedBox(width: 8),
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFECFDF5),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    isPro ? Icons.account_balance_wallet_rounded : Icons.payments_rounded,
+                    color: const Color(0xFF10B981),
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
                 Expanded(
-                  child: Text(
-                    'Ce numéro sera automatiquement crédité par ProsArtisan dès validation de vos jalons, livraisons ou retraits de matériel.',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: _C.muted,
-                      height: 1.3,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: _C.ink,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: _C.muted,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
-          ),
-        ],
-      ),
-    );
+            const SizedBox(height: 16),
+            const Text(
+              'Opérateur de paiement',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: _C.ink,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Obx(() {
+              final currentProvider = controller.selectedPaymentProvider.value;
+              return Row(
+                children: [
+                  _buildProviderChip('wave', 'Wave', const Color(0xFF00A3FF), currentProvider == 'wave'),
+                  const SizedBox(width: 8),
+                  _buildProviderChip('orange_money', 'Orange', const Color(0xFFFF7900), currentProvider == 'orange_money'),
+                  const SizedBox(width: 8),
+                  _buildProviderChip('mtn_money', 'MTN', const Color(0xFFFFCC00), currentProvider == 'mtn_money'),
+                  const SizedBox(width: 8),
+                  _buildProviderChip('moov_money', 'Moov', const Color(0xFF005BA6), currentProvider == 'moov_money'),
+                ],
+              );
+            }),
+            const SizedBox(height: 16),
+            _InputField(
+              label: 'Numéro Mobile Money (10 chiffres)',
+              controller: controller.paymentPhoneController,
+              icon: Icons.phone_android_rounded,
+              hint: 'Ex: 0701020304',
+              keyboardType: TextInputType.phone,
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF9FAFB),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFE5E7EB)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.info_outline_rounded, size: 16, color: _C.muted),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      infoMessage,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: _C.muted,
+                        height: 1.3,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    });
   }
 
   Widget _buildProviderChip(String providerKey, String label, Color color, bool isSelected) {
