@@ -566,7 +566,15 @@ class VitrineAdminController extends Controller
     {
         try {
             $settings = $request->validate([
-                // Chiffres clés
+                // Chiffres clés & Indicateurs vitrine
+                'stat_artisans_valeur' => 'nullable|string|max:50',
+                'stat_artisans_label' => 'nullable|string|max:100',
+                'stat_missions_valeur' => 'nullable|string|max:50',
+                'stat_missions_label' => 'nullable|string|max:100',
+                'stat_communes_valeur' => 'nullable|string|max:50',
+                'stat_communes_label' => 'nullable|string|max:100',
+                'stat_satisfaction_valeur' => 'nullable|string|max:50',
+                'stat_satisfaction_label' => 'nullable|string|max:100',
                 'chiffres_cles_artisans' => 'nullable|string|max:50',
                 'chiffres_cles_utilisateurs' => 'nullable|string|max:50',
                 'chiffres_cles_missions' => 'nullable|string|max:50',
