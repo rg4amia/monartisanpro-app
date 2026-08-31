@@ -396,6 +396,7 @@ interface AdminPageProps {
     vitrineRecrutements?: any[];
     vitrinePopups?: any[];
     vitrineSettings?: any[];
+    contactMessages?: any[];
 }
 
 interface AdminNotificationItem {
@@ -522,9 +523,9 @@ const tabMeta: Record<AdminTab, { description: string; label: string; section: s
         description: 'Centre de notifications système, alertes KYC, litiges et anomalies de sécurité de la plateforme.',
     },
     vitrine: {
-        label: 'CMS Vitrine',
+        label: 'CMS Vitrine & Contacts',
         section: 'COMMUNICATION',
-        description: 'Administration et gestion du contenu éditorial de la vitrine ProsArtisan.',
+        description: 'Administration et gestion du contenu éditorial de la vitrine ProsArtisan et des demandes de contact.',
     },
 };
 
@@ -727,6 +728,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         vitrineRecrutements = [],
         vitrinePopups = [],
         vitrineSettings = [],
+        contactMessages = [],
     } = (pageProps || {}) as Partial<AdminPageProps>;
 
     const [missionSubTab, setMissionSubTab] = useState<'chantiers' | 'livraisons'>('chantiers');
@@ -1560,7 +1562,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                 { id: 'roles_permissions', label: tabMeta.roles_permissions.label },
                 { count: (communications ?? []).filter(c => c.statut === 'publie').length, id: 'communications', label: tabMeta.communications.label },
                 { count: (promoCodes ?? []).filter(p => p.is_active).length, id: 'promo_codes', label: 'Codes Promo' },
-                { id: 'vitrine', label: tabMeta.vitrine.label },
+                { count: (contactMessages ?? []).filter(c => c.statut === 'nouveau').length, id: 'vitrine', label: tabMeta.vitrine.label },
             ],
         },
     ];
@@ -1675,13 +1677,15 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                     { label: 'Cl\u00f4tur\u00e9es', tone: 'slate' as const, value: numberFormat.format(comms.filter(c => c.statut === 'cloture').length) },
                 ];
             }
-            case 'vitrine':
+            case 'vitrine': {
+                const newContacts = (contactMessages ?? []).filter(c => c.statut === 'nouveau').length;
                 return [
-                    { label: 'Slides', tone: 'amber' as const, value: `${(vitrineSlides ?? []).length}` },
-                    { label: 'Articles', tone: 'green' as const, value: `${(vitrineArticles ?? []).length}` },
-                    { label: 'Formations', tone: 'blue' as const, value: `${(vitrineFormations ?? []).length}` },
+                    { label: 'Demandes Contact', tone: newContacts > 0 ? ('rose' as const) : ('amber' as const), value: `${newContacts} Nouvelle${newContacts > 1 ? 's' : ''}` },
+                    { label: 'Articles & Actus', tone: 'green' as const, value: `${(vitrineArticles ?? []).length}` },
+                    { label: 'Formations & Slides', tone: 'blue' as const, value: `${(vitrineFormations ?? []).length} / ${(vitrineSlides ?? []).length}` },
                     { label: 'Vidéos & Recrut.', tone: 'slate' as const, value: `${(vitrineVideos ?? []).length} / ${(vitrineRecrutements ?? []).length}` },
                 ];
+            }
             default:
                 return [];
         }
@@ -1720,6 +1724,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         vitrineFormations,
         vitrineVideos,
         vitrineRecrutements,
+        contactMessages,
     ]);
 
     const summaryCards = [
@@ -4783,6 +4788,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                         vitrineRecrutements={vitrineRecrutements}
                                         vitrinePopups={vitrinePopups}
                                         vitrineSettings={vitrineSettings}
+                                        contactMessages={contactMessages}
                                         users={users}
                                     />
                                 </section>
