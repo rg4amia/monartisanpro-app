@@ -55,7 +55,7 @@ export default function SupplierOrders() {
 
     const loadOrders = async () => {
         try {
-            const list = await api.getSupplierOrders();
+            const list = await api.getSupplierOrders<Order[]>();
             setOrders(list);
         } catch (err: any) {
             console.error(err);
