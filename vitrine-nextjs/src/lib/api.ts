@@ -227,8 +227,8 @@ const MOCK_POPUP: Popup = {
 const MOCK_SETTINGS: Record<string, string> = {
     vitrine_hero_title: "La confiance au cœur de l'artisanat ivoirien",
     vitrine_hero_subtitle: "Mise en relation sécurisée, artisans qualifiés et livraison de chantiers simplifiée.",
-    contact_phone_vitrine: "+225 07 00 00 00 00",
-    contact_email_vitrine: "contact@prosartisan.ci"
+    contact_phone_vitrine: "+225 01 60 60 61 83",
+    contact_email_vitrine: "info@prosartisan.net"
 };
 
 function getAuthToken(): string | null {

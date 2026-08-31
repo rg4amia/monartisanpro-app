@@ -181,11 +181,11 @@ class VitrineSeeder extends Seeder
         );
         VitrineSetting::updateOrCreate(
             ['cle' => 'contact_phone_vitrine'],
-            ['valeur' => '+225 07 00 00 00 00']
+            ['valeur' => '+225 01 60 60 61 83']
         );
         VitrineSetting::updateOrCreate(
             ['cle' => 'contact_email_vitrine'],
-            ['valeur' => 'contact@prosartisan.ci']
+            ['valeur' => 'info@prosartisan.net']
         );
     }
 }

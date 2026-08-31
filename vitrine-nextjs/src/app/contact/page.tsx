@@ -69,7 +69,7 @@ function ContactFormInner() {
                             </div>
                             <div className="space-y-0.5">
                                 <p className="font-bold text-[#241b16]">Téléphone</p>
-                                <a href="tel:+2250700000000" className="hover:underline font-semibold">+225 07 00 00 00 00</a>
+                                <a href="tel:+2250160606183" className="hover:underline font-semibold">+225 01 60 60 61 83</a>
                             </div>
                         </div>
 
@@ -79,7 +79,7 @@ function ContactFormInner() {
                             </div>
                             <div className="space-y-0.5">
                                 <p className="font-bold text-[#241b16]">Email</p>
-                                <a href="mailto:contact@prosartisan.ci" className="hover:underline font-semibold">contact@prosartisan.ci</a>
+                                <a href="mailto:info@prosartisan.net" className="hover:underline font-semibold">info@prosartisan.net</a>
                             </div>
                         </div>
 
@@ -89,7 +89,7 @@ function ContactFormInner() {
                             </div>
                             <div className="space-y-0.5">
                                 <p className="font-bold text-[#241b16]">Siège social</p>
-                                <p>Plateau, Boulevard de la République,<br />Abidjan, Côte d&apos;Ivoire</p>
+                                <p>Koumassi remblais,<br />Abidjan, Côte d&apos;Ivoire</p>
                             </div>
                         </div>
                     </div>
@@ -162,7 +162,7 @@ function ContactFormInner() {
                                     type="tel"
                                     value={telephone}
                                     onChange={(e) => setTelephone(e.target.value)}
-                                    placeholder="Ex: +225 07 00 00 00 00"
+                                    placeholder="Ex: +225 01 60 60 61 83"
                                     className="w-full rounded-xl border border-[#e6d3b2]/60 px-4 py-3 text-xs text-[#241b16] focus:border-[#8a5d16] focus:outline-none"
                                 />
                             </label>

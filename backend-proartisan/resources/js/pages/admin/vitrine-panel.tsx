@@ -1954,9 +1954,9 @@ function SettingsSubPanel({ settings }: { settings: any[] }) {
             chiffres_cles_metiers: '29',
             
             // Coordonnées & Contact
-            contact_phone: '+225 07 00 00 00 00',
-            contact_email: 'contact@prosartisan.ci',
-            footer_address: "Plateau, Boulevard de la République, Abidjan, Côte d'Ivoire",
+            contact_phone: '+225 01 60 60 61 83',
+            contact_email: 'info@prosartisan.net',
+            footer_address: "Koumassi remblais, Abidjan, Côte d'Ivoire",
             
             // Réseaux sociaux
             lien_facebook: '',
@@ -2179,7 +2179,7 @@ function SettingsSubPanel({ settings }: { settings: any[] }) {
                             value={data.contact_phone}
                             onChange={e => setData('contact_phone', e.target.value)}
                             className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm font-semibold"
-                            placeholder="+225 07 00 00 00 00"
+                            placeholder="+225 01 60 60 61 83"
                         />
                     </div>
                     <div>
@@ -2189,7 +2189,7 @@ function SettingsSubPanel({ settings }: { settings: any[] }) {
                             value={data.contact_email}
                             onChange={e => setData('contact_email', e.target.value)}
                             className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm font-semibold"
-                            placeholder="contact@prosartisan.ci"
+                            placeholder="info@prosartisan.net"
                         />
                     </div>
                     <div>
@@ -2199,7 +2199,7 @@ function SettingsSubPanel({ settings }: { settings: any[] }) {
                             value={data.footer_address}
                             onChange={e => setData('footer_address', e.target.value)}
                             className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm"
-                            placeholder="Plateau, Boulevard de la République, Abidjan"
+                            placeholder="Koumassi remblais, Abidjan"
                         />
                     </div>
                 </div>
