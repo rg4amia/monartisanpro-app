@@ -436,14 +436,48 @@ class _MenuList extends StatelessWidget {
             onTap: () => Get.toNamed(Routes.updateProfile),
           ),
           const SizedBox(height: 12),
-          _MenuItem(
-            icon: Icons.account_balance_wallet_outlined,
-            iconBg: const Color(0xFFECFDF5),
-            iconColor: const Color(0xFF10B981),
-            title: 'Reversement Mobile Money',
-            subtitle: 'Numéro de réception des fonds (Wave, Orange, MTN, Moov)',
-            onTap: () => Get.toNamed(Routes.updateProfile),
-          ),
+          Obx(() {
+            final isClient = controller.userRole.value == 'client';
+            final hasPaymentPhone = controller.paymentPhone.value.isNotEmpty;
+            final providerName = controller.preferredPaymentProvider.value.toUpperCase().replaceAll('_', ' ');
+
+            final title = isClient ? 'Moyen de paiement Mobile Money' : 'Reversement Mobile Money';
+            final subtitle = hasPaymentPhone
+                ? '$providerName : ${controller.paymentPhone.value}'
+                : (isClient
+                    ? 'Associer un numéro Wave, Orange, MTN ou Moov'
+                    : 'Numéro de réception des fonds (Wave, Orange, MTN, Moov)');
+
+            return _MenuItem(
+              icon: isClient ? Icons.payments_outlined : Icons.account_balance_wallet_outlined,
+              iconBg: const Color(0xFFECFDF5),
+              iconColor: const Color(0xFF10B981),
+              title: title,
+              subtitle: subtitle,
+              trailing: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: hasPaymentPhone ? const Color(0xFFECFDF5) : const Color(0xFFFFF3EB),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: hasPaymentPhone
+                        ? const Color(0xFF10B981).withValues(alpha: 0.3)
+                        : const Color(0xFFF97316).withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Text(
+                  hasPaymentPhone ? 'CONFIGURÉ' : 'À ASSOCIER',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    color: hasPaymentPhone ? const Color(0xFF10B981) : const Color(0xFFF97316),
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+              onTap: () => _showPaymentPhoneDialog(context, controller),
+            );
+          }),
           const SizedBox(height: 12),
           _MenuItem(
             icon: Icons.receipt_long_outlined,
@@ -617,6 +651,204 @@ class _MenuList extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  void _showPaymentPhoneDialog(BuildContext context, SettingsController controller) {
+    final selectedProvider = (controller.preferredPaymentProvider.value.isNotEmpty
+            ? controller.preferredPaymentProvider.value
+            : 'wave')
+        .obs;
+    final phoneCtrl = TextEditingController(text: controller.paymentPhone.value);
+    final isClient = controller.userRole.value == 'client';
+    controller.paymentPhoneError.value = null;
+
+    Get.dialog(
+      Obx(() => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFECFDF5),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                isClient ? Icons.payments_rounded : Icons.account_balance_wallet_rounded,
+                color: const Color(0xFF10B981),
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                isClient ? 'Moyen de paiement' : 'Reversement Mobile Money',
+                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
+              ),
+            ),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                isClient
+                    ? 'Associez votre compte Mobile Money pour régler vos devis rapidement et recevoir automatiquement vos remboursements en cas de litige.'
+                    : 'Renseignez le numéro Mobile Money sur lequel vos gains et fonds débloqués seront virés.',
+                style: const TextStyle(color: _C.muted, fontSize: 13, height: 1.4),
+              ),
+              const SizedBox(height: 18),
+              const Text(
+                'Opérateur Mobile Money',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: _C.ink,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  _buildDialogProviderChip('wave', 'Wave', const Color(0xFF00A3FF), selectedProvider),
+                  const SizedBox(width: 6),
+                  _buildDialogProviderChip('orange_money', 'Orange', const Color(0xFFFF7900), selectedProvider),
+                  const SizedBox(width: 6),
+                  _buildDialogProviderChip('mtn_money', 'MTN', const Color(0xFFFFCC00), selectedProvider),
+                  const SizedBox(width: 6),
+                  _buildDialogProviderChip('moov_money', 'Moov', const Color(0xFF005BA6), selectedProvider),
+                ],
+              ),
+              const SizedBox(height: 18),
+              TextField(
+                controller: phoneCtrl,
+                keyboardType: TextInputType.phone,
+                decoration: InputDecoration(
+                  labelText: 'Numéro Mobile Money (10 chiffres)',
+                  hintText: 'Ex: 0701020304',
+                  prefixIcon: const Icon(Icons.phone_android_rounded, size: 20),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              if (controller.paymentPhoneError.value != null) ...[
+                const SizedBox(height: 10),
+                Text(
+                  controller.paymentPhoneError.value!,
+                  style: const TextStyle(color: _C.danger, fontSize: 12, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('Annuler'),
+          ),
+          ElevatedButton(
+            onPressed: controller.isSavingPaymentPhone.value
+                ? null
+                : () async {
+                    final phone = phoneCtrl.text.trim();
+                    if (phone.isEmpty || phone.length < 10) {
+                      Get.snackbar(
+                        'Numéro invalide',
+                        'Veuillez entrer un numéro à 10 chiffres (ex: 0701020304)',
+                        backgroundColor: _C.danger,
+                        colorText: Colors.white,
+                      );
+                      return;
+                    }
+
+                    final success = await controller.updatePaymentPhone(
+                      newPaymentPhone: phone,
+                      provider: selectedProvider.value,
+                    );
+
+                    if (success) {
+                      Get.back();
+                      Get.snackbar(
+                        'Compte associé',
+                        'Votre numéro Mobile Money a été mis à jour avec succès.',
+                        backgroundColor: _C.success,
+                        colorText: Colors.white,
+                      );
+                    } else {
+                      Get.snackbar(
+                        'Erreur',
+                        controller.paymentPhoneError.value ?? 'Impossible d\'enregistrer le numéro.',
+                        backgroundColor: _C.danger,
+                        colorText: Colors.white,
+                      );
+                    }
+                  },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _C.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: controller.isSavingPaymentPhone.value
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  )
+                : const Text('Enregistrer'),
+          ),
+        ],
+      )),
+    );
+  }
+
+  Widget _buildDialogProviderChip(
+    String providerKey,
+    String label,
+    Color color,
+    RxString selectedProvider,
+  ) {
+    return Obx(() {
+      final isSelected = selectedProvider.value == providerKey;
+      return Expanded(
+        child: GestureDetector(
+          onTap: () => selectedProvider.value = providerKey,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            decoration: BoxDecoration(
+              color: isSelected ? color.withValues(alpha: 0.12) : const Color(0xFFF3F4F6),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: isSelected ? color : Colors.transparent,
+                width: 1.5,
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 7,
+                  height: 7,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isSelected ? color : Colors.grey.shade400,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                    color: isSelected ? color : _C.ink,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    });
   }
 
   void _showChangePhoneDialog(BuildContext context, SettingsController controller) {

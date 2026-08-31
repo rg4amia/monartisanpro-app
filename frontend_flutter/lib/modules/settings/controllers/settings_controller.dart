@@ -23,6 +23,11 @@ class SettingsController extends GetxController {
   final notificationsEnabled = true.obs;
   final notificationSoundEnabled = true.obs;
 
+  final paymentPhone = ''.obs;
+  final preferredPaymentProvider = 'wave'.obs;
+  final isSavingPaymentPhone = false.obs;
+  final paymentPhoneError = Rx<String?>(null);
+
   @override
   void onInit() {
     super.onInit();
@@ -33,6 +38,32 @@ class SettingsController extends GetxController {
     notificationsEnabled.value = StorageService.areNotificationsEnabled();
     notificationSoundEnabled.value = StorageService.isNotificationSoundEnabled();
     _loadData();
+  }
+
+  Future<bool> updatePaymentPhone({
+    required String newPaymentPhone,
+    required String provider,
+  }) async {
+    final userId = StorageService.getUserId();
+    if (userId == null) return false;
+    isSavingPaymentPhone.value = true;
+    paymentPhoneError.value = null;
+    try {
+      await _userRepo.updateProfile(
+        userId: userId,
+        name: userName.value.isNotEmpty ? userName.value : (StorageService.getName() ?? 'Utilisateur'),
+        paymentPhone: newPaymentPhone.trim(),
+        preferredPaymentProvider: provider,
+      );
+      paymentPhone.value = newPaymentPhone.trim();
+      preferredPaymentProvider.value = provider;
+      return true;
+    } catch (e) {
+      paymentPhoneError.value = e.toString().replaceAll('Exception: ', '');
+      return false;
+    } finally {
+      isSavingPaymentPhone.value = false;
+    }
   }
 
   void toggleNotifications(bool value) {
@@ -65,6 +96,13 @@ class SettingsController extends GetxController {
   Future<void> _loadData() async {
     isLoading.value = true;
     try {
+      // Load current user profile for payment phone & provider
+      final me = await _authRepo.me();
+      paymentPhone.value = me.paymentPhone ?? '';
+      if (me.preferredPaymentProvider != null && me.preferredPaymentProvider!.isNotEmpty) {
+        preferredPaymentProvider.value = me.preferredPaymentProvider!;
+      }
+
       // Load wallet balance
       final balance = await _walletRepo.getBalance();
       walletBalance.value = balance['total'] ?? 0;

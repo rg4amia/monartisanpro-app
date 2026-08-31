@@ -7,6 +7,7 @@ import '../../../core/storage/storage_service.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../data/models/artisan_model.dart';
 import '../../../data/models/mission_model.dart';
+import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/artisan_repository.dart';
 import '../../../data/repositories/mission_repository.dart';
 import '../../../data/repositories/wallet_repository.dart';
@@ -16,6 +17,7 @@ import '../../../data/models/communication_model.dart';
 import '../../../data/repositories/communication_repository.dart';
 
 class HomeController extends GetxController {
+  final AuthRepository _authRepo = AuthRepository();
   final ArtisanRepository _artisanRepo = ArtisanRepository();
   final MissionRepository _missionRepo = MissionRepository();
   final WalletRepository _walletRepo = WalletRepository();
@@ -33,6 +35,9 @@ class HomeController extends GetxController {
   final isMapLoading = false.obs;
   final role = Rx<String?>(null);
   final userName = ''.obs;
+  final paymentPhone = ''.obs;
+  final preferredPaymentProvider = 'wave'.obs;
+  final isSavingPaymentPhone = false.obs;
   final activeMissionsCount = 0.obs;
   final nearbyArtisansCount = 0.obs;
   final walletMateriaux = 0.obs;
@@ -201,6 +206,15 @@ class HomeController extends GetxController {
   /// Logique principale de chargement — extraite pour le retry.
   Future<void> _loadDataCore() async {
       await _getLocation();
+
+      // Load user profile payment settings
+      try {
+        final me = await _authRepo.me();
+        paymentPhone.value = me.paymentPhone ?? '';
+        if (me.preferredPaymentProvider != null && me.preferredPaymentProvider!.isNotEmpty) {
+          preferredPaymentProvider.value = me.preferredPaymentProvider!;
+        }
+      } catch (_) {}
 
       // Load wallet balance for all users
       try {
@@ -728,5 +742,29 @@ class HomeController extends GetxController {
     }
 
     return (parsed / 100).clamp(0.0, 1.0);
+  }
+
+  Future<bool> updatePaymentPhone({
+    required String newPaymentPhone,
+    required String provider,
+  }) async {
+    final userId = StorageService.getUserId();
+    if (userId == null) return false;
+    isSavingPaymentPhone.value = true;
+    try {
+      await _userRepo.updateProfile(
+        userId: userId,
+        name: userName.value.isNotEmpty ? userName.value : (StorageService.getName() ?? 'Client'),
+        paymentPhone: newPaymentPhone.trim(),
+        preferredPaymentProvider: provider,
+      );
+      paymentPhone.value = newPaymentPhone.trim();
+      preferredPaymentProvider.value = provider;
+      return true;
+    } catch (_) {
+      return false;
+    } finally {
+      isSavingPaymentPhone.value = false;
+    }
   }
 }
