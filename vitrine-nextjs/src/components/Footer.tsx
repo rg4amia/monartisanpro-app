@@ -100,9 +100,9 @@ export default function Footer() {
         }
     ].filter(s => s.text.trim() !== '');
 
-    const phone = get('contact_phone', '+225 07 00 00 00 00');
-    const email = get('contact_email', 'contact@prosartisan.ci');
-    const address = get('footer_address', 'Plateau, Boulevard de la République, Abidjan, Côte d\'Ivoire');
+    const phone = get('contact_phone', '+225 01 60 60 61 83');
+    const email = get('contact_email', 'info@prosartisan.net');
+    const address = get('footer_address', 'Koumassi remblais, Abidjan, Côte d\'Ivoire');
     const description = get('footer_description', "Première plateforme de confiance en Côte d'Ivoire connectant clients, artisans et quincailleries agréées via un système de séquestre innovant et sécurisé.");
     const badgeText = get('footer_badge_text', 'Label Qualité & Confiance Ivoirien');
     const servicesTitle = get('footer_services_title', 'Nos Services');

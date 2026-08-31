@@ -288,7 +288,7 @@ export default function Welcome() {
 
                             <div className="flex items-center gap-3">
                                 <a
-                                    href="mailto:contact@prosartisan.ci"
+                                    href="mailto:info@prosartisan.net"
                                     className="hidden rounded-full border border-[var(--landing-border)] bg-white/70 px-4 py-2 text-sm font-semibold text-[var(--landing-ink)] transition hover:bg-white sm:inline-flex"
                                 >
                                     Nous contacter
@@ -644,7 +644,7 @@ export default function Welcome() {
                                                 Acceder au backoffice
                                             </Link>
                                             <a
-                                                href="mailto:contact@prosartisan.ci"
+                                                href="mailto:info@prosartisan.net"
                                                 className="inline-flex items-center justify-center rounded-full border border-[var(--landing-border)] bg-white/70 px-6 py-3.5 text-sm font-semibold text-[var(--landing-ink)] transition hover:bg-white"
                                             >
                                                 Parler a l equipe
