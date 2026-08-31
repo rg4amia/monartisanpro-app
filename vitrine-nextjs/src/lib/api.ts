@@ -228,7 +228,15 @@ const MOCK_SETTINGS: Record<string, string> = {
     vitrine_hero_title: "La confiance au cœur de l'artisanat ivoirien",
     vitrine_hero_subtitle: "Mise en relation sécurisée, artisans qualifiés et livraison de chantiers simplifiée.",
     contact_phone_vitrine: "+225 01 60 60 61 83",
-    contact_email_vitrine: "info@prosartisan.net"
+    contact_email_vitrine: "info@prosartisan.net",
+    stat_artisans_valeur: "2 500+",
+    stat_artisans_label: "Artisans agréés",
+    stat_missions_valeur: "14 800+",
+    stat_missions_label: "Missions terminées",
+    stat_communes_valeur: "10 Abidjan",
+    stat_communes_label: "Communes desservies",
+    stat_satisfaction_valeur: "4.8 / 5",
+    stat_satisfaction_label: "Satisfaction client"
 };
 
 function getAuthToken(): string | null {

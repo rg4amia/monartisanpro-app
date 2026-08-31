@@ -10,7 +10,7 @@ import VitrinePanel from './vitrine-panel';
 
 type AdminTab = 'dashboard' | 'kyc' | 'missions' | 'litiges' | 'notifications' | 'users' | 'transactions' | 'settings' | 'llm_admin' | 'roles_permissions' | 'evaluations' | 'ai_dashboard' | 'communications' | 'promo_codes' | 'vitrine';
 type ThemeMode = 'light' | 'dark';
-type Tone = 'amber' | 'green' | 'rose' | 'blue' | 'slate';
+type Tone = 'amber' | 'green' | 'rose' | 'blue' | 'slate' | 'purple';
 
 export interface PromoCodeItem {
     id: number;
@@ -623,6 +623,7 @@ function toneBadgeClasses(tone: Tone): string {
         green: 'border-[#bfe0c8] bg-[#eef8f0] text-[#24734f]',
         rose: 'border-[#f2c1ba] bg-[#fff0ed] text-[#c55e50]',
         slate: 'border-[#dfd4c4] bg-[#f4eee6] text-[#746251]',
+        purple: 'border-[#d8b4fe] bg-[#f3e8ff] text-[#7e22ce]',
     };
 
     return classes[tone];
@@ -635,6 +636,7 @@ function toneIconClasses(tone: Tone): string {
         green: 'bg-[#dff1e4] text-[#24734f]',
         rose: 'bg-[#fbe0da] text-[#c55e50]',
         slate: 'bg-[#efe6da] text-[#746251]',
+        purple: 'bg-[#f3e8ff] text-[#7e22ce]',
     };
 
     return classes[tone];
@@ -1692,16 +1694,21 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         analytics.releasedAmount,
         artisansActifs,
         clientsActifs,
+        dashboard.kyc_en_attente,
+        dashboard.litiges_ouverts,
         dashboard.missions_en_litige,
         fournisseurs.length,
         fournisseursAgrees,
         fraudAlerts,
         kycPending,
         kycUsers,
+        liveNotifications.length,
         missionsInProgress,
         openDisputes,
+        promoCodes,
         referentRequired,
         totalUsers,
+        unreadNotifsCount,
         users,
         volume24h,
         evaluationsList,

@@ -187,5 +187,39 @@ class VitrineSeeder extends Seeder
             ['cle' => 'contact_email_vitrine'],
             ['valeur' => 'info@prosartisan.net']
         );
+
+        // 9. Indicateurs de statistiques Hero Vitrine
+        VitrineSetting::updateOrCreate(
+            ['cle' => 'stat_artisans_valeur'],
+            ['valeur' => '2 500+']
+        );
+        VitrineSetting::updateOrCreate(
+            ['cle' => 'stat_artisans_label'],
+            ['valeur' => 'Artisans agréés']
+        );
+        VitrineSetting::updateOrCreate(
+            ['cle' => 'stat_missions_valeur'],
+            ['valeur' => '14 800+']
+        );
+        VitrineSetting::updateOrCreate(
+            ['cle' => 'stat_missions_label'],
+            ['valeur' => 'Missions terminées']
+        );
+        VitrineSetting::updateOrCreate(
+            ['cle' => 'stat_communes_valeur'],
+            ['valeur' => '10 Abidjan']
+        );
+        VitrineSetting::updateOrCreate(
+            ['cle' => 'stat_communes_label'],
+            ['valeur' => 'Communes desservies']
+        );
+        VitrineSetting::updateOrCreate(
+            ['cle' => 'stat_satisfaction_valeur'],
+            ['valeur' => '4.8 / 5']
+        );
+        VitrineSetting::updateOrCreate(
+            ['cle' => 'stat_satisfaction_label'],
+            ['valeur' => 'Satisfaction client']
+        );
     }
 }

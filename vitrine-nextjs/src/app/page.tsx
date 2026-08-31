@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { 
   ArrowRight, ShieldCheck, Award, Users, 
   MapPin, Star, Play, Calendar, Landmark, CheckCircle2, ChevronLeft, ChevronRight 
@@ -86,10 +87,13 @@ export default function HomePage() {
     return (
       <div className="min-h-screen bg-[#fbf9f6] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <img
+          <Image
             src="/img/prosartisan-logo.png"
             alt="ProsArtisan — Professionnel de l'Artisanat"
+            width={160}
+            height={56}
             className="h-14 w-auto object-contain animate-pulse"
+            priority
           />
           <p className="text-sm font-bold text-[#746251] animate-pulse">Chargement de la vitrine...</p>
         </div>
@@ -203,10 +207,30 @@ export default function HomePage() {
       <section className="relative z-10 -mt-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 p-8 rounded-[36px] bg-white border border-[#e6d3b2] shadow-xl">
           {[
-            { label: "Artisans agréés", value: "2 500+", icon: Users, color: "text-[#8a5d16]" },
-            { label: "Missions terminées", value: "14 800+", icon: CheckCircle2, color: "text-emerald-700" },
-            { label: "Communes desservies", value: "10 Abidjan", icon: MapPin, color: "text-blue-700" },
-            { label: "Satisfaction client", value: "4.8 / 5", icon: Star, color: "text-amber-500" }
+            {
+              label: settings.stat_artisans_label || settings.chiffres_cles_artisans_label || "Artisans agréés",
+              value: settings.stat_artisans_valeur || settings.chiffres_cles_artisans || "2 500+",
+              icon: Users,
+              color: "text-[#8a5d16]"
+            },
+            {
+              label: settings.stat_missions_label || settings.chiffres_cles_missions_label || "Missions terminées",
+              value: settings.stat_missions_valeur || settings.chiffres_cles_missions || "14 800+",
+              icon: CheckCircle2,
+              color: "text-emerald-700"
+            },
+            {
+              label: settings.stat_communes_label || settings.chiffres_cles_communes_label || "Communes desservies",
+              value: settings.stat_communes_valeur || settings.chiffres_cles_communes || "10 Abidjan",
+              icon: MapPin,
+              color: "text-blue-700"
+            },
+            {
+              label: settings.stat_satisfaction_label || settings.chiffres_cles_satisfaction_label || "Satisfaction client",
+              value: settings.stat_satisfaction_valeur || settings.chiffres_cles_satisfaction || "4.8 / 5",
+              icon: Star,
+              color: "text-amber-500"
+            }
           ].map((stat, i) => (
             <div key={i} className="text-center space-y-2 border-r last:border-0 border-[#e6d3b2]/40">
               <div className="inline-flex p-3 bg-[#f7efe2]/60 rounded-2xl">
@@ -230,10 +254,12 @@ export default function HomePage() {
               <div className="relative">
                 <div className="absolute -inset-4 bg-gradient-to-tr from-[#ebb95e] to-[#8a5d16] rounded-[36px] blur-lg opacity-40 animate-pulse" />
                 <div className="relative h-80 w-80 rounded-[32px] overflow-hidden border-4 border-[#ebb95e] bg-[#241b16]">
-                  <img
+                  <Image
                     src={artisanDuMois.photo_url}
                     alt={artisanDuMois.artisan.name}
-                    className="w-full h-full object-cover"
+                    fill
+                    className="object-cover"
+                    unoptimized
                   />
                   <div className="absolute bottom-4 left-4 right-4 bg-white/95 backdrop-blur-md rounded-2xl p-3 border border-[#e6d3b2]/40 flex items-center justify-between shadow-lg">
                     <div>
@@ -310,10 +336,12 @@ export default function HomePage() {
               >
                 <div>
                   <div className="aspect-square bg-zinc-950 overflow-hidden relative">
-                    <img
+                    <Image
                       src={artisan.kyc_selfie_path || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80'}
                       alt={artisan.name}
-                      className="w-full h-full object-cover"
+                      fill
+                      className="object-cover"
+                      unoptimized
                     />
                     <div className="absolute top-4 left-4 right-4 flex justify-between items-center">
                       <span className="px-2.5 py-0.5 bg-black/60 rounded-md text-[9px] font-bold uppercase tracking-wider text-white">
@@ -439,10 +467,12 @@ export default function HomePage() {
                   <div>
                     {/* Thumbnail space */}
                     <div className="relative aspect-video bg-zinc-950 overflow-hidden cursor-pointer" onClick={() => setActiveVideoUrl(video.video_url)}>
-                      <img
+                      <Image
                         src={video.thumbnail_url || 'https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?auto=format&fit=crop&w=600&q=80'}
                         alt={video.titre}
-                        className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                        fill
+                        className="object-cover group-hover:scale-105 transition duration-300"
+                        unoptimized
                       />
                       <div className="absolute inset-0 bg-black/35 group-hover:bg-black/20 flex items-center justify-center transition">
                         <div className="h-14 w-14 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center text-[#8a5d16] shadow-lg group-hover:scale-110 transition duration-300">
@@ -510,11 +540,13 @@ export default function HomePage() {
                   className="bg-white border border-[#e6d3b2]/40 rounded-[32px] overflow-hidden shadow-sm hover:shadow-md transition flex flex-col sm:flex-row gap-6 p-6"
                 >
                   {/* Formation image */}
-                  <div className="w-full sm:w-1/3 aspect-square sm:aspect-auto sm:h-auto rounded-2xl overflow-hidden bg-zinc-200 shrink-0">
-                    <img
+                  <div className="w-full sm:w-1/3 aspect-square sm:aspect-auto sm:h-auto rounded-2xl overflow-hidden bg-zinc-200 shrink-0 relative min-h-[140px]">
+                    <Image
                       src={formation.image_url || 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=300&q=80'}
                       alt={formation.titre}
-                      className="w-full h-full object-cover"
+                      fill
+                      className="object-cover"
+                      unoptimized
                     />
                   </div>
 
@@ -593,10 +625,12 @@ export default function HomePage() {
               >
                 {/* Image */}
                 <div className="aspect-video bg-zinc-100 overflow-hidden relative">
-                  <img
+                  <Image
                     src={article.image_url || 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=500&q=80'}
                     alt={article.titre}
-                    className="w-full h-full object-cover group-hover:scale-103 transition duration-300"
+                    fill
+                    className="object-cover group-hover:scale-103 transition duration-300"
+                    unoptimized
                   />
                   <span className="absolute bottom-4 left-4 px-2.5 py-0.5 bg-white/95 backdrop-blur-md rounded-md text-[9px] font-bold uppercase tracking-wider text-[#8a5d16] border border-[#e6d3b2]/30">
                     {article.categorie}

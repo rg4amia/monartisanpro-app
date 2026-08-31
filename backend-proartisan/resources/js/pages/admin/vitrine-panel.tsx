@@ -1400,11 +1400,7 @@ function FormationsSubPanel({ formations, money }: { formations: any[]; money: (
 function RecrutementsSubPanel({ recrutements }: { recrutements: any[] }) {
     const [isOpen, setIsOpen] = useState(false);
     const [editingRecrutement, setEditingRecrutement] = useState<any>(null);
-    const [currentTime, setCurrentTime] = useState<number>(0);
-
-    useEffect(() => {
-        setCurrentTime(Date.now());
-    }, []);
+    const [currentTime] = useState<number>(() => Date.now());
 
     const { data, setData, post, reset, errors, processing } = useForm({
         titre: '',
@@ -1953,9 +1949,19 @@ function SettingsSubPanel({ settings }: { settings: any[] }) {
     // Map list of settings to helper object
     const settingsMap = useMemo(() => {
         const map: Record<string, string> = {
-            chiffres_cles_artisans: '800',
+            // Indicateurs Hero Vitrine
+            stat_artisans_valeur: '2 500+',
+            stat_artisans_label: 'Artisans agréés',
+            stat_missions_valeur: '14 800+',
+            stat_missions_label: 'Missions terminées',
+            stat_communes_valeur: '10 Abidjan',
+            stat_communes_label: 'Communes desservies',
+            stat_satisfaction_valeur: '4.8 / 5',
+            stat_satisfaction_label: 'Satisfaction client',
+
+            chiffres_cles_artisans: '2 500+',
             chiffres_cles_utilisateurs: '3000',
-            chiffres_cles_missions: '5000',
+            chiffres_cles_missions: '14 800+',
             chiffres_cles_metiers: '29',
             
             // Coordonnées & Contact
@@ -2003,6 +2009,15 @@ function SettingsSubPanel({ settings }: { settings: any[] }) {
     }, [settings]);
 
     const { data, setData, post, processing, errors } = useForm({
+        stat_artisans_valeur: settingsMap.stat_artisans_valeur,
+        stat_artisans_label: settingsMap.stat_artisans_label,
+        stat_missions_valeur: settingsMap.stat_missions_valeur,
+        stat_missions_label: settingsMap.stat_missions_label,
+        stat_communes_valeur: settingsMap.stat_communes_valeur,
+        stat_communes_label: settingsMap.stat_communes_label,
+        stat_satisfaction_valeur: settingsMap.stat_satisfaction_valeur,
+        stat_satisfaction_label: settingsMap.stat_satisfaction_label,
+
         chiffres_cles_artisans: settingsMap.chiffres_cles_artisans,
         chiffres_cles_utilisateurs: settingsMap.chiffres_cles_utilisateurs,
         chiffres_cles_missions: settingsMap.chiffres_cles_missions,
@@ -2077,51 +2092,134 @@ function SettingsSubPanel({ settings }: { settings: any[] }) {
                 </div>
             )}
 
-            {/* 1. CHIFFRES CLÉS */}
+            {/* 1. INDICATEURS CLÉS (HERO VITRINE) */}
             <div className="space-y-4 bg-white/40 border border-[var(--admin-border)] p-6 rounded-[24px]">
-                <h4 className="text-sm font-bold text-[#b77918] uppercase tracking-wider flex items-center gap-2">
-                    <span>📊</span> Chiffres Clés (Hero Vitrine)
-                </h4>
-                <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
-                    <div>
-                        <label className="block text-xs font-semibold text-[var(--admin-text)] mb-1">Nombre d'artisans</label>
-                        <input
-                            type="text"
-                            value={data.chiffres_cles_artisans}
-                            onChange={e => setData('chiffres_cles_artisans', e.target.value)}
-                            className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm font-semibold"
-                            placeholder="Ex: 800"
-                        />
+                <div>
+                    <h4 className="text-sm font-bold text-[#b77918] uppercase tracking-wider flex items-center gap-2">
+                        <span>📊</span> Barre d'Indicateurs Clés (Hero Vitrine)
+                    </h4>
+                    <p className="text-xs text-[var(--admin-text-soft)] mt-1">
+                        Configurez les 4 compteurs et indicateurs affichés sous le diaporama de la page d'accueil de la Vitrine.
+                    </p>
+                </div>
+                
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    {/* Indicateur 1 */}
+                    <div className="p-4 bg-white/70 rounded-2xl border border-[var(--admin-border)] space-y-3 shadow-sm">
+                        <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold text-[#8a5d16] uppercase tracking-wider">Indicateur 1 (Artisans)</span>
+                            <span className="text-xs">👥</span>
+                        </div>
+                        <div>
+                            <label className="block text-[11px] font-semibold text-[var(--admin-text)] mb-1">Valeur affichée</label>
+                            <input
+                                type="text"
+                                value={data.stat_artisans_valeur}
+                                onChange={e => {
+                                    setData('stat_artisans_valeur', e.target.value);
+                                    setData('chiffres_cles_artisans', e.target.value);
+                                }}
+                                className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm font-semibold"
+                                placeholder="Ex: 2 500+"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-[11px] font-semibold text-[var(--admin-text)] mb-1">Libellé</label>
+                            <input
+                                type="text"
+                                value={data.stat_artisans_label}
+                                onChange={e => setData('stat_artisans_label', e.target.value)}
+                                className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-1.5 text-xs"
+                                placeholder="Ex: Artisans agréés"
+                            />
+                        </div>
                     </div>
-                    <div>
-                        <label className="block text-xs font-semibold text-[var(--admin-text)] mb-1">Nombre d'utilisateurs</label>
-                        <input
-                            type="text"
-                            value={data.chiffres_cles_utilisateurs}
-                            onChange={e => setData('chiffres_cles_utilisateurs', e.target.value)}
-                            className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm font-semibold"
-                            placeholder="Ex: 3 000"
-                        />
+
+                    {/* Indicateur 2 */}
+                    <div className="p-4 bg-white/70 rounded-2xl border border-[var(--admin-border)] space-y-3 shadow-sm">
+                        <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">Indicateur 2 (Missions)</span>
+                            <span className="text-xs">✅</span>
+                        </div>
+                        <div>
+                            <label className="block text-[11px] font-semibold text-[var(--admin-text)] mb-1">Valeur affichée</label>
+                            <input
+                                type="text"
+                                value={data.stat_missions_valeur}
+                                onChange={e => {
+                                    setData('stat_missions_valeur', e.target.value);
+                                    setData('chiffres_cles_missions', e.target.value);
+                                }}
+                                className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm font-semibold"
+                                placeholder="Ex: 14 800+"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-[11px] font-semibold text-[var(--admin-text)] mb-1">Libellé</label>
+                            <input
+                                type="text"
+                                value={data.stat_missions_label}
+                                onChange={e => setData('stat_missions_label', e.target.value)}
+                                className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-1.5 text-xs"
+                                placeholder="Ex: Missions terminées"
+                            />
+                        </div>
                     </div>
-                    <div>
-                        <label className="block text-xs font-semibold text-[var(--admin-text)] mb-1">Missions complétées</label>
-                        <input
-                            type="text"
-                            value={data.chiffres_cles_missions}
-                            onChange={e => setData('chiffres_cles_missions', e.target.value)}
-                            className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm font-semibold"
-                            placeholder="Ex: 5 000"
-                        />
+
+                    {/* Indicateur 3 */}
+                    <div className="p-4 bg-white/70 rounded-2xl border border-[var(--admin-border)] space-y-3 shadow-sm">
+                        <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold text-blue-700 uppercase tracking-wider">Indicateur 3 (Communes)</span>
+                            <span className="text-xs">📍</span>
+                        </div>
+                        <div>
+                            <label className="block text-[11px] font-semibold text-[var(--admin-text)] mb-1">Valeur affichée</label>
+                            <input
+                                type="text"
+                                value={data.stat_communes_valeur}
+                                onChange={e => setData('stat_communes_valeur', e.target.value)}
+                                className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm font-semibold"
+                                placeholder="Ex: 10 Abidjan"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-[11px] font-semibold text-[var(--admin-text)] mb-1">Libellé</label>
+                            <input
+                                type="text"
+                                value={data.stat_communes_label}
+                                onChange={e => setData('stat_communes_label', e.target.value)}
+                                className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-1.5 text-xs"
+                                placeholder="Ex: Communes desservies"
+                            />
+                        </div>
                     </div>
-                    <div>
-                        <label className="block text-xs font-semibold text-[var(--admin-text)] mb-1">Métiers répertoriés</label>
-                        <input
-                            type="text"
-                            value={data.chiffres_cles_metiers}
-                            onChange={e => setData('chiffres_cles_metiers', e.target.value)}
-                            className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm font-semibold"
-                            placeholder="Ex: 29"
-                        />
+
+                    {/* Indicateur 4 */}
+                    <div className="p-4 bg-white/70 rounded-2xl border border-[var(--admin-border)] space-y-3 shadow-sm">
+                        <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Indicateur 4 (Satisfaction)</span>
+                            <span className="text-xs">⭐</span>
+                        </div>
+                        <div>
+                            <label className="block text-[11px] font-semibold text-[var(--admin-text)] mb-1">Valeur affichée</label>
+                            <input
+                                type="text"
+                                value={data.stat_satisfaction_valeur}
+                                onChange={e => setData('stat_satisfaction_valeur', e.target.value)}
+                                className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-sm font-semibold"
+                                placeholder="Ex: 4.8 / 5"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-[11px] font-semibold text-[var(--admin-text)] mb-1">Libellé</label>
+                            <input
+                                type="text"
+                                value={data.stat_satisfaction_label}
+                                onChange={e => setData('stat_satisfaction_label', e.target.value)}
+                                className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-1.5 text-xs"
+                                placeholder="Ex: Satisfaction client"
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
