@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
 import { useForm, router } from '@inertiajs/react';
+import React, { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 
 function sanitizeUploadedFile(file: File | null): File | null {
@@ -79,16 +79,16 @@ export default function VitrinePanel({
             <div className="flex flex-wrap gap-2 border-b border-[var(--admin-border)] pb-px">
                 {(
                     [
-                        { id: 'contacts', label: 'Demandes de Contact', badge: newContactsCount },
-                        { id: 'slides', label: 'Slides Hero' },
-                        { id: 'artisan_du_mois', label: 'Artisan du Mois' },
-                        { id: 'articles', label: 'Actualités & Blog' },
-                        { id: 'videos', label: 'Capsules Vidéo' },
-                        { id: 'formations', label: 'Sessions Formations' },
-                        { id: 'recrutements', label: 'Espace Recrutement' },
-                        { id: 'popups', label: 'Pop-ups & Banner' },
-                        { id: 'settings', label: 'Paramètres Généraux' },
-                    ] as const
+                        { id: 'contacts' as const, label: 'Demandes de Contact', badge: newContactsCount },
+                        { id: 'slides' as const, label: 'Slides Hero', badge: undefined },
+                        { id: 'artisan_du_mois' as const, label: 'Artisan du Mois', badge: undefined },
+                        { id: 'articles' as const, label: 'Actualités & Blog', badge: undefined },
+                        { id: 'videos' as const, label: 'Capsules Vidéo', badge: undefined },
+                        { id: 'formations' as const, label: 'Sessions Formations', badge: undefined },
+                        { id: 'recrutements' as const, label: 'Espace Recrutement', badge: undefined },
+                        { id: 'popups' as const, label: 'Pop-ups & Banner', badge: undefined },
+                        { id: 'settings' as const, label: 'Paramètres Généraux', badge: undefined },
+                    ]
                 ).map((tab) => {
                     const isActive = activeSubTab === tab.id;
                     return (
@@ -155,7 +155,7 @@ function SlidesSubPanel({ slides }: { slides: any[] }) {
     const [isOpen, setIsOpen] = useState(false);
     const [editingSlide, setEditingSlide] = useState<any>(null);
 
-    const { data, setData, post, put, delete: destroy, reset, errors, processing } = useForm({
+    const { data, setData, post, reset, errors, processing } = useForm({
         titre: '',
         sous_titre: '',
         image: null as File | null,
@@ -1400,6 +1400,7 @@ function FormationsSubPanel({ formations, money }: { formations: any[]; money: (
 function RecrutementsSubPanel({ recrutements }: { recrutements: any[] }) {
     const [isOpen, setIsOpen] = useState(false);
     const [editingRecrutement, setEditingRecrutement] = useState<any>(null);
+    const currentTime = useMemo(() => Date.now(), []);
 
     const { data, setData, post, reset, errors, processing } = useForm({
         titre: '',
@@ -1477,7 +1478,7 @@ function RecrutementsSubPanel({ recrutements }: { recrutements: any[] }) {
                     </div>
                 ) : (
                     recrutements.map((job) => {
-                        const isExpired = job.date_limite && new Date(job.date_limite + 'T23:59:59').getTime() < Date.now();
+                        const isExpired = job.date_limite && new Date(job.date_limite + 'T23:59:59').getTime() < currentTime;
                         return (
                             <div key={job.id} className="border border-[var(--admin-border)] bg-white/40 rounded-2xl p-5 flex flex-col md:flex-row justify-between items-start gap-4">
                                 <div className="space-y-2">
@@ -2445,7 +2446,7 @@ function ContactsSubPanel({ messages = [] }: { messages: any[] }) {
     const [statusFilter, setStatusFilter] = useState<'all' | 'nouveau' | 'en_cours' | 'traite' | 'archive'>('all');
     const [searchQuery, setSearchQuery] = useState('');
 
-    const { data, setData, post, processing, errors } = useForm({
+    const { data, setData, post, processing } = useForm({
         statut: 'nouveau' as 'nouveau' | 'en_cours' | 'traite' | 'archive',
         priorite: 'normale' as 'basse' | 'normale' | 'urgente',
         notes_admin: '',
@@ -2477,20 +2478,7 @@ function ContactsSubPanel({ messages = [] }: { messages: any[] }) {
         });
     };
 
-    const handleSendReply = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!selectedMessage) return;
 
-        post(`/admin/vitrine/contacts/${selectedMessage.id}/reply`, {
-            preserveScroll: true,
-            onSuccess: () => {
-                setSelectedMessage(null);
-            },
-            onError: (errs) => {
-                console.error('Erreur réponse contact:', errs);
-            }
-        });
-    };
 
     const handleQuickStatus = (msg: any, newStatus: string) => {
         router.post(`/admin/vitrine/contacts/${msg.id}`, {

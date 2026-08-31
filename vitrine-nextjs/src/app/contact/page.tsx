@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api';
 import { Phone, Mail, MapPin, Send, CheckCircle2, ShieldAlert, UserCheck } from 'lucide-react';
@@ -13,17 +13,13 @@ function ContactFormInner() {
     const [nom, setNom] = useState('');
     const [email, setEmail] = useState('');
     const [telephone, setTelephone] = useState('');
-    const [sujet, setSujet] = useState(artisanId ? `Demande d'intervention pour l'artisan #${artisanId}` : '');
+    const [sujet, setSujet] = useState(
+        artisanId ? `Demande de devis & intervention (Artisan #${artisanId})` : ''
+    );
     const [message, setMessage] = useState('');
 
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
-
-    useEffect(() => {
-        if (artisanId && !sujet) {
-            setSujet(`Demande de devis & intervention (Artisan #${artisanId})`);
-        }
-    }, [artisanId, sujet]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
