@@ -22,7 +22,7 @@ export default function SupplierDashboard() {
     useEffect(() => {
         const fetchDashboard = async () => {
             try {
-                const res = await api.getSupplierDashboard();
+                const res = await api.getSupplierDashboard<DashboardData>();
                 setData(res);
             } catch (err: any) {
                 console.error(err);
@@ -65,7 +65,7 @@ export default function SupplierDashboard() {
                     onClick={() => {
                         setLoading(true);
                         setError(null);
-                        api.getSupplierDashboard().then(setData).catch(err => setError(err.message)).finally(() => setLoading(false));
+                        api.getSupplierDashboard<DashboardData>().then(setData).catch(err => setError(err.message)).finally(() => setLoading(false));
                     }}
                     className="bg-rose-900/60 hover:bg-rose-800 text-white font-bold px-4 py-2 rounded-lg text-xs self-start transition"
                 >

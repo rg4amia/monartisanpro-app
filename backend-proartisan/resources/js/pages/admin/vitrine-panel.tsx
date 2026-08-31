@@ -1,5 +1,5 @@
 import { useForm, router } from '@inertiajs/react';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
 function sanitizeUploadedFile(file: File | null): File | null {
@@ -1400,7 +1400,11 @@ function FormationsSubPanel({ formations, money }: { formations: any[]; money: (
 function RecrutementsSubPanel({ recrutements }: { recrutements: any[] }) {
     const [isOpen, setIsOpen] = useState(false);
     const [editingRecrutement, setEditingRecrutement] = useState<any>(null);
-    const currentTime = useMemo(() => Date.now(), []);
+    const [currentTime, setCurrentTime] = useState<number>(0);
+
+    useEffect(() => {
+        setCurrentTime(Date.now());
+    }, []);
 
     const { data, setData, post, reset, errors, processing } = useForm({
         titre: '',
@@ -1478,7 +1482,7 @@ function RecrutementsSubPanel({ recrutements }: { recrutements: any[] }) {
                     </div>
                 ) : (
                     recrutements.map((job) => {
-                        const isExpired = job.date_limite && new Date(job.date_limite + 'T23:59:59').getTime() < currentTime;
+                        const isExpired = currentTime > 0 && Boolean(job.date_limite && new Date(job.date_limite + 'T23:59:59').getTime() < currentTime);
                         return (
                             <div key={job.id} className="border border-[var(--admin-border)] bg-white/40 rounded-2xl p-5 flex flex-col md:flex-row justify-between items-start gap-4">
                                 <div className="space-y-2">

@@ -270,7 +270,7 @@ async function fetchAuthApi<T>(
     if (response.status === 401) {
         if (typeof window !== 'undefined' && endpoint !== '/auth/verify-otp') {
             localStorage.removeItem('supplier_token');
-            window.location.href = '/supplier/login';
+            window.location.replace('/supplier/login');
         }
         const json = await response.json().catch(() => ({}));
         throw new Error(json.message || 'Identifiants ou code OTP invalide.');
@@ -389,41 +389,41 @@ export const api = {
         const res = await fetchAuthApi<{ success: boolean }>('/auth/send-otp', 'POST', { phone: formatted, role: 'fournisseur' });
         return res.success;
     },
-    async supplierVerifyOtp(phone: string, otp: string): Promise<{ token: string; user: Record<string, unknown> }> {
+    async supplierVerifyOtp<U = Record<string, unknown>>(phone: string, otp: string): Promise<{ token: string; user: U }> {
         const clean = phone.replace(/\s+/g, '');
         const formatted = clean.startsWith('+') ? clean : (clean.startsWith('225') ? `+${clean}` : `+225${clean}`);
-        const res = await fetchAuthApi<{ success: boolean; token: string; user: Record<string, unknown> }>('/auth/verify-otp', 'POST', { phone: formatted, otp: otp.trim(), otpCode: otp.trim() });
+        const res = await fetchAuthApi<{ success: boolean; token: string; user: U }>('/auth/verify-otp', 'POST', { phone: formatted, otp: otp.trim(), otpCode: otp.trim() });
         return { token: res.token, user: res.user };
     },
-    async getSupplierDashboard(): Promise<Record<string, unknown>> {
-        const res = await fetchAuthApi<{ success: boolean; data: Record<string, unknown> }>('/supplier/dashboard');
+    async getSupplierDashboard<T = Record<string, unknown>>(): Promise<T> {
+        const res = await fetchAuthApi<{ success: boolean; data: T }>('/supplier/dashboard');
         return res.data;
     },
-    async getSupplierProducts(): Promise<Record<string, unknown>[]> {
-        const res = await fetchAuthApi<{ success: boolean; data: Record<string, unknown>[] }>('/supplier-products');
+    async getSupplierProducts<T = Record<string, unknown>[]>(): Promise<T> {
+        const res = await fetchAuthApi<{ success: boolean; data: T }>('/supplier-products');
         return res.data;
     },
-    async createSupplierProduct(data: Record<string, unknown>): Promise<Record<string, unknown>> {
-        return fetchAuthApi<Record<string, unknown>>('/supplier-products', 'POST', data);
+    async createSupplierProduct<T = Record<string, unknown>>(data: unknown): Promise<T> {
+        return fetchAuthApi<T>('/supplier-products', 'POST', data);
     },
-    async updateSupplierProduct(id: number, data: Record<string, unknown>): Promise<Record<string, unknown>> {
-        return fetchAuthApi<Record<string, unknown>>(`/supplier-products/${id}`, 'PUT', data);
+    async updateSupplierProduct<T = Record<string, unknown>>(id: number, data: unknown): Promise<T> {
+        return fetchAuthApi<T>(`/supplier-products/${id}`, 'PUT', data);
     },
-    async deleteSupplierProduct(id: number): Promise<Record<string, unknown>> {
-        return fetchAuthApi<Record<string, unknown>>(`/supplier-products/${id}`, 'DELETE');
+    async deleteSupplierProduct<T = Record<string, unknown>>(id: number): Promise<T> {
+        return fetchAuthApi<T>(`/supplier-products/${id}`, 'DELETE');
     },
-    async getSupplierOrders(): Promise<Record<string, unknown>[]> {
-        const res = await fetchAuthApi<{ success: boolean; data: Record<string, unknown>[] }>('/supplier/orders');
+    async getSupplierOrders<T = Record<string, unknown>[]>(): Promise<T> {
+        const res = await fetchAuthApi<{ success: boolean; data: T }>('/supplier/orders');
         return res.data;
     },
-    async markOrderPrepared(id: number): Promise<Record<string, unknown>> {
-        return fetchAuthApi<Record<string, unknown>>(`/orders/${id}/prepared`, 'POST');
+    async markOrderPrepared<T = Record<string, unknown>>(id: number): Promise<T> {
+        return fetchAuthApi<T>(`/orders/${id}/prepared`, 'POST');
     },
-    async verifyOrderPickup(id: number, code: string): Promise<Record<string, unknown>> {
-        return fetchAuthApi<Record<string, unknown>>(`/orders/${id}/verify-pickup`, 'POST', { code });
+    async verifyOrderPickup<T = Record<string, unknown>>(id: number, code: string): Promise<T> {
+        return fetchAuthApi<T>(`/orders/${id}/verify-pickup`, 'POST', { code });
     },
-    async getSupplierLitiges(): Promise<Record<string, unknown>> {
-        const res = await fetchAuthApi<{ success: boolean; data: Record<string, unknown> }>('/supplier/litiges');
+    async getSupplierLitiges<T = Record<string, unknown>>(): Promise<T> {
+        const res = await fetchAuthApi<{ success: boolean; data: T }>('/supplier/litiges');
         return res.data;
     },
     async uploadSupplierImage(file: File): Promise<string> {

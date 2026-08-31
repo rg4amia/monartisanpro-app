@@ -51,7 +51,7 @@ export default function SupplierLitiges() {
     useEffect(() => {
         const fetchLitiges = async () => {
             try {
-                const res = await api.getSupplierLitiges();
+                const res = await api.getSupplierLitiges<LitigeData>();
                 setData(res);
             } catch (err: any) {
                 console.error(err);
