@@ -216,15 +216,8 @@ class _FormSection extends StatelessWidget {
             ],
           );
         }),
-        Obx(() {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 24),
-              _MobileMoneyPayoutCard(controller: controller),
-            ],
-          );
-        }),
+        const SizedBox(height: 24),
+        _MobileMoneyPayoutCard(controller: controller),
         Obx(() {
           if (!controller.isArtisan.value) {
             return const SizedBox.shrink();
@@ -253,83 +246,81 @@ class _CategorySelectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Obx(() {
-      final hasCategory = controller.selectedSectorName.value != null;
-      final categoryText = hasCategory
-          ? "${controller.selectedSectorName.value} — ${controller.selectedTradeName.value ?? 'Non spécifié'}"
-          : "Aucune catégorie définie";
+    final hasCategory = controller.selectedSectorName.value != null;
+    final categoryText = hasCategory
+        ? "${controller.selectedSectorName.value} — ${controller.selectedTradeName.value ?? 'Non spécifié'}"
+        : "Aucune catégorie définie";
 
-      return Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: _C.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: _C.subtle),
-        ),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: hasCategory ? const Color(0xFFEEF2FF) : const Color(0xFFF9FAFB),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    Icons.build_circle_outlined,
-                    color: hasCategory ? _C.primary : _C.muted,
-                    size: 22,
-                  ),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _C.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _C.subtle),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: hasCategory ? const Color(0xFFEEF2FF) : const Color(0xFFF9FAFB),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        hasCategory ? 'Catégorie active' : 'Catégorie non configurée',
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: _C.ink,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        categoryText,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: _C.muted,
-                          height: 1.35,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
+                child: Icon(
+                  Icons.build_circle_outlined,
+                  color: hasCategory ? _C.primary : _C.muted,
+                  size: 22,
                 ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            OutlinedButton.icon(
-              onPressed: controller.selectCategoryAndSubcategory,
-              icon: const Icon(Icons.category_outlined, size: 18),
-              label: Text(hasCategory ? 'Modifier ma catégorie' : 'Choisir ma catégorie'),
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 48),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                side: const BorderSide(color: _C.primary),
-                foregroundColor: _C.primary,
               ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      hasCategory ? 'Catégorie active' : 'Catégorie non configurée',
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: _C.ink,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      categoryText,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: _C.muted,
+                        height: 1.35,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: controller.selectCategoryAndSubcategory,
+            icon: const Icon(Icons.category_outlined, size: 18),
+            label: Text(hasCategory ? 'Modifier ma catégorie' : 'Choisir ma catégorie'),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size(double.infinity, 48),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              side: const BorderSide(color: _C.primary),
+              foregroundColor: _C.primary,
             ),
-          ],
-        ),
-      );
-    });
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -340,81 +331,79 @@ class _LocationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Obx(() {
-      final isSet = controller.selectedLatitude.value != null &&
-          controller.selectedLongitude.value != null;
+    final isSet = controller.selectedLatitude.value != null &&
+        controller.selectedLongitude.value != null;
 
-      return Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: _C.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: _C.subtle),
-        ),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: isSet ? const Color(0xFFEEF2FF) : const Color(0xFFF9FAFB),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    Icons.my_location,
-                    color: isSet ? _C.primary : _C.muted,
-                    size: 22,
-                  ),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _C.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _C.subtle),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: isSet ? const Color(0xFFEEF2FF) : const Color(0xFFF9FAFB),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        isSet ? 'Position configurée' : 'Emplacement non défini',
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: _C.ink,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        controller.selectedAddress.value,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: _C.muted,
-                          height: 1.35,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
+                child: Icon(
+                  Icons.my_location,
+                  color: isSet ? _C.primary : _C.muted,
+                  size: 22,
                 ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            OutlinedButton.icon(
-              onPressed: controller.selectLocationOnMap,
-              icon: const Icon(Icons.map_outlined, size: 18),
-              label: Text(isSet ? 'Modifier ma position' : 'Définir ma position sur la carte'),
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 48),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                side: const BorderSide(color: _C.primary),
-                foregroundColor: _C.primary,
               ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isSet ? 'Position configurée' : 'Emplacement non défini',
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: _C.ink,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      controller.selectedAddress.value,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: _C.muted,
+                        height: 1.35,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: controller.selectLocationOnMap,
+            icon: const Icon(Icons.map_outlined, size: 18),
+            label: Text(isSet ? 'Modifier ma position' : 'Définir ma position sur la carte'),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size(double.infinity, 48),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              side: const BorderSide(color: _C.primary),
+              foregroundColor: _C.primary,
             ),
-          ],
-        ),
-      );
-    });
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -487,67 +476,67 @@ class _NightModeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Obx(() => Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: _C.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: _C.subtle),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _C.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _C.subtle),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: _C.primaryLight,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.nightlight_round,
+              color: _C.primary,
+              size: 22,
+            ),
           ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: _C.primaryLight,
-                  borderRadius: BorderRadius.circular(12),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Interventions de nuit',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: _C.ink,
+                  ),
                 ),
-                child: const Icon(
-                  Icons.nightlight_round,
-                  color: _C.primary,
-                  size: 22,
+                const SizedBox(height: 4),
+                Text(
+                  controller.isProfileLoading.value
+                      ? 'Chargement de votre disponibilité actuelle...'
+                      : 'Activez ce mode si vous acceptez les demandes entre 18h et 7h.',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: _C.muted,
+                    height: 1.35,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Interventions de nuit',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: _C.ink,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      controller.isProfileLoading.value
-                          ? 'Chargement de votre disponibilité actuelle...'
-                          : 'Activez ce mode si vous acceptez les demandes entre 18h et 7h.',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: _C.muted,
-                        height: 1.35,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Switch(
-                value: controller.nightInterventionsEnabled.value,
-                activeThumbColor: _C.primary,
-                onChanged: controller.isProfileLoading.value
-                    ? null
-                    : (value) =>
-                        controller.nightInterventionsEnabled.value = value,
-              ),
-            ],
+              ],
+            ),
           ),
-        ));
+          Switch(
+            value: controller.nightInterventionsEnabled.value,
+            activeThumbColor: _C.primary,
+            onChanged: controller.isProfileLoading.value
+                ? null
+                : (value) =>
+                    controller.nightInterventionsEnabled.value = value,
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -612,6 +601,58 @@ class _CnmciCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final status = controller.cnmciStatus.value;
+    final localPath = controller.cnmciCardImagePath.value;
+    final remoteUrl = controller.cnmciCardUrl.value;
+
+    Color badgeBg = const Color(0xFFF3F4F6);
+    Color badgeText = const Color(0xFF4B5563);
+    String label = 'Non renseigné';
+    IconData icon = Icons.info_outline;
+
+    if (status == 'en_attente') {
+      badgeBg = const Color(0xFFFEF3C7);
+      badgeText = const Color(0xFFD97706);
+      label = 'Validation en cours';
+      icon = Icons.hourglass_empty;
+    } else if (status == 'valide') {
+      badgeBg = const Color(0xFFD1FAE5);
+      badgeText = const Color(0xFF059669);
+      label = 'Artisan Certifié CNMCI';
+      icon = Icons.verified;
+    } else if (status == 'rejete') {
+      badgeBg = const Color(0xFFFEE2E2);
+      badgeText = const Color(0xFFDC2626);
+      label = 'Certification rejetée';
+      icon = Icons.cancel_outlined;
+    }
+
+    Widget imageWidget;
+    if (localPath != null) {
+      imageWidget = Image.file(
+        File(localPath),
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: 160,
+      );
+    } else if (remoteUrl != null && remoteUrl.isNotEmpty) {
+      final serverBase = ApiEndpoints.baseUrl.replaceAll('/api/v1', '').replaceAll('/v1', '');
+      final fullUrl = remoteUrl.startsWith('http') 
+        ? remoteUrl 
+        : '$serverBase$remoteUrl';
+      imageWidget = Image.network(
+        fullUrl,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: 160,
+        errorBuilder: (context, error, stackTrace) {
+          return const Center(child: Icon(Icons.broken_image, size: 40));
+        },
+      );
+    } else {
+      imageWidget = const SizedBox.shrink();
+    }
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -665,34 +706,8 @@ class _CnmciCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           
-          // Statut de certification actuel
-          Obx(() {
-            final status = controller.cnmciStatus.value;
-            if (status == 'non_renseigne') return const SizedBox.shrink();
-            
-            Color badgeBg = const Color(0xFFF3F4F6);
-            Color badgeText = const Color(0xFF4B5563);
-            String label = 'Non renseigné';
-            IconData icon = Icons.info_outline;
-
-            if (status == 'en_attente') {
-              badgeBg = const Color(0xFFFEF3C7);
-              badgeText = const Color(0xFFD97706);
-              label = 'Validation en cours';
-              icon = Icons.hourglass_empty;
-            } else if (status == 'valide') {
-              badgeBg = const Color(0xFFD1FAE5);
-              badgeText = const Color(0xFF059669);
-              label = 'Artisan Certifié CNMCI';
-              icon = Icons.verified;
-            } else if (status == 'rejete') {
-              badgeBg = const Color(0xFFFEE2E2);
-              badgeText = const Color(0xFFDC2626);
-              label = 'Certification rejetée';
-              icon = Icons.cancel_outlined;
-            }
-
-            return Padding(
+          if (status != 'non_renseigne')
+            Padding(
               padding: const EdgeInsets.only(bottom: 16),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -717,8 +732,7 @@ class _CnmciCard extends StatelessWidget {
                   ],
                 ),
               ),
-            );
-          }),
+            ),
 
           _InputField(
             label: 'Numéro de carte artisan',
@@ -738,64 +752,37 @@ class _CnmciCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           
-          Obx(() {
-            final localPath = controller.cnmciCardImagePath.value;
-            final remoteUrl = controller.cnmciCardUrl.value;
-            
-            Widget imageWidget;
-            if (localPath != null) {
-              imageWidget = Image.file(
-                File(localPath),
-                fit: BoxFit.cover,
-                width: double.infinity,
-                height: 160,
-              );
-            } else if (remoteUrl != null && remoteUrl.isNotEmpty) {
-              final serverBase = ApiEndpoints.baseUrl.replaceAll('/api/v1', '').replaceAll('/v1', '');
-              final fullUrl = remoteUrl.startsWith('http') 
-                ? remoteUrl 
-                : '$serverBase$remoteUrl';
-              imageWidget = Image.network(
-                fullUrl,
-                fit: BoxFit.cover,
-                width: double.infinity,
-                height: 160,
-                errorBuilder: (context, error, stackTrace) {
-                  return const Center(child: Icon(Icons.broken_image, size: 40));
-                },
-              );
-            } else {
-              return GestureDetector(
-                onTap: controller.pickCnmciCardImage,
-                child: Container(
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF9FAFB),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: _C.subtle, style: BorderStyle.solid),
-                  ),
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.add_a_photo_outlined, color: _C.primary, size: 28),
-                        const SizedBox(height: 8),
-                        const Text(
-                          'Joindre la photo de la carte',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: _C.primary,
-                          ),
+          if (localPath == null && (remoteUrl == null || remoteUrl.isEmpty))
+            GestureDetector(
+              onTap: controller.pickCnmciCardImage,
+              child: Container(
+                height: 120,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF9FAFB),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: _C.subtle, style: BorderStyle.solid),
+                ),
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.add_a_photo_outlined, color: _C.primary, size: 28),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Joindre la photo de la carte',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: _C.primary,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
-              );
-            }
-            
-            return ClipRRect(
+              ),
+            )
+          else
+            ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: Stack(
                 children: [
@@ -817,8 +804,7 @@ class _CnmciCard extends StatelessWidget {
                   ),
                 ],
               ),
-            );
-          }),
+            ),
         ],
       ),
     );
@@ -904,20 +890,17 @@ class _MobileMoneyPayoutCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            Obx(() {
-              final currentProvider = controller.selectedPaymentProvider.value;
-              return Row(
-                children: [
-                  _buildProviderChip('wave', 'Wave', const Color(0xFF00A3FF), currentProvider == 'wave'),
-                  const SizedBox(width: 8),
-                  _buildProviderChip('orange_money', 'Orange', const Color(0xFFFF7900), currentProvider == 'orange_money'),
-                  const SizedBox(width: 8),
-                  _buildProviderChip('mtn_money', 'MTN', const Color(0xFFFFCC00), currentProvider == 'mtn_money'),
-                  const SizedBox(width: 8),
-                  _buildProviderChip('moov_money', 'Moov', const Color(0xFF005BA6), currentProvider == 'moov_money'),
-                ],
-              );
-            }),
+            Row(
+              children: [
+                _buildProviderChip('wave', 'Wave', const Color(0xFF00A3FF), controller.selectedPaymentProvider.value == 'wave'),
+                const SizedBox(width: 8),
+                _buildProviderChip('orange_money', 'Orange', const Color(0xFFFF7900), controller.selectedPaymentProvider.value == 'orange_money'),
+                const SizedBox(width: 8),
+                _buildProviderChip('mtn_money', 'MTN', const Color(0xFFFFCC00), controller.selectedPaymentProvider.value == 'mtn_money'),
+                const SizedBox(width: 8),
+                _buildProviderChip('moov_money', 'Moov', const Color(0xFF005BA6), controller.selectedPaymentProvider.value == 'moov_money'),
+              ],
+            ),
             const SizedBox(height: 16),
             _InputField(
               label: 'Numéro Mobile Money (10 chiffres)',
