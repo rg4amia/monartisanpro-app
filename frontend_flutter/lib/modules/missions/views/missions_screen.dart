@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -478,7 +479,7 @@ class _MissionCard extends StatelessWidget {
             },
           );
           if (result == true) {
-            Get.find<MissionsController>().loadMissions();
+            unawaited(Get.find<MissionsController>().loadMissions());
           }
         },
       );

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -26,11 +27,11 @@ class _SplashScreenState extends State<SplashScreen> {
     final isOnboarded = StorageService.isOnboarded();
 
     if (!isOnboarded) {
-      Get.offAllNamed(Routes.onboarding);
+      unawaited(Get.offAllNamed(Routes.onboarding));
     } else if (token != null && token.isNotEmpty) {
-      Get.offAllNamed(Routes.mainTab);
+      unawaited(Get.offAllNamed(Routes.mainTab));
     } else {
-      Get.offAllNamed(Routes.login);
+      unawaited(Get.offAllNamed(Routes.login));
     }
   }
 

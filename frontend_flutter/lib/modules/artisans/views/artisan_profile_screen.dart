@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -557,12 +558,12 @@ void _showQuoteRequestModal(BuildContext context, ArtisanModel a) {
                   }
 
                   // 1. Show loading progress indicator
-                  Get.dialog(
+                  unawaited(Get.dialog(
                     const Center(
                       child: CircularProgressIndicator(),
                     ),
                     barrierDismissible: false,
-                  );
+                  ));
 
                   try {
                     final missionsController = Get.isRegistered<MissionsController>()
@@ -593,10 +594,10 @@ void _showQuoteRequestModal(BuildContext context, ArtisanModel a) {
                     Get.back(); // Close bottom sheet modal
 
                     if (mission != null) {
-                      Get.toNamed(
+                      unawaited(Get.toNamed(
                         Routes.missionTracking,
                         arguments: mission,
-                      );
+                      ));
                     }
                   } catch (e) {
                     Get.back(); // Close loading dialog

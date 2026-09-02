@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -130,7 +131,7 @@ class ArtisanSelectionController extends GetxController {
 
       if (mission != null) {
         // Redirection vers le suivi de mission avec la mission créée
-        Get.offNamed(Routes.missionTracking, arguments: mission);
+        unawaited(Get.offNamed(Routes.missionTracking, arguments: mission));
       } else {
         // Si mission est null, c'est qu'une erreur s'est produite
         // Le message d'erreur a déjà été affiché par le controller

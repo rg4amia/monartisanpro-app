@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -61,7 +62,7 @@ class ScannerScreen extends GetView<JcodeController> {
                           barcode!.rawValue!,
                         );
                         if (identifier == null) return;
-                        scannerCtrl.stop();
+                        unawaited(scannerCtrl.stop());
                         await _doScan(identifier);
                       },
                     ),

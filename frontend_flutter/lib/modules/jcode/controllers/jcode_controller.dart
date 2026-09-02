@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -365,7 +366,7 @@ class JcodeController extends GetxController {
     try {
       final jcode = await _repo.getJcode(identifier);
       scannedJcode.value = jcode;
-      Get.toNamed(Routes.jcodeServe, arguments: identifier);
+      unawaited(Get.toNamed(Routes.jcodeServe, arguments: identifier));
     } catch (e) {
       _showError('J-Code introuvable', e);
     } finally {
@@ -382,7 +383,7 @@ class JcodeController extends GetxController {
         lng: lng,
       );
       scanResult.value = result;
-      Get.toNamed(Routes.transactionConfirm, arguments: result);
+      unawaited(Get.toNamed(Routes.transactionConfirm, arguments: result));
     } catch (e) {
       Get.snackbar(
         'Scan refusé',
@@ -411,7 +412,7 @@ class JcodeController extends GetxController {
         servedItems: servedItems,
       );
       scanResult.value = result;
-      Get.offNamed(Routes.transactionConfirm, arguments: result);
+      unawaited(Get.offNamed(Routes.transactionConfirm, arguments: result));
     } catch (e) {
       _showError('Scan refusé', e);
       rethrow;

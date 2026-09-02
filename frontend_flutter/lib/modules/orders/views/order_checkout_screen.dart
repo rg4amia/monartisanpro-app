@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -182,7 +183,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
     );
 
     if (success) {
-      Get.dialog(
+      unawaited(Get.dialog(
         AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: const Row(
@@ -223,7 +224,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
           ],
         ),
         barrierDismissible: false,
-      );
+      ));
     } else {
       // En cas d'échec, permettre une nouvelle tentative
       _orderSubmitted.value = false;

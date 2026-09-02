@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:get/get.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../core/network/api_client.dart';
@@ -49,9 +50,9 @@ class LitigeController extends GetxController {
 
       final litigeId = response.data['data']?['id'];
       if (litigeId is int) {
-        Get.offNamed(Routes.litigeDetail, arguments: {'litigeId': litigeId});
+        unawaited(Get.offNamed(Routes.litigeDetail, arguments: {'litigeId': litigeId}));
       } else {
-        Get.offAllNamed(Routes.mainTab);
+        unawaited(Get.offAllNamed(Routes.mainTab));
       }
 
       Get.snackbar(

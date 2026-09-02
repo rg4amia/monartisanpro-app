@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
@@ -81,7 +82,7 @@ class AuthController extends GetxController {
           StorageService.setOnboarded(true);
 
           // Lier l'ID utilisateur à OneSignal pour les Push ciblées
-          OneSignal.login(user.id.toString());
+          unawaited(OneSignal.login(user.id.toString()));
 
           // Rejoue les mutations mises en file d'attente hors-ligne.
           _flushOfflineQueue();
@@ -133,7 +134,7 @@ class AuthController extends GetxController {
       StorageService.setOnboarded(true);
 
       // Lier l'ID utilisateur à OneSignal
-      OneSignal.login(user.id.toString());
+      unawaited(OneSignal.login(user.id.toString()));
       _flushOfflineQueue();
 
       // Token is already saved in repository

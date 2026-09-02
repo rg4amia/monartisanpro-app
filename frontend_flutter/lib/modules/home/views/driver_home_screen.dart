@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
@@ -1023,7 +1024,7 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
               ElevatedButton(
                 onPressed: () async {
                   await controller.handleAcceptDelivery(mission);
-                  Get.to(() => DeliveryRoutePlannerScreen(mission: mission));
+                  unawaited(Get.to(() => DeliveryRoutePlannerScreen(mission: mission)));
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,

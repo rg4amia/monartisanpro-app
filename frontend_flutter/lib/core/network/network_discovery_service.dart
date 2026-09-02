@@ -144,7 +144,7 @@ class NetworkDiscoveryService {
 
           for (final host in hostCandidates) {
             final ip = '$subnet.$host';
-            _probeHost(ip).then((reachable) {
+            unawaited(_probeHost(ip).then((reachable) {
               if (reachable && !completer.isCompleted) {
                 completer.complete('http://$ip:$_serverPort$_apiSuffix');
               }
@@ -152,7 +152,7 @@ class NetworkDiscoveryService {
               if (pending == 0 && !completer.isCompleted) {
                 completer.complete(null);
               }
-            });
+            }));
           }
 
           // Timeout global pour le scan du sous-réseau
