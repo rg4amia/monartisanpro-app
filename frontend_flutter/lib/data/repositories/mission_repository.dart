@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../core/cache/mission_cache_service.dart';
 import '../../core/network/api_client.dart';
 import '../../core/network/api_endpoints.dart';
+import '../../core/network/network_executor.dart';
 import '../../core/network/sync_service.dart';
 import '../models/jalon_model.dart';
 import '../models/mission_model.dart';
@@ -12,12 +13,6 @@ import '../models/mission_model.dart';
 class MissionRepository {
   final ApiClient _client = ApiClient();
   final MissionCacheService _cache = MissionCacheService();
-
-  /// Nombre maximum de tentatives pour les requêtes
-  static const int _maxRetries = 3;
-
-  /// Délai entre les tentatives (en millisecondes)
-  static const int _retryDelay = 1000;
 
   /// Initialise le cache
   Future<void> initCache() async {
@@ -48,7 +43,7 @@ class MissionRepository {
 
     // 2. Appeler l'API
     try {
-      final res = await _executeWithRetry(
+      final res = await NetworkExecutor.run(
         () => _client.get(
           ApiEndpoints.missions,
           params: status != null ? {'status': status} : null,
@@ -102,7 +97,7 @@ class MissionRepository {
 
     // 2. Appeler l'API
     try {
-      final res = await _executeWithRetry(
+      final res = await NetworkExecutor.run(
         () => _client.get(ApiEndpoints.mission(id)),
       );
 
@@ -194,12 +189,12 @@ class MissionRepository {
     required String description,
     required String category,
   }) async {
-    final res = await _executeWithRetry(
+    final res = await NetworkExecutor.run(
       () => _client.post(
         ApiEndpoints.missionEstimate,
         data: {'description': description, 'category': category},
       ),
-      retries: 2, // Moins de tentatives pour l'IA (coût API)
+      maxRetries: 2, // Moins de tentatives pour l'IA (coût API)
     );
 
     final data = res.data;
@@ -315,7 +310,7 @@ class MissionRepository {
 
     // 2. Appeler l'API
     try {
-      final res = await _executeWithRetry(
+      final res = await NetworkExecutor.run(
         () => _client.get(ApiEndpoints.missionJalons(missionId)),
       );
 
@@ -459,68 +454,4 @@ class MissionRepository {
     return {'size': _cache.cacheSize, 'isInitialized': _cache.isInitialized};
   }
 
-  /// Exécute une requête avec mécanisme de retry automatique
-  ///
-  /// Retry automatique en cas d'erreur réseau (timeout, connexion)
-  /// Ne retry PAS en cas d'erreur métier (4xx sauf 408/429)
-  Future<Response> _executeWithRetry(
-    Future<Response> Function() request, {
-    int retries = _maxRetries,
-  }) async {
-    int attempt = 0;
-    DioException? lastError;
-
-    while (attempt < retries) {
-      try {
-        return await request();
-      } on DioException catch (e) {
-        lastError = e;
-
-        // Ne pas retry pour les erreurs client (sauf timeout et rate limit)
-        if (e.response != null) {
-          final statusCode = e.response!.statusCode;
-
-          // Retry pour 408 (Request Timeout) et 429 (Too Many Requests)
-          if (statusCode == 408 || statusCode == 429) {
-            attempt++;
-            if (attempt < retries) {
-              // Délai exponentiel pour 429
-              final delay = statusCode == 429
-                  ? _retryDelay * (1 << attempt) // 2s, 4s, 8s...
-                  : _retryDelay;
-              await Future.delayed(Duration(milliseconds: delay));
-              continue;
-            }
-          }
-
-          // Ne pas retry pour les autres erreurs 4xx
-          if (statusCode != null && statusCode >= 400 && statusCode < 500) {
-            rethrow;
-          }
-        }
-
-        // Retry pour erreurs réseau et timeouts
-        final shouldRetry = e.type == DioExceptionType.connectionTimeout ||
-            e.type == DioExceptionType.receiveTimeout ||
-            e.type == DioExceptionType.sendTimeout ||
-            e.type == DioExceptionType.connectionError;
-
-        if (shouldRetry && attempt < retries - 1) {
-          attempt++;
-          await Future.delayed(const Duration(milliseconds: _retryDelay));
-          continue;
-        }
-
-        // Dernière tentative échouée
-        rethrow;
-      }
-    }
-
-    // Si on arrive ici, toutes les tentatives ont échoué
-    throw lastError ??
-        DioException(
-          requestOptions: RequestOptions(path: ''),
-          error: 'Toutes les tentatives ont échoué',
-        );
-  }
 }

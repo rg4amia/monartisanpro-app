@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 
+import '../../core/cache/cache_store.dart';
 import '../../core/network/api_client.dart';
 import '../../core/network/api_endpoints.dart';
 import '../../core/storage/storage_service.dart';
@@ -75,6 +76,9 @@ class AuthRepository {
       // ignore errors on logout
     } finally {
       await StorageService.clearAll();
+      // Purge des caches locaux : ne jamais exposer les données d'un compte
+      // au compte suivant sur le même appareil.
+      await CacheStore.wipeAll();
     }
   }
 
