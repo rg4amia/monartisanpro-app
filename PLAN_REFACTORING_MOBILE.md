@@ -38,7 +38,7 @@ Total indicatif : **~12 jours-homme**, découpables en 3 lots livrables indépen
 | 2 | Écran 4 — `client_home_screen.dart` : 2195 → **162 l.**, 21 widgets extraits dans `home/widgets/client_home/` + 8 tests widget | ✅ Fait | `262b86ff` |
 | 2 | Écran 3 — `devis_review_screen.dart` : 1785 → **119 l.**, 11 fichiers dans `missions/widgets/devis_review/` (+ `formatDevisFcfa`, token `AppColors.dangerSoft`) + 3 tests | ✅ Fait | `c4dbaa0b` |
 | 2 | Écran 2 — `devis_creation_screen.dart` : 2200 → **102 l.**, 14 fichiers dans `missions/widgets/devis_creation/` (+ `formatCreationFcfa`) + 4 tests widget | ✅ Fait | `dc864d77` |
-| 2 | Écran 1 — `mission_tracking_screen.dart` (2864 l., OTP/jalons) | ⏳ À faire | — |
+| 2 | Écran 1 — `mission_tracking_screen.dart` : 2865 → **155 l.**, 19 fichiers dans `missions/widgets/tracking/` (`_JalonCard` éclaté, dialogues OTP/paiement isolés, helper média partagé) + 4 tests widget | ✅ Fait | `<à venir>` |
 
 > **Chantier 3 terminé.** Les 6 règles de lint sont actives et `flutter analyze
 > --fatal-infos` protège la CI contre toute régression.
@@ -49,9 +49,16 @@ Total indicatif : **~12 jours-homme**, découpables en 3 lots livrables indépen
 > `StatusPill`, `MetaText`, `HeroMetric`) rendues publiques et couvertes par des
 > tests widget ; composites (`HeroHeader`, `StatGrid`, `QuickActions`,
 > `WorkflowReminder`, `MissionQueue`, `ProsArtisanScoreCard`) extraits tels quels.
-> L'état d'erreur inline devient `_ErrorRetryView`. Les 4 écrans restants — dont
-> `mission_tracking` (OTP/jalons/paiements) — exigent au préalable un harnais de
-> mock des contrôleurs GetX pour un vrai golden test d'écran.
+> L'état d'erreur inline devient `_ErrorRetryView`.
+>
+> **Chantier 2 terminé** (5/5 écrans). Les 4 écrans suivants ont suivi la même
+> méthode : `client_home`, `devis_review`, `devis_creation`, puis
+> `mission_tracking` (2865 → 155 l., 19 fichiers dans `widgets/tracking/`). Pour
+> ce dernier, `_JalonCard` (~550 l.) a été éclaté (carte + galerie de preuves),
+> les dialogues OTP et paiement de jalon isolés en fichiers dédiés, et le
+> visualiseur de média factorisé (`tracking_media_viewer.dart`). Les tests sont
+> des tests widget sur les primitives publiques ; un vrai golden test d'écran
+> reste à faire (harnais de mock des contrôleurs GetX).
 
 ---
 
