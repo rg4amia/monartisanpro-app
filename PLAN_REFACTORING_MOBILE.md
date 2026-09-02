@@ -37,7 +37,7 @@ Total indicatif : **~12 jours-homme**, découpables en 3 lots livrables indépen
 | 2 | Écran 5 — `artisan_home_screen.dart` : 1438 → **157 l.**, 12 widgets extraits dans `home/widgets/artisan_home/` + 7 tests widget | ✅ Fait | `a820fba6` |
 | 2 | Écran 4 — `client_home_screen.dart` : 2195 → **162 l.**, 21 widgets extraits dans `home/widgets/client_home/` + 8 tests widget | ✅ Fait | `262b86ff` |
 | 2 | Écran 3 — `devis_review_screen.dart` : 1785 → **119 l.**, 11 fichiers dans `missions/widgets/devis_review/` (+ `formatDevisFcfa`, token `AppColors.dangerSoft`) + 3 tests | ✅ Fait | `c4dbaa0b` |
-| 2 | Écran 2 — `devis_creation_screen.dart` : 2200 → **102 l.**, 14 fichiers dans `missions/widgets/devis_creation/` (+ `formatCreationFcfa`) + 4 tests widget | ✅ Fait | `<à venir>` |
+| 2 | Écran 2 — `devis_creation_screen.dart` : 2200 → **102 l.**, 14 fichiers dans `missions/widgets/devis_creation/` (+ `formatCreationFcfa`) + 4 tests widget | ✅ Fait | `dc864d77` |
 | 2 | Écran 1 — `mission_tracking_screen.dart` (2864 l., OTP/jalons) | ⏳ À faire | — |
 
 > **Chantier 3 terminé.** Les 6 règles de lint sont actives et `flutter analyze
