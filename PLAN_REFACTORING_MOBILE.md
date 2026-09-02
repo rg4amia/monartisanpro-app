@@ -38,7 +38,7 @@ Total indicatif : **~12 jours-homme**, découpables en 3 lots livrables indépen
 | 2 | Écran 4 — `client_home_screen.dart` : 2195 → **162 l.**, 21 widgets extraits dans `home/widgets/client_home/` + 8 tests widget | ✅ Fait | `262b86ff` |
 | 2 | Écran 3 — `devis_review_screen.dart` : 1785 → **119 l.**, 11 fichiers dans `missions/widgets/devis_review/` (+ `formatDevisFcfa`, token `AppColors.dangerSoft`) + 3 tests | ✅ Fait | `c4dbaa0b` |
 | 2 | Écran 2 — `devis_creation_screen.dart` : 2200 → **102 l.**, 14 fichiers dans `missions/widgets/devis_creation/` (+ `formatCreationFcfa`) + 4 tests widget | ✅ Fait | `dc864d77` |
-| 2 | Écran 1 — `mission_tracking_screen.dart` : 2865 → **155 l.**, 19 fichiers dans `missions/widgets/tracking/` (`_JalonCard` éclaté, dialogues OTP/paiement isolés, helper média partagé) + 4 tests widget | ✅ Fait | `<à venir>` |
+| 2 | Écran 1 — `mission_tracking_screen.dart` : 2865 → **155 l.**, 19 fichiers dans `missions/widgets/tracking/` (`_JalonCard` éclaté, dialogues OTP/paiement isolés, helper média partagé) + 4 tests widget | ✅ Fait | `a89db702` |
 
 > **Chantier 3 terminé.** Les 6 règles de lint sont actives et `flutter analyze
 > --fatal-infos` protège la CI contre toute régression.
