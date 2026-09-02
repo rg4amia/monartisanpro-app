@@ -31,10 +31,14 @@ Total indicatif : **~12 jours-homme**, découpables en 3 lots livrables indépen
 | 3 | Lint `only_throw_errors` (0 violation) | ✅ Fait | `9968da80` |
 | 3 | Réparation de `mobile-ci.yml` (chemins/branches, gate `flutter analyze`) | ✅ Fait | `9968da80` |
 | 3 | Lint `unawaited_futures` (51 sites : 50 `unawaited()` + 1 vrai `await` dans `StorageService.clearAll`) | ✅ Fait | `21a11658` |
-| 3 | Lint `require_trailing_commas` — **bloqué** : `dart fix` seul produit `},);` ; propre uniquement avec `dart format .` = ~100 fichiers → PR dédiée, à merger vite, hors branche partagée | ⏳ À faire | — |
-| 3 | Lint `avoid_dynamic_calls` (à faire après typage des repositories) | ⏳ À faire | — |
+| 3 | Lint `require_trailing_commas` (`dart format .` = 103 fichiers + `dart fix` 632 corrections + 6 `if` enrobés d'un bloc) | ✅ Fait | `23c341b0` |
+| 3 | Lint `avoid_dynamic_calls` — couche repository (`res.data` casté, 49 sites) | ✅ Fait | `ffaa7e77` |
+| 3 | Lint `avoid_dynamic_calls` — contrôleurs + vues (111 sites, modèles typés) + `flutter analyze --fatal-infos` en CI | ✅ Fait | `a2bfbbdf` |
 | 2 | Découpe des 5 vues volumineuses (prérequis : golden/widget tests) | ⏳ À faire | — |
 
+> **Chantier 3 terminé.** Les 6 règles de lint sont actives et `flutter analyze
+> --fatal-infos` protège la CI contre toute régression.
+>
 > **Chantier 2 non entamé volontairement.** L'extraction de vues de 1 400 à 2 740
 > lignes touche des parcours critiques (jalons, OTP, paiements) **sans filet de
 > tests** ; le plan exige d'abord des golden/widget tests et une cadence de commits
