@@ -1,12 +1,14 @@
 import 'dart:convert';
-import 'package:flutter/material.dart';
+
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
 import '../../../core/theme/app_colors.dart';
-import '../../../data/repositories/order_repository.dart';
-import '../../../data/repositories/supplier_catalog_repository.dart';
 import '../../../data/models/supplier_model.dart';
 import '../../../data/models/supplier_product_model.dart';
+import '../../../data/repositories/order_repository.dart';
+import '../../../data/repositories/supplier_catalog_repository.dart';
 
 class OrderController extends GetxController {
   final OrderRepository _repo = OrderRepository();

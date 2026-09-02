@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../../data/repositories/auth_repository.dart';
-import '../../../core/storage/storage_service.dart';
-import '../../../data/repositories/user_repository.dart';
-import '../../../core/utils/error_handler.dart';
 
 import '../../../app/routes/app_routes.dart';
+import '../../../core/storage/storage_service.dart';
+import '../../../core/utils/error_handler.dart';
+import '../../../data/repositories/auth_repository.dart';
+import '../../../data/repositories/user_repository.dart';
 import '../../home/controllers/home_controller.dart';
 
 class UpdateProfileController extends GetxController {

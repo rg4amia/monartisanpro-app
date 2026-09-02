@@ -1,10 +1,10 @@
 import 'dart:convert';
-import 'package:flutter/material.dart';
-import 'package:webview_flutter/webview_flutter.dart';
 
+import 'package:flutter/material.dart';
+import 'package:frontend_flutter/core/config/env_config.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:frontend_flutter/core/config/env_config.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 class IaAssistantScreen extends StatefulWidget {
   const IaAssistantScreen({super.key});

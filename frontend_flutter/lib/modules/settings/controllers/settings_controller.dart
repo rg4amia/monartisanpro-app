@@ -1,10 +1,11 @@
 import 'package:get/get.dart';
+
 import '../../../app/routes/app_routes.dart';
+import '../../../core/storage/storage_service.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/mission_repository.dart';
-import '../../../data/repositories/wallet_repository.dart';
 import '../../../data/repositories/user_repository.dart';
-import '../../../core/storage/storage_service.dart';
+import '../../../data/repositories/wallet_repository.dart';
 
 class SettingsController extends GetxController {
   final AuthRepository _authRepo = AuthRepository();

@@ -1,7 +1,8 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:frontend_flutter/modules/score/views/micro_credit_screen.dart';
 import 'package:get/get.dart';
-import 'package:fl_chart/fl_chart.dart';
+
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/score_prosartisan.dart';
 import '../controllers/score_controller.dart';

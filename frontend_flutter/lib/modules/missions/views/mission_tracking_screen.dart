@@ -1,18 +1,18 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/routes/app_routes.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/storage/storage_service.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../data/models/devis_model.dart';
 import '../../../data/models/jalon_model.dart';
 import '../../../data/models/mission_model.dart';
 import '../../../data/repositories/evaluation_repository.dart';
-import '../controllers/missions_controller.dart';
 import '../controllers/devis_controller.dart';
+import '../controllers/missions_controller.dart';
 import 'jalon_submit_screen.dart';
 
 abstract class _Palette {

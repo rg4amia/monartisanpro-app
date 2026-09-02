@@ -6,8 +6,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../../data/repositories/mission_repository.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../data/repositories/mission_repository.dart';
 
 class ReferentValidationController extends GetxController {
   final MissionRepository _missionRepo = MissionRepository();

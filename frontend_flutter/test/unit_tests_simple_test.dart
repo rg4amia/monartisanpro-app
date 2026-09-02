@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:frontend_flutter/data/models/user_model.dart';
+import 'package:frontend_flutter/core/network/api_endpoints.dart';
 import 'package:frontend_flutter/data/models/jcode_model.dart';
 import 'package:frontend_flutter/data/models/mission_model.dart';
-import 'package:frontend_flutter/core/network/api_endpoints.dart';
+import 'package:frontend_flutter/data/models/user_model.dart';
 
 /// Tests unitaires simples sans dépendances natives
 /// Ces tests peuvent être exécutés sans émulateur

@@ -5,10 +5,10 @@ import '../../../app/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../data/models/mission_model.dart';
+import '../../../shared/widgets/communication_banner.dart';
 import '../../../shared/widgets/loading_shimmer.dart';
 import '../../main_tab/controllers/main_tab_controller.dart';
 import '../../notifications/controllers/notifications_controller.dart';
-import '../../../shared/widgets/communication_banner.dart';
 import '../controllers/home_controller.dart';
 
 abstract class _Palette {

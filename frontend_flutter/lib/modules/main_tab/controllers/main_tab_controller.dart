@@ -1,7 +1,7 @@
 import 'package:get/get.dart';
-import '../../../core/storage/storage_service.dart';
-
 import 'package:onesignal_flutter/onesignal_flutter.dart';
+
+import '../../../core/storage/storage_service.dart';
 
 class MainTabController extends GetxController {
   final currentIndex = 0.obs;

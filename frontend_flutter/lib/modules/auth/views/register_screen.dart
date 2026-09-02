@@ -1,11 +1,11 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:flutter/gestures.dart';
 
 import '../../../app/routes/app_routes.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/storage/storage_service.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../settings/views/legal_terms_screen.dart';
 import '../controllers/auth_controller.dart';
 

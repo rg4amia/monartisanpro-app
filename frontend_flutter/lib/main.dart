@@ -2,16 +2,16 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:yandex_maps_mapkit/init.dart' as mapkit_init;
 import 'package:onesignal_flutter/onesignal_flutter.dart';
-import 'package:get/get.dart';
+import 'package:yandex_maps_mapkit/init.dart' as mapkit_init;
 
 import 'app/app.dart';
-import 'core/utils/error_handler.dart';
-import 'core/network/sync_service.dart';
 import 'core/config/env_config.dart';
+import 'core/network/sync_service.dart';
+import 'core/utils/error_handler.dart';
 import 'data/services/app_settings_service.dart';
 
 Future<void> main() async {

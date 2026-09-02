@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-// Pour d'éventuels globals
-import '../../../data/services/app_settings_service.dart';
+
 import '../../../app/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
+// Pour d'éventuels globals
+import '../../../data/services/app_settings_service.dart';
 import '../controllers/auth_controller.dart';
 
 // ─── Design Tokens ───────────────────────────────────────────────────────────

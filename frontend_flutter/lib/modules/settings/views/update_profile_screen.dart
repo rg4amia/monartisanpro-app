@@ -1,8 +1,10 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../controllers/update_profile_controller.dart';
+
 import '../../../core/network/api_endpoints.dart';
+import '../controllers/update_profile_controller.dart';
 
 // ─── Design Tokens ────────────────────────────────────────────────────────────
 abstract class _C {
