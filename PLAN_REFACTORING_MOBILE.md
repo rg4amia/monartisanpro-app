@@ -34,15 +34,24 @@ Total indicatif : **~12 jours-homme**, découpables en 3 lots livrables indépen
 | 3 | Lint `require_trailing_commas` (`dart format .` = 103 fichiers + `dart fix` 632 corrections + 6 `if` enrobés d'un bloc) | ✅ Fait | `23c341b0` |
 | 3 | Lint `avoid_dynamic_calls` — couche repository (`res.data` casté, 49 sites) | ✅ Fait | `ffaa7e77` |
 | 3 | Lint `avoid_dynamic_calls` — contrôleurs + vues (111 sites, modèles typés) + `flutter analyze --fatal-infos` en CI | ✅ Fait | `a2bfbbdf` |
-| 2 | Découpe des 5 vues volumineuses (prérequis : golden/widget tests) | ⏳ À faire | — |
+| 2 | Écran 5 — `artisan_home_screen.dart` : 1438 → **157 l.**, 12 widgets extraits dans `home/widgets/artisan_home/` + 7 tests widget | ✅ Fait | `<à venir>` |
+| 2 | Écran 4 — `client_home_screen.dart` (2195 l.) | ⏳ À faire | — |
+| 2 | Écran 3 — `devis_review_screen.dart` (1743 l.) | ⏳ À faire | — |
+| 2 | Écran 2 — `devis_creation_screen.dart` (2162 l.) | ⏳ À faire | — |
+| 2 | Écran 1 — `mission_tracking_screen.dart` (2740 l., OTP/jalons) | ⏳ À faire | — |
 
 > **Chantier 3 terminé.** Les 6 règles de lint sont actives et `flutter analyze
 > --fatal-infos` protège la CI contre toute régression.
 >
-> **Chantier 2 non entamé volontairement.** L'extraction de vues de 1 400 à 2 740
-> lignes touche des parcours critiques (jalons, OTP, paiements) **sans filet de
-> tests** ; le plan exige d'abord des golden/widget tests et une cadence de commits
-> atomiques par widget. À traiter dans un lot dédié, comme prévu au §2.3.
+> **Chantier 2 démarré par l'écran le moins risqué** (`artisan_home`, tableau de
+> bord sans logique de mutation). Méthode appliquée : sous-widgets `_Palette.*`
+> convertis en `AppColors.*`, primitives réutilisables (`StatCard`, `ActionTile`,
+> `StatusPill`, `MetaText`, `HeroMetric`) rendues publiques et couvertes par des
+> tests widget ; composites (`HeroHeader`, `StatGrid`, `QuickActions`,
+> `WorkflowReminder`, `MissionQueue`, `ProsArtisanScoreCard`) extraits tels quels.
+> L'état d'erreur inline devient `_ErrorRetryView`. Les 4 écrans restants — dont
+> `mission_tracking` (OTP/jalons/paiements) — exigent au préalable un harnais de
+> mock des contrôleurs GetX pour un vrai golden test d'écran.
 
 ---
 
