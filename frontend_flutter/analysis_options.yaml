@@ -26,9 +26,9 @@ linter:
     prefer_single_quotes: true
     only_throw_errors: true
     unawaited_futures: true
+    require_trailing_commas: true
     #
     # Reste à activer après nettoyage dédié :
-    #   require_trailing_commas (passe `dart format .` requise),
     #   avoid_dynamic_calls (après typage des repositories)
 
 # Additional information about this file can be found at

@@ -35,7 +35,7 @@ class AppLogger {
     String? context,
   }) async {
     debugPrint('[$_tag] ⚠️ WARNING: $message');
-    
+
     await ErrorHandler.logWarning(
       message,
       context: context,
@@ -48,7 +48,7 @@ class AppLogger {
     String? context,
   }) async {
     debugPrint('[$_tag] ℹ️ INFO: $message');
-    
+
     if (kDebugMode) {
       await ErrorHandler.logInfo(
         message,
@@ -67,7 +67,7 @@ class AppLogger {
     if (data != null) {
       debugPrint('  Data: $data');
     }
-    
+
     await ErrorHandler.logEvent(
       eventName,
       data: data,
@@ -93,7 +93,7 @@ class AppLogger {
     Map<String, dynamic>? data,
   }) async {
     debugPrint('[$_tag] 👤 USER ACTION: $action');
-    
+
     await event(
       'user_action',
       data: {
@@ -116,7 +116,7 @@ class AppLogger {
     Map<String, dynamic>? data,
   }) async {
     debugPrint('[$_tag] 💰 TRANSACTION: $type - $montant FCFA');
-    
+
     await event(
       'transaction',
       data: {
@@ -135,7 +135,7 @@ class AppLogger {
     Map<String, dynamic>? data,
   }) async {
     debugPrint('[$_tag] 🔐 KYC: $action${status != null ? " - $status" : ""}');
-    
+
     await event(
       'kyc_$action',
       data: {
@@ -152,8 +152,10 @@ class AppLogger {
     int? missionId,
     Map<String, dynamic>? data,
   }) async {
-    debugPrint('[$_tag] 🎯 MISSION: $action${missionId != null ? " #$missionId" : ""}');
-    
+    debugPrint(
+      '[$_tag] 🎯 MISSION: $action${missionId != null ? " #$missionId" : ""}',
+    );
+
     await event(
       'mission_$action',
       data: {
@@ -171,7 +173,7 @@ class AppLogger {
     Map<String, dynamic>? data,
   }) async {
     debugPrint('[$_tag] 🎫 JCODE: $action${code != null ? " - $code" : ""}');
-    
+
     await event(
       'jcode_$action',
       data: {
@@ -188,8 +190,10 @@ class AppLogger {
     int? jalonId,
     Map<String, dynamic>? data,
   }) async {
-    debugPrint('[$_tag] 📍 JALON: $action${jalonId != null ? " #$jalonId" : ""}');
-    
+    debugPrint(
+      '[$_tag] 📍 JALON: $action${jalonId != null ? " #$jalonId" : ""}',
+    );
+
     await event(
       'jalon_$action',
       data: {
@@ -206,7 +210,7 @@ class AppLogger {
     dynamic error,
   }) async {
     debugPrint('[$_tag] 📍 GEO ERROR: $message');
-    
+
     await ErrorHandler.logWarning(
       'Geolocation: $message',
       context: 'GPS/Location',
@@ -219,7 +223,7 @@ class AppLogger {
     String? context,
   }) async {
     debugPrint('[$_tag] 🚫 PERMISSION DENIED: $permission');
-    
+
     await ErrorHandler.logWarning(
       'Permission refusée: $permission',
       context: context ?? 'Permissions',

@@ -68,9 +68,8 @@ class QuoteScreen extends GetView<DevisController> {
             _SectionCard(
               title: 'Jalons de paiement',
               child: Column(
-                children: devis.jalons
-                    .map((j) => _JalonTile(jalon: j))
-                    .toList(),
+                children:
+                    devis.jalons.map((j) => _JalonTile(jalon: j)).toList(),
               ),
             ),
             const SizedBox(height: 24),

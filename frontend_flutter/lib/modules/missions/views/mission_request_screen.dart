@@ -234,8 +234,9 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
                           );
                           return;
                         }
-                        
-                        final bypassError = BypassValidator.validate(_descCtrl.text);
+
+                        final bypassError =
+                            BypassValidator.validate(_descCtrl.text);
                         if (bypassError != null) {
                           Get.snackbar(
                             'Sécurité',

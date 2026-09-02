@@ -321,11 +321,17 @@ class _InfoCard extends StatelessWidget {
                                   child: SizedBox(
                                     width: 20,
                                     height: 20,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
                                   ),
                                 ),
-                                errorWidget: (context, url, error) => const Center(
-                                  child: Icon(Icons.broken_image_outlined, size: 24),
+                                errorWidget: (context, url, error) =>
+                                    const Center(
+                                  child: Icon(
+                                    Icons.broken_image_outlined,
+                                    size: 24,
+                                  ),
                                 ),
                               ),
                           ],
@@ -368,7 +374,8 @@ class _InfoCard extends StatelessWidget {
                   child: CachedNetworkImage(
                     imageUrl: url,
                     fit: BoxFit.contain,
-                    placeholder: (context, url) => const CircularProgressIndicator(
+                    placeholder: (context, url) =>
+                        const CircularProgressIndicator(
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                     errorWidget: (context, url, error) => const Icon(
@@ -772,9 +779,10 @@ class _MaterialsSection extends StatelessWidget {
                     children: [
                       TextButton.icon(
                         onPressed: () {
-                          final ArtisanCartController artisanCart = Get.isRegistered<ArtisanCartController>()
-                              ? Get.find<ArtisanCartController>()
-                              : Get.put(ArtisanCartController());
+                          final ArtisanCartController artisanCart =
+                              Get.isRegistered<ArtisanCartController>()
+                                  ? Get.find<ArtisanCartController>()
+                                  : Get.put(ArtisanCartController());
 
                           if (artisanCart.cart.isEmpty) {
                             Get.snackbar(
@@ -786,7 +794,9 @@ class _MaterialsSection extends StatelessWidget {
                             return;
                           }
 
-                          controller.importArtisanCart(artisanCart.getCartLinesForDevis());
+                          controller.importArtisanCart(
+                            artisanCart.getCartLinesForDevis(),
+                          );
                           Get.snackbar(
                             'Panier importé',
                             '${artisanCart.cartCount} articles ont été importés dans votre devis.',
@@ -795,10 +805,19 @@ class _MaterialsSection extends StatelessWidget {
                           );
                         },
                         icon: const Icon(Icons.download_rounded, size: 16),
-                        label: const Text('Importer panier', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                        label: const Text(
+                          'Importer panier',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                         style: TextButton.styleFrom(
                           foregroundColor: _C.success,
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
                           minimumSize: Size.zero,
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
@@ -808,10 +827,19 @@ class _MaterialsSection extends StatelessWidget {
                             ? null
                             : () => _showCustomMaterialDialog(context),
                         icon: const Icon(Icons.add_circle_outline, size: 16),
-                        label: const Text('Hors catalogue', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                        label: const Text(
+                          'Hors catalogue',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                         style: TextButton.styleFrom(
                           foregroundColor: _C.primary,
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
                           minimumSize: Size.zero,
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
@@ -1196,14 +1224,16 @@ class _LignesSection extends StatelessWidget {
 
           return Column(
             children: laborLines
-                .map((entry) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: _LigneCard(
-                        ligne: entry,
-                        index: 0,
-                        onDelete: () => controller.removeLigneItem(entry),
-                      ),
-                    ))
+                .map(
+                  (entry) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _LigneCard(
+                      ligne: entry,
+                      index: 0,
+                      onDelete: () => controller.removeLigneItem(entry),
+                    ),
+                  ),
+                )
                 .toList(),
           );
         }),
@@ -1404,14 +1434,16 @@ class _JalonsSection extends StatelessWidget {
             children: controller.jalons
                 .asMap()
                 .entries
-                .map((entry) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: _JalonCard(
-                        jalon: entry.value,
-                        index: entry.key,
-                        onDelete: () => controller.removeJalon(entry.key),
-                      ),
-                    ))
+                .map(
+                  (entry) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _JalonCard(
+                      jalon: entry.value,
+                      index: entry.key,
+                      onDelete: () => controller.removeJalon(entry.key),
+                    ),
+                  ),
+                )
                 .toList(),
           );
         }),
@@ -1652,43 +1684,45 @@ class _RecapSection extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          Obx(() => Column(
-                children: [
-                  if (controller.selectedSupplier.value != null) ...[
-                    _RecapRow(
-                      label: 'Fournisseur',
-                      value: controller.selectedSupplier.value!.shopName,
-                      valueColor: _C.primary,
-                    ),
-                    const SizedBox(height: 8),
-                  ],
+          Obx(
+            () => Column(
+              children: [
+                if (controller.selectedSupplier.value != null) ...[
                   _RecapRow(
-                    label: 'Main d\'œuvre',
-                    value: _formatFCFA(controller.totalMo),
-                    valueColor: _C.success,
-                  ),
-                  const SizedBox(height: 8),
-                  _RecapRow(
-                    label: 'Matériaux',
-                    value: _formatFCFA(controller.totalMat),
-                    valueColor: _C.warning,
-                  ),
-                  const Divider(height: 24),
-                  _RecapRow(
-                    label: 'TOTAL',
-                    value: _formatFCFA(controller.totalGeneral),
+                    label: 'Fournisseur',
+                    value: controller.selectedSupplier.value!.shopName,
                     valueColor: _C.primary,
-                    isBold: true,
                   ),
                   const SizedBox(height: 8),
-                  _RecapRow(
-                    label: 'Ratio matériaux',
-                    value:
-                        '${(controller.ratioMateriaux * 100).toStringAsFixed(1)}%',
-                    valueColor: _C.muted,
-                  ),
                 ],
-              )),
+                _RecapRow(
+                  label: 'Main d\'œuvre',
+                  value: _formatFCFA(controller.totalMo),
+                  valueColor: _C.success,
+                ),
+                const SizedBox(height: 8),
+                _RecapRow(
+                  label: 'Matériaux',
+                  value: _formatFCFA(controller.totalMat),
+                  valueColor: _C.warning,
+                ),
+                const Divider(height: 24),
+                _RecapRow(
+                  label: 'TOTAL',
+                  value: _formatFCFA(controller.totalGeneral),
+                  valueColor: _C.primary,
+                  isBold: true,
+                ),
+                const SizedBox(height: 8),
+                _RecapRow(
+                  label: 'Ratio matériaux',
+                  value:
+                      '${(controller.ratioMateriaux * 100).toStringAsFixed(1)}%',
+                  valueColor: _C.muted,
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -1717,48 +1751,50 @@ class _SubmitButton extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Obx(() => ElevatedButton(
-            onPressed: controller.isSubmitting.value || missionId == null
-                ? null
-                : () async {
-                    final success = await controller.createDevis(
-                      missionId: missionId!,
-                    );
-                    if (success) {
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (Navigator.of(context).canPop()) {
-                          Navigator.of(context).pop(true);
-                          return;
-                        }
-                        Get.back(result: true);
-                      });
-                    }
-                  },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _C.primary,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+      child: Obx(
+        () => ElevatedButton(
+          onPressed: controller.isSubmitting.value || missionId == null
+              ? null
+              : () async {
+                  final success = await controller.createDevis(
+                    missionId: missionId!,
+                  );
+                  if (success) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (Navigator.of(context).canPop()) {
+                        Navigator.of(context).pop(true);
+                        return;
+                      }
+                      Get.back(result: true);
+                    });
+                  }
+                },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _C.primary,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: controller.isSubmitting.value
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : const Text(
-                    'Envoyer le devis',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
+          ),
+          child: controller.isSubmitting.value
+              ? const SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
                   ),
-          )),
+                )
+              : const Text(
+                  'Envoyer le devis',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+        ),
+      ),
     );
   }
 }
@@ -2095,7 +2131,8 @@ class _AiAssistantCard extends StatelessWidget {
                 ),
                 const Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: const Color(0xFFEEF2F6),
                     borderRadius: BorderRadius.circular(8),
@@ -2124,7 +2161,8 @@ class _AiAssistantCard extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: isLoading ? null : () => controller.fetchAiSuggestion(),
+                onPressed:
+                    isLoading ? null : () => controller.fetchAiSuggestion(),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF4F46E5),
                   foregroundColor: Colors.white,
@@ -2141,7 +2179,8 @@ class _AiAssistantCard extends StatelessWidget {
                         height: 18,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
                       )
                     : const Icon(Icons.bolt, size: 18),
@@ -2159,4 +2198,3 @@ class _AiAssistantCard extends StatelessWidget {
     });
   }
 }
-

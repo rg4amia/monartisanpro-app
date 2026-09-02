@@ -16,13 +16,17 @@ class AuthRepository {
   }
 
   Future<Map<String, dynamic>> verifyOtp(String phone, String otp) async {
-    final res = await _client.post(ApiEndpoints.verifyOtp, data: {
-      'phone': phone,
-      'otp': otp,
-      'device_fingerprint': StorageService.getDeviceFingerprint(),
-    });
+    final res = await _client.post(
+      ApiEndpoints.verifyOtp,
+      data: {
+        'phone': phone,
+        'otp': otp,
+        'device_fingerprint': StorageService.getDeviceFingerprint(),
+      },
+    );
 
-    final hasCompletedProfile = res.data['has_completed_profile'] as bool? ?? false;
+    final hasCompletedProfile =
+        res.data['has_completed_profile'] as bool? ?? false;
 
     // Si le profil est complet, on sauvegarde le token
     if (hasCompletedProfile) {
@@ -44,12 +48,15 @@ class AuthRepository {
     required String name,
     required bool cguAccepted,
   }) async {
-    final res = await _client.post(ApiEndpoints.register, data: {
-      'phone': phone,
-      'role': role,
-      'name': name,
-      'cgu_accepted': cguAccepted,
-    });
+    final res = await _client.post(
+      ApiEndpoints.register,
+      data: {
+        'phone': phone,
+        'role': role,
+        'name': name,
+        'cgu_accepted': cguAccepted,
+      },
+    );
 
     final token = res.data['token'] as String?;
     if (token != null) {
@@ -126,12 +133,15 @@ class AuthRepository {
     required String name,
     required String role,
   }) async {
-    await _client.post('/auth/reset-phone-request', data: {
-      'old_phone': oldPhone,
-      'new_phone': newPhone,
-      'name': name,
-      'role': role,
-    });
+    await _client.post(
+      '/auth/reset-phone-request',
+      data: {
+        'old_phone': oldPhone,
+        'new_phone': newPhone,
+        'name': name,
+        'role': role,
+      },
+    );
   }
 
   Future<Map<String, dynamic>> confirmResetPhoneLost({
@@ -141,13 +151,16 @@ class AuthRepository {
     required String role,
     required String otp,
   }) async {
-    final res = await _client.post('/auth/reset-phone-confirm', data: {
-      'old_phone': oldPhone,
-      'new_phone': newPhone,
-      'name': name,
-      'role': role,
-      'otp': otp,
-    });
+    final res = await _client.post(
+      '/auth/reset-phone-confirm',
+      data: {
+        'old_phone': oldPhone,
+        'new_phone': newPhone,
+        'name': name,
+        'role': role,
+        'otp': otp,
+      },
+    );
 
     final token = res.data['token'] as String?;
     if (token != null) {
@@ -164,10 +177,13 @@ class AuthRepository {
     required String newPhone,
     String? otp,
   }) async {
-    final res = await _client.post('/auth/change-phone', data: {
-      'new_phone': newPhone,
-      if (otp != null) 'otp': otp,
-    });
+    final res = await _client.post(
+      '/auth/change-phone',
+      data: {
+        'new_phone': newPhone,
+        if (otp != null) 'otp': otp,
+      },
+    );
 
     return res.data as Map<String, dynamic>;
   }

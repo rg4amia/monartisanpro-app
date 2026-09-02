@@ -42,9 +42,11 @@ class ArtisanSelectionScreen extends StatelessWidget {
             _AppBar(),
             _ViewToggle(controller: controller),
             _ZoneToggle(controller: controller),
-            Obx(() => controller.nightIntervention.value
-                ? const _NightFilterBanner()
-                : const SizedBox.shrink()),
+            Obx(
+              () => controller.nightIntervention.value
+                  ? const _NightFilterBanner()
+                  : const SizedBox.shrink(),
+            ),
             Expanded(
               child: Obx(() {
                 if (controller.isLoading.value) {
@@ -559,10 +561,13 @@ class _ArtisanCard extends StatelessWidget {
                   child: OutlinedButton.icon(
                     onPressed: isLoading
                         ? null
-                        : () => Get.toNamed(Routes.artisanProfile, arguments: {
-                              'artisan': artisan,
-                              'fromSelection': true,
-                            }),
+                        : () => Get.toNamed(
+                              Routes.artisanProfile,
+                              arguments: {
+                                'artisan': artisan,
+                                'fromSelection': true,
+                              },
+                            ),
                     icon: const Icon(Icons.person_outline, size: 16),
                     label: const Text('Profil'),
                     style: OutlinedButton.styleFrom(

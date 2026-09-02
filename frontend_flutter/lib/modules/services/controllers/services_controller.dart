@@ -56,9 +56,11 @@ class ServicesController extends GetxController {
   }
 
   void selectTrade(TradeModel trade) {
-    Get.back(result: {
-      'sector': selectedSector.value,
-      'trade': trade,
-    });
+    Get.back(
+      result: {
+        'sector': selectedSector.value,
+        'trade': trade,
+      },
+    );
   }
 }

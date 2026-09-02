@@ -68,7 +68,8 @@ class JcodeModel {
       qrUrl: (json['qrUrl'] ?? json['qr_url']) as String?,
       ussdCode: (json['ussdCode'] ?? json['ussd_code']) as String?,
       montant: _parseInt(json['montant'] ?? json['tokenAmount']),
-      montantConsomme: _parseInt(json['montantConsomme'] ?? json['montant_consomme']),
+      montantConsomme:
+          _parseInt(json['montantConsomme'] ?? json['montant_consomme']),
       statut: (json['statut'] ?? json['status'] ?? '').toString(),
       scanLat: _parseDouble(json['scanLat'] ?? json['scan_lat']),
       scanLng: _parseDouble(json['scanLng'] ?? json['scan_lng']),

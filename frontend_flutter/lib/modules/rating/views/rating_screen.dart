@@ -73,7 +73,10 @@ class RatingScreen extends GetView<RatingController> {
                     ),
                     const SizedBox(height: 4),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: roleColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
@@ -142,7 +145,11 @@ class RatingScreen extends GetView<RatingController> {
                   children: [
                     const Row(
                       children: [
-                        Icon(Icons.tune_rounded, size: 18, color: AppColors.primary),
+                        Icon(
+                          Icons.tune_rounded,
+                          size: 18,
+                          color: AppColors.primary,
+                        ),
                         SizedBox(width: 8),
                         Text(
                           'Évaluation par critères (Score ProsArtisan)',
@@ -213,8 +220,12 @@ class RatingScreen extends GetView<RatingController> {
                       maxLines: 4,
                       onChanged: (v) => controller.commentaire.value = v,
                       decoration: InputDecoration(
-                        hintText: 'Partagez votre expérience sur cette prestation...',
-                        hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+                        hintText:
+                            'Partagez votre expérience sur cette prestation...',
+                        hintStyle: const TextStyle(
+                          color: AppColors.textMuted,
+                          fontSize: 13,
+                        ),
                         filled: true,
                         fillColor: const Color(0xFFF9FAFB),
                         border: OutlineInputBorder(
@@ -257,7 +268,10 @@ class RatingScreen extends GetView<RatingController> {
                         )
                       : const Text(
                           'Valider l\'évaluation',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: roleColor,
@@ -332,8 +346,9 @@ class _StarPicker extends StatelessWidget {
                       ? Icons.star_rounded
                       : Icons.star_outline_rounded,
                   size: starSize,
-                  color:
-                      note >= star ? const Color(0xFFF59E0B) : const Color(0xFFD1D5DB),
+                  color: note >= star
+                      ? const Color(0xFFF59E0B)
+                      : const Color(0xFFD1D5DB),
                 ),
               ),
             );
@@ -366,4 +381,3 @@ class _StarPicker extends StatelessWidget {
     return labels[value.clamp(0, 5)];
   }
 }
-

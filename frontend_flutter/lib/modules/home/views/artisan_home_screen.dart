@@ -124,16 +124,24 @@ class ArtisanHomeScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      CommunicationBanner(announcements: controller.announcements),
+                      CommunicationBanner(
+                        announcements: controller.announcements,
+                      ),
                       LeSaviezVousCarousel(tips: controller.tips),
                       _ProsArtisanScoreCard(controller: controller),
                       _StatGrid(controller: controller),
                       const SizedBox(height: 24),
-                      _QuickActions(controller: controller, missions: controller.prioritizedArtisanMissions),
+                      _QuickActions(
+                        controller: controller,
+                        missions: controller.prioritizedArtisanMissions,
+                      ),
                       const SizedBox(height: 24),
                       _WorkflowReminder(controller: controller),
                       const SizedBox(height: 24),
-                      _MissionQueue(controller: controller, missions: controller.prioritizedArtisanMissions),
+                      _MissionQueue(
+                        controller: controller,
+                        missions: controller.prioritizedArtisanMissions,
+                      ),
                     ],
                   ),
                 ),
@@ -192,7 +200,11 @@ class _ProsArtisanScoreCard extends StatelessWidget {
                           ),
                         ],
                       ),
-                      child: const Icon(Icons.stars_rounded, color: Colors.white, size: 20),
+                      child: const Icon(
+                        Icons.stars_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
                     ),
                     const SizedBox(width: 10),
                     const Expanded(
@@ -213,7 +225,8 @@ class _ProsArtisanScoreCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
                   color: isEligible
                       ? _Palette.success.withValues(alpha: 0.12)
@@ -229,13 +242,17 @@ class _ProsArtisanScoreCard extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      isEligible ? Icons.verified_rounded : Icons.lock_outline_rounded,
+                      isEligible
+                          ? Icons.verified_rounded
+                          : Icons.lock_outline_rounded,
                       color: isEligible ? _Palette.success : _Palette.muted,
                       size: 13,
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      isEligible ? 'Crédit Débloqué (<2h)' : 'Seuil Crédit : 700',
+                      isEligible
+                          ? 'Crédit Débloqué (<2h)'
+                          : 'Seuil Crédit : 700',
                       style: TextStyle(
                         color: isEligible ? _Palette.success : _Palette.muted,
                         fontSize: 10.5,
@@ -871,15 +888,19 @@ class _QuickActions extends StatelessWidget {
           icon: Icons.store_rounded,
           gradient: AppColors.gradientWelding,
           title: 'Quincailleries Agréées',
-          subtitle: 'Consulter le réseau de quincailleries partenaires et leurs stocks',
+          subtitle:
+              'Consulter le réseau de quincailleries partenaires et leurs stocks',
           onTap: () => Get.toNamed(Routes.clientSuppliers),
         ),
         const SizedBox(height: 12),
         _ActionTile(
           icon: Icons.account_balance_wallet_rounded,
-          gradient: const LinearGradient(colors: [Color(0xFF0D9488), Color(0xFF14B8A6)]),
+          gradient: const LinearGradient(
+            colors: [Color(0xFF0D9488), Color(0xFF14B8A6)],
+          ),
           title: 'Paiements Reçus & Portefeuille',
-          subtitle: 'Consulter tous les reversements Wave/Orange Money et jalons libérés',
+          subtitle:
+              'Consulter tous les reversements Wave/Orange Money et jalons libérés',
           onTap: () => Get.toNamed(Routes.wallet),
         ),
       ],
@@ -975,7 +996,10 @@ class _ActionTile extends StatelessWidget {
                         if (badge != null) ...[
                           const SizedBox(width: 6),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: AppColors.accent.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(6),
@@ -1007,7 +1031,11 @@ class _ActionTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              const Icon(Icons.arrow_forward_ios_rounded, color: _Palette.muted, size: 14),
+              const Icon(
+                Icons.arrow_forward_ios_rounded,
+                color: _Palette.muted,
+                size: 14,
+              ),
             ],
           ),
         ),
@@ -1285,7 +1313,8 @@ class _MissionQueueCard extends StatelessWidget {
         if (mission.hasDevis) {
           return _MissionAction(
             label: 'Devis envoyé',
-            subtitle: 'Votre devis a été soumis. En attente de la décision du client.',
+            subtitle:
+                'Votre devis a été soumis. En attente de la décision du client.',
             color: _Palette.muted,
             onTap: null,
           );

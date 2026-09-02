@@ -106,7 +106,8 @@ class _MissionTrackingScreenState extends State<MissionTrackingScreen> {
                   hasReferentPendingValidation:
                       controller.hasReferentPendingValidation,
                 ),
-                if (isArtisan && mission.status == 'pending_artisan_acceptance') ...[
+                if (isArtisan &&
+                    mission.status == 'pending_artisan_acceptance') ...[
                   const SizedBox(height: 16),
                   _PendingAcceptanceCard(
                     mission: mission,
@@ -116,7 +117,8 @@ class _MissionTrackingScreenState extends State<MissionTrackingScreen> {
                 const SizedBox(height: 16),
                 if (isArtisan)
                   _BudgetSection(mission: mission)
-                else if (mission.status == 'financee' || mission.status == 'en_cours')
+                else if (mission.status == 'financee' ||
+                    mission.status == 'en_cours')
                   _EscrowSection(mission: mission, jalons: controller.jalons)
                 else
                   _BudgetSection(mission: mission),
@@ -139,11 +141,14 @@ class _MissionTrackingScreenState extends State<MissionTrackingScreen> {
                   mission: mission,
                   jalons: controller.jalons,
                 ),
-                if (!isArtisan && (mission.status == 'terminee' || mission.status == 'completed')) ...[
+                if (!isArtisan &&
+                    (mission.status == 'terminee' ||
+                        mission.status == 'completed')) ...[
                   const SizedBox(height: 16),
                   _MissionEvaluationsSection(
                     mission: mission,
-                    onEvaluated: () => controller.loadMission(mission.id, forceRefresh: true),
+                    onEvaluated: () =>
+                        controller.loadMission(mission.id, forceRefresh: true),
                   ),
                 ],
               ],
@@ -339,11 +344,17 @@ class _MissionHeaderCard extends StatelessWidget {
                                   child: SizedBox(
                                     width: 20,
                                     height: 20,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
                                   ),
                                 ),
-                                errorWidget: (context, url, error) => const Center(
-                                  child: Icon(Icons.broken_image_outlined, size: 24),
+                                errorWidget: (context, url, error) =>
+                                    const Center(
+                                  child: Icon(
+                                    Icons.broken_image_outlined,
+                                    size: 24,
+                                  ),
                                 ),
                               ),
                           ],
@@ -386,7 +397,8 @@ class _MissionHeaderCard extends StatelessWidget {
                   child: CachedNetworkImage(
                     imageUrl: url,
                     fit: BoxFit.contain,
-                    placeholder: (context, url) => const CircularProgressIndicator(
+                    placeholder: (context, url) =>
+                        const CircularProgressIndicator(
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                     errorWidget: (context, url, error) => const Icon(
@@ -541,7 +553,10 @@ class _CounterpartyCard extends StatelessWidget {
               ),
             ],
           ),
-          if (showActions && (mission.clientPhone != null || (mission.clientLatitude != null && mission.clientLongitude != null))) ...[
+          if (showActions &&
+              (mission.clientPhone != null ||
+                  (mission.clientLatitude != null &&
+                      mission.clientLongitude != null))) ...[
             const SizedBox(height: 12),
             const Divider(color: _Palette.subtle, height: 1),
             const SizedBox(height: 12),
@@ -574,16 +589,21 @@ class _CounterpartyCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                if (mission.clientPhone != null && mission.clientLatitude != null && mission.clientLongitude != null)
+                if (mission.clientPhone != null &&
+                    mission.clientLatitude != null &&
+                    mission.clientLongitude != null)
                   const SizedBox(width: 8),
-                if (mission.clientLatitude != null && mission.clientLongitude != null)
+                if (mission.clientLatitude != null &&
+                    mission.clientLongitude != null)
                   Expanded(
                     child: ElevatedButton.icon(
                       onPressed: () {
                         final lat = mission.clientLatitude;
                         final lng = mission.clientLongitude;
                         launchUrl(
-                          Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lng'),
+                          Uri.parse(
+                            'https://www.google.com/maps/search/?api=1&query=$lat,$lng',
+                          ),
                           mode: LaunchMode.externalApplication,
                         );
                       },
@@ -1420,11 +1440,17 @@ class _JalonCard extends StatelessWidget {
                                   child: SizedBox(
                                     width: 20,
                                     height: 20,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
                                   ),
                                 ),
-                                errorWidget: (context, url, error) => const Center(
-                                  child: Icon(Icons.broken_image_outlined, size: 20),
+                                errorWidget: (context, url, error) =>
+                                    const Center(
+                                  child: Icon(
+                                    Icons.broken_image_outlined,
+                                    size: 20,
+                                  ),
                                 ),
                               ),
                           ],
@@ -1539,7 +1565,8 @@ class _JalonCard extends StatelessWidget {
                     if (mission.paymentType == 'hybrid') ...[
                       Expanded(
                         child: ElevatedButton.icon(
-                          onPressed: () => _startJalonPaymentAndValidation(context, jalon),
+                          onPressed: () =>
+                              _startJalonPaymentAndValidation(context, jalon),
                           icon: const Icon(Icons.payment_rounded, size: 18),
                           label: const Text('Financer'),
                           style: ElevatedButton.styleFrom(
@@ -1552,7 +1579,8 @@ class _JalonCard extends StatelessWidget {
                     ],
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: () => showOtpValidationDialog(context, jalon),
+                        onPressed: () =>
+                            showOtpValidationDialog(context, jalon),
                         icon: const Icon(Icons.sms_outlined, size: 18),
                         label: const Text('Valider via OTP'),
                         style: OutlinedButton.styleFrom(
@@ -1571,10 +1599,18 @@ class _JalonCard extends StatelessWidget {
                 width: double.infinity,
                 child: TextButton.icon(
                   onPressed: () async => controller.requestOtp(jalon.id),
-                  icon: const Icon(Icons.sms_outlined, size: 16, color: _Palette.primary),
+                  icon: const Icon(
+                    Icons.sms_outlined,
+                    size: 16,
+                    color: _Palette.primary,
+                  ),
                   label: const Text(
                     'Renvoyer le code de validation (SMS)',
-                    style: TextStyle(color: _Palette.primary, fontSize: 13, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      color: _Palette.primary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),
@@ -1604,7 +1640,10 @@ class _JalonCard extends StatelessWidget {
                 const SizedBox(height: 12),
                 Text(
                   'Financer le Jalon ${jalon.ordre}',
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -1615,30 +1654,57 @@ class _JalonCard extends StatelessWidget {
                 const SizedBox(height: 16),
                 ListTile(
                   leading: const Icon(Icons.waves, color: _Palette.primary),
-                  title: const Text('Wave CI', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                  title: const Text(
+                    'Wave CI',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  ),
                   trailing: Icon(
-                    selectedProvider == 'wave' ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-                    color: selectedProvider == 'wave' ? _Palette.primary : _Palette.muted,
+                    selectedProvider == 'wave'
+                        ? Icons.radio_button_checked
+                        : Icons.radio_button_unchecked,
+                    color: selectedProvider == 'wave'
+                        ? _Palette.primary
+                        : _Palette.muted,
                   ),
                   onTap: () => setState(() => selectedProvider = 'wave'),
                 ),
                 ListTile(
-                  leading: const Icon(Icons.phone_android, color: _Palette.primary),
-                  title: const Text('Orange Money CI', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                  trailing: Icon(
-                    selectedProvider == 'orange_money' ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-                    color: selectedProvider == 'orange_money' ? _Palette.primary : _Palette.muted,
+                  leading:
+                      const Icon(Icons.phone_android, color: _Palette.primary),
+                  title: const Text(
+                    'Orange Money CI',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                   ),
-                  onTap: () => setState(() => selectedProvider = 'orange_money'),
+                  trailing: Icon(
+                    selectedProvider == 'orange_money'
+                        ? Icons.radio_button_checked
+                        : Icons.radio_button_unchecked,
+                    color: selectedProvider == 'orange_money'
+                        ? _Palette.primary
+                        : _Palette.muted,
+                  ),
+                  onTap: () =>
+                      setState(() => selectedProvider = 'orange_money'),
                 ),
                 ListTile(
-                  leading: const Icon(Icons.account_balance, color: _Palette.primary),
-                  title: const Text('Virement Bancaire', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                  trailing: Icon(
-                    selectedProvider == 'virement_bancaire' ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-                    color: selectedProvider == 'virement_bancaire' ? _Palette.primary : _Palette.muted,
+                  leading: const Icon(
+                    Icons.account_balance,
+                    color: _Palette.primary,
                   ),
-                  onTap: () => setState(() => selectedProvider = 'virement_bancaire'),
+                  title: const Text(
+                    'Virement Bancaire',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  ),
+                  trailing: Icon(
+                    selectedProvider == 'virement_bancaire'
+                        ? Icons.radio_button_checked
+                        : Icons.radio_button_unchecked,
+                    color: selectedProvider == 'virement_bancaire'
+                        ? _Palette.primary
+                        : _Palette.muted,
+                  ),
+                  onTap: () =>
+                      setState(() => selectedProvider = 'virement_bancaire'),
                 ),
                 const SizedBox(height: 20),
                 Row(
@@ -1659,7 +1725,12 @@ class _JalonCard extends StatelessWidget {
                             provider: selectedProvider,
                           );
                           if (success) {
-                            unawaited(Get.find<MissionsController>().loadMission(jalon.missionId, forceRefresh: true));
+                            unawaited(
+                              Get.find<MissionsController>().loadMission(
+                                jalon.missionId,
+                                forceRefresh: true,
+                              ),
+                            );
                             if (context.mounted) {
                               showOtpValidationDialog(context, jalon);
                             }
@@ -1750,7 +1821,8 @@ class _JalonCard extends StatelessWidget {
                   child: CachedNetworkImage(
                     imageUrl: url,
                     fit: BoxFit.contain,
-                    placeholder: (context, url) => const CircularProgressIndicator(
+                    placeholder: (context, url) =>
+                        const CircularProgressIndicator(
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                     errorWidget: (context, url, error) => const Icon(
@@ -1826,7 +1898,11 @@ void showOtpValidationDialog(BuildContext context, JalonModel jalon) {
               keyboardType: TextInputType.number,
               maxLength: 4,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 20, letterSpacing: 8, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontSize: 20,
+                letterSpacing: 8,
+                fontWeight: FontWeight.bold,
+              ),
               decoration: const InputDecoration(
                 hintText: '0000',
                 counterText: '',
@@ -1838,7 +1914,8 @@ void showOtpValidationDialog(BuildContext context, JalonModel jalon) {
               onPressed: () async {
                 await controller.requestOtp(jalon.id);
               },
-              icon: const Icon(Icons.refresh, size: 16, color: _Palette.primary),
+              icon:
+                  const Icon(Icons.refresh, size: 16, color: _Palette.primary),
               label: const Text(
                 'Renvoyer le code par SMS',
                 style: TextStyle(
@@ -1863,13 +1940,22 @@ void showOtpValidationDialog(BuildContext context, JalonModel jalon) {
                     onPressed: () async {
                       final otp = otpController.text.trim();
                       if (otp.length != 4) {
-                        Get.snackbar('Code invalide', 'Le code doit contenir 4 chiffres');
+                        Get.snackbar(
+                          'Code invalide',
+                          'Le code doit contenir 4 chiffres',
+                        );
                         return;
                       }
                       Get.back();
-                      final success = await controller.validateOtp(jalon.id, otp);
+                      final success =
+                          await controller.validateOtp(jalon.id, otp);
                       if (success) {
-                        unawaited(controller.loadMission(jalon.missionId, forceRefresh: true));
+                        unawaited(
+                          controller.loadMission(
+                            jalon.missionId,
+                            forceRefresh: true,
+                          ),
+                        );
                       }
                     },
                     child: const Text('Valider'),
@@ -2058,7 +2144,8 @@ class _BottomActions extends StatelessWidget {
               label: 'Valider le jalon (OTP)',
               icon: Icons.check_circle_outline,
               color: _Palette.success,
-              onTap: () => showOtpValidationDialog(context, nextSubmittedJalon!),
+              onTap: () =>
+                  showOtpValidationDialog(context, nextSubmittedJalon!),
             ),
             secondary: _ActionButtonConfig(
               label: 'Signaler',
@@ -2110,7 +2197,10 @@ class _BottomActions extends StatelessWidget {
               },
             );
             if (res == true) {
-              unawaited(Get.find<MissionsController>().loadMission(mission.id, forceRefresh: true));
+              unawaited(
+                Get.find<MissionsController>()
+                    .loadMission(mission.id, forceRefresh: true),
+              );
             }
           },
         ),
@@ -2317,7 +2407,11 @@ class _PendingAcceptanceCard extends StatelessWidget {
         children: [
           const Row(
             children: [
-              Icon(Icons.pending_actions_rounded, color: _Palette.warning, size: 24),
+              Icon(
+                Icons.pending_actions_rounded,
+                color: _Palette.warning,
+                size: 24,
+              ),
               SizedBox(width: 10),
               Text(
                 'Réponse requise',
@@ -2344,11 +2438,16 @@ class _PendingAcceptanceCard extends StatelessWidget {
                     backgroundColor: const Color(0xFF10B981),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     elevation: 0,
                   ),
                   icon: const Icon(Icons.check_circle_outline, size: 18),
-                  label: const Text('ACCEPTER', style: TextStyle(fontWeight: FontWeight.bold)),
+                  label: const Text(
+                    'ACCEPTER',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -2359,10 +2458,15 @@ class _PendingAcceptanceCard extends StatelessWidget {
                     foregroundColor: const Color(0xFFEF4444),
                     side: const BorderSide(color: Color(0xFFEF4444)),
                     padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                   icon: const Icon(Icons.cancel_outlined, size: 18),
-                  label: const Text('REFUSER', style: TextStyle(fontWeight: FontWeight.bold)),
+                  label: const Text(
+                    'REFUSER',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
             ],
@@ -2383,10 +2487,12 @@ class _MissionEvaluationsSection extends StatefulWidget {
   final VoidCallback onEvaluated;
 
   @override
-  State<_MissionEvaluationsSection> createState() => _MissionEvaluationsSectionState();
+  State<_MissionEvaluationsSection> createState() =>
+      _MissionEvaluationsSectionState();
 }
 
-class _MissionEvaluationsSectionState extends State<_MissionEvaluationsSection> {
+class _MissionEvaluationsSectionState
+    extends State<_MissionEvaluationsSection> {
   final EvaluationRepository _evaluationRepo = EvaluationRepository();
   bool _isLoading = true;
   List<Map<String, dynamic>> _actors = [];
@@ -2401,7 +2507,9 @@ class _MissionEvaluationsSectionState extends State<_MissionEvaluationsSection> 
     setState(() => _isLoading = true);
     final data = await _evaluationRepo.getMissionActors(widget.mission.id);
     if (mounted) {
-      if (data != null && data['actors'] is List && (data['actors'] as List).isNotEmpty) {
+      if (data != null &&
+          data['actors'] is List &&
+          (data['actors'] as List).isNotEmpty) {
         setState(() {
           _actors = List<Map<String, dynamic>>.from(data['actors']);
           _isLoading = false;
@@ -2440,7 +2548,11 @@ class _MissionEvaluationsSectionState extends State<_MissionEvaluationsSection> 
                   color: const Color(0xFFFEF3C7),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.star_rounded, size: 20, color: Color(0xFFD97706)),
+                child: const Icon(
+                  Icons.star_rounded,
+                  size: 20,
+                  color: Color(0xFFD97706),
+                ),
               ),
               const SizedBox(width: 10),
               const Expanded(
@@ -2618,7 +2730,10 @@ class _ActorEvaluationCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 6),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: roleColor.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(6),
@@ -2662,7 +2777,11 @@ class _ActorEvaluationCard extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.check_circle, size: 16, color: Color(0xFF16A34A)),
+                  const Icon(
+                    Icons.check_circle,
+                    size: 16,
+                    color: Color(0xFF16A34A),
+                  ),
                   const SizedBox(width: 6),
                   const Text(
                     'Avis enregistré : ',
@@ -2675,7 +2794,9 @@ class _ActorEvaluationCard extends StatelessWidget {
                   Row(
                     children: List.generate(5, (i) {
                       return Icon(
-                        i < note ? Icons.star_rounded : Icons.star_outline_rounded,
+                        i < note
+                            ? Icons.star_rounded
+                            : Icons.star_outline_rounded,
                         size: 16,
                         color: const Color(0xFFF59E0B),
                       );
@@ -2719,7 +2840,10 @@ class _ActorEvaluationCard extends StatelessWidget {
                       : role == 'livreur'
                           ? 'Noter le livreur'
                           : 'Noter la quincaillerie',
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: roleColor,
@@ -2738,4 +2862,3 @@ class _ActorEvaluationCard extends StatelessWidget {
     );
   }
 }
-

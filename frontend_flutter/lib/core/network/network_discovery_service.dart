@@ -62,7 +62,11 @@ class NetworkDiscoveryService {
     // ── 1. Émulateur Android ───────────────────────────────────────────────
     if (Platform.isAndroid) {
       const emulatorHost = '10.0.2.2';
-      if (await _isServerReachable(emulatorHost, _serverPort, _localProbeTimeout)) {
+      if (await _isServerReachable(
+        emulatorHost,
+        _serverPort,
+        _localProbeTimeout,
+      )) {
         _resolvedUrl = 'http://$emulatorHost:$_serverPort$_apiSuffix';
         _mode = 'emulator';
         _log('✅ Émulateur Android détecté → $_resolvedUrl');
@@ -144,15 +148,17 @@ class NetworkDiscoveryService {
 
           for (final host in hostCandidates) {
             final ip = '$subnet.$host';
-            unawaited(_probeHost(ip).then((reachable) {
-              if (reachable && !completer.isCompleted) {
-                completer.complete('http://$ip:$_serverPort$_apiSuffix');
-              }
-              pending--;
-              if (pending == 0 && !completer.isCompleted) {
-                completer.complete(null);
-              }
-            }));
+            unawaited(
+              _probeHost(ip).then((reachable) {
+                if (reachable && !completer.isCompleted) {
+                  completer.complete('http://$ip:$_serverPort$_apiSuffix');
+                }
+                pending--;
+                if (pending == 0 && !completer.isCompleted) {
+                  completer.complete(null);
+                }
+              }),
+            );
           }
 
           // Timeout global pour le scan du sous-réseau
@@ -201,7 +207,9 @@ class NetworkDiscoveryService {
           // Si le serveur répond avec un statut HTTP valide, la connexion est OK.
           if (response.statusCode < 500) return true;
         } catch (e) {
-          _log('Tentative $attempt/$maxAttempts — échec test HTTP production ($host) : $e');
+          _log(
+            'Tentative $attempt/$maxAttempts — échec test HTTP production ($host) : $e',
+          );
           if (attempt < maxAttempts) {
             await Future.delayed(Duration(seconds: 2 * attempt));
           }

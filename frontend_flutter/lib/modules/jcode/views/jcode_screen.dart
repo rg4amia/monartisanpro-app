@@ -234,8 +234,9 @@ class _ComposerViewState extends State<_ComposerView> {
                       onPressed: widget.controller.isImportingDevis.value
                           ? null
                           : () {
-                              final missionId =
-                                  int.tryParse(widget.missionIdCtrl.text.trim());
+                              final missionId = int.tryParse(
+                                widget.missionIdCtrl.text.trim(),
+                              );
                               if (missionId == null || missionId <= 0) {
                                 Get.snackbar(
                                   'Mission invalide',
@@ -244,7 +245,8 @@ class _ComposerViewState extends State<_ComposerView> {
                                 );
                                 return;
                               }
-                              widget.controller.importMaterialsFromMission(missionId);
+                              widget.controller
+                                  .importMaterialsFromMission(missionId);
                             },
                       icon: widget.controller.isImportingDevis.value
                           ? const SizedBox(
@@ -292,7 +294,8 @@ class _ComposerViewState extends State<_ComposerView> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  if (widget.controller.isSuppliersLoading.value && suppliers.isEmpty)
+                  if (widget.controller.isSuppliersLoading.value &&
+                      suppliers.isEmpty)
                     const Center(child: CircularProgressIndicator())
                   else if (suppliers.isEmpty)
                     const Text(
@@ -377,7 +380,8 @@ class _ComposerViewState extends State<_ComposerView> {
                 final query = _searchQuery.value.toLowerCase().trim();
                 if (query.isEmpty) return true;
                 final nameMatch = p.name.toLowerCase().contains(query);
-                final descMatch = (p.description ?? '').toLowerCase().contains(query);
+                final descMatch =
+                    (p.description ?? '').toLowerCase().contains(query);
                 final skuMatch = (p.sku ?? '').toLowerCase().contains(query);
                 return nameMatch || descMatch || skuMatch;
               }).toList();
@@ -398,7 +402,8 @@ class _ComposerViewState extends State<_ComposerView> {
                         ),
                       ),
                       TextButton.icon(
-                        onPressed: supplier == null ? null : widget.onAddCustomItem,
+                        onPressed:
+                            supplier == null ? null : widget.onAddCustomItem,
                         icon: const Icon(Icons.add_circle_outline),
                         label: const Text('Article hors catalogue'),
                       ),
@@ -413,26 +418,41 @@ class _ComposerViewState extends State<_ComposerView> {
                         onChanged: (val) => _searchQuery.value = val,
                         decoration: InputDecoration(
                           hintText: 'Rechercher un article...',
-                          prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary),
-                          suffixIcon: Obx(() => _searchQuery.value.isNotEmpty
-                              ? IconButton(
-                                  icon: const Icon(Icons.clear, color: AppColors.textSecondary),
-                                  onPressed: () {
-                                    _searchController.clear();
-                                    _searchQuery.value = '';
-                                  },
-                                )
-                              : const SizedBox.shrink()),
+                          prefixIcon: const Icon(
+                            Icons.search,
+                            color: AppColors.textSecondary,
+                          ),
+                          suffixIcon: Obx(
+                            () => _searchQuery.value.isNotEmpty
+                                ? IconButton(
+                                    icon: const Icon(
+                                      Icons.clear,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                    onPressed: () {
+                                      _searchController.clear();
+                                      _searchQuery.value = '';
+                                    },
+                                  )
+                                : const SizedBox.shrink(),
+                          ),
                           filled: true,
                           fillColor: Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 0,
+                            horizontal: 16,
+                          ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                            borderSide:
+                                const BorderSide(color: Color(0xFFE2E8F0)),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: AppColors.accent, width: 1.5),
+                            borderSide: const BorderSide(
+                              color: AppColors.accent,
+                              width: 1.5,
+                            ),
                           ),
                         ),
                       ),
@@ -460,7 +480,8 @@ class _ComposerViewState extends State<_ComposerView> {
                     ...filteredProducts.map(
                       (product) => _SupplierProductTile(
                         product: product,
-                        onAdd: () => widget.controller.addCatalogProduct(product),
+                        onAdd: () =>
+                            widget.controller.addCatalogProduct(product),
                       ),
                     ),
                 ],
@@ -493,11 +514,13 @@ class _ComposerViewState extends State<_ComposerView> {
                     ...items.map(
                       (item) => _DraftItemTile(
                         item: item,
-                        onIncrement: () => widget.controller.updateDraftQuantity(
+                        onIncrement: () =>
+                            widget.controller.updateDraftQuantity(
                           item,
                           item.quantity + 1,
                         ),
-                        onDecrement: () => widget.controller.updateDraftQuantity(
+                        onDecrement: () =>
+                            widget.controller.updateDraftQuantity(
                           item,
                           item.quantity - 1,
                         ),
@@ -540,8 +563,9 @@ class _ComposerViewState extends State<_ComposerView> {
                       onPressed: widget.controller.isLoading.value
                           ? null
                           : () {
-                              final missionId =
-                                  int.tryParse(widget.missionIdCtrl.text.trim());
+                              final missionId = int.tryParse(
+                                widget.missionIdCtrl.text.trim(),
+                              );
                               if (missionId == null || missionId <= 0) {
                                 Get.snackbar(
                                   'Mission invalide',
@@ -550,7 +574,8 @@ class _ComposerViewState extends State<_ComposerView> {
                                 );
                                 return;
                               }
-                              widget.controller.generateJcodeForDraft(missionId);
+                              widget.controller
+                                  .generateJcodeForDraft(missionId);
                             },
                       icon: widget.controller.isLoading.value
                           ? const SizedBox(
@@ -751,8 +776,11 @@ class _SupplierProductTile extends StatelessWidget {
                   color: AppColors.primary.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.inventory_2_outlined,
-                    color: AppColors.primary, size: 22),
+                child: const Icon(
+                  Icons.inventory_2_outlined,
+                  color: AppColors.primary,
+                  size: 22,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -810,11 +838,15 @@ class _SupplierProductTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    outOfStock ? 'Rupture de stock' : 'Stock: ${product.stockQuantity}',
+                    outOfStock
+                        ? 'Rupture de stock'
+                        : 'Stock: ${product.stockQuantity}',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: outOfStock ? AppColors.danger : AppColors.textSecondary,
+                      color: outOfStock
+                          ? AppColors.danger
+                          : AppColors.textSecondary,
                     ),
                   ),
                 ],
@@ -824,7 +856,8 @@ class _SupplierProductTile extends StatelessWidget {
                 icon: const Icon(Icons.add, size: 16),
                 label: const Text('Ajouter'),
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -1031,7 +1064,6 @@ class _SectionCard extends StatelessWidget {
     );
   }
 }
-
 
 class _QtyButton extends StatelessWidget {
   final IconData icon;

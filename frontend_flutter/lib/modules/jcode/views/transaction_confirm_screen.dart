@@ -104,7 +104,8 @@ class TransactionConfirmScreen extends StatelessWidget {
                           color: Colors.grey[300],
                           image: const DecorationImage(
                             image: AssetImage(
-                                'assets/images/materials_placeholder.jpg'),
+                              'assets/images/materials_placeholder.jpg',
+                            ),
                             fit: BoxFit.cover,
                           ),
                         ),
@@ -166,7 +167,8 @@ class TransactionConfirmScreen extends StatelessWidget {
                             label: 'Montant Total',
                             value: result['montant'] != null
                                 ? Formatters.fcfa(
-                                    (result['montant'] as num).toInt())
+                                    (result['montant'] as num).toInt(),
+                                  )
                                 : '45.000 FCFA',
                             valueColor: AppColors.primary,
                             isBold: true,
@@ -221,18 +223,21 @@ class TransactionConfirmScreen extends StatelessWidget {
                                     ),
                                     children: [
                                       TextSpan(
-                                          text:
-                                              'Virement J+1 garanti vers votre compte '),
+                                        text:
+                                            'Virement J+1 garanti vers votre compte ',
+                                      ),
                                       TextSpan(
                                         text: 'Wave',
                                         style: TextStyle(
-                                            fontWeight: FontWeight.w600),
+                                          fontWeight: FontWeight.w600,
+                                        ),
                                       ),
                                       TextSpan(text: ' ou '),
                                       TextSpan(
                                         text: 'Orange Money',
                                         style: TextStyle(
-                                            fontWeight: FontWeight.w600),
+                                          fontWeight: FontWeight.w600,
+                                        ),
                                       ),
                                       TextSpan(text: '.'),
                                     ],

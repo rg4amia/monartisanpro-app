@@ -70,12 +70,16 @@ class DevisController extends GetxController {
     isAiLoading.value = true;
     try {
       final suggestion = await _repo.getDevisSuggestion(missionId!);
-      
+
       final List<dynamic> suggestedLignes = suggestion['lignes'] ?? [];
-      lignes.value = suggestedLignes.map((l) => DevisLigne.fromJson(l as Map<String, dynamic>)).toList();
-      
+      lignes.value = suggestedLignes
+          .map((l) => DevisLigne.fromJson(l as Map<String, dynamic>))
+          .toList();
+
       final List<dynamic> suggestedJalons = suggestion['jalons'] ?? [];
-      jalons.value = suggestedJalons.map((j) => DevisJalon.fromJson(j as Map<String, dynamic>)).toList();
+      jalons.value = suggestedJalons
+          .map((j) => DevisJalon.fromJson(j as Map<String, dynamic>))
+          .toList();
 
       Get.snackbar(
         'Assistant IA',
@@ -140,15 +144,17 @@ class DevisController extends GetxController {
     lignes.assignAll(labor);
 
     for (final line in cartLines) {
-      lignes.add(DevisLigne(
-        type: 'mat',
-        description: line['description'] as String,
-        montant: line['montant'] as int,
-        unitPrice: line['unit_price'] as int,
-        quantity: line['quantity'] as int,
-        source: 'catalog',
-        supplierProductId: line['supplier_product_id'] as int,
-      ));
+      lignes.add(
+        DevisLigne(
+          type: 'mat',
+          description: line['description'] as String,
+          montant: line['montant'] as int,
+          unitPrice: line['unit_price'] as int,
+          quantity: line['quantity'] as int,
+          source: 'catalog',
+          supplierProductId: line['supplier_product_id'] as int,
+        ),
+      );
     }
   }
 
@@ -502,7 +508,11 @@ class DevisController extends GetxController {
   }
 
   /// Initie le paiement puis finalise l'acceptation du devis si le paiement est confirmé.
-  Future<bool> acceptDevis(int devisId, {String provider = 'wave', String paymentType = 'total'}) async {
+  Future<bool> acceptDevis(
+    int devisId, {
+    String provider = 'wave',
+    String paymentType = 'total',
+  }) async {
     isSubmitting.value = true;
     errorMsg.value = null;
 
@@ -525,7 +535,9 @@ class DevisController extends GetxController {
         return false;
       }
 
-      final montantAcompte = paymentType == 'hybrid' ? devis.montantMateriaux : devis.totalGeneralTtc;
+      final montantAcompte = paymentType == 'hybrid'
+          ? devis.montantMateriaux
+          : devis.totalGeneralTtc;
 
       final payment = await _paymentRepo.initiatePayment(
         missionId: devis.missionId,

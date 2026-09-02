@@ -168,18 +168,28 @@ class RatingController extends GetxController {
       return;
     }
 
-    final resolvedFiabilite =
-        fiabilite.value == 0 ? (selectedNote.value > 0 ? selectedNote.value : 5) : fiabilite.value;
-    final resolvedIntegrite =
-        integrite.value == 0 ? (selectedNote.value > 0 ? selectedNote.value : 5) : integrite.value;
-    final resolvedQualite =
-        qualite.value == 0 ? (selectedNote.value > 0 ? selectedNote.value : 5) : qualite.value;
-    final resolvedReactivite =
-        reactivite.value == 0 ? (selectedNote.value > 0 ? selectedNote.value : 5) : reactivite.value;
+    final resolvedFiabilite = fiabilite.value == 0
+        ? (selectedNote.value > 0 ? selectedNote.value : 5)
+        : fiabilite.value;
+    final resolvedIntegrite = integrite.value == 0
+        ? (selectedNote.value > 0 ? selectedNote.value : 5)
+        : integrite.value;
+    final resolvedQualite = qualite.value == 0
+        ? (selectedNote.value > 0 ? selectedNote.value : 5)
+        : qualite.value;
+    final resolvedReactivite = reactivite.value == 0
+        ? (selectedNote.value > 0 ? selectedNote.value : 5)
+        : reactivite.value;
 
     final resolvedNote = selectedNote.value > 0
         ? selectedNote.value
-        : ((resolvedFiabilite + resolvedIntegrite + resolvedQualite + resolvedReactivite) / 4).round().clamp(1, 5);
+        : ((resolvedFiabilite +
+                    resolvedIntegrite +
+                    resolvedQualite +
+                    resolvedReactivite) /
+                4)
+            .round()
+            .clamp(1, 5);
 
     isLoading.value = true;
     try {
@@ -246,4 +256,3 @@ class RatingController extends GetxController {
     return e.message ?? 'Impossible d\'envoyer l\'évaluation.';
   }
 }
-

@@ -15,10 +15,15 @@ class UserRepository {
       formData.fields.add(MapEntry('cnmci_number', cnmciNumber));
     }
     if (cardImagePath != null) {
-      formData.files.add(MapEntry(
-        'cnmci_card',
-        await MultipartFile.fromFile(cardImagePath, filename: 'cnmci_card.jpg'),
-      ));
+      formData.files.add(
+        MapEntry(
+          'cnmci_card',
+          await MultipartFile.fromFile(
+            cardImagePath,
+            filename: 'cnmci_card.jpg',
+          ),
+        ),
+      );
     }
 
     final response = await _client.postMultipart(
@@ -46,7 +51,8 @@ class UserRepository {
         if (sectorId != null) 'sector_id': sectorId,
         if (tradeId != null) 'trade_id': tradeId,
         if (paymentPhone != null) 'payment_phone': paymentPhone,
-        if (preferredPaymentProvider != null) 'preferred_payment_provider': preferredPaymentProvider,
+        if (preferredPaymentProvider != null)
+          'preferred_payment_provider': preferredPaymentProvider,
       },
     );
     return response.data as Map<String, dynamic>;

@@ -98,7 +98,7 @@ class EnvConfig {
     'TELEGRAM_CHAT_ID',
     defaultValue: '',
   );
-  
+
   // Active les logs Telegram en debug/release.
   // En production le logger est DÉSACTIVÉ par défaut : il expose des données
   // potentiellement personnelles (URLs, payloads d'erreur, téléphones) à un

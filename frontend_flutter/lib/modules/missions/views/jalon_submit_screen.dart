@@ -67,7 +67,8 @@ class _JalonSubmitScreenState extends State<JalonSubmitScreen> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library, color: AppColors.primary),
+              leading:
+                  const Icon(Icons.photo_library, color: AppColors.primary),
               title: const Text('Choisir une photo depuis la galerie'),
               onTap: () {
                 Get.back();
@@ -83,7 +84,8 @@ class _JalonSubmitScreenState extends State<JalonSubmitScreen> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.video_library, color: AppColors.primary),
+              leading:
+                  const Icon(Icons.video_library, color: AppColors.primary),
               title: const Text('Choisir une vidéo depuis la galerie'),
               onTap: () {
                 Get.back();
@@ -97,7 +99,10 @@ class _JalonSubmitScreenState extends State<JalonSubmitScreen> {
   }
 
   /// Capture ou choisit une preuve (photo ou vidéo) avec géolocalisation
-  Future<void> _addProof({required bool isVideo, required bool fromCamera}) async {
+  Future<void> _addProof({
+    required bool isVideo,
+    required bool fromCamera,
+  }) async {
     if (_jalon == null) return;
 
     setState(() => _isCapturing = true);
@@ -261,7 +266,9 @@ class _JalonSubmitScreenState extends State<JalonSubmitScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text(isAlreadySubmitted ? 'Ajouter des preuves' : 'Soumettre le jalon'),
+        title: Text(
+          isAlreadySubmitted ? 'Ajouter des preuves' : 'Soumettre le jalon',
+        ),
         elevation: 0,
         backgroundColor: Colors.white,
       ),
@@ -316,9 +323,10 @@ class _JalonSubmitScreenState extends State<JalonSubmitScreen> {
                             Text(
                               'Jalon ${_jalon!.ordre}',
                               style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.textPrimary),
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                              ),
                             ),
                             Text(
                               Formatters.fcfa(_jalon!.montant),
@@ -433,7 +441,8 @@ class _JalonSubmitScreenState extends State<JalonSubmitScreen> {
                                   : Image.file(
                                       File(path),
                                       fit: BoxFit.cover,
-                                      errorBuilder: (context, error, stackTrace) {
+                                      errorBuilder:
+                                          (context, error, stackTrace) {
                                         return const Center(
                                           child: Icon(
                                             Icons.broken_image,
@@ -487,7 +496,9 @@ class _JalonSubmitScreenState extends State<JalonSubmitScreen> {
                       )
                     : const Icon(Icons.add_a_photo),
                 label: Text(
-                  _isCapturing ? 'Capture en cours...' : 'Ajouter une photo ou vidéo',
+                  _isCapturing
+                      ? 'Capture en cours...'
+                      : 'Ajouter une photo ou vidéo',
                 ),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
@@ -540,7 +551,9 @@ class _JalonSubmitScreenState extends State<JalonSubmitScreen> {
                   ),
                 )
               : Text(
-                  isAlreadySubmitted ? 'Envoyer les preuves' : 'Soumettre le jalon',
+                  isAlreadySubmitted
+                      ? 'Envoyer les preuves'
+                      : 'Soumettre le jalon',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,

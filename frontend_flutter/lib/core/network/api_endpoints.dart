@@ -92,8 +92,10 @@ class ApiEndpoints {
   // Evaluations
   static const String evaluations = '/evaluations';
   static const String myEvaluations = '/evaluations/my';
-  static String missionEvaluationsStatus(int id) => '/missions/$id/evaluations-status';
-  static String orderEvaluationsStatus(int id) => '/orders/$id/evaluations-status';
+  static String missionEvaluationsStatus(int id) =>
+      '/missions/$id/evaluations-status';
+  static String orderEvaluationsStatus(int id) =>
+      '/orders/$id/evaluations-status';
 
   // Notifications
   static const String notifications = '/notifications';
@@ -106,6 +108,8 @@ class ApiEndpoints {
   // Livraisons & Courses
   static const String deliveriesAvailable = '/deliveries/available';
   static String acceptDelivery(int orderId) => '/deliveries/$orderId/accept';
-  static String orderVerifyPickup(int orderId) => '/orders/$orderId/verify-pickup';
-  static String orderVerifyDelivery(int orderId) => '/orders/$orderId/verify-delivery';
+  static String orderVerifyPickup(int orderId) =>
+      '/orders/$orderId/verify-pickup';
+  static String orderVerifyDelivery(int orderId) =>
+      '/orders/$orderId/verify-delivery';
 }

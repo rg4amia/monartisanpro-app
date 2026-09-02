@@ -43,7 +43,8 @@ class StorageService {
   static void setOnboarded(bool value) => _box.write(_onboardedKey, value);
   static bool isOnboarded() => _box.read<bool>(_onboardedKey) ?? false;
 
-  static void saveScoreProsArtisan(int score) => _box.write(_scoreProsArtisanKey, score);
+  static void saveScoreProsArtisan(int score) =>
+      _box.write(_scoreProsArtisanKey, score);
   static int? getScoreProsArtisan() => _box.read<int>(_scoreProsArtisanKey);
 
   // ── Device Fingerprint ──────────────────────────────────────────────────────
@@ -82,13 +83,18 @@ class StorageService {
 
   // ── Notifications Preferences ───────────────────────────────────────────────
   static const String _notificationsEnabledKey = 'notifications_enabled';
-  static const String _notificationSoundEnabledKey = 'notification_sound_enabled';
+  static const String _notificationSoundEnabledKey =
+      'notification_sound_enabled';
 
-  static void setNotificationsEnabled(bool value) => _box.write(_notificationsEnabledKey, value);
-  static bool areNotificationsEnabled() => _box.read<bool>(_notificationsEnabledKey) ?? true;
+  static void setNotificationsEnabled(bool value) =>
+      _box.write(_notificationsEnabledKey, value);
+  static bool areNotificationsEnabled() =>
+      _box.read<bool>(_notificationsEnabledKey) ?? true;
 
-  static void setNotificationSoundEnabled(bool value) => _box.write(_notificationSoundEnabledKey, value);
-  static bool isNotificationSoundEnabled() => _box.read<bool>(_notificationSoundEnabledKey) ?? true;
+  static void setNotificationSoundEnabled(bool value) =>
+      _box.write(_notificationSoundEnabledKey, value);
+  static bool isNotificationSoundEnabled() =>
+      _box.read<bool>(_notificationSoundEnabledKey) ?? true;
 
   // ── Clear all ───────────────────────────────────────────────────────────────
   static Future<void> clearAll() async {

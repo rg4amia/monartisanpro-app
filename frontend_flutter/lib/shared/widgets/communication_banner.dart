@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../data/models/communication_model.dart';
 
-
 class CommunicationBanner extends StatelessWidget {
   final List<CommunicationModel> announcements;
 
@@ -151,7 +150,7 @@ class _LeSaviezVousCarouselState extends State<LeSaviezVousCarousel> {
         gradient: const LinearGradient(
           colors: [
             Color(0xFFEDF5FF), // Soft premium blue
-            Color(0xFFD6E4FF), 
+            Color(0xFFD6E4FF),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -228,7 +227,7 @@ class _LeSaviezVousCarouselState extends State<LeSaviezVousCarousel> {
                               overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 4),
-                             Expanded(
+                            Expanded(
                               child: SingleChildScrollView(
                                 physics: const BouncingScrollPhysics(),
                                 child: Text(

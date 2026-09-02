@@ -91,10 +91,12 @@ class _JcodeServeScreenState extends State<JcodeServeScreen> {
 
       final servedItems = _quantitiesToServe.entries
           .where((e) => e.value > 0)
-          .map((e) => {
-                'jcode_item_id': e.key,
-                'quantity_served': e.value,
-              })
+          .map(
+            (e) => {
+              'jcode_item_id': e.key,
+              'quantity_served': e.value,
+            },
+          )
           .toList();
 
       await controller.submitPartialServe(
@@ -234,23 +236,26 @@ class _JcodeServeScreenState extends State<JcodeServeScreen> {
                 ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
                   color: jcode.isPartiallyUsed
                       ? Colors.orange.withValues(alpha: 0.2)
                       : AppColors.success.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: jcode.isPartiallyUsed ? Colors.orange : AppColors.success,
+                    color: jcode.isPartiallyUsed
+                        ? Colors.orange
+                        : AppColors.success,
                     width: 1,
                   ),
                 ),
                 child: Text(
-                  jcode.isPartiallyUsed
-                      ? 'Partiel'
-                      : 'Actif',
+                  jcode.isPartiallyUsed ? 'Partiel' : 'Actif',
                   style: TextStyle(
-                    color: jcode.isPartiallyUsed ? Colors.orange : AppColors.success,
+                    color: jcode.isPartiallyUsed
+                        ? Colors.orange
+                        : AppColors.success,
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
                   ),
@@ -285,7 +290,8 @@ class _JcodeServeScreenState extends State<JcodeServeScreen> {
             child: LinearProgressIndicator(
               value: progress,
               backgroundColor: Colors.white10,
-              valueColor: const AlwaysStoppedAnimation<Color>(Colors.greenAccent),
+              valueColor:
+                  const AlwaysStoppedAnimation<Color>(Colors.greenAccent),
               minHeight: 6,
             ),
           ),
@@ -294,7 +300,12 @@ class _JcodeServeScreenState extends State<JcodeServeScreen> {
     );
   }
 
-  Widget _buildHeaderStat(String label, String value, {Color? color, bool isBold = false}) {
+  Widget _buildHeaderStat(
+    String label,
+    String value, {
+    Color? color,
+    bool isBold = false,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -329,7 +340,9 @@ class _JcodeServeScreenState extends State<JcodeServeScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: selectedQty > 0 ? AppColors.primary.withValues(alpha: 0.3) : AppColors.border,
+          color: selectedQty > 0
+              ? AppColors.primary.withValues(alpha: 0.3)
+              : AppColors.border,
           width: selectedQty > 0 ? 1.5 : 1,
         ),
         boxShadow: [
@@ -390,21 +403,27 @@ class _JcodeServeScreenState extends State<JcodeServeScreen> {
                 children: [
                   Text(
                     'Requis : ${item.quantity} unités',
-                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     'Servi : ${item.quantityServed} unités',
                     style: TextStyle(
                       fontSize: 12,
-                      color: item.isServed ? AppColors.success : AppColors.textSecondary,
+                      color: item.isServed
+                          ? AppColors.success
+                          : AppColors.textSecondary,
                     ),
                   ),
                 ],
               ),
               if (!hasRemaining)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: AppColors.success.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(4),
@@ -465,7 +484,9 @@ class _JcodeServeScreenState extends State<JcodeServeScreen> {
       child: Container(
         padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
-          color: isDisabled ? Colors.grey[100] : AppColors.primary.withValues(alpha: 0.1),
+          color: isDisabled
+              ? Colors.grey[100]
+              : AppColors.primary.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(
@@ -537,7 +558,9 @@ class _JcodeServeScreenState extends State<JcodeServeScreen> {
             ),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: (_isLocating || controller.isScanning.value) ? null : _confirmDelivery,
+              onPressed: (_isLocating || controller.isScanning.value)
+                  ? null
+                  : _confirmDelivery,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
@@ -561,7 +584,9 @@ class _JcodeServeScreenState extends State<JcodeServeScreen> {
                         ),
                         const SizedBox(width: 12),
                         Text(
-                          _isLocating ? 'Obtention du GPS...' : 'Validation en cours...',
+                          _isLocating
+                              ? 'Obtention du GPS...'
+                              : 'Validation en cours...',
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,

@@ -87,7 +87,9 @@ class HomeController extends GetxController {
 
   List<ArtisanModel> get displayedArtisans {
     if (isNightModeActive) {
-      return artisans.where((artisan) => artisan.nightInterventionAvailable).toList();
+      return artisans
+          .where((artisan) => artisan.nightInterventionAvailable)
+          .toList();
     }
     return artisans;
   }
@@ -126,7 +128,7 @@ class HomeController extends GetxController {
     super.onInit();
     role.value = StorageService.getRole();
     userName.value = StorageService.getName() ?? '';
-    
+
     // Initialisation des données statistiques pour le tableau de bord client
     expensesByCategory.value = {
       'Maçonnerie': 320000,
@@ -134,7 +136,7 @@ class HomeController extends GetxController {
       'Plomberie': 88000,
       'Peinture': 54000,
     };
-    
+
     topSuppliers.value = [
       {
         'name': 'Dépôt Sodemi Marcory',
@@ -193,7 +195,9 @@ class HomeController extends GetxController {
         isLoading.value = false;
         return;
       } catch (e) {
-        debugPrint('[HomeController] Tentative $attempt/$_maxRetries échouée : $e');
+        debugPrint(
+          '[HomeController] Tentative $attempt/$_maxRetries échouée : $e',
+        );
         if (attempt < _maxRetries) {
           await Future.delayed(Duration(seconds: 2 * attempt));
         } else {
@@ -203,146 +207,173 @@ class HomeController extends GetxController {
       }
     }
   }
+
   /// Logique principale de chargement — extraite pour le retry.
   Future<void> _loadDataCore() async {
-      await _getLocation();
+    await _getLocation();
 
-      // Load user profile payment settings
-      try {
-        final me = await _authRepo.me();
-        paymentPhone.value = me.paymentPhone ?? '';
-        if (me.preferredPaymentProvider != null && me.preferredPaymentProvider!.isNotEmpty) {
-          preferredPaymentProvider.value = me.preferredPaymentProvider!;
-        }
-      } catch (_) {}
-
-      // Load wallet balance for all users
-      try {
-        final balance = await _walletRepo.getBalance();
-        walletMateriaux.value = balance['walletMateriaux']!;
-        walletMo.value = balance['walletMo']!;
-      } catch (_) {
-        walletMateriaux.value = 0;
-        walletMo.value = 0;
+    // Load user profile payment settings
+    try {
+      final me = await _authRepo.me();
+      paymentPhone.value = me.paymentPhone ?? '';
+      if (me.preferredPaymentProvider != null &&
+          me.preferredPaymentProvider!.isNotEmpty) {
+        preferredPaymentProvider.value = me.preferredPaymentProvider!;
       }
-      
-      fluidityScore.value = StorageService.getScoreProsArtisan() ?? 0; // Default 0 if not set yet
+    } catch (_) {}
 
-      try {
-        final rawResponse = await _userRepo.getDashboardStats();
-        final dashboardData = (rawResponse['data'] as Map<String, dynamic>?) ?? {};
-        
-        acceptedDevisCount.value = dashboardData['accepted_devis_count'] ?? dashboardData['completed_deliveries'] ?? 0;
-        refusedDevisCount.value = dashboardData['refused_devis_count'] ?? dashboardData['pending_deliveries'] ?? 0;
-        disputesCount.value = dashboardData['disputes_count'] ?? 0;
-        
-        if (dashboardData.containsKey('expenses_by_category')) {
-          final expenses = Map<String, dynamic>.from(dashboardData['expenses_by_category'] as Map);
-          expensesByCategory.value = expenses.map((key, value) => MapEntry(key, (value as num).toInt()));
-        }
+    // Load wallet balance for all users
+    try {
+      final balance = await _walletRepo.getBalance();
+      walletMateriaux.value = balance['walletMateriaux']!;
+      walletMo.value = balance['walletMo']!;
+    } catch (_) {
+      walletMateriaux.value = 0;
+      walletMo.value = 0;
+    }
 
-        if (dashboardData.containsKey('top_suppliers')) {
-          topSuppliers.value = List<Map<String, dynamic>>.from(
-            (dashboardData['top_suppliers'] as List).map((x) => Map<String, dynamic>.from(x as Map))
-          );
-        }
+    fluidityScore.value =
+        StorageService.getScoreProsArtisan() ?? 0; // Default 0 if not set yet
 
-        if (dashboardData.containsKey('top_drivers')) {
-          topDrivers.value = List<Map<String, dynamic>>.from(
-            (dashboardData['top_drivers'] as List).map((x) => Map<String, dynamic>.from(x as Map))
-          );
-        }
-        
-        // If it's supplier stats
-        if (dashboardData.containsKey('stats')) {
-           final s = dashboardData['stats'];
-           acceptedDevisCount.value = s['total_orders'] ?? 0;
-           refusedDevisCount.value = s['pending_orders'] ?? 0;
-           disputesCount.value = s['catalog_count'] ?? 0;
-        }
+    try {
+      final rawResponse = await _userRepo.getDashboardStats();
+      final dashboardData =
+          (rawResponse['data'] as Map<String, dynamic>?) ?? {};
 
-        // If it returns score_prosartisan from backend, update it
-        if (dashboardData.containsKey('score_prosartisan') && dashboardData['score_prosartisan'] != null) {
-           fluidityScore.value = _asInt(dashboardData['score_prosartisan']);
-        }
-      } catch (e) {
-        debugPrint('Error fetching dashboard stats: $e');
-      }
+      acceptedDevisCount.value = dashboardData['accepted_devis_count'] ??
+          dashboardData['completed_deliveries'] ??
+          0;
+      refusedDevisCount.value = dashboardData['refused_devis_count'] ??
+          dashboardData['pending_deliveries'] ??
+          0;
+      disputesCount.value = dashboardData['disputes_count'] ?? 0;
 
-      if (role.value == 'driver' || role.value == 'livreur') {
-        // Load driver configurations
-        driverVehicle.value = StorageService.getDriverVehicle() ?? 'Moto';
-        driverPlate.value = StorageService.getDriverPlate() ?? 'AB-123-CD';
-        driverBasePrice.value = StorageService.getDriverBasePrice() ?? 1000;
-        driverPriceKm.value = StorageService.getDriverPriceKm() ?? 200;
-        driverGpsCoords.value = StorageService.getDriverGps() ?? '5.3484, -4.0125';
-        driverAddress.value = StorageService.getDriverAddress() ?? 'Abidjan, Cocody';
-        
-        // Load persist wallet balance for driver
-        walletMo.value = StorageService.getDriverWalletBalance() ?? 25000;
-
-        await _loadDriverMissions();
-      }
-
-      if (role.value == 'client' && _lat != null) {
-        artisans.value = await _artisanRepo.getNearby(
-          lat: _lat!,
-          lng: _lng!,
-          radiusMeters: searchDistant.value ? 150000 : 5000,
+      if (dashboardData.containsKey('expenses_by_category')) {
+        final expenses = Map<String, dynamic>.from(
+          dashboardData['expenses_by_category'] as Map,
         );
-        nearbyArtisansCount.value = artisans.length;
+        expensesByCategory.value =
+            expenses.map((key, value) => MapEntry(key, (value as num).toInt()));
       }
 
-      if (role.value == 'artisan') {
-        final missions = await _missionRepo.getMissions();
-        artisanMissions.value = missions;
-        activeMissions.value = missions
-            .where(
-              (mission) =>
-                  mission.status == 'financee' || mission.status == 'en_cours',
-            )
-            .toList();
-        activeMissionsCount.value = activeMissions.length;
-
-        // Charger le score de l'artisan en temps réel
-        try {
-          final userId = StorageService.getUserId();
-          if (userId != null) {
-            final res = await _artisanRepo.getScore(userId);
-            final data = (res['data'] as Map<String, dynamic>?) ?? res;
-            final breakdown = data['breakdown'] is Map
-                ? Map<String, dynamic>.from(data['breakdown'] as Map)
-                : const <String, dynamic>{};
-            
-            scoreFiabilite.value = _normalizeCriterion(breakdown['fiabilite'] ?? breakdown['fiabilité'] ?? 0);
-            scoreIntegrite.value = _normalizeCriterion(breakdown['integrite'] ?? breakdown['intégrité'] ?? 0);
-            scoreQualite.value = _normalizeCriterion(breakdown['qualite'] ?? breakdown['qualité'] ?? 0);
-            scoreReactivite.value = _normalizeCriterion(breakdown['reactivite'] ?? breakdown['réactivité'] ?? 0);
-            
-            final dynScore = data['score_prosartisan'] ?? data['scoreProsArtisan'];
-            if (dynScore != null) {
-              fluidityScore.value = _asInt(dynScore);
-            }
-          }
-        } catch (e) {
-          debugPrint('[HomeController] Error fetching real artisan score detail: $e');
-        }
-      } else if (role.value != 'driver') {
-        final missions = await _missionRepo.getMissions(status: 'en_cours');
-        activeMissions.value = missions;
-        activeMissionsCount.value = missions.length;
+      if (dashboardData.containsKey('top_suppliers')) {
+        topSuppliers.value = List<Map<String, dynamic>>.from(
+          (dashboardData['top_suppliers'] as List)
+              .map((x) => Map<String, dynamic>.from(x as Map)),
+        );
       }
 
-      // Load active communications (announcements & tips)
+      if (dashboardData.containsKey('top_drivers')) {
+        topDrivers.value = List<Map<String, dynamic>>.from(
+          (dashboardData['top_drivers'] as List)
+              .map((x) => Map<String, dynamic>.from(x as Map)),
+        );
+      }
+
+      // If it's supplier stats
+      if (dashboardData.containsKey('stats')) {
+        final s = dashboardData['stats'];
+        acceptedDevisCount.value = s['total_orders'] ?? 0;
+        refusedDevisCount.value = s['pending_orders'] ?? 0;
+        disputesCount.value = s['catalog_count'] ?? 0;
+      }
+
+      // If it returns score_prosartisan from backend, update it
+      if (dashboardData.containsKey('score_prosartisan') &&
+          dashboardData['score_prosartisan'] != null) {
+        fluidityScore.value = _asInt(dashboardData['score_prosartisan']);
+      }
+    } catch (e) {
+      debugPrint('Error fetching dashboard stats: $e');
+    }
+
+    if (role.value == 'driver' || role.value == 'livreur') {
+      // Load driver configurations
+      driverVehicle.value = StorageService.getDriverVehicle() ?? 'Moto';
+      driverPlate.value = StorageService.getDriverPlate() ?? 'AB-123-CD';
+      driverBasePrice.value = StorageService.getDriverBasePrice() ?? 1000;
+      driverPriceKm.value = StorageService.getDriverPriceKm() ?? 200;
+      driverGpsCoords.value =
+          StorageService.getDriverGps() ?? '5.3484, -4.0125';
+      driverAddress.value =
+          StorageService.getDriverAddress() ?? 'Abidjan, Cocody';
+
+      // Load persist wallet balance for driver
+      walletMo.value = StorageService.getDriverWalletBalance() ?? 25000;
+
+      await _loadDriverMissions();
+    }
+
+    if (role.value == 'client' && _lat != null) {
+      artisans.value = await _artisanRepo.getNearby(
+        lat: _lat!,
+        lng: _lng!,
+        radiusMeters: searchDistant.value ? 150000 : 5000,
+      );
+      nearbyArtisansCount.value = artisans.length;
+    }
+
+    if (role.value == 'artisan') {
+      final missions = await _missionRepo.getMissions();
+      artisanMissions.value = missions;
+      activeMissions.value = missions
+          .where(
+            (mission) =>
+                mission.status == 'financee' || mission.status == 'en_cours',
+          )
+          .toList();
+      activeMissionsCount.value = activeMissions.length;
+
+      // Charger le score de l'artisan en temps réel
       try {
-        final commsMap = await _communicationRepo.getActiveCommunications();
-        announcements.value = commsMap['annonces'] ?? [];
-        tips.value = commsMap['le_saviez_vous'] ?? [];
+        final userId = StorageService.getUserId();
+        if (userId != null) {
+          final res = await _artisanRepo.getScore(userId);
+          final data = (res['data'] as Map<String, dynamic>?) ?? res;
+          final breakdown = data['breakdown'] is Map
+              ? Map<String, dynamic>.from(data['breakdown'] as Map)
+              : const <String, dynamic>{};
+
+          scoreFiabilite.value = _normalizeCriterion(
+            breakdown['fiabilite'] ?? breakdown['fiabilité'] ?? 0,
+          );
+          scoreIntegrite.value = _normalizeCriterion(
+            breakdown['integrite'] ?? breakdown['intégrité'] ?? 0,
+          );
+          scoreQualite.value = _normalizeCriterion(
+            breakdown['qualite'] ?? breakdown['qualité'] ?? 0,
+          );
+          scoreReactivite.value = _normalizeCriterion(
+            breakdown['reactivite'] ?? breakdown['réactivité'] ?? 0,
+          );
+
+          final dynScore =
+              data['score_prosartisan'] ?? data['scoreProsArtisan'];
+          if (dynScore != null) {
+            fluidityScore.value = _asInt(dynScore);
+          }
+        }
       } catch (e) {
-        debugPrint('[HomeController] Error fetching active communications: $e');
-        announcements.clear();
-        tips.clear();
+        debugPrint(
+          '[HomeController] Error fetching real artisan score detail: $e',
+        );
       }
+    } else if (role.value != 'driver') {
+      final missions = await _missionRepo.getMissions(status: 'en_cours');
+      activeMissions.value = missions;
+      activeMissionsCount.value = missions.length;
+    }
+
+    // Load active communications (announcements & tips)
+    try {
+      final commsMap = await _communicationRepo.getActiveCommunications();
+      announcements.value = commsMap['annonces'] ?? [];
+      tips.value = commsMap['le_saviez_vous'] ?? [];
+    } catch (e) {
+      debugPrint('[HomeController] Error fetching active communications: $e');
+      announcements.clear();
+      tips.clear();
+    }
   }
 
   void refreshLocationAndArtisans(double lat, double lng) {
@@ -450,7 +481,14 @@ class HomeController extends GetxController {
   }
 
   // ── Driver actions ─────────────────────────────────────────────────────────
-  void handleSaveVehicle(String vehicle, String plate, int baseVal, int kmVal, String addr, String gps) {
+  void handleSaveVehicle(
+    String vehicle,
+    String plate,
+    int baseVal,
+    int kmVal,
+    String addr,
+    String gps,
+  ) {
     driverVehicle.value = vehicle;
     driverPlate.value = plate;
     driverBasePrice.value = baseVal;
@@ -496,10 +534,13 @@ class HomeController extends GetxController {
             return '$pName x$qty';
           }).join(', ');
 
-          final supplierName = order['supplier']?['fournisseur_agree']?['nom_boutique'] ??
-              order['supplier']?['name'] ?? 'Quincaillerie Partenaire';
+          final supplierName = order['supplier']?['fournisseur_agree']
+                  ?['nom_boutique'] ??
+              order['supplier']?['name'] ??
+              'Quincaillerie Partenaire';
           final clientName = order['client']?['name'] ?? 'Client';
-          final deliveryCost = (order['delivery_cost'] as num?)?.toInt() ?? 1500;
+          final deliveryCost =
+              (order['delivery_cost'] as num?)?.toInt() ?? 1500;
           final totalAmount = (order['total_amount'] as num?)?.toInt() ?? 0;
 
           return MissionModel(
@@ -515,7 +556,9 @@ class HomeController extends GetxController {
             createdAt: order['created_at'] ?? DateTime.now().toIso8601String(),
             clientName: clientName,
             artisanName: supplierName,
-            description: descItems.isNotEmpty ? descItems : 'Commande d\'articles #${order['id']}',
+            description: descItems.isNotEmpty
+                ? descItems
+                : 'Commande d\'articles #${order['id']}',
             category: 'livraison',
             urgency: 'moyen',
             location: 'Abidjan',
@@ -529,7 +572,9 @@ class HomeController extends GetxController {
       if (myOrdersData.isNotEmpty) {
         final activeList = myOrdersData.where((order) {
           final s = order['status'];
-          return s == 'driver_assigned' || s == 'driver_picked_up' || s == 'shipping';
+          return s == 'driver_assigned' ||
+              s == 'driver_picked_up' ||
+              s == 'shipping';
         }).map((order) {
           final itemsList = (order['items'] as List?) ?? [];
           final descItems = itemsList.map((it) {
@@ -538,10 +583,13 @@ class HomeController extends GetxController {
             return '$pName x$qty';
           }).join(', ');
 
-          final supplierName = order['supplier']?['fournisseur_agree']?['nom_boutique'] ??
-              order['supplier']?['name'] ?? 'Quincaillerie Partenaire';
+          final supplierName = order['supplier']?['fournisseur_agree']
+                  ?['nom_boutique'] ??
+              order['supplier']?['name'] ??
+              'Quincaillerie Partenaire';
           final clientName = order['client']?['name'] ?? 'Client';
-          final deliveryCost = (order['delivery_cost'] as num?)?.toInt() ?? 1500;
+          final deliveryCost =
+              (order['delivery_cost'] as num?)?.toInt() ?? 1500;
           final totalAmount = (order['total_amount'] as num?)?.toInt() ?? 0;
 
           return MissionModel(
@@ -557,7 +605,9 @@ class HomeController extends GetxController {
             createdAt: order['created_at'] ?? DateTime.now().toIso8601String(),
             clientName: clientName,
             artisanName: supplierName,
-            description: descItems.isNotEmpty ? descItems : 'Commande d\'articles #${order['id']}',
+            description: descItems.isNotEmpty
+                ? descItems
+                : 'Commande d\'articles #${order['id']}',
             category: 'livraison',
             urgency: 'moyen',
             location: 'Abidjan',
@@ -622,7 +672,10 @@ class HomeController extends GetxController {
     }
   }
 
-  Future<void> handleDriverPickupFromStore(MissionModel mission, String code) async {
+  Future<void> handleDriverPickupFromStore(
+    MissionModel mission,
+    String code,
+  ) async {
     try {
       final res = await _orderRepo.verifyPickup(mission.id, code.trim());
       if (res['success'] == true) {
@@ -630,7 +683,9 @@ class HomeController extends GetxController {
           status: 'en_cours',
           statusGemini: 'shipping',
         );
-        driverActiveMissions.value = driverActiveMissions.map((m) => m.id == mission.id ? updatedMission : m).toList();
+        driverActiveMissions.value = driverActiveMissions
+            .map((m) => m.id == mission.id ? updatedMission : m)
+            .toList();
 
         Get.snackbar(
           'Colis enlevé avec succès',
@@ -651,20 +706,37 @@ class HomeController extends GetxController {
       }
     } catch (e) {
       final correctCode = 'RET-${mission.id}';
-      if (code.trim() == correctCode || code.trim() == '5561' || code.trim() == 'RET-5561') {
+      if (code.trim() == correctCode ||
+          code.trim() == '5561' ||
+          code.trim() == 'RET-5561') {
         final updatedMission = mission.copyWith(
           status: 'en_cours',
           statusGemini: 'shipping',
         );
-        driverActiveMissions.value = driverActiveMissions.map((m) => m.id == mission.id ? updatedMission : m).toList();
-        Get.snackbar('Colis enlevé', 'Le colis est en route vers le client.', backgroundColor: AppColors.success, colorText: Colors.white);
+        driverActiveMissions.value = driverActiveMissions
+            .map((m) => m.id == mission.id ? updatedMission : m)
+            .toList();
+        Get.snackbar(
+          'Colis enlevé',
+          'Le colis est en route vers le client.',
+          backgroundColor: AppColors.success,
+          colorText: Colors.white,
+        );
       } else {
-        Get.snackbar('Code invalide', 'Le code d\'enlèvement du magasin est incorrect.', backgroundColor: AppColors.danger, colorText: Colors.white);
+        Get.snackbar(
+          'Code invalide',
+          'Le code d\'enlèvement du magasin est incorrect.',
+          backgroundColor: AppColors.danger,
+          colorText: Colors.white,
+        );
       }
     }
   }
 
-  Future<void> handleDriverDropoffToClient(MissionModel mission, String code) async {
+  Future<void> handleDriverDropoffToClient(
+    MissionModel mission,
+    String code,
+  ) async {
     try {
       final res = await _orderRepo.verifyDelivery(mission.id, code.trim());
       if (res['success'] == true) {
@@ -693,7 +765,9 @@ class HomeController extends GetxController {
       }
     } catch (e) {
       final correctCode = 'REC-${mission.id}';
-      if (code.trim() == correctCode || code.trim() == '3012' || code.trim() == 'REC-3012') {
+      if (code.trim() == correctCode ||
+          code.trim() == '3012' ||
+          code.trim() == 'REC-3012') {
         final deliveryFee = mission.montantMo > 0 ? mission.montantMo : 1500;
         walletMo.value += deliveryFee;
         StorageService.saveDriverWalletBalance(walletMo.value);
@@ -752,7 +826,9 @@ class HomeController extends GetxController {
     try {
       await _userRepo.updateProfile(
         userId: userId,
-        name: userName.value.isNotEmpty ? userName.value : (StorageService.getName() ?? 'Client'),
+        name: userName.value.isNotEmpty
+            ? userName.value
+            : (StorageService.getName() ?? 'Client'),
         paymentPhone: newPaymentPhone.trim(),
         preferredPaymentProvider: provider,
       );

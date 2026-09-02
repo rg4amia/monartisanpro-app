@@ -24,10 +24,26 @@ const double _kDefaultZoom = 14.0;
 const List<Map<String, dynamic>> _kCategories = [
   {'label': 'Tous', 'icon': Icons.all_inclusive_outlined, 'value': null},
   {'label': 'Plomberie', 'icon': Icons.plumbing_outlined, 'value': 'Plomberie'},
-  {'label': 'Électricité', 'icon': Icons.electric_bolt_outlined, 'value': 'Électricité'},
-  {'label': 'Maçonnerie', 'icon': Icons.foundation_outlined, 'value': 'Maçonnerie'},
-  {'label': 'Menuiserie', 'icon': Icons.carpenter_outlined, 'value': 'Menuiserie'},
-  {'label': 'Peinture', 'icon': Icons.format_paint_outlined, 'value': 'Peinture'},
+  {
+    'label': 'Électricité',
+    'icon': Icons.electric_bolt_outlined,
+    'value': 'Électricité',
+  },
+  {
+    'label': 'Maçonnerie',
+    'icon': Icons.foundation_outlined,
+    'value': 'Maçonnerie',
+  },
+  {
+    'label': 'Menuiserie',
+    'icon': Icons.carpenter_outlined,
+    'value': 'Menuiserie',
+  },
+  {
+    'label': 'Peinture',
+    'icon': Icons.format_paint_outlined,
+    'value': 'Peinture',
+  },
 ];
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
@@ -78,8 +94,12 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
 
   // ─── Caméra ──────────────────────────────────────────────────────────────────
 
-  void _moveCamera(double lat, double lng, double zoom,
-      {bool animated = true}) {
+  void _moveCamera(
+    double lat,
+    double lng,
+    double zoom, {
+    bool animated = true,
+  }) {
     final mw = _mapWindow;
     if (mw == null) return;
 
@@ -107,8 +127,12 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
         locationSettings:
             const LocationSettings(accuracy: LocationAccuracy.high),
       );
-      _moveCamera(pos.latitude, pos.longitude, _kDefaultZoom,
-          animated: animated);
+      _moveCamera(
+        pos.latitude,
+        pos.longitude,
+        _kDefaultZoom,
+        animated: animated,
+      );
       unawaited(_plotUserPosition(pos.latitude, pos.longitude));
     } catch (_) {
       _moveCamera(_kAbidjanLat, _kAbidjanLng, 12.0, animated: animated);
@@ -147,10 +171,14 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
       final lat = artisan.location!['lat']!;
       final lng = artisan.location!['lng']!;
 
-      final color =
-          artisan.isGoldenMarker ? const Color(0xFFFBBF24) : const Color(0xFF64748B);
+      final color = artisan.isGoldenMarker
+          ? const Color(0xFFFBBF24)
+          : const Color(0xFF64748B);
       final bytes = await _renderArtisanIcon(
-          color, artisan.scoreProsArtisan.toString(), artisan.isGoldenMarker);
+        color,
+        artisan.scoreProsArtisan.toString(),
+        artisan.isGoldenMarker,
+      );
 
       final pm = col.addPlacemarkWithImageStyle(
         mk.Point(latitude: lat, longitude: lng),
@@ -165,7 +193,7 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
 
       final listener = _ArtisanTapListener((obj, point) {
         ArtisanModel? found;
-        
+
         // Find using coordinate comparison to avoid FFI object wrapper inequality issues
         for (final entry in _placemarkIndex.entries) {
           final entryPoint = entry.key.geometry;
@@ -198,7 +226,10 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
   // ─── Rendu icônes via Canvas ─────────────────────────────────────────────────
 
   Future<Uint8List> _renderArtisanIcon(
-      Color color, String score, bool isGolden) async {
+    Color color,
+    String score,
+    bool isGolden,
+  ) async {
     const size = 100.0;
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
@@ -218,16 +249,31 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
           ..color = const Color(0xFFFBBF24) // amber-400
           ..style = PaintingStyle.fill,
       );
-      _paintText(canvas, score, 12, const Color(0xFF451A03),
-          Offset(size / 2, badgeHeight / 2 + 5));
+      _paintText(
+        canvas,
+        score,
+        12,
+        const Color(0xFF451A03),
+        Offset(size / 2, badgeHeight / 2 + 5),
+      );
 
       // Draw location icon
-      _paintIcon(canvas, Icons.location_on, 36, const Color(0xFFF59E0B),
-          const Offset(size / 2, size / 2 + 15));
+      _paintIcon(
+        canvas,
+        Icons.location_on,
+        36,
+        const Color(0xFFF59E0B),
+        const Offset(size / 2, size / 2 + 15),
+      );
     } else {
       // Just location icon for others
-      _paintIcon(canvas, Icons.location_on, 36, const Color(0xFF64748B),
-          const Offset(size / 2, size / 2 + 15));
+      _paintIcon(
+        canvas,
+        Icons.location_on,
+        36,
+        const Color(0xFF64748B),
+        const Offset(size / 2, size / 2 + 15),
+      );
     }
 
     final img =
@@ -288,19 +334,33 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
   }
 
   void _paintText(
-      Canvas canvas, String text, double fontSize, Color color, Offset center) {
+    Canvas canvas,
+    String text,
+    double fontSize,
+    Color color,
+    Offset center,
+  ) {
     final tp = TextPainter(
       text: TextSpan(
-          text: text,
-          style: TextStyle(
-              fontSize: fontSize, color: color, fontWeight: FontWeight.bold)),
+        text: text,
+        style: TextStyle(
+          fontSize: fontSize,
+          color: color,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
       textDirection: TextDirection.ltr,
     )..layout();
     tp.paint(canvas, center - Offset(tp.width / 2, tp.height / 2));
   }
 
   void _paintIcon(
-      Canvas canvas, IconData icon, double size, Color color, Offset center) {
+    Canvas canvas,
+    IconData icon,
+    double size,
+    Color color,
+    Offset center,
+  ) {
     final tp = TextPainter(
       text: TextSpan(
         text: String.fromCharCode(icon.codePoint),
@@ -358,8 +418,11 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
                     onTap: () {
                       final pos = _mapWindow?.map.cameraPosition;
                       if (pos != null) {
-                        _moveCamera(pos.target.latitude, pos.target.longitude,
-                            pos.zoom + 1);
+                        _moveCamera(
+                          pos.target.latitude,
+                          pos.target.longitude,
+                          pos.zoom + 1,
+                        );
                       }
                     },
                   ),
@@ -369,8 +432,11 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
                     onTap: () {
                       final pos = _mapWindow?.map.cameraPosition;
                       if (pos != null) {
-                        _moveCamera(pos.target.latitude, pos.target.longitude,
-                            pos.zoom - 1);
+                        _moveCamera(
+                          pos.target.latitude,
+                          pos.target.longitude,
+                          pos.zoom - 1,
+                        );
                       }
                     },
                   ),
@@ -413,7 +479,6 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
           ),
         ],
       ),
-
     );
   }
 }
@@ -447,7 +512,8 @@ class _MapControlButton extends StatelessWidget {
             ),
           ],
         ),
-        child: Icon(icon, color: iconColor ?? const Color(0xFF64748B), size: 24),
+        child:
+            Icon(icon, color: iconColor ?? const Color(0xFF64748B), size: 24),
       ),
     );
   }
@@ -516,8 +582,11 @@ class _MapHeaderState extends State<_MapHeader> {
                       ),
                     ],
                   ),
-                  child: const Icon(Icons.arrow_back,
-                      color: Color(0xFF64748B), size: 22),
+                  child: const Icon(
+                    Icons.arrow_back,
+                    color: Color(0xFF64748B),
+                    size: 22,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -545,8 +614,11 @@ class _MapHeaderState extends State<_MapHeader> {
                         color: Color(0xFF94A3B8),
                         fontSize: 14,
                       ),
-                      prefixIcon: const Icon(Icons.search,
-                          size: 20, color: Color(0xFF94A3B8)),
+                      prefixIcon: const Icon(
+                        Icons.search,
+                        size: 20,
+                        color: Color(0xFF94A3B8),
+                      ),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(vertical: 12),
                     ),
@@ -555,7 +627,6 @@ class _MapHeaderState extends State<_MapHeader> {
                 ),
               ),
               const SizedBox(width: 8),
-
             ],
           ),
           const SizedBox(height: 10),
@@ -572,7 +643,8 @@ class _MapHeaderState extends State<_MapHeader> {
                 final label = cat['label'] as String;
                 final icon = cat['icon'] as IconData?;
                 final value = cat['value'] as String?;
-                final isSelected = _selected == label || (_selected == null && i == 0);
+                final isSelected =
+                    _selected == label || (_selected == null && i == 0);
                 return _CategoryChip(
                   label: label,
                   icon: icon,
@@ -596,11 +668,12 @@ class _CategoryChip extends StatelessWidget {
   final IconData? icon;
   final bool isSelected;
   final VoidCallback onTap;
-  const _CategoryChip(
-      {required this.label,
-      this.icon,
-      required this.isSelected,
-      required this.onTap});
+  const _CategoryChip({
+    required this.label,
+    this.icon,
+    required this.isSelected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -611,9 +684,7 @@ class _CategoryChip extends StatelessWidget {
         height: 36,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
-          color: isSelected
-              ? const Color(0xFF4F46E5)
-              : Colors.white,
+          color: isSelected ? const Color(0xFF4F46E5) : Colors.white,
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
@@ -627,9 +698,11 @@ class _CategoryChip extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (icon != null) ...[
-              Icon(icon,
-                  size: 16,
-                  color: isSelected ? Colors.white : const Color(0xFF64748B)),
+              Icon(
+                icon,
+                size: 16,
+                color: isSelected ? Colors.white : const Color(0xFF64748B),
+              ),
               const SizedBox(width: 8),
             ],
             Text(
@@ -737,17 +810,23 @@ class _ArtisanBottomPanel extends StatelessWidget {
                             ),
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 4),
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFFFF7ED),
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: const Color(0xFFFFEDD5)),
+                                border:
+                                    Border.all(color: const Color(0xFFFFEDD5)),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Icon(Icons.stars,
-                                      color: Color(0xFFF59E0B), size: 14),
+                                  const Icon(
+                                    Icons.stars,
+                                    color: Color(0xFFF59E0B),
+                                    size: 14,
+                                  ),
                                   const SizedBox(width: 4),
                                   Text(
                                     artisan.scoreProsArtisan.toString(),
@@ -765,21 +844,32 @@ class _ArtisanBottomPanel extends StatelessWidget {
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            const Icon(Icons.near_me,
-                                size: 14, color: Color(0xFF64748B)),
+                            const Icon(
+                              Icons.near_me,
+                              size: 14,
+                              color: Color(0xFF64748B),
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               artisan.distance ?? 'à 0,8 km',
                               style: const TextStyle(
-                                  color: Color(0xFF64748B), fontSize: 13),
+                                color: Color(0xFF64748B),
+                                fontSize: 13,
+                              ),
                             ),
                             const SizedBox(width: 8),
-                            const Icon(Icons.circle, size: 4, color: Color(0xFFCBD5E1)),
+                            const Icon(
+                              Icons.circle,
+                              size: 4,
+                              color: Color(0xFFCBD5E1),
+                            ),
                             const SizedBox(width: 8),
                             Text(
                               artisan.trade ?? 'Tailleur',
                               style: const TextStyle(
-                                  color: Color(0xFF64748B), fontSize: 13),
+                                color: Color(0xFF64748B),
+                                fontSize: 13,
+                              ),
                             ),
                           ],
                         ),
@@ -822,7 +912,6 @@ class _ArtisanBottomPanel extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-
             Row(
               children: [
                 Expanded(
@@ -840,8 +929,10 @@ class _ArtisanBottomPanel extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       elevation: 0,
                     ),
-                    child: const Text('Voir le Profil',
-                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    child: const Text(
+                      'Voir le Profil',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -852,7 +943,8 @@ class _ArtisanBottomPanel extends StatelessWidget {
                     color: const Color(0xFFEEF2FF),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.chat_bubble, color: Color(0xFF4F46E5)),
+                  child:
+                      const Icon(Icons.chat_bubble, color: Color(0xFF4F46E5)),
                 ),
               ],
             ),

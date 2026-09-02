@@ -55,7 +55,8 @@ class ArtisanModel {
 
   factory ArtisanModel.fromJson(Map<String, dynamic> json) {
     final parsedLocation = _parseLocation(json);
-    final scoreProsArtisan = _parseInt(json['scoreProsArtisan'] ?? json['score_prosartisan']);
+    final scoreProsArtisan =
+        _parseInt(json['scoreProsArtisan'] ?? json['score_prosartisan']);
     final distanceMetres = _parseDouble(
       json['distanceMetres'] ?? json['distance_metres'],
     );
@@ -67,9 +68,8 @@ class ArtisanModel {
       name: _parseName(json),
       photo: (json['photo'] ?? json['image']) as String?,
       bio: json['bio'] as String?,
-      trade:
-          (json['trade'] ?? json['category'] ?? json['artisanCategory'])
-              as String?,
+      trade: (json['trade'] ?? json['category'] ?? json['artisanCategory'])
+          as String?,
       sector: (json['sector'] ?? json['secteur']) as String?,
       experienceYears: _parseInt(
         json['experienceYears'] ?? json['experience_years'],
@@ -79,8 +79,7 @@ class ArtisanModel {
       completedMissions: _parseInt(
         json['completedMissions'] ?? json['completed_missions'],
       ),
-      distance:
-          (json['distance'] as String?) ??
+      distance: (json['distance'] as String?) ??
           (distanceMetres != null ? _formatDistance(distanceMetres) : null),
       distanceMetres: distanceMetres,
       isGoldenMarker:
@@ -101,37 +100,38 @@ class ArtisanModel {
       role: json['role'] as String?,
       price: json['price'] as String?,
       cnmciNumber: json['cnmciNumber'] as String?,
-      cnmciStatus: (json['cnmciStatus'] ?? json['cnmci_status']) as String? ?? 'non_renseigne',
+      cnmciStatus: (json['cnmciStatus'] ?? json['cnmci_status']) as String? ??
+          'non_renseigne',
     );
   }
 
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'phone': phone,
-    'name': name,
-    'photo': photo,
-    'bio': bio,
-    'trade': trade,
-    'sector': sector,
-    'experienceYears': experienceYears,
-    'scoreProsArtisan': scoreProsArtisan,
-    'rating': rating,
-    'completedMissions': completedMissions,
-    'distance': distance,
-    'distanceMetres': distanceMetres,
-    'isGoldenMarker': isGoldenMarker,
-    'nightInterventionAvailable': nightInterventionAvailable,
-    'kycStatus': kycStatus,
-    'commune': commune,
-    'location': location,
-    'locationLabel': locationLabel,
-    'isAvailable': isAvailable,
-    'joinedDate': joinedDate?.toIso8601String(),
-    'role': role,
-    'price': price,
-    'cnmciNumber': cnmciNumber,
-    'cnmciStatus': cnmciStatus,
-  };
+        'id': id,
+        'phone': phone,
+        'name': name,
+        'photo': photo,
+        'bio': bio,
+        'trade': trade,
+        'sector': sector,
+        'experienceYears': experienceYears,
+        'scoreProsArtisan': scoreProsArtisan,
+        'rating': rating,
+        'completedMissions': completedMissions,
+        'distance': distance,
+        'distanceMetres': distanceMetres,
+        'isGoldenMarker': isGoldenMarker,
+        'nightInterventionAvailable': nightInterventionAvailable,
+        'kycStatus': kycStatus,
+        'commune': commune,
+        'location': location,
+        'locationLabel': locationLabel,
+        'isAvailable': isAvailable,
+        'joinedDate': joinedDate?.toIso8601String(),
+        'role': role,
+        'price': price,
+        'cnmciNumber': cnmciNumber,
+        'cnmciStatus': cnmciStatus,
+      };
 
   bool get isCnmciVerified => cnmciStatus == 'valide';
 

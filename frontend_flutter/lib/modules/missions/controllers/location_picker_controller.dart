@@ -318,11 +318,13 @@ class LocationPickerController extends GetxController {
     final location = selectedLocation.value;
     if (location == null) return;
 
-    Get.back(result: {
-      'latitude': location.latitude,
-      'longitude': location.longitude,
-      'address': address.value,
-    });
+    Get.back(
+      result: {
+        'latitude': location.latitude,
+        'longitude': location.longitude,
+        'address': address.value,
+      },
+    );
   }
 
   String formatCoordinates(mk.Point point) {

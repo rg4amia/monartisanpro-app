@@ -25,17 +25,21 @@ class QuoteBuilderScreen extends GetView<DevisController> {
             color: AppColors.accent,
             onAdd: () => _showAddLigneDialog(context, 'mo'),
           ),
-          Obx(() => Column(
-                children: controller.lignes
-                    .asMap()
-                    .entries
-                    .where((e) => e.value.type == 'mo')
-                    .map((e) => _LigneTile(
-                          ligne: e.value,
-                          onDelete: () => controller.removeLigne(e.key),
-                        ))
-                    .toList(),
-              )),
+          Obx(
+            () => Column(
+              children: controller.lignes
+                  .asMap()
+                  .entries
+                  .where((e) => e.value.type == 'mo')
+                  .map(
+                    (e) => _LigneTile(
+                      ligne: e.value,
+                      onDelete: () => controller.removeLigne(e.key),
+                    ),
+                  )
+                  .toList(),
+            ),
+          ),
           const SizedBox(height: 16),
 
           // Lignes Matériaux
@@ -44,17 +48,21 @@ class QuoteBuilderScreen extends GetView<DevisController> {
             color: AppColors.success,
             onAdd: () => _showAddLigneDialog(context, 'mat'),
           ),
-          Obx(() => Column(
-                children: controller.lignes
-                    .asMap()
-                    .entries
-                    .where((e) => e.value.type == 'mat')
-                    .map((e) => _LigneTile(
-                          ligne: e.value,
-                          onDelete: () => controller.removeLigne(e.key),
-                        ))
-                    .toList(),
-              )),
+          Obx(
+            () => Column(
+              children: controller.lignes
+                  .asMap()
+                  .entries
+                  .where((e) => e.value.type == 'mat')
+                  .map(
+                    (e) => _LigneTile(
+                      ligne: e.value,
+                      onDelete: () => controller.removeLigne(e.key),
+                    ),
+                  )
+                  .toList(),
+            ),
+          ),
           const SizedBox(height: 16),
 
           // Jalons
@@ -63,61 +71,71 @@ class QuoteBuilderScreen extends GetView<DevisController> {
             color: AppColors.primary,
             onAdd: () => _showAddJalonDialog(context),
           ),
-          Obx(() => Column(
-                children: controller.jalons
-                    .asMap()
-                    .entries
-                    .map((e) => _JalonTile(
-                          jalon: e.value,
-                          onDelete: () => controller.removeJalon(e.key),
-                        ))
-                    .toList(),
-              )),
+          Obx(
+            () => Column(
+              children: controller.jalons
+                  .asMap()
+                  .entries
+                  .map(
+                    (e) => _JalonTile(
+                      jalon: e.value,
+                      onDelete: () => controller.removeJalon(e.key),
+                    ),
+                  )
+                  .toList(),
+            ),
+          ),
           const SizedBox(height: 24),
 
           // Totaux
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
-              child: Obx(() => Column(
-                    children: [
-                      _TotalRow(
-                        label: 'Main d\'œuvre',
-                        amount: controller.totalMo,
-                        color: AppColors.accent,
-                      ),
-                      _TotalRow(
-                        label: 'Matériaux',
-                        amount: controller.totalMat,
-                        color: AppColors.success,
-                      ),
-                      const Divider(height: 16),
-                      _TotalRow(
-                        label: 'Total',
-                        amount: controller.total,
-                        color: AppColors.primary,
-                        isBold: true,
-                      ),
-                    ],
-                  )),
+              child: Obx(
+                () => Column(
+                  children: [
+                    _TotalRow(
+                      label: 'Main d\'œuvre',
+                      amount: controller.totalMo,
+                      color: AppColors.accent,
+                    ),
+                    _TotalRow(
+                      label: 'Matériaux',
+                      amount: controller.totalMat,
+                      color: AppColors.success,
+                    ),
+                    const Divider(height: 16),
+                    _TotalRow(
+                      label: 'Total',
+                      amount: controller.total,
+                      color: AppColors.primary,
+                      isBold: true,
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 24),
 
-          Obx(() => ElevatedButton(
-                onPressed: controller.isLoading.value ||
-                        controller.lignes.isEmpty ||
-                        controller.jalons.isEmpty
-                    ? null
-                    : () => controller.submitDevis(missionId),
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(54),
-                ),
-                child: controller.isLoading.value
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('Envoyer le devis',
-                        style: TextStyle(fontSize: 16)),
-              )),
+          Obx(
+            () => ElevatedButton(
+              onPressed: controller.isLoading.value ||
+                      controller.lignes.isEmpty ||
+                      controller.jalons.isEmpty
+                  ? null
+                  : () => controller.submitDevis(missionId),
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size.fromHeight(54),
+              ),
+              child: controller.isLoading.value
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : const Text(
+                      'Envoyer le devis',
+                      style: TextStyle(fontSize: 16),
+                    ),
+            ),
+          ),
         ],
       ),
     );
@@ -128,7 +146,8 @@ class QuoteBuilderScreen extends GetView<DevisController> {
     final montantCtrl = TextEditingController();
     Get.dialog(
       AlertDialog(
-        title: Text(type == 'mo' ? 'Ajouter main d\'œuvre' : 'Ajouter matériau'),
+        title:
+            Text(type == 'mo' ? 'Ajouter main d\'œuvre' : 'Ajouter matériau'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -179,7 +198,8 @@ class QuoteBuilderScreen extends GetView<DevisController> {
           children: [
             TextField(
               controller: descCtrl,
-              decoration: const InputDecoration(labelText: 'Description du jalon'),
+              decoration:
+                  const InputDecoration(labelText: 'Description du jalon'),
             ),
             const SizedBox(height: 12),
             TextField(
@@ -224,7 +244,10 @@ class QuoteBuilderScreen extends GetView<DevisController> {
                   montant > 0 &&
                   dateCtrl.text.isNotEmpty) {
                 controller.addJalon(
-                    descCtrl.text.trim(), montant, dateCtrl.text);
+                  descCtrl.text.trim(),
+                  montant,
+                  dateCtrl.text,
+                );
                 Get.back();
               }
             },
@@ -240,8 +263,11 @@ class _SectionHeader extends StatelessWidget {
   final String title;
   final Color color;
   final VoidCallback onAdd;
-  const _SectionHeader(
-      {required this.title, required this.color, required this.onAdd});
+  const _SectionHeader({
+    required this.title,
+    required this.color,
+    required this.onAdd,
+  });
 
   @override
   Widget build(BuildContext context) {

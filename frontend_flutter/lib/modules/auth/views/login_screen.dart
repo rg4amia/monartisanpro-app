@@ -383,9 +383,13 @@ class _LoginScreenState extends State<LoginScreen>
           children: [
             Row(
               children: [
-                Expanded(child: SizedBox(height: itemHeight, child: visibleCards[0])),
+                Expanded(
+                  child: SizedBox(height: itemHeight, child: visibleCards[0]),
+                ),
                 const SizedBox(width: 12),
-                Expanded(child: SizedBox(height: itemHeight, child: visibleCards[1])),
+                Expanded(
+                  child: SizedBox(height: itemHeight, child: visibleCards[1]),
+                ),
               ],
             ),
             const SizedBox(height: 12),
@@ -404,9 +408,13 @@ class _LoginScreenState extends State<LoginScreen>
       if (visibleCards.length == 2) {
         return Row(
           children: [
-            Expanded(child: SizedBox(height: itemHeight, child: visibleCards[0])),
+            Expanded(
+              child: SizedBox(height: itemHeight, child: visibleCards[0]),
+            ),
             const SizedBox(width: 12),
-            Expanded(child: SizedBox(height: itemHeight, child: visibleCards[1])),
+            Expanded(
+              child: SizedBox(height: itemHeight, child: visibleCards[1]),
+            ),
           ],
         );
       }
@@ -433,16 +441,18 @@ class _LoginScreenState extends State<LoginScreen>
     final appSettings = Get.find<AppSettingsService>();
     final accent = _roleColor(label);
     return GestureDetector(
-      onTap: isBlocked ? () {
-        Get.snackbar(
-          'Accès désactivé', 
-          appSettings.getDisabledMessage(label),
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red.withValues(alpha: 0.9),
-          colorText: Colors.white,
-          margin: const EdgeInsets.all(16),
-        );
-      } : onTap,
+      onTap: isBlocked
+          ? () {
+              Get.snackbar(
+                'Accès désactivé',
+                appSettings.getDisabledMessage(label),
+                snackPosition: SnackPosition.BOTTOM,
+                backgroundColor: Colors.red.withValues(alpha: 0.9),
+                colorText: Colors.white,
+                margin: const EdgeInsets.all(16),
+              );
+            }
+          : onTap,
       child: AnimatedScale(
         scale: isSelected ? 1.03 : 1.0,
         duration: const Duration(milliseconds: 250),
@@ -484,100 +494,103 @@ class _LoginScreenState extends State<LoginScreen>
               children: [
                 Stack(
                   clipBehavior: Clip.none,
-                alignment: Alignment.center,
-                children: [
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 280),
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      gradient: isSelected
-                          ? LinearGradient(
-                              colors: [accent, accent.withValues(alpha: 0.82)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            )
-                          : null,
-                      color: isSelected ? null : _Dt.bg,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Center(
-                      child: Text(
-                        emoji,
-                        style: const TextStyle(fontSize: 28),
+                  alignment: Alignment.center,
+                  children: [
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 280),
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        gradient: isSelected
+                            ? LinearGradient(
+                                colors: [
+                                  accent,
+                                  accent.withValues(alpha: 0.82),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              )
+                            : null,
+                        color: isSelected ? null : _Dt.bg,
+                        borderRadius: BorderRadius.circular(14),
                       ),
-                    ),
-                  ),
-                  if (isSelected)
-                    Positioned(
-                      top: -6,
-                      right: -6,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: accent,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: accent.withValues(alpha: 0.35),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.check_rounded,
-                          color: Colors.white,
-                          size: 12,
+                      child: Center(
+                        child: Text(
+                          emoji,
+                          style: const TextStyle(fontSize: 28),
                         ),
                       ),
                     ),
-                  if (isBlocked)
-                    Positioned(
-                      top: -6,
-                      right: -6,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: Colors.red.shade400,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.red.withValues(alpha: 0.3),
-                              blurRadius: 6,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.lock_outline_rounded,
-                          color: Colors.white,
-                          size: 14,
+                    if (isSelected)
+                      Positioned(
+                        top: -6,
+                        right: -6,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: accent,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: accent.withValues(alpha: 0.35),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.check_rounded,
+                            color: Colors.white,
+                            size: 12,
+                          ),
                         ),
                       ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w900,
-                  color: isSelected ? accent : _Dt.ink,
-                  letterSpacing: 0.4,
+                    if (isBlocked)
+                      Positioned(
+                        top: -6,
+                        right: -6,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade400,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.red.withValues(alpha: 0.3),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.lock_outline_rounded,
+                            color: Colors.white,
+                            size: 14,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+                const SizedBox(height: 10),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w900,
+                    color: isSelected ? accent : _Dt.ink,
+                    letterSpacing: 0.4,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   // ── Phone Input ───────────────────────────────────────────────────────────
 
@@ -631,7 +644,8 @@ class _LoginScreenState extends State<LoginScreen>
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
                   decoration: BoxDecoration(
                     color: _Dt.surface,
                     borderRadius: const BorderRadius.only(
@@ -639,7 +653,9 @@ class _LoginScreenState extends State<LoginScreen>
                       bottomLeft: Radius.circular(16),
                     ),
                     border: Border.all(
-                      color: _selectedProfile.value != null ? activeColor.withValues(alpha: 0.6) : _Dt.border,
+                      color: _selectedProfile.value != null
+                          ? activeColor.withValues(alpha: 0.6)
+                          : _Dt.border,
                       width: 1.5,
                     ),
                   ),
@@ -696,7 +712,9 @@ class _LoginScreenState extends State<LoginScreen>
                           bottomRight: Radius.circular(16),
                         ),
                         borderSide: BorderSide(
-                          color: _selectedProfile.value != null ? activeColor.withValues(alpha: 0.6) : _Dt.border,
+                          color: _selectedProfile.value != null
+                              ? activeColor.withValues(alpha: 0.6)
+                              : _Dt.border,
                           width: 1.5,
                         ),
                       ),
@@ -706,7 +724,9 @@ class _LoginScreenState extends State<LoginScreen>
                           bottomRight: Radius.circular(16),
                         ),
                         borderSide: BorderSide(
-                          color: _selectedProfile.value != null ? activeColor.withValues(alpha: 0.6) : _Dt.border,
+                          color: _selectedProfile.value != null
+                              ? activeColor.withValues(alpha: 0.6)
+                              : _Dt.border,
                           width: 1.5,
                         ),
                       ),
@@ -830,7 +850,8 @@ class _LoginScreenState extends State<LoginScreen>
       final canContinue =
           _selectedProfile.value != null && _c.phone.value.length >= 14;
       final activeColor = _roleColor(_selectedProfile.value);
-      final darkActiveColor = Color.alphaBlend(Colors.black.withValues(alpha: 0.15), activeColor);
+      final darkActiveColor =
+          Color.alphaBlend(Colors.black.withValues(alpha: 0.15), activeColor);
 
       return AnimatedContainer(
         duration: const Duration(milliseconds: 300),
@@ -914,10 +935,15 @@ class _LoginScreenState extends State<LoginScreen>
 
     // If OTP sent successfully, navigate to OTP verification screen
     if (_c.otpSent.value && _c.errorMsg.value == null) {
-      unawaited(Get.toNamed(Routes.otpVerification, arguments: {
-        'phone': _c.phone.value,
-        'role': _selectedProfile.value,
-      }));
+      unawaited(
+        Get.toNamed(
+          Routes.otpVerification,
+          arguments: {
+            'phone': _c.phone.value,
+            'role': _selectedProfile.value,
+          },
+        ),
+      );
     }
   }
 
@@ -1135,7 +1161,9 @@ class _LoginScreenState extends State<LoginScreen>
                 style: OutlinedButton.styleFrom(
                   foregroundColor: _Dt.primary,
                   side: const BorderSide(color: _Dt.primary),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
               ),
@@ -1150,7 +1178,9 @@ class _LoginScreenState extends State<LoginScreen>
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _Dt.primary,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
               ),
@@ -1182,179 +1212,205 @@ class _LoginScreenState extends State<LoginScreen>
     _c.errorMsg.value = null;
 
     Get.dialog(
-      Obx(() => AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: const Text(
-              'Récupération de compte',
-              style: TextStyle(fontWeight: FontWeight.w800),
-            ),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    'Rattachez votre ancien compte à votre nouveau numéro de téléphone.',
-                    style: TextStyle(color: _Dt.muted, fontSize: 13),
+      Obx(
+        () => AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text(
+            'Récupération de compte',
+            style: TextStyle(fontWeight: FontWeight.w800),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Rattachez votre ancien compte à votre nouveau numéro de téléphone.',
+                  style: TextStyle(color: _Dt.muted, fontSize: 13),
+                ),
+                const SizedBox(height: 16),
+
+                // Role Selector
+                DropdownButtonFormField<String>(
+                  initialValue: _c.resetRole.value,
+                  decoration: const InputDecoration(
+                    labelText: 'Votre espace / rôle',
+                    border: OutlineInputBorder(),
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
+                  items: const [
+                    DropdownMenuItem(value: 'client', child: Text('Client')),
+                    DropdownMenuItem(
+                      value: 'artisan',
+                      child: Text('Artisan'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'fournisseur',
+                      child: Text('Fournisseur'),
+                    ),
+                    DropdownMenuItem(value: 'driver', child: Text('Livreur')),
+                  ],
+                  onChanged: _c.isResetOtpSent.value
+                      ? null
+                      : (val) {
+                          _c.resetRole.value = val;
+                        },
+                ),
+                const SizedBox(height: 12),
+
+                // Name
+                TextField(
+                  controller: nameCtrl,
+                  enabled: !_c.isResetOtpSent.value,
+                  decoration: const InputDecoration(
+                    labelText: 'Nom complet exact',
+                    border: OutlineInputBorder(),
+                    hintText: 'Ex: Jean Dupont',
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                  onChanged: (val) => _c.resetName.value = val,
+                ),
+                const SizedBox(height: 12),
+
+                // Old Phone
+                TextField(
+                  controller: oldPhoneCtrl,
+                  enabled: !_c.isResetOtpSent.value,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(
+                    labelText: 'Ancien numéro (+225)',
+                    border: OutlineInputBorder(),
+                    hintText: '+2250707000000',
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                  onChanged: (val) => _c.resetOldPhone.value = val,
+                ),
+                const SizedBox(height: 12),
+
+                // New Phone
+                TextField(
+                  controller: newPhoneCtrl,
+                  enabled: !_c.isResetOtpSent.value,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(
+                    labelText: 'Nouveau numéro (+225)',
+                    border: OutlineInputBorder(),
+                    hintText: '+2250707000000',
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                  onChanged: (val) => _c.resetNewPhone.value = val,
+                ),
+
+                if (_c.isResetOtpSent.value) ...[
                   const SizedBox(height: 16),
-                  
-                  // Role Selector
-                  DropdownButtonFormField<String>(
-                    initialValue: _c.resetRole.value,
-                    decoration: const InputDecoration(
-                      labelText: 'Votre espace / rôle',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    ),
-                    items: const [
-                      DropdownMenuItem(value: 'client', child: Text('Client')),
-                      DropdownMenuItem(value: 'artisan', child: Text('Artisan')),
-                      DropdownMenuItem(value: 'fournisseur', child: Text('Fournisseur')),
-                      DropdownMenuItem(value: 'driver', child: Text('Livreur')),
-                    ],
-                    onChanged: _c.isResetOtpSent.value ? null : (val) {
-                      _c.resetRole.value = val;
-                    },
+                  const Divider(),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Entrez le code OTP reçu sur votre nouveau numéro :',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                   ),
-                  const SizedBox(height: 12),
-
-                  // Name
+                  const SizedBox(height: 8),
                   TextField(
-                    controller: nameCtrl,
-                    enabled: !_c.isResetOtpSent.value,
+                    controller: otpCtrl,
+                    keyboardType: TextInputType.number,
+                    maxLength: 4,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 8,
+                    ),
                     decoration: const InputDecoration(
-                      labelText: 'Nom complet exact',
                       border: OutlineInputBorder(),
-                      hintText: 'Ex: Jean Dupont',
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      counterText: '',
+                      hintText: '0000',
+                      contentPadding: EdgeInsets.symmetric(vertical: 8),
                     ),
-                    onChanged: (val) => _c.resetName.value = val,
+                    onChanged: (val) => _c.resetOtp.value = val,
                   ),
-                  const SizedBox(height: 12),
-
-                  // Old Phone
-                  TextField(
-                    controller: oldPhoneCtrl,
-                    enabled: !_c.isResetOtpSent.value,
-                    keyboardType: TextInputType.phone,
-                    decoration: const InputDecoration(
-                      labelText: 'Ancien numéro (+225)',
-                      border: OutlineInputBorder(),
-                      hintText: '+2250707000000',
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    ),
-                    onChanged: (val) => _c.resetOldPhone.value = val,
-                  ),
-                  const SizedBox(height: 12),
-
-                  // New Phone
-                  TextField(
-                    controller: newPhoneCtrl,
-                    enabled: !_c.isResetOtpSent.value,
-                    keyboardType: TextInputType.phone,
-                    decoration: const InputDecoration(
-                      labelText: 'Nouveau numéro (+225)',
-                      border: OutlineInputBorder(),
-                      hintText: '+2250707000000',
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    ),
-                    onChanged: (val) => _c.resetNewPhone.value = val,
-                  ),
-
-                  if (_c.isResetOtpSent.value) ...[
-                    const SizedBox(height: 16),
-                    const Divider(),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Entrez le code OTP reçu sur votre nouveau numéro :',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: otpCtrl,
-                      keyboardType: TextInputType.number,
-                      maxLength: 4,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, letterSpacing: 8),
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        counterText: '',
-                        hintText: '0000',
-                        contentPadding: EdgeInsets.symmetric(vertical: 8),
-                      ),
-                      onChanged: (val) => _c.resetOtp.value = val,
-                    ),
-                  ],
-
-                  if (_c.errorMsg.value != null) ...[
-                    const SizedBox(height: 12),
-                    Text(
-                      _c.errorMsg.value!,
-                      style: const TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.bold),
-                    ),
-                  ],
                 ],
-              ),
+
+                if (_c.errorMsg.value != null) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    _c.errorMsg.value!,
+                    style: const TextStyle(
+                      color: Colors.red,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ],
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Get.back(),
-                child: const Text('Annuler'),
-              ),
-              ElevatedButton(
-                onPressed: _c.isResetting.value
-                    ? null
-                    : () async {
-                        if (!_c.isResetOtpSent.value) {
-                          // Envoyer OTP
-                          await _c.requestResetPhone();
-                          if (_c.errorMsg.value != null) {
-                            Get.snackbar(
-                              'Erreur',
-                              _c.errorMsg.value!,
-                              backgroundColor: Colors.red,
-                              colorText: Colors.white,
-                            );
-                          } else {
-                            Get.snackbar(
-                              'OTP envoyé',
-                              'Un code de validation a été envoyé sur votre nouveau numéro.',
-                              backgroundColor: _Dt.success,
-                              colorText: Colors.white,
-                            );
-                          }
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(),
+              child: const Text('Annuler'),
+            ),
+            ElevatedButton(
+              onPressed: _c.isResetting.value
+                  ? null
+                  : () async {
+                      if (!_c.isResetOtpSent.value) {
+                        // Envoyer OTP
+                        await _c.requestResetPhone();
+                        if (_c.errorMsg.value != null) {
+                          Get.snackbar(
+                            'Erreur',
+                            _c.errorMsg.value!,
+                            backgroundColor: Colors.red,
+                            colorText: Colors.white,
+                          );
                         } else {
-                          // Confirmer la récupération
-                          final success = await _c.confirmResetPhone();
-                          if (success) {
-                            Get.back();
-                            Get.snackbar(
-                              'Compte récupéré',
-                              'Votre compte a été associé à votre nouveau numéro avec succès.',
-                              backgroundColor: _Dt.success,
-                              colorText: Colors.white,
-                            );
-                            unawaited(Get.offAllNamed(Routes.mainTab));
-                          } else {
-                            Get.snackbar(
-                              'Code OTP erroné',
-                              _c.errorMsg.value ?? 'Le code saisi est invalide.',
-                              backgroundColor: Colors.red,
-                              colorText: Colors.white,
-                            );
-                          }
+                          Get.snackbar(
+                            'OTP envoyé',
+                            'Un code de validation a été envoyé sur votre nouveau numéro.',
+                            backgroundColor: _Dt.success,
+                            colorText: Colors.white,
+                          );
                         }
-                      },
-                child: _c.isResetting.value
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                      )
-                    : Text(_c.isResetOtpSent.value ? 'Confirmer' : 'Suivant'),
-              ),
-            ],
-          )),
+                      } else {
+                        // Confirmer la récupération
+                        final success = await _c.confirmResetPhone();
+                        if (success) {
+                          Get.back();
+                          Get.snackbar(
+                            'Compte récupéré',
+                            'Votre compte a été associé à votre nouveau numéro avec succès.',
+                            backgroundColor: _Dt.success,
+                            colorText: Colors.white,
+                          );
+                          unawaited(Get.offAllNamed(Routes.mainTab));
+                        } else {
+                          Get.snackbar(
+                            'Code OTP erroné',
+                            _c.errorMsg.value ?? 'Le code saisi est invalide.',
+                            backgroundColor: Colors.red,
+                            colorText: Colors.white,
+                          );
+                        }
+                      }
+                    },
+              child: _c.isResetting.value
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Text(_c.isResetOtpSent.value ? 'Confirmer' : 'Suivant'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

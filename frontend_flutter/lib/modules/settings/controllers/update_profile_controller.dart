@@ -59,7 +59,11 @@ class UpdateProfileController extends GetxController {
     phoneController.text = StorageService.getPhone() ?? '';
     final role = StorageService.getRole();
     isArtisan.value = role == 'artisan';
-    isProActor.value = role == 'artisan' || role == 'fournisseur' || role == 'driver' || role == 'livreur' || role == 'LIVREUR';
+    isProActor.value = role == 'artisan' ||
+        role == 'fournisseur' ||
+        role == 'driver' ||
+        role == 'livreur' ||
+        role == 'LIVREUR';
     canEditLocation.value = isProActor.value;
   }
 
@@ -74,17 +78,22 @@ class UpdateProfileController extends GetxController {
       }
 
       isArtisan.value = user.role == 'artisan';
-      isProActor.value = user.role == 'artisan' || user.role == 'fournisseur' || user.role == 'driver' || user.role == 'livreur' || user.role == 'LIVREUR';
+      isProActor.value = user.role == 'artisan' ||
+          user.role == 'fournisseur' ||
+          user.role == 'driver' ||
+          user.role == 'livreur' ||
+          user.role == 'LIVREUR';
       canEditLocation.value = isProActor.value;
-      
+
       if (user.lat != null && user.lng != null) {
         selectedLatitude.value = user.lat;
         selectedLongitude.value = user.lng;
-        selectedAddress.value = 'Position configurée (${user.lat!.toStringAsFixed(4)}, ${user.lng!.toStringAsFixed(4)})';
+        selectedAddress.value =
+            'Position configurée (${user.lat!.toStringAsFixed(4)}, ${user.lng!.toStringAsFixed(4)})';
       }
 
       nightInterventionsEnabled.value = user.nightInterventionAvailable;
-      
+
       selectedSectorId.value = user.sectorId;
       selectedTradeId.value = user.tradeId;
       selectedSectorName.value = user.sectorName;
@@ -95,7 +104,8 @@ class UpdateProfileController extends GetxController {
       cnmciCardUrl.value = user.cnmciCardUrl;
 
       paymentPhoneController.text = user.paymentPhone ?? '';
-      if (user.preferredPaymentProvider != null && user.preferredPaymentProvider!.isNotEmpty) {
+      if (user.preferredPaymentProvider != null &&
+          user.preferredPaymentProvider!.isNotEmpty) {
         selectedPaymentProvider.value = user.preferredPaymentProvider!;
       }
 
@@ -114,7 +124,8 @@ class UpdateProfileController extends GetxController {
     if (result != null && result is Map) {
       selectedLatitude.value = result['latitude'] as double?;
       selectedLongitude.value = result['longitude'] as double?;
-      selectedAddress.value = result['address'] as String? ?? 'Position sélectionnée';
+      selectedAddress.value =
+          result['address'] as String? ?? 'Position sélectionnée';
     }
   }
 
@@ -330,9 +341,8 @@ class UpdateProfileController extends GetxController {
       await _userRepo.updateProfile(
         userId: userId,
         name: nameController.text.trim(),
-        nightInterventionAvailable: isArtisan.value
-            ? nightInterventionsEnabled.value
-            : null,
+        nightInterventionAvailable:
+            isArtisan.value ? nightInterventionsEnabled.value : null,
         sectorId: isArtisan.value ? selectedSectorId.value : null,
         tradeId: isArtisan.value ? selectedTradeId.value : null,
         paymentPhone: paymentPhoneController.text.trim().isNotEmpty
@@ -341,7 +351,9 @@ class UpdateProfileController extends GetxController {
         preferredPaymentProvider: selectedPaymentProvider.value,
       );
 
-      if (isArtisan.value && (cnmciNumberController.text.isNotEmpty || cnmciCardImagePath.value != null)) {
+      if (isArtisan.value &&
+          (cnmciNumberController.text.isNotEmpty ||
+              cnmciCardImagePath.value != null)) {
         await _userRepo.updateCnmci(
           userId: userId,
           cnmciNumber: cnmciNumberController.text.trim(),
@@ -360,7 +372,7 @@ class UpdateProfileController extends GetxController {
 
       // Update local storage
       StorageService.saveName(nameController.text.trim());
-      
+
       // Reload profile to synchronize local model coordinates & details
       await _loadCurrentProfile();
 
@@ -369,7 +381,10 @@ class UpdateProfileController extends GetxController {
         homeCtrl.userName.value = nameController.text.trim();
         // Trigger reload of nearby artisans or self position
         if (selectedLatitude.value != null && selectedLongitude.value != null) {
-          homeCtrl.refreshLocationAndArtisans(selectedLatitude.value!, selectedLongitude.value!);
+          homeCtrl.refreshLocationAndArtisans(
+            selectedLatitude.value!,
+            selectedLongitude.value!,
+          );
         }
       } catch (_) {}
 

@@ -19,7 +19,10 @@ class MicroCreditEligibilityModel {
     return MicroCreditEligibilityModel(
       eligible: json['eligible'] as bool? ?? false,
       currentScore: _parseInt(
-        json['score_prosartisan'] ?? json['scoreProsArtisan'] ?? json['current_score'] ?? json['currentScore'],
+        json['score_prosartisan'] ??
+            json['scoreProsArtisan'] ??
+            json['current_score'] ??
+            json['currentScore'],
       ),
       requiredScore: _parseInt(
         json['required_score'] ?? json['requiredScore'] ?? 700,
@@ -56,7 +59,8 @@ class MicroCreditApplicationModel {
       amount: _parseInt(json['amount']),
       status: (json['status'] ?? '').toString(),
       scoreProsArtisanAtApplication: _parseInt(
-        json['score_prosartisan_at_application'] ?? json['scoreProsArtisanAtApplication'],
+        json['score_prosartisan_at_application'] ??
+            json['scoreProsArtisanAtApplication'],
       ),
       approvedAt:
           json['approved_at']?.toString() ?? json['approvedAt']?.toString(),

@@ -94,7 +94,7 @@ class ClientHomeScreen extends StatelessWidget {
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: [
                 SliverToBoxAdapter(child: _ClientHero(controller: controller)),
-                
+
                 // Tab Selection Bar
                 SliverToBoxAdapter(
                   child: Padding(
@@ -144,7 +144,9 @@ class ClientHomeScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           const _MissionSearchCard(),
-                          CommunicationBanner(announcements: controller.announcements),
+                          CommunicationBanner(
+                            announcements: controller.announcements,
+                          ),
                           LeSaviezVousCarousel(tips: controller.tips),
                           if (controller.isNightModeActive) ...[
                             const SizedBox(height: 16),
@@ -167,7 +169,9 @@ class ClientHomeScreen extends StatelessWidget {
                           const SizedBox(height: 12),
                           const _CategoriesGrid(),
                           const SizedBox(height: 24),
-                          const _SectionHeader(title: 'Matériaux & Quincailleries'),
+                          const _SectionHeader(
+                            title: 'Matériaux & Quincailleries',
+                          ),
                           const SizedBox(height: 12),
                           const _SupplierBanner(),
                           const SizedBox(height: 24),
@@ -182,100 +186,114 @@ class ClientHomeScreen extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 14),
-                          Obx(() => Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: AppColors.surface,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: AppColors.border),
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      if (controller.searchDistant.value) {
-                                        controller.toggleSearchDistant();
-                                      }
-                                    },
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(vertical: 8),
-                                      decoration: BoxDecoration(
-                                        color: !controller.searchDistant.value
-                                            ? AppColors.client
-                                            : Colors.transparent,
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            Icons.my_location,
-                                            size: 16,
-                                            color: !controller.searchDistant.value
-                                                ? Colors.white
-                                                : AppColors.textSecondary,
-                                          ),
-                                          const SizedBox(width: 6),
-                                          Text(
-                                            'Ma zone (local)',
-                                            style: TextStyle(
-                                              fontSize: 12.5,
-                                              fontWeight: FontWeight.w700,
-                                              color: !controller.searchDistant.value
+                          Obx(
+                            () => Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: AppColors.surface,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: AppColors.border),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        if (controller.searchDistant.value) {
+                                          controller.toggleSearchDistant();
+                                        }
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 8,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: !controller.searchDistant.value
+                                              ? AppColors.client
+                                              : Colors.transparent,
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              Icons.my_location,
+                                              size: 16,
+                                              color: !controller
+                                                      .searchDistant.value
                                                   ? Colors.white
                                                   : AppColors.textSecondary,
                                             ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Expanded(
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      if (!controller.searchDistant.value) {
-                                        controller.toggleSearchDistant();
-                                      }
-                                    },
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(vertical: 8),
-                                      decoration: BoxDecoration(
-                                        color: controller.searchDistant.value
-                                            ? AppColors.client
-                                            : Colors.transparent,
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            Icons.public,
-                                            size: 16,
-                                            color: controller.searchDistant.value
-                                                ? Colors.white
-                                                : AppColors.textSecondary,
-                                          ),
-                                          const SizedBox(width: 6),
-                                          Text(
-                                            'Artisans éloignés',
-                                            style: TextStyle(
-                                              fontSize: 12.5,
-                                              fontWeight: FontWeight.w700,
-                                              color: controller.searchDistant.value
-                                                  ? Colors.white
-                                                  : AppColors.textSecondary,
+                                            const SizedBox(width: 6),
+                                            Text(
+                                              'Ma zone (local)',
+                                              style: TextStyle(
+                                                fontSize: 12.5,
+                                                fontWeight: FontWeight.w700,
+                                                color: !controller
+                                                        .searchDistant.value
+                                                    ? Colors.white
+                                                    : AppColors.textSecondary,
+                                              ),
                                             ),
-                                          ),
-                                        ],
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              ],
+                                  Expanded(
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        if (!controller.searchDistant.value) {
+                                          controller.toggleSearchDistant();
+                                        }
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 8,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: controller.searchDistant.value
+                                              ? AppColors.client
+                                              : Colors.transparent,
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              Icons.public,
+                                              size: 16,
+                                              color:
+                                                  controller.searchDistant.value
+                                                      ? Colors.white
+                                                      : AppColors.textSecondary,
+                                            ),
+                                            const SizedBox(width: 6),
+                                            Text(
+                                              'Artisans éloignés',
+                                              style: TextStyle(
+                                                fontSize: 12.5,
+                                                fontWeight: FontWeight.w700,
+                                                color: controller
+                                                        .searchDistant.value
+                                                    ? Colors.white
+                                                    : AppColors.textSecondary,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          )),
+                          ),
                           const SizedBox(height: 16),
                           _ArtisansList(controller: controller),
                         ],
@@ -481,8 +499,11 @@ class _MissionSearchCard extends StatelessWidget {
                 ),
               ),
             ),
-            Icon(Icons.arrow_forward_ios_rounded,
-                size: 16, color: AppColors.textMuted),
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 16,
+              color: AppColors.textMuted,
+            ),
           ],
         ),
       ),
@@ -648,10 +669,14 @@ class _CategoriesGrid extends StatelessWidget {
                             ),
                           ],
                         ),
-                        child: Icon(category.icon, color: Colors.white, size: 24),
+                        child:
+                            Icon(category.icon, color: Colors.white, size: 24),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 7,
+                          vertical: 3,
+                        ),
                         decoration: BoxDecoration(
                           color: category.color.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
@@ -1066,7 +1091,7 @@ class _TabButton extends StatelessWidget {
                     color: AppColors.client.withValues(alpha: 0.2),
                     blurRadius: 8,
                     offset: const Offset(0, 3),
-                  )
+                  ),
                 ]
               : null,
         ),
@@ -1158,7 +1183,10 @@ class _ClientDashboardView extends StatelessWidget {
           child: Column(
             children: controller.expensesByCategory.entries.map((e) {
               // Calculate percentages based on total
-              final total = controller.expensesByCategory.values.isEmpty ? 0 : controller.expensesByCategory.values.reduce((a, b) => a + b);
+              final total = controller.expensesByCategory.values.isEmpty
+                  ? 0
+                  : controller.expensesByCategory.values
+                      .reduce((a, b) => a + b);
               final pct = total > 0 ? e.value / total : 0.0;
               return Padding(
                 padding: const EdgeInsets.only(bottom: 14),
@@ -1282,8 +1310,11 @@ class _ClientMobileMoneyCard extends StatelessWidget {
                             : 'Aucun numéro associé',
                         style: TextStyle(
                           fontSize: 12,
-                          color: hasPhone ? const Color(0xFF10B981) : AppColors.textSecondary,
-                          fontWeight: hasPhone ? FontWeight.w600 : FontWeight.w400,
+                          color: hasPhone
+                              ? const Color(0xFF10B981)
+                              : AppColors.textSecondary,
+                          fontWeight:
+                              hasPhone ? FontWeight.w600 : FontWeight.w400,
                         ),
                       ),
                     ],
@@ -1291,8 +1322,13 @@ class _ClientMobileMoneyCard extends StatelessWidget {
                 ),
                 if (hasPhone)
                   IconButton(
-                    onPressed: () => _showClientPaymentPhoneModal(context, controller),
-                    icon: const Icon(Icons.edit_outlined, size: 20, color: AppColors.textSecondary),
+                    onPressed: () =>
+                        _showClientPaymentPhoneModal(context, controller),
+                    icon: const Icon(
+                      Icons.edit_outlined,
+                      size: 20,
+                      color: AppColors.textSecondary,
+                    ),
                     tooltip: 'Modifier',
                   ),
               ],
@@ -1300,16 +1336,21 @@ class _ClientMobileMoneyCard extends StatelessWidget {
             const SizedBox(height: 14),
             if (hasPhone) ...[
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
                   color: providerColor.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: providerColor.withValues(alpha: 0.3)),
+                  border:
+                      Border.all(color: providerColor.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: providerColor,
                         borderRadius: BorderRadius.circular(8),
@@ -1336,7 +1377,11 @@ class _ClientMobileMoneyCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 18),
+                    const Icon(
+                      Icons.check_circle_rounded,
+                      color: Color(0xFF10B981),
+                      size: 18,
+                    ),
                   ],
                 ),
               ),
@@ -1351,7 +1396,8 @@ class _ClientMobileMoneyCard extends StatelessWidget {
               ),
               const SizedBox(height: 14),
               ElevatedButton.icon(
-                onPressed: () => _showClientPaymentPhoneModal(context, controller),
+                onPressed: () =>
+                    _showClientPaymentPhoneModal(context, controller),
                 icon: const Icon(Icons.add_card_rounded, size: 18),
                 label: const Text('Associer mon numéro Mobile Money'),
                 style: ElevatedButton.styleFrom(
@@ -1401,7 +1447,10 @@ class _ClientMobileMoneyCard extends StatelessWidget {
   }
 }
 
-void _showClientPaymentPhoneModal(BuildContext context, HomeController controller) {
+void _showClientPaymentPhoneModal(
+  BuildContext context,
+  HomeController controller,
+) {
   final selectedProvider = (controller.preferredPaymentProvider.value.isNotEmpty
           ? controller.preferredPaymentProvider.value
           : 'wave')
@@ -1489,17 +1538,39 @@ void _showClientPaymentPhoneModal(BuildContext context, HomeController controlle
                 ),
               ),
               const SizedBox(height: 10),
-              Obx(() => Row(
-                children: [
-                  _buildModalProviderChip('wave', 'Wave', const Color(0xFF00A3FF), selectedProvider),
-                  const SizedBox(width: 8),
-                  _buildModalProviderChip('orange_money', 'Orange', const Color(0xFFFF7900), selectedProvider),
-                  const SizedBox(width: 8),
-                  _buildModalProviderChip('mtn_money', 'MTN', const Color(0xFFFFCC00), selectedProvider),
-                  const SizedBox(width: 8),
-                  _buildModalProviderChip('moov_money', 'Moov', const Color(0xFF005BA6), selectedProvider),
-                ],
-              )),
+              Obx(
+                () => Row(
+                  children: [
+                    _buildModalProviderChip(
+                      'wave',
+                      'Wave',
+                      const Color(0xFF00A3FF),
+                      selectedProvider,
+                    ),
+                    const SizedBox(width: 8),
+                    _buildModalProviderChip(
+                      'orange_money',
+                      'Orange',
+                      const Color(0xFFFF7900),
+                      selectedProvider,
+                    ),
+                    const SizedBox(width: 8),
+                    _buildModalProviderChip(
+                      'mtn_money',
+                      'MTN',
+                      const Color(0xFFFFCC00),
+                      selectedProvider,
+                    ),
+                    const SizedBox(width: 8),
+                    _buildModalProviderChip(
+                      'moov_money',
+                      'Moov',
+                      const Color(0xFF005BA6),
+                      selectedProvider,
+                    ),
+                  ],
+                ),
+              ),
               const SizedBox(height: 20),
               TextField(
                 controller: phoneCtrl,
@@ -1513,65 +1584,77 @@ void _showClientPaymentPhoneModal(BuildContext context, HomeController controlle
                   ),
                 ),
               ),
-              Obx(() => errorMsg.value != null
-                  ? Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Text(
-                        errorMsg.value!,
-                        style: const TextStyle(
-                          color: AppColors.danger,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
+              Obx(
+                () => errorMsg.value != null
+                    ? Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text(
+                          errorMsg.value!,
+                          style: const TextStyle(
+                            color: AppColors.danger,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      ),
-                    )
-                  : const SizedBox.shrink()),
-              const SizedBox(height: 20),
-              Obx(() => ElevatedButton(
-                onPressed: controller.isSavingPaymentPhone.value
-                    ? null
-                    : () async {
-                        final phone = phoneCtrl.text.trim();
-                        if (phone.isEmpty || phone.length < 10) {
-                          errorMsg.value = 'Veuillez saisir un numéro valide à 10 chiffres';
-                          return;
-                        }
-                        errorMsg.value = null;
-                        final ok = await controller.updatePaymentPhone(
-                          newPaymentPhone: phone,
-                          provider: selectedProvider.value,
-                        );
-                        if (ok) {
-                          Get.back();
-                          Get.snackbar(
-                            'Numéro associé',
-                            'Votre compte Mobile Money a été mis à jour avec succès.',
-                            backgroundColor: const Color(0xFFD1FAE5),
-                            colorText: const Color(0xFF065F46),
-                          );
-                        } else {
-                          errorMsg.value = 'Échec de l\'enregistrement. Veuillez réessayer.';
-                        }
-                      },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.client,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                child: controller.isSavingPaymentPhone.value
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                       )
-                    : const Text(
-                        'Enregistrer mon numéro',
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-                      ),
-              )),
+                    : const SizedBox.shrink(),
+              ),
+              const SizedBox(height: 20),
+              Obx(
+                () => ElevatedButton(
+                  onPressed: controller.isSavingPaymentPhone.value
+                      ? null
+                      : () async {
+                          final phone = phoneCtrl.text.trim();
+                          if (phone.isEmpty || phone.length < 10) {
+                            errorMsg.value =
+                                'Veuillez saisir un numéro valide à 10 chiffres';
+                            return;
+                          }
+                          errorMsg.value = null;
+                          final ok = await controller.updatePaymentPhone(
+                            newPaymentPhone: phone,
+                            provider: selectedProvider.value,
+                          );
+                          if (ok) {
+                            Get.back();
+                            Get.snackbar(
+                              'Numéro associé',
+                              'Votre compte Mobile Money a été mis à jour avec succès.',
+                              backgroundColor: const Color(0xFFD1FAE5),
+                              colorText: const Color(0xFF065F46),
+                            );
+                          } else {
+                            errorMsg.value =
+                                'Échec de l\'enregistrement. Veuillez réessayer.';
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.client,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(double.infinity, 50),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: controller.isSavingPaymentPhone.value
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text(
+                          'Enregistrer mon numéro',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                ),
+              ),
               const SizedBox(height: 10),
             ],
           ),
@@ -1595,7 +1678,9 @@ Widget _buildModalProviderChip(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? color.withValues(alpha: 0.14) : const Color(0xFFF3F4F6),
+          color: isSelected
+              ? color.withValues(alpha: 0.14)
+              : const Color(0xFFF3F4F6),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? color : Colors.transparent,
@@ -1787,7 +1872,8 @@ class _TopArtisansSection extends StatelessWidget {
             border: Border.all(color: AppColors.border),
           ),
           child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             leading: CircleAvatar(
               radius: 26,
               backgroundColor: AppColors.clientSoft,
@@ -1823,7 +1909,11 @@ class _TopArtisansSection extends StatelessWidget {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
+                    const Icon(
+                      Icons.star_rounded,
+                      color: Colors.amber,
+                      size: 16,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       artisan.rating.toStringAsFixed(1),
@@ -1845,7 +1935,11 @@ class _TopArtisansSection extends StatelessWidget {
                 ),
               ],
             ),
-            trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textMuted),
+            trailing: const Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 14,
+              color: AppColors.textMuted,
+            ),
             onTap: () => Get.toNamed(Routes.artisanProfile, arguments: artisan),
           ),
         );
@@ -1875,61 +1969,66 @@ class _TopSuppliersSection extends StatelessWidget {
               border: Border.all(color: AppColors.border),
             ),
             child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(12),
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.store_mall_directory_rounded,
+                    color: AppColors.primary,
+                  ),
                 ),
-                child: const Icon(
-                  Icons.store_mall_directory_rounded,
-                  color: AppColors.primary,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      supplier['name'] as String,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 14.5,
-                        color: AppColors.textPrimary,
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        supplier['name'] as String,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 14.5,
+                          color: AppColors.textPrimary,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${supplier['rating']}',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 13,
-                            color: AppColors.textPrimary,
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.star_rounded,
+                            color: Colors.amber,
+                            size: 16,
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '•  ${supplier['deliveries']} commandes livrées',
-                          style: const TextStyle(
-                            color: AppColors.textMuted,
-                            fontSize: 12,
+                          const SizedBox(width: 4),
+                          Text(
+                            '${supplier['rating']}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                              color: AppColors.textPrimary,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                          const SizedBox(width: 8),
+                          Text(
+                            '•  ${supplier['deliveries']} commandes livrées',
+                            style: const TextStyle(
+                              color: AppColors.textMuted,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ));
+        );
       }).toList(),
     );
   }
@@ -1992,7 +2091,11 @@ class _TopDriversSection extends StatelessWidget {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
+                        const Icon(
+                          Icons.star_rounded,
+                          color: Colors.amber,
+                          size: 16,
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           '${driver['rating']}',
@@ -2055,7 +2158,8 @@ class _SupplierBanner extends StatelessWidget {
                 color: Colors.white24,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.storefront, color: Colors.white, size: 28),
+              child:
+                  const Icon(Icons.storefront, color: Colors.white, size: 28),
             ),
             const SizedBox(width: 16),
             const Expanded(

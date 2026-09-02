@@ -37,7 +37,8 @@ class EvaluationRepository {
 
   Future<Map<String, dynamic>?> getMissionActors(int missionId) async {
     try {
-      final res = await _client.get(ApiEndpoints.missionEvaluationsStatus(missionId));
+      final res =
+          await _client.get(ApiEndpoints.missionEvaluationsStatus(missionId));
       if (res.data is Map && res.data['data'] is Map) {
         return Map<String, dynamic>.from(res.data['data']);
       }
@@ -47,7 +48,8 @@ class EvaluationRepository {
 
   Future<Map<String, dynamic>?> getOrderActors(int orderId) async {
     try {
-      final res = await _client.get(ApiEndpoints.orderEvaluationsStatus(orderId));
+      final res =
+          await _client.get(ApiEndpoints.orderEvaluationsStatus(orderId));
       if (res.data is Map && res.data['data'] is Map) {
         return Map<String, dynamic>.from(res.data['data']);
       }

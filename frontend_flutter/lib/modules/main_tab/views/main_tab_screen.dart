@@ -41,7 +41,8 @@ class MainTabScreen extends StatelessWidget {
 
       final isFournisseur = role == 'fournisseur';
       final isArtisan = role == 'artisan';
-      final isDriver = role == 'driver' || role == 'livreur' || role == 'LIVREUR';
+      final isDriver =
+          role == 'driver' || role == 'livreur' || role == 'LIVREUR';
 
       final tabs = isFournisseur
           ? _fournisseurTabs()
@@ -313,7 +314,9 @@ class _NavButton extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
         decoration: BoxDecoration(
-          color: isActive ? activeColor.withValues(alpha: 0.12) : Colors.transparent,
+          color: isActive
+              ? activeColor.withValues(alpha: 0.12)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(

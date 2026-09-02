@@ -61,7 +61,10 @@ class ArtisanRepository {
     );
   }
 
-  Future<ArtisanModel> getArtisan(int userId, {bool forceRefresh = false}) async {
+  Future<ArtisanModel> getArtisan(
+    int userId, {
+    bool forceRefresh = false,
+  }) async {
     await _store.init();
 
     return _store.readOne(

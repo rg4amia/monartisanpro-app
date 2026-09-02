@@ -25,10 +25,12 @@ class DeliveryRoutePlannerScreen extends StatefulWidget {
   const DeliveryRoutePlannerScreen({super.key, required this.mission});
 
   @override
-  State<DeliveryRoutePlannerScreen> createState() => _DeliveryRoutePlannerScreenState();
+  State<DeliveryRoutePlannerScreen> createState() =>
+      _DeliveryRoutePlannerScreenState();
 }
 
-class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen> {
+class _DeliveryRoutePlannerScreenState
+    extends State<DeliveryRoutePlannerScreen> {
   final HomeController _homeController = Get.find<HomeController>();
 
   mk.MapWindow? _mapWindow;
@@ -98,7 +100,12 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
   }
 
   /// Récupère la géométrie réelle du réseau routier via OSRM (Open Source Routing Machine)
-  Future<List<mk.Point>> _fetchRoadRoutePoints(double lat1, double lng1, double lat2, double lng2) async {
+  Future<List<mk.Point>> _fetchRoadRoutePoints(
+    double lat1,
+    double lng1,
+    double lat2,
+    double lng2,
+  ) async {
     try {
       final url = Uri.parse(
         'https://router.project-osrm.org/route/v1/driving/$lng1,$lat1;$lng2,$lat2?overview=full&geometries=geojson',
@@ -106,13 +113,16 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
       final response = await http.get(url).timeout(const Duration(seconds: 4));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        if (data['code'] == 'Ok' && data['routes'] is List && (data['routes'] as List).isNotEmpty) {
+        if (data['code'] == 'Ok' &&
+            data['routes'] is List &&
+            (data['routes'] as List).isNotEmpty) {
           final route = data['routes'][0];
           final geometry = route['geometry'];
           final coords = (geometry['coordinates'] as List?);
 
           if (route['distance'] != null) {
-            final distKm = ((route['distance'] as num) / 1000).toStringAsFixed(1);
+            final distKm =
+                ((route['distance'] as num) / 1000).toStringAsFixed(1);
             _routeDistanceText = '$distKm km';
           }
           if (route['duration'] != null) {
@@ -145,10 +155,12 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
       final offsetLat = sin(t * pi) * 0.0025;
       final offsetLng = cos(t * pi * 2) * 0.0015;
 
-      points.add(mk.Point(
-        latitude: latInterp + (i % 2 == 0 ? offsetLat : -offsetLat * 0.5),
-        longitude: lngInterp + offsetLng,
-      ));
+      points.add(
+        mk.Point(
+          latitude: latInterp + (i % 2 == 0 ? offsetLat : -offsetLat * 0.5),
+          longitude: lngInterp + offsetLng,
+        ),
+      );
     }
     return points;
   }
@@ -167,9 +179,15 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
       pDriver.geometry = mk.Point(latitude: _driverLat, longitude: _driverLng);
 
       final pSupplier = pins.addPlacemark();
-      pSupplier.geometry = mk.Point(latitude: _supplierLat, longitude: _supplierLng);
+      pSupplier.geometry =
+          mk.Point(latitude: _supplierLat, longitude: _supplierLng);
 
-      final points = await _fetchRoadRoutePoints(_driverLat, _driverLng, _supplierLat, _supplierLng);
+      final points = await _fetchRoadRoutePoints(
+        _driverLat,
+        _driverLng,
+        _supplierLat,
+        _supplierLng,
+      );
       try {
         final poly = routes.addPolyline();
         poly.geometry = mk.Polyline(points);
@@ -187,12 +205,18 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
     } else if (_currentPhase == DeliveryPhase.delivery) {
       // ── ÉTAPE 2 : Fournisseur -> Client ──
       final pPickup = pins.addPlacemark();
-      pPickup.geometry = mk.Point(latitude: _supplierLat, longitude: _supplierLng);
+      pPickup.geometry =
+          mk.Point(latitude: _supplierLat, longitude: _supplierLng);
 
       final pClient = pins.addPlacemark();
       pClient.geometry = mk.Point(latitude: _clientLat, longitude: _clientLng);
 
-      final points = await _fetchRoadRoutePoints(_supplierLat, _supplierLng, _clientLat, _clientLng);
+      final points = await _fetchRoadRoutePoints(
+        _supplierLat,
+        _supplierLng,
+        _clientLat,
+        _clientLng,
+      );
       try {
         final poly = routes.addPolyline();
         poly.geometry = mk.Polyline(points);
@@ -231,12 +255,19 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
 
     mw.map.move(
       center,
-      animation: const mk.Animation(type: mk.AnimationType.Smooth, duration: 1.0),
+      animation:
+          const mk.Animation(type: mk.AnimationType.Smooth, duration: 1.0),
     );
   }
 
-  Future<void> _launchExternalNavigation(double destLat, double destLng, String label) async {
-    final googleUrl = Uri.parse('https://www.google.com/maps/dir/?api=1&destination=$destLat,$destLng');
+  Future<void> _launchExternalNavigation(
+    double destLat,
+    double destLng,
+    String label,
+  ) async {
+    final googleUrl = Uri.parse(
+      'https://www.google.com/maps/dir/?api=1&destination=$destLat,$destLng',
+    );
     final appleUrl = Uri.parse('maps://?daddr=$destLat,$destLng');
 
     try {
@@ -263,7 +294,8 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
   }
 
   void _promptPickupValidation() {
-    final textController = TextEditingController(text: 'RET-${widget.mission.id}');
+    final textController =
+        TextEditingController(text: 'RET-${widget.mission.id}');
     Get.dialog(
       AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -271,7 +303,10 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
           children: [
             Icon(Icons.storefront_rounded, color: AppColors.warning),
             SizedBox(width: 8),
-            Text('Enlèvement Magasin', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+            Text(
+              'Enlèvement Magasin',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+            ),
           ],
         ),
         content: Column(
@@ -280,7 +315,8 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
           children: [
             Text(
               'Confirmez la récupération du matériel chez ${widget.mission.artisanName ?? 'le fournisseur'}.',
-              style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+              style:
+                  const TextStyle(fontSize: 13, color: AppColors.textSecondary),
             ),
             const SizedBox(height: 14),
             TextField(
@@ -288,7 +324,8 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
               decoration: InputDecoration(
                 labelText: 'Code de retrait fournisseur',
                 hintText: 'Ex: RET-${widget.mission.id}',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 prefixIcon: const Icon(Icons.qr_code_scanner_rounded),
               ),
             ),
@@ -297,23 +334,34 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
         actions: [
           TextButton(
             onPressed: () => Get.back(),
-            child: const Text('Annuler', style: TextStyle(color: AppColors.textSecondary)),
+            child: const Text(
+              'Annuler',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.warning,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             onPressed: () async {
               Get.back();
-              await _homeController.handleDriverPickupFromStore(widget.mission, textController.text.trim());
+              await _homeController.handleDriverPickupFromStore(
+                widget.mission,
+                textController.text.trim(),
+              );
               setState(() {
                 _currentPhase = DeliveryPhase.delivery;
               });
               unawaited(_updateMapElements());
             },
-            child: const Text('Valider Enlèvement', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: const Text(
+              'Valider Enlèvement',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
@@ -321,7 +369,8 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
   }
 
   void _promptDeliveryValidation() {
-    final textController = TextEditingController(text: 'REC-${widget.mission.id}');
+    final textController =
+        TextEditingController(text: 'REC-${widget.mission.id}');
     Get.dialog(
       AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -329,7 +378,10 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
           children: [
             Icon(Icons.check_circle_rounded, color: AppColors.success),
             SizedBox(width: 8),
-            Text('Livraison Client', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+            Text(
+              'Livraison Client',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+            ),
           ],
         ),
         content: Column(
@@ -338,7 +390,8 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
           children: [
             Text(
               'Remettez les articles à ${widget.mission.clientName ?? 'Client'} et demandez le code de réception OTP.',
-              style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+              style:
+                  const TextStyle(fontSize: 13, color: AppColors.textSecondary),
             ),
             const SizedBox(height: 14),
             TextField(
@@ -346,7 +399,8 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
               decoration: InputDecoration(
                 labelText: 'Code de réception client (OTP)',
                 hintText: 'Ex: REC-${widget.mission.id}',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 prefixIcon: const Icon(Icons.pin_outlined),
               ),
             ),
@@ -355,22 +409,33 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
         actions: [
           TextButton(
             onPressed: () => Get.back(),
-            child: const Text('Annuler', style: TextStyle(color: AppColors.textSecondary)),
+            child: const Text(
+              'Annuler',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.success,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             onPressed: () async {
               Get.back();
-              await _homeController.handleDriverDropoffToClient(widget.mission, textController.text.trim());
+              await _homeController.handleDriverDropoffToClient(
+                widget.mission,
+                textController.text.trim(),
+              );
               setState(() {
                 _currentPhase = DeliveryPhase.completed;
               });
             },
-            child: const Text('Confirmer Livraison', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: const Text(
+              'Confirmer Livraison',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
@@ -381,7 +446,9 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
   Widget build(BuildContext context) {
     final deliveryFee = widget.mission.montantMo > 0
         ? widget.mission.montantMo
-        : (widget.mission.montantTotal > 0 ? (widget.mission.montantTotal * 0.15).toInt() : 1500);
+        : (widget.mission.montantTotal > 0
+            ? (widget.mission.montantTotal * 0.15).toInt()
+            : 1500);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -400,7 +467,8 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
         elevation: 1.5,
         actions: [
           IconButton(
-            icon: const Icon(Icons.my_location_rounded, color: AppColors.primary),
+            icon:
+                const Icon(Icons.my_location_rounded, color: AppColors.primary),
             tooltip: 'Recentrer la carte',
             onPressed: () => _updateMapElements(),
           ),
@@ -413,7 +481,9 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
             child: YandexMap(onMapCreated: _onMapCreated),
           ),
           if (!_mapReady)
-            const Center(child: CircularProgressIndicator(color: AppColors.driver)),
+            const Center(
+              child: CircularProgressIndicator(color: AppColors.driver),
+            ),
 
           // ── Top Phase Indicator HUD ──
           Positioned(
@@ -446,8 +516,12 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
             : AppColors.success;
 
     final targetName = isPickup
-        ? (widget.mission.artisanName?.isNotEmpty == true ? widget.mission.artisanName! : 'Quincaillerie Partenaire')
-        : (widget.mission.clientName?.isNotEmpty == true ? widget.mission.clientName! : 'Client');
+        ? (widget.mission.artisanName?.isNotEmpty == true
+            ? widget.mission.artisanName!
+            : 'Quincaillerie Partenaire')
+        : (widget.mission.clientName?.isNotEmpty == true
+            ? widget.mission.clientName!
+            : 'Client');
 
     return Material(
       elevation: 6,
@@ -506,7 +580,10 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
                       ),
                       if (_routeDistanceText != null && !isCompleted) ...[
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: badgeColor.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(6),
@@ -525,7 +602,9 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    isCompleted ? 'Livraison effectuée avec succès' : 'Vers : $targetName',
+                    isCompleted
+                        ? 'Livraison effectuée avec succès'
+                        : 'Vers : $targetName',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
@@ -563,11 +642,19 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 52),
+            const Icon(
+              Icons.check_circle_rounded,
+              color: AppColors.success,
+              size: 52,
+            ),
             const SizedBox(height: 10),
             const Text(
               'Course Livrée avec Succès !',
-              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF0F172A),
+              ),
             ),
             const SizedBox(height: 6),
             const Text(
@@ -583,10 +670,15 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 onPressed: () => Get.back(),
-                child: const Text('Retour à mes courses', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                child: const Text(
+                  'Retour à mes courses',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                ),
               ),
             ),
           ],
@@ -596,8 +688,12 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
 
     final isPickup = _currentPhase == DeliveryPhase.pickup;
     final targetName = isPickup
-        ? (widget.mission.artisanName?.isNotEmpty == true ? widget.mission.artisanName! : 'Quincaillerie Partenaire')
-        : (widget.mission.clientName?.isNotEmpty == true ? widget.mission.clientName! : 'Client');
+        ? (widget.mission.artisanName?.isNotEmpty == true
+            ? widget.mission.artisanName!
+            : 'Quincaillerie Partenaire')
+        : (widget.mission.clientName?.isNotEmpty == true
+            ? widget.mission.clientName!
+            : 'Client');
 
     return Container(
       width: double.infinity,
@@ -628,7 +724,9 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      isPickup ? 'POINT D\'ENLÈVEMENT (MAGASIN)' : 'DESTINATION (CLIENT)',
+                      isPickup
+                          ? 'POINT D\'ENLÈVEMENT (MAGASIN)'
+                          : 'DESTINATION (CLIENT)',
                       style: const TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
@@ -654,14 +752,19 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
               InkWell(
                 onTap: () {
                   if (isPickup) {
-                    _launchExternalNavigation(_supplierLat, _supplierLng, 'Fournisseur');
+                    _launchExternalNavigation(
+                      _supplierLat,
+                      _supplierLng,
+                      'Fournisseur',
+                    );
                   } else {
                     _launchExternalNavigation(_clientLat, _clientLng, 'Client');
                   }
                 },
                 borderRadius: BorderRadius.circular(10),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
                     color: AppColors.primary,
                     borderRadius: BorderRadius.circular(10),
@@ -669,9 +772,20 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.navigation_rounded, size: 14, color: Colors.white),
+                      Icon(
+                        Icons.navigation_rounded,
+                        size: 14,
+                        color: Colors.white,
+                      ),
                       SizedBox(width: 4),
-                      Text('GPS', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                      Text(
+                        'GPS',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -690,7 +804,11 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
             ),
             child: Row(
               children: [
-                const Icon(Icons.inventory_2_outlined, size: 16, color: AppColors.textSecondary),
+                const Icon(
+                  Icons.inventory_2_outlined,
+                  size: 16,
+                  color: AppColors.textSecondary,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -716,16 +834,30 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
             height: 48,
             child: ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: isPickup ? const Color(0xFFF59E0B) : const Color(0xFF10B981),
+                backgroundColor: isPickup
+                    ? const Color(0xFFF59E0B)
+                    : const Color(0xFF10B981),
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 elevation: 0,
               ),
-              onPressed: isPickup ? _promptPickupValidation : _promptDeliveryValidation,
-              icon: Icon(isPickup ? Icons.qr_code_scanner_rounded : Icons.check_circle_outline, size: 20),
+              onPressed: isPickup
+                  ? _promptPickupValidation
+                  : _promptDeliveryValidation,
+              icon: Icon(
+                isPickup
+                    ? Icons.qr_code_scanner_rounded
+                    : Icons.check_circle_outline,
+                size: 20,
+              ),
               label: Text(
-                isPickup ? 'Valider l\'Enlèvement Magasin' : 'Valider la Livraison Client',
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+                isPickup
+                    ? 'Valider l\'Enlèvement Magasin'
+                    : 'Valider la Livraison Client',
+                style:
+                    const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
               ),
             ),
           ),

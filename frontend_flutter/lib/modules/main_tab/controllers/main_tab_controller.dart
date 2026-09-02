@@ -11,7 +11,7 @@ class MainTabController extends GetxController {
   void onInit() {
     super.onInit();
     role.value = StorageService.getRole();
-    
+
     final userId = StorageService.getUserId();
     if (userId != null) {
       try {
@@ -31,5 +31,8 @@ class MainTabController extends GetxController {
   bool get isClient => role.value == 'client';
   bool get isArtisan => role.value == 'artisan';
   bool get isFournisseur => role.value == 'fournisseur';
-  bool get isDriver => role.value == 'driver' || role.value == 'livreur' || role.value == 'LIVREUR';
+  bool get isDriver =>
+      role.value == 'driver' ||
+      role.value == 'livreur' ||
+      role.value == 'LIVREUR';
 }

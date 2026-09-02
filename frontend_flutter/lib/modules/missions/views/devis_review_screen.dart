@@ -76,10 +76,12 @@ class DevisReviewScreen extends StatelessWidget {
                         ),
                       ),
                       if (controller.hasPendingPaymentFor(devis.id) &&
-                          controller.pendingProvider.value == 'virement_bancaire') ...[
+                          controller.pendingProvider.value ==
+                              'virement_bancaire') ...[
                         const SizedBox(height: 24),
                         _PendingVirementInstructionsCard(
-                          instructions: controller.pendingVirementInstructions.value,
+                          instructions:
+                              controller.pendingVirementInstructions.value,
                         ),
                       ] else if (devis.totalGeneral >= 2000000 &&
                           devis.statut == 'soumis') ...[
@@ -187,8 +189,11 @@ class _StatusCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(config['icon'] as IconData,
-              color: config['color'] as Color, size: 24),
+          Icon(
+            config['icon'] as IconData,
+            color: config['color'] as Color,
+            size: 24,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -355,10 +360,12 @@ class _LignesSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        ...devis.lignes.map((ligne) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _LigneCard(ligne: ligne),
-            )),
+        ...devis.lignes.map(
+          (ligne) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _LigneCard(ligne: ligne),
+          ),
+        ),
       ],
     );
   }
@@ -406,10 +413,12 @@ class _JalonsSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        ...devis.jalons.map((jalon) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _JalonCard(jalon: jalon),
-            )),
+        ...devis.jalons.map(
+          (jalon) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _JalonCard(jalon: jalon),
+          ),
+        ),
       ],
     );
   }
@@ -485,7 +494,9 @@ class _RecapSection extends StatelessWidget {
                       child: _ProgressBar(
                         label: 'Matériaux',
                         percentage: devis.totalGeneralTtc > 0
-                            ? (devis.montantMateriaux / devis.totalGeneralTtc * 100)
+                            ? (devis.montantMateriaux /
+                                devis.totalGeneralTtc *
+                                100)
                             : 0.0,
                         color: _C.warning,
                       ),
@@ -547,83 +558,85 @@ class _ActionButtons extends StatelessWidget {
         ],
       ),
       child: SafeArea(
-        child: Obx(() => Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Bouton Accepter
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: controller.isSubmitting.value
-                        ? null
-                        : () => _showAcceptDialog(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _C.success,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+        child: Obx(
+          () => Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Bouton Accepter
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: controller.isSubmitting.value
+                      ? null
+                      : () => _showAcceptDialog(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _C.success,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: controller.isSubmitting.value
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.check_circle, size: 20),
-                              SizedBox(width: 8),
-                              Text(
-                                'Accepter et payer',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                ),
+                  ),
+                  child: controller.isSubmitting.value
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.check_circle, size: 20),
+                            SizedBox(width: 8),
+                            Text(
+                              'Accepter et payer',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
                               ),
-                            ],
-                          ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                // Bouton Refuser
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: controller.isSubmitting.value
-                        ? null
-                        : () => _showRefuseDialog(context),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: _C.danger,
-                      side: const BorderSide(color: _C.danger),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.cancel, size: 20),
-                        SizedBox(width: 8),
-                        Text(
-                          'Refuser ce devis',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
+                            ),
+                          ],
                         ),
-                      ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              // Bouton Refuser
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: controller.isSubmitting.value
+                      ? null
+                      : () => _showRefuseDialog(context),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: _C.danger,
+                    side: const BorderSide(color: _C.danger),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.cancel, size: 20),
+                      SizedBox(width: 8),
+                      Text(
+                        'Refuser ce devis',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ],
-            )),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -636,9 +649,11 @@ class _ActionButtons extends StatelessWidget {
     final int montantMateriaux = devis.montantMateriaux;
 
     String paymentType = totalGeneralTtc >= 2000000 ? 'hybrid' : 'total';
-    String selectedProvider = (paymentType == 'hybrid' ? montantMateriaux : totalGeneralTtc) >= 2000000
-        ? 'virement_bancaire'
-        : 'wave';
+    String selectedProvider =
+        (paymentType == 'hybrid' ? montantMateriaux : totalGeneralTtc) >=
+                2000000
+            ? 'virement_bancaire'
+            : 'wave';
 
     Get.dialog(
       Dialog(
@@ -647,7 +662,8 @@ class _ActionButtons extends StatelessWidget {
           padding: const EdgeInsets.all(20),
           child: StatefulBuilder(
             builder: (context, setState) {
-              final int amountToPay = paymentType == 'hybrid' ? montantMateriaux : totalGeneralTtc;
+              final int amountToPay =
+                  paymentType == 'hybrid' ? montantMateriaux : totalGeneralTtc;
               final bool isGrandsComptes = amountToPay >= 2000000;
 
               if (isGrandsComptes && selectedProvider != 'virement_bancaire') {
@@ -664,7 +680,8 @@ class _ActionButtons extends StatelessWidget {
                       color: _C.successLight,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.payment, color: _C.success, size: 28),
+                    child:
+                        const Icon(Icons.payment, color: _C.success, size: 28),
                   ),
                   const SizedBox(height: 12),
                   const Text(
@@ -676,16 +693,18 @@ class _ActionButtons extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  
                   const Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
                       'Option de Financement',
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: _C.muted),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: _C.muted,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 8),
-                  
                   InkWell(
                     onTap: () {
                       setState(() {
@@ -699,7 +718,8 @@ class _ActionButtons extends StatelessWidget {
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         border: Border.all(
-                          color: paymentType == 'total' ? _C.primary : _C.subtle,
+                          color:
+                              paymentType == 'total' ? _C.primary : _C.subtle,
                           width: paymentType == 'total' ? 2 : 1,
                         ),
                         borderRadius: BorderRadius.circular(8),
@@ -707,8 +727,11 @@ class _ActionButtons extends StatelessWidget {
                       child: Row(
                         children: [
                           Icon(
-                            paymentType == 'total' ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-                            color: paymentType == 'total' ? _C.primary : _C.muted,
+                            paymentType == 'total'
+                                ? Icons.radio_button_checked
+                                : Icons.radio_button_unchecked,
+                            color:
+                                paymentType == 'total' ? _C.primary : _C.muted,
                             size: 22,
                           ),
                           const SizedBox(width: 8),
@@ -718,12 +741,18 @@ class _ActionButtons extends StatelessWidget {
                               children: [
                                 const Text(
                                   'Financement Intégral',
-                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
                                   'Préfinancez l\'intégralité (${totalGeneralTtc.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]} ')} FCFA).',
-                                  style: const TextStyle(fontSize: 11, color: _C.muted),
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: _C.muted,
+                                  ),
                                 ),
                               ],
                             ),
@@ -733,7 +762,6 @@ class _ActionButtons extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  
                   InkWell(
                     onTap: () {
                       setState(() {
@@ -747,7 +775,8 @@ class _ActionButtons extends StatelessWidget {
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         border: Border.all(
-                          color: paymentType == 'hybrid' ? _C.primary : _C.subtle,
+                          color:
+                              paymentType == 'hybrid' ? _C.primary : _C.subtle,
                           width: paymentType == 'hybrid' ? 2 : 1,
                         ),
                         borderRadius: BorderRadius.circular(8),
@@ -755,8 +784,11 @@ class _ActionButtons extends StatelessWidget {
                       child: Row(
                         children: [
                           Icon(
-                            paymentType == 'hybrid' ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-                            color: paymentType == 'hybrid' ? _C.primary : _C.muted,
+                            paymentType == 'hybrid'
+                                ? Icons.radio_button_checked
+                                : Icons.radio_button_unchecked,
+                            color:
+                                paymentType == 'hybrid' ? _C.primary : _C.muted,
                             size: 22,
                           ),
                           const SizedBox(width: 8),
@@ -766,12 +798,18 @@ class _ActionButtons extends StatelessWidget {
                               children: [
                                 const Text(
                                   'Financement Hybride (Matériaux)',
-                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
                                   'Payez les matériaux (${montantMateriaux.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]} ')} FCFA). MO par jalons.',
-                                  style: const TextStyle(fontSize: 11, color: _C.muted),
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: _C.muted,
+                                  ),
                                 ),
                               ],
                             ),
@@ -780,18 +818,19 @@ class _ActionButtons extends StatelessWidget {
                       ),
                     ),
                   ),
-                  
                   const SizedBox(height: 20),
-                  
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
                       'Moyen de Paiement (${amountToPay.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]} ')} FCFA)',
-                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: _C.muted),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: _C.muted,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 8),
-                  
                   if (isGrandsComptes) ...[
                     Container(
                       padding: const EdgeInsets.all(10),
@@ -799,7 +838,8 @@ class _ActionButtons extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: _C.dangerLight,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: _C.danger.withValues(alpha: 0.3)),
+                        border:
+                            Border.all(color: _C.danger.withValues(alpha: 0.3)),
                       ),
                       child: const Row(
                         children: [
@@ -819,7 +859,6 @@ class _ActionButtons extends StatelessWidget {
                       ),
                     ),
                   ],
-                  
                   _PaymentOption(
                     label: 'Wave CI',
                     value: 'wave',
@@ -845,7 +884,6 @@ class _ActionButtons extends StatelessWidget {
                     icon: Icons.account_balance,
                     onChanged: (v) => setState(() => selectedProvider = v!),
                   ),
-                  
                   const SizedBox(height: 24),
                   Row(
                     children: [
@@ -1593,7 +1631,11 @@ class _PendingVirementInstructionsCard extends StatelessWidget {
                   color: _C.primaryLight,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.account_balance, color: _C.primary, size: 20),
+                child: const Icon(
+                  Icons.account_balance,
+                  color: _C.primary,
+                  size: 20,
+                ),
               ),
               const SizedBox(width: 12),
               const Text(

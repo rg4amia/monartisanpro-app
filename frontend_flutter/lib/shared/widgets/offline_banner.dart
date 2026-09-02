@@ -32,8 +32,11 @@ class OfflineBanner extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: const [
-                        Icon(Icons.cloud_off_rounded,
-                            size: 15, color: Colors.white),
+                        Icon(
+                          Icons.cloud_off_rounded,
+                          size: 15,
+                          color: Colors.white,
+                        ),
                         SizedBox(width: 8),
                         Text(
                           'Hors-ligne — vos actions seront synchronisées au retour du réseau',

@@ -54,7 +54,9 @@ class SupplierHomeScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        CommunicationBanner(announcements: controller.announcements),
+                        CommunicationBanner(
+                          announcements: controller.announcements,
+                        ),
                         LeSaviezVousCarousel(tips: controller.tips),
                         Row(
                           children: [
@@ -85,12 +87,14 @@ class SupplierHomeScreen extends StatelessWidget {
                         const SizedBox(height: 24),
                         const _SectionTitle(title: 'Actions prioritaires'),
                         const SizedBox(height: 12),
-                        _PrimaryScannerCard(missionCount: controller.activeMissions.length),
+                        _PrimaryScannerCard(
+                          missionCount: controller.activeMissions.length,
+                        ),
                         const SizedBox(height: 12),
                         OutlinedButton.icon(
-                           onPressed: () => Get.toNamed(Routes.supplierCatalog),
-                           icon: const Icon(Icons.inventory_2_outlined),
-                           label: const Text('Mettre à jour mon catalogue'),
+                          onPressed: () => Get.toNamed(Routes.supplierCatalog),
+                          icon: const Icon(Icons.inventory_2_outlined),
+                          label: const Text('Mettre à jour mon catalogue'),
                         ),
                         const SizedBox(height: 24),
                         _SectionTitle(
@@ -107,8 +111,11 @@ class SupplierHomeScreen extends StatelessWidget {
                                 children: missions
                                     .map(
                                       (mission) => Padding(
-                                        padding: const EdgeInsets.only(bottom: 12),
-                                        child: _SupplierMissionCard(mission: mission),
+                                        padding:
+                                            const EdgeInsets.only(bottom: 12),
+                                        child: _SupplierMissionCard(
+                                          mission: mission,
+                                        ),
                                       ),
                                     )
                                     .toList(),
@@ -258,7 +265,8 @@ class _SupplierHero extends StatelessWidget {
                 Expanded(
                   child: _HeroMetric(
                     label: 'Score Fluidité',
-                    value: '${controller.fluidityScore.value} pts • ${controller.fluidityStatus}',
+                    value:
+                        '${controller.fluidityScore.value} pts • ${controller.fluidityStatus}',
                   ),
                 ),
                 Container(
@@ -611,49 +619,49 @@ class _MetricCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(18),
           border: Border.all(color: AppColors.border),
         ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: background,
-              borderRadius: BorderRadius.circular(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: background,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: color, size: 18),
             ),
-            child: Icon(icon, color: color, size: 18),
-          ),
-          const SizedBox(height: 14),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              color: color,
+            const SizedBox(height: 14),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: color,
+              ),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
+            const SizedBox(height: 4),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
             ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            subtitle,
-            style: const TextStyle(
-              fontSize: 12,
-              color: AppColors.textSecondary,
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppColors.textSecondary,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 }
 
 class _HeroMetric extends StatelessWidget {

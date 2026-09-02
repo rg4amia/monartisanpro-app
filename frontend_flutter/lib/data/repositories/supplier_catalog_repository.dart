@@ -11,7 +11,7 @@ class SupplierCatalogRepository {
     final res = await _client.get(
       ApiEndpoints.fournisseurs,
       params: {
-        if (search != null && search.trim().isNotEmpty) 'search': search
+        if (search != null && search.trim().isNotEmpty) 'search': search,
       },
     );
 
@@ -38,23 +38,27 @@ class SupplierCatalogRepository {
   }
 
   Future<SupplierProductModel> createProduct(
-      SupplierProductModel product) async {
+    SupplierProductModel product,
+  ) async {
     final res = await _client.post(
       ApiEndpoints.supplierProducts,
       data: product.toRequestJson(),
     );
     return SupplierProductModel.fromJson(
-        res.data['data'] as Map<String, dynamic>);
+      res.data['data'] as Map<String, dynamic>,
+    );
   }
 
   Future<SupplierProductModel> updateProduct(
-      SupplierProductModel product) async {
+    SupplierProductModel product,
+  ) async {
     final res = await _client.put(
       ApiEndpoints.supplierProduct(product.id),
       data: product.toRequestJson(),
     );
     return SupplierProductModel.fromJson(
-        res.data['data'] as Map<String, dynamic>);
+      res.data['data'] as Map<String, dynamic>,
+    );
   }
 
   Future<void> archiveProduct(int productId) async {

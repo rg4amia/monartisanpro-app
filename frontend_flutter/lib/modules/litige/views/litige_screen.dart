@@ -84,17 +84,22 @@ class LitigeScreen extends GetView<LitigeController> {
             ),
             const Spacer(),
 
-            Obx(() => ElevatedButton(
-                  onPressed: controller.isLoading.value ? null : controller.submit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.danger,
-                    minimumSize: const Size.fromHeight(54),
-                  ),
-                  child: controller.isLoading.value
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text('Signaler le litige',
-                          style: TextStyle(fontSize: 16)),
-                )),
+            Obx(
+              () => ElevatedButton(
+                onPressed:
+                    controller.isLoading.value ? null : controller.submit,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.danger,
+                  minimumSize: const Size.fromHeight(54),
+                ),
+                child: controller.isLoading.value
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text(
+                        'Signaler le litige',
+                        style: TextStyle(fontSize: 16),
+                      ),
+              ),
+            ),
             const SizedBox(height: 16),
           ],
         ),
@@ -123,8 +128,9 @@ class _TypeButton extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         decoration: BoxDecoration(
-          color:
-              selected ? AppColors.primary.withValues(alpha: 0.1) : AppColors.card,
+          color: selected
+              ? AppColors.primary.withValues(alpha: 0.1)
+              : AppColors.card,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: selected ? AppColors.primary : AppColors.border,

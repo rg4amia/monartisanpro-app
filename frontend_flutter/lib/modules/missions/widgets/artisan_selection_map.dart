@@ -548,7 +548,8 @@ class _MapSummaryCard extends StatelessWidget {
             ? controller.locationDetail.value
             : 'Position du client';
     final artisansCount = controller.artisans.length;
-    final hasNoNearby = artisansCount > 0 && (controller.artisans.first.distanceMetres ?? 0.0) > 5000;
+    final hasNoNearby = artisansCount > 0 &&
+        (controller.artisans.first.distanceMetres ?? 0.0) > 5000;
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -652,7 +653,9 @@ class _MapSummaryCard extends StatelessWidget {
               decoration: BoxDecoration(
                 color: const Color(0xFFC0842C).withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFC0842C).withValues(alpha: 0.2)),
+                border: Border.all(
+                  color: const Color(0xFFC0842C).withValues(alpha: 0.2),
+                ),
               ),
               child: const Row(
                 children: [
@@ -969,7 +972,8 @@ class _SelectedArtisanCard extends StatelessWidget {
                 ),
               ],
             ),
-            if (artisan.isGoldenMarker || artisan.nightInterventionAvailable) ...[
+            if (artisan.isGoldenMarker ||
+                artisan.nightInterventionAvailable) ...[
               const SizedBox(height: 12),
               Wrap(
                 spacing: 8,

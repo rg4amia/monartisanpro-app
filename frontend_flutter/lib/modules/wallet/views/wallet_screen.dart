@@ -130,11 +130,17 @@ class _BalanceCards extends StatelessWidget {
                           color: Colors.white.withValues(alpha: 0.15),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.account_balance_wallet_rounded, color: Colors.white, size: 20),
+                        child: const Icon(
+                          Icons.account_balance_wallet_rounded,
+                          color: Colors.white,
+                          size: 20,
+                        ),
                       ),
                       const SizedBox(width: 10),
                       Text(
-                        role == 'driver' ? 'Gains Disponibles (Livreur)' : 'Gains Disponibles (MO)',
+                        role == 'driver'
+                            ? 'Gains Disponibles (Livreur)'
+                            : 'Gains Disponibles (MO)',
                         style: const TextStyle(
                           color: Colors.white70,
                           fontWeight: FontWeight.w600,
@@ -145,18 +151,27 @@ class _BalanceCards extends StatelessWidget {
                     ],
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Row(
                       children: [
-                        Icon(Icons.check_circle_rounded, color: AppColors.success, size: 12),
+                        Icon(
+                          Icons.check_circle_rounded,
+                          color: AppColors.success,
+                          size: 12,
+                        ),
                         SizedBox(width: 4),
                         Text(
                           'Actif',
-                          style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ],
                     ),
@@ -288,19 +303,24 @@ class _TransactionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final String type = transaction.type ?? '';
     final String statut = (transaction.statut ?? '').toString().toLowerCase();
-    final bool isCredit = type == 'liberation_jalon' || type == 'acompte' || type == 'credit';
+    final bool isCredit =
+        type == 'liberation_jalon' || type == 'acompte' || type == 'credit';
     final Color color = isCredit ? AppColors.success : const Color(0xFFE11D48);
     final String sign = isCredit ? '+' : '-';
-    
+
     DateTime? date;
     try {
       date = DateTime.parse(transaction.createdAt);
     } catch (_) {}
 
-    final String? missionDesc = transaction is TransactionModel ? transaction.missionDescription : null;
-    final String? clientName = transaction is TransactionModel ? transaction.clientName : null;
-    final int? missionId = transaction is TransactionModel ? transaction.missionId : null;
-    final String provider = (transaction.provider ?? '').toString().toLowerCase();
+    final String? missionDesc =
+        transaction is TransactionModel ? transaction.missionDescription : null;
+    final String? clientName =
+        transaction is TransactionModel ? transaction.clientName : null;
+    final int? missionId =
+        transaction is TransactionModel ? transaction.missionId : null;
+    final String provider =
+        (transaction.provider ?? '').toString().toLowerCase();
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -330,7 +350,9 @@ class _TransactionTile extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
-                  isCredit ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded,
+                  isCredit
+                      ? Icons.arrow_downward_rounded
+                      : Icons.arrow_upward_rounded,
                   color: color,
                   size: 20,
                 ),
@@ -367,7 +389,8 @@ class _TransactionTile extends StatelessWidget {
                       (() {
                         if (date == null) return '';
                         try {
-                          return DateFormat("dd MMM yyyy 'à' HH:mm", 'fr_FR').format(date);
+                          return DateFormat("dd MMM yyyy 'à' HH:mm", 'fr_FR')
+                              .format(date);
                         } catch (_) {
                           try {
                             return DateFormat('dd/MM/yyyy HH:mm').format(date);
@@ -386,7 +409,8 @@ class _TransactionTile extends StatelessWidget {
               ),
             ],
           ),
-          if (missionDesc != null && missionDesc.isNotEmpty || clientName != null && clientName.isNotEmpty) ...[
+          if (missionDesc != null && missionDesc.isNotEmpty ||
+              clientName != null && clientName.isNotEmpty) ...[
             const SizedBox(height: 10),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -398,10 +422,15 @@ class _TransactionTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (missionId != null || (missionDesc != null && missionDesc.isNotEmpty))
+                  if (missionId != null ||
+                      (missionDesc != null && missionDesc.isNotEmpty))
                     Row(
                       children: [
-                        const Icon(Icons.handyman_outlined, size: 13, color: AppColors.textSecondary),
+                        const Icon(
+                          Icons.handyman_outlined,
+                          size: 13,
+                          color: AppColors.textSecondary,
+                        ),
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
@@ -421,7 +450,11 @@ class _TransactionTile extends StatelessWidget {
                     const SizedBox(height: 3),
                     Row(
                       children: [
-                        const Icon(Icons.person_outline, size: 13, color: AppColors.textSecondary),
+                        const Icon(
+                          Icons.person_outline,
+                          size: 13,
+                          color: AppColors.textSecondary,
+                        ),
                         const SizedBox(width: 6),
                         Text(
                           'Client : $clientName',
@@ -443,11 +476,14 @@ class _TransactionTile extends StatelessWidget {
             children: [
               if (provider.isNotEmpty)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
                     color: _getProviderColor(provider).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: _getProviderColor(provider).withValues(alpha: 0.3)),
+                    border: Border.all(
+                      color: _getProviderColor(provider).withValues(alpha: 0.3),
+                    ),
                   ),
                   child: Text(
                     _formatProvider(provider),
@@ -469,11 +505,15 @@ class _TransactionTile extends StatelessWidget {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  statut == 'confirme' || statut == 'paid' ? 'Confirmé / Reversé' : 'En traitement',
+                  statut == 'confirme' || statut == 'paid'
+                      ? 'Confirmé / Reversé'
+                      : 'En traitement',
                   style: TextStyle(
                     fontSize: 10.5,
                     fontWeight: FontWeight.w700,
-                    color: statut == 'confirme' || statut == 'paid' ? AppColors.success : Colors.orange.shade800,
+                    color: statut == 'confirme' || statut == 'paid'
+                        ? AppColors.success
+                        : Colors.orange.shade800,
                   ),
                 ),
               ),

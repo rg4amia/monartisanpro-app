@@ -93,7 +93,9 @@ class MissionsController extends GetxController {
 
       final results = await Future.wait([
         _repo.getMission(id, forceRefresh: forceRefresh),
-        _repo.getJalons(id, forceRefresh: forceRefresh).catchError((_) => <JalonModel>[]),
+        _repo
+            .getJalons(id, forceRefresh: forceRefresh)
+            .catchError((_) => <JalonModel>[]),
       ]);
 
       currentMission.value = results[0] as MissionModel;
@@ -443,7 +445,10 @@ class MissionsController extends GetxController {
   }
 
   /// Upload de preuves supplémentaires pour un jalon (artisan)
-  Future<bool> uploadJalonPhotos(int jalonId, List<Map<String, dynamic>> localFiles) async {
+  Future<bool> uploadJalonPhotos(
+    int jalonId,
+    List<Map<String, dynamic>> localFiles,
+  ) async {
     isSubmittingJalon.value = true;
     errorMsg.value = null;
 

@@ -29,8 +29,11 @@ class ArtisanProfileScreen extends StatelessWidget {
         }
         final a = c.artisan.value!;
         final scoreData = c.score.value;
-        final rootData = (scoreData?['data'] as Map<String, dynamic>?) ?? scoreData;
-        final dynamicScore = (rootData?['score_prosartisan'] as num?)?.toInt() ?? a.scoreProsArtisan;
+        final rootData =
+            (scoreData?['data'] as Map<String, dynamic>?) ?? scoreData;
+        final dynamicScore =
+            (rootData?['score_prosartisan'] as num?)?.toInt() ??
+                a.scoreProsArtisan;
 
         return CustomScrollView(
           slivers: [
@@ -45,7 +48,8 @@ class ArtisanProfileScreen extends StatelessWidget {
                         imageUrl: a.photo!,
                         fit: BoxFit.cover,
                         placeholder: (_, __) => Container(
-                            color: AppColors.primary.withValues(alpha: 0.3)),
+                          color: AppColors.primary.withValues(alpha: 0.3),
+                        ),
                         errorWidget: (_, __, ___) =>
                             Container(color: AppColors.primary),
                       )
@@ -55,9 +59,10 @@ class ArtisanProfileScreen extends StatelessWidget {
                           child: Text(
                             Formatters.initial(a.name ?? 'A'),
                             style: const TextStyle(
-                                fontSize: 72,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.accent),
+                              fontSize: 72,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.accent,
+                            ),
                           ),
                         ),
                       ),
@@ -82,15 +87,20 @@ class ArtisanProfileScreen extends StatelessWidget {
                                 spacing: 8,
                                 runSpacing: 6,
                                 children: [
-                                  Text(a.name ?? 'Artisan',
-                                      style: const TextStyle(
-                                          fontSize: 22,
-                                          fontWeight: FontWeight.w800,
-                                          color: AppColors.textPrimary)),
+                                  Text(
+                                    a.name ?? 'Artisan',
+                                    style: const TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
                                   if (a.isGoldenMarker)
                                     Container(
                                       padding: const EdgeInsets.symmetric(
-                                          horizontal: 8, vertical: 3),
+                                        horizontal: 8,
+                                        vertical: 3,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: const Color(0xFFFFF3CD),
                                         borderRadius: BorderRadius.circular(8),
@@ -98,22 +108,29 @@ class ArtisanProfileScreen extends StatelessWidget {
                                       child: const Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Icon(Icons.star,
-                                              size: 12,
-                                              color: Color(0xFFD4A017)),
+                                          Icon(
+                                            Icons.star,
+                                            size: 12,
+                                            color: Color(0xFFD4A017),
+                                          ),
                                           SizedBox(width: 3),
-                                          Text('Artisan d\'élite',
-                                              style: TextStyle(
-                                                  fontSize: 11,
-                                                  color: Color(0xFFD4A017),
-                                                  fontWeight: FontWeight.w600)),
+                                          Text(
+                                            'Artisan d\'élite',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              color: Color(0xFFD4A017),
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
                                         ],
                                       ),
                                     ),
                                   if (a.isCnmciVerified)
                                     Container(
                                       padding: const EdgeInsets.symmetric(
-                                          horizontal: 8, vertical: 3),
+                                        horizontal: 8,
+                                        vertical: 3,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: const Color(0xFFD1FAE5),
                                         borderRadius: BorderRadius.circular(8),
@@ -121,25 +138,33 @@ class ArtisanProfileScreen extends StatelessWidget {
                                       child: const Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Icon(Icons.verified,
-                                              size: 12,
-                                              color: Color(0xFF059669)),
+                                          Icon(
+                                            Icons.verified,
+                                            size: 12,
+                                            color: Color(0xFF059669),
+                                          ),
                                           SizedBox(width: 3),
-                                          Text('Certifié CNMCI',
-                                              style: TextStyle(
-                                                  fontSize: 11,
-                                                  color: Color(0xFF059669),
-                                                  fontWeight: FontWeight.w600)),
+                                          Text(
+                                            'Certifié CNMCI',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              color: Color(0xFF059669),
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
                                         ],
                                       ),
                                     ),
                                 ],
                               ),
                               if (a.trade != null)
-                                Text(a.trade!,
-                                    style: const TextStyle(
-                                        fontSize: 15,
-                                        color: AppColors.textSecondary)),
+                                Text(
+                                  a.trade!,
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
                               if (a.nightInterventionAvailable) ...[
                                 const SizedBox(height: 10),
                                 Container(
@@ -148,7 +173,8 @@ class ArtisanProfileScreen extends StatelessWidget {
                                     vertical: 6,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: AppColors.primary.withValues(alpha: 0.08),
+                                    color: AppColors.primary
+                                        .withValues(alpha: 0.08),
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: const Row(
@@ -175,21 +201,28 @@ class ArtisanProfileScreen extends StatelessWidget {
                               if (a.distance != null)
                                 Row(
                                   children: [
-                                    const Icon(Icons.location_on_outlined,
-                                        size: 14, color: AppColors.textMuted),
-                                    Text(a.distance!,
-                                        style: const TextStyle(
-                                            fontSize: 13,
-                                            color: AppColors.textMuted)),
+                                    const Icon(
+                                      Icons.location_on_outlined,
+                                      size: 14,
+                                      color: AppColors.textMuted,
+                                    ),
+                                    Text(
+                                      a.distance!,
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        color: AppColors.textMuted,
+                                      ),
+                                    ),
                                   ],
                                 ),
                             ],
                           ),
                         ),
                         ScoreProsArtisan(
-                            score: dynamicScore,
-                            size: ScoreSize.large,
-                            showLabel: true),
+                          score: dynamicScore,
+                          size: ScoreSize.large,
+                          showLabel: true,
+                        ),
                       ],
                     ),
                     const SizedBox(height: 20),
@@ -201,8 +234,10 @@ class ArtisanProfileScreen extends StatelessWidget {
                       child: c.fromSelection.value
                           ? ElevatedButton.icon(
                               onPressed: () {
-                                if (Get.isRegistered<ArtisanSelectionController>()) {
-                                  Get.find<ArtisanSelectionController>().selectArtisan(a);
+                                if (Get.isRegistered<
+                                    ArtisanSelectionController>()) {
+                                  Get.find<ArtisanSelectionController>()
+                                      .selectArtisan(a);
                                 } else {
                                   Get.snackbar(
                                     'Erreur',
@@ -212,30 +247,45 @@ class ArtisanProfileScreen extends StatelessWidget {
                                 }
                               },
                               style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 14),
                                 backgroundColor: AppColors.primary,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
-                              icon: const Icon(Icons.check_circle_outline, color: Colors.white),
+                              icon: const Icon(
+                                Icons.check_circle_outline,
+                                color: Colors.white,
+                              ),
                               label: const Text(
                                 'Choisir cet artisan',
-                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             )
                           : ElevatedButton.icon(
-                              onPressed: () => _showQuoteRequestModal(context, a),
+                              onPressed: () =>
+                                  _showQuoteRequestModal(context, a),
                               style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 14),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
-                              icon: const Icon(Icons.send_outlined, color: Colors.white),
+                              icon: const Icon(
+                                Icons.send_outlined,
+                                color: Colors.white,
+                              ),
                               label: const Text(
                                 'Demander un devis',
-                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                     ),
@@ -256,8 +306,7 @@ class ArtisanProfileScreen extends StatelessWidget {
   Widget _buildScoreBreakdown(ArtisanController c) {
     final scoreData = c.score.value;
     if (scoreData == null) return const SizedBox.shrink();
-    final rootData =
-        (scoreData['data'] as Map<String, dynamic>?) ?? scoreData;
+    final rootData = (scoreData['data'] as Map<String, dynamic>?) ?? scoreData;
     final breakdown = rootData['breakdown'] is Map
         ? Map<String, dynamic>.from(
             rootData['breakdown'] as Map,
@@ -266,44 +315,51 @@ class ArtisanProfileScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Score ProsArtisan',
-            style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary)),
+        const Text(
+          'Score ProsArtisan',
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+          ),
+        ),
         const SizedBox(height: 12),
         _ScoreDimension(
-            label: 'Fiabilité',
-            pct: 40,
-            value: _weightedBreakdownValue(
-              breakdown['fiabilite'],
-              40,
-            ),
-            color: AppColors.primary),
+          label: 'Fiabilité',
+          pct: 40,
+          value: _weightedBreakdownValue(
+            breakdown['fiabilite'],
+            40,
+          ),
+          color: AppColors.primary,
+        ),
         _ScoreDimension(
-            label: 'Intégrité',
-            pct: 30,
-            value: _weightedBreakdownValue(
-              breakdown['integrite'],
-              30,
-            ),
-            color: AppColors.accent),
+          label: 'Intégrité',
+          pct: 30,
+          value: _weightedBreakdownValue(
+            breakdown['integrite'],
+            30,
+          ),
+          color: AppColors.accent,
+        ),
         _ScoreDimension(
-            label: 'Qualité',
-            pct: 20,
-            value: _weightedBreakdownValue(
-              breakdown['qualite'],
-              20,
-            ),
-            color: AppColors.success),
+          label: 'Qualité',
+          pct: 20,
+          value: _weightedBreakdownValue(
+            breakdown['qualite'],
+            20,
+          ),
+          color: AppColors.success,
+        ),
         _ScoreDimension(
-            label: 'Réactivité',
-            pct: 10,
-            value: _weightedBreakdownValue(
-              breakdown['reactivite'],
-              10,
-            ),
-            color: AppColors.warning),
+          label: 'Réactivité',
+          pct: 10,
+          value: _weightedBreakdownValue(
+            breakdown['reactivite'],
+            10,
+          ),
+          color: AppColors.warning,
+        ),
       ],
     );
   }
@@ -344,12 +400,21 @@ class _ScoreDimension extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(label,
-                  style: const TextStyle(
-                      fontSize: 13, color: AppColors.textSecondary)),
-              Text('$value / $pct pts',
-                  style: TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w600, color: color)),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              Text(
+                '$value / $pct pts',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 4),
@@ -435,7 +500,10 @@ void _showQuoteRequestModal(BuildContext context, ArtisanModel a) {
               const SizedBox(height: 8),
               Text(
                 'Décrivez vos travaux pour que ${a.name} puisse vous établir un devis personnalisé.',
-                style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: AppColors.textSecondary,
+                ),
               ),
               const SizedBox(height: 16),
 
@@ -444,8 +512,10 @@ void _showQuoteRequestModal(BuildContext context, ArtisanModel a) {
                 controller: descCtrl,
                 maxLines: 4,
                 decoration: InputDecoration(
-                  hintText: 'Décrivez précisément votre besoin (min. 20 caractères)...\nEx: Remplacement fuite sous évier cuisine et pose nouveau siphon.',
-                  hintStyle: const TextStyle(fontSize: 13, color: AppColors.textMuted),
+                  hintText:
+                      'Décrivez précisément votre besoin (min. 20 caractères)...\nEx: Remplacement fuite sous évier cuisine et pose nouveau siphon.',
+                  hintStyle:
+                      const TextStyle(fontSize: 13, color: AppColors.textMuted),
                   filled: true,
                   fillColor: AppColors.background,
                   border: OutlineInputBorder(
@@ -459,23 +529,33 @@ void _showQuoteRequestModal(BuildContext context, ArtisanModel a) {
               // Urgency Selection
               const Text(
                 'Niveau d\'urgence',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
               ),
               const SizedBox(height: 8),
-              Obx(() => SegmentedButton<String>(
-                segments: const [
-                  ButtonSegment(value: 'faible', label: Text('Normal')),
-                  ButtonSegment(value: 'moyen', label: Text('Moyen')),
-                  ButtonSegment(value: 'urgent', label: Text('Urgent')),
-                ],
-                selected: {urgency.value},
-                onSelectionChanged: (set) => urgency.value = set.first,
-              )),
+              Obx(
+                () => SegmentedButton<String>(
+                  segments: const [
+                    ButtonSegment(value: 'faible', label: Text('Normal')),
+                    ButtonSegment(value: 'moyen', label: Text('Moyen')),
+                    ButtonSegment(value: 'urgent', label: Text('Urgent')),
+                  ],
+                  selected: {urgency.value},
+                  onSelectionChanged: (set) => urgency.value = set.first,
+                ),
+              ),
               const SizedBox(height: 16),
 
               const Text(
                 'Visuels (Photos ou Vidéos)',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
               ),
               const SizedBox(height: 8),
               Row(
@@ -558,26 +638,31 @@ void _showQuoteRequestModal(BuildContext context, ArtisanModel a) {
                   }
 
                   // 1. Show loading progress indicator
-                  unawaited(Get.dialog(
-                    const Center(
-                      child: CircularProgressIndicator(),
+                  unawaited(
+                    Get.dialog(
+                      const Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                      barrierDismissible: false,
                     ),
-                    barrierDismissible: false,
-                  ));
+                  );
 
                   try {
-                    final missionsController = Get.isRegistered<MissionsController>()
-                        ? Get.find<MissionsController>()
-                        : Get.put(MissionsController());
+                    final missionsController =
+                        Get.isRegistered<MissionsController>()
+                            ? Get.find<MissionsController>()
+                            : Get.put(MissionsController());
 
                     // 2. Upload photos and videos first
                     final List<String> uploadedUrls = [];
                     for (final photo in photos) {
-                      final url = await missionsController.uploadFile(photo.path);
+                      final url =
+                          await missionsController.uploadFile(photo.path);
                       uploadedUrls.add(url);
                     }
                     if (video.value != null) {
-                      final url = await missionsController.uploadFile(video.value!.path);
+                      final url = await missionsController
+                          .uploadFile(video.value!.path);
                       uploadedUrls.add(url);
                     }
 
@@ -594,21 +679,25 @@ void _showQuoteRequestModal(BuildContext context, ArtisanModel a) {
                     Get.back(); // Close bottom sheet modal
 
                     if (mission != null) {
-                      unawaited(Get.toNamed(
-                        Routes.missionTracking,
-                        arguments: mission,
-                      ));
+                      unawaited(
+                        Get.toNamed(
+                          Routes.missionTracking,
+                          arguments: mission,
+                        ),
+                      );
                     }
                   } catch (e) {
                     Get.back(); // Close loading dialog
-                    
-                    String errorMsg = 'Une erreur est survenue lors du téléversement ou de la création';
+
+                    String errorMsg =
+                        'Une erreur est survenue lors du téléversement ou de la création';
                     if (e is DioException) {
-                      errorMsg = e.response?.data['message'] ?? e.message ?? errorMsg;
+                      errorMsg =
+                          e.response?.data['message'] ?? e.message ?? errorMsg;
                     } else if (e.toString().contains('Fichier rejeté')) {
                       errorMsg = e.toString();
                     }
-                    
+
                     Get.snackbar(
                       'Erreur',
                       errorMsg,
@@ -622,10 +711,15 @@ void _showQuoteRequestModal(BuildContext context, ArtisanModel a) {
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   backgroundColor: AppColors.client,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 icon: const Icon(Icons.send_outlined, color: Colors.white),
-                label: const Text('ENVOYER LA DEMANDE DE DEVIS', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                label: const Text(
+                  'ENVOYER LA DEMANDE DE DEVIS',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                ),
               ),
             ],
           ),

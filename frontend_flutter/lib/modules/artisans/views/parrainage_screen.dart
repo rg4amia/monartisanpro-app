@@ -14,7 +14,7 @@ class ParrainageScreen extends StatelessWidget {
   void _submit() async {
     final phone = _phoneController.text.trim();
     if (phone.isEmpty) return;
-    
+
     final success = await controller.addFilleul(phone);
     if (success) {
       _phoneController.clear();
@@ -51,11 +51,17 @@ class ParrainageScreen extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: AppColors.secondary,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                        border: Border.all(
+                          color: AppColors.primary.withValues(alpha: 0.3),
+                        ),
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.shield, color: AppColors.primary, size: 40),
+                          Icon(
+                            Icons.shield,
+                            color: AppColors.primary,
+                            size: 40,
+                          ),
                           const SizedBox(width: 16),
                           Expanded(
                             child: Text(
@@ -71,11 +77,15 @@ class ParrainageScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    
+
                     // Formulaire d'ajout
                     Text(
                       'Nouveau Filleul',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     Row(
@@ -103,7 +113,8 @@ class ParrainageScreen extends StatelessWidget {
                         SizedBox(
                           height: 56,
                           child: ElevatedButton(
-                            onPressed: controller.isSubmitting.value ? null : _submit,
+                            onPressed:
+                                controller.isSubmitting.value ? null : _submit,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primary,
                               foregroundColor: Colors.white,
@@ -111,8 +122,15 @@ class ParrainageScreen extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            child: controller.isSubmitting.value 
-                                ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                            child: controller.isSubmitting.value
+                                ? const SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
                                 : const Icon(Icons.add),
                           ),
                         ),
@@ -121,15 +139,19 @@ class ParrainageScreen extends StatelessWidget {
                     const SizedBox(height: 32),
                     Text(
                       'Vos Filleuls Actifs',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                     const SizedBox(height: 12),
                   ],
                 ),
               ),
-              
+
               // Liste
-              controller.filleuls.isEmpty 
+              controller.filleuls.isEmpty
                   ? const SliverFillRemaining(
                       hasScrollBody: false,
                       child: Center(
@@ -156,20 +178,30 @@ class ParrainageScreen extends StatelessWidget {
                               children: [
                                 CircleAvatar(
                                   backgroundColor: AppColors.background,
-                                  child: Icon(Icons.person, color: AppColors.primary),
+                                  child: Icon(
+                                    Icons.person,
+                                    color: AppColors.primary,
+                                  ),
                                 ),
                                 const SizedBox(width: 16),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         filleul['name'] ?? 'Inconnu',
-                                        style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.textPrimary,
+                                        ),
                                       ),
                                       Text(
                                         filleul['phone'] ?? '',
-                                        style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                                        style: TextStyle(
+                                          color: AppColors.textSecondary,
+                                          fontSize: 13,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -179,14 +211,23 @@ class ParrainageScreen extends StatelessWidget {
                                   children: [
                                     Text(
                                       'Caution: ${f['score_caution']} pts',
-                                      style: TextStyle(color: AppColors.warning, fontWeight: FontWeight.bold, fontSize: 12),
+                                      style: TextStyle(
+                                        color: AppColors.warning,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12,
+                                      ),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      f['created_at'] != null 
-                                          ? DateFormat('dd/MM/yyyy').format(DateTime.parse(f['created_at']))
+                                      f['created_at'] != null
+                                          ? DateFormat('dd/MM/yyyy').format(
+                                              DateTime.parse(f['created_at']),
+                                            )
                                           : '',
-                                      style: TextStyle(color: AppColors.textSecondary, fontSize: 11),
+                                      style: TextStyle(
+                                        color: AppColors.textSecondary,
+                                        fontSize: 11,
+                                      ),
                                     ),
                                   ],
                                 ),

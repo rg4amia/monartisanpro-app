@@ -139,24 +139,24 @@ class AppColors {
 
   // Modern Card Shadow
   static List<BoxShadow> get cardShadow => [
-    BoxShadow(
-      color: primary.withValues(alpha: 0.05),
-      blurRadius: 16,
-      offset: const Offset(0, 4),
-    ),
-    BoxShadow(
-      color: primary.withValues(alpha: 0.03),
-      blurRadius: 4,
-      offset: const Offset(0, 1),
-    ),
-  ];
+        BoxShadow(
+          color: primary.withValues(alpha: 0.05),
+          blurRadius: 16,
+          offset: const Offset(0, 4),
+        ),
+        BoxShadow(
+          color: primary.withValues(alpha: 0.03),
+          blurRadius: 4,
+          offset: const Offset(0, 1),
+        ),
+      ];
 
   static List<BoxShadow> get goldGlow => [
-    BoxShadow(
-      color: const Color(0xFFD4A017).withValues(alpha: 0.35),
-      blurRadius: 12,
-      spreadRadius: 1,
-      offset: const Offset(0, 3),
-    ),
-  ];
+        BoxShadow(
+          color: const Color(0xFFD4A017).withValues(alpha: 0.35),
+          blurRadius: 12,
+          spreadRadius: 1,
+          offset: const Offset(0, 3),
+        ),
+      ];
 }

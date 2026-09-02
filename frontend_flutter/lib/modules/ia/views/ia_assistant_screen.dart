@@ -43,7 +43,7 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
 
   Future<void> _selectAndSendImage() async {
     final ImagePicker picker = ImagePicker();
-    
+
     final ImageSource? source = await showModalBottomSheet<ImageSource>(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -60,7 +60,8 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
                 onTap: () => Navigator.pop(context, ImageSource.camera),
               ),
               ListTile(
-                leading: const Icon(Icons.photo_library, color: Color(0xFF8B5CF6)),
+                leading:
+                    const Icon(Icons.photo_library, color: Color(0xFF8B5CF6)),
                 title: const Text('Choisir depuis la galerie'),
                 onTap: () => Navigator.pop(context, ImageSource.gallery),
               ),
@@ -94,7 +95,7 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
       });
 
       await _controller.runJavaScript(
-        '(() => { const data = $jsData; window.handleFlutterImage(data.base64, data.filename, data.fileSize); })()'
+        '(() => { const data = $jsData; window.handleFlutterImage(data.base64, data.filename, data.fileSize); })()',
       );
     } catch (e) {
       debugPrint('Error picking/reading/sending image: $e');
@@ -121,7 +122,9 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
 
   void _initWebView() {
     final assistantUrl = _buildAssistantUrl();
-    debugPrint('[IaAssistant] Chargement WebView → $assistantUrl (mode: ${EnvConfig.currentMode})');
+    debugPrint(
+      '[IaAssistant] Chargement WebView → $assistantUrl (mode: ${EnvConfig.currentMode})',
+    );
 
     setState(() {
       _isLoading = true;
@@ -132,7 +135,9 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(const Color(0xFFF8FAFC))
-      ..setUserAgent('Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36')
+      ..setUserAgent(
+        'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+      )
       ..clearCache()
       ..clearLocalStorage()
       ..setNavigationDelegate(
@@ -149,8 +154,10 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
             });
           },
           onWebResourceError: (WebResourceError error) {
-            debugPrint('WebView error (isForMainFrame: ${error.isForMainFrame}, url: ${error.url}): ${error.description}');
-            
+            debugPrint(
+              'WebView error (isForMainFrame: ${error.isForMainFrame}, url: ${error.url}): ${error.description}',
+            );
+
             // Ne bloquer la page entière QUE si l'erreur concerne le cadre principal (main frame)
             final bool isMainFrameError = error.isForMainFrame ?? true;
             if (!isMainFrameError) {
@@ -168,7 +175,9 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
               Future.delayed(const Duration(seconds: 2), () {
                 if (mounted) {
                   final assistantUrl = _buildAssistantUrl();
-                  debugPrint('[IaAssistant] Retry automatique $_retryCount/$_maxRetries → $assistantUrl');
+                  debugPrint(
+                    '[IaAssistant] Retry automatique $_retryCount/$_maxRetries → $assistantUrl',
+                  );
                   _controller.loadRequest(Uri.parse(assistantUrl));
                 }
               });
@@ -189,16 +198,16 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
             final data = jsonDecode(message.message);
             final event = data['event'];
             final msg = data['message'] ?? '';
-            
+
             if (event == 'select_image') {
               _selectAndSendImage();
               return;
             }
-            
+
             final color = event == 'auth_success'
                 ? const Color(0xFF10B981) // Emerald Green
                 : const Color(0xFFEF4444); // Red
-                
+
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
@@ -232,7 +241,8 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
       _isLoading = true;
       _hasError = false;
       _errorMessage = '';
-      _retryCount = 0; // Reset le compteur pour une nouvelle série de tentatives
+      _retryCount =
+          0; // Reset le compteur pour une nouvelle série de tentatives
     });
 
     // Relancer la découverte réseau
@@ -240,7 +250,9 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
 
     // Recharger avec la nouvelle URL
     final assistantUrl = _buildAssistantUrl();
-    debugPrint('[IaAssistant] Retry → $assistantUrl (mode: ${EnvConfig.currentMode})');
+    debugPrint(
+      '[IaAssistant] Retry → $assistantUrl (mode: ${EnvConfig.currentMode})',
+    );
     unawaited(_controller.loadRequest(Uri.parse(assistantUrl)));
   }
 
@@ -251,7 +263,8 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
       appBar: AppBar(
         title: const Text(
           'Assistant IA Chantier',
-          style: TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.bold),
+          style:
+              TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.bold),
         ),
         backgroundColor: const Color(0xFFFFFFFF),
         elevation: 0,

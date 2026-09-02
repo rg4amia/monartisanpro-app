@@ -23,7 +23,8 @@ class LitigeDetailScreen extends GetView<LitigeDetailController> {
 
         final isResolved = data['statut'] == 'resolu';
         final proofs = (data['preuves'] as List<dynamic>? ?? const []);
-        final evidenceCounts = data['evidenceCounts'] as Map<String, dynamic>? ?? const {};
+        final evidenceCounts =
+            data['evidenceCounts'] as Map<String, dynamic>? ?? const {};
 
         return SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -37,7 +38,9 @@ class LitigeDetailScreen extends GetView<LitigeDetailController> {
               const SizedBox(height: 16),
               _InfoCard(
                 title: 'Etape en cours',
-                content: (data['nextAction'] ?? 'Dossier en cours de traitement').toString(),
+                content:
+                    (data['nextAction'] ?? 'Dossier en cours de traitement')
+                        .toString(),
               ),
               const SizedBox(height: 16),
               _InfoCard(
@@ -82,7 +85,9 @@ class LitigeDetailScreen extends GetView<LitigeDetailController> {
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 const SizedBox(height: 12),
-                ...proofs.map((proof) => _ProofTile(data: proof as Map<String, dynamic>)),
+                ...proofs.map(
+                  (proof) => _ProofTile(data: proof as Map<String, dynamic>),
+                ),
                 const SizedBox(height: 20),
               ],
               if (isResolved) ...[
@@ -178,7 +183,8 @@ class _StatusBadge extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12),
+        style:
+            TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12),
       ),
     );
   }
@@ -219,7 +225,8 @@ class _ProofTile extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               'GPS: ${coordinates['lat']}, ${coordinates['lng']}',
-              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              style:
+                  const TextStyle(fontSize: 12, color: AppColors.textSecondary),
             ),
           ],
         ],

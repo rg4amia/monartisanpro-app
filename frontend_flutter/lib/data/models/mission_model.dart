@@ -135,38 +135,32 @@ class MissionModel {
             json['ratioMateriaux'] ??
             _computeRatio(montantMateriaux, montantTotal),
       ),
-      createdAt:
-          (json['created_at'] ??
-                  json['createdAt'] ??
-                  DateTime.now().toIso8601String())
-              .toString(),
+      createdAt: (json['created_at'] ??
+              json['createdAt'] ??
+              DateTime.now().toIso8601String())
+          .toString(),
       updatedAt: (json['updated_at'] ?? json['updatedAt'])?.toString(),
-      clientName:
-          (json['client_name'] ??
-                  json['clientName'] ??
-                  client?['name'] ??
-                  json['clientNom'])
-              as String?,
-      artisanName:
-          (json['artisan_name'] ?? json['artisanName'] ?? artisan?['name'])
-              as String?,
+      clientName: (json['client_name'] ??
+          json['clientName'] ??
+          client?['name'] ??
+          json['clientNom']) as String?,
+      artisanName: (json['artisan_name'] ??
+          json['artisanName'] ??
+          artisan?['name']) as String?,
       description: (json['description'] ?? json['problem']) as String?,
-      category:
-          (json['category'] ??
-                  json['geminiCategory'] ??
-                  json['artisanCategory'])
-              as String?,
+      category: (json['category'] ??
+          json['geminiCategory'] ??
+          json['artisanCategory']) as String?,
       urgency: (json['urgency'] ?? json['geminiUrgency']) as String?,
       location: _parseLocation(json),
-      paymentStatus:
-          (json['paymentStatus'] as String?) ??
+      paymentStatus: (json['paymentStatus'] as String?) ??
           _derivePaymentStatus((json['status'] ?? '').toString()),
       paymentType:
           (json['payment_type'] ?? json['paymentType'] ?? 'total').toString(),
       statusGemini:
           (json['statusGemini'] ?? json['status'] ?? '').toString().isEmpty
-          ? null
-          : (json['statusGemini'] ?? json['status']).toString(),
+              ? null
+              : (json['statusGemini'] ?? json['status']).toString(),
       hasDevis: json['has_devis'] == true || json['hasDevis'] == true,
       photos: (json['photos'] as List<dynamic>?)
               ?.map((e) => e.toString())
@@ -174,40 +168,50 @@ class MissionModel {
           [],
       clientPhone: (client?['phone'] ?? json['clientPhone'])?.toString(),
       clientLatitude: json['clientCoordinates'] is Map<String, dynamic>
-          ? double.tryParse((json['clientCoordinates'] as Map<String, dynamic>)['lat'].toString())
-          : (json['clientLatitude'] != null ? double.tryParse(json['clientLatitude'].toString()) : null),
+          ? double.tryParse(
+              (json['clientCoordinates'] as Map<String, dynamic>)['lat']
+                  .toString(),
+            )
+          : (json['clientLatitude'] != null
+              ? double.tryParse(json['clientLatitude'].toString())
+              : null),
       clientLongitude: json['clientCoordinates'] is Map<String, dynamic>
-          ? double.tryParse((json['clientCoordinates'] as Map<String, dynamic>)['lng'].toString())
-          : (json['clientLongitude'] != null ? double.tryParse(json['clientLongitude'].toString()) : null),
+          ? double.tryParse(
+              (json['clientCoordinates'] as Map<String, dynamic>)['lng']
+                  .toString(),
+            )
+          : (json['clientLongitude'] != null
+              ? double.tryParse(json['clientLongitude'].toString())
+              : null),
     );
   }
 
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'client_id': clientId,
-    'artisan_id': artisanId,
-    'status': status,
-    'montant_total': montantTotal,
-    'montant_materiaux': montantMateriaux,
-    'montant_mo': montantMo,
-    'ratio_materiaux': ratioMateriaux,
-    'created_at': createdAt,
-    'updated_at': updatedAt,
-    'client_name': clientName,
-    'artisan_name': artisanName,
-    'description': description,
-    'category': category,
-    'urgency': urgency,
-    'location': location,
-    'paymentStatus': paymentStatus,
-    'payment_type': paymentType,
-    'statusGemini': statusGemini,
-    'has_devis': hasDevis,
-    'photos': photos,
-    'clientPhone': clientPhone,
-    'clientLatitude': clientLatitude,
-    'clientLongitude': clientLongitude,
-  };
+        'id': id,
+        'client_id': clientId,
+        'artisan_id': artisanId,
+        'status': status,
+        'montant_total': montantTotal,
+        'montant_materiaux': montantMateriaux,
+        'montant_mo': montantMo,
+        'ratio_materiaux': ratioMateriaux,
+        'created_at': createdAt,
+        'updated_at': updatedAt,
+        'client_name': clientName,
+        'artisan_name': artisanName,
+        'description': description,
+        'category': category,
+        'urgency': urgency,
+        'location': location,
+        'paymentStatus': paymentStatus,
+        'payment_type': paymentType,
+        'statusGemini': statusGemini,
+        'has_devis': hasDevis,
+        'photos': photos,
+        'clientPhone': clientPhone,
+        'clientLatitude': clientLatitude,
+        'clientLongitude': clientLongitude,
+      };
 
   MissionModel copyWith({
     int? id,
@@ -270,9 +274,8 @@ class MissionModel {
     }
 
     return (json['clientAddress'] ??
-            json['location_address'] ??
-            json['adresse'])
-        as String?;
+        json['location_address'] ??
+        json['adresse']) as String?;
   }
 
   static int _parseInt(dynamic value) {

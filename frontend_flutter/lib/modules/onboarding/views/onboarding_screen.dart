@@ -107,18 +107,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     double bubble1Left = -100 + (scrollPosition * 120);
     double bubble1Top = -50 + (scrollPosition * 40);
     Color bubble1Color = Color.lerp(
-      const Color(0xFFFDB750).withValues(alpha: 0.18),
-      const Color(0xFF5B5FEF).withValues(alpha: 0.12),
-      scrollPosition / (_pages.length - 1),
-    ) ?? const Color(0xFFFDB750).withValues(alpha: 0.15);
+          const Color(0xFFFDB750).withValues(alpha: 0.18),
+          const Color(0xFF5B5FEF).withValues(alpha: 0.12),
+          scrollPosition / (_pages.length - 1),
+        ) ??
+        const Color(0xFFFDB750).withValues(alpha: 0.15);
 
     double bubble2Right = -80 - (scrollPosition * 60);
     double bubble2Bottom = 80 + (scrollPosition * 90);
     Color bubble2Color = Color.lerp(
-      const Color(0xFF5B5FEF).withValues(alpha: 0.12),
-      const Color(0xFF4CAF50).withValues(alpha: 0.18),
-      scrollPosition / (_pages.length - 1),
-    ) ?? const Color(0xFF5B5FEF).withValues(alpha: 0.12);
+          const Color(0xFF5B5FEF).withValues(alpha: 0.12),
+          const Color(0xFF4CAF50).withValues(alpha: 0.18),
+          scrollPosition / (_pages.length - 1),
+        ) ??
+        const Color(0xFF5B5FEF).withValues(alpha: 0.12);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -136,13 +138,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             bottom: bubble2Bottom,
             child: _GlowBubble(size: 320, color: bubble2Color),
           ),
-          
+
           SafeArea(
             child: Column(
               children: [
                 // AppBar Elements
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -151,10 +154,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               decoration: BoxDecoration(
                                 color: Colors.white.withValues(alpha: 0.6),
                                 shape: BoxShape.circle,
-                                border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+                                border: Border.all(
+                                  color: Colors.black.withValues(alpha: 0.06),
+                                ),
                               ),
                               child: IconButton(
-                                icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF1A1A1A), size: 18),
+                                icon: const Icon(
+                                  Icons.arrow_back_ios_new_rounded,
+                                  color: Color(0xFF1A1A1A),
+                                  size: 18,
+                                ),
                                 onPressed: () {
                                   _pageController.previousPage(
                                     duration: const Duration(milliseconds: 500),
@@ -190,7 +199,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ],
                   ),
                 ),
-                
+
                 // PageView
                 Expanded(
                   child: PageView.builder(
@@ -226,20 +235,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                     ? _pages[index].accentColor
                                     : const Color(0xFFE0E0E0),
                                 borderRadius: BorderRadius.circular(4),
-                                boxShadow: isSelected ? [
-                                  BoxShadow(
-                                    color: _pages[index].accentColor.withValues(alpha: 0.35),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 3),
-                                  )
-                                ] : null,
+                                boxShadow: isSelected
+                                    ? [
+                                        BoxShadow(
+                                          color: _pages[index]
+                                              .accentColor
+                                              .withValues(alpha: 0.35),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 3),
+                                        ),
+                                      ]
+                                    : null,
                               ),
                             );
                           },
                         ),
                       ),
                       const SizedBox(height: 32),
-                      
+
                       // Button
                       Container(
                         width: double.infinity,
@@ -249,17 +262,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           gradient: LinearGradient(
                             colors: [
                               _pages[_currentPage].accentColor,
-                              Color.alphaBlend(Colors.black.withValues(alpha: 0.12), _pages[_currentPage].accentColor),
+                              Color.alphaBlend(
+                                Colors.black.withValues(alpha: 0.12),
+                                _pages[_currentPage].accentColor,
+                              ),
                             ],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: _pages[_currentPage].accentColor.withValues(alpha: 0.35),
+                              color: _pages[_currentPage]
+                                  .accentColor
+                                  .withValues(alpha: 0.35),
                               blurRadius: 18,
                               offset: const Offset(0, 8),
-                            )
+                            ),
                           ],
                         ),
                         child: ElevatedButton(
@@ -288,7 +306,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               ),
                               if (_currentPage < _pages.length - 1) ...[
                                 const SizedBox(width: 8),
-                                const Icon(Icons.arrow_forward_rounded, size: 20),
+                                const Icon(
+                                  Icons.arrow_forward_rounded,
+                                  size: 20,
+                                ),
                               ],
                             ],
                           ),
@@ -327,10 +348,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 width: double.infinity,
                 height: math.min(constraints.maxHeight * 0.52, 380),
                 decoration: BoxDecoration(
-                  color: page.showProfile ? Colors.transparent : page.backgroundColor,
+                  color: page.showProfile
+                      ? Colors.transparent
+                      : page.backgroundColor,
                   borderRadius: BorderRadius.circular(32),
-                  boxShadow: page.showProfile 
-                      ? null 
+                  boxShadow: page.showProfile
+                      ? null
                       : [
                           BoxShadow(
                             color: Colors.black.withValues(alpha: 0.04),
@@ -387,7 +410,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ],
           ),
         );
-      }
+      },
     );
   }
 
@@ -415,7 +438,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               color: page.accentColor.withValues(alpha: 0.2),
               blurRadius: 20,
               offset: const Offset(0, 8),
-            )
+            ),
           ],
         ),
         child: Icon(
@@ -459,7 +482,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   decoration: BoxDecoration(
                     color: const Color(0xFFFDB750).withValues(alpha: 0.12),
                     shape: BoxShape.circle,
-                    border: Border.all(color: const Color(0xFFFDB750), width: 2),
+                    border:
+                        Border.all(color: const Color(0xFFFDB750), width: 2),
                   ),
                   child: const Center(
                     child: Text('👨‍🔧', style: TextStyle(fontSize: 30)),
@@ -487,7 +511,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               color: Color(0xFF4CAF50),
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.check, color: Colors.white, size: 12),
+                            child: const Icon(
+                              Icons.check,
+                              color: Colors.white,
+                              size: 12,
+                            ),
                           ),
                         ],
                       ),
@@ -540,7 +568,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.verified_user_rounded, color: Color(0xFF2E7D32), size: 18),
+                  const Icon(
+                    Icons.verified_user_rounded,
+                    color: Color(0xFF2E7D32),
+                    size: 18,
+                  ),
                   const SizedBox(width: 8),
                   const Expanded(
                     child: Text(
@@ -561,7 +593,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  Widget _buildProsArtisanMetric(String label, String value, String suffix, Color color) {
+  Widget _buildProsArtisanMetric(
+    String label,
+    String value,
+    String suffix,
+    Color color,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -613,13 +650,32 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _buildRoleCircle('Client', '👩‍💼', const Color(0xFFE8EAF6), const Color(0xFF5B5FEF)),
-                _buildRoleCircle('Artisan', '👨‍🔧', const Color(0xFFFFF8E1), const Color(0xFFFDB750)),
-                _buildRoleCircle('Boutique', '🏭', const Color(0xFFE8F5E9), const Color(0xFF4CAF50)),
+                _buildRoleCircle(
+                  'Client',
+                  '👩‍💼',
+                  const Color(0xFFE8EAF6),
+                  const Color(0xFF5B5FEF),
+                ),
+                _buildRoleCircle(
+                  'Artisan',
+                  '👨‍🔧',
+                  const Color(0xFFFFF8E1),
+                  const Color(0xFFFDB750),
+                ),
+                _buildRoleCircle(
+                  'Boutique',
+                  '🏭',
+                  const Color(0xFFE8F5E9),
+                  const Color(0xFF4CAF50),
+                ),
               ],
             ),
             const SizedBox(height: 24),
-            const Icon(Icons.swap_horiz_rounded, color: Color(0xFF5B5FEF), size: 36),
+            const Icon(
+              Icons.swap_horiz_rounded,
+              color: Color(0xFF5B5FEF),
+              size: 36,
+            ),
             const SizedBox(height: 8),
             const Text(
               'Un Écosystème Intégré',
@@ -650,7 +706,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 color: border.withValues(alpha: 0.18),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
-              )
+              ),
             ],
           ),
           child: Center(
@@ -719,4 +775,3 @@ class OnboardingPage {
     this.showRoleSelection = false,
   });
 }
-

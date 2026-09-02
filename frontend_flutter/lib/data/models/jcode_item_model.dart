@@ -33,7 +33,8 @@ class JcodeItemModel {
 
   factory JcodeItemModel.fromJson(Map<String, dynamic> json) {
     final quantity = _parseInt(json['quantity']);
-    final quantityServed = _parseInt(json['quantityServed'] ?? json['quantity_served']);
+    final quantityServed =
+        _parseInt(json['quantityServed'] ?? json['quantity_served']);
     final unitPrice = _parseInt(json['unitPrice'] ?? json['unit_price']);
 
     return JcodeItemModel(
