@@ -30,8 +30,8 @@ Total indicatif : **~12 jours-homme**, découpables en 3 lots livrables indépen
 | 3 | Lint `prefer_single_quotes` (`dart fix`, 13 fichiers) | ✅ Fait | `a154304e` |
 | 3 | Lint `only_throw_errors` (0 violation) | ✅ Fait | `9968da80` |
 | 3 | Réparation de `mobile-ci.yml` (chemins/branches, gate `flutter analyze`) | ✅ Fait | `9968da80` |
-| 3 | Lint `require_trailing_commas` — **bloqué** : impose `dart format .` = 100 fichiers reformatés → PR dédiée, à merger vite | ⏳ À faire | — |
-| 3 | Lint `unawaited_futures` (53 sites, 25 fichiers, revue manuelle `await` vs `unawaited()`) | ⏳ À faire | — |
+| 3 | Lint `unawaited_futures` (51 sites : 50 `unawaited()` + 1 vrai `await` dans `StorageService.clearAll`) | ✅ Fait | `21a11658` |
+| 3 | Lint `require_trailing_commas` — **bloqué** : `dart fix` seul produit `},);` ; propre uniquement avec `dart format .` = ~100 fichiers → PR dédiée, à merger vite, hors branche partagée | ⏳ À faire | — |
 | 3 | Lint `avoid_dynamic_calls` (à faire après typage des repositories) | ⏳ À faire | — |
 | 2 | Découpe des 5 vues volumineuses (prérequis : golden/widget tests) | ⏳ À faire | — |
 
