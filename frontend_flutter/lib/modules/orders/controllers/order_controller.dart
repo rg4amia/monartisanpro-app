@@ -20,7 +20,7 @@ class OrderController extends GetxController {
 
   // Liste des fournisseurs agréés
   final approvedSuppliers = <SupplierModel>[].obs;
-  
+
   // Catalogue du fournisseur sélectionné
   final supplierProducts = <SupplierProductModel>[].obs;
   final selectedSupplier = Rxn<SupplierModel>();
@@ -69,21 +69,31 @@ class OrderController extends GetxController {
         cart.isNotEmpty) {
       Get.dialog(
         AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Changer de quincaillerie ?', style: TextStyle(fontWeight: FontWeight.bold)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text(
+            'Changer de quincaillerie ?',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
           content: Text(
             'Votre panier contient actuellement $cartCount article(s) chez "${selectedSupplier.value!.shopName}". Souhaitez-vous le vider pour commander chez "${supplier.shopName}" ?',
-            style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
+            style:
+                const TextStyle(fontSize: 14, color: AppColors.textSecondary),
           ),
           actions: [
             TextButton(
               onPressed: () => Get.back(),
-              child: const Text('Conserver mon panier', style: TextStyle(color: AppColors.textSecondary)),
+              child: const Text(
+                'Conserver mon panier',
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.danger,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
               onPressed: () {
                 Get.back();
@@ -92,7 +102,13 @@ class OrderController extends GetxController {
                 loadSupplierProducts(supplier.id);
                 if (onConfirmed != null) onConfirmed();
               },
-              child: const Text('Vider et Continuer', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              child: const Text(
+                'Vider et Continuer',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ],
         ),
@@ -137,7 +153,8 @@ class OrderController extends GetxController {
   int get subtotal {
     int total = 0;
     for (var entry in cart.entries) {
-      final product = supplierProducts.firstWhereOrNull((p) => p.id == entry.key);
+      final product =
+          supplierProducts.firstWhereOrNull((p) => p.id == entry.key);
       if (product != null) {
         total += product.unitPrice * entry.value;
       }

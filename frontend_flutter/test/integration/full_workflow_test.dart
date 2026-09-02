@@ -202,7 +202,8 @@ void main() {
       }
     });
 
-    test('should filter artisans with emergency kit for night intervention (V23)',
+    test(
+        'should filter artisans with emergency kit for night intervention (V23)',
         () async {
       // V23 : hasEmergencyKit = true -> artisans disponibles la nuit (18h-7h)
       // Majoration nightSurgeMultiplier appliquee automatiquement
@@ -390,7 +391,8 @@ void main() {
       }
     });
 
-    test('should scan J-Code with valid GPS position (< 100m from boutique) (V23)',
+    test(
+        'should scan J-Code with valid GPS position (< 100m from boutique) (V23)',
         () async {
       // Coordonnees simulant le fournisseur a sa boutique (Adjame lat/lng du MOCK_DB)
       try {
@@ -407,7 +409,8 @@ void main() {
       }
     });
 
-    test('should block J-Code scan when GPS distance > 100m (anti-fraud rule V23)',
+    test(
+        'should block J-Code scan when GPS distance > 100m (anti-fraud rule V23)',
         () async {
       // Coordonnees eloignees de la boutique -> doit etre bloque + alerte admin
       try {

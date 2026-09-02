@@ -61,10 +61,13 @@ class DevisRepository {
     required List<DevisLigne> lignes,
     required List<DevisJalon> jalons,
   }) async {
-    final res = await _client.post(ApiEndpoints.missionDevis(missionId), data: {
-      'lignes_json': lignes.map((l) => l.toJson()).toList(),
-      'jalons_json': jalons.map((j) => j.toJson()).toList(),
-    });
+    final res = await _client.post(
+      ApiEndpoints.missionDevis(missionId),
+      data: {
+        'lignes_json': lignes.map((l) => l.toJson()).toList(),
+        'jalons_json': jalons.map((j) => j.toJson()).toList(),
+      },
+    );
     final devis = DevisModel.fromJson(res.data['data'] as Map<String, dynamic>);
     await _invalidate(missionId: missionId, devisId: devis.id);
     return devis;
@@ -75,10 +78,13 @@ class DevisRepository {
     required List<DevisLigne> lignes,
     required List<DevisJalon> jalons,
   }) async {
-    final res = await _client.put(ApiEndpoints.devis(id), data: {
-      'lignes_json': lignes.map((l) => l.toJson()).toList(),
-      'jalons_json': jalons.map((j) => j.toJson()).toList(),
-    });
+    final res = await _client.put(
+      ApiEndpoints.devis(id),
+      data: {
+        'lignes_json': lignes.map((l) => l.toJson()).toList(),
+        'jalons_json': jalons.map((j) => j.toJson()).toList(),
+      },
+    );
     final devis = DevisModel.fromJson(res.data['data'] as Map<String, dynamic>);
     await _invalidate(missionId: devis.missionId, devisId: id);
     return devis;

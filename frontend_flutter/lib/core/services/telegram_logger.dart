@@ -11,16 +11,18 @@ class TelegramLogger {
 
   // Configuration Telegram Bot (depuis EnvConfig)
   String get _botToken => EnvConfig.telegramBotToken;
-  
+
   String get _chatId => EnvConfig.telegramChatId;
-  
+
   static const bool _enableInDebug = EnvConfig.telegramLoggerDebug;
   static const bool _enableInRelease = EnvConfig.telegramLoggerRelease;
 
-  final Dio _dio = Dio(BaseOptions(
-    connectTimeout: const Duration(seconds: 5),
-    receiveTimeout: const Duration(seconds: 5),
-  ));
+  final Dio _dio = Dio(
+    BaseOptions(
+      connectTimeout: const Duration(seconds: 5),
+      receiveTimeout: const Duration(seconds: 5),
+    ),
+  );
 
   bool get _isEnabled {
     if (kDebugMode) return _enableInDebug;
@@ -86,20 +88,20 @@ class TelegramLogger {
     final buffer = StringBuffer();
     buffer.writeln('🔴 <b>ERREUR</b>');
     buffer.writeln('');
-    
+
     if (context != null) {
       buffer.writeln('📍 <b>Contexte:</b> $context');
     }
-    
+
     buffer.writeln('⚠️ <b>Erreur:</b>');
     buffer.writeln('<code>${_truncate(error.toString(), 500)}</code>');
-    
+
     if (stackTrace != null) {
       buffer.writeln('');
       buffer.writeln('📚 <b>Stack:</b>');
       buffer.writeln('<code>${_truncate(stackTrace.toString(), 1000)}</code>');
     }
-    
+
     buffer.writeln('');
     buffer.writeln('🕐 ${DateTime.now().toIso8601String()}');
     buffer.writeln('📱 ${Platform.operatingSystem}');
@@ -115,24 +117,26 @@ class TelegramLogger {
     final buffer = StringBuffer();
     buffer.writeln('🌐 <b>ERREUR HTTP</b>');
     buffer.writeln('');
-    
+
     if (context != null) {
       buffer.writeln('📍 <b>Contexte:</b> $context');
     }
-    
+
     buffer.writeln('🔗 <b>URL:</b> ${error.requestOptions.uri}');
     buffer.writeln('📤 <b>Méthode:</b> ${error.requestOptions.method}');
-    
+
     if (error.response != null) {
       buffer.writeln('📥 <b>Status:</b> ${error.response?.statusCode}');
       buffer.writeln('');
       buffer.writeln('💬 <b>Réponse:</b>');
-      buffer.writeln('<code>${_truncate(error.response?.data.toString() ?? 'N/A', 800)}</code>');
+      buffer.writeln(
+        '<code>${_truncate(error.response?.data.toString() ?? 'N/A', 800)}</code>',
+      );
     } else {
       buffer.writeln('❌ <b>Type:</b> ${error.type}');
       buffer.writeln('💬 <b>Message:</b> ${error.message}');
     }
-    
+
     buffer.writeln('');
     buffer.writeln('🕐 ${DateTime.now().toIso8601String()}');
 
@@ -144,11 +148,11 @@ class TelegramLogger {
     final buffer = StringBuffer();
     buffer.writeln('⚠️ <b>WARNING</b>');
     buffer.writeln('');
-    
+
     if (context != null) {
       buffer.writeln('📍 <b>Contexte:</b> $context');
     }
-    
+
     buffer.writeln('💬 $message');
     buffer.writeln('');
     buffer.writeln('🕐 ${DateTime.now().toIso8601String()}');
@@ -159,15 +163,15 @@ class TelegramLogger {
   /// Log une info (désactivé par défaut en production)
   Future<void> logInfo(String message, {String? context}) async {
     if (!kDebugMode) return;
-    
+
     final buffer = StringBuffer();
     buffer.writeln('ℹ️ <b>INFO</b>');
     buffer.writeln('');
-    
+
     if (context != null) {
       buffer.writeln('📍 <b>Contexte:</b> $context');
     }
-    
+
     buffer.writeln('💬 $message');
     buffer.writeln('');
     buffer.writeln('🕐 ${DateTime.now().toIso8601String()}');
@@ -184,18 +188,18 @@ class TelegramLogger {
     final buffer = StringBuffer();
     buffer.writeln('📊 <b>EVENT: $event</b>');
     buffer.writeln('');
-    
+
     if (context != null) {
       buffer.writeln('📍 <b>Contexte:</b> $context');
     }
-    
+
     if (data != null && data.isNotEmpty) {
       buffer.writeln('📦 <b>Data:</b>');
       data.forEach((key, value) {
         buffer.writeln('  • $key: $value');
       });
     }
-    
+
     buffer.writeln('');
     buffer.writeln('🕐 ${DateTime.now().toIso8601String()}');
 

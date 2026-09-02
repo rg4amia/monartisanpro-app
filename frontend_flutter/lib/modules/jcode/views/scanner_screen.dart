@@ -93,7 +93,9 @@ class ScannerScreen extends GetView<JcodeController> {
                           icon: Icons.photo_library,
                           onTap: () async {
                             final picker = ImagePicker();
-                            final image = await picker.pickImage(source: ImageSource.gallery);
+                            final image = await picker.pickImage(
+                              source: ImageSource.gallery,
+                            );
                             if (image != null) {
                               Get.snackbar(
                                 'Galerie',
@@ -180,13 +182,15 @@ class ScannerScreen extends GetView<JcodeController> {
                       ],
                     ),
                   ),
-                  Obx(() => Switch(
-                        value: gpsEnabled.value,
-                        onChanged: (val) => gpsEnabled.value = val,
-                        activeThumbColor: AppColors.success,
-                        activeTrackColor:
-                            AppColors.success.withValues(alpha: 0.4),
-                      )),
+                  Obx(
+                    () => Switch(
+                      value: gpsEnabled.value,
+                      onChanged: (val) => gpsEnabled.value = val,
+                      activeThumbColor: AppColors.success,
+                      activeTrackColor:
+                          AppColors.success.withValues(alpha: 0.4),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -230,7 +234,9 @@ class ScannerScreen extends GetView<JcodeController> {
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: const BorderSide(
-                            color: AppColors.primary, width: 2),
+                          color: AppColors.primary,
+                          width: 2,
+                        ),
                       ),
                     ),
                     textCapitalization: TextCapitalization.characters,
@@ -244,54 +250,57 @@ class ScannerScreen extends GetView<JcodeController> {
             // Validate button
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Obx(() => ElevatedButton(
-                    onPressed: controller.isScanning.value
-                        ? null
-                        : () async {
-                            final code = manualCodeCtrl.text.trim();
-                            if (code.isEmpty) return;
-                            final identifier = _normalizeJcodeIdentifier(code);
-                            if (identifier != null) {
-                              await _doScan(identifier);
-                            } else {
-                              Get.snackbar(
-                                'Code invalide',
-                                'Veuillez entrer un code valide (ex: PA-XXXX)',
-                                snackPosition: SnackPosition.TOP,
-                              );
-                            }
-                          },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+              child: Obx(
+                () => ElevatedButton(
+                  onPressed: controller.isScanning.value
+                      ? null
+                      : () async {
+                          final code = manualCodeCtrl.text.trim();
+                          if (code.isEmpty) return;
+                          final identifier = _normalizeJcodeIdentifier(code);
+                          if (identifier != null) {
+                            await _doScan(identifier);
+                          } else {
+                            Get.snackbar(
+                              'Code invalide',
+                              'Veuillez entrer un code valide (ex: PA-XXXX)',
+                              snackPosition: SnackPosition.TOP,
+                            );
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: (controller.isFetchingJcode.value || controller.isScanning.value)
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: const [
-                              Text(
-                                'Valider manuellement',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              SizedBox(width: 8),
-                              Icon(Icons.arrow_forward, size: 20),
-                            ],
+                  ),
+                  child: (controller.isFetchingJcode.value ||
+                          controller.isScanning.value)
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
                           ),
-                  )),
+                        )
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            Text(
+                              'Valider manuellement',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            SizedBox(width: 8),
+                            Icon(Icons.arrow_forward, size: 20),
+                          ],
+                        ),
+                ),
+              ),
             ),
 
             const SizedBox(height: 32),
@@ -370,21 +379,39 @@ class _ScannerCornersPainter extends CustomPainter {
 
     // Top-right
     canvas.drawLine(
-        Offset(size.width, 0), Offset(size.width - cornerLength, 0), paint);
+      Offset(size.width, 0),
+      Offset(size.width - cornerLength, 0),
+      paint,
+    );
     canvas.drawLine(
-        Offset(size.width, 0), Offset(size.width, cornerLength), paint);
+      Offset(size.width, 0),
+      Offset(size.width, cornerLength),
+      paint,
+    );
 
     // Bottom-left
     canvas.drawLine(
-        Offset(0, size.height), Offset(cornerLength, size.height), paint);
+      Offset(0, size.height),
+      Offset(cornerLength, size.height),
+      paint,
+    );
     canvas.drawLine(
-        Offset(0, size.height), Offset(0, size.height - cornerLength), paint);
+      Offset(0, size.height),
+      Offset(0, size.height - cornerLength),
+      paint,
+    );
 
     // Bottom-right
-    canvas.drawLine(Offset(size.width, size.height),
-        Offset(size.width - cornerLength, size.height), paint);
-    canvas.drawLine(Offset(size.width, size.height),
-        Offset(size.width, size.height - cornerLength), paint);
+    canvas.drawLine(
+      Offset(size.width, size.height),
+      Offset(size.width - cornerLength, size.height),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(size.width, size.height),
+      Offset(size.width, size.height - cornerLength),
+      paint,
+    );
   }
 
   @override

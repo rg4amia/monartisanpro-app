@@ -33,12 +33,17 @@ class CommunicationModel {
       id: json['id'] as int? ?? 0,
       type: json['type'] as String? ?? 'annonce',
       titre: json['titre'] as String? ?? json['title'] as String? ?? '',
-      contenu: json['contenu'] as String? ?? json['content'] as String? ?? json['message'] as String? ?? '',
+      contenu: json['contenu'] as String? ??
+          json['content'] as String? ??
+          json['message'] as String? ??
+          '',
       cibles: ciblesList,
-      statut: json['statut'] as String? ?? json['status'] as String? ?? 'brouillon',
+      statut:
+          json['statut'] as String? ?? json['status'] as String? ?? 'brouillon',
       publieAt: json['publie_at'] as String?,
       clotureAt: json['cloture_at'] as String?,
-      createdAt: json['created_at'] as String? ?? DateTime.now().toIso8601String(),
+      createdAt:
+          json['created_at'] as String? ?? DateTime.now().toIso8601String(),
     );
   }
 

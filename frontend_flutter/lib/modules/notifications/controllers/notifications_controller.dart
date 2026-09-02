@@ -16,18 +16,24 @@ class NotificationsController extends GetxController {
     if (selectedTab.value == 'all') {
       return notifications;
     } else if (selectedTab.value == 'missions') {
-      return notifications.where((n) => 
-        n.type == 'mission' || 
-        n.type == 'mission_update' ||
-        n.type == 'jalon' ||
-        n.type == 'jcode'
-      ).toList();
+      return notifications
+          .where(
+            (n) =>
+                n.type == 'mission' ||
+                n.type == 'mission_update' ||
+                n.type == 'jalon' ||
+                n.type == 'jcode',
+          )
+          .toList();
     } else if (selectedTab.value == 'finances') {
-      return notifications.where((n) => 
-        n.type == 'payment' || 
-        n.type == 'payment_alert' ||
-        n.type == 'wallet'
-      ).toList();
+      return notifications
+          .where(
+            (n) =>
+                n.type == 'payment' ||
+                n.type == 'payment_alert' ||
+                n.type == 'wallet',
+          )
+          .toList();
     }
     return notifications;
   }
@@ -71,22 +77,24 @@ class NotificationsController extends GetxController {
   Future<void> markAllRead() async {
     await _repo.markAllRead();
     notifications.value = notifications
-        .map((n) => NotificationModel(
-              id: n.id,
-              title: n.title,
-              message: n.message,
-              type: n.type,
-              isRead: true,
-              createdAt: n.createdAt,
-              data: n.data,
-            ))
+        .map(
+          (n) => NotificationModel(
+            id: n.id,
+            title: n.title,
+            message: n.message,
+            type: n.type,
+            isRead: true,
+            createdAt: n.createdAt,
+            data: n.data,
+          ),
+        )
         .toList();
   }
 
   Future<void> onNotificationTap(NotificationModel notification) async {
     // Marquer comme lu sur le serveur et localement
     await markRead(notification.id);
-    
+
     // Combiner le type principal et les données additionnelles
     final Map<String, dynamic> routingData = {
       'type': notification.type,

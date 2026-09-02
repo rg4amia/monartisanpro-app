@@ -36,161 +36,165 @@ class ArtisanCard extends StatelessWidget {
               boxShadow: isGold ? AppColors.goldGlow : AppColors.cardShadow,
             ),
             child: Row(
-            children: [
-              // Avatar
-              _buildAvatar(),
-              const SizedBox(width: 14),
-              // Info
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            artisan.name ?? 'Artisan',
-                            style: const TextStyle(
-                              fontSize: 15.5,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.textPrimary,
-                              letterSpacing: -0.2,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (artisan.isGoldenMarker)
-                          Container(
-                            margin: const EdgeInsets.only(left: 6),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 7,
-                              vertical: 2.5,
-                            ),
-                            decoration: BoxDecoration(
-                              gradient: AppColors.gradientGold,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.star_rounded,
-                                  size: 11,
-                                  color: Colors.white,
-                                ),
-                                SizedBox(width: 2),
-                                Text(
-                                  'Élite',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        if (artisan.isCnmciVerified)
-                          Container(
-                            margin: const EdgeInsets.only(left: 6),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 7,
-                              vertical: 2.5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFD1FAE5),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.verified_rounded,
-                                  size: 11,
-                                  color: Color(0xFF059669),
-                                ),
-                                SizedBox(width: 2),
-                                Text(
-                                  'CNMCI',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    color: Color(0xFF059669),
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                      ],
-                    ),
-                    if (artisan.trade != null) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        artisan.trade!,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textSecondary.withValues(alpha: 0.9),
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 5),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.location_on_outlined,
-                          size: 13,
-                          color: AppColors.textMuted,
-                        ),
-                        const SizedBox(width: 3),
-                        Text(
-                          artisan.distance ??
-                              artisan.locationLabel ??
-                              artisan.commune ??
-                              artisan.sector ??
-                              'Abidjan',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textMuted,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (artisan.nightInterventionAvailable) ...[
-                      const SizedBox(height: 6),
+              children: [
+                // Avatar
+                _buildAvatar(),
+                const SizedBox(width: 14),
+                // Info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Row(
-                        children: const [
-                          Icon(
-                            Icons.nightlight_round,
-                            size: 12,
-                            color: AppColors.primary,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              artisan.name ?? 'Artisan',
+                              style: const TextStyle(
+                                fontSize: 15.5,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.textPrimary,
+                                letterSpacing: -0.2,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
-                          SizedBox(width: 4),
+                          if (artisan.isGoldenMarker)
+                            Container(
+                              margin: const EdgeInsets.only(left: 6),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 7,
+                                vertical: 2.5,
+                              ),
+                              decoration: BoxDecoration(
+                                gradient: AppColors.gradientGold,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.star_rounded,
+                                    size: 11,
+                                    color: Colors.white,
+                                  ),
+                                  SizedBox(width: 2),
+                                  Text(
+                                    'Élite',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          if (artisan.isCnmciVerified)
+                            Container(
+                              margin: const EdgeInsets.only(left: 6),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 7,
+                                vertical: 2.5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFD1FAE5),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.verified_rounded,
+                                    size: 11,
+                                    color: Color(0xFF059669),
+                                  ),
+                                  SizedBox(width: 2),
+                                  Text(
+                                    'CNMCI',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: Color(0xFF059669),
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                      if (artisan.trade != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          artisan.trade!,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color:
+                                AppColors.textSecondary.withValues(alpha: 0.9),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 5),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.location_on_outlined,
+                            size: 13,
+                            color: AppColors.textMuted,
+                          ),
+                          const SizedBox(width: 3),
                           Text(
-                            'Disponible la nuit',
-                            style: TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.primary,
+                            artisan.distance ??
+                                artisan.locationLabel ??
+                                artisan.commune ??
+                                artisan.sector ??
+                                'Abidjan',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textMuted,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ],
                       ),
+                      if (artisan.nightInterventionAvailable) ...[
+                        const SizedBox(height: 6),
+                        Row(
+                          children: const [
+                            Icon(
+                              Icons.nightlight_round,
+                              size: 12,
+                              color: AppColors.primary,
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              'Disponible la nuit',
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              // Score
-              ScoreProsArtisan(score: artisan.scoreProsArtisan, size: ScoreSize.medium),
-            ],
+                const SizedBox(width: 10),
+                // Score
+                ScoreProsArtisan(
+                  score: artisan.scoreProsArtisan,
+                  size: ScoreSize.medium,
+                ),
+              ],
+            ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildAvatar() {
     if (artisan.photo != null && artisan.photo!.isNotEmpty) {

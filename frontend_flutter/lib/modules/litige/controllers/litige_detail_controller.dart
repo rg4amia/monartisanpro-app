@@ -88,7 +88,10 @@ class LitigeDetailController extends GetxController {
         'photos[0][description]': 'Preuve terrain',
       });
 
-      await _client.postMultipart(ApiEndpoints.litigeEvidence(litigeId), formData);
+      await _client.postMultipart(
+        ApiEndpoints.litigeEvidence(litigeId),
+        formData,
+      );
       await loadLitige();
 
       Get.snackbar(

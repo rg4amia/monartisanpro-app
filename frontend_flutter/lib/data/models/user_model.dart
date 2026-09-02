@@ -57,20 +57,25 @@ class UserModel {
       id: json['id'] as int,
       phone: json['phone'] as String,
       role: json['role'] as String,
-      kycStatus: (json['kycStatus'] ?? json['kyc_status']) as String? ?? 'en_attente',
-      scoreProsArtisan: (json['scoreProsArtisan'] ?? json['score_prosartisan']) as int? ?? 0,
-      walletMateriaux: (json['walletMateriaux'] ?? json['wallet_materiaux']) as int? ?? 0,
+      kycStatus:
+          (json['kycStatus'] ?? json['kyc_status']) as String? ?? 'en_attente',
+      scoreProsArtisan:
+          (json['scoreProsArtisan'] ?? json['score_prosartisan']) as int? ?? 0,
+      walletMateriaux:
+          (json['walletMateriaux'] ?? json['wallet_materiaux']) as int? ?? 0,
       walletMo: (json['walletMo'] ?? json['wallet_mo']) as int? ?? 0,
       name: json['name'] as String?,
       photoUrl: (json['photoUrl'] ?? json['photo_url']) as String?,
       lat: (json['lat'] as num?)?.toDouble() ??
           (json['position'] is Map<String, dynamic>
-              ? (json['position'] as Map<String, dynamic>)['lat'] as num?
-              : null)?.toDouble(),
+                  ? (json['position'] as Map<String, dynamic>)['lat'] as num?
+                  : null)
+              ?.toDouble(),
       lng: (json['lng'] as num?)?.toDouble() ??
           (json['position'] is Map<String, dynamic>
-              ? (json['position'] as Map<String, dynamic>)['lng'] as num?
-              : null)?.toDouble(),
+                  ? (json['position'] as Map<String, dynamic>)['lng'] as num?
+                  : null)
+              ?.toDouble(),
       nightInterventionAvailable: _parseBool(
         json['nightInterventionAvailable'] ??
             json['night_intervention_available'] ??
@@ -78,16 +83,22 @@ class UserModel {
                 ? artisanProfile['nightInterventionAvailable']
                 : null),
       ),
-      sectorId: artisanProfile != null ? artisanProfile['sectorId'] as int? : null,
-      tradeId: artisanProfile != null ? artisanProfile['tradeId'] as int? : null,
-      sectorName: artisanProfile != null ? artisanProfile['sector'] as String? : null,
-      tradeName: artisanProfile != null ? artisanProfile['trade'] as String? : null,
+      sectorId:
+          artisanProfile != null ? artisanProfile['sectorId'] as int? : null,
+      tradeId:
+          artisanProfile != null ? artisanProfile['tradeId'] as int? : null,
+      sectorName:
+          artisanProfile != null ? artisanProfile['sector'] as String? : null,
+      tradeName:
+          artisanProfile != null ? artisanProfile['trade'] as String? : null,
       cguAcceptedAt: json['cguAcceptedAt'] as String?,
       cnmciNumber: json['cnmciNumber'] as String?,
       cnmciCardUrl: json['cnmciCardUrl'] as String?,
       cnmciStatus: json['cnmciStatus'] as String? ?? 'non_renseigne',
-      paymentPhone: json['paymentPhone'] as String? ?? json['payment_phone'] as String?,
-      preferredPaymentProvider: json['preferredPaymentProvider'] as String? ?? json['preferred_payment_provider'] as String?,
+      paymentPhone:
+          json['paymentPhone'] as String? ?? json['payment_phone'] as String?,
+      preferredPaymentProvider: json['preferredPaymentProvider'] as String? ??
+          json['preferred_payment_provider'] as String?,
     );
   }
 

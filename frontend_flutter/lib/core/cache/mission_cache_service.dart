@@ -32,7 +32,8 @@ class MissionCacheService {
     const secureStorage = FlutterSecureStorage();
 
     // Récupérer ou générer la clé de chiffrement AES-256
-    final containsEncryptionKey = await secureStorage.containsKey(key: 'hive_encryption_key');
+    final containsEncryptionKey =
+        await secureStorage.containsKey(key: 'hive_encryption_key');
     List<int> encryptionKey;
 
     if (!containsEncryptionKey) {
@@ -51,25 +52,31 @@ class MissionCacheService {
 
     // Ouvrir les boxes de manière chiffrée avec gestion d'erreurs (Self-Healing)
     try {
-      _missionsBox = await Hive.openBox<Map>(_missionsBoxName, encryptionCipher: cipher);
+      _missionsBox =
+          await Hive.openBox<Map>(_missionsBoxName, encryptionCipher: cipher);
     } catch (_) {
       // Si échec (ex: transition depuis un cache non chiffré), on nettoie et recrée
       await Hive.deleteBoxFromDisk(_missionsBoxName);
-      _missionsBox = await Hive.openBox<Map>(_missionsBoxName, encryptionCipher: cipher);
+      _missionsBox =
+          await Hive.openBox<Map>(_missionsBoxName, encryptionCipher: cipher);
     }
 
     try {
-      _jalonsBox = await Hive.openBox<Map>(_jalonsBoxName, encryptionCipher: cipher);
+      _jalonsBox =
+          await Hive.openBox<Map>(_jalonsBoxName, encryptionCipher: cipher);
     } catch (_) {
       await Hive.deleteBoxFromDisk(_jalonsBoxName);
-      _jalonsBox = await Hive.openBox<Map>(_jalonsBoxName, encryptionCipher: cipher);
+      _jalonsBox =
+          await Hive.openBox<Map>(_jalonsBoxName, encryptionCipher: cipher);
     }
 
     try {
-      _metadataBox = await Hive.openBox<Map>(_metadataBoxName, encryptionCipher: cipher);
+      _metadataBox =
+          await Hive.openBox<Map>(_metadataBoxName, encryptionCipher: cipher);
     } catch (_) {
       await Hive.deleteBoxFromDisk(_metadataBoxName);
-      _metadataBox = await Hive.openBox<Map>(_metadataBoxName, encryptionCipher: cipher);
+      _metadataBox =
+          await Hive.openBox<Map>(_metadataBoxName, encryptionCipher: cipher);
     }
   }
 
@@ -82,8 +89,10 @@ class MissionCacheService {
   // ─────────────────────────────────────────────────────────────────────────────
 
   /// Cache une liste de missions
-  Future<void> cacheMissions(List<MissionModel> missions,
-      {String? filter}) async {
+  Future<void> cacheMissions(
+    List<MissionModel> missions, {
+    String? filter,
+  }) async {
     if (!isInitialized) await init();
 
     final key = filter ?? 'all';
@@ -94,7 +103,10 @@ class MissionCacheService {
   }
 
   /// Récupère les missions du cache
-  List<MissionModel>? getCachedMissions({String? filter, bool ignoreExpiration = false}) {
+  List<MissionModel>? getCachedMissions({
+    String? filter,
+    bool ignoreExpiration = false,
+  }) {
     if (!isInitialized) return null;
 
     final key = filter ?? 'all';
@@ -162,7 +174,10 @@ class MissionCacheService {
   }
 
   /// Récupère les jalons du cache
-  List<JalonModel>? getCachedJalons(int missionId, {bool ignoreExpiration = false}) {
+  List<JalonModel>? getCachedJalons(
+    int missionId, {
+    bool ignoreExpiration = false,
+  }) {
     if (!isInitialized) return null;
 
     final key = 'jalons_$missionId';

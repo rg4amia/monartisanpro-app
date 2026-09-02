@@ -55,22 +55,28 @@ class NotificationRepository {
     required int note,
     String? commentaire,
   }) async {
-    await _client.post(ApiEndpoints.evaluations, data: {
-      'mission_id': missionId,
-      'evalue_id': evalueId,
-      'note': note,
-      if (commentaire != null) 'commentaire': commentaire,
-    });
+    await _client.post(
+      ApiEndpoints.evaluations,
+      data: {
+        'mission_id': missionId,
+        'evalue_id': evalueId,
+        'note': note,
+        if (commentaire != null) 'commentaire': commentaire,
+      },
+    );
   }
 
   Future<void> submitLitige({
     required int missionId,
     required String description,
   }) async {
-    await _client.post(ApiEndpoints.litiges, data: {
-      'mission_id': missionId,
-      'description': description,
-    });
+    await _client.post(
+      ApiEndpoints.litiges,
+      data: {
+        'mission_id': missionId,
+        'description': description,
+      },
+    );
   }
 
   Future<Map<String, dynamic>> getLitige(int id) async {

@@ -26,15 +26,22 @@ class WalletController extends GetxController {
       final balance = WalletBalance.fromJson(balanceResponse.data['data']);
       walletMateriaux.value = balance.walletMateriaux;
       walletMo.value = balance.walletMo;
-      
-      // Fetch or fallback to driver balance
-      walletEscrowLivreur.value = balanceResponse.data['data']['wallet_escrow_livreur'] as int? ?? 2700;
 
-      final transactionsResponse = await _apiClient.get(ApiEndpoints.transactions);
+      // Fetch or fallback to driver balance
+      walletEscrowLivreur.value =
+          balanceResponse.data['data']['wallet_escrow_livreur'] as int? ?? 2700;
+
+      final transactionsResponse =
+          await _apiClient.get(ApiEndpoints.transactions);
       final List<dynamic> data = transactionsResponse.data['data'] ?? [];
-      transactions.value = data.map((e) => TransactionModel.fromJson(e)).toList();
+      transactions.value =
+          data.map((e) => TransactionModel.fromJson(e)).toList();
     } catch (e) {
-      Get.snackbar('Erreur', 'Impossible de charger le portefeuille', snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar(
+        'Erreur',
+        'Impossible de charger le portefeuille',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     } finally {
       isLoading.value = false;
     }

@@ -54,11 +54,11 @@ void main() {
           TestConfig.testPhone,
           TestConfig.testOtp,
         );
-        
+
         // verifyOtp() retourne un Map avec 'token', 'user', 'has_completed_profile', 'phone'
         expect(result, isA<Map<String, dynamic>>());
         expect(result.containsKey('has_completed_profile'), isTrue);
-        
+
         if (result['has_completed_profile'] == true) {
           expect(result['token'], isNotNull);
         }
@@ -80,7 +80,7 @@ void main() {
         // register() retourne un Map avec 'token' et 'user'
         expect(result['token'], isNotNull);
         expect(result['user'], isA<UserModel>());
-        
+
         final user = result['user'] as UserModel;
         expect(user.phone, TestConfig.testPhone);
         expect(user.role, TestConfig.testRole);

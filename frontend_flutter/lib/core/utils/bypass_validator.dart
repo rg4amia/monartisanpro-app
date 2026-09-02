@@ -25,13 +25,19 @@ class BypassValidator {
   static final List<RegExp> _contactInvitePatterns = [
     RegExp(r'\btel\s*[:.]', caseSensitive: false),
     RegExp(r'\bt[ée]l[ée]phone[rz]?\b', caseSensitive: false),
-    RegExp(r'\b(appelez|appeler|joignable|contactez[- ]moi|rappelez)\b',
-        caseSensitive: false),
+    RegExp(
+      r'\b(appelez|appeler|joignable|contactez[- ]moi|rappelez)\b',
+      caseSensitive: false,
+    ),
     RegExp(r'\b(mon|le)\s+num[ée]ro\b', caseSensitive: false),
-    RegExp(r'\b[ée]cris\s?[- ]?moi\b|\b[ée]crivez[- ]moi\b',
-        caseSensitive: false),
-    RegExp(r'\bhors\s+(de\s+l[’\x27]?\s*)?(appli|application|plateforme)\b',
-        caseSensitive: false),
+    RegExp(
+      r'\b[ée]cris\s?[- ]?moi\b|\b[ée]crivez[- ]moi\b',
+      caseSensitive: false,
+    ),
+    RegExp(
+      r'\bhors\s+(de\s+l[’\x27]?\s*)?(appli|application|plateforme)\b',
+      caseSensitive: false,
+    ),
   ];
 
   static const List<String> _numberWords = [

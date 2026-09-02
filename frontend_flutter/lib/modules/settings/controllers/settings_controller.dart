@@ -38,7 +38,8 @@ class SettingsController extends GetxController {
     userRole.value = StorageService.getRole() ?? '';
     kycStatus.value = StorageService.getKycStatus() ?? 'en_attente';
     notificationsEnabled.value = StorageService.areNotificationsEnabled();
-    notificationSoundEnabled.value = StorageService.isNotificationSoundEnabled();
+    notificationSoundEnabled.value =
+        StorageService.isNotificationSoundEnabled();
     _loadData();
   }
 
@@ -53,7 +54,9 @@ class SettingsController extends GetxController {
     try {
       await _userRepo.updateProfile(
         userId: userId,
-        name: userName.value.isNotEmpty ? userName.value : (StorageService.getName() ?? 'Utilisateur'),
+        name: userName.value.isNotEmpty
+            ? userName.value
+            : (StorageService.getName() ?? 'Utilisateur'),
         paymentPhone: newPaymentPhone.trim(),
         preferredPaymentProvider: provider,
       );
@@ -101,7 +104,8 @@ class SettingsController extends GetxController {
       // Load current user profile for payment phone & provider
       final me = await _authRepo.me();
       paymentPhone.value = me.paymentPhone ?? '';
-      if (me.preferredPaymentProvider != null && me.preferredPaymentProvider!.isNotEmpty) {
+      if (me.preferredPaymentProvider != null &&
+          me.preferredPaymentProvider!.isNotEmpty) {
         preferredPaymentProvider.value = me.preferredPaymentProvider!;
       }
 
@@ -155,7 +159,8 @@ class SettingsController extends GetxController {
     isChangingPhone.value = true;
     changePhoneError.value = null;
     try {
-      final res = await _authRepo.changePhoneConnected(newPhone: newPhone, otp: otp);
+      final res =
+          await _authRepo.changePhoneConnected(newPhone: newPhone, otp: otp);
       if (res['success'] == true) {
         userPhone.value = newPhone;
         StorageService.savePhone(newPhone);

@@ -81,7 +81,7 @@ class ScoreProsArtisan extends StatelessWidget {
 /// Badge compact pour afficher le score ProsArtisan dans les listes
 class ScoreProsArtisanBadge extends StatelessWidget {
   final int score;
-  
+
   const ScoreProsArtisanBadge({
     super.key,
     required this.score,

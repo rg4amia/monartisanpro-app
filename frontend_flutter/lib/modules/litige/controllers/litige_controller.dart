@@ -31,8 +31,11 @@ class LitigeController extends GetxController {
 
   Future<void> submit() async {
     if (description.value.trim().isEmpty) {
-      Get.snackbar('Erreur', 'Veuillez décrire le problème',
-          snackPosition: SnackPosition.TOP);
+      Get.snackbar(
+        'Erreur',
+        'Veuillez décrire le problème',
+        snackPosition: SnackPosition.TOP,
+      );
       return;
     }
     isLoading.value = true;
@@ -40,17 +43,26 @@ class LitigeController extends GetxController {
       // `type` indique qui déclenche le litige ('client' ou 'artisan')
       final role = StorageService.getRole() ?? 'client';
       final type = (role == 'artisan') ? 'artisan' : 'client';
-      final fullDescription = '${selectedMotif.value} — ${description.value.trim()}';
+      final fullDescription =
+          '${selectedMotif.value} — ${description.value.trim()}';
 
-      final response = await _client.post(ApiEndpoints.litiges, data: {
-        'mission_id': missionId,
-        'type': type,
-        'description': fullDescription,
-      });
+      final response = await _client.post(
+        ApiEndpoints.litiges,
+        data: {
+          'mission_id': missionId,
+          'type': type,
+          'description': fullDescription,
+        },
+      );
 
       final litigeId = response.data['data']?['id'];
       if (litigeId is int) {
-        unawaited(Get.offNamed(Routes.litigeDetail, arguments: {'litigeId': litigeId}));
+        unawaited(
+          Get.offNamed(
+            Routes.litigeDetail,
+            arguments: {'litigeId': litigeId},
+          ),
+        );
       } else {
         unawaited(Get.offAllNamed(Routes.mainTab));
       }

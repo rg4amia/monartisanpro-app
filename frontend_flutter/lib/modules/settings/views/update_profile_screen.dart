@@ -268,7 +268,9 @@ class _CategorySelectionCard extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: hasCategory ? const Color(0xFFEEF2FF) : const Color(0xFFF9FAFB),
+                  color: hasCategory
+                      ? const Color(0xFFEEF2FF)
+                      : const Color(0xFFF9FAFB),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
@@ -283,7 +285,9 @@ class _CategorySelectionCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      hasCategory ? 'Catégorie active' : 'Catégorie non configurée',
+                      hasCategory
+                          ? 'Catégorie active'
+                          : 'Catégorie non configurée',
                       style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
@@ -310,7 +314,9 @@ class _CategorySelectionCard extends StatelessWidget {
           OutlinedButton.icon(
             onPressed: controller.selectCategoryAndSubcategory,
             icon: const Icon(Icons.category_outlined, size: 18),
-            label: Text(hasCategory ? 'Modifier ma catégorie' : 'Choisir ma catégorie'),
+            label: Text(
+              hasCategory ? 'Modifier ma catégorie' : 'Choisir ma catégorie',
+            ),
             style: OutlinedButton.styleFrom(
               minimumSize: const Size(double.infinity, 48),
               shape: RoundedRectangleBorder(
@@ -351,7 +357,8 @@ class _LocationCard extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: isSet ? const Color(0xFFEEF2FF) : const Color(0xFFF9FAFB),
+                  color:
+                      isSet ? const Color(0xFFEEF2FF) : const Color(0xFFF9FAFB),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
@@ -393,7 +400,11 @@ class _LocationCard extends StatelessWidget {
           OutlinedButton.icon(
             onPressed: controller.selectLocationOnMap,
             icon: const Icon(Icons.map_outlined, size: 18),
-            label: Text(isSet ? 'Modifier ma position' : 'Définir ma position sur la carte'),
+            label: Text(
+              isSet
+                  ? 'Modifier ma position'
+                  : 'Définir ma position sur la carte',
+            ),
             style: OutlinedButton.styleFrom(
               minimumSize: const Size(double.infinity, 48),
               shape: RoundedRectangleBorder(
@@ -533,8 +544,7 @@ class _NightModeCard extends StatelessWidget {
             activeThumbColor: _C.primary,
             onChanged: controller.isProfileLoading.value
                 ? null
-                : (value) =>
-                    controller.nightInterventionsEnabled.value = value,
+                : (value) => controller.nightInterventionsEnabled.value = value,
           ),
         ],
       ),
@@ -562,37 +572,39 @@ class _BottomActions extends StatelessWidget {
           ),
         ],
       ),
-      child: Obx(() => ElevatedButton(
-            onPressed:
-                controller.isLoading.value || controller.isProfileLoading.value
-                    ? null
-                    : controller.updateProfile,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _C.primary,
-              foregroundColor: Colors.white,
-              minimumSize: const Size(double.infinity, 56),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              elevation: 0,
+      child: Obx(
+        () => ElevatedButton(
+          onPressed:
+              controller.isLoading.value || controller.isProfileLoading.value
+                  ? null
+                  : controller.updateProfile,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _C.primary,
+            foregroundColor: Colors.white,
+            minimumSize: const Size(double.infinity, 56),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: controller.isLoading.value || controller.isProfileLoading.value
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                : const Text(
-                    'Enregistrer les modifications',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+            elevation: 0,
+          ),
+          child: controller.isLoading.value || controller.isProfileLoading.value
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                   ),
-          )),
+                )
+              : const Text(
+                  'Enregistrer les modifications',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+        ),
+      ),
     );
   }
 }
@@ -638,10 +650,10 @@ class _CnmciCard extends StatelessWidget {
         height: 160,
       );
     } else if (remoteUrl != null && remoteUrl.isNotEmpty) {
-      final serverBase = ApiEndpoints.baseUrl.replaceAll('/api/v1', '').replaceAll('/v1', '');
-      final fullUrl = remoteUrl.startsWith('http') 
-        ? remoteUrl 
-        : '$serverBase$remoteUrl';
+      final serverBase =
+          ApiEndpoints.baseUrl.replaceAll('/api/v1', '').replaceAll('/v1', '');
+      final fullUrl =
+          remoteUrl.startsWith('http') ? remoteUrl : '$serverBase$remoteUrl';
       imageWidget = Image.network(
         fullUrl,
         fit: BoxFit.cover,
@@ -707,12 +719,12 @@ class _CnmciCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          
           if (status != 'non_renseigne')
             Padding(
               padding: const EdgeInsets.only(bottom: 16),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   color: badgeBg,
                   borderRadius: BorderRadius.circular(10),
@@ -735,7 +747,6 @@ class _CnmciCard extends StatelessWidget {
                 ),
               ),
             ),
-
           _InputField(
             label: 'Numéro de carte artisan',
             controller: controller.cnmciNumberController,
@@ -743,7 +754,6 @@ class _CnmciCard extends StatelessWidget {
             hint: 'Ex: CNM-XXXXXXXX',
           ),
           const SizedBox(height: 16),
-          
           const Text(
             'Photo de la carte artisan',
             style: TextStyle(
@@ -753,7 +763,6 @@ class _CnmciCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          
           if (localPath == null && (remoteUrl == null || remoteUrl.isEmpty))
             GestureDetector(
               onTap: controller.pickCnmciCardImage,
@@ -762,13 +771,18 @@ class _CnmciCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: const Color(0xFFF9FAFB),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: _C.subtle, style: BorderStyle.solid),
+                  border:
+                      Border.all(color: _C.subtle, style: BorderStyle.solid),
                 ),
                 child: Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.add_a_photo_outlined, color: _C.primary, size: 28),
+                      const Icon(
+                        Icons.add_a_photo_outlined,
+                        color: _C.primary,
+                        size: 28,
+                      ),
                       const SizedBox(height: 8),
                       const Text(
                         'Joindre la photo de la carte',
@@ -800,7 +814,11 @@ class _CnmciCard extends StatelessWidget {
                           color: Colors.black54,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.edit, color: Colors.white, size: 16),
+                        child: const Icon(
+                          Icons.edit,
+                          color: Colors.white,
+                          size: 16,
+                        ),
                       ),
                     ),
                   ),
@@ -823,7 +841,8 @@ class _MobileMoneyPayoutCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Obx(() {
       final isPro = controller.isProActor.value;
-      final title = isPro ? 'Reversement Mobile Money' : 'Moyen de paiement Mobile Money';
+      final title =
+          isPro ? 'Reversement Mobile Money' : 'Moyen de paiement Mobile Money';
       final subtitle = isPro
           ? 'Compte de réception de vos gains'
           : 'Paiements de devis & remboursements';
@@ -851,7 +870,9 @@ class _MobileMoneyPayoutCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
-                    isPro ? Icons.account_balance_wallet_rounded : Icons.payments_rounded,
+                    isPro
+                        ? Icons.account_balance_wallet_rounded
+                        : Icons.payments_rounded,
                     color: const Color(0xFF10B981),
                     size: 20,
                   ),
@@ -894,13 +915,33 @@ class _MobileMoneyPayoutCard extends StatelessWidget {
             const SizedBox(height: 8),
             Row(
               children: [
-                _buildProviderChip('wave', 'Wave', const Color(0xFF00A3FF), controller.selectedPaymentProvider.value == 'wave'),
+                _buildProviderChip(
+                  'wave',
+                  'Wave',
+                  const Color(0xFF00A3FF),
+                  controller.selectedPaymentProvider.value == 'wave',
+                ),
                 const SizedBox(width: 8),
-                _buildProviderChip('orange_money', 'Orange', const Color(0xFFFF7900), controller.selectedPaymentProvider.value == 'orange_money'),
+                _buildProviderChip(
+                  'orange_money',
+                  'Orange',
+                  const Color(0xFFFF7900),
+                  controller.selectedPaymentProvider.value == 'orange_money',
+                ),
                 const SizedBox(width: 8),
-                _buildProviderChip('mtn_money', 'MTN', const Color(0xFFFFCC00), controller.selectedPaymentProvider.value == 'mtn_money'),
+                _buildProviderChip(
+                  'mtn_money',
+                  'MTN',
+                  const Color(0xFFFFCC00),
+                  controller.selectedPaymentProvider.value == 'mtn_money',
+                ),
                 const SizedBox(width: 8),
-                _buildProviderChip('moov_money', 'Moov', const Color(0xFF005BA6), controller.selectedPaymentProvider.value == 'moov_money'),
+                _buildProviderChip(
+                  'moov_money',
+                  'Moov',
+                  const Color(0xFF005BA6),
+                  controller.selectedPaymentProvider.value == 'moov_money',
+                ),
               ],
             ),
             const SizedBox(height: 16),
@@ -922,7 +963,11 @@ class _MobileMoneyPayoutCard extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.info_outline_rounded, size: 16, color: _C.muted),
+                  const Icon(
+                    Icons.info_outline_rounded,
+                    size: 16,
+                    color: _C.muted,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -943,7 +988,12 @@ class _MobileMoneyPayoutCard extends StatelessWidget {
     });
   }
 
-  Widget _buildProviderChip(String providerKey, String label, Color color, bool isSelected) {
+  Widget _buildProviderChip(
+    String providerKey,
+    String label,
+    Color color,
+    bool isSelected,
+  ) {
     return Expanded(
       child: GestureDetector(
         onTap: () => controller.selectedPaymentProvider.value = providerKey,
@@ -951,7 +1001,9 @@ class _MobileMoneyPayoutCard extends StatelessWidget {
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: isSelected ? color.withValues(alpha: 0.12) : const Color(0xFFF3F4F6),
+            color: isSelected
+                ? color.withValues(alpha: 0.12)
+                : const Color(0xFFF3F4F6),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isSelected ? color : Colors.transparent,

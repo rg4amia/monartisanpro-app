@@ -59,26 +59,34 @@ class _SupplierCatalogScreenState extends State<SupplierCatalogScreen> {
               onChanged: (val) => _searchQuery.value = val,
               decoration: InputDecoration(
                 hintText: 'Rechercher un article...',
-                prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary),
-                suffixIcon: Obx(() => _searchQuery.value.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear, color: AppColors.textSecondary),
-                        onPressed: () {
-                          _searchController.clear();
-                          _searchQuery.value = '';
-                        },
-                      )
-                    : const SizedBox.shrink()),
+                prefixIcon:
+                    const Icon(Icons.search, color: AppColors.textSecondary),
+                suffixIcon: Obx(
+                  () => _searchQuery.value.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(
+                            Icons.clear,
+                            color: AppColors.textSecondary,
+                          ),
+                          onPressed: () {
+                            _searchController.clear();
+                            _searchQuery.value = '';
+                          },
+                        )
+                      : const SizedBox.shrink(),
+                ),
                 filled: true,
                 fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                contentPadding:
+                    const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.success, width: 1.5),
+                  borderSide:
+                      const BorderSide(color: AppColors.success, width: 1.5),
                 ),
               ),
             ),
@@ -123,8 +131,10 @@ class _SupplierCatalogScreenState extends State<SupplierCatalogScreen> {
                         const Text(
                           'Ajoutez vos articles pour enrichir le catalogue consulté par les artisans.',
                           textAlign: TextAlign.center,
-                          style:
-                              TextStyle(color: AppColors.textSecondary, height: 1.4),
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            height: 1.4,
+                          ),
                         ),
                       ],
                     ),
@@ -136,7 +146,8 @@ class _SupplierCatalogScreenState extends State<SupplierCatalogScreen> {
                 final query = _searchQuery.value.toLowerCase().trim();
                 if (query.isEmpty) return true;
                 final nameMatch = p.name.toLowerCase().contains(query);
-                final descMatch = (p.description ?? '').toLowerCase().contains(query);
+                final descMatch =
+                    (p.description ?? '').toLowerCase().contains(query);
                 final skuMatch = (p.sku ?? '').toLowerCase().contains(query);
                 return nameMatch || descMatch || skuMatch;
               }).toList();
@@ -146,11 +157,18 @@ class _SupplierCatalogScreenState extends State<SupplierCatalogScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.search_off_outlined, size: 64, color: Colors.grey[400]),
+                      Icon(
+                        Icons.search_off_outlined,
+                        size: 64,
+                        color: Colors.grey[400],
+                      ),
                       const SizedBox(height: 16),
                       const Text(
                         'Aucun article ne correspond à votre recherche',
-                        style: TextStyle(color: AppColors.textSecondary, fontSize: 15),
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 15,
+                        ),
                       ),
                     ],
                   ),
@@ -490,7 +508,8 @@ class _CatalogProductCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final stockColor =
         product.stockQuantity > 0 ? AppColors.success : AppColors.danger;
-    final hasImage = product.imageUrl != null && product.imageUrl!.trim().isNotEmpty;
+    final hasImage =
+        product.imageUrl != null && product.imageUrl!.trim().isNotEmpty;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -591,10 +610,15 @@ class _CatalogProductCard extends StatelessWidget {
                     ),
                     _CatalogChip(
                       label: product.isActive ? 'Actif' : 'Inactif',
-                      color: product.isActive ? AppColors.info : AppColors.textMuted,
+                      color: product.isActive
+                          ? AppColors.info
+                          : AppColors.textMuted,
                     ),
                     if ((product.sku ?? '').isNotEmpty)
-                      _CatalogChip(label: product.sku!, color: AppColors.warning),
+                      _CatalogChip(
+                        label: product.sku!,
+                        color: AppColors.warning,
+                      ),
                   ],
                 ),
               ],

@@ -113,10 +113,10 @@ class AuthController extends GetxController {
 
   Future<void> register() async {
     if (name.value.trim().isEmpty || role.value == null) return;
-    
+
     isLoading.value = true;
     errorMsg.value = null;
-    
+
     try {
       final result = await _repo.register(
         phone: phone.value,
@@ -173,7 +173,7 @@ class AuthController extends GetxController {
     if (cniPath.value == null) return;
     isLoading.value = true;
     errorMsg.value = null;
-    
+
     try {
       await _repo.uploadCni(cniPath.value!);
       kycStep.value = kycStep.value < 2 ? kycStep.value + 1 : kycStep.value;
@@ -269,7 +269,7 @@ class AuthController extends GetxController {
       name.value = '';
       otpSent.value = false;
       errorMsg.value = null;
-      
+
       resetOldPhone.value = '';
       resetNewPhone.value = '';
       resetName.value = '';

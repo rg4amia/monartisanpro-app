@@ -41,9 +41,12 @@ class ParrainageController extends GetxController {
       return true;
     } on DioException catch (e) {
       errorMsg.value = _handleDioError(e);
-      Get.snackbar('Erreur', errorMsg.value ?? 'Impossible d\'ajouter le filleul',
-          backgroundColor: Get.theme.colorScheme.error.withValues(alpha: 0.9),
-          colorText: Get.theme.colorScheme.onError);
+      Get.snackbar(
+        'Erreur',
+        errorMsg.value ?? 'Impossible d\'ajouter le filleul',
+        backgroundColor: Get.theme.colorScheme.error.withValues(alpha: 0.9),
+        colorText: Get.theme.colorScheme.onError,
+      );
       return false;
     } catch (e) {
       errorMsg.value = 'Une erreur est survenue';

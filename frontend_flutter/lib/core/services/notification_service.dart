@@ -45,14 +45,17 @@ class NotificationService extends GetxService {
   void routeToTarget(Map<String, dynamic> data) {
     try {
       final type = (data['type'] as String?)?.toLowerCase() ?? '';
-      
+
       final devisIdStr = data['devisId'] ?? data['devis_id'];
       final missionIdStr = data['missionId'] ?? data['mission_id'];
       final litigeIdStr = data['litigeId'] ?? data['litige_id'];
-      
-      final devisId = devisIdStr != null ? int.tryParse(devisIdStr.toString()) : null;
-      final missionId = missionIdStr != null ? int.tryParse(missionIdStr.toString()) : null;
-      final litigeId = litigeIdStr != null ? int.tryParse(litigeIdStr.toString()) : null;
+
+      final devisId =
+          devisIdStr != null ? int.tryParse(devisIdStr.toString()) : null;
+      final missionId =
+          missionIdStr != null ? int.tryParse(missionIdStr.toString()) : null;
+      final litigeId =
+          litigeIdStr != null ? int.tryParse(litigeIdStr.toString()) : null;
 
       final role = StorageService.getRole() ?? 'client';
 
@@ -67,17 +70,19 @@ class NotificationService extends GetxService {
         } else if (missionId != null) {
           Get.toNamed(Routes.missionTracking, arguments: missionId);
         }
-      } 
+      }
       // 2. Redirection pour les missions ou jalons
       else if (type.contains('mission') || type.contains('jalon')) {
         if (missionId != null) {
           Get.toNamed(Routes.missionTracking, arguments: missionId);
         }
-      } 
+      }
       // 3. Redirection pour les paiements / finances / wallet
-      else if (type.contains('payment') || type.contains('wallet') || type.contains('finance')) {
+      else if (type.contains('payment') ||
+          type.contains('wallet') ||
+          type.contains('finance')) {
         _switchToMainTab(3); // Profil/Settings contient les infos financières
-      } 
+      }
       // 4. Redirection pour les J-Codes
       else if (type.contains('jcode')) {
         if (role == 'artisan') {
@@ -85,7 +90,7 @@ class NotificationService extends GetxService {
         } else {
           Get.toNamed(Routes.jcode);
         }
-      } 
+      }
       // 5. Redirection pour les litiges
       else if (type.contains('litige')) {
         if (litigeId != null) {
@@ -100,7 +105,9 @@ class NotificationService extends GetxService {
   }
 
   void _switchToMainTab(int index) {
-    Get.until((route) => Get.currentRoute == Routes.mainTab || Get.currentRoute == '/');
+    Get.until(
+      (route) => Get.currentRoute == Routes.mainTab || Get.currentRoute == '/',
+    );
     try {
       final mainTabController = Get.find<MainTabController>();
       mainTabController.changeTab(index);

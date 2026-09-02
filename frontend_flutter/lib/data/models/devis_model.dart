@@ -182,11 +182,15 @@ class DevisModel {
         id: _parseInt(json['id']),
         missionId: _parseInt(json['missionId'] ?? json['mission_id']),
         artisanId: _parseInt(json['artisanId'] ?? json['artisan_id']),
-        lignes: (json['lignesJson'] as List<dynamic>? ?? json['lignes_json'] as List<dynamic>? ?? const [])
+        lignes: (json['lignesJson'] as List<dynamic>? ??
+                json['lignes_json'] as List<dynamic>? ??
+                const [])
             .whereType<Map<String, dynamic>>()
             .map(DevisLigne.fromJson)
             .toList(),
-        jalons: (json['jalonsJson'] as List<dynamic>? ?? json['jalons_json'] as List<dynamic>? ?? const [])
+        jalons: (json['jalonsJson'] as List<dynamic>? ??
+                json['jalons_json'] as List<dynamic>? ??
+                const [])
             .whereType<Map<String, dynamic>>()
             .map(DevisJalon.fromJson)
             .toList(),
@@ -225,7 +229,8 @@ class DevisModel {
         'missionStatus': missionStatus,
         'ratioMateriaux': ratioMateriaux,
         if (serverMontantTotal != null) 'montantTotal': serverMontantTotal,
-        if (serverMontantMateriaux != null) 'montantMateriaux': serverMontantMateriaux,
+        if (serverMontantMateriaux != null)
+          'montantMateriaux': serverMontantMateriaux,
         if (serverMontantMo != null) 'montantMo': serverMontantMo,
       };
 

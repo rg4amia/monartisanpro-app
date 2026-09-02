@@ -13,8 +13,10 @@ DioException _dioError({int? status, DioExceptionType? type}) {
   );
 }
 
-Response<dynamic> _ok() =>
-    Response<dynamic>(requestOptions: RequestOptions(path: '/test'), data: 'ok');
+Response<dynamic> _ok() => Response<dynamic>(
+      requestOptions: RequestOptions(path: '/test'),
+      data: 'ok',
+    );
 
 void main() {
   group('NetworkExecutor.run', () {
@@ -33,7 +35,9 @@ void main() {
       final res = await NetworkExecutor.run(
         () async {
           calls++;
-          if (calls < 3) throw _dioError(type: DioExceptionType.connectionError);
+          if (calls < 3) {
+            throw _dioError(type: DioExceptionType.connectionError);
+          }
           return _ok();
         },
         retryDelay: Duration.zero,

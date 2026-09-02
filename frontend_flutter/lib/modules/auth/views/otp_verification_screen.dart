@@ -104,7 +104,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       PopScope(
         canPop: false,
         child: AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: const Text(
             'Mise à jour requise',
             style: TextStyle(fontWeight: FontWeight.w800, color: _Dt.ink),
@@ -118,7 +119,10 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                 height: 1.5,
               ),
               children: [
-                const TextSpan(text: 'Pour continuer à utiliser ProsArtisan, vous devez accepter nos nouvelles '),
+                const TextSpan(
+                  text:
+                      'Pour continuer à utiliser ProsArtisan, vous devez accepter nos nouvelles ',
+                ),
                 TextSpan(
                   text: 'Conditions Générales d\'Utilisation',
                   style: const TextStyle(
@@ -128,9 +132,14 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                   ),
                   recognizer: TapGestureRecognizer()
                     ..onTap = () async {
-                      final url = Uri.parse(EnvConfig.baseUrl.replaceAll('/api/v1', '/cgu'));
+                      final url = Uri.parse(
+                        EnvConfig.baseUrl.replaceAll('/api/v1', '/cgu'),
+                      );
                       if (await canLaunchUrl(url)) {
-                        await launchUrl(url, mode: LaunchMode.externalApplication);
+                        await launchUrl(
+                          url,
+                          mode: LaunchMode.externalApplication,
+                        );
                       }
                     },
                 ),
@@ -144,26 +153,45 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                 Get.back();
                 _c.errorMsg.value = null;
               },
-              child: const Text('Plus tard', style: TextStyle(color: _Dt.muted, fontWeight: FontWeight.w600)),
-            ),
-            Obx(() => ElevatedButton(
-              onPressed: _c.isLoading.value ? null : () async {
-                final success = await _c.acceptCgu();
-                if (success) {
-                  Get.back(); // close modal
-                  unawaited(Get.offAllNamed(Routes.mainTab));
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _Dt.primary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                elevation: 0,
+              child: const Text(
+                'Plus tard',
+                style: TextStyle(color: _Dt.muted, fontWeight: FontWeight.w600),
               ),
-              child: _c.isLoading.value
-                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                  : const Text('J\'accepte', style: TextStyle(fontWeight: FontWeight.w700)),
-            )),
+            ),
+            Obx(
+              () => ElevatedButton(
+                onPressed: _c.isLoading.value
+                    ? null
+                    : () async {
+                        final success = await _c.acceptCgu();
+                        if (success) {
+                          Get.back(); // close modal
+                          unawaited(Get.offAllNamed(Routes.mainTab));
+                        }
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _Dt.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  elevation: 0,
+                ),
+                child: _c.isLoading.value
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text(
+                        'J\'accepte',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+              ),
+            ),
           ],
         ),
       ),

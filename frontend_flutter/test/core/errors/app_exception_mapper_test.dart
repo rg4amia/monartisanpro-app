@@ -30,12 +30,17 @@ void main() {
   });
 
   test('422 → ValidationException avec fieldErrors', () {
-    final e = toAppException(_dio(status: 422, data: {
-      'message': 'Champs invalides',
-      'errors': {
-        'phone': ['Le numéro est invalide'],
-      },
-    }));
+    final e = toAppException(
+      _dio(
+        status: 422,
+        data: {
+          'message': 'Champs invalides',
+          'errors': {
+            'phone': ['Le numéro est invalide'],
+          },
+        },
+      ),
+    );
     expect(e, isA<ValidationException>());
     final v = e as ValidationException;
     expect(v.message, 'Champs invalides');

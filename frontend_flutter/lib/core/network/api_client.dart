@@ -74,7 +74,9 @@ class ApiClient {
 class _AuthInterceptor extends Interceptor {
   @override
   Future<void> onRequest(
-      RequestOptions options, RequestInterceptorHandler handler) async {
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) async {
     // Use StorageService instead of direct FlutterSecureStorage
     final token = await StorageService.getToken();
     if (token != null) {
@@ -113,7 +115,7 @@ class _ErrorLoggerInterceptor extends Interceptor {
         showSnackbar: false, // Le controller gérera l'affichage
       ),
     );
-    
+
     handler.next(err);
   }
 }
@@ -132,7 +134,9 @@ class _DynamicBaseUrlInterceptor extends Interceptor {
     }
     options.baseUrl = latestBaseUrl;
 
-    if (options.path.startsWith('/') && !options.path.startsWith('//') && !options.path.startsWith('http')) {
+    if (options.path.startsWith('/') &&
+        !options.path.startsWith('//') &&
+        !options.path.startsWith('http')) {
       options.path = options.path.substring(1);
     }
     handler.next(options);

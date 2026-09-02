@@ -366,8 +366,10 @@ class _MissionCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () => Get.toNamed(Routes.missionTracking,
-                          arguments: mission),
+                      onPressed: () => Get.toNamed(
+                        Routes.missionTracking,
+                        arguments: mission,
+                      ),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: _Palette.primary,
                         side: BorderSide(
@@ -412,7 +414,8 @@ class _MissionCard extends StatelessWidget {
           if (mission.hasDevis) {
             return _MissionAction(
               label: 'Devis envoyé',
-              subtitle: 'Votre devis a été soumis. En attente de la décision du client.',
+              subtitle:
+                  'Votre devis a été soumis. En attente de la décision du client.',
               color: _Palette.muted,
               icon: Icons.hourglass_empty_outlined,
               onTap: null,

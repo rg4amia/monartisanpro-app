@@ -72,7 +72,8 @@ class MissionRepository {
       return missions;
     } catch (e) {
       // 4. En cas d'erreur, retourner le cache expiré si disponible
-      final fallbackCache = _cache.getCachedMissions(filter: status, ignoreExpiration: true);
+      final fallbackCache =
+          _cache.getCachedMissions(filter: status, ignoreExpiration: true);
       if (fallbackCache != null) {
         // Le cache existe mais est expiré, on le retourne quand même
         return fallbackCache;
@@ -213,15 +214,19 @@ class MissionRepository {
   /// Met à jour le statut d'une mission
   Future<void> updateStatus(int id, String status) async {
     try {
-      await _client.put(ApiEndpoints.missionStatus(id), data: {'status': status});
+      await _client
+          .put(ApiEndpoints.missionStatus(id), data: {'status': status});
     } on DioException catch (e) {
-      if (e.type == DioExceptionType.connectionTimeout || 
-          e.type == DioExceptionType.receiveTimeout || 
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
           e.type == DioExceptionType.connectionError) {
-        
         final syncService = Get.find<SyncService>();
-        await syncService.enqueueRequest('PUT', ApiEndpoints.missionStatus(id), data: {'status': status});
-        
+        await syncService.enqueueRequest(
+          'PUT',
+          ApiEndpoints.missionStatus(id),
+          data: {'status': status},
+        );
+
         // Mettre à jour localement la mission en cache en attendant la synchro
         final cached = _cache.getCachedMission(id, ignoreExpiration: true);
         if (cached != null) {
@@ -229,7 +234,9 @@ class MissionRepository {
           final json = cached.toJson();
           json['status'] = status;
           await _cache.cacheMission(MissionModel.fromJson(json));
-          await _cache.invalidate('all'); // Pour forcer la vue liste à se rafraîchir localement
+          await _cache.invalidate(
+            'all',
+          ); // Pour forcer la vue liste à se rafraîchir localement
         }
       } else {
         rethrow;
@@ -335,7 +342,8 @@ class MissionRepository {
       return jalons;
     } catch (e) {
       // 4. Fallback sur cache expiré
-      final fallbackCache = _cache.getCachedJalons(missionId, ignoreExpiration: true);
+      final fallbackCache =
+          _cache.getCachedJalons(missionId, ignoreExpiration: true);
       if (fallbackCache != null) {
         return fallbackCache;
       }
@@ -362,13 +370,16 @@ class MissionRepository {
     try {
       await _client.put(ApiEndpoints.submitJalon(jalonId), data: payload);
     } on DioException catch (e) {
-      if (e.type == DioExceptionType.connectionTimeout || 
-          e.type == DioExceptionType.receiveTimeout || 
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
           e.type == DioExceptionType.connectionError) {
-        
         final syncService = Get.find<SyncService>();
-        await syncService.enqueueRequest('PUT', ApiEndpoints.submitJalon(jalonId), data: payload);
-        
+        await syncService.enqueueRequest(
+          'PUT',
+          ApiEndpoints.submitJalon(jalonId),
+          data: payload,
+        );
+
         if (missionId != null) {
           // On invalide le cache des jalons pour forcer un refresh local (ou on pourrait le modifier localement)
           await _cache.invalidate('jalons_$missionId');
@@ -406,7 +417,11 @@ class MissionRepository {
   }
 
   /// Upload de preuves supplémentaires pour un jalon (artisan)
-  Future<void> uploadJalonPhotos(int jalonId, List<Map<String, dynamic>> localFiles, {int? missionId}) async {
+  Future<void> uploadJalonPhotos(
+    int jalonId,
+    List<Map<String, dynamic>> localFiles, {
+    int? missionId,
+  }) async {
     final Map<String, dynamic> formMap = {};
     for (int i = 0; i < localFiles.length; i++) {
       final fileMap = localFiles[i];
@@ -422,7 +437,10 @@ class MissionRepository {
       }
     }
     final formData = FormData.fromMap(formMap);
-    await _client.postMultipart(ApiEndpoints.uploadJalonPhotos(jalonId), formData);
+    await _client.postMultipart(
+      ApiEndpoints.uploadJalonPhotos(jalonId),
+      formData,
+    );
 
     if (missionId != null) {
       await _cache.invalidate('jalons_$missionId');
@@ -453,5 +471,4 @@ class MissionRepository {
 
     return {'size': _cache.cacheSize, 'isInitialized': _cache.isInitialized};
   }
-
 }

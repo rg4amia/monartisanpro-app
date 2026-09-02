@@ -46,7 +46,9 @@ class ScoreScreen extends GetView<ScoreController> {
                         const SizedBox(height: 12),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 8),
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.success.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(20),
@@ -55,7 +57,11 @@ class ScoreScreen extends GetView<ScoreController> {
                           child: const Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.star, color: AppColors.success, size: 16),
+                              Icon(
+                                Icons.star,
+                                color: AppColors.success,
+                                size: 16,
+                              ),
                               SizedBox(width: 6),
                               Text(
                                 'Accès micro-crédit débloqué',
@@ -159,7 +165,8 @@ class ScoreScreen extends GetView<ScoreController> {
                                 dotData: const FlDotData(show: false),
                                 belowBarData: BarAreaData(
                                   show: true,
-                                  color: AppColors.primary.withValues(alpha: 0.1),
+                                  color:
+                                      AppColors.primary.withValues(alpha: 0.1),
                                 ),
                               ),
                             ],
@@ -175,8 +182,10 @@ class ScoreScreen extends GetView<ScoreController> {
               // Info micro-crédit
               Card(
                 child: ListTile(
-                  leading: const Icon(Icons.account_balance,
-                      color: AppColors.primary),
+                  leading: const Icon(
+                    Icons.account_balance,
+                    color: AppColors.primary,
+                  ),
                   title: const Text('Micro-crédit d\'urgence'),
                   subtitle: Text(
                     controller.hasAccesMicrocredit.value
@@ -185,8 +194,12 @@ class ScoreScreen extends GetView<ScoreController> {
                   ),
                   trailing: controller.hasAccesMicrocredit.value
                       ? ElevatedButton(
-                          onPressed: () => Get.to(() => const MicroCreditScreen(),
-                              binding: BindingsBuilder.put(() => MicroCreditController())),
+                          onPressed: () => Get.to(
+                            () => const MicroCreditScreen(),
+                            binding: BindingsBuilder.put(
+                              () => MicroCreditController(),
+                            ),
+                          ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.success,
                             foregroundColor: Colors.white,
@@ -235,22 +248,31 @@ class _CritereBar extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(label,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w500, fontSize: 13)),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 13,
+                ),
+              ),
               Row(
                 children: [
                   Text(
                     '${(value * 100).round()}/100',
                     style: TextStyle(
-                        color: color,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13),
+                      color: color,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
                   ),
                   const SizedBox(width: 8),
-                  Text(weight,
-                      style: const TextStyle(
-                          color: AppColors.textMuted, fontSize: 11)),
+                  Text(
+                    weight,
+                    style: const TextStyle(
+                      color: AppColors.textMuted,
+                      fontSize: 11,
+                    ),
+                  ),
                 ],
               ),
             ],

@@ -79,7 +79,8 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
         ),
       );
       setState(() {
-        _gpsCtrl.text = '${pos.latitude.toStringAsFixed(6)}, ${pos.longitude.toStringAsFixed(6)}';
+        _gpsCtrl.text =
+            '${pos.latitude.toStringAsFixed(6)}, ${pos.longitude.toStringAsFixed(6)}';
       });
       Get.snackbar(
         'GPS synchronisé',
@@ -140,13 +141,14 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Column(
                       children: [
-                        CommunicationBanner(announcements: controller.announcements),
+                        CommunicationBanner(
+                          announcements: controller.announcements,
+                        ),
                         LeSaviezVousCarousel(tips: controller.tips),
                       ],
                     ),
                   ),
                 ),
-
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
@@ -234,7 +236,10 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
                         color: Colors.white.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: const Icon(Icons.notifications_outlined, color: Colors.white),
+                      child: const Icon(
+                        Icons.notifications_outlined,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                   (() {
@@ -369,9 +374,15 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
                   title: 'Score Fluidité',
                   value: '${controller.fluidityScore.value} pts',
                   subtitle: 'Statut : ${controller.fluidityStatus}',
-                  color: controller.fluidityScore.value > 150 ? Colors.amber.shade700 : AppColors.driver,
-                  background: controller.fluidityScore.value > 150 ? Colors.amber.shade50 : AppColors.driverSoft,
-                  icon: controller.fluidityScore.value > 150 ? Icons.workspace_premium_rounded : Icons.military_tech,
+                  color: controller.fluidityScore.value > 150
+                      ? Colors.amber.shade700
+                      : AppColors.driver,
+                  background: controller.fluidityScore.value > 150
+                      ? Colors.amber.shade50
+                      : AppColors.driverSoft,
+                  icon: controller.fluidityScore.value > 150
+                      ? Icons.workspace_premium_rounded
+                      : Icons.military_tech,
                 ),
               ),
             ],
@@ -415,7 +426,8 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: AppColors.success.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
@@ -470,7 +482,9 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
                   Row(
                     children: List.generate(5, (index) {
                       return Icon(
-                        index < 4 ? Icons.star_rounded : Icons.star_half_rounded,
+                        index < 4
+                            ? Icons.star_rounded
+                            : Icons.star_half_rounded,
                         color: Colors.amber,
                         size: 18,
                       );
@@ -528,7 +542,9 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
               value: percentage,
               backgroundColor: AppColors.border,
               valueColor: AlwaysStoppedAnimation<Color>(
-                stars >= 4 ? AppColors.success : (stars == 3 ? Colors.amber : Colors.red),
+                stars >= 4
+                    ? AppColors.success
+                    : (stars == 3 ? Colors.amber : Colors.red),
               ),
               minHeight: 6,
             ),
@@ -707,7 +723,8 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
             _buildEmptyDeliveriesCard('Aucune course de livraison disponible.')
           else
             Column(
-              children: available.map((m) => _buildAvailableDeliveryCard(m)).toList(),
+              children:
+                  available.map((m) => _buildAvailableDeliveryCard(m)).toList(),
             ),
         ],
       ),
@@ -738,7 +755,11 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
 
   Widget _buildActiveDeliveryCard(MissionModel mission) {
     final rawStatus = mission.rawStatus;
-    final deliveryFee = mission.montantMo > 0 ? mission.montantMo : (mission.montantTotal > 0 ? (mission.montantTotal * 0.15).toInt() : 1500);
+    final deliveryFee = mission.montantMo > 0
+        ? mission.montantMo
+        : (mission.montantTotal > 0
+            ? (mission.montantTotal * 0.15).toInt()
+            : 1500);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -783,28 +804,37 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
           _buildDeliveryStep(
             stepNumber: '1',
             title: 'Enlèvement Boutique (Fournisseur)',
-            value: '${mission.artisanName ?? 'Quincaillerie Centrale'} (${mission.location ?? 'Cocody'})',
+            value:
+                '${mission.artisanName ?? 'Quincaillerie Centrale'} (${mission.location ?? 'Cocody'})',
           ),
           const SizedBox(height: 12),
           _buildDeliveryStep(
             stepNumber: '2',
             title: 'Livraison Client',
-            value: '${mission.clientName ?? 'Client'} (${mission.location ?? 'Cocody'})',
+            value:
+                '${mission.clientName ?? 'Client'} (${mission.location ?? 'Cocody'})',
           ),
           const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: () => Get.to(() => DeliveryRoutePlannerScreen(mission: mission)),
+                  onPressed: () => Get.to(
+                    () => DeliveryRoutePlannerScreen(mission: mission),
+                  ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.driver,
                     side: const BorderSide(color: AppColors.driver),
                     minimumSize: const Size(0, 44),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                   icon: const Icon(Icons.map_outlined, size: 18),
-                  label: const Text('Itinéraire', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  label: const Text(
+                    'Itinéraire',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
               const SizedBox(width: 10),
@@ -816,10 +846,18 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
                           backgroundColor: AppColors.warning,
                           foregroundColor: Colors.white,
                           minimumSize: const Size(0, 44),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                         icon: const Icon(Icons.check_circle_outline, size: 18),
-                        label: const Text('Enlèvement', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
+                        label: const Text(
+                          'Enlèvement',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
                       )
                     : ElevatedButton.icon(
                         onPressed: () => _promptDropoffCode(mission),
@@ -827,10 +865,18 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
                           backgroundColor: AppColors.success,
                           foregroundColor: Colors.white,
                           minimumSize: const Size(0, 44),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                         icon: const Icon(Icons.check_circle, size: 18),
-                        label: const Text('Livraison', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
+                        label: const Text(
+                          'Livraison',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
                       ),
               ),
             ],
@@ -858,7 +904,11 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
           child: Center(
             child: Text(
               stepNumber,
-              style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ),
@@ -869,12 +919,20 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
             children: [
               Text(
                 title.toUpperCase(),
-                style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: AppColors.textSecondary),
+                style: const TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textSecondary,
+                ),
               ),
               const SizedBox(height: 2),
               Text(
                 value,
-                style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
               ),
             ],
           ),
@@ -888,7 +946,10 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
     Get.dialog(
       AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Code d\'enlèvement magasin', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+        title: const Text(
+          'Code d\'enlèvement magasin',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -903,7 +964,8 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
               decoration: InputDecoration(
                 hintText: 'Ex: RET-${mission.id}',
                 helperText: 'Pour tester, saisissez : RET-${mission.id}',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               ),
             ),
           ],
@@ -913,7 +975,10 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
           ElevatedButton(
             onPressed: () {
               Get.back();
-              controller.handleDriverPickupFromStore(mission, textController.text);
+              controller.handleDriverPickupFromStore(
+                mission,
+                textController.text,
+              );
             },
             child: const Text('Confirmer'),
           ),
@@ -927,7 +992,10 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
     Get.dialog(
       AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Code de réception client', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+        title: const Text(
+          'Code de réception client',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -942,7 +1010,8 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
               decoration: InputDecoration(
                 hintText: 'Ex: REC-${mission.id}',
                 helperText: 'Pour tester, saisissez : REC-${mission.id}',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               ),
             ),
           ],
@@ -952,7 +1021,10 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
           ElevatedButton(
             onPressed: () {
               Get.back();
-              controller.handleDriverDropoffToClient(mission, textController.text);
+              controller.handleDriverDropoffToClient(
+                mission,
+                textController.text,
+              );
             },
             child: const Text('Valider'),
           ),
@@ -962,7 +1034,11 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
   }
 
   Widget _buildAvailableDeliveryCard(MissionModel mission) {
-    final deliveryFee = mission.montantMo > 0 ? mission.montantMo : (mission.montantTotal > 0 ? (mission.montantTotal * 0.15).toInt() : 1500);
+    final deliveryFee = mission.montantMo > 0
+        ? mission.montantMo
+        : (mission.montantTotal > 0
+            ? (mission.montantTotal * 0.15).toInt()
+            : 1500);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -1024,16 +1100,25 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
               ElevatedButton(
                 onPressed: () async {
                   await controller.handleAcceptDelivery(mission);
-                  unawaited(Get.to(() => DeliveryRoutePlannerScreen(mission: mission)));
+                  unawaited(
+                    Get.to(
+                      () => DeliveryRoutePlannerScreen(mission: mission),
+                    ),
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   minimumSize: const Size(80, 32),
                   padding: const EdgeInsets.symmetric(horizontal: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
-                child: const Text('Accepter', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                child: const Text(
+                  'Accepter',
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                ),
               ),
             ],
           ),
@@ -1062,12 +1147,16 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
             initialValue: _selectedVehicle,
             decoration: InputDecoration(
               labelText: 'Catégorie de Véhicule',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             ),
             items: const [
               DropdownMenuItem(value: 'Moto', child: Text('Moto')),
               DropdownMenuItem(value: 'Tricycle', child: Text('Tricycle')),
-              DropdownMenuItem(value: 'Camionnette', child: Text('Camionnette')),
+              DropdownMenuItem(
+                value: 'Camionnette',
+                child: Text('Camionnette'),
+              ),
             ],
             onChanged: (val) {
               if (val != null) {
@@ -1083,7 +1172,8 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
             controller: _plateCtrl,
             decoration: InputDecoration(
               labelText: 'Plaque d\'immatriculation',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             ),
           ),
           const SizedBox(height: 16),
@@ -1099,7 +1189,9 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
                     helperText: 'Géré par la plateforme',
                     fillColor: AppColors.background,
                     filled: true,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
               ),
@@ -1114,7 +1206,9 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
                     helperText: 'Géré par la plateforme',
                     fillColor: AppColors.background,
                     filled: true,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
               ),
@@ -1139,16 +1233,24 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
                     labelText: 'Coordonnées GPS (Ex: 5.3482, -4.0169)',
                     fillColor: AppColors.surface,
                     filled: true,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     hintText: 'lat, lng',
                     suffixIcon: IconButton(
                       icon: _loadingGeo
                           ? const SizedBox(
                               width: 20,
                               height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.primary,
+                              ),
                             )
-                          : const Icon(Icons.my_location, color: AppColors.primary),
+                          : const Icon(
+                              Icons.my_location,
+                              color: AppColors.primary,
+                            ),
                       onPressed: _loadingGeo ? null : _handleGeoLocation,
                       tooltip: 'Obtenir ma position GPS',
                     ),
@@ -1162,7 +1264,9 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
                     labelText: 'Adresse manuelle',
                     fillColor: AppColors.surface,
                     filled: true,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
               ],
@@ -1175,11 +1279,16 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
               backgroundColor: AppColors.driver,
               foregroundColor: Colors.white,
               minimumSize: const Size(double.infinity, 50),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               shadowColor: AppColors.driver.withValues(alpha: 0.3),
               elevation: 4,
             ),
-            child: const Text('Sauvegarder les modifications', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+            child: const Text(
+              'Sauvegarder les modifications',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+            ),
           ),
         ],
       ),

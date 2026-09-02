@@ -24,7 +24,9 @@ class NotificationModel {
         title: json['title'] as String? ?? '',
         message: json['message'] as String? ?? '',
         isRead: json['isRead'] as bool? ?? json['read'] as bool? ?? false,
-        createdAt: json['createdAt'] as String? ?? json['created_at'] as String? ?? DateTime.now().toIso8601String(),
+        createdAt: json['createdAt'] as String? ??
+            json['created_at'] as String? ??
+            DateTime.now().toIso8601String(),
         data: json['data'] is Map ? json['data'] as Map<String, dynamic> : null,
       );
 

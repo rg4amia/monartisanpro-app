@@ -56,13 +56,18 @@ class MissionCard extends StatelessWidget {
             if (mission.location != null)
               Row(
                 children: [
-                  const Icon(Icons.location_on_outlined,
-                      size: 12, color: AppColors.textMuted),
+                  const Icon(
+                    Icons.location_on_outlined,
+                    size: 12,
+                    color: AppColors.textMuted,
+                  ),
                   const SizedBox(width: 2),
                   Text(
                     mission.location!,
                     style: const TextStyle(
-                        fontSize: 12, color: AppColors.textMuted),
+                      fontSize: 12,
+                      color: AppColors.textMuted,
+                    ),
                   ),
                 ],
               ),
@@ -71,24 +76,27 @@ class MissionCard extends StatelessWidget {
             if (mission.needsReferent)
               Container(
                 margin: const EdgeInsets.only(bottom: 6),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: AppColors.warning.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                      color: AppColors.warning.withValues(alpha: 0.3)),
+                    color: AppColors.warning.withValues(alpha: 0.3),
+                  ),
                 ),
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.gavel, size: 11, color: AppColors.warning),
                     SizedBox(width: 4),
-                    Text('Référent requis',
-                        style: TextStyle(
-                            fontSize: 11,
-                            color: AppColors.warning,
-                            fontWeight: FontWeight.w500)),
+                    Text(
+                      'Référent requis',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: AppColors.warning,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -106,8 +114,8 @@ class MissionCard extends StatelessWidget {
                 ),
                 Text(
                   Formatters.date(mission.createdAt),
-                  style: const TextStyle(
-                      fontSize: 12, color: AppColors.textMuted),
+                  style:
+                      const TextStyle(fontSize: 12, color: AppColors.textMuted),
                 ),
               ],
             ),
@@ -118,16 +126,23 @@ class MissionCard extends StatelessWidget {
               children: [
                 _dot(AppColors.accent),
                 const SizedBox(width: 4),
-                Text('Matériaux ${(mission.ratioMateriaux * 100).round()}%',
-                    style: const TextStyle(
-                        fontSize: 10, color: AppColors.textSecondary)),
+                Text(
+                  'Matériaux ${(mission.ratioMateriaux * 100).round()}%',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
                 const SizedBox(width: 10),
                 _dot(AppColors.primary),
                 const SizedBox(width: 4),
                 Text(
-                    'Main d\'œuvre ${((1 - mission.ratioMateriaux) * 100).round()}%',
-                    style: const TextStyle(
-                        fontSize: 10, color: AppColors.textSecondary)),
+                  'Main d\'œuvre ${((1 - mission.ratioMateriaux) * 100).round()}%',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
               ],
             ),
           ],
@@ -161,8 +176,8 @@ class MissionCard extends StatelessWidget {
       ),
       child: Text(
         Formatters.missionStatus(mission.status),
-        style: TextStyle(
-            fontSize: 11, color: color, fontWeight: FontWeight.w500),
+        style:
+            TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w500),
       ),
     );
   }

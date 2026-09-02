@@ -7,7 +7,6 @@ import '../../../data/repositories/evaluation_repository.dart';
 import '../controllers/settings_controller.dart';
 import 'legal_terms_screen.dart';
 
-
 // ─── Design Tokens ────────────────────────────────────────────────────────────
 abstract class _C {
   static const bg = Color(0xFFF8F9FA);
@@ -142,7 +141,8 @@ class _ProfileHeader extends StatelessWidget {
                       shape: BoxShape.circle,
                       border: Border.all(color: _C.surface, width: 3),
                     ),
-                    child: const Icon(Icons.edit, color: Colors.white, size: 16),
+                    child:
+                        const Icon(Icons.edit, color: Colors.white, size: 16),
                   ),
                 ),
               ],
@@ -185,26 +185,27 @@ class _StatsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
-      child: Obx(() => Row(
-            children: [
-              Expanded(
-                child: _StatCard(
-                  label: 'Solde',
-                  value:
-                      'FCFA ${_formatBalance(controller.walletBalance.value)}',
-                  color: _C.primary,
-                ),
+      child: Obx(
+        () => Row(
+          children: [
+            Expanded(
+              child: _StatCard(
+                label: 'Solde',
+                value: 'FCFA ${_formatBalance(controller.walletBalance.value)}',
+                color: _C.primary,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _StatCard(
-                  label: 'Commandes',
-                  value: '${controller.ordersCount.value}',
-                  color: _C.primary,
-                ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _StatCard(
+                label: 'Commandes',
+                value: '${controller.ordersCount.value}',
+                color: _C.primary,
               ),
-            ],
-          )),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -277,7 +278,7 @@ class _MenuList extends StatelessWidget {
   Widget build(BuildContext context) {
     const orangeAccent = Color(0xFFF97316);
     const orangeAccentLight = Color(0xFFFFF3EB);
-    
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
@@ -320,114 +321,118 @@ class _MenuList extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 24),
-                
+
                 // Notifications switch Row
-                Obx(() => Row(
-                  children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: orangeAccentLight,
-                        borderRadius: BorderRadius.circular(12),
+                Obx(
+                  () => Row(
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: orangeAccentLight,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.notifications_none_outlined,
+                          color: orangeAccent,
+                          size: 22,
+                        ),
                       ),
-                      child: const Icon(
-                        Icons.notifications_none_outlined,
-                        color: orangeAccent,
-                        size: 22,
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Notifications',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: _C.ink,
+                      const SizedBox(width: 14),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Notifications',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: _C.ink,
+                              ),
                             ),
-                          ),
-                          SizedBox(height: 2),
-                          Text(
-                            'Activer/désactiver toutes les notifications',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: _C.muted,
+                            SizedBox(height: 2),
+                            Text(
+                              'Activer/désactiver toutes les notifications',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: _C.muted,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                    Switch(
-                      value: controller.notificationsEnabled.value,
-                      onChanged: controller.toggleNotifications,
-                      activeThumbColor: orangeAccent,
-                      activeTrackColor: orangeAccent.withValues(alpha: 0.3),
-                    ),
-                  ],
-                )),
-                
+                      Switch(
+                        value: controller.notificationsEnabled.value,
+                        onChanged: controller.toggleNotifications,
+                        activeThumbColor: orangeAccent,
+                        activeTrackColor: orangeAccent.withValues(alpha: 0.3),
+                      ),
+                    ],
+                  ),
+                ),
+
                 const SizedBox(height: 16),
                 const Divider(height: 1, color: _C.subtle),
                 const SizedBox(height: 16),
-                
+
                 // Son switch Row
-                Obx(() => Row(
-                  children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: orangeAccentLight,
-                        borderRadius: BorderRadius.circular(12),
+                Obx(
+                  () => Row(
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: orangeAccentLight,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.volume_up_outlined,
+                          color: orangeAccent,
+                          size: 22,
+                        ),
                       ),
-                      child: const Icon(
-                        Icons.volume_up_outlined,
-                        color: orangeAccent,
-                        size: 22,
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Son',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: _C.ink,
+                      const SizedBox(width: 14),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Son',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: _C.ink,
+                              ),
                             ),
-                          ),
-                          SizedBox(height: 2),
-                          Text(
-                            'Activer le son des notifications',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: _C.muted,
+                            SizedBox(height: 2),
+                            Text(
+                              'Activer le son des notifications',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: _C.muted,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                    Switch(
-                      value: controller.notificationSoundEnabled.value,
-                      onChanged: controller.toggleNotificationSound,
-                      activeThumbColor: orangeAccent,
-                      activeTrackColor: orangeAccent.withValues(alpha: 0.3),
-                    ),
-                  ],
-                )),
+                      Switch(
+                        value: controller.notificationSoundEnabled.value,
+                        onChanged: controller.toggleNotificationSound,
+                        activeThumbColor: orangeAccent,
+                        activeTrackColor: orangeAccent.withValues(alpha: 0.3),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
-          
+
           const SizedBox(height: 20),
-          
+
           _MenuItem(
             icon: Icons.person_outline,
             iconBg: _C.primaryLight,
@@ -440,9 +445,13 @@ class _MenuList extends StatelessWidget {
           Obx(() {
             final isClient = controller.userRole.value == 'client';
             final hasPaymentPhone = controller.paymentPhone.value.isNotEmpty;
-            final providerName = controller.preferredPaymentProvider.value.toUpperCase().replaceAll('_', ' ');
+            final providerName = controller.preferredPaymentProvider.value
+                .toUpperCase()
+                .replaceAll('_', ' ');
 
-            final title = isClient ? 'Moyen de paiement Mobile Money' : 'Reversement Mobile Money';
+            final title = isClient
+                ? 'Moyen de paiement Mobile Money'
+                : 'Reversement Mobile Money';
             final subtitle = hasPaymentPhone
                 ? '$providerName : ${controller.paymentPhone.value}'
                 : (isClient
@@ -450,15 +459,20 @@ class _MenuList extends StatelessWidget {
                     : 'Numéro de réception des fonds (Wave, Orange, MTN, Moov)');
 
             return _MenuItem(
-              icon: isClient ? Icons.payments_outlined : Icons.account_balance_wallet_outlined,
+              icon: isClient
+                  ? Icons.payments_outlined
+                  : Icons.account_balance_wallet_outlined,
               iconBg: const Color(0xFFECFDF5),
               iconColor: const Color(0xFF10B981),
               title: title,
               subtitle: subtitle,
               trailing: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: hasPaymentPhone ? const Color(0xFFECFDF5) : const Color(0xFFFFF3EB),
+                  color: hasPaymentPhone
+                      ? const Color(0xFFECFDF5)
+                      : const Color(0xFFFFF3EB),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: hasPaymentPhone
@@ -471,7 +485,9 @@ class _MenuList extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w800,
-                    color: hasPaymentPhone ? const Color(0xFF10B981) : const Color(0xFFF97316),
+                    color: hasPaymentPhone
+                        ? const Color(0xFF10B981)
+                        : const Color(0xFFF97316),
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -489,17 +505,19 @@ class _MenuList extends StatelessWidget {
             onTap: () => Get.toNamed(Routes.wallet),
           ),
           const SizedBox(height: 12),
-          Obx(() => _MenuItem(
-            icon: Icons.shield_outlined,
-            iconBg: _C.successLight,
-            iconColor: _C.success,
-            title: 'Sécurité & Statut KYC',
-            subtitle: 'Sécurisez votre compte et vos limites',
-            trailing: _VerifiedBadge(status: controller.kycStatus.value),
-            onTap: controller.kycStatus.value != 'actif'
-                ? () => Get.toNamed(Routes.kycCni)
-                : null,
-          )),
+          Obx(
+            () => _MenuItem(
+              icon: Icons.shield_outlined,
+              iconBg: _C.successLight,
+              iconColor: _C.success,
+              title: 'Sécurité & Statut KYC',
+              subtitle: 'Sécurisez votre compte et vos limites',
+              trailing: _VerifiedBadge(status: controller.kycStatus.value),
+              onTap: controller.kycStatus.value != 'actif'
+                  ? () => Get.toNamed(Routes.kycCni)
+                  : null,
+            ),
+          ),
           const SizedBox(height: 12),
           _MenuItem(
             icon: Icons.phone_android_outlined,
@@ -519,7 +537,7 @@ class _MenuList extends StatelessWidget {
             onTap: () => _showMyEvaluationsDialog(context),
           ),
           const SizedBox(height: 12),
-          
+
           // Conditions d'utilisation
           _MenuItem(
             icon: Icons.assignment_outlined,
@@ -530,7 +548,7 @@ class _MenuList extends StatelessWidget {
             onTap: () => Get.to(() => const LegalTermsScreen(initialTab: 0)),
           ),
           const SizedBox(height: 12),
-          
+
           // Politique de confidentialité
           _MenuItem(
             icon: Icons.security_outlined,
@@ -541,7 +559,7 @@ class _MenuList extends StatelessWidget {
             onTap: () => Get.to(() => const LegalTermsScreen(initialTab: 1)),
           ),
           const SizedBox(height: 12),
-          
+
           // Aide et support
           _MenuItem(
             icon: Icons.help_outline_outlined,
@@ -552,18 +570,25 @@ class _MenuList extends StatelessWidget {
             onTap: () {
               Get.dialog(
                 AlertDialog(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   title: const Text('Aide et support'),
-                  content: const Text('Besoin d\'assistance pour un jalon ou un paiement ? Contactez notre support disponible 7j/7 depuis notre centre d\'appel.'),
+                  content: const Text(
+                    'Besoin d\'assistance pour un jalon ou un paiement ? Contactez notre support disponible 7j/7 depuis notre centre d\'appel.',
+                  ),
                   actions: [
-                    TextButton(onPressed: () => Get.back(), child: const Text('Fermer')),
+                    TextButton(
+                      onPressed: () => Get.back(),
+                      child: const Text('Fermer'),
+                    ),
                   ],
                 ),
               );
             },
           ),
           const SizedBox(height: 12),
-          
+
           // Déconnexion
           _MenuItem(
             icon: Icons.logout,
@@ -575,7 +600,7 @@ class _MenuList extends StatelessWidget {
             onTap: () => _confirmLogout(context, controller),
           ),
           const SizedBox(height: 12),
-          
+
           // Supprimer mon compte
           _MenuItem(
             icon: Icons.person_remove_outlined,
@@ -620,7 +645,10 @@ class _MenuList extends StatelessWidget {
     );
   }
 
-  void _confirmDeleteAccount(BuildContext context, SettingsController controller) {
+  void _confirmDeleteAccount(
+    BuildContext context,
+    SettingsController controller,
+  ) {
     Get.dialog(
       AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -654,151 +682,201 @@ class _MenuList extends StatelessWidget {
     );
   }
 
-  void _showPaymentPhoneDialog(BuildContext context, SettingsController controller) {
-    final selectedProvider = (controller.preferredPaymentProvider.value.isNotEmpty
-            ? controller.preferredPaymentProvider.value
-            : 'wave')
-        .obs;
-    final phoneCtrl = TextEditingController(text: controller.paymentPhone.value);
+  void _showPaymentPhoneDialog(
+    BuildContext context,
+    SettingsController controller,
+  ) {
+    final selectedProvider =
+        (controller.preferredPaymentProvider.value.isNotEmpty
+                ? controller.preferredPaymentProvider.value
+                : 'wave')
+            .obs;
+    final phoneCtrl =
+        TextEditingController(text: controller.paymentPhone.value);
     final isClient = controller.userRole.value == 'client';
     controller.paymentPhoneError.value = null;
 
     Get.dialog(
-      Obx(() => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFECFDF5),
-                borderRadius: BorderRadius.circular(10),
+      Obx(
+        () => AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFECFDF5),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  isClient
+                      ? Icons.payments_rounded
+                      : Icons.account_balance_wallet_rounded,
+                  color: const Color(0xFF10B981),
+                  size: 22,
+                ),
               ),
-              child: Icon(
-                isClient ? Icons.payments_rounded : Icons.account_balance_wallet_rounded,
-                color: const Color(0xFF10B981),
-                size: 22,
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  isClient ? 'Moyen de paiement' : 'Reversement Mobile Money',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 17,
+                  ),
+                ),
               ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isClient
+                      ? 'Associez votre compte Mobile Money pour régler vos devis rapidement et recevoir automatiquement vos remboursements en cas de litige.'
+                      : 'Renseignez le numéro Mobile Money sur lequel vos gains et fonds débloqués seront virés.',
+                  style: const TextStyle(
+                    color: _C.muted,
+                    fontSize: 13,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                const Text(
+                  'Opérateur Mobile Money',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: _C.ink,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    _buildDialogProviderChip(
+                      'wave',
+                      'Wave',
+                      const Color(0xFF00A3FF),
+                      selectedProvider,
+                    ),
+                    const SizedBox(width: 6),
+                    _buildDialogProviderChip(
+                      'orange_money',
+                      'Orange',
+                      const Color(0xFFFF7900),
+                      selectedProvider,
+                    ),
+                    const SizedBox(width: 6),
+                    _buildDialogProviderChip(
+                      'mtn_money',
+                      'MTN',
+                      const Color(0xFFFFCC00),
+                      selectedProvider,
+                    ),
+                    const SizedBox(width: 6),
+                    _buildDialogProviderChip(
+                      'moov_money',
+                      'Moov',
+                      const Color(0xFF005BA6),
+                      selectedProvider,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                TextField(
+                  controller: phoneCtrl,
+                  keyboardType: TextInputType.phone,
+                  decoration: InputDecoration(
+                    labelText: 'Numéro Mobile Money (10 chiffres)',
+                    hintText: 'Ex: 0701020304',
+                    prefixIcon:
+                        const Icon(Icons.phone_android_rounded, size: 20),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                if (controller.paymentPhoneError.value != null) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    controller.paymentPhoneError.value!,
+                    style: const TextStyle(
+                      color: _C.danger,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ],
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                isClient ? 'Moyen de paiement' : 'Reversement Mobile Money',
-                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(),
+              child: const Text('Annuler'),
+            ),
+            ElevatedButton(
+              onPressed: controller.isSavingPaymentPhone.value
+                  ? null
+                  : () async {
+                      final phone = phoneCtrl.text.trim();
+                      if (phone.isEmpty || phone.length < 10) {
+                        Get.snackbar(
+                          'Numéro invalide',
+                          'Veuillez entrer un numéro à 10 chiffres (ex: 0701020304)',
+                          backgroundColor: _C.danger,
+                          colorText: Colors.white,
+                        );
+                        return;
+                      }
+
+                      final success = await controller.updatePaymentPhone(
+                        newPaymentPhone: phone,
+                        provider: selectedProvider.value,
+                      );
+
+                      if (success) {
+                        Get.back();
+                        Get.snackbar(
+                          'Compte associé',
+                          'Votre numéro Mobile Money a été mis à jour avec succès.',
+                          backgroundColor: _C.success,
+                          colorText: Colors.white,
+                        );
+                      } else {
+                        Get.snackbar(
+                          'Erreur',
+                          controller.paymentPhoneError.value ??
+                              'Impossible d\'enregistrer le numéro.',
+                          backgroundColor: _C.danger,
+                          colorText: Colors.white,
+                        );
+                      }
+                    },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _C.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
+              child: controller.isSavingPaymentPhone.value
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Text('Enregistrer'),
             ),
           ],
         ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                isClient
-                    ? 'Associez votre compte Mobile Money pour régler vos devis rapidement et recevoir automatiquement vos remboursements en cas de litige.'
-                    : 'Renseignez le numéro Mobile Money sur lequel vos gains et fonds débloqués seront virés.',
-                style: const TextStyle(color: _C.muted, fontSize: 13, height: 1.4),
-              ),
-              const SizedBox(height: 18),
-              const Text(
-                'Opérateur Mobile Money',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: _C.ink,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  _buildDialogProviderChip('wave', 'Wave', const Color(0xFF00A3FF), selectedProvider),
-                  const SizedBox(width: 6),
-                  _buildDialogProviderChip('orange_money', 'Orange', const Color(0xFFFF7900), selectedProvider),
-                  const SizedBox(width: 6),
-                  _buildDialogProviderChip('mtn_money', 'MTN', const Color(0xFFFFCC00), selectedProvider),
-                  const SizedBox(width: 6),
-                  _buildDialogProviderChip('moov_money', 'Moov', const Color(0xFF005BA6), selectedProvider),
-                ],
-              ),
-              const SizedBox(height: 18),
-              TextField(
-                controller: phoneCtrl,
-                keyboardType: TextInputType.phone,
-                decoration: InputDecoration(
-                  labelText: 'Numéro Mobile Money (10 chiffres)',
-                  hintText: 'Ex: 0701020304',
-                  prefixIcon: const Icon(Icons.phone_android_rounded, size: 20),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-              if (controller.paymentPhoneError.value != null) ...[
-                const SizedBox(height: 10),
-                Text(
-                  controller.paymentPhoneError.value!,
-                  style: const TextStyle(color: _C.danger, fontSize: 12, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Annuler'),
-          ),
-          ElevatedButton(
-            onPressed: controller.isSavingPaymentPhone.value
-                ? null
-                : () async {
-                    final phone = phoneCtrl.text.trim();
-                    if (phone.isEmpty || phone.length < 10) {
-                      Get.snackbar(
-                        'Numéro invalide',
-                        'Veuillez entrer un numéro à 10 chiffres (ex: 0701020304)',
-                        backgroundColor: _C.danger,
-                        colorText: Colors.white,
-                      );
-                      return;
-                    }
-
-                    final success = await controller.updatePaymentPhone(
-                      newPaymentPhone: phone,
-                      provider: selectedProvider.value,
-                    );
-
-                    if (success) {
-                      Get.back();
-                      Get.snackbar(
-                        'Compte associé',
-                        'Votre numéro Mobile Money a été mis à jour avec succès.',
-                        backgroundColor: _C.success,
-                        colorText: Colors.white,
-                      );
-                    } else {
-                      Get.snackbar(
-                        'Erreur',
-                        controller.paymentPhoneError.value ?? 'Impossible d\'enregistrer le numéro.',
-                        backgroundColor: _C.danger,
-                        colorText: Colors.white,
-                      );
-                    }
-                  },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _C.primary,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            child: controller.isSavingPaymentPhone.value
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                  )
-                : const Text('Enregistrer'),
-          ),
-        ],
-      )),
+      ),
     );
   }
 
@@ -817,7 +895,9 @@ class _MenuList extends StatelessWidget {
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(vertical: 8),
             decoration: BoxDecoration(
-              color: isSelected ? color.withValues(alpha: 0.12) : const Color(0xFFF3F4F6),
+              color: isSelected
+                  ? color.withValues(alpha: 0.12)
+                  : const Color(0xFFF3F4F6),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: isSelected ? color : Colors.transparent,
@@ -852,7 +932,10 @@ class _MenuList extends StatelessWidget {
     });
   }
 
-  void _showChangePhoneDialog(BuildContext context, SettingsController controller) {
+  void _showChangePhoneDialog(
+    BuildContext context,
+    SettingsController controller,
+  ) {
     final phoneCtrl = TextEditingController(text: controller.userPhone.value);
     final otpCtrl = TextEditingController();
 
@@ -860,141 +943,167 @@ class _MenuList extends StatelessWidget {
     controller.changePhoneError.value = null;
 
     Get.dialog(
-      Obx(() => AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: const Text(
-              'Modifier le numéro',
-              style: TextStyle(fontWeight: FontWeight.w800),
-            ),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    'Entrez votre nouveau numéro de téléphone (+225). Un code de validation OTP vous sera envoyé.',
-                    style: TextStyle(color: _C.muted, fontSize: 13),
+      Obx(
+        () => AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text(
+            'Modifier le numéro',
+            style: TextStyle(fontWeight: FontWeight.w800),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Entrez votre nouveau numéro de téléphone (+225). Un code de validation OTP vous sera envoyé.',
+                  style: TextStyle(color: _C.muted, fontSize: 13),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: phoneCtrl,
+                  enabled: !controller.isChangePhoneOtpSent.value,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(
+                    labelText: 'Nouveau numéro (+225)',
+                    border: OutlineInputBorder(),
+                    hintText: '+2250707000000',
                   ),
+                ),
+                if (controller.isChangePhoneOtpSent.value) ...[
                   const SizedBox(height: 16),
+                  const Divider(),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Saisissez le code OTP reçu :',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+                  const SizedBox(height: 8),
                   TextField(
-                    controller: phoneCtrl,
-                    enabled: !controller.isChangePhoneOtpSent.value,
-                    keyboardType: TextInputType.phone,
+                    controller: otpCtrl,
+                    keyboardType: TextInputType.number,
+                    maxLength: 4,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 8,
+                    ),
                     decoration: const InputDecoration(
-                      labelText: 'Nouveau numéro (+225)',
                       border: OutlineInputBorder(),
-                      hintText: '+2250707000000',
+                      counterText: '',
+                      hintText: '0000',
                     ),
                   ),
-                  if (controller.isChangePhoneOtpSent.value) ...[
-                    const SizedBox(height: 16),
-                    const Divider(),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Saisissez le code OTP reçu :',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: otpCtrl,
-                      keyboardType: TextInputType.number,
-                      maxLength: 4,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: 8),
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        counterText: '',
-                        hintText: '0000',
-                      ),
-                    ),
-                  ],
-                  if (controller.changePhoneError.value != null) ...[
-                    const SizedBox(height: 12),
-                    Text(
-                      controller.changePhoneError.value!,
-                      style: const TextStyle(color: _C.danger, fontSize: 12, fontWeight: FontWeight.bold),
-                    ),
-                  ],
                 ],
-              ),
+                if (controller.changePhoneError.value != null) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    controller.changePhoneError.value!,
+                    style: const TextStyle(
+                      color: _C.danger,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ],
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Get.back(),
-                child: const Text('Annuler'),
-              ),
-              ElevatedButton(
-                onPressed: controller.isChangingPhone.value
-                    ? null
-                    : () async {
-                        final newPhone = phoneCtrl.text.trim();
-                        if (newPhone.isEmpty || !newPhone.startsWith('+225') || newPhone.length < 14) {
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(),
+              child: const Text('Annuler'),
+            ),
+            ElevatedButton(
+              onPressed: controller.isChangingPhone.value
+                  ? null
+                  : () async {
+                      final newPhone = phoneCtrl.text.trim();
+                      if (newPhone.isEmpty ||
+                          !newPhone.startsWith('+225') ||
+                          newPhone.length < 14) {
+                        Get.snackbar(
+                          'Numéro invalide',
+                          'Veuillez entrer un numéro valide au format +225XXXXXXXXXX',
+                          backgroundColor: _C.danger,
+                          colorText: Colors.white,
+                        );
+                        return;
+                      }
+
+                      if (!controller.isChangePhoneOtpSent.value) {
+                        final success =
+                            await controller.requestChangePhone(newPhone);
+                        if (success) {
                           Get.snackbar(
-                            'Numéro invalide',
-                            'Veuillez entrer un numéro valide au format +225XXXXXXXXXX',
+                            'OTP envoyé',
+                            'Un code OTP a été envoyé sur le nouveau numéro.',
+                            backgroundColor: _C.success,
+                            colorText: Colors.white,
+                          );
+                        } else {
+                          Get.snackbar(
+                            'Erreur',
+                            controller.changePhoneError.value ??
+                                'Impossible d\'envoyer le code.',
+                            backgroundColor: _C.danger,
+                            colorText: Colors.white,
+                          );
+                        }
+                      } else {
+                        final otp = otpCtrl.text.trim();
+                        if (otp.length != 4) {
+                          Get.snackbar(
+                            'OTP requis',
+                            'Veuillez saisir le code OTP à 4 chiffres.',
                             backgroundColor: _C.danger,
                             colorText: Colors.white,
                           );
                           return;
                         }
 
-                        if (!controller.isChangePhoneOtpSent.value) {
-                          final success = await controller.requestChangePhone(newPhone);
-                          if (success) {
-                            Get.snackbar(
-                              'OTP envoyé',
-                              'Un code OTP a été envoyé sur le nouveau numéro.',
-                              backgroundColor: _C.success,
-                              colorText: Colors.white,
-                            );
-                          } else {
-                            Get.snackbar(
-                              'Erreur',
-                              controller.changePhoneError.value ?? 'Impossible d\'envoyer le code.',
-                              backgroundColor: _C.danger,
-                              colorText: Colors.white,
-                            );
-                          }
+                        final success = await controller.confirmChangePhone(
+                          newPhone,
+                          otp,
+                        );
+                        if (success) {
+                          Get.back();
+                          Get.snackbar(
+                            'Numéro modifié',
+                            'Votre numéro de téléphone de connexion a été mis à jour.',
+                            backgroundColor: _C.success,
+                            colorText: Colors.white,
+                          );
                         } else {
-                          final otp = otpCtrl.text.trim();
-                          if (otp.length != 4) {
-                            Get.snackbar(
-                              'OTP requis',
-                              'Veuillez saisir le code OTP à 4 chiffres.',
-                              backgroundColor: _C.danger,
-                              colorText: Colors.white,
-                            );
-                            return;
-                          }
-
-                          final success = await controller.confirmChangePhone(newPhone, otp);
-                          if (success) {
-                            Get.back();
-                            Get.snackbar(
-                              'Numéro modifié',
-                              'Votre numéro de téléphone de connexion a été mis à jour.',
-                              backgroundColor: _C.success,
-                              colorText: Colors.white,
-                            );
-                          } else {
-                            Get.snackbar(
-                              'Code OTP erroné',
-                              controller.changePhoneError.value ?? 'Le code saisi est invalide.',
-                              backgroundColor: _C.danger,
-                              colorText: Colors.white,
-                            );
-                          }
+                          Get.snackbar(
+                            'Code OTP erroné',
+                            controller.changePhoneError.value ??
+                                'Le code saisi est invalide.',
+                            backgroundColor: _C.danger,
+                            colorText: Colors.white,
+                          );
                         }
-                      },
-                child: controller.isChangingPhone.value
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                      )
-                    : Text(controller.isChangePhoneOtpSent.value ? 'Confirmer' : 'Suivant'),
-              ),
-            ],
-          )),
+                      }
+                    },
+              child: controller.isChangingPhone.value
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Text(
+                      controller.isChangePhoneOtpSent.value
+                          ? 'Confirmer'
+                          : 'Suivant',
+                    ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -1156,7 +1265,11 @@ void _showMyEvaluationsDialog(BuildContext context) {
                       color: const Color(0xFFFEF3C7),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.star_rounded, size: 22, color: Color(0xFFD97706)),
+                    child: const Icon(
+                      Icons.star_rounded,
+                      size: 22,
+                      color: Color(0xFFD97706),
+                    ),
                   ),
                   const SizedBox(width: 12),
                   const Expanded(
@@ -1245,7 +1358,9 @@ void _showMyEvaluationsDialog(BuildContext context) {
                     separatorBuilder: (_, __) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
                       final item = given[index];
-                      final evalue = item['evalue'] is Map ? Map<String, dynamic>.from(item['evalue']) : null;
+                      final evalue = item['evalue'] is Map
+                          ? Map<String, dynamic>.from(item['evalue'])
+                          : null;
                       final String name = evalue?['name'] ?? 'Intervenant';
                       final String role = evalue?['role'] ?? 'artisan';
                       final int note = item['note'] as int? ?? 0;
@@ -1267,7 +1382,8 @@ void _showMyEvaluationsDialog(BuildContext context) {
                               children: [
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         name,
@@ -1294,7 +1410,9 @@ void _showMyEvaluationsDialog(BuildContext context) {
                                 Row(
                                   children: List.generate(5, (i) {
                                     return Icon(
-                                      i < note ? Icons.star_rounded : Icons.star_outline_rounded,
+                                      i < note
+                                          ? Icons.star_rounded
+                                          : Icons.star_outline_rounded,
                                       size: 18,
                                       color: const Color(0xFFF59E0B),
                                     );
@@ -1328,6 +1446,4 @@ void _showMyEvaluationsDialog(BuildContext context) {
   );
 }
 
-
 // ─── Carte de Changement d'Espace ─────────────────────────────────────────────
-

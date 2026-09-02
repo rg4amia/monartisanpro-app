@@ -56,18 +56,21 @@ class DevisController extends GetxController {
 
   void addLigne(String type, String description, int montant) {
     lignes.add(
-        DevisLigne(type: type, description: description, montant: montant));
+      DevisLigne(type: type, description: description, montant: montant),
+    );
   }
 
   void removeLigne(int index) => lignes.removeAt(index);
 
   void addJalon(String description, int montant, String dateCible) {
-    jalons.add(DevisJalon(
-      ordre: jalons.length + 1,
-      description: description,
-      montant: montant,
-      dateCible: dateCible,
-    ));
+    jalons.add(
+      DevisJalon(
+        ordre: jalons.length + 1,
+        description: description,
+        montant: montant,
+        dateCible: dateCible,
+      ),
+    );
   }
 
   void removeJalon(int index) {
@@ -92,8 +95,11 @@ class DevisController extends GetxController {
         jalons: jalons,
       );
       Get.back();
-      Get.snackbar('Devis envoyé', 'Le client recevra une notification.',
-          snackPosition: SnackPosition.TOP);
+      Get.snackbar(
+        'Devis envoyé',
+        'Le client recevra une notification.',
+        snackPosition: SnackPosition.TOP,
+      );
     } finally {
       isLoading.value = false;
     }

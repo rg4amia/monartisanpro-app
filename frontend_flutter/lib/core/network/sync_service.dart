@@ -35,7 +35,9 @@ class QueuedRequest {
         id: json['id'],
         method: json['method'],
         url: json['url'],
-        data: json['data'] != null ? Map<String, dynamic>.from(json['data']) : null,
+        data: json['data'] != null
+            ? Map<String, dynamic>.from(json['data'])
+            : null,
         timestamp: DateTime.parse(json['timestamp']),
       );
 }
@@ -70,7 +72,8 @@ class SyncService extends GetxService {
     _updateConnectionStatus(results);
 
     // Écoute des changements de réseau
-    _connectivitySubscription = Connectivity().onConnectivityChanged.listen(_updateConnectionStatus);
+    _connectivitySubscription =
+        Connectivity().onConnectivityChanged.listen(_updateConnectionStatus);
 
     // Si on démarre en ligne avec des requêtes en attente (app tuée hors-ligne),
     // on tente de les rejouer immédiatement.
@@ -82,7 +85,8 @@ class SyncService extends GetxService {
   }
 
   void _updateConnectionStatus(List<ConnectivityResult> results) {
-    final offline = results.contains(ConnectivityResult.none) || results.isEmpty;
+    final offline =
+        results.contains(ConnectivityResult.none) || results.isEmpty;
     if (isOffline.value != offline) {
       isOffline.value = offline;
       if (!offline) {
@@ -92,9 +96,13 @@ class SyncService extends GetxService {
   }
 
   /// Met en file d'attente une requête échouée à cause du réseau
-  Future<void> enqueueRequest(String method, String url, {Map<String, dynamic>? data}) async {
+  Future<void> enqueueRequest(
+    String method,
+    String url, {
+    Map<String, dynamic>? data,
+  }) async {
     if (_queueBox == null) return;
-    
+
     final request = QueuedRequest(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       method: method,
@@ -127,7 +135,9 @@ class SyncService extends GetxService {
         // mutation obsolète (statut déjà changé, jalon déjà soumis…).
         if (DateTime.now().difference(request.timestamp) > _maxRequestAge) {
           await _queueBox!.delete(key);
-          debugPrint('[SyncService] Requête expirée abandonnée: ${request.url}');
+          debugPrint(
+            '[SyncService] Requête expirée abandonnée: ${request.url}',
+          );
           continue;
         }
 
@@ -155,7 +165,9 @@ class SyncService extends GetxService {
               status == 429 ||
               (status != null && status >= 500)) {
             // Problème transitoire : on garde la requête pour un prochain essai.
-            debugPrint('[SyncService] Report de ${request.url} (status=$status)');
+            debugPrint(
+              '[SyncService] Report de ${request.url} (status=$status)',
+            );
             continue;
           }
 

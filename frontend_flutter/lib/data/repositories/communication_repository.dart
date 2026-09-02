@@ -7,7 +7,8 @@ class CommunicationRepository {
 
   /// Récupère les communications actives (annonces + astuces le_saviez_vous)
   /// pour le rôle actuel de l'utilisateur connecté.
-  Future<Map<String, List<CommunicationModel>>> getActiveCommunications() async {
+  Future<Map<String, List<CommunicationModel>>>
+      getActiveCommunications() async {
     final res = await _client.get(ApiEndpoints.communicationsActive);
     final data = res.data['data'] as Map<String, dynamic>;
 

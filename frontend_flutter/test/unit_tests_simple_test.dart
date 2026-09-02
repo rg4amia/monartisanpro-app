@@ -173,7 +173,9 @@ void main() {
       expect(jcode.statut, 'actif');
     });
 
-    test('should create JcodeModel and JcodeItemModel from JSON with partial consumption fields', () {
+    test(
+        'should create JcodeModel and JcodeItemModel from JSON with partial consumption fields',
+        () {
       final json = {
         'id': 1,
         'missionId': 10,
@@ -194,7 +196,7 @@ void main() {
             'subtotal': 50000,
             'status': 'partial',
           }
-        ]
+        ],
       };
 
       final jcode = JcodeModel.fromJson(json);

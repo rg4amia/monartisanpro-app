@@ -80,7 +80,10 @@ class CacheStore<T> {
     _metaBox = await _openHealing(_metadataBoxName, cipher);
   }
 
-  static Future<Box<Map>> _openHealing(String name, HiveAesCipher cipher) async {
+  static Future<Box<Map>> _openHealing(
+    String name,
+    HiveAesCipher cipher,
+  ) async {
     try {
       return await Hive.openBox<Map>(name, encryptionCipher: cipher);
     } catch (_) {
@@ -118,7 +121,11 @@ class CacheStore<T> {
     }
   }
 
-  List<T>? peekList(String key, {bool ignoreExpiration = false, Duration? ttl}) {
+  List<T>? peekList(
+    String key, {
+    bool ignoreExpiration = false,
+    Duration? ttl,
+  }) {
     if (!isInitialized) return null;
     if (!ignoreExpiration && !isFresh(key, ttl)) return null;
     final raw = _box!.get(key);
@@ -145,7 +152,8 @@ class CacheStore<T> {
         fetch: fetch,
         ttl: ttl,
         policy: policy,
-        peek: (ignoreExp) => peekOne(key, ignoreExpiration: ignoreExp, ttl: ttl),
+        peek: (ignoreExp) =>
+            peekOne(key, ignoreExpiration: ignoreExp, ttl: ttl),
         persist: (v) => writeOne(key, v),
       );
 
@@ -191,7 +199,9 @@ class CacheStore<T> {
     } catch (e) {
       final stale = peek(true);
       if (stale != null) {
-        debugPrint('[CacheStore:$boxName] réseau KO, fallback cache périmé ($key)');
+        debugPrint(
+          '[CacheStore:$boxName] réseau KO, fallback cache périmé ($key)',
+        );
         return stale;
       }
       rethrow;
@@ -200,8 +210,8 @@ class CacheStore<T> {
 
   // ── Métadonnées / invalidation ───────────────────────────────────────────
 
-  Future<void> _touch(String key) =>
-      _metaBox!.put('${boxName}_$key', {'ts': DateTime.now().toIso8601String()});
+  Future<void> _touch(String key) => _metaBox!
+      .put('${boxName}_$key', {'ts': DateTime.now().toIso8601String()});
 
   bool isFresh(String key, Duration? ttl) {
     if (ttl == null) return false; // sans TTL, jamais "frais" → réseau

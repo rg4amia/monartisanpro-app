@@ -56,17 +56,19 @@ class ServicesScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    ...controller.sectors.map((sector) => Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: _ServiceCard(
-                            sector: sector,
-                            onTap: () => _showTradesBottomSheet(
-                              context,
-                              controller,
-                              sector,
-                            ),
+                    ...controller.sectors.map(
+                      (sector) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _ServiceCard(
+                          sector: sector,
+                          onTap: () => _showTradesBottomSheet(
+                            context,
+                            controller,
+                            sector,
                           ),
-                        )),
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 20),
                     _NeedHelpCard(),
                   ],

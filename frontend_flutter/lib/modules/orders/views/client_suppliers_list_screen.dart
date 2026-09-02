@@ -8,7 +8,8 @@ class ClientSuppliersListScreen extends StatefulWidget {
   const ClientSuppliersListScreen({super.key});
 
   @override
-  State<ClientSuppliersListScreen> createState() => _ClientSuppliersListScreenState();
+  State<ClientSuppliersListScreen> createState() =>
+      _ClientSuppliersListScreenState();
 }
 
 class _ClientSuppliersListScreenState extends State<ClientSuppliersListScreen> {
@@ -44,7 +45,10 @@ class _ClientSuppliersListScreenState extends State<ClientSuppliersListScreen> {
               alignment: Alignment.center,
               children: [
                 IconButton(
-                  icon: const Icon(Icons.shopping_cart_outlined, color: AppColors.primary),
+                  icon: const Icon(
+                    Icons.shopping_cart_outlined,
+                    color: AppColors.primary,
+                  ),
                   onPressed: () {
                     if (controller.selectedSupplier.value != null) {
                       Get.to(() => const ClientCatalogScreen());
@@ -62,7 +66,11 @@ class _ClientSuppliersListScreenState extends State<ClientSuppliersListScreen> {
                     ),
                     child: Text(
                       '${controller.cartCount}',
-                      style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
@@ -81,7 +89,8 @@ class _ClientSuppliersListScreenState extends State<ClientSuppliersListScreen> {
               onChanged: (val) => controller.loadApprovedSuppliers(search: val),
               decoration: InputDecoration(
                 hintText: 'Rechercher une quincaillerie...',
-                prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary),
+                prefixIcon:
+                    const Icon(Icons.search, color: AppColors.textSecondary),
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.clear, color: AppColors.textSecondary),
                   onPressed: () {
@@ -91,14 +100,16 @@ class _ClientSuppliersListScreenState extends State<ClientSuppliersListScreen> {
                 ),
                 filled: true,
                 fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                contentPadding:
+                    const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                  borderSide:
+                      const BorderSide(color: AppColors.primary, width: 1.5),
                 ),
               ),
             ),
@@ -108,7 +119,9 @@ class _ClientSuppliersListScreenState extends State<ClientSuppliersListScreen> {
           Expanded(
             child: Obx(() {
               if (controller.isLoading.value) {
-                return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+                return const Center(
+                  child: CircularProgressIndicator(color: AppColors.primary),
+                );
               }
 
               if (controller.approvedSuppliers.isEmpty) {
@@ -120,7 +133,11 @@ class _ClientSuppliersListScreenState extends State<ClientSuppliersListScreen> {
                       const SizedBox(height: 16),
                       Text(
                         'Aucun fournisseur trouvé',
-                        style: TextStyle(color: Colors.grey[600], fontSize: 16, fontWeight: FontWeight.w500),
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ],
                   ),
@@ -133,7 +150,7 @@ class _ClientSuppliersListScreenState extends State<ClientSuppliersListScreen> {
                 itemBuilder: (context, index) {
                   final supplier = controller.approvedSuppliers[index];
                   final shopName = supplier.shopName;
-                  
+
                   return Card(
                     margin: const EdgeInsets.only(bottom: 16),
                     elevation: 0,
@@ -145,9 +162,12 @@ class _ClientSuppliersListScreenState extends State<ClientSuppliersListScreen> {
                     child: InkWell(
                       borderRadius: BorderRadius.circular(16),
                       onTap: () {
-                        controller.selectSupplier(supplier, onConfirmed: () {
-                          Get.to(() => const ClientCatalogScreen());
-                        });
+                        controller.selectSupplier(
+                          supplier,
+                          onConfirmed: () {
+                            Get.to(() => const ClientCatalogScreen());
+                          },
+                        );
                       },
                       child: Padding(
                         padding: const EdgeInsets.all(16.0),
@@ -190,7 +210,11 @@ class _ClientSuppliersListScreenState extends State<ClientSuppliersListScreen> {
                                   const SizedBox(height: 6),
                                   Row(
                                     children: [
-                                      const Icon(Icons.phone, size: 14, color: AppColors.textSecondary),
+                                      const Icon(
+                                        Icons.phone,
+                                        size: 14,
+                                        color: AppColors.textSecondary,
+                                      ),
                                       const SizedBox(width: 4),
                                       Text(
                                         'Contact masqué (disponible après validation)',
@@ -222,18 +246,26 @@ class _ClientSuppliersListScreenState extends State<ClientSuppliersListScreen> {
         ],
       ),
       bottomNavigationBar: Obx(() {
-        if (controller.cartCount == 0 || controller.selectedSupplier.value == null) {
+        if (controller.cartCount == 0 ||
+            controller.selectedSupplier.value == null) {
           return const SizedBox.shrink();
         }
         final totalTtc = controller.totalTtc;
-        final totalFormatted = totalTtc.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]} ');
+        final totalFormatted = totalTtc.toString().replaceAllMapped(
+              RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+              (Match m) => '${m[1]} ',
+            );
         return Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
             color: Colors.white,
             boxShadow: [
-              BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 10, offset: const Offset(0, -3)),
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 10,
+                offset: const Offset(0, -3),
+              ),
             ],
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
           ),
@@ -242,8 +274,15 @@ class _ClientSuppliersListScreenState extends State<ClientSuppliersListScreen> {
               children: [
                 Container(
                   padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.1), shape: BoxShape.circle),
-                  child: const Icon(Icons.shopping_bag_outlined, color: AppColors.primary, size: 20),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.shopping_bag_outlined,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -253,13 +292,21 @@ class _ClientSuppliersListScreenState extends State<ClientSuppliersListScreen> {
                     children: [
                       Text(
                         'Panier : ${controller.selectedSupplier.value?.shopName ?? "Quincaillerie"}',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.textPrimary),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                          color: AppColors.textPrimary,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
                         '${controller.cartCount} article(s) • $totalFormatted FCFA',
-                        style: const TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.w700),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w700,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -271,10 +318,18 @@ class _ClientSuppliersListScreenState extends State<ClientSuppliersListScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
-                  child: const Text('Voir mon panier', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  child: const Text(
+                    'Voir mon panier',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
                 ),
               ],
             ),

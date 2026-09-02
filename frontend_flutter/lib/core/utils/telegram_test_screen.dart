@@ -31,7 +31,6 @@ class TelegramTestScreen extends StatelessWidget {
             style: TextStyle(color: Colors.grey),
           ),
           const SizedBox(height: 24),
-          
           _buildTestButton(
             icon: Icons.info_outline,
             label: 'Test Info',
@@ -44,7 +43,6 @@ class TelegramTestScreen extends StatelessWidget {
               _showSuccess('Info envoyée');
             },
           ),
-          
           _buildTestButton(
             icon: Icons.warning_amber,
             label: 'Test Warning',
@@ -57,7 +55,6 @@ class TelegramTestScreen extends StatelessWidget {
               _showSuccess('Warning envoyé');
             },
           ),
-          
           _buildTestButton(
             icon: Icons.error_outline,
             label: 'Test Error',
@@ -71,7 +68,6 @@ class TelegramTestScreen extends StatelessWidget {
               _showSuccess('Erreur envoyée');
             },
           ),
-          
           _buildTestButton(
             icon: Icons.event,
             label: 'Test Event',
@@ -89,9 +85,7 @@ class TelegramTestScreen extends StatelessWidget {
               _showSuccess('Événement envoyé');
             },
           ),
-          
           const Divider(height: 32),
-          
           const Text(
             'Tests métier',
             style: TextStyle(
@@ -100,7 +94,6 @@ class TelegramTestScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          
           _buildTestButton(
             icon: Icons.account_balance_wallet,
             label: 'Test Transaction',
@@ -117,7 +110,6 @@ class TelegramTestScreen extends StatelessWidget {
               _showSuccess('Transaction loggée');
             },
           ),
-          
           _buildTestButton(
             icon: Icons.verified_user,
             label: 'Test KYC',
@@ -134,7 +126,6 @@ class TelegramTestScreen extends StatelessWidget {
               _showSuccess('KYC loggé');
             },
           ),
-          
           _buildTestButton(
             icon: Icons.work_outline,
             label: 'Test Mission',
@@ -152,7 +143,6 @@ class TelegramTestScreen extends StatelessWidget {
               _showSuccess('Mission loggée');
             },
           ),
-          
           _buildTestButton(
             icon: Icons.qr_code,
             label: 'Test J-Code',
@@ -169,7 +159,6 @@ class TelegramTestScreen extends StatelessWidget {
               _showSuccess('J-Code loggé');
             },
           ),
-          
           _buildTestButton(
             icon: Icons.location_on,
             label: 'Test Géolocalisation',
@@ -182,9 +171,7 @@ class TelegramTestScreen extends StatelessWidget {
               _showSuccess('Erreur géo loggée');
             },
           ),
-          
           const Divider(height: 32),
-          
           _buildTestButton(
             icon: Icons.bug_report,
             label: 'Test Crash Simulé',

@@ -56,11 +56,11 @@ class ErrorHandler {
     if (error is DioException) {
       return getDioErrorMessage(error);
     }
-    
+
     if (error is String) {
       return error;
     }
-    
+
     return 'Une erreur est survenue';
   }
 
@@ -71,23 +71,23 @@ class ErrorHandler {
       case DioExceptionType.sendTimeout:
       case DioExceptionType.receiveTimeout:
         return 'Délai de connexion dépassé';
-      
+
       case DioExceptionType.badResponse:
         final statusCode = error.response?.statusCode;
         final data = error.response?.data;
-        
+
         if (statusCode == 401) {
           return 'Session expirée, veuillez vous reconnecter';
         }
-        
+
         if (statusCode == 403) {
           return 'Accès refusé';
         }
-        
+
         if (statusCode == 404) {
           return 'Ressource introuvable';
         }
-        
+
         if (statusCode == 422 && data is Map) {
           // Erreurs de validation Laravel
           if (data['errors'] != null) {
@@ -101,29 +101,29 @@ class ErrorHandler {
             return data['message'].toString();
           }
         }
-        
+
         if (statusCode != null && statusCode >= 500) {
           return 'Erreur serveur, veuillez réessayer';
         }
-        
+
         if (data is Map && data['message'] != null) {
           return data['message'].toString();
         }
-        
+
         return 'Erreur HTTP $statusCode';
-      
+
       case DioExceptionType.cancel:
         return 'Requête annulée';
-      
+
       case DioExceptionType.connectionError:
         return 'Pas de connexion internet';
-      
+
       case DioExceptionType.badCertificate:
         return 'Certificat SSL invalide';
-      
+
       case DioExceptionType.transformTimeout:
         return 'Délai de connexion dépassé';
-      
+
       case DioExceptionType.unknown:
         return 'Erreur de connexion';
     }

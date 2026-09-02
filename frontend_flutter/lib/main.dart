@@ -63,15 +63,17 @@ Future<void> main() async {
 
       // OneSignal — Initialisation (Push Notifications)
       // App ID surchargeable via --dart-define=ONESIGNAL_APP_ID
-      unawaited(OneSignal.Debug.setLogLevel(
-        kReleaseMode ? OSLogLevel.none : OSLogLevel.verbose,
-      ));
+      unawaited(
+        OneSignal.Debug.setLogLevel(
+          kReleaseMode ? OSLogLevel.none : OSLogLevel.verbose,
+        ),
+      );
       unawaited(OneSignal.initialize(EnvConfig.oneSignalAppId));
       unawaited(OneSignal.Notifications.requestPermission(true));
 
       // Initialisation de la synchro hors-ligne
       await Get.putAsync(() => SyncService().init());
-      
+
       Get.put(AppSettingsService());
 
       runApp(const App());

@@ -14,7 +14,8 @@ class VirementInstructionsModel {
   factory VirementInstructionsModel.fromJson(Map<String, dynamic> json) =>
       VirementInstructionsModel(
         bankName: (json['bank_name'] ?? json['bankName'] ?? '').toString(),
-        accountName: (json['account_name'] ?? json['accountName'] ?? '').toString(),
+        accountName:
+            (json['account_name'] ?? json['accountName'] ?? '').toString(),
         iban: (json['iban'] ?? '').toString(),
         reference: (json['reference'] ?? '').toString(),
       );
@@ -54,10 +55,12 @@ class PaymentInitiationModel {
         orderId: json['order_id']?.toString() ?? json['orderId']?.toString(),
         virementInstructions: json['virement_instructions'] != null
             ? VirementInstructionsModel.fromJson(
-                json['virement_instructions'] as Map<String, dynamic>)
+                json['virement_instructions'] as Map<String, dynamic>,
+              )
             : json['virementInstructions'] != null
                 ? VirementInstructionsModel.fromJson(
-                    json['virementInstructions'] as Map<String, dynamic>)
+                    json['virementInstructions'] as Map<String, dynamic>,
+                  )
                 : null,
       );
 }

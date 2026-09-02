@@ -65,12 +65,26 @@ class NotificationsScreen extends GetView<NotificationsController> {
     return Container(
       color: Colors.white,
       child: Obx(() {
-        final allCount = controller.notifications.where((n) => !n.isRead).length;
+        final allCount =
+            controller.notifications.where((n) => !n.isRead).length;
         final missionsCount = controller.notifications
-            .where((n) => !n.isRead && (n.type == 'mission' || n.type == 'mission_update' || n.type == 'jalon' || n.type == 'jcode'))
+            .where(
+              (n) =>
+                  !n.isRead &&
+                  (n.type == 'mission' ||
+                      n.type == 'mission_update' ||
+                      n.type == 'jalon' ||
+                      n.type == 'jcode'),
+            )
             .length;
         final financesCount = controller.notifications
-            .where((n) => !n.isRead && (n.type == 'payment' || n.type == 'payment_alert' || n.type == 'wallet'))
+            .where(
+              (n) =>
+                  !n.isRead &&
+                  (n.type == 'payment' ||
+                      n.type == 'payment_alert' ||
+                      n.type == 'wallet'),
+            )
             .length;
 
         return Row(
@@ -116,7 +130,8 @@ class NotificationsScreen extends GetView<NotificationsController> {
       }
 
       // Grouper les notifications par date
-      final groupedNotifications = _groupNotificationsByDate(filteredNotifications);
+      final groupedNotifications =
+          _groupNotificationsByDate(filteredNotifications);
 
       return RefreshIndicator(
         onRefresh: controller.load,
@@ -497,7 +512,8 @@ class _NotificationTile extends StatelessWidget {
                             style: TextStyle(
                               color: Colors.black87,
                               fontSize: 15,
-                              fontWeight: isUnread ? FontWeight.w700 : FontWeight.w600,
+                              fontWeight:
+                                  isUnread ? FontWeight.w700 : FontWeight.w600,
                               height: 1.3,
                             ),
                           ),

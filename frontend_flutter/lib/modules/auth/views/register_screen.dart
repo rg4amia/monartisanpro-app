@@ -326,7 +326,8 @@ class _RegisterScreenState extends State<RegisterScreen>
         return {
           'emoji': '🚚',
           'label': 'Livreur',
-          'description': 'Enlevez et livrez les colis de matériaux en toute sécurité',
+          'description':
+              'Enlevez et livrez les colis de matériaux en toute sécurité',
         };
       default:
         return {
@@ -397,7 +398,8 @@ class _RegisterScreenState extends State<RegisterScreen>
 
   Widget _buildContinueButton() {
     return Obx(() {
-      final canContinue = _c.name.value.trim().length >= 2 && _c.cguAccepted.value;
+      final canContinue =
+          _c.name.value.trim().length >= 2 && _c.cguAccepted.value;
 
       return SizedBox(
         width: double.infinity,
@@ -472,67 +474,69 @@ class _RegisterScreenState extends State<RegisterScreen>
   // ── CGU Checkbox ──────────────────────────────────────────────────────────
 
   Widget _buildCguCheckbox() {
-    return Obx(() => Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          height: 24,
-          width: 24,
-          child: Checkbox(
-            value: _c.cguAccepted.value,
-            onChanged: (val) {
-              if (val != null) _c.cguAccepted.value = val;
-            },
-            activeColor: _Dt.primary,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(4),
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: RichText(
-            text: TextSpan(
-              style: const TextStyle(
-                fontSize: 13,
-                color: _Dt.ink,
-                fontWeight: FontWeight.w500,
-                height: 1.5,
+    return Obx(
+      () => Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            height: 24,
+            width: 24,
+            child: Checkbox(
+              value: _c.cguAccepted.value,
+              onChanged: (val) {
+                if (val != null) _c.cguAccepted.value = val;
+              },
+              activeColor: _Dt.primary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(4),
               ),
-              children: [
-                const TextSpan(text: 'J\'ai lu et j\'accepte les '),
-                TextSpan(
-                  text: 'Conditions Générales d\'Utilisation (CGU)',
-                  style: const TextStyle(
-                    color: _Dt.primary,
-                    fontWeight: FontWeight.w700,
-                    decoration: TextDecoration.underline,
-                  ),
-                  recognizer: TapGestureRecognizer()
-                    ..onTap = () {
-                      Get.to(() => const LegalTermsScreen(initialTab: 0));
-                    },
-                ),
-                const TextSpan(text: ' et la '),
-                TextSpan(
-                  text: 'Politique de Confidentialité',
-                  style: const TextStyle(
-                    color: _Dt.primary,
-                    fontWeight: FontWeight.w700,
-                    decoration: TextDecoration.underline,
-                  ),
-                  recognizer: TapGestureRecognizer()
-                    ..onTap = () {
-                      Get.to(() => const LegalTermsScreen(initialTab: 1));
-                    },
-                ),
-                const TextSpan(text: '.'),
-              ],
             ),
           ),
-        ),
-      ],
-    ));
+          const SizedBox(width: 12),
+          Expanded(
+            child: RichText(
+              text: TextSpan(
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: _Dt.ink,
+                  fontWeight: FontWeight.w500,
+                  height: 1.5,
+                ),
+                children: [
+                  const TextSpan(text: 'J\'ai lu et j\'accepte les '),
+                  TextSpan(
+                    text: 'Conditions Générales d\'Utilisation (CGU)',
+                    style: const TextStyle(
+                      color: _Dt.primary,
+                      fontWeight: FontWeight.w700,
+                      decoration: TextDecoration.underline,
+                    ),
+                    recognizer: TapGestureRecognizer()
+                      ..onTap = () {
+                        Get.to(() => const LegalTermsScreen(initialTab: 0));
+                      },
+                  ),
+                  const TextSpan(text: ' et la '),
+                  TextSpan(
+                    text: 'Politique de Confidentialité',
+                    style: const TextStyle(
+                      color: _Dt.primary,
+                      fontWeight: FontWeight.w700,
+                      decoration: TextDecoration.underline,
+                    ),
+                    recognizer: TapGestureRecognizer()
+                      ..onTap = () {
+                        Get.to(() => const LegalTermsScreen(initialTab: 1));
+                      },
+                  ),
+                  const TextSpan(text: '.'),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   // ── Error ─────────────────────────────────────────────────────────────────
