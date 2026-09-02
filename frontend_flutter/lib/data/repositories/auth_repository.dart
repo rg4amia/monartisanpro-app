@@ -26,19 +26,20 @@ class AuthRepository {
     );
 
     final hasCompletedProfile =
-        res.data['has_completed_profile'] as bool? ?? false;
+        (res.data as Map<String, dynamic>)['has_completed_profile'] as bool? ??
+            false;
 
     // Si le profil est complet, on sauvegarde le token
     if (hasCompletedProfile) {
-      final token = res.data['token'] as String?;
+      final token = (res.data as Map<String, dynamic>)['token'] as String?;
       if (token != null) await StorageService.saveToken(token);
     }
 
     return {
       'has_completed_profile': hasCompletedProfile,
-      'token': res.data['token'] as String?,
-      'user': res.data['user'],
-      'phone': res.data['phone'] as String?,
+      'token': (res.data as Map<String, dynamic>)['token'] as String?,
+      'user': (res.data as Map<String, dynamic>)['user'],
+      'phone': (res.data as Map<String, dynamic>)['phone'] as String?,
     };
   }
 
@@ -58,21 +59,23 @@ class AuthRepository {
       },
     );
 
-    final token = res.data['token'] as String?;
+    final token = (res.data as Map<String, dynamic>)['token'] as String?;
     if (token != null) {
       await StorageService.saveToken(token);
     }
 
     return {
       'token': token,
-      'user': UserModel.fromJson(res.data['user'] as Map<String, dynamic>),
+      'user': UserModel.fromJson(
+        (res.data as Map<String, dynamic>)['user'] as Map<String, dynamic>,
+      ),
     };
   }
 
   Future<UserModel> me() async {
     final res = await _client.get(ApiEndpoints.me);
-    final payload =
-        (res.data['data'] ?? res.data['user']) as Map<String, dynamic>;
+    final payload = ((res.data as Map<String, dynamic>)['data'] ??
+        (res.data as Map<String, dynamic>)['user']) as Map<String, dynamic>;
     return UserModel.fromJson(payload);
   }
 
@@ -96,7 +99,7 @@ class AuthRepository {
 
   Future<String> kycStatus() async {
     final res = await _client.get(ApiEndpoints.kycStatus);
-    return res.data['kycStatus'] as String;
+    return (res.data as Map<String, dynamic>)['kycStatus'] as String;
   }
 
   Future<void> uploadCni(String filePath) async {
@@ -162,14 +165,14 @@ class AuthRepository {
       },
     );
 
-    final token = res.data['token'] as String?;
+    final token = (res.data as Map<String, dynamic>)['token'] as String?;
     if (token != null) {
       await StorageService.saveToken(token);
     }
 
     return {
       'token': token,
-      'user': res.data['user'],
+      'user': (res.data as Map<String, dynamic>)['user'],
     };
   }
 

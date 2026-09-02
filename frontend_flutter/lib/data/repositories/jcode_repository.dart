@@ -21,12 +21,14 @@ class JcodeRepository {
         'items': items.map((item) => item.toRequestJson()).toList(),
       },
     );
-    return JcodeModel.fromJson(res.data['data'] as Map<String, dynamic>);
+    return JcodeModel.fromJson(
+      (res.data as Map<String, dynamic>)['data'] as Map<String, dynamic>,
+    );
   }
 
   Future<JcodeModel?> getActiveJcode() async {
     final res = await _client.get(ApiEndpoints.jcodesActive);
-    final data = res.data['data'];
+    final data = (res.data as Map<String, dynamic>)['data'];
     if (data == null) return null;
     if (data is List && data.isNotEmpty) {
       return JcodeModel.fromJson(data.first as Map<String, dynamic>);
@@ -39,7 +41,9 @@ class JcodeRepository {
 
   Future<JcodeModel> getJcode(Object identifier) async {
     final res = await _client.get(ApiEndpoints.jcode(identifier));
-    return JcodeModel.fromJson(res.data['data'] as Map<String, dynamic>);
+    return JcodeModel.fromJson(
+      (res.data as Map<String, dynamic>)['data'] as Map<String, dynamic>,
+    );
   }
 
   /// Supplier scans a J-Code by numeric ID or business code (ex: PA-AB12).

@@ -31,7 +31,8 @@ class NotificationRepository {
         final res = await NetworkExecutor.run(
           () => _client.get(ApiEndpoints.notifications),
         );
-        final list = res.data['data'] as List<dynamic>;
+        final list =
+            (res.data as Map<String, dynamic>)['data'] as List<dynamic>;
         return list
             .map((e) => NotificationModel.fromJson(e as Map<String, dynamic>))
             .toList();

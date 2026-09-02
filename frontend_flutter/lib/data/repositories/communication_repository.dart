@@ -10,7 +10,8 @@ class CommunicationRepository {
   Future<Map<String, List<CommunicationModel>>>
       getActiveCommunications() async {
     final res = await _client.get(ApiEndpoints.communicationsActive);
-    final data = res.data['data'] as Map<String, dynamic>;
+    final data =
+        (res.data as Map<String, dynamic>)['data'] as Map<String, dynamic>;
 
     final annoncesRaw = data['annonces'] as List<dynamic>? ?? [];
     final tipsRaw = data['le_saviez_vous'] as List<dynamic>? ?? [];

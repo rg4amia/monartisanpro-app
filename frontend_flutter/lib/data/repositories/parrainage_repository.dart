@@ -5,7 +5,7 @@ class ParrainageRepository {
 
   Future<List<Map<String, dynamic>>> getFilleuls() async {
     final res = await _client.get('/parrainages');
-    final data = res.data['data'] as List?;
+    final data = (res.data as Map<String, dynamic>)['data'] as List?;
     if (data == null) return [];
     return List<Map<String, dynamic>>.from(data);
   }
