@@ -1,10 +1,10 @@
-import 'package:get/get.dart' hide FormData, MultipartFile;
 import 'package:dio/dio.dart';
+import 'package:get/get.dart' hide FormData, MultipartFile;
 
+import '../../../app/routes/app_routes.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/storage/storage_service.dart';
 import '../../../core/utils/app_logger.dart';
-import '../../../app/routes/app_routes.dart';
 
 /// Exemple d'utilisation du logger dans un controller
 class AuthControllerExample extends GetxController {

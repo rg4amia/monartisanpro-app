@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../data/services/app_settings_service.dart';
+import '../../../shared/widgets/maintenance_overlay.dart';
+import '../../../shared/widgets/offline_banner.dart';
 import '../../home/views/artisan_home_screen.dart';
 import '../../home/views/artisan_map_screen.dart';
 import '../../home/views/client_home_screen.dart';
@@ -16,10 +19,6 @@ import '../../orders/views/client_suppliers_list_screen.dart';
 import '../../settings/views/settings_screen.dart';
 import '../../wallet/views/wallet_screen.dart';
 import '../controllers/main_tab_controller.dart';
-
-import '../../../data/services/app_settings_service.dart';
-import '../../../shared/widgets/maintenance_overlay.dart';
-import '../../../shared/widgets/offline_banner.dart';
 
 class MainTabScreen extends StatelessWidget {
   const MainTabScreen({super.key});

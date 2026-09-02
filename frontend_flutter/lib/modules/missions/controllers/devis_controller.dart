@@ -1,13 +1,12 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../../core/utils/bypass_validator.dart';
-
 import '../../../core/storage/storage_service.dart';
+import '../../../core/utils/bypass_validator.dart';
 import '../../../data/models/devis_model.dart';
 import '../../../data/models/payment_model.dart';
 import '../../../data/models/supplier_model.dart';

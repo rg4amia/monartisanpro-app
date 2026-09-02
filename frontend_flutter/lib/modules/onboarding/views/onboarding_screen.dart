@@ -1,9 +1,10 @@
 import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../core/storage/storage_service.dart';
 import '../../../app/routes/app_routes.dart';
+import '../../../core/storage/storage_service.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});

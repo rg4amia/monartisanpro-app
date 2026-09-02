@@ -3,8 +3,8 @@ import 'package:get/get.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 
 import '../../app/routes/app_routes.dart';
-import '../storage/storage_service.dart';
 import '../../modules/main_tab/controllers/main_tab_controller.dart';
+import '../storage/storage_service.dart';
 
 class NotificationService extends GetxService {
   static NotificationService get to => Get.find();

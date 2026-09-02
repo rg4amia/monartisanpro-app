@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../core/utils/formatters.dart';
+
 import '../../../app/routes/app_routes.dart';
+import '../../../core/utils/formatters.dart';
 import '../../../data/repositories/evaluation_repository.dart';
 import '../controllers/settings_controller.dart';
 import 'legal_terms_screen.dart';

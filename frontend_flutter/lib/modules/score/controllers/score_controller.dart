@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
-import '../../../data/repositories/artisan_repository.dart';
+
 import '../../../core/storage/storage_service.dart';
+import '../../../data/repositories/artisan_repository.dart';
 
 /// Seuil du Score ProsArtisan (échelle 0–1000) ouvrant l'accès au micro-crédit
 /// d'urgence. Doit rester aligné avec `prosartisan.score_prosartisan.credit_threshold`

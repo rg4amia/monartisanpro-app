@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../app/routes/app_routes.dart';
 import '../controllers/services_controller.dart';
 import '../models/sector_model.dart';
 import '../models/trade_model.dart';
-import '../../../app/routes/app_routes.dart';
 
 class ServicesScreen extends StatelessWidget {
   const ServicesScreen({super.key});

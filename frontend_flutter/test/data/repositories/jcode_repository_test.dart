@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:frontend_flutter/data/repositories/jcode_repository.dart';
 import 'package:frontend_flutter/data/models/jcode_item_model.dart';
+import 'package:frontend_flutter/data/repositories/jcode_repository.dart';
 
 import '../../helpers/test_helpers.dart';
 

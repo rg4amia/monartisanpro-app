@@ -21,12 +21,11 @@ linter:
   # `// ignore_for_file: name_of_lint` syntax on the line or in the file
   # producing the lint.
   rules:
-    # avoid_print: false  # Uncomment to disable the `avoid_print` rule
-    # prefer_single_quotes: true  # Uncomment to enable the `prefer_single_quotes` rule
+    # Chantier 3 — durcissement progressif (une règle par commit).
+    directives_ordering: true
     #
-    # Durcissement recommandé (à activer après une passe de nettoyage dédiée,
-    # ~500 avertissements sur le code existant) :
-    #   prefer_single_quotes, require_trailing_commas, directives_ordering,
+    # Reste à activer après nettoyage dédié :
+    #   prefer_single_quotes, require_trailing_commas,
     #   avoid_dynamic_calls, unawaited_futures, only_throw_errors
 
 # Additional information about this file can be found at

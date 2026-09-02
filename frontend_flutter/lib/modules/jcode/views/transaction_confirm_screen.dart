@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
+import '../../../app/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
-import '../../../app/routes/app_routes.dart';
 
 class TransactionConfirmScreen extends StatelessWidget {
   const TransactionConfirmScreen({super.key});
