@@ -53,6 +53,20 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      # Le build release (R8 + dexing + fusion des .so du SDK Yandex Maps,
+      # ~200 Mo de natifs) fait un pic mémoire qui dépasse les ~16 Go du
+      # runner : le daemon Gradle est tué par l'OOM-killer sans rien logger
+      # (pas de « BUILD FAILED », juste des processus java orphelins puis
+      # « Gradle build failed to produce an .apk file »). 10 Go de swap
+      # absorbent le pic.
+      - name: Ajouter du swap (anti OOM-killer)
+        run: |
+          sudo fallocate -l 10G /swapfile
+          sudo chmod 600 /swapfile
+          sudo mkswap /swapfile
+          sudo swapon /swapfile
+          free -h
+
       - name: Setup Java
         uses: actions/setup-java@v5
         with:
@@ -85,7 +99,19 @@ jobs:
 
       - name: Build APK (release)
         working-directory: frontend_flutter
-        run: flutter build apk --release
+        run: |
+          set -o pipefail
+          flutter build apk --release 2>&1 | tee /tmp/flutter-build.log || {
+            echo "::group::Mémoire / charge après échec"
+            free -h || true
+            cat /proc/loadavg || true
+            dmesg 2>/dev/null | grep -iE 'killed process|out of memory' | tail -n 20 || true
+            echo "::endgroup::"
+            echo "::group::Gradle :app:assembleRelease --stacktrace (diagnostic)"
+            (cd android && ./gradlew :app:assembleRelease --stacktrace --no-daemon --console=plain 2>&1 | tail -n 250) || true
+            echo "::endgroup::"
+            exit 1
+          }
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
