@@ -93,6 +93,6 @@ class StorageService {
   // ── Clear all ───────────────────────────────────────────────────────────────
   static Future<void> clearAll() async {
     await clearToken();
-    _box.erase();
+    await _box.erase();
   }
 }

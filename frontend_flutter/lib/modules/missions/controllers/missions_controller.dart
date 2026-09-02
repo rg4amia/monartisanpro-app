@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 
@@ -250,7 +251,7 @@ class MissionsController extends GetxController {
           snackPosition: SnackPosition.TOP,
           duration: const Duration(seconds: 4),
         );
-        Get.toNamed(Routes.kycCni);
+        unawaited(Get.toNamed(Routes.kycCni));
         return null;
       }
 

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
@@ -310,7 +311,7 @@ class _DeliveryRoutePlannerScreenState extends State<DeliveryRoutePlannerScreen>
               setState(() {
                 _currentPhase = DeliveryPhase.delivery;
               });
-              _updateMapElements();
+              unawaited(_updateMapElements());
             },
             child: const Text('Valider Enlèvement', style: TextStyle(fontWeight: FontWeight.bold)),
           ),

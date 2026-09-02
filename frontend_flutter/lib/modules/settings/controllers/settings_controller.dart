@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:get/get.dart';
 
 import '../../../app/routes/app_routes.dart';
@@ -84,11 +85,11 @@ class SettingsController extends GetxController {
     try {
       await _userRepo.deleteAccount(userId: userId);
       await StorageService.clearAll();
-      Get.offAllNamed(Routes.login);
+      unawaited(Get.offAllNamed(Routes.login));
     } catch (_) {
       // Ignorer silencieusement en cas d'erreur de réseau ou autre
       await StorageService.clearAll();
-      Get.offAllNamed(Routes.login);
+      unawaited(Get.offAllNamed(Routes.login));
     } finally {
       isLoading.value = false;
     }
@@ -127,7 +128,7 @@ class SettingsController extends GetxController {
       await _missionRepo.clearCache();
     } finally {
       isLoading.value = false;
-      Get.offAllNamed(Routes.login);
+      unawaited(Get.offAllNamed(Routes.login));
     }
   }
 

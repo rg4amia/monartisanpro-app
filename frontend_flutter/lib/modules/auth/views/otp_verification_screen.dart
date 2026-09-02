@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -77,7 +78,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   void _handleVerify() async {
     if (_c.otp.value.length != 4) return;
 
-    HapticFeedback.mediumImpact();
+    unawaited(HapticFeedback.mediumImpact());
 
     // Verify OTP
     final hasCompletedProfile = await _c.verifyOtp();
@@ -89,11 +90,11 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         if (user != null && user.cguAcceptedAt == null) {
           _showCguModal();
         } else {
-          Get.offAllNamed(Routes.mainTab);
+          unawaited(Get.offAllNamed(Routes.mainTab));
         }
       } else {
         // User needs to complete profile first - use toNamed to keep controller alive
-        Get.toNamed(Routes.register);
+        unawaited(Get.toNamed(Routes.register));
       }
     }
   }
@@ -150,7 +151,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                 final success = await _c.acceptCgu();
                 if (success) {
                   Get.back(); // close modal
-                  Get.offAllNamed(Routes.mainTab);
+                  unawaited(Get.offAllNamed(Routes.mainTab));
                 }
               },
               style: ElevatedButton.styleFrom(
@@ -171,7 +172,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   }
 
   void _handleResend() async {
-    HapticFeedback.lightImpact();
+    unawaited(HapticFeedback.lightImpact());
 
     // Clear OTP fields
     for (final c in _otpCtrl) {

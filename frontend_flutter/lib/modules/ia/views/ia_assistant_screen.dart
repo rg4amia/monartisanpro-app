@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -240,7 +241,7 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
     // Recharger avec la nouvelle URL
     final assistantUrl = _buildAssistantUrl();
     debugPrint('[IaAssistant] Retry → $assistantUrl (mode: ${EnvConfig.currentMode})');
-    _controller.loadRequest(Uri.parse(assistantUrl));
+    unawaited(_controller.loadRequest(Uri.parse(assistantUrl)));
   }
 
   @override

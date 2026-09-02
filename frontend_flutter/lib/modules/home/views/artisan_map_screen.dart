@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
@@ -108,7 +109,7 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
       );
       _moveCamera(pos.latitude, pos.longitude, _kDefaultZoom,
           animated: animated);
-      _plotUserPosition(pos.latitude, pos.longitude);
+      unawaited(_plotUserPosition(pos.latitude, pos.longitude));
     } catch (_) {
       _moveCamera(_kAbidjanLat, _kAbidjanLng, 12.0, animated: animated);
     }

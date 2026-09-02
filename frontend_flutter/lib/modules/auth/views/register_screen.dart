@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -450,7 +451,7 @@ class _RegisterScreenState extends State<RegisterScreen>
   void _handleContinue() async {
     if (_c.name.value.trim().length < 2) return;
 
-    HapticFeedback.mediumImpact();
+    unawaited(HapticFeedback.mediumImpact());
 
     // Register user (complete profile)
     await _c.register();
@@ -461,7 +462,7 @@ class _RegisterScreenState extends State<RegisterScreen>
       final token = await StorageService.getToken();
 
       if (token != null) {
-        Get.offAllNamed(Routes.kycCni);
+        unawaited(Get.offAllNamed(Routes.kycCni));
       } else {
         _c.errorMsg.value = 'Erreur: Token non reçu. Veuillez réessayer.';
       }

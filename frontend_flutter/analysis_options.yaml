@@ -25,10 +25,10 @@ linter:
     directives_ordering: true
     prefer_single_quotes: true
     only_throw_errors: true
+    unawaited_futures: true
     #
     # Reste à activer après nettoyage dédié :
     #   require_trailing_commas (passe `dart format .` requise),
-    #   unawaited_futures (~53 sites, revue manuelle),
     #   avoid_dynamic_calls (après typage des repositories)
 
 # Additional information about this file can be found at

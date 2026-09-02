@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -906,17 +907,17 @@ class _LoginScreenState extends State<LoginScreen>
   void _handleContinue() async {
     if (_selectedProfile.value == null) return;
 
-    HapticFeedback.mediumImpact();
+    unawaited(HapticFeedback.mediumImpact());
 
     // Send OTP
     await _c.sendOtp();
 
     // If OTP sent successfully, navigate to OTP verification screen
     if (_c.otpSent.value && _c.errorMsg.value == null) {
-      Get.toNamed(Routes.otpVerification, arguments: {
+      unawaited(Get.toNamed(Routes.otpVerification, arguments: {
         'phone': _c.phone.value,
         'role': _selectedProfile.value,
-      });
+      }));
     }
   }
 
@@ -1333,7 +1334,7 @@ class _LoginScreenState extends State<LoginScreen>
                               backgroundColor: _Dt.success,
                               colorText: Colors.white,
                             );
-                            Get.offAllNamed(Routes.mainTab);
+                            unawaited(Get.offAllNamed(Routes.mainTab));
                           } else {
                             Get.snackbar(
                               'Code OTP erroné',

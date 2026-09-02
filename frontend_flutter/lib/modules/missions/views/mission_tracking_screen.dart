@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -1658,7 +1659,7 @@ class _JalonCard extends StatelessWidget {
                             provider: selectedProvider,
                           );
                           if (success) {
-                            Get.find<MissionsController>().loadMission(jalon.missionId, forceRefresh: true);
+                            unawaited(Get.find<MissionsController>().loadMission(jalon.missionId, forceRefresh: true));
                             if (context.mounted) {
                               showOtpValidationDialog(context, jalon);
                             }
@@ -1868,7 +1869,7 @@ void showOtpValidationDialog(BuildContext context, JalonModel jalon) {
                       Get.back();
                       final success = await controller.validateOtp(jalon.id, otp);
                       if (success) {
-                        controller.loadMission(jalon.missionId, forceRefresh: true);
+                        unawaited(controller.loadMission(jalon.missionId, forceRefresh: true));
                       }
                     },
                     child: const Text('Valider'),
@@ -2109,7 +2110,7 @@ class _BottomActions extends StatelessWidget {
               },
             );
             if (res == true) {
-              Get.find<MissionsController>().loadMission(mission.id, forceRefresh: true);
+              unawaited(Get.find<MissionsController>().loadMission(mission.id, forceRefresh: true));
             }
           },
         ),
@@ -2511,7 +2512,7 @@ class _MissionEvaluationsSectionState extends State<_MissionEvaluationsSection> 
                       },
                     );
                     if (res == true) {
-                      _loadActors();
+                      unawaited(_loadActors());
                       widget.onEvaluated();
                     }
                   },

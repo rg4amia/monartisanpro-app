@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -57,7 +58,7 @@ class _KycSelfieLivenessScreenState extends State<KycSelfieLivenessScreen>
   }
 
   Future<void> _captureSelfie() async {
-    HapticFeedback.mediumImpact();
+    unawaited(HapticFeedback.mediumImpact());
     try {
       final img = await _picker.pickImage(
         source: ImageSource.camera,
@@ -72,7 +73,7 @@ class _KycSelfieLivenessScreenState extends State<KycSelfieLivenessScreen>
 
         // Navigate to main app if successful
         if (_c.errorMsg.value == null) {
-          Get.offAllNamed(Routes.mainTab);
+          unawaited(Get.offAllNamed(Routes.mainTab));
         }
       }
     } catch (e) {
@@ -81,7 +82,7 @@ class _KycSelfieLivenessScreenState extends State<KycSelfieLivenessScreen>
   }
 
   Future<void> _pickFromGallery() async {
-    HapticFeedback.lightImpact();
+    unawaited(HapticFeedback.lightImpact());
     try {
       final img = await _picker.pickImage(
         source: ImageSource.gallery,
@@ -95,7 +96,7 @@ class _KycSelfieLivenessScreenState extends State<KycSelfieLivenessScreen>
 
         // Navigate to main app if successful
         if (_c.errorMsg.value == null) {
-          Get.offAllNamed(Routes.mainTab);
+          unawaited(Get.offAllNamed(Routes.mainTab));
         }
       }
     } catch (e) {
