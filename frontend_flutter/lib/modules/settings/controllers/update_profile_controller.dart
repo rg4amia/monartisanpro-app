@@ -80,7 +80,7 @@ class UpdateProfileController extends GetxController {
       if (user.lat != null && user.lng != null) {
         selectedLatitude.value = user.lat;
         selectedLongitude.value = user.lng;
-        selectedAddress.value = "Position configurée (${user.lat!.toStringAsFixed(4)}, ${user.lng!.toStringAsFixed(4)})";
+        selectedAddress.value = 'Position configurée (${user.lat!.toStringAsFixed(4)}, ${user.lng!.toStringAsFixed(4)})';
       }
 
       nightInterventionsEnabled.value = user.nightInterventionAvailable;

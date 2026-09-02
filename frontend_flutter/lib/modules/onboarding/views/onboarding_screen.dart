@@ -36,7 +36,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     ),
     OnboardingPage(
       image: 'assets/images/onboarding_3.png',
-      title: "La Transparence avec le Score ProsArtisan",
+      title: 'La Transparence avec le Score ProsArtisan',
       description:
           'Évaluez vos artisans sur la fiabilité, la qualité, l\'intégrité et la réactivité. Choisissez l\'excellence grâce à un score transparent et audité.',
       backgroundColor: Colors.white,
@@ -166,7 +166,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           : const SizedBox(width: 48),
                       // App logo text
                       const Text(
-                        "ProsArtisan",
+                        'ProsArtisan',
                         style: TextStyle(
                           color: Color(0xFF1A1A1A),
                           fontSize: 20,

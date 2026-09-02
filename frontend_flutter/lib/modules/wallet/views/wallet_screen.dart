@@ -370,7 +370,7 @@ class _TransactionTile extends StatelessWidget {
                           return DateFormat("dd MMM yyyy 'à' HH:mm", 'fr_FR').format(date);
                         } catch (_) {
                           try {
-                            return DateFormat("dd/MM/yyyy HH:mm").format(date);
+                            return DateFormat('dd/MM/yyyy HH:mm').format(date);
                           } catch (e) {
                             return date.toString();
                           }

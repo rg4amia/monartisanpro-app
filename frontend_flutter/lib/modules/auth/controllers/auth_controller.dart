@@ -283,7 +283,7 @@ class AuthController extends GetxController {
   String _parseError(dynamic e) {
     if (e is DioException) {
       if (e.response?.statusCode == 401) {
-        return "Votre session a expiré ou vos identifiants sont incorrects. Veuillez vous reconnecter.";
+        return 'Votre session a expiré ou vos identifiants sont incorrects. Veuillez vous reconnecter.';
       }
       if (e.response?.statusCode == 403) {
         return "Accès refusé. Vous n'avez pas les permissions nécessaires.";
@@ -293,14 +293,14 @@ class AuthController extends GetxController {
           final message = e.response?.data['message'];
           if (message != null) return message.toString();
         }
-        return "Les données fournies sont invalides.";
+        return 'Les données fournies sont invalides.';
       }
       if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
         return "Délai d'attente dépassé. Veuillez vérifier votre connexion internet.";
       }
       if (e.type == DioExceptionType.connectionError) {
-        return "Impossible de contacter le serveur. Veuillez vérifier votre connexion.";
+        return 'Impossible de contacter le serveur. Veuillez vérifier votre connexion.';
       }
 
       if (e.response?.data != null && e.response?.data is Map) {
