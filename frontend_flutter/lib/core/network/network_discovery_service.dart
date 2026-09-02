@@ -15,7 +15,12 @@ import 'package:flutter/foundation.dart';
 class NetworkDiscoveryService {
   NetworkDiscoveryService._();
 
-  static const String _productionHost = 'prosartisan.net';
+  /// Domaine de production. Surchargables au build :
+  ///   flutter build apk --dart-define=API_HOST=prosartisan.net
+  static const String _productionHost = String.fromEnvironment(
+    'API_HOST',
+    defaultValue: 'prosartisan.net',
+  );
   static const String _productionBaseUrl = 'https://$_productionHost/api/v1';
   static const int _serverPort = 8000;
   static const String _apiSuffix = '/api/v1';
@@ -184,9 +189,9 @@ class NetworkDiscoveryService {
       const maxAttempts = 2;
       for (var attempt = 1; attempt <= maxAttempts; attempt++) {
         try {
-          final client = HttpClient()
-            ..connectionTimeout = timeout
-            ..badCertificateCallback = (cert, host, port) => true;
+          // Validation TLS stricte : on ne contourne jamais les erreurs de
+          // certificat, même pour une simple sonde de disponibilité.
+          final client = HttpClient()..connectionTimeout = timeout;
 
           final url = Uri.parse('https://$host/client.html');
           final request = await client.getUrl(url).timeout(timeout);

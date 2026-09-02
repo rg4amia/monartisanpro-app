@@ -23,6 +23,11 @@ linter:
   rules:
     # avoid_print: false  # Uncomment to disable the `avoid_print` rule
     # prefer_single_quotes: true  # Uncomment to enable the `prefer_single_quotes` rule
+    #
+    # Durcissement recommandé (à activer après une passe de nettoyage dédiée,
+    # ~500 avertissements sur le code existant) :
+    #   prefer_single_quotes, require_trailing_commas, directives_ordering,
+    #   avoid_dynamic_calls, unawaited_futures, only_throw_errors
 
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options
