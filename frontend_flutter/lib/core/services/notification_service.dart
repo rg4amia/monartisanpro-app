@@ -23,7 +23,7 @@ class NotificationService extends GetxService {
       }
 
       // Initialiser OneSignal
-      const appId = "00d061c8-977b-405a-a207-e2d87846670b";
+      const appId = '00d061c8-977b-405a-a207-e2d87846670b';
       OneSignal.initialize(appId);
 
       // Demander la permission de recevoir des notifications
@@ -95,7 +95,7 @@ class NotificationService extends GetxService {
         }
       }
     } catch (e) {
-      debugPrint("Erreur lors de la redirection de la notification: $e");
+      debugPrint('Erreur lors de la redirection de la notification: $e');
     }
   }
 

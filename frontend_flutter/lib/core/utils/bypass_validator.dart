@@ -67,7 +67,7 @@ class BypassValidator {
     // 1. Réseaux sociaux / messageries.
     for (final keyword in _socialKeywords) {
       if (text.contains(keyword)) {
-        return "Le partage de réseaux sociaux ou de messageries est interdit : "
+        return 'Le partage de réseaux sociaux ou de messageries est interdit : '
             "les échanges doivent rester dans l'application.";
       }
     }
@@ -93,7 +93,7 @@ class BypassValidator {
       final digits = m.group(0)!.replaceAll(RegExp(r'\D'), '');
       if (digits.length >= 10 && digits.length <= 15) {
         return "L'insertion de numéros de téléphone ou de coordonnées "
-            "numériques est interdite.";
+            'numériques est interdite.';
       }
     }
     if (_phoneRegex.hasMatch(text.replaceAll(' ', ''))) {
@@ -109,7 +109,7 @@ class BypassValidator {
     }
     if (wordNumbersCount >= 5) {
       return "L'insertion de numéros de téléphone (même épelés en lettres) "
-          "est interdite.";
+          'est interdite.';
     }
 
     return null;

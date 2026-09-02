@@ -36,7 +36,7 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
         await Permission.storage.request();
       }
     } catch (e) {
-      debugPrint("Error requesting permissions: $e");
+      debugPrint('Error requesting permissions: $e');
     }
   }
 
@@ -55,12 +55,12 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
             children: <Widget>[
               ListTile(
                 leading: const Icon(Icons.camera_alt, color: Color(0xFF06B6D4)),
-                title: const Text("Prendre une photo (Appareil photo)"),
+                title: const Text('Prendre une photo (Appareil photo)'),
                 onTap: () => Navigator.pop(context, ImageSource.camera),
               ),
               ListTile(
                 leading: const Icon(Icons.photo_library, color: Color(0xFF8B5CF6)),
-                title: const Text("Choisir depuis la galerie"),
+                title: const Text('Choisir depuis la galerie'),
                 onTap: () => Navigator.pop(context, ImageSource.gallery),
               ),
             ],
@@ -93,10 +93,10 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
       });
 
       await _controller.runJavaScript(
-        "(() => { const data = $jsData; window.handleFlutterImage(data.base64, data.filename, data.fileSize); })()"
+        '(() => { const data = $jsData; window.handleFlutterImage(data.base64, data.filename, data.fileSize); })()'
       );
     } catch (e) {
-      debugPrint("Error picking/reading/sending image: $e");
+      debugPrint('Error picking/reading/sending image: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -131,7 +131,7 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(const Color(0xFFF8FAFC))
-      ..setUserAgent("Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36")
+      ..setUserAgent('Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36')
       ..clearCache()
       ..clearLocalStorage()
       ..setNavigationDelegate(
@@ -148,7 +148,7 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
             });
           },
           onWebResourceError: (WebResourceError error) {
-            debugPrint("WebView error (isForMainFrame: ${error.isForMainFrame}, url: ${error.url}): ${error.description}");
+            debugPrint('WebView error (isForMainFrame: ${error.isForMainFrame}, url: ${error.url}): ${error.description}');
             
             // Ne bloquer la page entière QUE si l'erreur concerne le cadre principal (main frame)
             final bool isMainFrameError = error.isForMainFrame ?? true;
@@ -218,7 +218,7 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
               ),
             );
           } catch (e) {
-            debugPrint("Error parsing channel message: $e");
+            debugPrint('Error parsing channel message: $e');
           }
         },
       )
@@ -249,7 +249,7 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         title: const Text(
-          "Assistant IA Chantier",
+          'Assistant IA Chantier',
           style: TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.bold),
         ),
         backgroundColor: const Color(0xFFFFFFFF),

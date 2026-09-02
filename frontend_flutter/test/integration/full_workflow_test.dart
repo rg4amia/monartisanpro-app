@@ -544,14 +544,14 @@ void main() {
 
   // GROUPE 8 : Evaluation multi-criteres Score ProsArtisan (Phase 5 - V23)
   // fiabilite 40%, integrite 30%, qualite 20%, reactivite 10%
-  group("Evaluation & Score ProsArtisan Tests (V23)", () {
+  group('Evaluation & Score ProsArtisan Tests (V23)', () {
     late EvaluationRepository evalRepo;
 
     setUp(() {
       evalRepo = EvaluationRepository();
     });
 
-    test("should submit evaluation with all ProsArtisan criteria", () async {
+    test('should submit evaluation with all ProsArtisan criteria', () async {
       try {
         final result = await evalRepo.submit(
           missionId: 1,

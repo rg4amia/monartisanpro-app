@@ -23,10 +23,11 @@ linter:
   rules:
     # Chantier 3 — durcissement progressif (une règle par commit).
     directives_ordering: true
+    prefer_single_quotes: true
     #
     # Reste à activer après nettoyage dédié :
-    #   prefer_single_quotes, require_trailing_commas,
-    #   avoid_dynamic_calls, unawaited_futures, only_throw_errors
+    #   require_trailing_commas, avoid_dynamic_calls,
+    #   unawaited_futures, only_throw_errors
 
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options

@@ -197,7 +197,7 @@ class _ProsArtisanScoreCard extends StatelessWidget {
                     const SizedBox(width: 10),
                     const Expanded(
                       child: Text(
-                        "Score ProsArtisan & Solvabilité",
+                        'Score ProsArtisan & Solvabilité',
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w800,

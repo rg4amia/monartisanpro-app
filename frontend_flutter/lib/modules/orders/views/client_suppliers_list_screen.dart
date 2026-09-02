@@ -193,7 +193,7 @@ class _ClientSuppliersListScreenState extends State<ClientSuppliersListScreen> {
                                       const Icon(Icons.phone, size: 14, color: AppColors.textSecondary),
                                       const SizedBox(width: 4),
                                       Text(
-                                        "Contact masqué (disponible après validation)",
+                                        'Contact masqué (disponible après validation)',
                                         style: TextStyle(
                                           color: Colors.grey[500],
                                           fontSize: 12,

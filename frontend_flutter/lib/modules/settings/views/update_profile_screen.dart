@@ -251,7 +251,7 @@ class _CategorySelectionCard extends StatelessWidget {
     final hasCategory = controller.selectedSectorName.value != null;
     final categoryText = hasCategory
         ? "${controller.selectedSectorName.value} — ${controller.selectedTradeName.value ?? 'Non spécifié'}"
-        : "Aucune catégorie définie";
+        : 'Aucune catégorie définie';
 
     return Container(
       padding: const EdgeInsets.all(16),

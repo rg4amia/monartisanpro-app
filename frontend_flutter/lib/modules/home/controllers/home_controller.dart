@@ -266,7 +266,7 @@ class HomeController extends GetxController {
            fluidityScore.value = _asInt(dashboardData['score_prosartisan']);
         }
       } catch (e) {
-        debugPrint("Error fetching dashboard stats: $e");
+        debugPrint('Error fetching dashboard stats: $e');
       }
 
       if (role.value == 'driver' || role.value == 'livreur') {
