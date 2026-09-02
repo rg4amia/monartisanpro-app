@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Models\User;
 use App\Models\CreditApplication;
+use App\Models\User;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -19,12 +19,14 @@ class MicroCreditService
      */
     public function checkEligibility(User $artisan): array
     {
+        $threshold = (int) config('prosartisan.score_prosartisan.credit_threshold', 700);
+
         if (! $this->scoreService->isEligibleCredit($artisan)) {
             return [
                 'eligible' => false,
-                'reason' => 'Score ProsArtisan < 70. Améliorez votre score en complétant des missions.',
+                'reason' => "Score ProsArtisan < {$threshold}. Améliorez votre score en complétant des missions.",
                 'current_score' => $artisan->score_prosartisan,
-                'required_score' => 70,
+                'required_score' => $threshold,
             ];
         }
 
@@ -70,8 +72,8 @@ class MicroCreditService
         if ($baseUrl && $apiKey) {
             try {
                 $response = Http::withHeaders([
-                    'Authorization' => 'Bearer ' . $apiKey,
-                ])->post($baseUrl . '/applications', [
+                    'Authorization' => 'Bearer '.$apiKey,
+                ])->post($baseUrl.'/applications', [
                     'artisan_id' => $artisan->id,
                     'artisan_phone' => $artisan->phone,
                     'artisan_name' => $artisan->name,
@@ -123,10 +125,12 @@ class MicroCreditService
 
     private function calculateMaxCredit(User $artisan, array $scoreDetail): int
     {
-        // Formule : Base 50 000 FCFA + (score - 70) * 5 000 FCFA par point
+        // Formule : Base 50 000 FCFA + (score - seuil) * 1 500 FCFA par point au-dessus du seuil.
+        // Sur l'échelle 0–1000 : seuil 700 → score 1000 plafonne le crédit à 50 000 + 300 × 1 500 = 500 000 FCFA.
+        $threshold = (int) config('prosartisan.score_prosartisan.credit_threshold', 700);
         $base = 50000;
-        $perPoint = 5000;
-        $scoreAboveThreshold = max(0, $artisan->score_prosartisan - 70);
+        $perPoint = 1500;
+        $scoreAboveThreshold = max(0, $artisan->score_prosartisan - $threshold);
 
         return $base + ($scoreAboveThreshold * $perPoint);
     }

@@ -23,10 +23,10 @@
 ### 3. **Calcul de Distance et Tri Intelligent** ✅
 
 - **Problème** : Pas de calcul de distance entre client et artisan
-- **Solution** : Algorithme de tri par Score N'Zassa + distance
+- **Solution** : Algorithme de tri par Score ProsArtisan + distance
 - **Fonctionnalités** :
   - Calcul de distance avec formule Haversine
-  - Tri prioritaire : Score N'Zassa > Distance
+  - Tri prioritaire : Score ProsArtisan > Distance
   - Artisans d'élite (Golden Marker) en premier
 
 ## 🚀 Nouvelles Fonctionnalités
@@ -34,7 +34,7 @@
 ### Écran de Sélection d'Artisans
 
 - **Vue Toggle** : Basculer entre carte et liste
-- **Tri Intelligent** : Score N'Zassa + distance
+- **Tri Intelligent** : Score ProsArtisan + distance
 - **Badges Élite** : Artisans d'élite mis en avant
 - **Informations Complètes** : Distance, commune, disponibilité
 - **Actions Rapides** : Voir profil, choisir artisan
@@ -43,7 +43,7 @@
 
 - **Géolocalisation** : Position GPS précise
 - **Distance Calculée** : Distance réelle du client
-- **Score N'Zassa** : Système de notation 0-100
+- **Score ProsArtisan** : Système de notation 0-1000
 - **Statut Disponibilité** : Temps réel
 - **Commune** : Localisation administrative
 
@@ -87,7 +87,7 @@ final DateTime? joinedDate;
 - **Tri Algorithmique** : Score + distance
 - **Mock Data** : Données de développement
 
-### Widget Score N'Zassa
+### Widget Score ProsArtisan
 
 - **Badge Compact** : Pour les listes
 - **Couleurs Dynamiques** : Rouge/Orange/Vert selon score
@@ -107,7 +107,7 @@ static const warning = Color(0xFFF59E0B);
 
 - `_ArtisanCard` : Carte artisan avec toutes les infos
 - `_ViewToggle` : Basculer carte/liste
-- `ScoreNzassaBadge` : Badge de score compact
+- `ScoreProsArtisanBadge` : Badge de score compact
 - `_EmptyState` : État vide avec actions
 
 ## 🗺️ Configuration Routes
@@ -130,7 +130,7 @@ GetPage(
 
 ### Critères de Tri (par ordre de priorité)
 
-1. **Score N'Zassa** (décroissant) - Fiabilité artisan
+1. **Score ProsArtisan** (décroissant) - Fiabilité artisan
 2. **Distance** (croissant) - Proximité géographique
 3. **Disponibilité** - Artisans disponibles en premier
 4. **Badge Élite** - Artisans d'élite prioritaires
@@ -151,7 +151,7 @@ double distance = earthRadius * 2 * atan2(
 
 - **12 artisans fictifs** avec positions GPS réalistes
 - **Communes d'Abidjan** : Cocody, Plateau, Adjamé, etc.
-- **Scores variés** : 60-100 pour simulation réaliste
+- **Scores variés** : 600-1000 pour simulation réaliste
 - **Distances** : 0-5km du client
 
 ### Points de Validation

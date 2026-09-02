@@ -2,8 +2,8 @@
 
 return [
     'gps' => [
-        'jcode_max_distance'    => env('GPS_JCODE_MAX_DISTANCE', 100),   // mètres
-        'artisan_blur_radius'   => env('GPS_ARTISAN_BLUR', 50),          // mètres
+        'jcode_max_distance' => env('GPS_JCODE_MAX_DISTANCE', 100),   // mètres
+        'artisan_blur_radius' => env('GPS_ARTISAN_BLUR', 50),          // mètres
         'nearby_artisan_radius' => env('ARTISAN_NEARBY_RADIUS', 2000),   // mètres
     ],
 
@@ -17,21 +17,28 @@ return [
 
     'otp' => [
         'length' => 4,
-        'ttl'    => 5, // minutes
+        'ttl' => 5, // minutes
     ],
 
     'score_prosartisan' => [
+        // Points maximum de chaque pilier sur l'échelle 0–1000 du Score ProsArtisan
+        // (cf. ScoreService::recalculateFromLedger).
         'weights' => [
-            'fiabilite'  => 40,
-            'integrite'  => 30,
-            'qualite'    => 20,
-            'reactivite' => 10,
+            'fiabilite' => 400,
+            'integrite' => 300,
+            'qualite' => 200,
+            'reactivite' => 100,
         ],
-        'credit_threshold' => 70,
+        // Score minimum requis pour l'accès au micro-crédit d'urgence (échelle 0–1000).
+        'credit_threshold' => env('SCORE_CREDIT_THRESHOLD', 700),
+        // Seuil des scores d'excellence (> 800) exigeant maturité + 5 étoiles sur ≥ 3 critères.
+        'excellence_threshold' => env('SCORE_EXCELLENCE_THRESHOLD', 800),
+        // Score à partir duquel l'artisan est affiché avec le « marqueur doré » (artisan prioritaire).
+        'golden_marker_threshold' => env('SCORE_GOLDEN_MARKER_THRESHOLD', 700),
     ],
 
     'jcode' => [
-        'prefix'    => 'PA-',
+        'prefix' => 'PA-',
         'ttl_hours' => 48,
     ],
 

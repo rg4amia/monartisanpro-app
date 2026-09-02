@@ -181,8 +181,8 @@ class MicroCreditScreen extends GetView<MicroCreditController> {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      Text('Score actuel : ${eligibility.currentScore}/100'),
-                      Text('Seuil requis : ${eligibility.requiredScore}/100'),
+                      Text('Score actuel : ${eligibility.currentScore}/1000'),
+                      Text('Seuil requis : ${eligibility.requiredScore}/1000'),
                       Text(
                         'Plafond actuel : ${eligibility.maxAmount} FCFA',
                         style: const TextStyle(fontWeight: FontWeight.w600),

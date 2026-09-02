@@ -61,7 +61,7 @@ Tu m'assistes sur le développement de **ProsArtisan**, une plateforme marketpla
 - **Gemini API** retourne : catégorie, urgence, estimation FCFA
 - Recherche artisans dans rayon ≤ 2 km via **ST_Distance_Sphere** (MySQL)
 - Position artisan floutée à 50 m via calcul d'offset aléatoire en PHP avant envoi au client
-- Tri par Score N'Zassa + badge "marqueur doré" pour artisans prioritaires
+- Tri par Score ProsArtisan (`score_prosartisan`, 0–1000) + badge "marqueur doré" pour artisans prioritaires (score ≥ 700)
 
 ### Phase 2 — Devis & Séquestre
 - Artisan crée un devis : lignes main d'œuvre + lignes matériaux + jalons (montants + dates)
@@ -87,17 +87,19 @@ Tu m'assistes sur le développement de **ProsArtisan**, une plateforme marketpla
 - Si montant mission > **2 000 000 FCFA** : visite physique du Référent requise avant libération
 - Cycle jusqu'au dernier jalon → statut `terminee`
 
-### Phase 5 — Clôture & Score N'Zassa
+### Phase 5 — Clôture & Score ProsArtisan
 - Artisan soumet fiche d'intervention (checklist + récapitulatif)
 - Client signe digitalement (doigt ou OTP SMS)
 - Client note l'artisan (1 à 5 étoiles)
-- **Calcul Score N'Zassa** (0–100) :
-  - Fiabilité : **40%**
-  - Intégrité : **30%**
-  - Qualité : **20%**
-  - Réactivité : **10%**
+- **Calcul Score ProsArtisan** — colonne `score_prosartisan`, échelle **0–1000** :
+  - Fiabilité : **400 pts max** (40 %)
+  - Intégrité : **300 pts max** (30 %)
+  - Qualité : **200 pts max** (20 %)
+  - Réactivité : **100 pts max** (10 %)
+  - Facteur de maturité $\min(1, n/10)$ ; excellence (> 800) si ≥ 3 critères ≥ 4,8/5 ; ledger `score_ledger_entries` ; pénalité « Rouille » après 60 j
 - Score archivé pour audit bancaire
-- Score > 70 → accès micro-crédit d'urgence (déblocage < 2h)
+- Score ≥ **700** → accès micro-crédit d'urgence (déblocage < 2h) ; badge « marqueur doré » à partir de 700
+- Seuils configurables : `config('prosartisan.score_prosartisan.*')` — jamais l'ancienne échelle 0–100 / seuil `70`
 - Génération PDF rapport de solvabilité pour microfinances partenaires
 
 ### Flux parallèle — Litiges
@@ -118,7 +120,7 @@ CREATE TABLE users (
   phone         VARCHAR(20) NOT NULL UNIQUE,
   role          ENUM('client','artisan','fournisseur','referent','admin') NOT NULL,
   kyc_status    ENUM('en_attente','actif','rejete') NOT NULL DEFAULT 'en_attente',
-  score_nzassa  TINYINT UNSIGNED NOT NULL DEFAULT 0,  -- 0 à 100
+  score_prosartisan SMALLINT UNSIGNED NOT NULL DEFAULT 0,  -- 0 à 1000
   wallet_materiaux BIGINT NOT NULL DEFAULT 0,          -- FCFA, entiers
   wallet_mo        BIGINT NOT NULL DEFAULT 0,          -- FCFA, entiers
   position      POINT SRID 4326 NULL,                  -- coordonnées GPS (lat/lng)
@@ -251,13 +253,13 @@ CREATE TABLE fournisseurs_agrees (
 
 ```sql
 -- Recherche artisans dans un rayon de 2 km autour d'un point (lat, lng)
-SELECT id, phone, score_nzassa,
+SELECT id, phone, score_prosartisan,
        ST_Distance_Sphere(position, ST_SRID(POINT(:lng, :lat), 4326)) AS distance_metres
 FROM users
 WHERE role = 'artisan'
   AND kyc_status = 'actif'
   AND ST_Distance_Sphere(position, ST_SRID(POINT(:lng, :lat), 4326)) <= 2000
-ORDER BY score_nzassa DESC, distance_metres ASC;
+ORDER BY score_prosartisan DESC, distance_metres ASC;
 
 -- Vérification GPS J-Code (fournisseur doit être à < 100 m de sa boutique)
 SELECT ST_Distance_Sphere(

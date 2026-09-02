@@ -52,9 +52,11 @@ class AppColors {
   static const Color scoreOrange = Color(0xFFE67E22);
   static const Color scoreGreen = Color(0xFF27AE60);
 
+  /// Couleur du Score ProsArtisan sur l'échelle 0–1000
+  /// (vert à partir du seuil « marqueur doré » / micro-crédit = 700).
   static Color scoreColor(int score) {
-    if (score < 40) return scoreRed;
-    if (score < 70) return scoreOrange;
+    if (score < 400) return scoreRed;
+    if (score < 700) return scoreOrange;
     return scoreGreen;
   }
 

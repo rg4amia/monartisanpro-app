@@ -12,6 +12,39 @@ class MicroCreditComplianceTest extends TestCase
 
     public function test_artisan_can_check_eligibility_and_apply_for_micro_credit(): void
     {
+        // Échelle 0–1000 : seuil d'éligibilité = 700 (config prosartisan.score_prosartisan.credit_threshold).
+        $artisan = User::factory()->create([
+            'role' => 'artisan',
+            'kyc_status' => 'actif',
+            'score_prosartisan' => 800,
+        ]);
+
+        // Base 50 000 + (800 - 700) × 1 500 = 200 000 FCFA.
+        $this->actingAs($artisan)
+            ->getJson('/api/v1/micro-credit/eligibility')
+            ->assertOk()
+            ->assertJsonPath('data.eligible', true)
+            ->assertJsonPath('data.max_amount', 200000)
+            ->assertJsonPath('data.score_prosartisan', 800);
+
+        $this->actingAs($artisan)
+            ->postJson('/api/v1/micro-credit/apply', [
+                'amount' => 180000,
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.amount', 180000)
+            ->assertJsonPath('data.status', 'approuve');
+
+        $this->assertDatabaseHas('credit_applications', [
+            'user_id' => $artisan->id,
+            'amount' => 180000,
+            'status' => 'approuve',
+            'score_prosartisan_at_application' => 800,
+        ]);
+    }
+
+    public function test_artisan_below_threshold_is_not_eligible_for_micro_credit(): void
+    {
         $artisan = User::factory()->create([
             'role' => 'artisan',
             'kyc_status' => 'actif',
@@ -21,23 +54,17 @@ class MicroCreditComplianceTest extends TestCase
         $this->actingAs($artisan)
             ->getJson('/api/v1/micro-credit/eligibility')
             ->assertOk()
-            ->assertJsonPath('data.eligible', true)
-            ->assertJsonPath('data.max_amount', 100000)
-            ->assertJsonPath('data.score_prosartisan', 80);
+            ->assertJsonPath('data.eligible', false)
+            ->assertJsonPath('data.required_score', 700);
 
         $this->actingAs($artisan)
             ->postJson('/api/v1/micro-credit/apply', [
                 'amount' => 90000,
             ])
-            ->assertCreated()
-            ->assertJsonPath('data.amount', 90000)
-            ->assertJsonPath('data.status', 'approuve');
+            ->assertStatus(422);
 
-        $this->assertDatabaseHas('credit_applications', [
+        $this->assertDatabaseMissing('credit_applications', [
             'user_id' => $artisan->id,
-            'amount' => 90000,
-            'status' => 'approuve',
-            'score_prosartisan_at_application' => 80,
         ]);
     }
 }

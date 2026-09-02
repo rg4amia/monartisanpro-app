@@ -64,7 +64,7 @@ Tu m'assistes sur le développement de **ProsArtisan**, une plateforme marketpla
 - **Gemini API** retourne : catégorie, urgence, estimation FCFA
 - Recherche artisans dans rayon ≤ 2 km via **ST_Distance_Sphere** (MySQL)
 - Position artisan floutée à 50 m via calcul d'offset aléatoire en PHP avant envoi au client
-- Tri par Score ProsArtisan + badge "marqueur doré" pour artisans prioritaires
+- Tri par Score ProsArtisan (`score_prosartisan`, 0–1000) + badge "marqueur doré" pour artisans prioritaires (score ≥ 700)
 
 ### Phase 2 — Devis & Séquestre
 
@@ -98,13 +98,16 @@ Tu m'assistes sur le développement de **ProsArtisan**, une plateforme marketpla
 - Artisan soumet fiche d'intervention (checklist + récapitulatif)
 - Client signe digitalement (doigt ou OTP SMS)
 - Client note l'artisan (1 à 5 étoiles)
-- **Calcul Score ProsArtisan** (0–1000) :
-  - Fiabilité : **40%**
-  - Intégrité : **30%**
-  - Qualité : **20%**
-  - Réactivité : **10%**
+- **Calcul Score ProsArtisan** — colonne `score_prosartisan`, échelle **0–1000** :
+  - Fiabilité : **400 pts max** (poids relatif 40 %)
+  - Intégrité : **300 pts max** (30 %)
+  - Qualité : **200 pts max** (20 %)
+  - Réactivité : **100 pts max** (10 %)
+  - Facteur de maturité $\min(1, n/10)$ ; excellence (> 800) si ≥ 3 critères ≥ 4,8/5 ; ledger `score_ledger_entries` (pondéré par $C_k$) ; « Rouille » après 60 j
 - Score archivé pour audit bancaire
-- Score > 70 → accès micro-crédit d'urgence (déblocage < 2h)
+- Score ≥ **700** → accès micro-crédit d'urgence (déblocage < 2h) ; plafond `50 000 + (score − 700) × 1 500` FCFA
+- Badge « marqueur doré » (artisan prioritaire) à partir de **700**
+- Seuils dans `config('prosartisan.score_prosartisan.*')` — ne jamais coder en dur, ne jamais réutiliser l'échelle 0–100 / seuil `70` de l'ancien « Score N'Zassa »
 - Génération PDF rapport de solvabilité pour microfinances partenaires
 
 ### Flux parallèle — Litiges

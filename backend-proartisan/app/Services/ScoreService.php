@@ -6,6 +6,8 @@ use App\Models\Evaluation;
 use App\Models\Mission;
 use App\Models\ScoreLedgerEntry;
 use App\Models\User;
+use App\States\Mission\CompletedState;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class ScoreService
@@ -14,26 +16,28 @@ class ScoreService
      * Poids des événements du Score ProsArtisan (échelle 0–1000, base 300).
      */
     private const EVENT_POINTS = [
-        'success_mission'       =>   5,
-        'jalon_on_time'         =>   2,
-        'jalon_delay'           => -15,
-        'dispute_fraud'         => -150,
-        'dispute_abandon'       => -300,
-        'evaluation_negative'   => -15,
-        'inactivity_decay'      =>  -5,
+        'success_mission' => 5,
+        'jalon_on_time' => 2,
+        'jalon_delay' => -15,
+        'dispute_fraud' => -150,
+        'dispute_abandon' => -300,
+        'evaluation_negative' => -15,
+        'inactivity_decay' => -5,
 
         // --- Événements Logistiques (Fournisseurs & Livreurs) ---
-        'jcode_scan_success'         =>   5,
+        'jcode_scan_success' => 5,
         'rupture_stock_non_signalee' => -20,
-        'fraude_gps_tentative'       => -50,
-        'livraison_on_time'          =>   5,
-        'livraison_retard'           => -15,
-        'casse_materiel'             => -100,
+        'fraude_gps_tentative' => -50,
+        'livraison_on_time' => 5,
+        'livraison_retard' => -15,
+        'casse_materiel' => -100,
     ];
 
     private const BASE_SCORE = 0;
-    private const MIN_SCORE  = 0;
-    private const MAX_SCORE  = 1000;
+
+    private const MIN_SCORE = 0;
+
+    private const MAX_SCORE = 1000;
 
     // ──────────────────────────────────────────────
     //  Recalcul principal (appelé après évaluations)
@@ -50,7 +54,7 @@ class ScoreService
         }
 
         $lastEvaluation = Evaluation::where('evalue_id', $artisan->id)->latest('id')->first();
-        if (!$lastEvaluation) {
+        if (! $lastEvaluation) {
             return $artisan->score_prosartisan;
         }
 
@@ -78,13 +82,13 @@ class ScoreService
 
         if ($points !== 0) {
             ScoreLedgerEntry::create([
-                'user_id'            => $artisan->id,
-                'event_type'         => $eventType,
-                'points'             => $points,
+                'user_id' => $artisan->id,
+                'event_type' => $eventType,
+                'points' => $points,
                 'credibility_factor' => $credibility,
-                'evaluation_id'      => $lastEvaluation->id,
-                'mission_id'         => $lastEvaluation->mission_id,
-                'description'        => $desc,
+                'evaluation_id' => $lastEvaluation->id,
+                'mission_id' => $lastEvaluation->mission_id,
+                'description' => $desc,
             ]);
         }
 
@@ -104,7 +108,7 @@ class ScoreService
         }
 
         $lastEvaluation = Evaluation::where('evalue_id', $logisticWorker->id)->latest('id')->first();
-        if (!$lastEvaluation) {
+        if (! $lastEvaluation) {
             return $logisticWorker->score_prosartisan;
         }
 
@@ -134,14 +138,14 @@ class ScoreService
 
         if ($points !== 0) {
             ScoreLedgerEntry::create([
-                'user_id'            => $logisticWorker->id,
-                'event_type'         => $eventType,
-                'points'             => $points,
+                'user_id' => $logisticWorker->id,
+                'event_type' => $eventType,
+                'points' => $points,
                 'credibility_factor' => $credibility,
-                'evaluation_id'      => $lastEvaluation->id,
-                'mission_id'         => $lastEvaluation->mission_id,
-                'order_id'           => $lastEvaluation->order_id,
-                'description'        => $desc,
+                'evaluation_id' => $lastEvaluation->id,
+                'mission_id' => $lastEvaluation->mission_id,
+                'order_id' => $lastEvaluation->order_id,
+                'description' => $desc,
             ]);
         }
 
@@ -169,13 +173,13 @@ class ScoreService
         }
 
         ScoreLedgerEntry::create([
-            'user_id'            => $artisan->id,
-            'event_type'         => $eventType,
-            'points'             => $points,
+            'user_id' => $artisan->id,
+            'event_type' => $eventType,
+            'points' => $points,
             'credibility_factor' => $credibilityFactor,
-            'evaluation_id'      => $evaluationId,
-            'mission_id'         => $missionId,
-            'description'        => $description ?? "Événement: {$eventType}",
+            'evaluation_id' => $evaluationId,
+            'mission_id' => $missionId,
+            'description' => $description ?? "Événement: {$eventType}",
         ]);
 
         return $this->recalculateFromLedger($artisan);
@@ -227,7 +231,7 @@ class ScoreService
             $fournisseur,
             'fraude_gps_tentative',
             $missionId,
-            description: "Tentative de validation J-Code hors zone GPS (> 100m) " . ($jcodeCode ? "[{$jcodeCode}]" : ""),
+            description: 'Tentative de validation J-Code hors zone GPS (> 100m) '.($jcodeCode ? "[{$jcodeCode}]" : ''),
         );
     }
 
@@ -266,11 +270,11 @@ class ScoreService
         $totalPenalty = self::EVENT_POINTS['inactivity_decay'] * $weeksOver;
 
         ScoreLedgerEntry::create([
-            'user_id'            => $artisan->id,
-            'event_type'         => 'inactivity_decay',
-            'points'             => $totalPenalty,
+            'user_id' => $artisan->id,
+            'event_type' => 'inactivity_decay',
+            'points' => $totalPenalty,
             'credibility_factor' => 1.00,
-            'description'        => "Dégradation inactivité: {$inactivityDays}j ({$weeksOver} sem. au-delà de 60j)",
+            'description' => "Dégradation inactivité: {$inactivityDays}j ({$weeksOver} sem. au-delà de 60j)",
         ]);
 
         $this->recalculateFromLedger($artisan);
@@ -295,10 +299,10 @@ class ScoreService
 
         $lastActivity = collect([$lastJalonValidated, $lastMissionAccepted])
             ->filter()
-            ->map(fn($d) => \Carbon\Carbon::parse($d))
+            ->map(fn ($d) => Carbon::parse($d))
             ->max();
 
-        if (!$lastActivity) {
+        if (! $lastActivity) {
             return (int) now()->diffInDays($artisan->created_at);
         }
 
@@ -316,7 +320,7 @@ class ScoreService
             return $artisan->score_prosartisan;
         }
 
-        $row = DB::selectOne("
+        $row = DB::selectOne('
             SELECT
                 AVG(fiabilite)  AS avg_fiabilite,
                 AVG(integrite)  AS avg_integrite,
@@ -325,7 +329,7 @@ class ScoreService
                 COUNT(*)        AS total_evaluations
             FROM evaluations
             WHERE evalue_id = ?
-        ", [$artisan->id]);
+        ', [$artisan->id]);
 
         $evalScoreBase = 0;
         $totalEvals = (int) ($row?->total_evaluations ?? 0);
@@ -341,10 +345,18 @@ class ScoreService
 
             // Condition d'excellence : Au moins 3 critères avec moyenne >= 4.8 / 5 pour dépasser 800
             $countExcellence = 0;
-            if ($f >= 4.8) $countExcellence++;
-            if ($i >= 4.8) $countExcellence++;
-            if ($q >= 4.8) $countExcellence++;
-            if ($r >= 4.8) $countExcellence++;
+            if ($f >= 4.8) {
+                $countExcellence++;
+            }
+            if ($i >= 4.8) {
+                $countExcellence++;
+            }
+            if ($q >= 4.8) {
+                $countExcellence++;
+            }
+            if ($r >= 4.8) {
+                $countExcellence++;
+            }
 
             if ($countExcellence < 3) {
                 $rawCriteriaScore = min(800, $rawCriteriaScore);
@@ -383,7 +395,7 @@ class ScoreService
      */
     public function resolveCredibility(?User $evaluateur): float
     {
-        if (!$evaluateur) {
+        if (! $evaluateur) {
             return 0.1;
         }
 
@@ -393,7 +405,7 @@ class ScoreService
 
         if ($evaluateur->isKycActif()) {
             $completedMissionsCount = Mission::where('client_id', $evaluateur->id)
-                ->where('status', \App\States\Mission\CompletedState::class)
+                ->where('status', CompletedState::class)
                 ->count();
             if ($completedMissionsCount > 3) {
                 return 1.0;
@@ -414,7 +426,7 @@ class ScoreService
     {
         $calculatedScore = $this->recalculateFromLedger($artisan);
 
-        $row = DB::selectOne("
+        $row = DB::selectOne('
             SELECT
                 AVG(fiabilite)  AS avg_fiabilite,
                 AVG(integrite)  AS avg_integrite,
@@ -424,30 +436,30 @@ class ScoreService
                 COUNT(*)        AS total_evaluations
             FROM evaluations
             WHERE evalue_id = ?
-        ", [$artisan->id]);
+        ', [$artisan->id]);
 
-        $threshold = config('prosartisan.score_prosartisan.credit_threshold', 70);
+        $threshold = config('prosartisan.score_prosartisan.credit_threshold', 700);
         $totalEvals = (int) ($row?->total_evaluations ?? 0);
 
         return [
-            'score_prosartisan'          => $calculatedScore,
-            'micro_credit_eligible'      => $calculatedScore >= $threshold,
-            'total_evaluations'          => $totalEvals,
-            'maturity_missions_target'   => 10,
-            'maturity_missions_count'    => min(10, $totalEvals),
-            'maturity_percentage'        => round(min(1.0, $totalEvals / 10.0) * 100, 1),
-            'breakdown'                  => [
-                'fiabilite'  => round((float) ($row?->avg_fiabilite ?? 0), 1),
-                'integrite'  => round((float) ($row?->avg_integrite ?? 0), 1),
-                'qualite'    => round((float) ($row?->avg_qualite ?? 0), 1),
+            'score_prosartisan' => $calculatedScore,
+            'micro_credit_eligible' => $calculatedScore >= $threshold,
+            'total_evaluations' => $totalEvals,
+            'maturity_missions_target' => 10,
+            'maturity_missions_count' => min(10, $totalEvals),
+            'maturity_percentage' => round(min(1.0, $totalEvals / 10.0) * 100, 1),
+            'breakdown' => [
+                'fiabilite' => round((float) ($row?->avg_fiabilite ?? 0), 1),
+                'integrite' => round((float) ($row?->avg_integrite ?? 0), 1),
+                'qualite' => round((float) ($row?->avg_qualite ?? 0), 1),
                 'reactivite' => round((float) ($row?->avg_reactivite ?? 0), 1),
             ],
-            'average_rating'             => round((float) ($row?->avg_note ?? 0), 1),
+            'average_rating' => round((float) ($row?->avg_note ?? 0), 1),
         ];
     }
 
     public function isEligibleCredit(User $artisan): bool
     {
-        return $artisan->score_prosartisan >= config('prosartisan.score_prosartisan.credit_threshold', 70);
+        return $artisan->score_prosartisan >= config('prosartisan.score_prosartisan.credit_threshold', 700);
     }
 }

@@ -21,7 +21,7 @@ import '../test_config.dart';
 /// Couvre les fonctionnalites V18 + V23 :
 /// - GPS artisans/fournisseurs, kit urgence nuit, mode nuit
 /// - Score bayesien, vue carte, profil avec geolocalisation
-/// - Litige avec preuve obligatoire, evaluation multi-criteres N'Zassa
+/// - Litige avec preuve obligatoire, evaluation multi-criteres ProsArtisan
 void main() {
   // CRITICAL: Mock FlutterSecureStorage BEFORE any other initialization
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -228,7 +228,7 @@ void main() {
       }
     });
 
-    test('should return artisan Score N\'Zassa', () async {
+    test('should return artisan Score ProsArtisan', () async {
       try {
         final score = await artisanRepo.getScore(1);
         expect(score, isA<Map<String, dynamic>>());

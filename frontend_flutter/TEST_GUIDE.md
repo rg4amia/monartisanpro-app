@@ -27,7 +27,7 @@ flutter test test/unit_tests_simple.dart
 - Configuration API et endpoints
 - Modèles (UserModel, JcodeModel, MissionModel)
 - Sérialisation/désérialisation JSON
-- Logique métier (Score Nzassa, KYC, J-Codes)
+- Logique métier (Score ProsArtisan, KYC, J-Codes)
 - Validation des règles business
 
 ### 2. Tests d'Intégration (Nécessitent le backend)
@@ -118,13 +118,13 @@ open coverage/html/index.html
 
 ### ✅ Modèles de Données
 
-- **UserModel**: Sérialisation, KYC, Score Nzassa, Golden Marker
+- **UserModel**: Sérialisation, KYC, Score ProsArtisan, Golden Marker
 - **JcodeModel**: Statuts (actif, utilisé, expiré), format PA-XXXX
 - **MissionModel**: Montants, ratios, règle référent (>2M FCFA)
 
 ### ✅ Logique Métier
 
-- Score Nzassa > 65 = Golden Marker
+- Score ProsArtisan >= 700 = Golden Marker
 - Statuts KYC: en_attente, en_cours, actif, refuse
 - Format J-Code: PA-XXXX
 - Wallets non-négatifs

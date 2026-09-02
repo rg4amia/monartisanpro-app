@@ -22,7 +22,7 @@
 - ✅ Création depuis JSON
 - ✅ Gestion des champs optionnels
 - ✅ Validation KYC (isKycActif)
-- ✅ Golden Marker (score > 65)
+- ✅ Golden Marker (score >= 700)
 - ✅ Conversion vers JSON
 
 ### 3. JcodeModel (5 tests) ✅
@@ -41,7 +41,7 @@
 
 ### 5. Logique Métier (4 tests) ✅
 
-- ✅ Calcul Score Nzassa
+- ✅ Calcul Score ProsArtisan
 - ✅ Validation statuts KYC
 - ✅ Format J-Code (PA-XXXX)
 - ✅ Validation wallets non-négatifs
@@ -121,7 +121,7 @@ ApiEndpoints.baseUrl = 'http://backend-proartisan.test/api/v1'
 
 ### Logique Métier
 
-- ✅ Score Nzassa (Golden Marker)
+- ✅ Score ProsArtisan (Golden Marker)
 - ✅ Statuts KYC
 - ✅ Validation J-Codes
 - ✅ Règles missions (référent)
@@ -135,10 +135,10 @@ ApiEndpoints.baseUrl = 'http://backend-proartisan.test/api/v1'
 
 ## 🎨 Règles Métier Validées
 
-### Score Nzassa
+### Score ProsArtisan
 
 ```dart
-scoreNzassa > 65 → Golden Marker ✅
+scoreProsArtisan >= 700 → Golden Marker ✅
 ```
 
 ### Statuts KYC

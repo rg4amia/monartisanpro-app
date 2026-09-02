@@ -392,7 +392,7 @@ export default function LlmAdminPanel() {
       'enduit', 'plomb', 'tuyau', 'fuite', 'robinet', 'electr', 'électr', 'cable', 'câble', 'fil',
       'courant', 'prise', 'disjoncteur', 'peint', 'humid', 'fissur', 'infiltr', 'chantier', 'macon',
       'maçon', 'travaux', 'devis', 'renov', 'rénov', 'constru', 'batiment', 'bâtiment', 'carrel',
-      'toit', 'charp', 'bois', 'fer', 'soud', 'nzassa', 'referent', 'référent', 'jcode',
+      'toit', 'charp', 'bois', 'fer', 'soud', 'prosartisan', 'referent', 'référent', 'jcode',
       'sequestre', 'séquestre', 'wallet', 'portland', 'cpj', 'mortier', 'gachage', 'gâchage',
       'lbtp', 'bnetd'
     ];

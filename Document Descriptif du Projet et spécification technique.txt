@@ -17,6 +17,6 @@ Résumé des spécifications fonctionnelles :
 - Ratio de fragmentation des fonds bloqué et immuable dès l'acceptation du devis.
 - Smart Token J-Code PA-XXXX avec vérification GPS stricte.
 - Libération progressive de la main d'œuvre par OTP client à chaque jalon validé.
-- Score de Réputation N'Zassa : Stocké sous le champ "score_prosartisan" (0 à 1000) et géré en Event Sourcing, il détermine l'accès au micro-crédit d'urgence.
+- Score de Réputation ProsArtisan : Stocké sous le champ "score_prosartisan" (0 à 1000) et géré en Event Sourcing, il détermine l'accès au micro-crédit d'urgence (seuil >= 700, configurable dans config/prosartisan.php).
 
 Voir le fichier PRD.md pour le détail complet de l'analyse fonctionnelle de A à Z (points forts et faibles observés par phase, y compris logistique livreurs).

@@ -48,7 +48,7 @@ class UserModel {
   });
 
   bool get isKycActif => kycStatus == 'actif';
-  bool get isGoldenMarker => scoreProsArtisan > 65;
+  bool get isGoldenMarker => scoreProsArtisan >= 700;
   bool get isCnmciVerified => cnmciStatus == 'valide';
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -58,7 +58,7 @@ class UserModel {
       phone: json['phone'] as String,
       role: json['role'] as String,
       kycStatus: (json['kycStatus'] ?? json['kyc_status']) as String? ?? 'en_attente',
-      scoreProsArtisan: (json['scoreProsArtisan'] ?? json['score_prosartisan'] ?? json['scoreNzassa'] ?? json['score_nzassa']) as int? ?? 0,
+      scoreProsArtisan: (json['scoreProsArtisan'] ?? json['score_prosartisan']) as int? ?? 0,
       walletMateriaux: (json['walletMateriaux'] ?? json['wallet_materiaux']) as int? ?? 0,
       walletMo: (json['walletMo'] ?? json['wallet_mo']) as int? ?? 0,
       name: json['name'] as String?,
