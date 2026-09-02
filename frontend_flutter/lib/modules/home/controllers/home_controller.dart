@@ -272,7 +272,7 @@ class HomeController extends GetxController {
 
       // If it's supplier stats
       if (dashboardData.containsKey('stats')) {
-        final s = dashboardData['stats'];
+        final s = dashboardData['stats'] as Map<String, dynamic>;
         acceptedDevisCount.value = s['total_orders'] ?? 0;
         refusedDevisCount.value = s['pending_orders'] ?? 0;
         disputesCount.value = s['catalog_count'] ?? 0;
@@ -529,16 +529,18 @@ class HomeController extends GetxController {
         driverAvailableMissions.value = availableData.map((order) {
           final itemsList = (order['items'] as List?) ?? [];
           final descItems = itemsList.map((it) {
-            final pName = it['product']?['name'] ?? 'Article';
-            final qty = it['quantity'] ?? 1;
+            final itMap = _asMap(it);
+            final pName = _asMap(itMap?['product'])?['name'] ?? 'Article';
+            final qty = itMap?['quantity'] ?? 1;
             return '$pName x$qty';
           }).join(', ');
 
-          final supplierName = order['supplier']?['fournisseur_agree']
-                  ?['nom_boutique'] ??
-              order['supplier']?['name'] ??
-              'Quincaillerie Partenaire';
-          final clientName = order['client']?['name'] ?? 'Client';
+          final supplier = _asMap(order['supplier']);
+          final supplierName =
+              _asMap(supplier?['fournisseur_agree'])?['nom_boutique'] ??
+                  supplier?['name'] ??
+                  'Quincaillerie Partenaire';
+          final clientName = _asMap(order['client'])?['name'] ?? 'Client';
           final deliveryCost =
               (order['delivery_cost'] as num?)?.toInt() ?? 1500;
           final totalAmount = (order['total_amount'] as num?)?.toInt() ?? 0;
@@ -578,16 +580,18 @@ class HomeController extends GetxController {
         }).map((order) {
           final itemsList = (order['items'] as List?) ?? [];
           final descItems = itemsList.map((it) {
-            final pName = it['product']?['name'] ?? 'Article';
-            final qty = it['quantity'] ?? 1;
+            final itMap = _asMap(it);
+            final pName = _asMap(itMap?['product'])?['name'] ?? 'Article';
+            final qty = itMap?['quantity'] ?? 1;
             return '$pName x$qty';
           }).join(', ');
 
-          final supplierName = order['supplier']?['fournisseur_agree']
-                  ?['nom_boutique'] ??
-              order['supplier']?['name'] ??
-              'Quincaillerie Partenaire';
-          final clientName = order['client']?['name'] ?? 'Client';
+          final supplier = _asMap(order['supplier']);
+          final supplierName =
+              _asMap(supplier?['fournisseur_agree'])?['nom_boutique'] ??
+                  supplier?['name'] ??
+                  'Quincaillerie Partenaire';
+          final clientName = _asMap(order['client'])?['name'] ?? 'Client';
           final deliveryCost =
               (order['delivery_cost'] as num?)?.toInt() ?? 1500;
           final totalAmount = (order['total_amount'] as num?)?.toInt() ?? 0;
@@ -799,6 +803,10 @@ class HomeController extends GetxController {
     if (value is double) return value.toInt();
     return int.tryParse(value.toString()) ?? 0;
   }
+
+  /// Cast défensif d'une valeur JSON dynamique en `Map` typée (ou `null`).
+  static Map<String, dynamic>? _asMap(dynamic value) =>
+      value is Map ? Map<String, dynamic>.from(value) : null;
 
   double _normalizeCriterion(dynamic value) {
     double parsed;

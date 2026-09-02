@@ -291,7 +291,8 @@ class AuthController extends GetxController {
       }
       if (e.response?.statusCode == 422) {
         if (e.response?.data != null && e.response?.data is Map) {
-          final message = e.response?.data['message'];
+          final message =
+              (e.response?.data as Map<String, dynamic>?)?['message'];
           if (message != null) return message.toString();
         }
         return 'Les données fournies sont invalides.';
@@ -305,7 +306,7 @@ class AuthController extends GetxController {
       }
 
       if (e.response?.data != null && e.response?.data is Map) {
-        final message = e.response?.data['message'];
+        final message = (e.response?.data as Map<String, dynamic>?)?['message'];
         if (message != null) return message.toString();
       }
       return "Une erreur réseau est survenue (${e.response?.statusCode ?? 'Inconnue'}).";

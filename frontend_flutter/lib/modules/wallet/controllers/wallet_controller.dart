@@ -23,17 +23,20 @@ class WalletController extends GetxController {
     isLoading.value = true;
     try {
       final balanceResponse = await _apiClient.get(ApiEndpoints.walletBalance);
-      final balance = WalletBalance.fromJson(balanceResponse.data['data']);
+      final balanceData = (balanceResponse.data as Map<String, dynamic>)['data']
+          as Map<String, dynamic>;
+      final balance = WalletBalance.fromJson(balanceData);
       walletMateriaux.value = balance.walletMateriaux;
       walletMo.value = balance.walletMo;
 
       // Fetch or fallback to driver balance
       walletEscrowLivreur.value =
-          balanceResponse.data['data']['wallet_escrow_livreur'] as int? ?? 2700;
+          balanceData['wallet_escrow_livreur'] as int? ?? 2700;
 
       final transactionsResponse =
           await _apiClient.get(ApiEndpoints.transactions);
-      final List<dynamic> data = transactionsResponse.data['data'] ?? [];
+      final List<dynamic> data =
+          (transactionsResponse.data as Map<String, dynamic>)['data'] ?? [];
       transactions.value =
           data.map((e) => TransactionModel.fromJson(e)).toList();
     } catch (e) {

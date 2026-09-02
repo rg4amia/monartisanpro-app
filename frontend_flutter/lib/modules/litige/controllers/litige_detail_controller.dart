@@ -20,7 +20,7 @@ class LitigeDetailController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    litigeId = Get.arguments['litigeId'];
+    litigeId = (Get.arguments as Map<String, dynamic>)['litigeId'];
     loadLitige();
   }
 
@@ -34,7 +34,8 @@ class LitigeDetailController extends GetxController {
     isLoading.value = true;
     try {
       final res = await _client.get(ApiEndpoints.litige(litigeId));
-      litige.value = res.data['data'] as Map<String, dynamic>?;
+      litige.value =
+          (res.data as Map<String, dynamic>)['data'] as Map<String, dynamic>?;
     } finally {
       isLoading.value = false;
     }

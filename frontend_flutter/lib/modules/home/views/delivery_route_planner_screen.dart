@@ -112,13 +112,12 @@ class _DeliveryRoutePlannerScreenState
       );
       final response = await http.get(url).timeout(const Duration(seconds: 4));
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data['code'] == 'Ok' &&
-            data['routes'] is List &&
-            (data['routes'] as List).isNotEmpty) {
-          final route = data['routes'][0];
-          final geometry = route['geometry'];
-          final coords = (geometry['coordinates'] as List?);
+        final data = json.decode(response.body) as Map<String, dynamic>;
+        final routes = data['routes'];
+        if (data['code'] == 'Ok' && routes is List && routes.isNotEmpty) {
+          final route = routes[0] as Map<String, dynamic>;
+          final geometry = route['geometry'] as Map<String, dynamic>;
+          final coords = geometry['coordinates'] as List?;
 
           if (route['distance'] != null) {
             final distKm =
@@ -132,8 +131,9 @@ class _DeliveryRoutePlannerScreenState
 
           if (coords != null && coords.isNotEmpty) {
             return coords.map((c) {
-              final lng = (c[0] as num).toDouble();
-              final lat = (c[1] as num).toDouble();
+              final pair = c as List;
+              final lng = (pair[0] as num).toDouble();
+              final lat = (pair[1] as num).toDouble();
               return mk.Point(latitude: lat, longitude: lng);
             }).toList();
           }

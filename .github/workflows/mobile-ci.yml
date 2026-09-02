@@ -31,7 +31,7 @@ jobs:
 
       - name: Analyze project source
         working-directory: frontend_flutter
-        run: flutter analyze
+        run: flutter analyze --fatal-infos
 
       # Tests unitaires / widget uniquement — les tests d'intégration
       # (test/integration, test/data/repositories) exigent un backend Laravel live.

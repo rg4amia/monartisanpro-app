@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../data/models/notification_model.dart';
 import '../controllers/notifications_controller.dart';
 
 class NotificationsScreen extends GetView<NotificationsController> {
@@ -143,7 +144,7 @@ class NotificationsScreen extends GetView<NotificationsController> {
             final group = groupedNotifications[index];
             return _NotificationGroup(
               dateLabel: group['label'] as String,
-              notifications: group['notifications'] as List,
+              notifications: group['notifications'] as List<NotificationModel>,
               controller: controller,
             );
           },
@@ -226,16 +227,18 @@ class NotificationsScreen extends GetView<NotificationsController> {
     }
   }
 
-  List<Map<String, dynamic>> _groupNotificationsByDate(List notifications) {
+  List<Map<String, dynamic>> _groupNotificationsByDate(
+    List<NotificationModel> notifications,
+  ) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final yesterday = today.subtract(const Duration(days: 1));
     final lastWeek = today.subtract(const Duration(days: 7));
 
-    final todayList = <dynamic>[];
-    final yesterdayList = <dynamic>[];
-    final thisWeekList = <dynamic>[];
-    final olderList = <dynamic>[];
+    final todayList = <NotificationModel>[];
+    final yesterdayList = <NotificationModel>[];
+    final thisWeekList = <NotificationModel>[];
+    final olderList = <NotificationModel>[];
 
     for (final notification in notifications) {
       final createdAt = DateTime.parse(notification.createdAt);
@@ -277,7 +280,7 @@ class NotificationsScreen extends GetView<NotificationsController> {
 
 class _NotificationGroup extends StatelessWidget {
   final String dateLabel;
-  final List notifications;
+  final List<NotificationModel> notifications;
   final NotificationsController controller;
 
   const _NotificationGroup({
@@ -412,7 +415,7 @@ class _TabItem extends StatelessWidget {
 // ============================================================================
 
 class _NotificationTile extends StatelessWidget {
-  final dynamic notification;
+  final NotificationModel notification;
   final VoidCallback onTap;
   final VoidCallback onDismiss;
 

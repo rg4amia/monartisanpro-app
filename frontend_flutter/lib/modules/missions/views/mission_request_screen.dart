@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../core/storage/storage_service.dart';
 import '../../../core/utils/bypass_validator.dart';
+import '../../../data/models/sector_model.dart';
 import '../controllers/missions_controller.dart';
 
 // ─── Design Tokens ────────────────────────────────────────────────────────────
@@ -134,12 +135,12 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
                                   Routes.services,
                                 );
                                 if (result != null && result is Map) {
-                                  _selectedCategory.value =
-                                      result['trade']?.name ?? '';
-                                  _selectedCategoryId.value =
-                                      result['sector']?.id ?? 0;
-                                  _selectedTradeId.value =
-                                      result['trade']?.id ?? 0;
+                                  final trade = result['trade'] as TradeModel?;
+                                  final sector =
+                                      result['sector'] as SectorModel?;
+                                  _selectedCategory.value = trade?.name ?? '';
+                                  _selectedCategoryId.value = sector?.id ?? 0;
+                                  _selectedTradeId.value = trade?.id ?? 0;
                                 }
                               },
                             )
@@ -150,12 +151,12 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
                                   Routes.services,
                                 );
                                 if (result != null && result is Map) {
-                                  _selectedCategory.value =
-                                      result['trade']?.name ?? '';
-                                  _selectedCategoryId.value =
-                                      result['sector']?.id ?? 0;
-                                  _selectedTradeId.value =
-                                      result['trade']?.id ?? 0;
+                                  final trade = result['trade'] as TradeModel?;
+                                  final sector =
+                                      result['sector'] as SectorModel?;
+                                  _selectedCategory.value = trade?.name ?? '';
+                                  _selectedCategoryId.value = sector?.id ?? 0;
+                                  _selectedTradeId.value = trade?.id ?? 0;
                                 }
                               },
                             ),

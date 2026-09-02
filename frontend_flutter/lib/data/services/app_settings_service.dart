@@ -37,7 +37,8 @@ class AppSettingsService extends GetxService {
       final response = await http.get(url).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body)['data'];
+        final body = jsonDecode(response.body) as Map<String, dynamic>;
+        final data = body['data'] as Map<String, dynamic>?;
         if (data != null) {
           blockClient.value = data['block_client'] ?? 'none';
           blockArtisan.value = data['block_artisan'] ?? 'none';

@@ -165,7 +165,9 @@ class ParrainageScreen extends StatelessWidget {
                       delegate: SliverChildBuilderDelegate(
                         (context, index) {
                           final f = controller.filleuls[index];
-                          final filleul = f['filleul'];
+                          final filleul =
+                              (f['filleul'] as Map?)?.cast<String, dynamic>() ??
+                                  const <String, dynamic>{};
                           return Container(
                             margin: const EdgeInsets.only(bottom: 12),
                             padding: const EdgeInsets.all(16),
