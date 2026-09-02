@@ -1,24 +1,52 @@
+import '../../core/cache/cache_store.dart';
 import '../../core/network/api_client.dart';
 import '../../core/network/api_endpoints.dart';
+import '../../core/network/network_executor.dart';
+import '../../core/storage/storage_service.dart';
 import '../models/notification_model.dart';
 
 class NotificationRepository {
   final ApiClient _client = ApiClient();
 
-  Future<List<NotificationModel>> getNotifications() async {
-    final res = await _client.get(ApiEndpoints.notifications);
-    final list = res.data['data'] as List<dynamic>;
-    return list
-        .map((e) => NotificationModel.fromJson(e as Map<String, dynamic>))
-        .toList();
+  static final CacheStore<NotificationModel> _store =
+      CacheStore<NotificationModel>(
+    boxName: 'notifications_cache',
+    fromJson: NotificationModel.fromJson,
+    toJson: (n) => n.toJson(),
+  );
+
+  static const Duration _ttl = Duration(minutes: 1);
+
+  String get _key => 'list_u${StorageService.getUserId() ?? 0}';
+
+  Future<List<NotificationModel>> getNotifications({
+    bool forceRefresh = false,
+  }) async {
+    await _store.init();
+    return _store.readList(
+      key: _key,
+      ttl: _ttl,
+      policy: forceRefresh ? CachePolicy.networkFirst : CachePolicy.cacheFirst,
+      fetch: () async {
+        final res = await NetworkExecutor.run(
+          () => _client.get(ApiEndpoints.notifications),
+        );
+        final list = res.data['data'] as List<dynamic>;
+        return list
+            .map((e) => NotificationModel.fromJson(e as Map<String, dynamic>))
+            .toList();
+      },
+    );
   }
 
   Future<void> markRead(int id) async {
     await _client.put(ApiEndpoints.markNotificationRead(id));
+    await _store.invalidate(_key);
   }
 
   Future<void> markAllRead() async {
     await _client.post(ApiEndpoints.markAllRead);
+    await _store.invalidate(_key);
   }
 
   Future<void> submitEvaluation({
@@ -46,7 +74,9 @@ class NotificationRepository {
   }
 
   Future<Map<String, dynamic>> getLitige(int id) async {
-    final res = await _client.get(ApiEndpoints.litige(id));
+    final res = await NetworkExecutor.run(
+      () => _client.get(ApiEndpoints.litige(id)),
+    );
     return res.data as Map<String, dynamic>;
   }
 }
