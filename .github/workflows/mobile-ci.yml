@@ -57,15 +57,21 @@ jobs:
       # ~200 Mo de natifs) fait un pic mémoire qui dépasse les ~16 Go du
       # runner : le daemon Gradle est tué par l'OOM-killer sans rien logger
       # (pas de « BUILD FAILED », juste des processus java orphelins puis
-      # « Gradle build failed to produce an .apk file »). 10 Go de swap
-      # absorbent le pic.
-      - name: Ajouter du swap (anti OOM-killer)
+      # « Gradle build failed to produce an .apk file »). On remplace le
+      # swapfile de 4 Go du runner par 12 Go pour absorber le pic.
+      - name: Étendre le swap (anti OOM-killer)
+        continue-on-error: true
         run: |
-          sudo fallocate -l 10G /swapfile
-          sudo chmod 600 /swapfile
-          sudo mkswap /swapfile
-          sudo swapon /swapfile
-          free -h
+          set -x
+          sudo swapoff -a || true
+          sudo rm -f /mnt/swapfile /swapfile || true
+          sudo fallocate -l 12G /mnt/swapfile \
+            || sudo dd if=/dev/zero of=/mnt/swapfile bs=1M count=12288 status=none
+          sudo chmod 600 /mnt/swapfile
+          sudo mkswap /mnt/swapfile
+          sudo swapon /mnt/swapfile
+          swapon --show || true
+          free -h || true
 
       - name: Setup Java
         uses: actions/setup-java@v5
