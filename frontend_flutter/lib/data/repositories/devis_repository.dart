@@ -33,7 +33,8 @@ class DevisRepository {
         final res = await NetworkExecutor.run(
           () => _client.get(ApiEndpoints.missionDevis(missionId)),
         );
-        final list = res.data['data'] as List<dynamic>;
+        final list =
+            (res.data as Map<String, dynamic>)['data'] as List<dynamic>;
         return list
             .map((e) => DevisModel.fromJson(e as Map<String, dynamic>))
             .toList();
@@ -51,7 +52,9 @@ class DevisRepository {
         final res = await NetworkExecutor.run(
           () => _client.get(ApiEndpoints.devis(id)),
         );
-        return DevisModel.fromJson(res.data['data'] as Map<String, dynamic>);
+        return DevisModel.fromJson(
+          (res.data as Map<String, dynamic>)['data'] as Map<String, dynamic>,
+        );
       },
     );
   }
@@ -68,7 +71,9 @@ class DevisRepository {
         'jalons_json': jalons.map((j) => j.toJson()).toList(),
       },
     );
-    final devis = DevisModel.fromJson(res.data['data'] as Map<String, dynamic>);
+    final devis = DevisModel.fromJson(
+      (res.data as Map<String, dynamic>)['data'] as Map<String, dynamic>,
+    );
     await _invalidate(missionId: missionId, devisId: devis.id);
     return devis;
   }
@@ -85,7 +90,9 @@ class DevisRepository {
         'jalons_json': jalons.map((j) => j.toJson()).toList(),
       },
     );
-    final devis = DevisModel.fromJson(res.data['data'] as Map<String, dynamic>);
+    final devis = DevisModel.fromJson(
+      (res.data as Map<String, dynamic>)['data'] as Map<String, dynamic>,
+    );
     await _invalidate(missionId: devis.missionId, devisId: id);
     return devis;
   }
@@ -95,7 +102,9 @@ class DevisRepository {
       ApiEndpoints.acceptDevis(id),
       data: {'transaction_id': transactionId},
     );
-    final devis = DevisModel.fromJson(res.data['data'] as Map<String, dynamic>);
+    final devis = DevisModel.fromJson(
+      (res.data as Map<String, dynamic>)['data'] as Map<String, dynamic>,
+    );
     await _invalidate(missionId: devis.missionId, devisId: id);
     return devis;
   }
@@ -109,7 +118,7 @@ class DevisRepository {
     final res = await NetworkExecutor.run(
       () => _client.get(ApiEndpoints.missionDevisSuggest(missionId)),
     );
-    return res.data['data'] as Map<String, dynamic>;
+    return (res.data as Map<String, dynamic>)['data'] as Map<String, dynamic>;
   }
 
   Future<void> _invalidate({int? missionId, int? devisId}) async {

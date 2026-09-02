@@ -39,8 +39,11 @@ class EvaluationRepository {
     try {
       final res =
           await _client.get(ApiEndpoints.missionEvaluationsStatus(missionId));
-      if (res.data is Map && res.data['data'] is Map) {
-        return Map<String, dynamic>.from(res.data['data']);
+      if (res.data is Map &&
+          (res.data as Map<String, dynamic>)['data'] is Map) {
+        return Map<String, dynamic>.from(
+          (res.data as Map<String, dynamic>)['data'],
+        );
       }
     } catch (_) {}
     return null;
@@ -50,8 +53,11 @@ class EvaluationRepository {
     try {
       final res =
           await _client.get(ApiEndpoints.orderEvaluationsStatus(orderId));
-      if (res.data is Map && res.data['data'] is Map) {
-        return Map<String, dynamic>.from(res.data['data']);
+      if (res.data is Map &&
+          (res.data as Map<String, dynamic>)['data'] is Map) {
+        return Map<String, dynamic>.from(
+          (res.data as Map<String, dynamic>)['data'],
+        );
       }
     } catch (_) {}
     return null;
@@ -60,8 +66,11 @@ class EvaluationRepository {
   Future<Map<String, dynamic>?> getMyEvaluations() async {
     try {
       final res = await _client.get(ApiEndpoints.myEvaluations);
-      if (res.data is Map && res.data['data'] is Map) {
-        return Map<String, dynamic>.from(res.data['data']);
+      if (res.data is Map &&
+          (res.data as Map<String, dynamic>)['data'] is Map) {
+        return Map<String, dynamic>.from(
+          (res.data as Map<String, dynamic>)['data'],
+        );
       }
     } catch (_) {}
     return null;

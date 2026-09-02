@@ -29,7 +29,8 @@ class WalletRepository {
         final res = await NetworkExecutor.run(
           () => _client.get(ApiEndpoints.walletBalance),
         );
-        return (res.data['data'] as Map).cast<String, dynamic>();
+        return ((res.data as Map<String, dynamic>)['data'] as Map)
+            .cast<String, dynamic>();
       },
     );
 

@@ -53,7 +53,8 @@ class ArtisanRepository {
             },
           ),
         );
-        final list = res.data['data'] as List<dynamic>;
+        final list =
+            (res.data as Map<String, dynamic>)['data'] as List<dynamic>;
         return list
             .map((e) => ArtisanModel.fromJson(e as Map<String, dynamic>))
             .toList();
@@ -75,7 +76,9 @@ class ArtisanRepository {
         final res = await NetworkExecutor.run(
           () => _client.get(ApiEndpoints.artisan(userId)),
         );
-        return ArtisanModel.fromJson(res.data['data'] as Map<String, dynamic>);
+        return ArtisanModel.fromJson(
+          (res.data as Map<String, dynamic>)['data'] as Map<String, dynamic>,
+        );
       },
     );
   }

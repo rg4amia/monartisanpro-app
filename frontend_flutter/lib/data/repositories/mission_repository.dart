@@ -182,7 +182,7 @@ class MissionRepository {
       ),
     });
     final res = await _client.postMultipart('/upload', formData);
-    return res.data['url'] as String;
+    return (res.data as Map<String, dynamic>)['url'] as String;
   }
 
   /// Demande une estimation IA Gemini pour une mission

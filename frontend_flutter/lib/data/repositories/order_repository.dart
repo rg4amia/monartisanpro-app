@@ -29,8 +29,11 @@ class OrderRepository {
   Future<List<Map<String, dynamic>>> getAvailableDeliveries() async {
     try {
       final res = await _client.get(ApiEndpoints.deliveriesAvailable);
-      if (res.data is Map && res.data['data'] is List) {
-        return List<Map<String, dynamic>>.from(res.data['data']);
+      if (res.data is Map &&
+          (res.data as Map<String, dynamic>)['data'] is List) {
+        return List<Map<String, dynamic>>.from(
+          (res.data as Map<String, dynamic>)['data'],
+        );
       }
     } catch (_) {}
     return [];
@@ -39,8 +42,11 @@ class OrderRepository {
   Future<List<Map<String, dynamic>>> getMyOrders() async {
     try {
       final res = await _client.get(ApiEndpoints.orders);
-      if (res.data is Map && res.data['data'] is List) {
-        return List<Map<String, dynamic>>.from(res.data['data']);
+      if (res.data is Map &&
+          (res.data as Map<String, dynamic>)['data'] is List) {
+        return List<Map<String, dynamic>>.from(
+          (res.data as Map<String, dynamic>)['data'],
+        );
       }
     } catch (_) {}
     return [];

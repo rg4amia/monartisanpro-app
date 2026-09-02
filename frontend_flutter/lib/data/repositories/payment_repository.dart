@@ -26,7 +26,7 @@ class PaymentRepository {
     );
 
     return PaymentInitiationModel.fromJson(
-      res.data['data'] as Map<String, dynamic>,
+      (res.data as Map<String, dynamic>)['data'] as Map<String, dynamic>,
     );
   }
 
@@ -44,14 +44,14 @@ class PaymentRepository {
     );
 
     return PaymentInitiationModel.fromJson(
-      res.data['data'] as Map<String, dynamic>,
+      (res.data as Map<String, dynamic>)['data'] as Map<String, dynamic>,
     );
   }
 
   Future<PaymentStatusModel> checkStatus(int transactionId) async {
     final res = await _client.get(ApiEndpoints.paymentStatus(transactionId));
     return PaymentStatusModel.fromJson(
-      res.data['data'] as Map<String, dynamic>,
+      (res.data as Map<String, dynamic>)['data'] as Map<String, dynamic>,
     );
   }
 }
