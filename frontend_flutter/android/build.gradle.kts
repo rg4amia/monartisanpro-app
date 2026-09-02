@@ -11,6 +11,20 @@ allprojects {
         mavenCentral()
     }
 }
+
+// Redirige la sortie de build des modules Android vers `frontend_flutter/build/`
+// (et non `frontend_flutter/android/**/build/`). C'est l'emplacement où
+// `flutter_tools` va chercher l'APK/AAB : sans cette redirection,
+// `flutter build apk` échoue avec « Gradle build failed to produce an .apk
+// file [...] the tool couldn't find it » alors que le build Gradle a réussi.
+val newBuildDir: Directory = rootProject.layout.buildDirectory.dir("../../build").get()
+rootProject.layout.buildDirectory.value(newBuildDir)
+
+subprojects {
+    val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
+    project.layout.buildDirectory.value(newSubprojectBuildDir)
+}
+
 subprojects {
     project.evaluationDependsOn(":app")
 }

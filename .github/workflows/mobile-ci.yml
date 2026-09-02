@@ -53,26 +53,6 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      # Le build release (R8 + dexing + fusion des .so du SDK Yandex Maps,
-      # ~200 Mo de natifs) fait un pic mémoire qui dépasse les ~16 Go du
-      # runner : le daemon Gradle est tué par l'OOM-killer sans rien logger
-      # (pas de « BUILD FAILED », juste des processus java orphelins puis
-      # « Gradle build failed to produce an .apk file »). On remplace le
-      # swapfile de 4 Go du runner par 12 Go pour absorber le pic.
-      - name: Étendre le swap (anti OOM-killer)
-        continue-on-error: true
-        run: |
-          set -x
-          sudo swapoff -a || true
-          sudo rm -f /mnt/swapfile /swapfile || true
-          sudo fallocate -l 12G /mnt/swapfile \
-            || sudo dd if=/dev/zero of=/mnt/swapfile bs=1M count=12288 status=none
-          sudo chmod 600 /mnt/swapfile
-          sudo mkswap /mnt/swapfile
-          sudo swapon /mnt/swapfile
-          swapon --show || true
-          free -h || true
-
       - name: Setup Java
         uses: actions/setup-java@v5
         with:
@@ -105,29 +85,7 @@ jobs:
 
       - name: Build APK (release)
         working-directory: frontend_flutter
-        run: |
-          set -o pipefail
-          flutter build apk --release --verbose 2>&1 | tail -n 120 || FLUTTER_RC=$?
-          echo "::group::APK réellement produits sur le disque"
-          find . \( -name '*.apk' -o -name '*.aab' \) -exec ls -la {} \; 2>/dev/null || true
-          echo "--- répertoires de sortie ---"
-          find build android/app/build -type d \( -name 'flutter-apk' -o -name 'apk' -o -name 'bundle' \) 2>/dev/null || true
-          echo "::endgroup::"
-          # Contournement : si l'APK existe (côté AGP) mais pas là où Flutter
-          # le cherche, on le recopie et on considère le build réussi.
-          AGP_APK="android/app/build/outputs/apk/release/app-release.apk"
-          WANT="build/app/outputs/flutter-apk/app-release.apk"
-          if [ ! -f "$WANT" ] && [ -f "$AGP_APK" ]; then
-            echo "APK trouvé côté AGP mais absent de $WANT — recopie."
-            mkdir -p "$(dirname "$WANT")"
-            cp "$AGP_APK" "$WANT"
-          fi
-          if [ -f "$WANT" ]; then
-            echo "APK OK : $WANT"
-            exit 0
-          fi
-          echo "::error::Aucun APK produit."
-          exit "${FLUTTER_RC:-1}"
+        run: flutter build apk --release
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
