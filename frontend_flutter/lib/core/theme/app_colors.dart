@@ -23,6 +23,7 @@ class AppColors {
 
   // States
   static const Color danger = Color(0xFFE74C3C);
+  static const Color dangerSoft = Color(0xFFFEE2E2);
   static const Color warning = Color(0xFFF39C12);
   static const Color info = Color(0xFF3498DB);
   static const Color infoLight = Color(0xFFD6EAF8);
