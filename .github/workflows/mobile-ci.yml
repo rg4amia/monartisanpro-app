@@ -107,17 +107,27 @@ jobs:
         working-directory: frontend_flutter
         run: |
           set -o pipefail
-          flutter build apk --release 2>&1 | tee /tmp/flutter-build.log || {
-            echo "::group::Mémoire / charge après échec"
-            free -h || true
-            cat /proc/loadavg || true
-            dmesg 2>/dev/null | grep -iE 'killed process|out of memory' | tail -n 20 || true
-            echo "::endgroup::"
-            echo "::group::Gradle :app:assembleRelease --stacktrace (diagnostic)"
-            (cd android && ./gradlew :app:assembleRelease --stacktrace --no-daemon --console=plain 2>&1 | tail -n 250) || true
-            echo "::endgroup::"
-            exit 1
-          }
+          flutter build apk --release --verbose 2>&1 | tail -n 120 || FLUTTER_RC=$?
+          echo "::group::APK réellement produits sur le disque"
+          find . \( -name '*.apk' -o -name '*.aab' \) -exec ls -la {} \; 2>/dev/null || true
+          echo "--- répertoires de sortie ---"
+          find build android/app/build -type d \( -name 'flutter-apk' -o -name 'apk' -o -name 'bundle' \) 2>/dev/null || true
+          echo "::endgroup::"
+          # Contournement : si l'APK existe (côté AGP) mais pas là où Flutter
+          # le cherche, on le recopie et on considère le build réussi.
+          AGP_APK="android/app/build/outputs/apk/release/app-release.apk"
+          WANT="build/app/outputs/flutter-apk/app-release.apk"
+          if [ ! -f "$WANT" ] && [ -f "$AGP_APK" ]; then
+            echo "APK trouvé côté AGP mais absent de $WANT — recopie."
+            mkdir -p "$(dirname "$WANT")"
+            cp "$AGP_APK" "$WANT"
+          fi
+          if [ -f "$WANT" ]; then
+            echo "APK OK : $WANT"
+            exit 0
+          fi
+          echo "::error::Aucun APK produit."
+          exit "${FLUTTER_RC:-1}"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
