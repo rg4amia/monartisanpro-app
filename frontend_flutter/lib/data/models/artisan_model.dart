@@ -55,7 +55,7 @@ class ArtisanModel {
 
   factory ArtisanModel.fromJson(Map<String, dynamic> json) {
     final parsedLocation = _parseLocation(json);
-    final scoreProsArtisan = _parseInt(json['scoreProsArtisan'] ?? json['score_prosartisan'] ?? json['scoreNzassa'] ?? json['score_nzassa']);
+    final scoreProsArtisan = _parseInt(json['scoreProsArtisan'] ?? json['score_prosartisan']);
     final distanceMetres = _parseDouble(
       json['distanceMetres'] ?? json['distance_metres'],
     );
@@ -83,7 +83,8 @@ class ArtisanModel {
           (json['distance'] as String?) ??
           (distanceMetres != null ? _formatDistance(distanceMetres) : null),
       distanceMetres: distanceMetres,
-      isGoldenMarker: (json['isGoldenMarker'] as bool?) ?? scoreProsArtisan >= 70,
+      isGoldenMarker:
+          (json['isGoldenMarker'] as bool?) ?? scoreProsArtisan >= 700,
       nightInterventionAvailable: _parseBool(
         json['nightInterventionAvailable'] ??
             json['intervention_nuit'] ??

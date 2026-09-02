@@ -59,9 +59,9 @@ o Afin de bloquer la validation si l'écart dépasse 100 mètres et notifier l'admi
 o En tant qu’Administrateur,
 o Je veux visualiser une carte de chaleur (Heatmap) des demandes pour orienter les artisans géographiquement (ex : Bingerville), ajuster la pondération de l'algorithme de confiance, et ajouter de nouveaux corps de métiers. 
 o CA : Le système doit détecter automatiquement les comportements aberrants (ex : 5 jetons validés en 10 minutes). 
-* US 5.3 : Évaluation N'Zassa et Accès au Crédit
+* US 5.3 : Évaluation ProsArtisan et Accès au Crédit
 o En tant qu’Artisan,
-o Je veux consulter mon score de fiabilité sur 100 (calculé sur l'intégrité, la qualité, la réactivité, et le ratio d'achèvement), 
+o Je veux consulter mon score de fiabilité sur 1000 (calculé sur l'intégrité, la qualité, la réactivité, et le ratio d'achèvement), 
 o Afin de solliciter un micro-crédit "Urgence Sociale" déblocable en moins de 2h si mon score dépasse 700. 
 o CA : Historisation complète des variations de score. Génération de rapports de solvabilité PDF pour les microfinances. 
 Épic 6 : Matrice de Résilience et Gestion des Exceptions (ProsArtisan)
@@ -99,7 +99,7 @@ Notification push au client pour un "Top-up" d'urgence (lien de paiement direct)
 Abandon de chantier par l'artisan (Après réception de la première tranche)
 Le client perd son acompte matériel et la plateforme perd sa crédibilité.
 Gel immédiat du reste du séquestre. Révocation des jetons matériels non scannés.
-Transfert du reliquat financier à un "Artisan de Remplacement" certifié N'Zassa.
+Transfert du reliquat financier à un "Artisan de Remplacement" certifié ProsArtisan.
 À VALIDER
 
 
@@ -120,9 +120,9 @@ La gestion de l'état des paiements et des jetons matériels ne pardonne aucune er
 * Séparation des Queues (Workers) : Ton backend (idéalement structuré sur un framework robuste comme Laravel) doit isoler les processus lourds. La génération de PDF de solvabilité, les envois d'OTP SMS, et les webhooks de Mobile Money doivent tourner sur des files d'attente asynchrones (Redis/RabbitMQ). Un crash sur l'envoi d'un SMS ne doit jamais faire planter la transaction de séquestre dans la base de données.
 * Verrous Optimistes et Pessimistes (Bases de données) : Sur ton système de gestion de base de données relationnelle (PostgreSQL ou MySQL), implémente des Database Locks lors de la validation d'un jeton par le quincaillier. Cela empêche la faille du "Double Spend" (l'artisan et le quincaillier cliquent 5 fois sur "Valider" au même moment avec une mauvaise connexion pour vider le compte client).
 4. Ingénierie Sociale et Anthropologie (Le Levier de l'Égo)
-En Côte d'Ivoire, le statut social et la réputation (le "nom") sont des monnaies d'échange puissantes. Ton Score N'Zassa doit être visible et glorifié.
-* Badges de Prestiges Publics : Les artisans avec un score > 800 obtiennent un badge "Maître Artisan N'Zassa". L'algorithme de recherche de la plateforme doit privilégier ces profils de manière flagrante. Si tu as ce badge, tu gagnes plus d'argent. C'est le seul moyen psychologique de les forcer à respecter le processus de l'application au lieu de s'arranger "en bas" avec le client.
-* Programme de Parrainage Sous Caution : Un "Maître Artisan" peut coopter un apprenti. Si l'apprenti fraude, le parrain perd des points sur son propre Score N'Zassa. Tu délègues ainsi le contrôle qualité et la pression sociale aux artisans eux-mêmes.
+En Côte d'Ivoire, le statut social et la réputation (le "nom") sont des monnaies d'échange puissantes. Ton Score ProsArtisan doit être visible et glorifié.
+* Badges de Prestiges Publics : Les artisans avec un score > 800 obtiennent un badge "Maître Artisan ProsArtisan". L'algorithme de recherche de la plateforme doit privilégier ces profils de manière flagrante. Si tu as ce badge, tu gagnes plus d'argent. C'est le seul moyen psychologique de les forcer à respecter le processus de l'application au lieu de s'arranger "en bas" avec le client.
+* Programme de Parrainage Sous Caution : Un "Maître Artisan" peut coopter un apprenti. Si l'apprenti fraude, le parrain perd des points sur son propre Score ProsArtisan. Tu délègues ainsi le contrôle qualité et la pression sociale aux artisans eux-mêmes.
 5. Gouvernance du Projet et Qualité (La Rigueur)
 Pour ne pas s'embourber dans une dette technique infinie, le cycle de vie du projet doit être militaire.
 * Couverture de Tests Automatisés : Exige une couverture de tests unitaires et d'intégration stricte (ex: via PHPUnit) sur toute l'API de gestion financière. Aucun code lié aux flux de Mobile Money ou à la fragmentation des fonds ne part en production (CI/CD) sans un feu vert des tests automatisés.
@@ -149,7 +149,7 @@ Voici comment ton architecture doit réagir aux réalités de la rue :
 * Le Syndrome de la Zone Blanche (Perte de 4G) : Le livreur arrive sur le chantier mais n'a plus de réseau pour cliquer sur "Livré".
 o Solution : Mode hors-ligne "Optimistic UI" sur l'application mobile. L'application stocke l'action avec un timestamp cryptographiquement signé. Dès qu'il recroise une antenne relais, l'application synchronise l'événement DELIVERED_OFFLINE avec le serveur. Le serveur valide si le timestamp correspond à l'estimation du trajet.
 * La "Fausse Course" (Détournement d'application) : Le livreur appelle l'artisan : "Mon frère, annule sur l'application, paye-moi la moitié en cash, je te livre quand même".
-o Solution : Si une course est annulée alors que le livreur était à moins de 500 mètres du point de collecte, le Anti-Fraud Service flague les deux comptes. Au bout de 3 annulations de ce type, le Score N'Zassa de l'artisan chute, et le livreur est banni temporairement.
+o Solution : Si une course est annulée alors que le livreur était à moins de 500 mètres du point de collecte, le Anti-Fraud Service flague les deux comptes. Au bout de 3 annulations de ce type, le Score ProsArtisan de l'artisan chute, et le livreur est banni temporairement.
 * Le Pattern SAGA pour l'Annulation Financière : Si le livreur ne trouve pas l'adresse après 30 minutes, comment rembourser la livraison bloquée sur le compte du client ? Tu ne peux pas utiliser une transaction SQL simple entre des micro-services. Tu dois implémenter une chorégraphie SAGA : Le Delivery State Machine émet `DeliveryFailed
 
 Épic 9 :  Les Entités Fondamentales (Le Noyau Financier)
@@ -248,7 +248,7 @@ EVIDENCE_GATHERING
 Les deux parties ont 24h pour soumettre leurs preuves.
 Verrouillage automatique si délai dépassé. Qui ne prouve rien, perd tout.
 PEER_REVIEW
-(Optionnel) Le dossier technique est soumis au Jury N'Zassa.
+(Optionnel) Le dossier technique est soumis au Jury ProsArtisan.
 Le litige doit concerner la "Qualité" du travail, pas un vol de matériel.
 ADMIN_ESCALATION
 Cas critiques nécessitant l'intervention humaine du Backoffice.
@@ -260,9 +260,9 @@ Modification irréversible du séquestre (Remboursement ou Paiement forcé).
 L'anthropologie locale veut que celui qui crie le plus fort ait raison. Le code ne doit pas écouter les cris. Il faut une couche de "Triage à Froid" automatisée.
 * Formatage Forcé des Requêtes : Le plaignant ne peut pas taper un long texte libre. L'interface (UI) doit le forcer à choisir une catégorie stricte (ex: "Abandon de poste", "Malfaçon visible", "Matériel non conforme") et à uploader obligatoirement une photo géolocalisée + une note vocale de 30 seconds maximums.
 * Agent LLM Médiateur (Niveau 1) : Un service backend alimenté par un modèle de langage (LLM) transcrit la note vocale, extrait les faits bruts et élimine la charge émotionnelle. Il propose immédiatement une résolution standard (ex: "Selon nos conditions, ce retard engendre une pénalité de 5%, acceptez-vous ?"). Près de 40% des micro-conflits peuvent être résolus à cette étape sans intervention humaine.
-3. La Décentralisation du Jugement : Le "Jury N'Zassa"
+3. La Décentralisation du Jugement : Le "Jury ProsArtisan"
 C'est ici que l'architecture devient brillante. Ton administration n'a pas les compétences pour juger si un raccordement de plomberie est conforme aux normes. Tu dois utiliser la communauté pour s'auto-réguler.
-* L'Arbitrage par les Pairs : Si le litige concerne une malfaçon, le système anonymise les photos du chantier et les envoie à 3 artisans de la même spécialité possédant un Score N'Zassa "Maître Artisan" (Top 5%).
+* L'Arbitrage par les Pairs : Si le litige concerne une malfaçon, le système anonymise les photos du chantier et les envoie à 3 artisans de la même spécialité possédant un Score ProsArtisan "Maître Artisan" (Top 5%).
 * Consensus Algorithmique : Ces 3 experts votent indépendamment via leur application ("Conforme" ou "Non Conforme"). Si le consensus est atteint (2 sur 3), le verdict est rendu.
 * Incentive (La Récompense) : Les jurés qui participent au vote reçoivent un micro-paiement ou des points de visibilité supplémentaires sur l'algorithme de recherche, financés par la pénalité prélevée sur le perdant.
 4. Le Coffre-Fort des Preuves (Evidence Vault)
@@ -272,10 +272,10 @@ L'intégrité des données est ta seule protection légale. Si une partie conteste t
 5. L'Exécution Impitoyable (Smart Resolution)
 La résolution d'un litige ne doit jamais être une suggestion. C'est une exécution financière automatisée.
 * Le "Slashing" (Pénalité d'abus) : Pour dissuader les clients d'ouvrir des litiges justes pour retarder le paiement, instaure des frais de procédure. Si le client perd le litige (déclaré de mauvaise foi par le Jury ou l'Admin), la plateforme prélève automatiquement 5% à 10% du reste de son séquestre au titre de dédommagement pour l'artisan et de frais de dossier pour l'application.
-* Reverse Entry (Comptabilité) : Si l'artisan est en tort, le système génère une écriture de type REVERSE_ENTRY dans le registre pour rembourser le client, et ampute drastiquement le Score N'Zassa de l'artisan.
+* Reverse Entry (Comptabilité) : Si l'artisan est en tort, le système génère une écriture de type REVERSE_ENTRY dans le registre pour rembourser le client, et ampute drastiquement le Score ProsArtisan de l'artisan.
 
 Epic 12 : Le Modèle Mathématique (L'Accumulateur d'Événements)
-Le score N'Zassa (noté $S$) n'est pas une moyenne. C'est une somme pondérée d'événements historiques, capée entre 0 et 1000 points. Un nouvel artisan commence avec un "Score de Confiance Initial" de 300.
+Le score ProsArtisan (noté $S$) n'est pas une moyenne. C'est une somme pondérée d'événements historiques, capée entre 0 et 1000 points. Un nouvel artisan commence avec un "Score de Confiance Initial" de 300.
 La formule fondamentale qui tournera sur tes serveurs est la suivante :
 $$S(t) = \min\left(1000, \max\left(0, S_{base} + \sum_{k=1}^{n} (\omega_k \cdot E_k \cdot C_k) - \Delta(t)\right)\right)$$
 
@@ -289,7 +289,7 @@ Explication des variables pour tes développeurs :
 L'algorithme réagit à des événements (Triggers) issus de la Machine à États que nous avons vue précédemment. La pondération est asymétrique : les sanctions sont beaucoup plus lourdes que les récompenses.
 * L'Intégrité (Le plus lourd - Sanction impitoyable)
 o Comportement ciblé : Tentative de contournement du système (le "gombo" hors plateforme), fausses factures, litige perdu pour fraude.
-o Pondération : Un chantier réussi sans litige ajoute +5 points. Une condamnation par le Jury N'Zassa pour tentative de fraude retire -150 points immédiatement.
+o Pondération : Un chantier réussi sans litige ajoute +5 points. Une condamnation par le Jury ProsArtisan pour tentative de fraude retire -150 points immédiatement.
 * La Fiabilité (Le respect de la parole donnée)
 o Comportement ciblé : Respect des délais et présence.
 o Pondération : Validation d'un jalon à l'heure prévue : +2 points. Retard de plus de 48h non justifié : -15 points. Abandon de chantier (Statut DISPUTED escaladé en Backoffice) : -300 points (Blacklistage quasi immédiat).
@@ -309,7 +309,7 @@ La valeur d'une note est multipliée par l'indice de crédibilité $C_k$ du client 
 Dans l'artisanat, tu es aussi bon que ton dernier chantier. Un score de 800 obtenu il y a deux ans ne vaut plus rien aujourd'hui. L'algorithme doit intégrer une fonction d'oubli mathématique.
 Si un artisan reste inactif (aucun jalon validé) pendant 60 jours, le système commence à lui retirer des points chaque semaine (ex: -5 points/semaine). Cela le force à rester actif sur ProsArtisan s'il veut conserver son accès au micro-crédit, et cela nettoie naturellement ta base de données des "fantômes".
 5. Implémentation Backend (Event Sourcing)
-Tes développeurs ne doivent jamais stocker le score N'Zassa comme une simple colonne dans la table Artisans qu'ils écraseraient avec une mise à jour.
+Tes développeurs ne doivent jamais stocker le score ProsArtisan comme une simple colonne dans la table Artisans qu'ils écraseraient avec une mise à jour.
 Le score doit être calculé en temps réel (ou via une tâche CRON nocturne pour économiser le CPU) en additionnant toutes les lignes d'une table dédiée Score_Ledger_Entries.
 * Avantage : Si tu décides de changer les règles de l'algorithme dans 6 mois (par exemple, augmenter le poids de la ponctualité), tu peux recalculer rétroactivement et proprement le score de tous les artisans. C'est ce qu'on appelle la reproductibilité de l'état.
 Le périmètre métier et applicatif (Escrow, Delivery, FSM, Litiges, Scoring) est désormais d'une solidité redoutable. C'est un moteur de confiance prêt à encaisser le marché.

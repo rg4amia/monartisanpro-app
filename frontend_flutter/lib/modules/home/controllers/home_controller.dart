@@ -261,11 +261,9 @@ class HomeController extends GetxController {
            disputesCount.value = s['catalog_count'] ?? 0;
         }
 
-        // If it returns score_prosartisan/score_nzassa from backend, update it
+        // If it returns score_prosartisan from backend, update it
         if (dashboardData.containsKey('score_prosartisan') && dashboardData['score_prosartisan'] != null) {
            fluidityScore.value = _asInt(dashboardData['score_prosartisan']);
-        } else if (dashboardData.containsKey('score_nzassa') && dashboardData['score_nzassa'] != null) {
-           fluidityScore.value = _asInt(dashboardData['score_nzassa']);
         }
       } catch (e) {
         debugPrint("Error fetching dashboard stats: $e");
@@ -321,7 +319,7 @@ class HomeController extends GetxController {
             scoreQualite.value = _normalizeCriterion(breakdown['qualite'] ?? breakdown['qualité'] ?? 0);
             scoreReactivite.value = _normalizeCriterion(breakdown['reactivite'] ?? breakdown['réactivité'] ?? 0);
             
-            final dynScore = data['score_prosartisan'] ?? data['scoreProsArtisan'] ?? data['score_nzassa'] ?? data['scoreNzassa'];
+            final dynScore = data['score_prosartisan'] ?? data['scoreProsArtisan'];
             if (dynScore != null) {
               fluidityScore.value = _asInt(dynScore);
             }

@@ -106,11 +106,15 @@ Note : Pour les prestations chantiers de l'Artisan.
 
 ### ⭐️ Phase 5 : Clôture & Score ProsArtisan
 * Le client évalue la mission et peut noter distinctement l'ensemble des acteurs intervenus :
-  * **L'Artisan** (Fiabilité 40%, Intégrité 30%, Qualité 20%, Réactivité 10%).
+  * **L'Artisan** — 4 piliers pondérés sur l'échelle 0–1000 : Fiabilité **400 pts**, Intégrité **300 pts**, Qualité **200 pts**, Réactivité **100 pts** (équivalents aux poids relatifs 40 % / 30 % / 20 % / 10 %).
   * **Le Livreur** (Ponctualité, Intégrité, Soin du colis, Courtoisie).
   * **Le Fournisseur / Quincaillerie** (Disponibilité, Transparence, Qualité, Rapidité).
 * Le **Score ProsArtisan** est mis à jour dans la colonne de base de données **`score_prosartisan`** (échelle 0 à 1000) et journalisé dans `score_ledger_entries`.
-* Si le score $> 700$, l'artisan est éligible aux micro-crédits d'urgence.
+* **Seuils (configurables dans `config/prosartisan.php` → `score_prosartisan`) :**
+  * `credit_threshold = 700` — score $\ge 700$ requis pour l'éligibilité au micro-crédit d'urgence ; plafond de crédit = $50\,000 + (\text{score} - 700) \times 1\,500$ FCFA (soit 500 000 FCFA à 1000).
+  * `golden_marker_threshold = 700` — badge « marqueur doré » (artisan prioritaire dans le matching et la vitrine).
+  * `excellence_threshold = 800` — palier d'excellence, conditionné à la maturité (10 missions) et à ≥ 3 critères $\ge 4{,}8/5$.
+* L'ancienne échelle 0–100 et l'ancien seuil `70` (période « Score N'Zassa ») sont **obsolètes** et ne doivent plus apparaître ni en code ni en documentation.
 
 ---
 
@@ -124,7 +128,7 @@ Note : Pour les prestations chantiers de l'Artisan.
 | **Livreurs & Logistique** | • Radar étendu automatique. Formule dynamique Maps. Double code de sécurité (Pickup/Reception). | • Pas de réaffectation automatique du livreur. |
 | **J-Code & Anti-Fraude** | • Clôture GPS boutique < 100m. | • Signal GPS en intérieur capricieux. |
 | **Jalons & Libération** | • Validation progressive OTP. Contrôle physique > 2M FCFA. | • Risque de blocage client injoignable. |
-| **Score ProsArtisan** | • Facteur clé d'accès au micro-crédit. | • Colonne `score_prosartisan` en BDD. |
+| **Score ProsArtisan** | • Échelle 0–1000, seuils configurables. Facteur clé d'accès au micro-crédit (≥ 700). | • Colonne `score_prosartisan` en BDD. |
 
 ---
 
@@ -135,7 +139,7 @@ Note : Pour les prestations chantiers de l'Artisan.
 2. **Immuabilité du Ratio :** Ratio de fragmentation figé dès l'acceptation.
 3. **Géorepérage J-Code :** Distance scan-boutique $> 100\text{m}$ $\rightarrow$ Blocage automatique.
 4. **Validation de Livraison par Codes :** Aucun transfert de fonds logistique ou matériel sans validation des codes respectifs (`pickup_code` et `reception_code`).
-5. **Score ProsArtisan (`score_prosartisan`) :** Archivage complet dans un Ledger d'événements pour audits bancaires et micro-crédits.
+5. **Score ProsArtisan (`score_prosartisan`, échelle 0–1000) :** Archivage complet dans un Ledger d'événements (`score_ledger_entries`) pour audits bancaires et micro-crédits. Tous les seuils métier (`credit_threshold` 700, `golden_marker_threshold` 700, `excellence_threshold` 800) sont lus depuis `config/prosartisan.php` côté backend et depuis `kMicroCreditScoreThreshold` côté mobile — **jamais** une valeur en dur ni l'ancienne échelle 0–100 / seuil `70`.
 6. **FCFA Entier :** Toutes les colonnes financières en `BIGINT`.
 7. **Autorité Financière du Serveur & Alignement de Paiement :** Le serveur fait autorité sur le montant total du devis (`montant_total`). L'initiation de paiement ajuste automatiquement tout écart de commission ou d'arrondi client sans bloquer la transaction.
 8. **Redirection Négociée par Deep Link Android (`intent://`) :** Lors de la validation de paiement, le navigateur web exécute la fragmentation du séquestre et déclenche un Intent Android `intent://payment-result...#Intent;scheme=prosartisan;package=com.prosartisan.app;end` pour ramener l'utilisateur sur l’application mobile.

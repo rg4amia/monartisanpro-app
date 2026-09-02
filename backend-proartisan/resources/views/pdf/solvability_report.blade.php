@@ -30,7 +30,7 @@
 
     <div class="score-container">
         <h3>Score ProsArtisan Global</h3>
-        <div class="score">{{ $score_detail['score_prosartisan'] }}/100</div>
+        <div class="score">{{ $score_detail['score_prosartisan'] }}/1000</div>
         <p>Ce score représente la fiabilité globale calculée par l'algorithme ProsArtisan.</p>
     </div>
 
@@ -72,12 +72,13 @@
     </ul>
 
     <h3>Éligibilité au Micro-crédit</h3>
+    @php($credit_threshold = config('prosartisan.score_prosartisan.credit_threshold', 700))
     @if($score_detail['micro_credit_eligible'])
-        <p class="status-eligible">✓ ÉLIGIBLE (Score ≥ 70)</p>
+        <p class="status-eligible">✓ ÉLIGIBLE (Score ≥ {{ $credit_threshold }})</p>
         <p>L'artisan présente un profil à faible risque, favorable pour un déblocage de fonds rapide.</p>
     @else
-        <p class="status-ineligible">✗ NON ÉLIGIBLE (Score < 70)</p>
-        <p>Un score de 70 est requis pour l'accès prioritaire au micro-crédit.</p>
+        <p class="status-ineligible">✗ NON ÉLIGIBLE (Score &lt; {{ $credit_threshold }})</p>
+        <p>Un score de {{ $credit_threshold }} est requis pour l'accès prioritaire au micro-crédit.</p>
     @endif
 
     <div class="footer">

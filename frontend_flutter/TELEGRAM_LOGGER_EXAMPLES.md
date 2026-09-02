@@ -61,7 +61,7 @@ await AppLogger.mission(
   missionId: missionId,
   data: {
     'artisan_id': artisanId,
-    'score_nzassa': artisan.score,
+    'score_prosartisan': artisan.score,
   },
 );
 

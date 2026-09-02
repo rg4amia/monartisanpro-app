@@ -180,7 +180,7 @@ class ScoreScreen extends GetView<ScoreController> {
                   subtitle: Text(
                     controller.hasAccesMicrocredit.value
                         ? 'Déblocage en moins de 2h'
-                        : 'Score > 70 requis (actuel : ${controller.score.value})',
+                        : 'Score > $kMicroCreditScoreThreshold requis (actuel : ${controller.score.value})',
                   ),
                   trailing: controller.hasAccesMicrocredit.value
                       ? ElevatedButton(
@@ -204,9 +204,10 @@ class ScoreScreen extends GetView<ScoreController> {
   }
 
   String _scoreLabel(int s) {
-    if (s >= 70) return 'Excellent — Marqueur Doré';
-    if (s >= 50) return 'Bon profil';
-    if (s >= 30) return 'En progression';
+    // Échelle 0–1000 du Score ProsArtisan.
+    if (s >= kMicroCreditScoreThreshold) return 'Excellent — Marqueur Doré';
+    if (s >= 500) return 'Bon profil';
+    if (s >= 300) return 'En progression';
     return 'Débutant';
   }
 }

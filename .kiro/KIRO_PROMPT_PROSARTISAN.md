@@ -16,7 +16,7 @@ ProsArtisan solves a trust problem in the informal artisan market by:
 1. Verifying identity (KYC) before any transaction
 2. Locking payments in escrow, split between materials and labor wallets
 3. Releasing funds only after milestone validation via SMS OTP
-4. Building a trust score (Score N'Zassa) that unlocks access to micro-credit
+4. Building a trust score (Score ProsArtisan) that unlocks access to micro-credit
 
 ---
 
@@ -45,7 +45,7 @@ ProsArtisan solves a trust problem in the informal artisan market by:
 - Use **PostGIS** to search artisans within 2 km radius
 - Artisan positions are blurred to 50 m precision for privacy
 - Prioritized artisans shown with "marqueur doré" (golden badge) status
-- Client views artisan profile: photo, trade, Score N'Zassa (0–100), rating, completed missions
+- Client views artisan profile: photo, trade, Score ProsArtisan (0–1000), rating, completed missions
 
 #### REQ-03 — Quote (Devis) System
 - Artisan creates itemized quote: labor lines vs material lines
@@ -76,17 +76,18 @@ ProsArtisan solves a trust problem in the informal artisan market by:
 - For missions > **2,000,000 FCFA**: physical validation by Référent de zone required before release
 - Cycle repeats for each milestone
 
-#### REQ-07 — Mission Closure & Score N'Zassa
+#### REQ-07 — Mission Closure & Score ProsArtisan
 - Artisan submits intervention report (checklist + summary)
 - Client signs digitally (finger or OTP SMS)
 - Client rates artisan (1–5 stars)
-- **Score N'Zassa** calculated:
-  - Fiabilité (Reliability): 40%
-  - Intégrité (Integrity): 30%
-  - Qualité (Quality): 20%
-  - Réactivité (Responsiveness): 10%
+- **Score ProsArtisan** calculated on a **0–1000** scale (`score_prosartisan`):
+  - Fiabilité (Reliability): 400 pts max (40%)
+  - Intégrité (Integrity): 300 pts max (30%)
+  - Qualité (Quality): 200 pts max (20%)
+  - Réactivité (Responsiveness): 100 pts max (10%)
+  - Maturity factor min(1, n/10); excellence (> 800) requires ≥ 3 criteria ≥ 4.8/5; ledger `score_ledger_entries`; inactivity decay after 60 days
 - Score archived for banking audit
-- If score > 70/100 → artisan eligible for **emergency micro-credit** (disbursed in < 2h)
+- If `score_prosartisan >= 700` → artisan eligible for **emergency micro-credit** (disbursed in < 2h); "marqueur doré" badge also from 700. Thresholds live in `config('prosartisan.score_prosartisan.*')`
 - PDF solvency report generated for partner microfinance institutions
 
 #### REQ-08 — Dispute (Litige) Management
@@ -102,7 +103,7 @@ ProsArtisan solves a trust problem in the informal artisan market by:
 ### 🗄️ Key database entities
 
 ```sql
-users (id, phone, role, kyc_status, score_nzassa, wallet_materiaux, wallet_mo, geom GEOGRAPHY)
+users (id, phone, role, kyc_status, score_prosartisan, wallet_materiaux, wallet_mo, geom GEOGRAPHY)
 missions (id, client_id, artisan_id, status, montant_total, montant_materiaux, montant_mo)
 devis (id, mission_id, lignes_json, jalons_json, statut)
 jalons (id, mission_id, ordre, montant, statut, otp_code, photos_json)

@@ -103,13 +103,13 @@ void main() {
       expect(user.isKycActif, false);
     });
 
-    test('isGoldenMarker should return true when score > 65', () {
+    test('isGoldenMarker should return true when score >= 700', () {
       const user = UserModel(
         id: 1,
         phone: '+2250700000001',
         role: 'artisan',
         kycStatus: 'actif',
-        scoreProsArtisan: 70,
+        scoreProsArtisan: 720,
         walletMateriaux: 0,
         walletMo: 0,
       );
@@ -117,13 +117,13 @@ void main() {
       expect(user.isGoldenMarker, true);
     });
 
-    test('isGoldenMarker should return false when score <= 65', () {
+    test('isGoldenMarker should return false when score < 700', () {
       const user = UserModel(
         id: 1,
         phone: '+2250700000001',
         role: 'artisan',
         kycStatus: 'actif',
-        scoreProsArtisan: 60,
+        scoreProsArtisan: 650,
         walletMateriaux: 0,
         walletMo: 0,
       );

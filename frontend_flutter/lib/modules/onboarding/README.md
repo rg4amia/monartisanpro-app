@@ -55,7 +55,7 @@ onboarding/
 - Card profile avec :
   - Badge "VERIFIED"
   - Badge "ELITE PROVIDER"
-  - Score 98/100
+  - Score 980/1000
   - Nom : Moussa Traoré
   - Métier : Master Carpenter • 8 yrs exp.
   - 5 étoiles

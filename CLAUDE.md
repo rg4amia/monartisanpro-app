@@ -60,9 +60,10 @@ routes/api.php
 - `JalonService` — cycle OTP → libération `wallet_mo`
 - `JCodeService` — tokens `PA-XXXX`, QR + USSD, vérification GPS fournisseur
 - `WalletService` — gestion `wallet_materiaux` / `wallet_mo`
-- `ScoreService` — calcul ProsArtisan (4 composantes pondérées)
+- `ScoreService` — calcul du Score ProsArtisan (échelle **0–1000**, 4 piliers pondérés : Fiabilité 400 / Intégrité 300 / Qualité 200 / Réactivité 100 + ledger `score_ledger_entries`)
+- `MicroCreditService` — éligibilité (`score_prosartisan >= credit_threshold`) et calcul du plafond de crédit
 
-**Constantes métier** : `config/prosartisan.php` — seuils GPS, TTL OTP, weights ProsArtisan, seuil Référent.
+**Constantes métier** : `config/prosartisan.php` — seuils GPS, TTL OTP, `score_prosartisan` (poids des piliers, `credit_threshold` = 700, `excellence_threshold` = 800, `golden_marker_threshold` = 700), seuil Référent. Toute logique de seuil de score doit lire la config, jamais une valeur en dur.
 
 **Auth** : Sanctum Bearer tokens. Middleware `account.active` vérifie `kyc_status = 'actif'`. Routes publiques : `send-otp`, `verify-otp`, `register`, webhooks.
 
@@ -153,4 +154,5 @@ lib/
 12. **Acceptation des CGU & Confidentialité** : Validation obligatoire dès l'inscription avec horodatage en base de données et accès permanent depuis chaque espace et le footer web.
 13. **Robustesse et Navigation de Notation** : Le bouton de notation d'un artisan est directement accessible sur la carte de mission terminée (`Routes.rating`). Le backend et l'application mobile traitent les critères d'évaluation de manière résiliente avec conversion de types sécurisée et fallback automatique.
 14. **Maturité et Excellence du Score ProsArtisan** : Le Score ProsArtisan (0-1000) applique un facteur de maturité progressive basé sur 10 missions minimum ($F_{\text{volume}} = \min(1.0, n/10)$) et exige au moins 3 critères avec 5 étoiles ($\ge 4.8/5$) pour dépasser 800 points et avoisiner 1000 points.
+15. **Seuils du Score ProsArtisan (échelle 0-1000)** : L'accès au micro-crédit d'urgence exige `score_prosartisan >= 700` (`config('prosartisan.score_prosartisan.credit_threshold')`) ; le « marqueur doré » (artisan prioritaire) s'applique à partir de 700 ; les scores d'excellence commencent à 800. Le plafond de micro-crédit vaut `50 000 + (score - 700) × 1 500` FCFA (500 000 FCFA à 1000). Ces seuils sont lus depuis `config/prosartisan.php` côté backend et depuis `kMicroCreditScoreThreshold` côté mobile — jamais l'ancienne échelle 0-100 ni le seuil `70`.
 

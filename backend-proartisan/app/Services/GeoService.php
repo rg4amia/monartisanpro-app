@@ -11,7 +11,7 @@ class GeoService
     /**
      * Recherche les artisans actifs dans un rayon donné (ST_Distance_Sphere MySQL).
      *
-     * @return Collection tableau de stdObject {id, phone, name, score_nzassa, distance_metres, lat, lng}
+     * @return Collection tableau de stdObject {id, phone, name, score_prosartisan, distance_metres, lat, lng}
      */
     public function nearbyArtisans(
         float $lat,
@@ -79,7 +79,7 @@ class GeoService
 
         $bindings = [$lng, $lat, $lng, $lat, $radiusMeters];
         [$sql, $bindings] = $this->appendFilters($sql, $bindings, $sectorFilter, $tradeFilter, $nightOnly);
-        $sql .= " ORDER BY u.score_prosartisan DESC, distance_metres ASC";
+        $sql .= ' ORDER BY u.score_prosartisan DESC, distance_metres ASC';
 
         return collect(DB::select($sql, $bindings));
     }
@@ -125,14 +125,14 @@ class GeoService
             ];
         }
 
-        $row = DB::selectOne("
+        $row = DB::selectOne('
             SELECT ST_Distance_Sphere(
                 POINT(?, ?),
                 fa.position
             ) AS distance_metres
             FROM fournisseurs_agrees fa
             WHERE fa.user_id = ?
-        ", [$scanLng, $scanLat, $fournisseurId]);
+        ', [$scanLng, $scanLat, $fournisseurId]);
 
         if (! $row) {
             return ['valid' => false, 'distance' => null, 'reason' => 'Fournisseur non trouvé.'];
@@ -181,12 +181,12 @@ class GeoService
             ];
         }
 
-        $row = DB::selectOne("
+        $row = DB::selectOne('
             SELECT ST_Distance_Sphere(
                 POINT(?, ?),
                 POINT(?, ?)
             ) AS distance_metres
-        ", [
+        ', [
             $referentLng,
             $referentLat,
             (float) $mission->client_longitude,
@@ -208,10 +208,10 @@ class GeoService
     public function formatDistance(float $metres): string
     {
         if ($metres < 1000) {
-            return round($metres) . ' m';
+            return round($metres).' m';
         }
 
-        return round($metres / 1000, 1) . ' km';
+        return round($metres / 1000, 1).' km';
     }
 
     private function appendFilters(
@@ -223,26 +223,26 @@ class GeoService
     ): array {
         if ($sectorFilter !== null) {
             if (is_numeric($sectorFilter)) {
-                $sql .= " AND ap.sector_id = ?";
+                $sql .= ' AND ap.sector_id = ?';
                 $bindings[] = (int) $sectorFilter;
             } else {
-                $sql .= " AND LOWER(s.name) LIKE ?";
-                $bindings[] = '%' . $sectorFilter . '%';
+                $sql .= ' AND LOWER(s.name) LIKE ?';
+                $bindings[] = '%'.$sectorFilter.'%';
             }
         }
 
         if ($tradeFilter !== null) {
             if (is_numeric($tradeFilter)) {
-                $sql .= " AND ap.trade_id = ?";
+                $sql .= ' AND ap.trade_id = ?';
                 $bindings[] = (int) $tradeFilter;
             } else {
-                $sql .= " AND LOWER(t.name) LIKE ?";
-                $bindings[] = '%' . $tradeFilter . '%';
+                $sql .= ' AND LOWER(t.name) LIKE ?';
+                $bindings[] = '%'.$tradeFilter.'%';
             }
         }
 
         if ($nightOnly) {
-            $sql .= " AND ap.intervient_la_nuit = ?";
+            $sql .= ' AND ap.intervient_la_nuit = ?';
             $bindings[] = 1;
         }
 

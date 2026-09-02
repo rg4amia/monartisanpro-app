@@ -1,5 +1,21 @@
+# ── Artefacts de build ──────────────────────────────────────────────
 *.apk
 *.zip
-.DS_Store
-.idea/
 release_apks/
+**/android/build/
+
+# ── OS ──────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── IDE ─────────────────────────────────────────────────────────────
+.idea/
+
+# ── Environnements Python locaux ────────────────────────────────────
+.venv/
+
+# ── Logs & captures de debug ───────────────────────────────────────
+*.log
+emulator_*.log
+emulator_screen.png
+gradle_*.log

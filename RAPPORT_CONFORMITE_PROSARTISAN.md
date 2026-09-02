@@ -7,6 +7,28 @@
 
 ---
 
+> **⚠️ ERRATA — mise à jour du 2 septembre 2026**
+>
+> Ce rapport est un **instantané daté du 10 mars 2026**. Les extraits de code et numéros de
+> ligne cités reflètent l'état d'alors et ne sont plus exacts. Depuis :
+>
+> - **« Score N'Zassa » a été renommé « Score ProsArtisan »** (marque unifiée). La colonne
+>   `score_nzassa` a été renommée `score_prosartisan`.
+> - **L'échelle est passée de 0–100 à 0–1000.** Le calcul (`ScoreService::recalculateFromLedger()`)
+>   somme 4 piliers (Fiabilité 400 / Intégrité 300 / Qualité 200 / Réactivité 100), applique un
+>   facteur de maturité $\min(1, n/10)$ (10 missions), une condition d'excellence (≥ 3 critères
+>   ≥ 4,8/5 pour dépasser 800) et le grand livre immuable `score_ledger_entries`.
+> - **Le seuil d'éligibilité au micro-crédit est passé de 70 à 700** ; idem pour le
+>   « marqueur doré ». Tous les seuils sont dans `config('prosartisan.score_prosartisan.*')`
+>   (`credit_threshold` 700, `golden_marker_threshold` 700, `excellence_threshold` 800).
+> - Le plafond de micro-crédit vaut désormais `50 000 + (score − 700) × 1 500` FCFA.
+>
+> Référence à jour : `PRD.md`, `CLAUDE.md` (Règle d'Or n°15), `config/prosartisan.php`.
+> Les mentions d'une échelle « 0-100 », d'un seuil « 70 » et de « poids 40/30/20/10 » en valeur
+> absolue ci-dessous sont **obsolètes**.
+
+---
+
 ## TABLE DES MATIERES
 
 1. [Résumé Exécutif](#resume-executif)
@@ -15,7 +37,7 @@
 4. [Phase 2 - Séquestre et Flux Financiers](#phase-2---sequestre-et-flux-financiers)
 5. [Phase 3 - J-Code et Anti-Fraude](#phase-3---j-code-et-anti-fraude)
 6. [Phase 4 - Jalons et Libération](#phase-4---jalons-et-liberation)
-7. [Phase 5 - Clôture et Score N'Zassa](#phase-5---cloture-et-score-nzassa)
+7. [Phase 5 - Clôture et Score ProsArtisan](#phase-5---cloture-et-score-prosartisan)
 8. [Flux Litiges](#flux-litiges)
 9. [Plan d'Action Prioritaire](#plan-daction-prioritaire)
 10. [Conclusion Générale](#conclusion-generale)
@@ -47,7 +69,7 @@
 1. ✅ Fragmentation séquestre automatique et immuable
 2. ✅ Vérification GPS `ST_Distance_Sphere` anti-fraude (< 100 m)
 3. ✅ Validation OTP jalons obligatoire (règle critique respectée)
-4. ✅ Calcul Score N'Zassa conforme (40% + 30% + 20% + 10%)
+4. ✅ Calcul Score ProsArtisan conforme (40% + 30% + 20% + 10%)
 5. ✅ J-Codes uniques PA-XXXX avec QR + USSD
 6. ✅ Photos géolocalisées obligatoires
 7. ✅ Architecture Services Layer propre
@@ -208,7 +230,7 @@ class LivenessService {
 | --- | --- | --- | --- |
 | Client décrit besoin (texte + photos) | ✅ `MissionRequestScreen` | ✅ Complet |
 | Recherche artisans rayon ≤ 2 km | ✅ `ST_Distance_Sphere` MySQL | ✅ Conforme |
-| Tri par Score N'Zassa + distance | ✅ `ORDER BY score_nzassa DESC, distance_metres ASC` | ✅ Conforme |
+| Tri par Score ProsArtisan + distance | ✅ `ORDER BY score_prosartisan DESC, distance_metres ASC` | ✅ Conforme |
 | Consultation profils artisans | ✅ `ArtisanSelectionScreen` | ✅ Complet |
 | Création devis avec jalons | ✅ `DevisCreationScreen` + validation backend | ✅ Complet |
 | Client accepte/refuse devis | ✅ `DevisReviewScreen` avec Wave/Orange Money | ✅ Complet |
@@ -225,7 +247,7 @@ public function nearbyArtisans(float $lat, float $lng, int $radiusMeters): Colle
             u.id,
             u.phone,
             u.name,
-            u.score_nzassa,
+            u.score_prosartisan,
             ST_X(u.position) AS lng,
             ST_Y(u.position) AS lat,
             ST_Distance_Sphere(u.position, POINT(?, ?)) AS distance_metres
@@ -234,7 +256,7 @@ public function nearbyArtisans(float $lat, float $lng, int $radiusMeters): Colle
           AND u.kyc_status = 'actif'
           AND u.position IS NOT NULL
           AND ST_Distance_Sphere(u.position, POINT(?, ?)) <= ?
-        ORDER BY u.score_nzassa DESC, distance_metres ASC
+        ORDER BY u.score_prosartisan DESC, distance_metres ASC
     ", [$lng, $lat, $lng, $lat, $radiusMeters]);
 
     return collect($rows);
@@ -286,7 +308,7 @@ public function accept(Devis $devis, string $provider = 'wave'): void {
 | Élément | État actuel | Impact | Priorité |
 | --- | --- | --- | --- |
 | **Floutage GPS artisan** | ❌ Position exacte retournée | Sécurité artisans | 🔴 **CRITIQUE** |
-| **Badge "marqueur doré"** | ❌ Pas d'indicateur visuel Score ≥ 70 | UX client | 🟡 Important |
+| **Badge "marqueur doré"** | ❌ Pas d'indicateur visuel Score ≥ 700 | UX client | 🟡 Important |
 | **Gemini API analyse besoin** | ❌ Pas d'estimation préliminaire | UX client | 🟡 Important |
 | **Photos géolocalisées mission** | ⚠️ Upload sans extraction GPS | Preuve localisation | 🟡 Important |
 | **Validation KYC avant mission** | ⚠️ Non vérifié côté frontend | Règle métier critique | 🔴 **CRITIQUE** |
@@ -315,7 +337,7 @@ public function toArray($request) {
     return [
         'id' => $this->id,
         'name' => $this->name,
-        'score_nzassa' => $this->score_nzassa,
+        'score_prosartisan' => $this->score_prosartisan,
         'position' => $blurred, // Position floutée
         // ... autres champs
     ];
@@ -347,13 +369,13 @@ void initState() {
 }
 ```
 
-#### 🟡 Important : Badge "marqueur doré" Score ≥ 70
+#### 🟡 Important : Badge "marqueur doré" Score ≥ 700
 
 **Flutter** : `artisan_card.dart`
 
 ```dart
 Widget build(BuildContext context) {
-  final hasGoldenBadge = artisan.scoreNzassa >= 70;
+  final hasGoldenBadge = artisan.scoreProsArtisan >= 700;
 
   return Stack(
     children: [
@@ -1121,28 +1143,33 @@ if (config('app.env') === 'production') {
 
 ---
 
-## PHASE 5 - CLOTURE ET SCORE NZASSA
+## PHASE 5 - CLOTURE ET SCORE PROSARTISAN
+
+> **⚠️ Section historique.** Le moteur de score décrit ci-dessous (échelle 0-100, seuil 70,
+> pondérations 40/30/20/10, méthode `recalculate()`) a été entièrement refondu depuis.
+> Voir l'encadré **ERRATA** en tête de document et `PRD.md` §Phase 5 pour l'implémentation
+> actuelle (échelle 0-1000, base ledger, maturité 10 missions, seuil 700).
 
 ### Conformité : ⚠️ **70%**
 
-### Éléments Conformes (PHASE 5 — CLÔTURE & SCORE N'ZASSA)
+### Éléments Conformes (PHASE 5 — CLÔTURE & SCORE PROSARTISAN)
 
 | Règle Métier | Implémentation | Fichier | Statut |
 | --- | --- | --- | --- |
-| Calcul Score N'Zassa (40/30/20/10%) | ✅ `ScoreService::recalculate()` | `ScoreService.php:14-51` | ✅ **PARFAIT** |
-| Journal score archivé audit bancaire | ✅ Table `evaluations` + `users.score_nzassa` | - | ✅ Conforme |
-| Éligibilité micro-crédit (score > 70) | ✅ `isEligibleCredit()` | `ScoreService.php:86-89` | ✅ Conforme |
+| Calcul Score ProsArtisan (40/30/20/10%) | ✅ `ScoreService::recalculate()` | `ScoreService.php:14-51` | ✅ **PARFAIT** |
+| Journal score archivé audit bancaire | ✅ Table `evaluations` + `users.score_prosartisan` | - | ✅ Conforme |
+| Éligibilité micro-crédit (score > 700) | ✅ `isEligibleCredit()` | `ScoreService.php:86-89` | ✅ Conforme |
 | Client note artisan (1-5★) | ✅ Table `evaluations` existe | - | ✅ Backend OK |
 | Mission clôturée (statut = terminée) | ✅ Logique métier | - | ✅ OK |
 
-### Points Forts Exceptionnels (PHASE 5 - CLOTURE ET SCORE NZASSA)
+### Points Forts Exceptionnels (PHASE 5 - CLOTURE ET SCORE PROSARTISAN)
 
-#### 1. Calcul Score N'Zassa — Formule exacte conforme
+#### 1. Calcul Score ProsArtisan — Formule exacte conforme
 
 ```php
 // app/Services/ScoreService.php:14-51
 public function recalculate(User $artisan): int {
-    $weights = config('prosartisan.score_nzassa.weights', [
+    $weights = config('prosartisan.score_prosartisan.weights', [
         'fiabilite'  => 40,  // 40%
         'integrite'  => 30,  // 30%
         'qualite'    => 20,  // 20%
@@ -1161,7 +1188,7 @@ public function recalculate(User $artisan): int {
     ", [$artisan->id]);
 
     if (! $row | $row->total == 0) {
-        return $artisan->score_nzassa;
+        return $artisan->score_prosartisan;
     }
 
     $score = (
@@ -1173,7 +1200,7 @@ public function recalculate(User $artisan): int {
 
     $score = (int) min(100, max(0, round($score * 100)));
 
-    $artisan->update(['score_nzassa' => $score]);
+    $artisan->update(['score_prosartisan' => $score]);
 
     return $score;
 }
@@ -1203,11 +1230,11 @@ public function getScoreDetail(User $artisan): array {
         WHERE evalue_id = ?
     ", [$artisan->id]);
 
-    $threshold = config('prosartisan.score_nzassa.credit_threshold', 70);
+    $threshold = config('prosartisan.score_prosartisan.credit_threshold', 70);
 
     return [
-        'score_nzassa'          => $artisan->score_nzassa,
-        'micro_credit_eligible' => $artisan->score_nzassa >= $threshold,
+        'score_prosartisan'          => $artisan->score_prosartisan,
+        'micro_credit_eligible' => $artisan->score_prosartisan >= $threshold,
         'total_evaluations'     => $row?->total_evaluations ?? 0,
         'breakdown'             => [
             'fiabilite'  => round((float) ($row?->avg_fiabilite ?? 0), 1),
@@ -1222,7 +1249,7 @@ public function getScoreDetail(User $artisan): array {
 
 ✅ **Parfait pour audit** : Détail complet des sous-scores exportable pour microfinances.
 
-### Points à Améliorer (PHASE 5 — CLÔTURE & SCORE N'ZASSA)
+### Points à Améliorer (PHASE 5 — CLÔTURE & SCORE PROSARTISAN)
 
 | Élément | État actuel | Impact | Priorité |
 | --- | --- | --- | --- |
@@ -1260,9 +1287,9 @@ class MicroCreditService
         if (! $this->scoreService->isEligibleCredit($artisan)) {
             return [
                 'eligible' => false,
-                'reason' => 'Score N\'Zassa < 70. Améliorez votre score en complétant des missions.',
-                'current_score' => $artisan->score_nzassa,
-                'required_score' => 70,
+                'reason' => 'Score ProsArtisan < 700. Améliorez votre score en complétant des missions.',
+                'current_score' => $artisan->score_prosartisan,
+                'required_score' => 700,
             ];
         }
 
@@ -1273,7 +1300,7 @@ class MicroCreditService
         return [
             'eligible' => true,
             'max_amount' => $maxAmount,
-            'score_nzassa' => $artisan->score_nzassa,
+            'score_prosartisan' => $artisan->score_prosartisan,
             'total_evaluations' => $scoreDetail['total_evaluations'],
         ];
     }
@@ -1296,7 +1323,7 @@ class MicroCreditService
         $application = CreditApplication::create([
             'user_id' => $artisan->id,
             'amount' => $amount,
-            'score_nzassa_at_application' => $artisan->score_nzassa,
+            'score_prosartisan_at_application' => $artisan->score_prosartisan,
             'status' => 'en_attente',
         ]);
 
@@ -1309,7 +1336,7 @@ class MicroCreditService
                 'artisan_phone' => $artisan->phone,
                 'artisan_name' => $artisan->name,
                 'amount' => $amount,
-                'score_nzassa' => $artisan->score_nzassa,
+                'score_prosartisan' => $artisan->score_prosartisan,
                 'score_breakdown' => $this->scoreService->getScoreDetail($artisan),
             ]);
 
@@ -1343,7 +1370,7 @@ class MicroCreditService
         // Formule : Base 50 000 FCFA + (score - 70) * 5 000 FCFA par point
         $base = 50000;
         $perPoint = 5000;
-        $scoreAboveThreshold = max(0, $artisan->score_nzassa - 70);
+        $scoreAboveThreshold = max(0, $artisan->score_prosartisan - 70);
 
         return $base + ($scoreAboveThreshold * $perPoint);
     }
@@ -1357,7 +1384,7 @@ Schema::create('credit_applications', function (Blueprint $table) {
     $table->id();
     $table->unsignedBigInteger('user_id');
     $table->bigInteger('amount'); // FCFA
-    $table->tinyInteger('score_nzassa_at_application');
+    $table->tinyInteger('score_prosartisan_at_application');
     $table->enum('status', ['en_attente', 'approuve', 'rejete', 'debourse', 'rembourse'])->default('en_attente');
     $table->string('external_reference')->nullable();
     $table->timestamp('approved_at')->nullable();
@@ -1441,8 +1468,8 @@ class PdfService
     <p><strong>Nom :</strong> {{ $artisan->name }}</p>
     <p><strong>Téléphone :</strong> {{ $artisan->phone }}</p>
 
-    <h3>Score N'Zassa</h3>
-    <div class="score">{{ $score_detail['score_nzassa'] }}/100</div>
+    <h3>Score ProsArtisan</h3>
+    <div class="score">{{ $score_detail['score_prosartisan'] }}/100</div>
 
     <table>
         <tr>
@@ -1480,9 +1507,9 @@ class PdfService
 
     <h3>Éligibilité Micro-crédit</h3>
     @if($score_detail['micro_credit_eligible'])
-        <p style="color: green;"><strong>✓ ÉLIGIBLE</strong> (Score ≥ 70)</p>
+        <p style="color: green;"><strong>✓ ÉLIGIBLE</strong> (Score ≥ 700)</p>
     @else
-        <p style="color: red;"><strong>✗ NON ÉLIGIBLE</strong> (Score < 70)</p>
+        <p style="color: red;"><strong>✗ NON ÉLIGIBLE</strong> (Score < 700)</p>
     @endif
 </body>
 </html>
@@ -1709,9 +1736,9 @@ Schema::table('litiges', function (Blueprint $table) {
 
 - **Fichier** : `MicroCreditService.php` (à créer)
 - **Action** : Voir recommandation Phase 5
-- **Impact** : Valeur ajoutée artisans avec Score > 70 perdue
+- **Impact** : Valeur ajoutée artisans avec Score > 700 perdue
 
-#### 8. Badge "marqueur doré" Score ≥ 70 ⏱️ **1 jour**
+#### 8. Badge "marqueur doré" Score ≥ 700 ⏱️ **1 jour**
 
 - **Fichier** : `artisan_card.dart` (Flutter)
 - **Action** : Voir recommandation Phase 1
@@ -1767,10 +1794,10 @@ Le système **ProsArtisan** est **opérationnel à 82%** avec une **architecture
    - Libération impossible sans OTP
    - Seuil 2M FCFA référent respecté
 
-4. **Calcul Score N'Zassa conforme** (Phase 5)
+4. **Calcul Score ProsArtisan conforme** (Phase 5)
    - Formule exacte 40/30/20/10%
    - Archivage audit bancaire
-   - Éligibilité micro-crédit (score ≥ 70)
+   - Éligibilité micro-crédit (score ≥ 700)
 
 5. **J-Codes PA-XXXX uniques** (Phase 3)
    - QR + USSD `*555*XXXX#`

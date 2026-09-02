@@ -111,7 +111,7 @@ void main() {
         phone: '+2250700000001',
         role: 'artisan',
         kycStatus: 'actif',
-        scoreProsArtisan: 70,
+        scoreProsArtisan: 720,
         walletMateriaux: 0,
         walletMo: 0,
       );
@@ -121,7 +121,7 @@ void main() {
         phone: '+2250700000001',
         role: 'artisan',
         kycStatus: 'actif',
-        scoreProsArtisan: 60,
+        scoreProsArtisan: 650,
         walletMateriaux: 0,
         walletMo: 0,
       );
@@ -376,19 +376,19 @@ void main() {
 
   group('Business Logic Tests', () {
     test('Score ProsArtisan calculation logic', () {
-      // Score > 65 = Golden Marker
+      // Score >= 700 (échelle 0–1000) = Golden Marker
       const highScoreUser = UserModel(
         id: 1,
         phone: '+2250700000001',
         role: 'artisan',
         kycStatus: 'actif',
-        scoreProsArtisan: 70,
+        scoreProsArtisan: 720,
         walletMateriaux: 0,
         walletMo: 0,
       );
 
       expect(highScoreUser.isGoldenMarker, true);
-      expect(highScoreUser.scoreProsArtisan > 65, true);
+      expect(highScoreUser.scoreProsArtisan >= 700, true);
     });
 
     test('KYC status validation', () {
