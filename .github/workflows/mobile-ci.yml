@@ -42,7 +42,7 @@ jobs:
         working-directory: frontend_flutter
         run: >-
           flutter test
-          test/core test/data/models
+          test/core test/data/models test/modules
           test/unit_tests_simple_test.dart test/widget_test.dart
 
   build-android:
