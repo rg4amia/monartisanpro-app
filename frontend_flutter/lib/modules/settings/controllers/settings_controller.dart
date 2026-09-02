@@ -120,7 +120,10 @@ class SettingsController extends GetxController {
   Future<void> logout() async {
     isLoading.value = true;
     try {
-      await _authRepo.logout(); // révoque le token côté serveur puis vide le stockage
+      // révoque le token côté serveur, vide le stockage et purge les CacheStore
+      await _authRepo.logout();
+      // le cache missions/jalons a son propre service
+      await _missionRepo.clearCache();
     } finally {
       isLoading.value = false;
       Get.offAllNamed(Routes.login);

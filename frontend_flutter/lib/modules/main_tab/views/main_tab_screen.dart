@@ -19,6 +19,7 @@ import '../controllers/main_tab_controller.dart';
 
 import '../../../data/services/app_settings_service.dart';
 import '../../../shared/widgets/maintenance_overlay.dart';
+import '../../../shared/widgets/offline_banner.dart';
 
 class MainTabScreen extends StatelessWidget {
   const MainTabScreen({super.key});
@@ -65,9 +66,16 @@ class MainTabScreen extends StatelessWidget {
           : c.currentIndex.value;
 
       return Scaffold(
-        body: IndexedStack(
-          index: safeIndex,
-          children: tabs.screens,
+        body: Column(
+          children: [
+            const OfflineBanner(),
+            Expanded(
+              child: IndexedStack(
+                index: safeIndex,
+                children: tabs.screens,
+              ),
+            ),
+          ],
         ),
         bottomNavigationBar: _ModernBottomNav(
           currentIndex: safeIndex,

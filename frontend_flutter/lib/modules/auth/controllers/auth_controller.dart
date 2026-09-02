@@ -1,10 +1,11 @@
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
-
-import '../../../core/storage/storage_service.dart';
-import '../../../data/repositories/auth_repository.dart';
-import '../../../data/models/user_model.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
+
+import '../../../core/network/sync_service.dart';
+import '../../../core/storage/storage_service.dart';
+import '../../../data/models/user_model.dart';
+import '../../../data/repositories/auth_repository.dart';
 
 class AuthController extends GetxController {
   final AuthRepository _repo = AuthRepository();
@@ -81,6 +82,9 @@ class AuthController extends GetxController {
 
           // Lier l'ID utilisateur à OneSignal pour les Push ciblées
           OneSignal.login(user.id.toString());
+
+          // Rejoue les mutations mises en file d'attente hors-ligne.
+          _flushOfflineQueue();
         }
       }
 
@@ -90,6 +94,13 @@ class AuthController extends GetxController {
       return false;
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  /// Déclenche (best-effort) le rejeu des requêtes en attente après connexion.
+  void _flushOfflineQueue() {
+    if (Get.isRegistered<SyncService>()) {
+      Get.find<SyncService>().flush();
     }
   }
 
@@ -123,6 +134,7 @@ class AuthController extends GetxController {
 
       // Lier l'ID utilisateur à OneSignal
       OneSignal.login(user.id.toString());
+      _flushOfflineQueue();
 
       // Token is already saved in repository
     } catch (e) {
