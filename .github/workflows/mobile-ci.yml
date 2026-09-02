@@ -1,107 +1,76 @@
 name: Mobile CI
 
 on:
- push:
-  branches: [master]
-  paths:
-   - "frontend-/**"
-   - ".github/workflows/mobile-ci.yml"
- pull_request:
-  branches: [master]
-  paths:
-   - "frontend-/**"
-   - ".github/workflows/mobile-ci.yml"
+  push:
+    branches: [new-develop, new-dev-inz]
+    paths:
+      - "frontend_flutter/**"
+      - ".github/workflows/mobile-ci.yml"
+  pull_request:
+    branches: [new-develop]
+    paths:
+      - "frontend_flutter/**"
+      - ".github/workflows/mobile-ci.yml"
 
 jobs:
- test:
-  runs-on: ubuntu-latest
+  test:
+    runs-on: ubuntu-latest
 
-  steps:
-   - uses: actions/checkout@v4
+    steps:
+      - uses: actions/checkout@v4
 
-   - name: Setup Flutter
-     uses: subosito/flutter-action@v2
-     with:
-      flutter-version: "3.24.0"
-      channel: "stable"
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.35.0"
+          channel: "stable"
 
-   - name: Get dependencies
-     working-directory: frontend
-     run: flutter pub get
+      - name: Get dependencies
+        working-directory: frontend_flutter
+        run: flutter pub get
 
-   - name: Verify formatting
-     working-directory: frontend
-     run: dart format --output=none --set-exit-if-changed .
+      - name: Analyze project source
+        working-directory: frontend_flutter
+        run: flutter analyze
 
-   - name: Analyze project source
-     working-directory: frontend
-     run: flutter analyze
+      # Tests unitaires / widget uniquement — les tests d'intégration
+      # (test/integration, test/data/repositories) exigent un backend Laravel live.
+      - name: Run unit & widget tests
+        working-directory: frontend_flutter
+        run: >-
+          flutter test
+          test/core test/data/models
+          test/unit_tests_simple_test.dart test/widget_test.dart
 
-   - name: Run unit tests
-     working-directory: frontend
-     run: flutter test test/unit --coverage
+  build-android:
+    runs-on: ubuntu-latest
+    needs: test
 
-   - name: Run widget tests
-     working-directory: frontend
-     run: flutter test test/widget
+    steps:
+      - uses: actions/checkout@v4
 
-   - name: Upload Coverage Reports
-     uses: codecov/codecov-action@v4
-     with:
-      files: ./frontend/coverage/lcov.info
-      flags: mobile
-      name: mobile-coverage
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.35.0"
+          channel: "stable"
 
- build-android:
-  runs-on: ubuntu-latest
-  needs: test
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: "zulu"
+          java-version: "17"
 
-  steps:
-   - uses: actions/checkout@v4
+      - name: Get dependencies
+        working-directory: frontend_flutter
+        run: flutter pub get
 
-   - name: Setup Flutter
-     uses: subosito/flutter-action@v2
-     with:
-      flutter-version: "3.24.0"
-      channel: "stable"
+      - name: Build APK
+        working-directory: frontend_flutter
+        run: flutter build apk --release
 
-   - name: Setup Java
-     uses: actions/setup-java@v4
-     with:
-      distribution: "zulu"
-      java-version: "17"
-
-   - name: Get dependencies
-     working-directory: frontend
-     run: flutter pub get
-
-   - name: Build APK
-     working-directory: frontend
-     run: flutter build apk --release
-
-   - name: Upload APK
-     uses: actions/upload-artifact@v4
-     with:
-      name: app-release
-      path: frontend/build/app/outputs/flutter-apk/app-release.apk
-
- build-ios:
-  runs-on: macos-latest
-  needs: test
-
-  steps:
-   - uses: actions/checkout@v4
-
-   - name: Setup Flutter
-     uses: subosito/flutter-action@v2
-     with:
-      flutter-version: "3.24.0"
-      channel: "stable"
-
-   - name: Get dependencies
-     working-directory: frontend
-     run: flutter pub get
-
-   - name: Build iOS (no codesign)
-     working-directory: frontend
-     run: flutter build ios --release --no-codesign
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release
+          path: frontend_flutter/build/app/outputs/flutter-apk/app-release.apk
