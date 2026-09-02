@@ -14,6 +14,32 @@ Total indicatif : **~12 jours-homme**, découpables en 3 lots livrables indépen
 
 ---
 
+## État d'avancement (mis à jour le 2 septembre 2026)
+
+| Chantier | Étape | Statut | Commit |
+|---|---|---|---|
+| 1 | `NetworkExecutor` + tests | ✅ Fait | `bb947ba2` |
+| 1 | `CacheStore<T>` + `HiveCipherProvider` + tests | ✅ Fait | `bb947ba2` |
+| 1 | `mission_repository` délègue à `NetworkExecutor` | ✅ Fait | `bb947ba2` |
+| 1 | Migration `artisan_repository` + `wallet_repository` | ✅ Fait | `bb947ba2` |
+| 1 | `SyncService.flush()` après login + purge cache au logout | ✅ Fait | `bb947ba2` |
+| 1 | Bandeau hors-ligne global (`OfflineBanner` dans `main_tab`) | ✅ Fait | `bb947ba2` |
+| 1 | Migration `devis_repository` + `notification_repository` | ⏳ À faire | — |
+| 3 | `core/errors/` (`AppException` + mapper) + tests | ✅ Fait | `a9678eac` |
+| 3 | Lint `directives_ordering` (`dart fix`, 44 fichiers) | ✅ Fait | `a9678eac` |
+| 3 | Lint `prefer_single_quotes` (`dart fix`, 13 fichiers) | ✅ Fait | `a154304e` |
+| 3 | Lint `require_trailing_commas` (nécessite passe `dart format` dédiée) | ⏳ À faire | — |
+| 3 | Lint `unawaited_futures` / `only_throw_errors` / `avoid_dynamic_calls` | ⏳ À faire | — |
+| 3 | `flutter analyze --fatal-infos` en CI | ⏳ À faire | — |
+| 2 | Découpe des 5 vues volumineuses | ⏳ À faire | — |
+
+> **Chantier 2 non entamé volontairement.** L'extraction de vues de 1 400 à 2 740
+> lignes touche des parcours critiques (jalons, OTP, paiements) **sans filet de
+> tests** ; le plan exige d'abord des golden/widget tests et une cadence de commits
+> atomiques par widget. À traiter dans un lot dédié, comme prévu au §2.3.
+
+---
+
 ## Chantier 1 — Couche réseau + cache unifiée
 
 ### 1.1 Constat
