@@ -57,7 +57,11 @@ jobs:
         uses: actions/setup-java@v5
         with:
           distribution: "zulu"
-          java-version: "17"
+          # Le plugin yandex_maps_mapkit compile son module Android en
+          # Java 21 (sourceCompatibility/targetCompatibility = 21). Un JDK 17
+          # ne peut pas lire ces .class → « cannot access YandexMapsPlugin »
+          # lors de la compilation de GeneratedPluginRegistrant.
+          java-version: "21"
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -79,30 +83,9 @@ jobs:
         working-directory: frontend_flutter
         run: flutter pub get
 
-      # Le build tire des artefacts natifs volumineux (yandex_maps_mapkit,
-      # geolocator, onesignal) au moment de Gradle : la résolution est
-      # intermittente sur les runners. On réessaie jusqu'à 3 fois, la dernière
-      # tentative en --verbose pour diagnostiquer un échec persistant.
       - name: Build APK (release)
         working-directory: frontend_flutter
-        run: |
-          set +e
-          for attempt in 1 2 3; do
-            echo "::group::Build APK — tentative $attempt/3"
-            if [ "$attempt" -eq 3 ]; then
-              flutter build apk --release --verbose
-            else
-              flutter build apk --release
-            fi
-            code=$?
-            echo "::endgroup::"
-            if [ "$code" -eq 0 ]; then
-              exit 0
-            fi
-            echo "Tentative $attempt échouée (code $code), nouvelle tentative dans 20s…"
-            sleep 20
-          done
-          exit 1
+        run: flutter build apk --release
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
