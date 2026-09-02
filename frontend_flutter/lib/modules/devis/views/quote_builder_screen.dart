@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../data/models/devis_model.dart';
 import '../controllers/devis_controller.dart';
 
 class QuoteBuilderScreen extends GetView<DevisController> {
@@ -295,7 +296,7 @@ class _SectionHeader extends StatelessWidget {
 }
 
 class _LigneTile extends StatelessWidget {
-  final dynamic ligne;
+  final DevisLigne ligne;
   final VoidCallback onDelete;
   const _LigneTile({required this.ligne, required this.onDelete});
 
@@ -324,7 +325,7 @@ class _LigneTile extends StatelessWidget {
 }
 
 class _JalonTile extends StatelessWidget {
-  final dynamic jalon;
+  final DevisJalon jalon;
   final VoidCallback onDelete;
   const _JalonTile({required this.jalon, required this.onDelete});
 
@@ -346,7 +347,7 @@ class _JalonTile extends StatelessWidget {
           ),
         ),
         title: Text(jalon.description),
-        subtitle: jalon.dateCible != null
+        subtitle: jalon.dateCible.isNotEmpty
             ? Text(Formatters.date(jalon.dateCible))
             : null,
         trailing: Row(

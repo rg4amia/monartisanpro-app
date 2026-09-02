@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../data/models/devis_model.dart';
 import '../controllers/devis_controller.dart';
 
 class QuoteScreen extends GetView<DevisController> {
@@ -155,7 +156,7 @@ class _SectionCard extends StatelessWidget {
 }
 
 class _LigneTile extends StatelessWidget {
-  final dynamic ligne;
+  final DevisLigne ligne;
   const _LigneTile({required this.ligne});
 
   @override
@@ -196,7 +197,7 @@ class _LigneTile extends StatelessWidget {
 }
 
 class _JalonTile extends StatelessWidget {
-  final dynamic jalon;
+  final DevisJalon jalon;
   const _JalonTile({required this.jalon});
 
   @override
@@ -226,7 +227,7 @@ class _JalonTile extends StatelessWidget {
                   jalon.description,
                   style: const TextStyle(fontWeight: FontWeight.w500),
                 ),
-                if (jalon.dateCible != null)
+                if (jalon.dateCible.isNotEmpty)
                   Text(
                     Formatters.date(jalon.dateCible),
                     style: TextStyle(

@@ -15,7 +15,7 @@ class ReferentValidationController extends GetxController {
   final photos = <XFile>[].obs;
   final notesCtrl = TextEditingController();
   final isLoading = false.obs;
-  final missionId = Get.arguments['missionId'] as int;
+  final missionId = (Get.arguments as Map<String, dynamic>)['missionId'] as int;
 
   @override
   void onClose() {

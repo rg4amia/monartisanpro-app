@@ -195,7 +195,7 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
         'FlutterNotificationChannel',
         onMessageReceived: (JavaScriptMessage message) {
           try {
-            final data = jsonDecode(message.message);
+            final data = jsonDecode(message.message) as Map<String, dynamic>;
             final event = data['event'];
             final msg = data['message'] ?? '';
 

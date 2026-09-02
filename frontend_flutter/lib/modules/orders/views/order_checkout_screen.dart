@@ -104,8 +104,10 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
         },
       );
 
-      if (res.data != null && res.data['success'] == true) {
-        final data = res.data['data'] as Map<String, dynamic>;
+      if (res.data != null &&
+          (res.data as Map<String, dynamic>)['success'] == true) {
+        final data =
+            (res.data as Map<String, dynamic>)['data'] as Map<String, dynamic>;
         final discountAmount =
             (data['discount_amount'] as num?)?.toDouble() ?? 0.0;
         final discountType = data['discount_type'] as String? ?? 'percent';
@@ -120,7 +122,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
             discountType == 'percent' ? '-$discountVal%' : '-$discountVal FCFA';
         Get.snackbar(
           'Code promo validé !',
-          '${res.data['message']} ($detail)',
+          '${(res.data as Map<String, dynamic>)['message']} ($detail)',
           backgroundColor: const Color(0xFF24734F),
           colorText: Colors.white,
           snackPosition: SnackPosition.TOP,
@@ -133,7 +135,8 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
         });
         Get.snackbar(
           'Code promo invalide',
-          res.data?['message'] ?? 'Ce code promo n\'est pas applicable.',
+          (res.data as Map<String, dynamic>?)?['message'] ??
+              'Ce code promo n\'est pas applicable.',
           backgroundColor: const Color(0xFFC55E50),
           colorText: Colors.white,
           snackPosition: SnackPosition.TOP,
@@ -145,8 +148,9 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
         _appliedPromoCode = null;
       });
       String msg = 'Code promo invalide ou expiré.';
-      if (e.response?.data is Map && e.response!.data['message'] != null) {
-        msg = e.response!.data['message'].toString();
+      final errData = e.response?.data;
+      if (errData is Map && errData['message'] != null) {
+        msg = errData['message'].toString();
       }
       Get.snackbar(
         'Code promo',

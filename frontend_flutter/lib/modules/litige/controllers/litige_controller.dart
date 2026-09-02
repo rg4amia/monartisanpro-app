@@ -55,7 +55,8 @@ class LitigeController extends GetxController {
         },
       );
 
-      final litigeId = response.data['data']?['id'];
+      final body = response.data as Map<String, dynamic>;
+      final litigeId = (body['data'] as Map<String, dynamic>?)?['id'];
       if (litigeId is int) {
         unawaited(
           Get.offNamed(

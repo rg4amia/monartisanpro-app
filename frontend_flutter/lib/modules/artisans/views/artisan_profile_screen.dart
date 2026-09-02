@@ -692,8 +692,10 @@ void _showQuoteRequestModal(BuildContext context, ArtisanModel a) {
                     String errorMsg =
                         'Une erreur est survenue lors du téléversement ou de la création';
                     if (e is DioException) {
-                      errorMsg =
-                          e.response?.data['message'] ?? e.message ?? errorMsg;
+                      errorMsg = (e.response?.data
+                              as Map<String, dynamic>?)?['message'] ??
+                          e.message ??
+                          errorMsg;
                     } else if (e.toString().contains('Fichier rejeté')) {
                       errorMsg = e.toString();
                     }

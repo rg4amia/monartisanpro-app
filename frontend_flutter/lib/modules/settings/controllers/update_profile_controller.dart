@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../core/storage/storage_service.dart';
 import '../../../core/utils/error_handler.dart';
+import '../../../data/models/sector_model.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/user_repository.dart';
 import '../../home/controllers/home_controller.dart';
@@ -299,13 +300,13 @@ class UpdateProfileController extends GetxController {
   Future<void> selectCategoryAndSubcategory() async {
     final result = await Get.toNamed(Routes.services);
     if (result != null && result is Map) {
-      final sector = result['sector'];
-      final trade = result['trade'];
+      final sector = result['sector'] as SectorModel?;
+      final trade = result['trade'] as TradeModel?;
       if (sector != null && trade != null) {
-        selectedSectorId.value = sector.id as int?;
-        selectedTradeId.value = trade.id as int?;
-        selectedSectorName.value = sector.name as String?;
-        selectedTradeName.value = trade.name as String?;
+        selectedSectorId.value = sector.id;
+        selectedTradeId.value = trade.id;
+        selectedSectorName.value = sector.name;
+        selectedTradeName.value = trade.name;
       }
     }
   }

@@ -29,11 +29,12 @@ class _LegalTermsScreenState extends State<LegalTermsScreen>
   @override
   void initState() {
     super.initState();
+    final args = Get.arguments;
     _tabController = TabController(
       length: 2,
       vsync: this,
-      initialIndex: (Get.arguments is Map && Get.arguments['tab'] != null)
-          ? (Get.arguments['tab'] as int).clamp(0, 1)
+      initialIndex: (args is Map && args['tab'] != null)
+          ? (args['tab'] as int).clamp(0, 1)
           : widget.initialTab.clamp(0, 1),
     );
   }

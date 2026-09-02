@@ -21,15 +21,13 @@ linter:
   # `// ignore_for_file: name_of_lint` syntax on the line or in the file
   # producing the lint.
   rules:
-    # Chantier 3 — durcissement progressif (une règle par commit).
+    # Chantier 3 — durcissement progressif du lint (terminé).
     directives_ordering: true
     prefer_single_quotes: true
     only_throw_errors: true
     unawaited_futures: true
     require_trailing_commas: true
-    #
-    # Reste à activer après nettoyage dédié :
-    #   avoid_dynamic_calls (après typage des repositories)
+    avoid_dynamic_calls: true
 
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options

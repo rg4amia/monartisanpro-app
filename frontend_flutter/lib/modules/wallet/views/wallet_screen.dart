@@ -295,14 +295,14 @@ class _BalanceCards extends StatelessWidget {
 }
 
 class _TransactionTile extends StatelessWidget {
-  final dynamic transaction;
+  final TransactionModel transaction;
 
   const _TransactionTile({required this.transaction});
 
   @override
   Widget build(BuildContext context) {
-    final String type = transaction.type ?? '';
-    final String statut = (transaction.statut ?? '').toString().toLowerCase();
+    final String type = transaction.type;
+    final String statut = transaction.statut.toLowerCase();
     final bool isCredit =
         type == 'liberation_jalon' || type == 'acompte' || type == 'credit';
     final Color color = isCredit ? AppColors.success : const Color(0xFFE11D48);
@@ -313,14 +313,10 @@ class _TransactionTile extends StatelessWidget {
       date = DateTime.parse(transaction.createdAt);
     } catch (_) {}
 
-    final String? missionDesc =
-        transaction is TransactionModel ? transaction.missionDescription : null;
-    final String? clientName =
-        transaction is TransactionModel ? transaction.clientName : null;
-    final int? missionId =
-        transaction is TransactionModel ? transaction.missionId : null;
-    final String provider =
-        (transaction.provider ?? '').toString().toLowerCase();
+    final String? missionDesc = transaction.missionDescription;
+    final String? clientName = transaction.clientName;
+    final int? missionId = transaction.missionId;
+    final String provider = transaction.provider.toLowerCase();
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),

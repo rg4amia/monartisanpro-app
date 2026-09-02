@@ -158,9 +158,7 @@ class TransactionConfirmScreen extends StatelessWidget {
                           const SizedBox(height: 16),
                           _DetailRow(
                             label: 'Artisan',
-                            value: result['artisan']?['name']?.toString() ??
-                                result['artisan']?.toString() ??
-                                'Mamadou Diop',
+                            value: _artisanLabel(result['artisan']),
                           ),
                           const SizedBox(height: 16),
                           _DetailRow(
@@ -305,6 +303,16 @@ class TransactionConfirmScreen extends StatelessWidget {
               ),
             ),
     );
+  }
+
+  /// Libellé de l'artisan, que l'argument soit une `Map` ({name: ...}) ou une
+  /// simple chaîne.
+  String _artisanLabel(Object? artisan) {
+    if (artisan is Map) {
+      final name = artisan['name'];
+      if (name != null) return name.toString();
+    }
+    return artisan?.toString() ?? 'Mamadou Diop';
   }
 }
 

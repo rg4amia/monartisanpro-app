@@ -25,8 +25,8 @@ class ServicesController extends GetxController {
       isLoading.value = true;
       final response = await _api.get(ApiEndpoints.sectors);
 
-      if (response.data['success'] == true) {
-        final data = response.data['data'] as List;
+      if ((response.data as Map<String, dynamic>)['success'] == true) {
+        final data = (response.data as Map<String, dynamic>)['data'] as List;
         sectors.value = data.map((e) => SectorModel.fromJson(e)).toList();
       }
     } catch (e) {
@@ -44,8 +44,8 @@ class ServicesController extends GetxController {
 
       final response = await _api.get(ApiEndpoints.sectorTrades(sector.id));
 
-      if (response.data['success'] == true) {
-        final data = response.data['data'] as List;
+      if ((response.data as Map<String, dynamic>)['success'] == true) {
+        final data = (response.data as Map<String, dynamic>)['data'] as List;
         trades.value = data.map((e) => TradeModel.fromJson(e)).toList();
       }
     } catch (e) {
