@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -55,15 +55,18 @@ Future<void> main() async {
       // Teste production → émulateur → scan réseau local (port 8000)
       await EnvConfig.init();
 
-      // Yandex MapKit — clé API
+      // Yandex MapKit — clé API (surchargeable via --dart-define=YANDEX_MAPKIT_API_KEY)
       await mapkit_init.initMapkit(
-        apiKey: 'e8411c6c-7c2d-414b-9cb0-029fc7d5a71d',
+        apiKey: EnvConfig.yandexMapKitApiKey,
         locale: 'fr_FR',
       );
 
       // OneSignal — Initialisation (Push Notifications)
-      OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
-      OneSignal.initialize("00d061c8-977b-405a-a207-e2d87846670b"); // À remplacer par votre ID
+      // App ID surchargeable via --dart-define=ONESIGNAL_APP_ID
+      OneSignal.Debug.setLogLevel(
+        kReleaseMode ? OSLogLevel.none : OSLogLevel.verbose,
+      );
+      OneSignal.initialize(EnvConfig.oneSignalAppId);
       OneSignal.Notifications.requestPermission(true);
 
       // Initialisation de la synchro hors-ligne

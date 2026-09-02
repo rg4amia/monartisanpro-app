@@ -29,7 +29,12 @@ class TelegramLogger {
 
   /// Envoie un message à Telegram
   Future<void> _sendMessage(String message) async {
-    if (!_isEnabled || _botToken == 'YOUR_BOT_TOKEN') return;
+    if (!_isEnabled ||
+        _botToken.isEmpty ||
+        _chatId.isEmpty ||
+        _botToken == 'YOUR_BOT_TOKEN') {
+      return;
+    }
 
     try {
       final url = 'https://api.telegram.org/bot$_botToken/sendMessage';
@@ -37,7 +42,7 @@ class TelegramLogger {
         url,
         data: {
           'chat_id': _chatId,
-          'text': message,
+          'text': _redact(message),
           'parse_mode': 'HTML',
         },
       );
@@ -45,6 +50,31 @@ class TelegramLogger {
       // Silencieux pour éviter les boucles infinies
       debugPrint('TelegramLogger error: $e');
     }
+  }
+
+  /// Masque les données potentiellement personnelles avant tout envoi vers
+  /// un service tiers (téléphones ivoiriens, jetons Bearer, emails).
+  static String _redact(String input) {
+    return input
+        // Téléphones : +225XXXXXXXXXX ou 10 chiffres consécutifs
+        .replaceAll(
+          RegExp(r'\+?225\d{8,10}|\b\d{10}\b'),
+          '«téléphone masqué»',
+        )
+        // Jetons Bearer / Sanctum
+        .replaceAll(
+          RegExp(r'Bearer\s+[A-Za-z0-9|._-]+', caseSensitive: false),
+          'Bearer «token masqué»',
+        )
+        .replaceAll(
+          RegExp(r'\b\d+\|[A-Za-z0-9]{20,}\b'),
+          '«token masqué»',
+        )
+        // Emails
+        .replaceAll(
+          RegExp(r'[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}'),
+          '«email masqué»',
+        );
   }
 
   /// Log une erreur

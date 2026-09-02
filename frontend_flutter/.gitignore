@@ -33,6 +33,16 @@ migrate_working_dir/
 /build/
 /coverage/
 
+# Local runtime state (GetStorage / Hive) — propre à chaque poste, source de conflits
+GetStorage*
+*.hive
+*_cache.lock
+cache_metadata.lock
+
+# Release artifacts
+*.apk
+*.aab
+
 # Symbolication related
 app.*.symbols
 

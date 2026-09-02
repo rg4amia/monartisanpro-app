@@ -11,8 +11,15 @@ class EnvConfig {
   /// iOS Simulator
   static const String iosSimulatorBaseUrl = 'http://localhost:8000/api/v1';
 
+  /// Domaine de production. Surchargeable au build :
+  ///   flutter build apk --dart-define=API_HOST=prosartisan.net
+  static const String productionHost = String.fromEnvironment(
+    'API_HOST',
+    defaultValue: 'prosartisan.net',
+  );
+
   /// Production
-  static const String productionBaseUrl = 'https://prosartisan.net/api/v1';
+  static const String productionBaseUrl = 'https://$productionHost/api/v1';
 
   // ── État interne ────────────────────────────────────────────────────────────
 
@@ -92,7 +99,12 @@ class EnvConfig {
     defaultValue: '',
   );
   
-  // Active les logs Telegram en debug/release
+  // Active les logs Telegram en debug/release.
+  // En production le logger est DÉSACTIVÉ par défaut : il expose des données
+  // potentiellement personnelles (URLs, payloads d'erreur, téléphones) à un
+  // service tiers, ce qui est incompatible avec le RGPD / la Loi CI n° 2013-450.
+  // L'activer explicitement au build si un canal d'audit dédié est en place :
+  //   --dart-define=TELEGRAM_LOGGER_RELEASE=true
   static const bool telegramLoggerDebug = bool.fromEnvironment(
     'TELEGRAM_LOGGER_DEBUG',
     defaultValue: true,
@@ -100,6 +112,18 @@ class EnvConfig {
 
   static const bool telegramLoggerRelease = bool.fromEnvironment(
     'TELEGRAM_LOGGER_RELEASE',
-    defaultValue: true,
+    defaultValue: false,
+  );
+
+  // ── Clés de services tiers (surcharge au build via --dart-define) ──────────
+  // Valeurs par défaut = clés de développement ; à surcharger en CI/CD prod.
+  static const String yandexMapKitApiKey = String.fromEnvironment(
+    'YANDEX_MAPKIT_API_KEY',
+    defaultValue: 'e8411c6c-7c2d-414b-9cb0-029fc7d5a71d',
+  );
+
+  static const String oneSignalAppId = String.fromEnvironment(
+    'ONESIGNAL_APP_ID',
+    defaultValue: '00d061c8-977b-405a-a207-e2d87846670b',
   );
 }

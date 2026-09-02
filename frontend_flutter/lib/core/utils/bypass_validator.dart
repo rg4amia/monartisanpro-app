@@ -1,38 +1,37 @@
+/// Détecte les tentatives de contournement de la plateforme (partage de
+/// coordonnées de contact, invitation à échanger hors application).
+///
+/// L'objectif est de bloquer un numéro de téléphone / email / réseau social,
+/// **sans** rejeter une description de chantier légitime. Les règles évitent
+/// donc les mots trop courants ("quartier", "deux", "devant"…) et se
+/// concentrent sur des signaux forts.
 class BypassValidator {
-  static const List<String> _suspiciousKeywords = [
+  /// Réseaux sociaux et messageries : leur simple mention dans un champ de
+  /// description n'a pas de raison d'être légitime.
+  static const List<String> _socialKeywords = [
     'whatsapp',
+    'whatsap',
     'telegram',
     'facebook',
+    'messenger',
     'instagram',
     'snapchat',
     'tiktok',
-    'snap',
-    'insta',
-    'adresse',
-    'numéro',
-    'numero',
-    'téléphone',
-    'telephone',
-    'phone',
-    'contact',
-    'appeler',
-    'appelez',
-    'écrire',
-    'ecrire',
-    'joignable',
-    'carrefour',
-    'devant',
-    'côté de',
-    'cote de',
-    'quartier',
-    'situé a',
-    'situe a',
-    'situé à',
-    'situe à',
-    'face a',
-    'face à',
-    'tel:',
-    'tél:',
+    'viber',
+    'imo',
+  ];
+
+  /// Formulations d'invitation explicite à échanger hors plateforme.
+  static final List<RegExp> _contactInvitePatterns = [
+    RegExp(r'\btel\s*[:.]', caseSensitive: false),
+    RegExp(r'\bt[ée]l[ée]phone[rz]?\b', caseSensitive: false),
+    RegExp(r'\b(appelez|appeler|joignable|contactez[- ]moi|rappelez)\b',
+        caseSensitive: false),
+    RegExp(r'\b(mon|le)\s+num[ée]ro\b', caseSensitive: false),
+    RegExp(r'\b[ée]cris\s?[- ]?moi\b|\b[ée]crivez[- ]moi\b',
+        caseSensitive: false),
+    RegExp(r'\bhors\s+(de\s+l[’\x27]?\s*)?(appli|application|plateforme)\b',
+        caseSensitive: false),
   ];
 
   static const List<String> _numberWords = [
@@ -47,47 +46,70 @@ class BypassValidator {
     'sept',
     'huit',
     'neuf',
-    'dix'
+    'dix',
   ];
 
-  /// Valide si le texte contient des tentatives de contournement (contacts, adresses précises, etc.)
-  /// Retourne un message d'erreur si c'est le cas, sinon null.
+  static final RegExp _emailRegex =
+      RegExp(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}');
+
+  /// Numéro ivoirien : +225 optionnel puis 10 chiffres, séparateurs tolérés.
+  static final RegExp _phoneRegex = RegExp(
+    r'(\+?\s*225)?(\s*[\.\-/]?\s*\d){10,}',
+  );
+
+  /// Valide un champ libre. Retourne un message d'erreur si un contournement
+  /// est détecté, sinon `null`.
   static String? validate(String? value) {
     if (value == null || value.trim().isEmpty) return null;
 
     final text = value.toLowerCase();
 
-    // 1. Détecter les mots-clés suspects ou invitations à contacter hors plateforme
-    for (final keyword in _suspiciousKeywords) {
+    // 1. Réseaux sociaux / messageries.
+    for (final keyword in _socialKeywords) {
       if (text.contains(keyword)) {
-        return "L'insertion de coordonnées de contact, d'indications d'adresse précises ou de réseaux sociaux est interdite.";
+        return "Le partage de réseaux sociaux ou de messageries est interdit : "
+            "les échanges doivent rester dans l'application.";
       }
     }
 
-    // 2. Détecter les numéros de téléphone épelés en toutes lettres (3 mots numériques ou plus)
-    final normalizedText = text.replaceAll(RegExp(r'[\s\-\.,_/\(\)]'), '');
-    int wordNumbersCount = 0;
-    for (final word in _numberWords) {
-      if (normalizedText.contains(word)) {
-        // Compter les occurrences
-        final matches = RegExp(word).allMatches(normalizedText);
-        wordNumbersCount += matches.length;
+    // 2. Invitations explicites à contacter hors plateforme.
+    for (final pattern in _contactInvitePatterns) {
+      if (pattern.hasMatch(text)) {
+        return "L'invitation à échanger vos coordonnées ou à communiquer hors "
+            "de l'application est interdite.";
       }
     }
-    if (wordNumbersCount >= 3) {
-      return "L'insertion de numéros de téléphone (même épelés en lettres ou fragmentés) est interdite.";
-    }
 
-    // 3. Détecter les suites numériques (numéros de téléphone de 8 chiffres ou plus, possiblement espacés)
-    final onlyDigits = text.replaceAll(RegExp(r'[^0-9]'), '');
-    if (onlyDigits.length >= 8) {
-      return "L'insertion de numéros de téléphone ou de coordonnées numériques est interdite.";
-    }
-
-    // 4. Détecter des adresses email
-    final emailRegex = RegExp(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}');
-    if (emailRegex.hasMatch(text)) {
+    // 3. Adresses email.
+    if (_emailRegex.hasMatch(text)) {
       return "L'insertion d'adresses email est interdite.";
+    }
+
+    // 4. Numéros de téléphone (suite d'au moins 10 chiffres, séparateurs
+    //    tolérés). Le seuil de 10 évite de bloquer un montant en FCFA
+    //    (ex : « 15 000 000 FCFA » = 8 chiffres).
+    final digitClusters = RegExp(r'\d[\d\s\.\-/]{8,}\d');
+    for (final m in digitClusters.allMatches(text)) {
+      final digits = m.group(0)!.replaceAll(RegExp(r'\D'), '');
+      if (digits.length >= 10 && digits.length <= 15) {
+        return "L'insertion de numéros de téléphone ou de coordonnées "
+            "numériques est interdite.";
+      }
+    }
+    if (_phoneRegex.hasMatch(text.replaceAll(' ', ''))) {
+      return "L'insertion de numéros de téléphone est interdite.";
+    }
+
+    // 5. Numéro épelé en toutes lettres (au moins 5 mots-nombres, pour ne pas
+    //    déclencher sur « deux fenêtres et trois portes »).
+    final normalizedText = text.replaceAll(RegExp(r'[\s\-\.,_/\(\)]'), '');
+    var wordNumbersCount = 0;
+    for (final word in _numberWords) {
+      wordNumbersCount += RegExp(word).allMatches(normalizedText).length;
+    }
+    if (wordNumbersCount >= 5) {
+      return "L'insertion de numéros de téléphone (même épelés en lettres) "
+          "est interdite.";
     }
 
     return null;

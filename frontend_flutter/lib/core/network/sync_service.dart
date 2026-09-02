@@ -1,8 +1,11 @@
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+
+import 'api_client.dart';
 
 /// Modèle pour une requête en file d'attente
 class QueuedRequest {
@@ -40,11 +43,23 @@ class QueuedRequest {
 /// Service pour gérer la file d'attente des requêtes et l'état du réseau
 class SyncService extends GetxService {
   static const String _queueBoxName = 'offline_sync_queue';
+
+  /// Durée maximale de conservation d'une requête en file (au-delà, on abandonne).
+  static const Duration _maxRequestAge = Duration(days: 3);
+
   Box<Map>? _queueBox;
 
   final RxBool isOffline = false.obs;
   late StreamSubscription<List<ConnectivityResult>> _connectivitySubscription;
-  final Dio _dio = Dio(); // Une instance basique ou injectée selon l'archi globale
+
+  /// On rejoue les requêtes via le client applicatif : il porte le baseUrl
+  /// courant (découverte réseau) ET le header `Authorization` via ses
+  /// intercepteurs. Une instance `Dio()` nue enverrait des requêtes sans
+  /// hôte ni token.
+  Dio get _dio => ApiClient().dio;
+
+  /// Empêche deux passes de synchro simultanées.
+  bool _syncing = false;
 
   Future<SyncService> init() async {
     await Hive.initFlutter();
@@ -56,6 +71,12 @@ class SyncService extends GetxService {
 
     // Écoute des changements de réseau
     _connectivitySubscription = Connectivity().onConnectivityChanged.listen(_updateConnectionStatus);
+
+    // Si on démarre en ligne avec des requêtes en attente (app tuée hors-ligne),
+    // on tente de les rejouer immédiatement.
+    if (!isOffline.value) {
+      unawaited(_syncQueue());
+    }
 
     return this;
   }
@@ -85,33 +106,74 @@ class SyncService extends GetxService {
     await _queueBox!.put(request.id, request.toJson());
   }
 
-  /// Tente de rejouer toutes les requêtes en file d'attente
+  /// Force une tentative de synchronisation (ex: après un login réussi).
+  Future<void> flush() => _syncQueue();
+
+  /// Tente de rejouer toutes les requêtes en file d'attente.
   Future<void> _syncQueue() async {
-    if (_queueBox == null || _queueBox!.isEmpty) return;
+    if (_queueBox == null || _queueBox!.isEmpty || _syncing) return;
+    _syncing = true;
 
-    final keys = _queueBox!.keys.toList();
-    for (final key in keys) {
-      final rawData = _queueBox!.get(key);
-      if (rawData == null) continue;
+    try {
+      final keys = _queueBox!.keys.toList();
+      for (final key in keys) {
+        final rawData = _queueBox!.get(key);
+        if (rawData == null) continue;
 
-      final request = QueuedRequest.fromJson(Map<String, dynamic>.from(rawData));
+        final request =
+            QueuedRequest.fromJson(Map<String, dynamic>.from(rawData));
 
-      try {
-        if (request.method.toUpperCase() == 'POST') {
-          await _dio.post(request.url, data: request.data);
-        } else if (request.method.toUpperCase() == 'PUT') {
-          await _dio.put(request.url, data: request.data);
+        // Abandon des requêtes trop anciennes pour ne pas rejouer une
+        // mutation obsolète (statut déjà changé, jalon déjà soumis…).
+        if (DateTime.now().difference(request.timestamp) > _maxRequestAge) {
+          await _queueBox!.delete(key);
+          debugPrint('[SyncService] Requête expirée abandonnée: ${request.url}');
+          continue;
         }
-        
-        // Succès : on retire de la file
-        await _queueBox!.delete(key);
-      } catch (e) {
-        // En cas d'erreur de validation (422) ou autre (404), on pourrait décider de l'enlever
-        // Mais si c'est un problème serveur temporaire, on le garde.
-        if (e is DioException && e.type != DioExceptionType.connectionError) {
-           await _queueBox!.delete(key); // Requête invalide, ne pas bloquer la queue éternellement
+
+        try {
+          switch (request.method.toUpperCase()) {
+            case 'POST':
+              await _dio.post(request.url, data: request.data);
+            case 'PUT':
+              await _dio.put(request.url, data: request.data);
+            case 'DELETE':
+              await _dio.delete(request.url);
+          }
+
+          // Succès : on retire de la file
+          await _queueBox!.delete(key);
+        } on DioException catch (e) {
+          final status = e.response?.statusCode;
+
+          if (e.type == DioExceptionType.connectionError ||
+              e.type == DioExceptionType.connectionTimeout ||
+              e.type == DioExceptionType.receiveTimeout ||
+              e.type == DioExceptionType.sendTimeout ||
+              status == 401 || // token pas encore rafraîchi → on retentera
+              status == 408 ||
+              status == 429 ||
+              (status != null && status >= 500)) {
+            // Problème transitoire : on garde la requête pour un prochain essai.
+            debugPrint('[SyncService] Report de ${request.url} (status=$status)');
+            continue;
+          }
+
+          // 4xx définitif (400/403/404/409/422…) : la requête ne passera
+          // jamais, on la retire pour ne pas bloquer la file.
+          await _queueBox!.delete(key);
+          debugPrint(
+            '[SyncService] Requête rejetée définitivement '
+            '(${status ?? e.type}): ${request.url}',
+          );
+        } catch (e) {
+          // Erreur inattendue (parsing, etc.) : on ne bloque pas la file mais
+          // on garde la requête pour investigation via l'âge maximal.
+          debugPrint('[SyncService] Erreur inattendue sur ${request.url}: $e');
         }
       }
+    } finally {
+      _syncing = false;
     }
   }
 
