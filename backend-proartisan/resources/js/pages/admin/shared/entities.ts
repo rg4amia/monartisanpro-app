@@ -255,11 +255,12 @@ export interface PersonalDataReport {
         anonymized_at: string | null;
         payment_phone: string | null;
         cnmci_number: string | null;
+        cnmci_card_url: string | null;
         device_fingerprint: string | null;
         commune: string | null;
     };
     position: { lat: number; lng: number } | null;
-    kyc_documents: Array<{ id: number; type: string; status: string | null; created_at: string | null }>;
+    kyc_documents: Array<{ id: number; type: string; status: string | null; file_url: string | null; created_at: string | null }>;
     evaluations_given: number;
     evaluations_received: number;
     missions_as_client: number;

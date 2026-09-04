@@ -112,6 +112,19 @@ export function PersonalDataModal({
                                 <DataRow label="Commune" value={report.user.commune} />
                                 <DataRow label="N° CNMCI" value={report.user.cnmci_number} />
                                 <DataRow label="Empreinte appareil" value={report.user.device_fingerprint} />
+                                {report.user.cnmci_card_url ? (
+                                    <div className="flex items-center justify-between gap-4 py-1.5">
+                                        <span className="text-xs text-[var(--admin-muted)]">Carte CNMCI</span>
+                                        <a
+                                            href={report.user.cnmci_card_url}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="rounded-full border border-[#e6d3b2] px-3 py-1 text-xs font-medium text-[#8b6732] transition hover:bg-[#fbf1db]"
+                                        >
+                                            Voir la carte
+                                        </a>
+                                    </div>
+                                ) : null}
                                 <DataRow
                                     label="Position GPS"
                                     value={report.position ? `${report.position.lat}, ${report.position.lng}` : null}
@@ -126,6 +139,37 @@ export function PersonalDataModal({
                                 />
                                 <DataRow label="Compte créé le" value={report.user.created_at ? shortDate(report.user.created_at) : null} />
                                 <DataRow label="Anonymisé le" value={report.user.anonymized_at ? shortDate(report.user.anonymized_at) : 'Non'} />
+                            </section>
+
+                            <section className="rounded-2xl border border-[var(--admin-border)] bg-white/50 p-4">
+                                <h3 className="text-xs font-bold uppercase tracking-widest text-[#b77918] mb-2">Pièces justificatives KYC</h3>
+                                {report.kyc_documents.length === 0 ? (
+                                    <p className="text-xs text-[var(--admin-muted)] py-1">Aucune pièce transmise.</p>
+                                ) : (
+                                    <div className="flex flex-wrap gap-2 pt-1">
+                                        {report.kyc_documents.map((document) =>
+                                            document.file_url ? (
+                                                <a
+                                                    key={document.id}
+                                                    href={document.file_url}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="rounded-full border border-[#e6d3b2] px-3 py-1 text-xs font-medium text-[#8b6732] transition hover:bg-[#fbf1db]"
+                                                    title={document.status ?? undefined}
+                                                >
+                                                    Voir {document.type.toUpperCase()}
+                                                </a>
+                                            ) : (
+                                                <span
+                                                    key={document.id}
+                                                    className="rounded-full border border-[var(--admin-border)] px-3 py-1 text-xs font-medium text-[var(--admin-muted)]"
+                                                >
+                                                    {document.type.toUpperCase()} (fichier absent)
+                                                </span>
+                                            ),
+                                        )}
+                                    </div>
+                                )}
                             </section>
 
                             <section className="rounded-2xl border border-[var(--admin-border)] bg-white/50 p-4">

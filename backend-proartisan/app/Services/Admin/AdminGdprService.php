@@ -47,6 +47,7 @@ class AdminGdprService
                 'anonymized_at' => optional($user->anonymized_at)->toIso8601String(),
                 'payment_phone' => $user->payment_phone,
                 'cnmci_number' => $user->cnmci_number,
+                'cnmci_card_url' => $user->cnmci_card_url,
                 'device_fingerprint' => $user->device_fingerprint,
                 'commune' => $user->commune?->name,
             ],
@@ -57,6 +58,7 @@ class AdminGdprService
                     'id' => $doc->id,
                     'type' => $doc->type,
                     'status' => $doc->statut,
+                    'file_url' => $doc->file_url,
                     'created_at' => optional($doc->created_at)->toIso8601String(),
                 ])
                 ->all(),
