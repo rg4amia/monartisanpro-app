@@ -83,7 +83,6 @@ export default function RolesPermissionsPanel({
     const adminHasFullAccess = selectedAdmin?.capabilities.includes('*') ?? false;
     const adminIsProtected = selectedAdmin?.protected ?? false;
     const adminLocked = savingAdmin || adminIsProtected;
-    const allCatalogCapabilities = Object.values(adminCapabilityCatalog).flatMap((g) => Object.keys(g));
 
     // Group permissions by category
     const groupedPermissions = allPermissions.reduce((acc, perm) => {
@@ -108,6 +107,7 @@ export default function RolesPermissionsPanel({
             role: selectedRole,
             permission: permissionName,
         }, {
+            preserveState: true,
             preserveScroll: true,
             onFinish: () => {
                 setToggling(null);
@@ -122,6 +122,9 @@ export default function RolesPermissionsPanel({
         if (!selectedAdmin || adminIsProtected) return;
         setSavingAdmin(true);
         router.post(`/admin/admins/${selectedAdmin.id}/permissions`, { capabilities }, {
+            // Sans cela, Inertia remonte le composant après le POST et `selectedAdminId`
+            // repart sur le premier admin de la liste — la modification paraît « ne rien faire ».
+            preserveState: true,
             preserveScroll: true,
             onFinish: () => setSavingAdmin(false),
             onError: () => alert('Une erreur est survenue lors de la mise à jour des droits admin.'),
@@ -129,12 +132,17 @@ export default function RolesPermissionsPanel({
     };
 
     const toggleAdminCapability = (capability: string) => {
-        if (!selectedAdmin) return;
-        // Point de départ : le catalogue complet si l'admin a l'accès total, sinon
-        // ses capacités explicites (en écartant tout marqueur `*`).
-        const current = adminHasFullAccess
-            ? allCatalogCapabilities
-            : selectedAdmin.capabilities.filter((c) => c !== '*');
+        if (!selectedAdmin || adminIsProtected) return;
+
+        // Depuis l'accès total, cocher une capacité précise fait basculer le compte
+        // en périmètre restreint limité à cette seule capacité (intention : « ce
+        // compte ne gère que ce volet »). L'accès total se rétablit via sa case.
+        if (adminHasFullAccess) {
+            submitAdminCapabilities([capability]);
+            return;
+        }
+
+        const current = selectedAdmin.capabilities.filter((c) => c !== '*');
         const next = current.includes(capability)
             ? current.filter((c) => c !== capability)
             : [...current, capability];
@@ -208,7 +216,8 @@ export default function RolesPermissionsPanel({
                                         <div className="min-w-0">
                                             <span className="font-semibold text-sm text-[var(--admin-text)]">Accès total</span>
                                             <p className="text-xs text-[var(--admin-text-soft)] mt-1">
-                                                Super administrateur : toutes les capacités, présentes et futures.
+                                                Toutes les capacités, présentes et futures. Décochez — ou cochez directement
+                                                une capacité ci-dessous — pour limiter ce compte à un périmètre précis.
                                             </p>
                                         </div>
                                         <input
@@ -230,8 +239,10 @@ export default function RolesPermissionsPanel({
                                                     <label
                                                         key={name}
                                                         className={`flex items-start justify-between gap-4 p-4 rounded-2xl border border-[var(--admin-border)] transition ${
-                                                            adminHas(name) ? 'bg-[#eef8f0]/40' : 'bg-white/40'
-                                                        } ${adminHasFullAccess ? 'opacity-60' : ''}`}
+                                                            adminLocked ? '' : 'cursor-pointer'
+                                                        } ${
+                                                            !adminHasFullAccess && adminHas(name) ? 'bg-[#eef8f0]/40' : 'bg-white/40'
+                                                        } ${adminHasFullAccess ? 'opacity-70' : ''}`}
                                                     >
                                                         <div className="min-w-0">
                                                             <span className="font-mono text-xs font-semibold text-[var(--admin-text)]">{name}</span>
@@ -241,7 +252,7 @@ export default function RolesPermissionsPanel({
                                                             type="checkbox"
                                                             className="h-5 w-5 shrink-0 mt-0.5"
                                                             checked={adminHas(name)}
-                                                            disabled={adminLocked || adminHasFullAccess}
+                                                            disabled={adminLocked}
                                                             onChange={() => toggleAdminCapability(name)}
                                                         />
                                                     </label>
