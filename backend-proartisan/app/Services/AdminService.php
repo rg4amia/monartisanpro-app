@@ -23,11 +23,13 @@ class AdminService
         private NotificationService $notificationService,
         private LitigeService $litigeService,
         private OneSignalService $oneSignalService,
+        private \App\Services\Admin\AdminActivityLogger $audit,
+        private \App\Services\Admin\AdminDashboardCache $dashboardCache,
     ) {}
 
     public function dashboard(): array
     {
-        return [
+        return $this->dashboardCache->dashboard(fn () => [
             'users_total'            => User::count(),
             'artisans_actifs'        => User::where('role', 'artisan')->where('kyc_status', 'actif')->count(),
             'clients_actifs'         => User::where('role', 'client')->where('kyc_status', 'actif')->count(),
@@ -41,18 +43,64 @@ class AdminService
                 ->count(),
             'recent_fraud_alerts'    => JCode::where('statut', 'actif')->count(), // Placeholder for actual fraud tracking
             'volume_transactions_24h' => Transaction::where('created_at', '>=', now()->subDay())->sum('montant'),
-        ];
+        ]);
     }
 
-    public function pendingKyc(?string $role = null, int $perPage = 20): LengthAwarePaginator
+    public function pendingKyc(?string $role = null, int $perPage = 20, ?string $search = null): LengthAwarePaginator
     {
         return User::query()
             ->where('kyc_status', 'en_attente')
             ->whereIn('role', ['client', 'artisan', 'fournisseur', 'livreur'])
             ->when($role, fn ($q) => $q->where('role', $role))
+            ->when($search, function ($q) use ($search): void {
+                $q->where(function ($sub) use ($search): void {
+                    $sub->where('name', 'like', "%{$search}%")
+                        ->orWhere('phone', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%")
+                        ->orWhere('id', $search);
+                });
+            })
             ->with(['kycDocuments' => fn ($q) => $q->orderByDesc('created_at')])
             ->orderByDesc('created_at')
             ->paginate($perPage);
+    }
+
+    /**
+     * Agrégats de l'onglet « KYC & Vérifications » (Chantier C4 / P1-6).
+     *
+     * @return array{pending: int, artisans_pending: int, fournisseurs_pending: int, rejected: int, registration_trend: list<array{label: string, value: int}>}
+     */
+    public function kycStats(): array
+    {
+        $byRole = User::query()
+            ->where('kyc_status', 'en_attente')
+            ->selectRaw('role, COUNT(*) as c')
+            ->groupBy('role')
+            ->pluck('c', 'role');
+
+        $since = now()->subDays(14)->startOfDay();
+        $registrations = User::query()
+            ->where('created_at', '>=', $since)
+            ->selectRaw('DATE(created_at) as d, COUNT(*) as c')
+            ->groupBy('d')
+            ->pluck('c', 'd');
+
+        $trend = [];
+        for ($i = 14; $i >= 0; $i--) {
+            $day = now()->subDays($i);
+            $trend[] = [
+                'label' => $day->format('d/m'),
+                'value' => (int) ($registrations[$day->format('Y-m-d')] ?? 0),
+            ];
+        }
+
+        return [
+            'pending' => (int) $byRole->sum(),
+            'artisans_pending' => (int) ($byRole['artisan'] ?? 0),
+            'fournisseurs_pending' => (int) ($byRole['fournisseur'] ?? 0),
+            'rejected' => (int) User::where('kyc_status', 'rejete')->count(),
+            'registration_trend' => $trend,
+        ];
     }
 
     public function reviewKyc(User $admin, User $user, string $decision, ?string $rejectionReason = null): User
@@ -125,21 +173,86 @@ class AdminService
             ['decision' => $decision, 'type' => 'kyc']
         );
 
+        $this->audit->log('kyc.reviewed', $user, [
+            'decision'         => $decision,
+            'rejection_reason' => $decision === 'rejete' ? $rejectionReason : null,
+        ], actor: $admin);
+
         return $user->fresh(['kycDocuments']);
     }
 
-    public function listLitiges(?string $statut = null, int $perPage = 20): LengthAwarePaginator
+    /**
+     * Revue KYC groupée (Chantier C5 / P1-9). Chaque dossier passe par `reviewKyc`
+     * (documents, notifications, journal). Un dossier en échec n'interrompt pas le lot.
+     *
+     * @param  array<int>  $ids
+     * @return int  Nombre de dossiers traités avec succès.
+     */
+    public function bulkReviewKyc(User $admin, array $ids, string $decision, ?string $rejectionReason = null): int
+    {
+        $done = 0;
+
+        foreach (User::whereIn('id', $ids)->where('kyc_status', 'en_attente')->get() as $user) {
+            try {
+                $this->reviewKyc($admin, $user, $decision, $rejectionReason);
+                $done++;
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error("bulkReviewKyc user {$user->id}: ".$e->getMessage());
+            }
+        }
+
+        $this->audit->log('kyc.bulk_reviewed', null, [
+            'decision' => $decision,
+            'requested' => count($ids),
+            'processed' => $done,
+        ], actor: $admin);
+
+        return $done;
+    }
+
+    public function listLitiges(?string $statut = null, int $perPage = 20, ?string $search = null): LengthAwarePaginator
     {
         $this->litigeService->evaluateDueLitiges();
 
         return Litige::query()
             ->with(['mission.client', 'mission.artisan', 'declencheur', 'preuves.user'])
             ->when($statut, fn ($q) => $q->where('statut', $statut))
+            ->when($search, function ($q) use ($search): void {
+                $q->where(function ($sub) use ($search): void {
+                    $sub->where('id', $search)
+                        ->orWhere('mission_id', $search)
+                        ->orWhere('description', 'like', "%{$search}%")
+                        ->orWhereHas('mission.client', fn ($u) => $u->where('name', 'like', "%{$search}%")->orWhere('phone', 'like', "%{$search}%"))
+                        ->orWhereHas('mission.artisan', fn ($u) => $u->where('name', 'like', "%{$search}%")->orWhere('phone', 'like', "%{$search}%"));
+                });
+            })
             ->orderByDesc('created_at')
             ->paginate($perPage);
     }
 
-    public function listMissions(?string $status = null, ?string $query = null, int $perPage = 20): LengthAwarePaginator
+    /**
+     * Agrégats des litiges, indépendants de la page (Chantier C4 / P1-6).
+     *
+     * @return array{open: int, high_risk: int, resolved: int, missions_disputed: int}
+     */
+    public function litigeStats(): array
+    {
+        $byStatus = Litige::query()
+            ->selectRaw('statut, COUNT(*) as c')
+            ->groupBy('statut')
+            ->pluck('c', 'statut');
+
+        return [
+            'open' => (int) (($byStatus['ouvert'] ?? 0) + ($byStatus['en_cours'] ?? 0)),
+            'resolved' => (int) ($byStatus['resolu'] ?? 0),
+            'high_risk' => (int) Litige::whereIn('statut', ['ouvert', 'en_cours'])
+                ->whereHas('mission', fn ($m) => $m->where('montant_total', '>=', 2_000_000))
+                ->count(),
+            'missions_disputed' => (int) Mission::where('status', 'disputed')->count(),
+        ];
+    }
+
+    public function listMissions(?string $status = null, ?string $query = null, int $perPage = 20, string $pageName = 'page'): LengthAwarePaginator
     {
         return Mission::query()
             ->with([
@@ -166,10 +279,54 @@ class AdminService
                 });
             })
             ->orderByDesc('created_at')
-            ->paginate($perPage);
+            ->paginate($perPage, ['*'], $pageName);
     }
 
-    public function listOrders(?string $status = null, ?string $mode = null, ?string $query = null, int $perPage = 100): LengthAwarePaginator
+    /**
+     * Agrégats de l'onglet « Missions » (Chantier C4 / P1-6), indépendants de la page.
+     *
+     * @return array{en_cours: int, referent_required: int, en_litige: int, enrichies: int}
+     */
+    public function missionStats(): array
+    {
+        return [
+            'en_cours' => (int) Mission::where('status', 'in_progress')->count(),
+            'en_litige' => (int) Mission::where('status', 'disputed')->count(),
+            'referent_required' => (int) Mission::where('referent_required', true)
+                ->whereIn('status', ['funded_locked', 'in_progress', 'disputed'])
+                ->count(),
+            'enrichies' => (int) Mission::whereNotNull('gemini_category')->where('gemini_category', '!=', '')->count(),
+        ];
+    }
+
+    /**
+     * Agrégats de la sous-vue « Livraisons » (Chantier C4 / P1-6).
+     *
+     * @return array{total: int, in_transit: int, awaiting_driver: int, delivered: int, by_status: array<string, int>}
+     */
+    public function deliveryStats(): array
+    {
+        if (! \Illuminate\Support\Facades\Schema::hasTable('orders')) {
+            return ['total' => 0, 'in_transit' => 0, 'awaiting_driver' => 0, 'delivered' => 0, 'by_status' => []];
+        }
+
+        $byStatus = Order::query()
+            ->selectRaw('status, COUNT(*) as c')
+            ->groupBy('status')
+            ->pluck('c', 'status');
+
+        $sum = fn (array $statuses) => (int) collect($statuses)->sum(fn ($s) => (int) ($byStatus[$s] ?? 0));
+
+        return [
+            'total' => (int) $byStatus->sum(),
+            'in_transit' => $sum(['shipping', 'driver_picked_up']),
+            'awaiting_driver' => $sum(['searching_driver', 'driver_assigned', 'prepared']),
+            'delivered' => (int) ($byStatus['delivered'] ?? 0),
+            'by_status' => $byStatus->map(fn ($c) => (int) $c)->toArray(),
+        ];
+    }
+
+    public function listOrders(?string $status = null, ?string $mode = null, ?string $query = null, int $perPage = 100, string $pageName = 'page'): LengthAwarePaginator
     {
         if (!\Illuminate\Support\Facades\Schema::hasTable('orders')) {
             return new \Illuminate\Pagination\LengthAwarePaginator([], 0, $perPage);
@@ -197,12 +354,19 @@ class AdminService
                 });
             })
             ->orderByDesc('created_at')
-            ->paginate($perPage);
+            ->paginate($perPage, ['*'], $pageName);
     }
 
     public function resolveLitige(User $admin, Litige $litige, array $payload): Litige
     {
-        return $this->litigeService->arbitrate($admin, $litige, $payload);
+        $resolved = $this->litigeService->arbitrate($admin, $litige, $payload);
+
+        $this->audit->log('litige.arbitrated', $litige, [
+            'decision'   => $payload['decision'] ?? null,
+            'mission_id' => $litige->mission_id,
+        ], subjectLabel: 'Litige #'.$litige->id, actor: $admin);
+
+        return $resolved;
     }
 
     public function pendingFournisseurs(int $perPage = 20): LengthAwarePaginator
@@ -235,6 +399,10 @@ class AdminService
             );
         }
 
+        $this->audit->log('fournisseur.reviewed', $fournisseurAgree, [
+            'decision' => $decision,
+        ], subjectLabel: $fournisseurAgree->nom_boutique, actor: $admin);
+
         return $fournisseurAgree->fresh('user');
     }
 
@@ -249,6 +417,7 @@ class AdminService
                 $q->where(function ($sub) use ($query): void {
                     $sub->where('name', 'like', "%{$query}%")
                         ->orWhere('phone', 'like', "%{$query}%")
+                        ->orWhere('email', 'like', "%{$query}%")
                         ->orWhere('id', $query);
                 });
             })
@@ -258,25 +427,96 @@ class AdminService
             ->paginate($perPage);
     }
 
-    public function listTransactions(?string $status = null, ?string $provider = null, int $perPage = 20): LengthAwarePaginator
-    {
+    public function listTransactions(
+        ?string $status = null,
+        ?string $provider = null,
+        int $perPage = 20,
+        ?string $search = null,
+        ?string $type = null
+    ): LengthAwarePaginator {
         return Transaction::query()
             ->with(['user', 'mission'])
             ->when($status, fn ($q) => $q->where('statut', $status))
             ->when($provider, fn ($q) => $q->where('provider', $provider))
+            ->when($type, fn ($q) => $q->where('type', $type))
+            ->when($search, function ($q) use ($search): void {
+                $q->where(function ($sub) use ($search): void {
+                    $sub->where('id', $search)
+                        ->orWhere('reference_externe', 'like', "%{$search}%")
+                        ->orWhere('wallet_source', 'like', "%{$search}%")
+                        ->orWhere('wallet_dest', 'like', "%{$search}%")
+                        ->orWhereHas('user', fn ($u) => $u
+                            ->where('name', 'like', "%{$search}%")
+                            ->orWhere('phone', 'like', "%{$search}%"));
+                });
+            })
             ->orderByDesc('created_at')
             ->paginate($perPage);
     }
 
-    public function listEvaluations(?int $perPage = 100): LengthAwarePaginator
+    /**
+     * Agrégats du journal financier, indépendants de la page courante
+     * (la liste des transactions est paginée — Chantier C4 / P1-6).
+     *
+     * @return array{pending: int, failed: int, confirmed: int, volume_24h: int, escrow: int, released: int}
+     */
+    public function transactionStats(): array
+    {
+        $byStatus = Transaction::query()
+            ->selectRaw('statut, COUNT(*) as c')
+            ->groupBy('statut')
+            ->pluck('c', 'statut');
+
+        return [
+            'pending'    => (int) ($byStatus['en_attente'] ?? 0),
+            'failed'     => (int) ($byStatus['echoue'] ?? 0),
+            'confirmed'  => (int) ($byStatus['confirme'] ?? 0),
+            'volume_24h' => (int) Transaction::where('created_at', '>=', now()->subDay())->sum('montant'),
+            'escrow'     => (int) Transaction::where('statut', 'confirme')->where('type', 'acompte')->sum('montant'),
+            'released'   => (int) Transaction::where('statut', 'confirme')
+                ->whereIn('type', ['liberation_jalon', 'paiement_fournisseur'])
+                ->sum('montant'),
+        ];
+    }
+
+    public function listEvaluations(?int $perPage = 100, ?string $search = null, string $pageName = 'page'): LengthAwarePaginator
     {
         return Evaluation::query()
             ->with(['mission', 'evaluateur', 'evalue'])
+            ->when($search, function ($q) use ($search): void {
+                $q->where(function ($sub) use ($search): void {
+                    $sub->where('id', $search)
+                        ->orWhere('mission_id', $search)
+                        ->orWhere('commentaire', 'like', "%{$search}%")
+                        ->orWhereHas('evaluateur', fn ($u) => $u->where('name', 'like', "%{$search}%")->orWhere('phone', 'like', "%{$search}%"))
+                        ->orWhereHas('evalue', fn ($u) => $u->where('name', 'like', "%{$search}%")->orWhere('phone', 'like', "%{$search}%"));
+                });
+            })
             ->orderByDesc('created_at')
-            ->paginate($perPage);
+            ->paginate($perPage, ['*'], $pageName);
+    }
+
+    /**
+     * Version paginée du classement des scores artisans, avec recherche
+     * (Chantier C4 / P1-6). `listArtisansScores()` reste pour le bundle Dashboard.
+     */
+    public function paginateArtisanScores(?string $search = null, int $perPage = 25, string $pageName = 'page'): LengthAwarePaginator
+    {
+        return $this->artisanScoresQuery()
+            ->when($search, function ($q) use ($search): void {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%")
+                    ->orWhere('id', $search);
+            })
+            ->paginate($perPage, ['*'], $pageName);
     }
 
     public function listArtisansScores(): array
+    {
+        return $this->artisanScoresQuery()->get()->toArray();
+    }
+
+    private function artisanScoresQuery(): \Illuminate\Database\Eloquent\Builder
     {
         return User::query()
             ->where('role', 'artisan')
@@ -285,9 +525,22 @@ class AdminService
             ->withAvg('evaluationsRecues', 'integrite')
             ->withAvg('evaluationsRecues', 'qualite')
             ->withAvg('evaluationsRecues', 'reactivite')
-            ->orderByDesc('score_prosartisan')
-            ->get()
-            ->toArray();
+            ->orderByDesc('score_prosartisan');
+    }
+
+    /**
+     * Agrégats de l'onglet « Évaluations & Scores » (Chantier C4 / P1-6).
+     *
+     * @return array{evaluations_total: int, note_moyenne: float, artisans_suivis: int, scores_geles: int}
+     */
+    public function evaluationStats(): array
+    {
+        return [
+            'evaluations_total' => (int) Evaluation::count(),
+            'note_moyenne' => round((float) (Evaluation::avg('note') ?? 0), 1),
+            'artisans_suivis' => (int) User::where('role', 'artisan')->count(),
+            'scores_geles' => (int) User::where('role', 'artisan')->where('score_frozen', true)->count(),
+        ];
     }
 
     public function listScoreLedger(): array
@@ -301,6 +554,12 @@ class AdminService
     }
 
     public function getFinancialKpis(): array
+    {
+        // Agrégats coûteux : stabilisés en cache, purge sur mouvement financier (Chantier C4 / P1-7).
+        return $this->dashboardCache->financialKpis(fn () => $this->buildFinancialKpis());
+    }
+
+    private function buildFinancialKpis(): array
     {
         try {
             // 1. Solde Général & Séquestre

@@ -31,11 +31,19 @@ php artisan migrate:fresh --seed
 ./vendor/bin/pest tests/Feature/FullMissionWorkflowTest.php  # un fichier
 ./vendor/bin/pest --filter="nom du test"  # filtre par nom
 
+# Tests de composants front du backoffice (Vitest + Testing Library)
+npm test                                # resources/js/**/*.test.tsx
+npm run test:watch
+
 # Linter (Laravel Pint)
 ./vendor/bin/pint
 
 # Démarrage serveur seul
 php artisan serve --port=8000
+
+# Backoffice — filets de sécurité opérationnels
+php artisan admin:full-access [email]   # restaure l'accès total d'un/tous les admins
+php artisan admin:health-check [--force] # contrôle santé + alerte Telegram
 ```
 
 ### Architecture Backend
@@ -63,9 +71,20 @@ routes/api.php
 - `ScoreService` — calcul du Score ProsArtisan (échelle **0–1000**, 4 piliers pondérés : Fiabilité 400 / Intégrité 300 / Qualité 200 / Réactivité 100 + ledger `score_ledger_entries`)
 - `MicroCreditService` — éligibilité (`score_prosartisan >= credit_threshold`) et calcul du plafond de crédit
 
-**Constantes métier** : `config/prosartisan.php` — seuils GPS, TTL OTP, `score_prosartisan` (poids des piliers, `credit_threshold` = 700, `excellence_threshold` = 800, `golden_marker_threshold` = 700), seuil Référent. Toute logique de seuil de score doit lire la config, jamais une valeur en dur.
+**Services backoffice** (`app/Services/Admin/`) :
 
-**Auth** : Sanctum Bearer tokens. Middleware `account.active` vérifie `kyc_status = 'actif'`. Routes publiques : `send-otp`, `verify-otp`, `register`, webhooks.
+- `AdminPanelData` — props Inertia par onglet (remplace l'ancien god-method `renderPage`)
+- `AdminActivityLogger` — écriture append-only du journal d'audit `admin_activity_logs` (best-effort)
+- `AdminLoginThrottle` — limitation des tentatives de connexion admin (5 / 60 s par identifiant + IP)
+- `AdminPermissionService` — capacités fines `admin.*` (table `admin_permission_user`), super admins protégés
+- `AdminExportService` — exports CSV en streaming (BOM UTF-8, `sep=;`, `->lazy()`)
+- `AdminGdprService` — vue des données personnelles + anonymisation tracée (RGPD)
+- `AdminObservabilityService` — instantané de santé (jobs KO, webhooks paiement, fraude GPS, seuil Référent)
+- `AdminDashboardCache` / `TelegramAlertService` — cache des KPI + alertes d'observabilité
+
+**Constantes métier** : `config/prosartisan.php` — seuils GPS, TTL OTP, `score_prosartisan` (poids des piliers, `credit_threshold` = 700, `excellence_threshold` = 800, `golden_marker_threshold` = 700), seuil Référent, `super_admins` (emails à accès total permanent, env `SUPER_ADMIN_EMAILS`). Toute logique de seuil de score doit lire la config, jamais une valeur en dur.
+
+**Auth** : Sanctum Bearer tokens (API). Middleware `account.active` vérifie `kyc_status = 'actif'`. Routes publiques : `send-otp`, `verify-otp`, `register`, webhooks. Le **backoffice** (`/admin/*`, Inertia + session web) est gardé par `admin.only` (`role='admin'`) puis, route par route, par le middleware `can:admin.<capacité>` adossé aux Gates d'`AdminPermissionService`.
 
 ### MySQL 5.7 — Contraintes critiques
 
@@ -138,6 +157,17 @@ lib/
 
 ---
 
+## Backoffice admin (Inertia 2 + React 19 + TS)
+
+`backend-proartisan/resources/js/pages/admin/` — console unique en onglets (`console.tsx` + `shared/AdminShell.tsx`), un panneau par onglet dans `panels/`, hooks dans `hooks/` (`useServerTable`, `useRowSelection`), primitives partagées dans `shared/` (`ConfirmDialog`, `permissions`, `loading`, `ExportButton`, `BulkActionBar`).
+
+- **Permissions front** : la prop partagée `auth.permissions` (`['*']` = accès total) pilote l'affichage des onglets et des actions ; le backend reste seul juge (`can:` middleware).
+- **Listes** : chargées page par page via `useServerTable` (rechargement partiel Inertia `only`), filtres persistés en `localStorage`.
+- **Confirmations destructives** : toujours via `useConfirm()` (modale accessible : `role="dialog"`, focus, Échap), jamais `window.confirm`/`prompt`.
+- **Tests** : Vitest + Testing Library, fichiers `*.test.tsx` co-localisés (exclus du glob Inertia dans `app.tsx`/`ssr.tsx`).
+
+---
+
 ## Règles d'or — ne jamais contourner
 
 1. **KYC** : `kyc_status = 'actif'` obligatoire avant toute transaction
@@ -155,4 +185,12 @@ lib/
 13. **Robustesse et Navigation de Notation** : Le bouton de notation d'un artisan est directement accessible sur la carte de mission terminée (`Routes.rating`). Le backend et l'application mobile traitent les critères d'évaluation de manière résiliente avec conversion de types sécurisée et fallback automatique.
 14. **Maturité et Excellence du Score ProsArtisan** : Le Score ProsArtisan (0-1000) applique un facteur de maturité progressive basé sur 10 missions minimum ($F_{\text{volume}} = \min(1.0, n/10)$) et exige au moins 3 critères avec 5 étoiles ($\ge 4.8/5$) pour dépasser 800 points et avoisiner 1000 points.
 15. **Seuils du Score ProsArtisan (échelle 0-1000)** : L'accès au micro-crédit d'urgence exige `score_prosartisan >= 700` (`config('prosartisan.score_prosartisan.credit_threshold')`) ; le « marqueur doré » (artisan prioritaire) s'applique à partir de 700 ; les scores d'excellence commencent à 800. Le plafond de micro-crédit vaut `50 000 + (score - 700) × 1 500` FCFA (500 000 FCFA à 1000). Ces seuils sont lus depuis `config/prosartisan.php` côté backend et depuis `kMicroCreditScoreThreshold` côté mobile — jamais l'ancienne échelle 0-100 ni le seuil `70`.
-
+16. **Permissions fines du backoffice** : `/admin/*` requiert `role='admin'` (`admin.only`) **puis** la capacité fine `admin.<x>` de la route (`can:` middleware + Gates d'`AdminPermissionService`, table pivot `admin_permission_user`). Un admin sans capacité affectée — ou porteur de `admin.full-access` — dispose de l'accès total. Les **super admins protégés** (`config('prosartisan.super_admins')`, défaut `admin@prosartisan.ci`) ont un accès total **inconditionnel** qui court-circuite la table pivot et ne peut **jamais** être restreint depuis l'UI ou l'endpoint `POST /admin/admins/{user}/permissions`. Secours : `php artisan admin:full-access [email]`.
+17. **Journal d'audit admin** : toute action sensible du backoffice (revue KYC uni/groupée, arbitrage de litige, revue fournisseur/CNMCI, gel de score, création/modification/suppression/suspension de compte, changement de droits admin, modification de paramètres/IA/taxonomie/code promo, export CSV, anonymisation RGPD, usurpation de session, connexions/déconnexions admin) est journalisée en **append-only** dans `admin_activity_logs` (acteur, IP, user-agent, type/id/libellé du sujet, contexte JSON, horodatage). L'écriture est *best-effort* : son échec ne bloque jamais l'action métier.
+18. **Throttle de connexion admin** : `/admin/login` et `/admin/login/verify-2fa` sont limités à **5 tentatives / 60 s** par (identifiant + IP) → HTTP 429. Chaque échec (mot de passe, rôle refusé, 2FA invalide) est audité ; le compteur est remis à zéro à la connexion réussie.
+19. **Listes backoffice paginées côté serveur** : les grandes listes (`users`, `transactions`, `missions`, `litiges`, `evaluations`, `kyc`, `audit-logs`) chargent **une page à la fois** via rechargement partiel Inertia (`router.get(path, params, { only: [...] })`) ; les agrégats et KPI sont calculés **indépendamment de la page courante**. Les KPI du dashboard passent par `AdminDashboardCache` (TTL court) invalidé par des observers sur les modèles financiers.
+20. **Exports CSV backoffice** : `AdminExportService` — streaming synchrone (`response()->streamDownload` + `fputcsv` + `->lazy()`), BOM UTF-8 + `sep=;` (Excel FR), ressources `users/transactions/missions/evaluations/litiges`, filtres alignés sur la liste, scopes Eloquent respectés (soft-delete), export audité (`export.generated`). Capacité `admin.exports`.
+21. **Actions groupées backoffice** : revue KYC et changement de statut de compte **en lot** (max 100). L'administrateur qui agit **ne peut jamais être affecté par le lot** ; un élément en échec n'interrompt pas le traitement ; une ligne d'audit récapitulative accompagne les lignes individuelles.
+22. **RGPD — droit d'accès & effacement** : `AdminGdprService` expose la **vue consolidée des données personnelles** d'un utilisateur (identité, KYC, position, consentement CGU, empreinte plateforme, traçabilité) + un **export JSON de portabilité**, et l'**anonymisation irréversible et tracée** (`anonymized_at` / `anonymized_by`) : expurge nom, e-mail, téléphone, numéro de paiement, empreinte appareil, données CNMCI et position GPS ; supprime les pièces KYC et notifications ; révoque les jetons ; passe le compte en `suspendu`. **La ligne `users` est conservée** pour l'intégrité des écritures financières et du journal d'audit. Refuse l'auto-cible et le second passage. Capacités `admin.rgpd.view` / `admin.rgpd.manage`.
+23. **Observabilité & alertes** : `/admin/observability` agrège 4 signaux critiques — jobs `failed_jobs`, transactions `echoue` (webhooks paiement KO), tentatives de fraude GPS J-Code (`score_ledger_entries.event_type = 'fraude_gps_tentative'`), missions bloquées au seuil Référent. La commande planifiée `admin:health-check` (toutes les 15 min) envoie une alerte **Telegram** (`TELEGRAM_BOT_TOKEN` / `TELEGRAM_ALERT_CHAT_ID`) dès qu'un signal est non nul. Les actions `queue:retry` / `queue:flush` sont gated `admin.observability.manage` et auditées.
+24. **Usurpation de session (super admin)** : `POST /admin/users/{user}/impersonate` (capacité `admin.users.impersonate`) bascule la session web sur un utilisateur **non-admin** ; `session('impersonator_id')` conserve l'identité de l'admin d'origine et un bandeau permanent (rendu Blade) permet le retour via `POST /admin/stop-impersonating` (hors `admin.only`, donc accessible au compte usurpé). Refus : sa propre cible, un autre administrateur, un compte anonymisé ou supprimé. Le début **et** la fin sont journalisés.

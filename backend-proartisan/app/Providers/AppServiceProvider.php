@@ -30,9 +30,16 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->configureRateLimiting();
+        $this->configureAdminDashboardCache();
+        $this->configureAdminGates();
 
         // Enregistrement des rôles et permissions
         Gate::before(function ($user, $ability) {
+            // Les capacités fines du backoffice (« admin.* ») ont leur propre
+            // Gate et ne doivent pas être court-circuitées ici (Chantier C6 / P2-10).
+            if (str_starts_with((string) $ability, 'admin.')) {
+                return null;
+            }
             if ($user->role === 'admin') {
                 return true;
             }
@@ -40,6 +47,22 @@ class AppServiceProvider extends ServiceProvider
                 return $user->hasPermissionTo($ability);
             }
         });
+    }
+
+    /**
+     * Enregistre un Gate par capacité fine du backoffice admin (Chantier C6 / P2-10).
+     *
+     * Un admin sans capacité affectée — ou porteur de `admin.full-access` —
+     * dispose d'un accès total ; sinon il est restreint à son périmètre.
+     */
+    protected function configureAdminGates(): void
+    {
+        foreach (\App\Services\Admin\AdminPermissionService::allCapabilityNames() as $capability) {
+            Gate::define($capability, function ($user) use ($capability): bool {
+                return $user->role === 'admin'
+                    && app(\App\Services\Admin\AdminPermissionService::class)->userCan($user, $capability);
+            });
+        }
     }
 
     /**
@@ -63,6 +86,28 @@ class AppServiceProvider extends ServiceProvider
                 ->uncompromised()
             : null,
         );
+    }
+
+    /**
+     * Purge le cache des KPI du backoffice dès qu'une donnée agrégée change
+     * (Chantier C4 / P1-7).
+     */
+    protected function configureAdminDashboardCache(): void
+    {
+        $observer = \App\Observers\AdminDashboardCacheObserver::class;
+
+        foreach ([
+            \App\Models\Transaction::class,
+            \App\Models\WalletTransaction::class,
+            \App\Models\Mission::class,
+            \App\Models\Litige::class,
+            \App\Models\Jalon::class,
+            \App\Models\Order::class,
+        ] as $model) {
+            if (class_exists($model)) {
+                $model::observe($observer);
+            }
+        }
     }
 
     /**

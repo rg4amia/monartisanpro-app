@@ -129,6 +129,7 @@ Note : Pour les prestations chantiers de l'Artisan.
 | **J-Code & Anti-Fraude** | • Clôture GPS boutique < 100m. | • Signal GPS en intérieur capricieux. |
 | **Jalons & Libération** | • Validation progressive OTP. Contrôle physique > 2M FCFA. | • Risque de blocage client injoignable. |
 | **Score ProsArtisan** | • Échelle 0–1000, seuils configurables. Facteur clé d'accès au micro-crédit (≥ 700). | • Colonne `score_prosartisan` en BDD. |
+| **Backoffice admin** | • Permissions fines + super admin protégé. Journal d'audit immuable. Throttle login. Pagination serveur + cache KPI. Exports CSV tracés. RGPD (accès/portabilité/anonymisation). Observabilité + alerte Telegram. Usurpation de session encadrée. | • Espace web limité aux rôles `admin` (et `fournisseur`/`livreur` via API) : l'usurpation d'un `client`/`artisan` a une portée réduite. |
 
 ---
 
@@ -158,6 +159,15 @@ Note : Pour les prestations chantiers de l'Artisan.
 21. **Acceptation Obligatoire des CGU & Politique de Confidentialité :** À la première inscription sur l'application mobile ou sur le web, la validation explicite des Conditions Générales d'Utilisation et de la Politique de Confidentialité est enregistrée avec horodatage en base de données. Ces documents restent consultables à tout moment dans chaque espace applicatif et sur le footer du site web.
 22. **Historique des Paiements Reçus & Rapprochement Mobile Money :** L'espace artisan offre un accès One-Tap pour consulter l'historique complet et exhaustif de tous les paiements reçus (jalons libérés, acomptes, micro-crédits, remboursements). Chaque entrée trace l'opérateur (Wave, Orange Money, MTN MoMo, Moov Money), le montant en FCFA entier, le statut de libération, le numéro et intitulé de la mission, ainsi que le nom du client.
 23. **Numéro Mobile Money Multi-Acteurs (Client & Prestataires) :** Tous les utilisateurs de la plateforme (Clients, Artisans, Livreurs, Fournisseurs) peuvent renseigner et mettre à jour leur numéro de téléphone Mobile Money (`payment_phone`) et leur opérateur préféré (`preferred_payment_provider`: Wave, Orange Money, MTN MoMo, Moov Money). Dans l'espace client, ce numéro permet le règlement rapide des devis et la réception automatique des remboursements en cas de litige. Pour les prestataires, ces coordonnées font autorité pour le virement automatisé des gains et fonds débloqués.
+24. **Permissions Fines & Super Admin Protégé (Backoffice) :** L'accès aux sections et actions de l'administration (`/admin/*`) est régi, au-delà du rôle `admin`, par des capacités fines `admin.<x>` (table pivot `admin_permission_user`, middleware `can:` + Gates). Un administrateur sans capacité affectée, ou porteur de `admin.full-access`, dispose de l'accès total. Les super administrateurs protégés (`config('prosartisan.super_admins')`, env `SUPER_ADMIN_EMAILS`, défaut `admin@prosartisan.ci`) disposent d'un accès total **inconditionnel** qui ne peut jamais être restreint depuis l'interface ni par API — garde-fou anti-verrouillage, avec commande de secours `php artisan admin:full-access`.
+25. **Journal d'Audit Immuable des Actions Sensibles (Backoffice) :** Toute action sensible du backoffice (revue KYC unitaire et groupée, arbitrage de litige, revue fournisseur/CNMCI, gel de score, cycle de vie des comptes, modification des droits admin, paramètres/IA/taxonomie/codes promo, exports CSV, anonymisation RGPD, usurpation de session, connexions administrateur) est journalisée en append-only dans `admin_activity_logs` (acteur, IP, user-agent, sujet, contexte JSON, horodatage). L'écriture est *best-effort* et ne bloque jamais l'action métier.
+26. **Anti-Force Brute sur l'Authentification Admin :** Les points d'entrée `/admin/login` et `/admin/login/verify-2fa` sont plafonnés à 5 tentatives par tranche de 60 secondes et par (identifiant + adresse IP) → HTTP 429. Chaque échec (mot de passe, rôle refusé, 2FA invalide) est audité ; le compteur se réinitialise à la connexion réussie.
+27. **Pagination Serveur & Agrégats Indépendants (Backoffice) :** Les grandes listes de l'administration (utilisateurs, transactions, missions, litiges, évaluations, KYC, journal d'audit) chargent une page à la fois via rechargement partiel Inertia ; les métriques KPI sont calculées indépendamment de la page affichée et mises en cache (TTL court) avec invalidation automatique sur mouvement financier.
+28. **Exports CSV Conformes & Tracés (Backoffice) :** Les exports (`users`, `transactions`, `missions`, `evaluations`, `litiges`) sont produits en streaming synchrone avec BOM UTF-8 et séparateur `;` (compatibilité Excel FR), respectent les filtres de la liste et les scopes Eloquent (soft-delete), et chaque génération est auditée.
+29. **Actions Groupées Sécurisées (Backoffice) :** La revue KYC et le changement de statut de compte peuvent s'appliquer par lot (max 100). L'administrateur qui déclenche l'action ne peut jamais être affecté par son propre lot ; un élément en échec n'interrompt pas le traitement ; une ligne d'audit récapitulative est produite en plus des lignes individuelles.
+30. **RGPD — Droit d'Accès, Portabilité & Effacement (Backoffice) :** L'administration expose la vue consolidée des données personnelles d'un utilisateur (identité, KYC, position, horodatage d'acceptation des CGU, empreinte sur la plateforme, traçabilité), un export JSON de portabilité, et une **anonymisation irréversible et tracée** (`anonymized_at`, `anonymized_by`) qui expurge toutes les données identifiantes, supprime les pièces KYC et notifications, révoque les jetons et suspend le compte — **sans supprimer la ligne `users`**, afin de préserver l'intégrité des écritures financières et du journal d'audit. Refus de l'auto-cible et du second passage.
+31. **Observabilité & Alerte Telegram (Backoffice) :** Un panneau de santé (`/admin/observability`) agrège quatre signaux critiques : files d'attente en échec (`failed_jobs`), webhooks de paiement KO (transactions `echoue`), tentatives de fraude GPS J-Code (`score_ledger_entries.event_type = 'fraude_gps_tentative'`), missions bloquées au seuil Référent. Une tâche planifiée `admin:health-check` (toutes les 15 minutes) émet une alerte Telegram dès qu'un signal est non nul.
+32. **Usurpation de Session Encadrée (Super Admin) :** Le super administrateur peut « se connecter en tant que » un utilisateur **non-admin** ; l'identité d'origine est conservée en session, un bandeau permanent permet le retour (`/admin/stop-impersonating`, accessible au compte usurpé). L'usurpation d'un autre administrateur, de soi-même ou d'un compte anonymisé/supprimé est interdite ; le début et la fin sont journalisés.
 
 ### Formule mathématique du Score ProsArtisan
 Le score d'un artisan $S(t)$ est calculé sur une échelle de 0 à 1000 :
@@ -178,6 +188,28 @@ Le module **Missions** du Backoffice administrateur (`/admin/missions`) intègre
    * Filtres dynamiques par statut (`paid`, `prepared`, `searching_driver`, `driver_assigned`, `driver_picked_up`, `shipping`, `delivered`, `disputed`).
    * Modale **Suivi 360°** : Timeline 4 étapes, fiches des 3 acteurs (Livreur, Artisan/Client destinataire, Quincaillerie expéditrice) avec boutons d'appel direct `tel:`, grille des matériaux commandés, ventilation des frais et preuves photographiques.
    * Liaison croisée dans le détail d'une mission de chantier pour consulter instantanément les courses associées.
+
+---
+
+### 🛡️ Durcissement du Backoffice Administrateur (Chantiers C1–C7)
+
+Le backoffice (Laravel 12 + Inertia 2 + React 19 + TypeScript) a fait l'objet d'un plan de fiabilisation en sept chantiers, tous **[COMPLÉTÉS]** :
+
+| Chantier | Contenu |
+| --- | --- |
+| **C1 — Architecture** | Suppression du god-method `renderPage` ; chaque onglet reçoit sa seule tranche de données via `AdminPanelData` ; logique métier déplacée en Service Layer + Form Requests. |
+| **C2 — Découpe front** | `console.tsx` scindé : `shared/AdminShell.tsx` (chrome) + un panneau par onglet dans `panels/` + hooks (`useServerTable`, `useRowSelection`). |
+| **C3 — Traçabilité & anti-abus** | Journal d'audit append-only `admin_activity_logs` (Règle d'Or 25) ; throttle de connexion admin (Règle d'Or 26). |
+| **C4 — Performance** | Pagination serveur des grandes listes via rechargements partiels Inertia + cache des KPI du dashboard invalidé par observers (Règle d'Or 27). |
+| **C5 — Opérations de masse** | Exports CSV conformes et tracés (Règle d'Or 28) ; actions groupées KYC & statut de compte (Règle d'Or 29). |
+| **C6 — Gouvernance des accès & RGPD** | Permissions fines `admin.*` + super admin protégé (Règle d'Or 24) ; vue des données personnelles, portabilité et anonymisation tracée (Règle d'Or 30) ; affichage de l'horodatage d'acceptation des CGU par compte. |
+| **C7 — Observabilité, UX & tests** | Panneau de santé + alerte Telegram (Règle d'Or 31) ; confirmations destructives normalisées et accessibles (`role="dialog"`, focus, Échap), persistance des filtres en `localStorage`, fil d'Ariane, squelettes de chargement ; suite de tests de composants front (Vitest + Testing Library, `npm test`). |
+
+**Ajouts hors-plan :** accès total permanent garanti au super administrateur (Règle d'Or 24) et fonctionnalité d'usurpation de session encadrée (Règle d'Or 32).
+
+**Capacités fines du backoffice** (extrait, `AdminPermissionService::catalog()`) : `admin.kyc.view|review`, `admin.missions.view`, `admin.litiges.view|arbitrate`, `admin.users.view|manage|delete|impersonate`, `admin.transactions.view`, `admin.exports`, `admin.evaluations.view`, `admin.fournisseurs.review`, `admin.settings.manage`, `admin.taxonomy.manage`, `admin.roles.manage`, `admin.audit.view`, `admin.observability.view|manage`, `admin.communications.manage`, `admin.notifications.view`, `admin.vitrine.manage`, `admin.promo.manage`, `admin.ai.manage`, `admin.llm.manage`, `admin.rgpd.view|manage` + sentinelle `admin.full-access`.
+
+**Variables d'environnement associées :** `SUPER_ADMIN_EMAILS` (défaut `admin@prosartisan.ci`), `TELEGRAM_BOT_TOKEN`, `TELEGRAM_ALERT_CHAT_ID`.
 
 ---
 
@@ -204,6 +236,17 @@ Le module **Missions** du Backoffice administrateur (`/admin/missions`) intègre
 3. **Évaluation Multi-Acteurs & Notation Directe Mobile :** [COMPLÉTÉ] Évaluation indépendante de l'artisan, du livreur et de la quincaillerie sur mission terminée ou commande livrée. Accès direct via bouton d'action doré « ⭐ Noter l'artisan » sur les cartes de missions terminées dans l'application mobile, notation par sous-critères (Fiabilité, Intégrité, Qualité, Réactivité), recalcul instantané du score et journalisation d'audit dans `score_ledger_entries`.
 4. **Maturité d'Expérience (10 Missions) & Règle d'Excellence :** [COMPLÉTÉ] Le Score ProsArtisan (0 à 1000) applique un coefficient de maturité $F_{\text{volume}} = \min(1.0, \frac{n}{10})$ afin d'éviter qu'un artisan atteigne 1000 points en seulement 1 ou 2 missions. L'accès aux scores d'excellence (> 800 et jusqu'à 1000) requiert impérativement un minimum de 10 missions terminées et 5 étoiles ($\ge 4.8/5$) sur au moins 3 critères distincts.
 
+### 🛡️ Administration & Backoffice
+1. **Journal d'Audit Immuable :** [COMPLÉTÉ] `admin_activity_logs` append-only pour toutes les actions sensibles (Règle d'Or 25).
+2. **Anti-Force Brute sur la Connexion Admin :** [COMPLÉTÉ] Throttle 5 tentatives / 60 s par identifiant + IP, échecs audités (Règle d'Or 26).
+3. **Pagination Serveur & Cache des KPI :** [COMPLÉTÉ] Rechargements partiels Inertia + agrégats indépendants de la page + cache invalidé par observers (Règle d'Or 27).
+4. **Exports CSV & Actions Groupées :** [COMPLÉTÉ] Exports tracés (Règle d'Or 28) et revue KYC / statut de compte en lot (Règle d'Or 29).
+5. **Permissions Fines & Super Admin Protégé :** [COMPLÉTÉ] Capacités `admin.*`, table pivot, Gates, super admins inconditionnels (Règle d'Or 24).
+6. **Panneau de Santé & Alerte Telegram :** [COMPLÉTÉ] Jobs KO, webhooks paiement, fraude GPS, seuil Référent + tâche `admin:health-check` (Règle d'Or 31).
+7. **Usurpation de Session :** [COMPLÉTÉ] « Se connecter en tant que » un utilisateur non-admin avec bandeau de retour et audit (Règle d'Or 32). *À étendre :* variante « jeton Sanctum temporaire » pour le support de l'application mobile.
+
 ### ⚖️ Conformité, Confidentialité & RGPD / Loi CI n° 2013-450
 1. **Gestion du Consentement des Cookies Web :** [COMPLÉTÉ] Bandeau de consentement interactif et modale de personnalisation granulaire (Essentiels, Analytiques, Préférences) sur le front office web, mémorisation du choix en stockage local et modification permanente via le footer.
 2. **Acceptation et Consultation des CGU / Confidentialité :** [COMPLÉTÉ] Traçabilité de l'acceptation initiale en base de données (`cgu_accepted_at`, `privacy_policy_accepted_at`) et consultation permanente de la politique de confidentialité et des CGU sur web et mobile.
+3. **Droit d'Accès, de Portabilité et à l'Effacement (Backoffice) :** [COMPLÉTÉ] L'administrateur habilité (`admin.rgpd.view` / `admin.rgpd.manage`) consulte la vue consolidée des données personnelles d'un utilisateur, l'exporte au format JSON (portabilité) et procède à une anonymisation irréversible et tracée (`anonymized_at`, `anonymized_by`) qui expurge toutes les données identifiantes tout en conservant la ligne de compte pour l'intégrité comptable et l'audit. L'horodatage d'acceptation des CGU est affiché par compte.
+4. **Journal d'Audit des Actions Sensibles :** [COMPLÉTÉ] Table append-only `admin_activity_logs` traçant acteur, IP, user-agent, sujet et contexte JSON de chaque action sensible du backoffice (voir Règle d'Or 25), consultable et filtrable depuis l'onglet « Journal d'audit ».
