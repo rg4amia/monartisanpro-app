@@ -3,8 +3,10 @@
 namespace Database\Seeders;
 
 use App\Models\Permission;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class PermissionSeeder extends Seeder
 {
@@ -142,5 +144,35 @@ class PermissionSeeder extends Seeder
                 ]);
             }
         }
+
+        $this->grantFullAccessToAdmins();
+    }
+
+    /**
+     * Chantier C6/C7 — le super administrateur dispose de toutes les capacités
+     * fines du backoffice via la capacité sentinelle `admin.full-access`
+     * (couvre aussi les capacités ajoutées ultérieurement).
+     *
+     * Ignoré tant que la table pivot n'existe pas (appels précoces de ce seeder
+     * depuis les migrations de 2026-07).
+     */
+    private function grantFullAccessToAdmins(): void
+    {
+        if (! Schema::hasTable('admin_permission_user')) {
+            return;
+        }
+
+        $fullAccessId = Permission::where('name', 'admin.full-access')->value('id');
+
+        if (! $fullAccessId) {
+            return;
+        }
+
+        User::where('role', 'admin')->orderBy('id')->pluck('id')->each(function ($userId) use ($fullAccessId) {
+            DB::table('admin_permission_user')->updateOrInsert(
+                ['user_id' => $userId, 'permission_id' => $fullAccessId],
+                ['created_at' => now()],
+            );
+        });
     }
 }

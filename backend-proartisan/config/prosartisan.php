@@ -42,6 +42,13 @@ return [
         'ttl_hours' => 48,
     ],
 
+    // Super administrateurs protégés : accès total permanent au backoffice,
+    // non modifiable depuis l'onglet « Rôles & Actions » (garde-fou anti-verrouillage).
+    'super_admins' => array_values(array_filter(array_map(
+        'trim',
+        explode(',', (string) env('SUPER_ADMIN_EMAILS', 'admin@prosartisan.ci')),
+    ))),
+
     'jalon' => [
         // Délai (en heures) avant libération automatique si le client ne valide pas
         // Backlog Epic 9 — "Trigger B (Le Force-Pass)"

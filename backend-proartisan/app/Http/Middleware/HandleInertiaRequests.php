@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Http\Controllers\Admin\ImpersonationController;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -35,11 +36,17 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $user,
+                // Capacités fines du backoffice — `['*']` = accès total (Chantier C6 / P2-10).
+                'permissions' => fn () => $user && $user->role === 'admin' ? $user->adminCapabilities() : [],
+                // Usurpation de session en cours (Chantier C7).
+                'impersonating' => fn () => $request->session()->has(ImpersonationController::SESSION_KEY),
             ],
             'flash' => [
                 'error' => fn () => $request->session()->get('error'),

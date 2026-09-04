@@ -32,6 +32,24 @@
 </head>
 
 <body class="font-sans antialiased">
+    @if (session()->has('impersonator_id'))
+        @php($impersonator = \App\Models\User::find(session('impersonator_id')))
+        <div style="position:fixed;top:0;left:0;right:0;z-index:2147483647;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:12px;padding:8px 16px;background:#7d2f14;color:#fff;font-size:13px;line-height:1.4;box-shadow:0 2px 8px rgba(0,0,0,.25)">
+            <span>
+                Usurpation de session &mdash; vous consultez le compte de
+                <strong>{{ auth()->user()?->name ?? 'utilisateur' }}</strong>
+                @if ($impersonator)
+                    (initiée par {{ $impersonator->name }})
+                @endif
+            </span>
+            <form method="POST" action="{{ route('admin.stop-impersonating') }}" style="margin:0">
+                @csrf
+                <button type="submit" style="cursor:pointer;border:0;border-radius:8px;padding:5px 12px;background:#fff;color:#7d2f14;font-weight:700;font-size:12px">
+                    Revenir à mon compte
+                </button>
+            </form>
+        </div>
+    @endif
     @inertia
 </body>
 

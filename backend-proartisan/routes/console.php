@@ -1,5 +1,6 @@
 <?php
 
+use App\Console\Commands\AdminHealthCheckCommand;
 use App\Console\Commands\AutoReleaseJalonsCommand;
 use App\Console\Commands\DecayScoreCommand;
 use App\Console\Commands\DriverWatchdogCommand;
@@ -34,3 +35,10 @@ Schedule::command(DriverWatchdogCommand::class)
     ->withoutOverlapping()
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/driver-watchdog.log'));
+
+// Santé du backoffice + alerte Telegram (Chantier C7 — P2-12)
+Schedule::command(AdminHealthCheckCommand::class)
+    ->everyFifteenMinutes()
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/admin-health-check.log'));

@@ -1,286 +1,73 @@
-import { Head, Link, router, usePage, useForm } from '@inertiajs/react';
+import { Link, router, usePage, useForm } from '@inertiajs/react';
 import { useDeferredValue, useEffect, useMemo, useState } from 'react';
-import type { ReactNode } from 'react';
 
 import { cn } from '@/lib/utils';
+
 import AiDashboardPanel from './ai-dashboard-panel';
+import { useAdminAnalytics } from './hooks/useAdminAnalytics';
+import { useRowSelection } from './hooks/useRowSelection';
+import { useServerTable } from './hooks/useServerTable';
 import LlmAdminPanel from './llm-admin-panel';
+import { AuditLogsPanel } from './panels/AuditLogsPanel';
+import { CommunicationsPanel } from './panels/CommunicationsPanel';
+import { DashboardPanel } from './panels/DashboardPanel';
+import { ArtisanLedgerModal, MissionDetailModal, OrderDetailModal, TransactionDetailModal } from './panels/DetailModals';
+import { EvaluationsPanel } from './panels/EvaluationsPanel';
+import { CommunicationFormModal, PromoCodeFormModal, StatusFormModal, UserFormModal } from './panels/FormModals';
+import { KycPanel } from './panels/KycPanel';
+import { LitigesPanel } from './panels/LitigesPanel';
+import { MissionsPanel } from './panels/MissionsPanel';
+import { NotificationsPanel } from './panels/NotificationsPanel';
+import { ObservabilityPanel } from './panels/ObservabilityPanel';
+import { PersonalDataModal } from './panels/PersonalDataModal';
+import { PromoCodesPanel } from './panels/PromoCodesPanel';
+import { SettingsPanel } from './panels/SettingsPanel';
+import { TransactionsPanel } from './panels/TransactionsPanel';
+import { UsersPanel } from './panels/UsersPanel';
 import RolesPermissionsPanel from './roles-permissions-panel';
+import type {
+    AdminEvaluation,
+    AdminMission,
+    AdminNotificationItem,
+    AdminOrder,
+    AdminTab,
+    AdminTransaction,
+    AdminUser,
+    ArtisanScoreItem,
+    AuditAdminOption,
+    DashboardData,
+    DeliveryStats,
+    EvaluationStats,
+    FlashMessages,
+    FournisseurItem,
+    KycStats,
+    KycUser,
+    LitigeItem,
+    LitigeStats,
+    MissionStats,
+    NavigationGroup,
+    ObservabilitySnapshot,
+    Paginated,
+    PaginatedAuditLogs,
+    SectorItem,
+    SettingItem,
+    PromoCodeItem,
+    ScoreLedgerEntryItem,
+    ThemeMode,
+    TransactionStats,
+    UserStats,
+} from './shared';
+import {
+    AdminShell,
+    can,
+    canOpenTab,
+    money,
+    numberFormat,
+    tabMeta,
+    tabRoutes,
+    useConfirm,
+} from './shared';
 import VitrinePanel from './vitrine-panel';
-
-type AdminTab = 'dashboard' | 'kyc' | 'missions' | 'litiges' | 'notifications' | 'users' | 'transactions' | 'settings' | 'llm_admin' | 'roles_permissions' | 'evaluations' | 'ai_dashboard' | 'communications' | 'promo_codes' | 'vitrine';
-type ThemeMode = 'light' | 'dark';
-type Tone = 'amber' | 'green' | 'rose' | 'blue' | 'slate' | 'purple';
-
-export interface PromoCodeItem {
-    id: number;
-    code: string;
-    description?: string | null;
-    discount_type: 'percent' | 'fixed';
-    discount_value: number;
-    min_order_amount: number;
-    max_discount_amount?: number | null;
-    usage_limit?: number | null;
-    used_count: number;
-    starts_at?: string | null;
-    expires_at?: string | null;
-    is_active: boolean;
-    created_at: string;
-}
-
-interface DashboardData {
-    users_total: number;
-    artisans_actifs: number;
-    clients_actifs: number;
-    fournisseurs_agrees: number;
-    missions_en_cours: number;
-    missions_en_litige: number;
-    litiges_ouverts: number;
-    kyc_en_attente: number;
-    referent_required_open: number;
-    recent_fraud_alerts: number;
-    volume_transactions_24h: number;
-}
-
-interface KycDocument {
-    id: number;
-    type: 'cni' | 'selfie';
-    file_url: string;
-}
-
-interface KycUser {
-    id: number;
-    name: string;
-    phone: string;
-    role: 'client' | 'artisan' | 'fournisseur' | 'admin' | 'referent';
-    created_at: string;
-    kyc_documents: KycDocument[];
-}
-
-interface LitigeActor {
-    name: string;
-}
-
-interface LitigeMission {
-    montant_total: number;
-    client?: LitigeActor;
-    artisan?: LitigeActor;
-}
-
-interface LitigeItem {
-    id: number;
-    mission_id: number;
-    description: string;
-    statut: 'ouvert' | 'en_cours' | 'resolu';
-    decision: 'client' | 'artisan' | 'gel' | null;
-    created_at: string;
-    mission: LitigeMission;
-    resolution_payload?: {
-        invoice_path?: string;
-        [key: string]: any;
-    } | null;
-}
-
-interface AdminMissionParty {
-    name: string;
-    phone?: string;
-}
-
-interface AdminMission {
-    id: number;
-    description: string;
-    status: string;
-    gemini_category?: string | null;
-    gemini_urgency?: string | null;
-    gemini_estimation_min?: number | null;
-    gemini_estimation_max?: number | null;
-    montant_total?: number | null;
-    montant_materiaux?: number | null;
-    montant_mo?: number | null;
-    ratio_materiaux?: string | number | null;
-    client_address?: string | null;
-    created_at: string;
-    client?: AdminMissionParty | null;
-    artisan?: AdminMissionParty | null;
-    jalons?: any[];
-    jcodes?: any[];
-    transactions?: any[];
-    litiges?: any[];
-    evaluations?: any[];
-}
-
-interface AdminOrderItem {
-    id: number;
-    order_id: number;
-    supplier_product_id: number;
-    quantity: number;
-    unit_price: number;
-    product?: {
-        id: number;
-        name: string;
-        price: number;
-        unit?: string;
-    } | null;
-}
-
-interface AdminOrder {
-    id: number;
-    client_id: number;
-    supplier_id: number;
-    driver_id?: number | null;
-    delivery_mode: string;
-    status: string;
-    subtotal: number;
-    delivery_cost: number;
-    platform_fee: number;
-    total_amount: number;
-    pickup_code: string;
-    reception_code: string;
-    vehicle_class?: string | null;
-    surge_multiplier?: number | null;
-    delivered_at?: string | null;
-    pickup_photo_url?: string | null;
-    delivery_photo_url?: string | null;
-    waiting_time_minutes?: number | null;
-    dispute_reason?: string | null;
-    dispute_opened_at?: string | null;
-    created_at: string;
-    client?: {
-        id: number;
-        name: string;
-        phone: string;
-        role: string;
-    } | null;
-    supplier?: {
-        id: number;
-        name: string;
-        phone: string;
-        role: string;
-        fournisseur_agree?: {
-            id: number;
-            nom_boutique: string;
-            statut: string;
-        } | null;
-    } | null;
-    driver?: {
-        id: number;
-        name: string;
-        phone: string;
-        role: string;
-    } | null;
-    items?: AdminOrderItem[];
-    transactions?: any[];
-}
-
-interface FournisseurUser {
-    name: string;
-    phone: string;
-}
-
-interface FournisseurItem {
-    id: number;
-    nom_boutique: string;
-    created_at: string;
-    user?: FournisseurUser;
-}
-
-interface AdminUser {
-    id: number;
-    name: string;
-    email?: string | null;
-    phone: string;
-    role: string;
-    kyc_status: string;
-    score_prosartisan: number;
-    created_at: string;
-    missions_client_count: number;
-    missions_artisan_count: number;
-    account_status?: string | null;
-    account_status_reason?: string | null;
-    score_frozen?: boolean;
-    device_fingerprint?: string | null;
-}
-
-interface AdminTransaction {
-    id: number;
-    type: string;
-    montant: number;
-    provider: string;
-    statut: string;
-    wallet_source: string;
-    wallet_dest: string;
-    created_at: string;
-    reference_externe?: string | null;
-    user?: {
-        name: string;
-        phone?: string;
-    };
-    mission?: {
-        id: number;
-        description: string;
-    };
-}
-
-interface AdminEvaluation {
-    id: number;
-    mission_id: number;
-    evaluateur_id: number;
-    evalue_id: number;
-    note: number;
-    fiabilite: number;
-    integrite: number;
-    qualite: number;
-    reactivite: number;
-    commentaire?: string | null;
-    created_at: string;
-    mission?: {
-        id: number;
-        description: string;
-    } | null;
-    evaluateur?: {
-        id: number;
-        name: string;
-        phone: string;
-    } | null;
-    evalue?: {
-        id: number;
-        name: string;
-        phone: string;
-        score_prosartisan: number;
-        score_frozen: boolean;
-    } | null;
-}
-
-interface ArtisanScoreItem {
-    id: number;
-    name: string;
-    phone: string;
-    score_prosartisan: number;
-    score_frozen: boolean;
-    evaluations_recues_count: number;
-    evaluations_recues_avg_fiabilite?: number | string | null;
-    evaluations_recues_avg_integrite?: number | string | null;
-    evaluations_recues_avg_qualite?: number | string | null;
-    evaluations_recues_avg_reactivite?: number | string | null;
-}
-
-interface ScoreLedgerEntryItem {
-    id: number;
-    user_id: number;
-    event_type: string;
-    points: number;
-    credibility_factor: number;
-    description: string;
-    created_at: string;
-    user?: {
-        name: string;
-        phone: string;
-    } | null;
-    mission?: {
-        id: number;
-        description: string;
-    } | null;
-}
 
 interface AuthUser {
     email?: string | null;
@@ -289,49 +76,12 @@ interface AuthUser {
     role?: string | null;
 }
 
-interface ChartPoint {
-    label: string;
-    value: number;
-}
-
-interface TimelinePoint {
-    date: string;
-    label: string;
-}
-
-interface DualSeries {
-    color: string;
-    label: string;
-    points: ChartPoint[];
-}
-
-interface MetricItem {
-    description: string;
-    title: string;
-    tone: Tone;
-    value: string;
-}
-
-interface NavigationItem {
-    count?: number;
-    id: AdminTab;
-    label: string;
-}
-
-interface NavigationGroup {
-    items: NavigationItem[];
-    label: string;
-}
-
-interface FlashMessages {
-    error?: string | null;
-    success?: string | null;
-}
-
 interface AdminPageProps {
     [key: string]: unknown;
     auth: {
         user?: AuthUser | null;
+        // Capacités fines du backoffice — `['*']` = accès total (Chantier C6 / P2-10).
+        permissions?: string[];
     };
     dashboard: DashboardData;
     errors: Record<string, string>;
@@ -355,24 +105,44 @@ interface AdminPageProps {
     evaluationsList: AdminEvaluation[];
     artisansScores: ArtisanScoreItem[];
     scoreLedger: ScoreLedgerEntryItem[];
+    navBadges?: {
+        transactions_en_attente?: number;
+        communications_publiees?: number;
+        promo_codes_actifs?: number;
+        contact_messages_nouveaux?: number;
+    };
     financialKpis?: any;
     promoCodes?: PromoCodeItem[];
-    settingsList?: Array<{
-        id: number;
-        key: string;
-        value: string;
-        type: string;
-        group: string;
-        label: string;
-        description: string;
-    }>;
-    sectors?: Array<{
-        id: number;
-        name: string;
-        trades?: Array<{ id: number; sector_id: number; name: string }>;
-    }>;
+    settingsList?: SettingItem[];
+    sectors?: SectorItem[];
     rolesPermissions?: Record<string, string[]>;
     allPermissions?: Array<{ id: number; name: string; description: string; category: string }>;
+    // Capacités fines du backoffice (Chantier C6 / P2-10).
+    adminCapabilityCatalog?: Record<string, Record<string, string>>;
+    admins?: Array<{ id: number; name: string; email: string | null; phone: string | null; capabilities: string[]; protected: boolean }>;
+    // Santé & observabilité (Chantier C7 / P2-12).
+    observability?: ObservabilitySnapshot;
+    auditLogs?: PaginatedAuditLogs;
+    auditActions?: string[];
+    auditAdmins?: AuditAdminOption[];
+    usersPage?: Paginated<AdminUser>;
+    userStats?: UserStats;
+    pendingFournisseurs?: FournisseurItem[];
+    topArtisans?: AdminUser[];
+    transactionsPage?: Paginated<AdminTransaction>;
+    transactionStats?: TransactionStats;
+    litigesPage?: Paginated<LitigeItem>;
+    litigeStats?: LitigeStats;
+    evaluationsPage?: Paginated<AdminEvaluation>;
+    artisansScoresPage?: Paginated<ArtisanScoreItem>;
+    evaluationStats?: EvaluationStats;
+    missionsPage?: Paginated<AdminMission>;
+    ordersPage?: Paginated<AdminOrder>;
+    missionStats?: MissionStats;
+    deliveryStats?: DeliveryStats;
+    kycUsersPage?: Paginated<KycUser>;
+    pendingFournisseursList?: FournisseurItem[];
+    kycStats?: KycStats;
     adminNotifications?: AdminNotificationItem[];
     allNotifications?: PaginatedNotifications;
     communications?: Array<{
@@ -399,20 +169,6 @@ interface AdminPageProps {
     contactMessages?: any[];
 }
 
-interface AdminNotificationItem {
-    id: number | string;
-    user_id?: number | null;
-    type: string;
-    title: string;
-    body: string;
-    data_json?: Record<string, any> | null;
-    read_at?: string | null;
-    created_at: string;
-    updated_at?: string;
-    action_url?: string;
-    action_label?: string;
-}
-
 interface AuditNotificationItem extends AdminNotificationItem {
     user?: {
         id: number;
@@ -431,253 +187,6 @@ interface PaginatedNotifications {
     next_page_url: string | null;
     prev_page_url: string | null;
     links: Array<{ url: string | null; label: string; active: boolean }>;
-}
-
-const tabRoutes: Record<AdminTab, string> = {
-    dashboard: '/admin/dashboard',
-    kyc: '/admin/kyc',
-    missions: '/admin/missions',
-    litiges: '/admin/litiges',
-    users: '/admin/users',
-    transactions: '/admin/transactions',
-    settings: '/admin/settings',
-    llm_admin: '/admin/llm-admin',
-    ai_dashboard: '/admin/ai-dashboard',
-    roles_permissions: '/admin/roles-permissions',
-    evaluations: '/admin/evaluations',
-    communications: '/admin/communications',
-    notifications: '/admin/notifications',
-    promo_codes: '/admin/promo-codes',
-    vitrine: '/admin/vitrine',
-};
-
-const tabMeta: Record<AdminTab, { description: string; label: string; section: string }> = {
-    dashboard: {
-        label: "Vue d'ensemble",
-        section: 'PILOTAGE',
-        description: 'Lecture rapide de la santé opérationnelle, financière et terrain de ProsArtisan.',
-    },
-    promo_codes: {
-        label: 'Codes Promo',
-        section: 'MARKETING',
-        description: 'Gestion des campagnes promotionnelles, remises en pourcentage ou en montant fixe et plafonds.',
-    },
-    kyc: {
-        label: 'KYC & Vérifications',
-        section: 'VALIDATIONS',
-        description: "Traitez les dossiers sensibles avant qu'ils ne bloquent les missions et paiements.",
-    },
-    missions: {
-        label: 'Missions',
-        section: 'OPÉRATIONS',
-        description: 'Suivi du pipe client, matching terrain et supervision des interventions en cours.',
-    },
-    litiges: {
-        label: 'Litiges',
-        section: 'ARBITRAGE',
-        description: 'Décidez vite sur les dossiers chauds et les missions au-delà du seuil Référent.',
-    },
-    users: {
-        label: 'Utilisateurs',
-        section: 'COMMUNAUTÉ',
-        description: 'Vue consolidée des clients, artisans, fournisseurs et comptes à surveiller.',
-    },
-    transactions: {
-        label: 'Transactions',
-        section: 'FINANCE',
-        description: 'Lecture claire des flux Wave, Orange Money et des libérations de fonds.',
-    },
-    settings: {
-        label: 'Paramètres',
-        section: 'PLATEFORME',
-        description: "Règles métier, configuration d'accès et garde-fous du backoffice.",
-    },
-    roles_permissions: {
-        label: 'Rôles & Actions',
-        section: 'PLATEFORME',
-        description: 'Attribuez et révoquez dynamiquement les actions autorisées pour chaque rôle.',
-    },
-    llm_admin: {
-        label: 'Administration LLM ProsArtisan',
-        section: 'INTELLIGENCE',
-        description: "Supervision de l'ingestion sémantique des documents et du pipeline RAG local.",
-    },
-    ai_dashboard: {
-        label: 'Suivi & Coûts IA',
-        section: 'INTELLIGENCE',
-        description: 'Visualisation de l\'utilisation de l\'IA, des jetons consommés et contrôle des limites de coûts.',
-    },
-    evaluations: {
-        label: 'Évaluations & Scores',
-        section: 'QUALITÉ',
-        description: 'Suivi de la réputation des artisans, calcul du score ProsArtisan et historiques des évaluations.',
-    },
-    communications: {
-        label: 'Communications',
-        section: 'COMMUNICATION',
-        description: 'Gérez les annonces et astuces "Le saviez-vous ?" diffusées aux utilisateurs de la plateforme.',
-    },
-    notifications: {
-        label: 'Notifications & Alertes',
-        section: 'COMMUNICATION',
-        description: 'Centre de notifications système, alertes KYC, litiges et anomalies de sécurité de la plateforme.',
-    },
-    vitrine: {
-        label: 'CMS Vitrine & Contacts',
-        section: 'COMMUNICATION',
-        description: 'Administration et gestion du contenu éditorial de la vitrine ProsArtisan et des demandes de contact.',
-    },
-};
-
-const searchPlaceholders: Record<AdminTab, string> = {
-    dashboard: 'Recherche rapide sur les signaux du jour...',
-    kyc: 'Rechercher un dossier KYC, un numéro ou un rôle...',
-    missions: 'Rechercher une mission, une catégorie ou un intervenant...',
-    litiges: 'Rechercher un litige ou une mission...',
-    users: 'Nom, téléphone, ID ou rôle...',
-    transactions: 'Type, provider, statut ou bénéficiaire...',
-    settings: 'Rechercher une règle ou un paramètre...',
-    roles_permissions: 'Rechercher une action ou un rôle...',
-    llm_admin: 'Rechercher une règle ou un document...',
-    ai_dashboard: 'Rechercher un log ou un modèle...',
-    evaluations: 'Rechercher une évaluation, un artisan ou un commentaire...',
-    communications: 'Rechercher une communication, un titre ou une cible...',
-    notifications: 'Rechercher une notification ou alerte...',
-    promo_codes: 'Rechercher un code promo, une description ou un type...',
-    vitrine: 'Rechercher un slide, article, vidéo ou formation...',
-};
-
-const quickDockTabs: AdminTab[] = ['dashboard', 'missions', 'users', 'settings'];
-const numberFormat = new Intl.NumberFormat('fr-FR');
-
-const money = (amount: number): string => `${numberFormat.format(amount)} FCFA`;
-
-const shortDate = (value: string): string =>
-    new Date(value).toLocaleDateString('fr-FR', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-    });
-
-const fullDate = (value: Date): string =>
-    value.toLocaleDateString('fr-FR', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-    });
-
-const compactDate = (value: Date): string =>
-    value.toLocaleDateString('fr-FR', {
-        day: '2-digit',
-        month: '2-digit',
-    });
-
-const roleLabels: Record<string, string> = {
-    admin: 'Admin',
-    artisan: 'Artisan',
-    client: 'Client',
-    fournisseur: 'Fournisseur',
-    referent: 'Référent',
-    livreur: 'Livreur',
-};
-
-const kycStatusLabels: Record<string, string> = {
-    actif: 'Actif',
-    en_attente: 'En attente',
-    rejete: 'Rejeté',
-};
-
-const missionStatusLabels: Record<string, string> = {
-    annulee: 'Annulée',
-    en_attente: 'En attente',
-    en_cours: 'En cours',
-    financee: 'Financée',
-    litige: 'Litige',
-    terminee: 'Terminée',
-};
-
-const transactionTypeLabels: Record<string, string> = {
-    acompte: 'Acompte',
-    credit: 'Crédit',
-    liberation_jalon: 'Libération jalon',
-    paiement_fournisseur: 'Paiement fournisseur',
-    remboursement: 'Remboursement',
-};
-
-const providerLabels: Record<string, string> = {
-    orange_money: 'Orange Money',
-    virement_bancaire: 'Virement',
-    wave: 'Wave',
-};
-
-const litigeDecisionLabels: Record<string, string> = {
-    artisan: 'Payer artisan',
-    client: 'Rembourser client',
-    gel: 'Geler et envoyer Référent',
-};
-
-function toneBadgeClasses(tone: Tone): string {
-    const classes: Record<Tone, string> = {
-        amber: 'border-[#efcf95] bg-[#f8eed4] text-[#b77918]',
-        blue: 'border-[#bcd4f6] bg-[#edf5ff] text-[#2d6aa6]',
-        green: 'border-[#bfe0c8] bg-[#eef8f0] text-[#24734f]',
-        rose: 'border-[#f2c1ba] bg-[#fff0ed] text-[#c55e50]',
-        slate: 'border-[#dfd4c4] bg-[#f4eee6] text-[#746251]',
-        purple: 'border-[#d8b4fe] bg-[#f3e8ff] text-[#7e22ce]',
-    };
-
-    return classes[tone];
-}
-
-function toneIconClasses(tone: Tone): string {
-    const classes: Record<Tone, string> = {
-        amber: 'bg-[#f7e3bc] text-[#b77918]',
-        blue: 'bg-[#dcebfb] text-[#2d6aa6]',
-        green: 'bg-[#dff1e4] text-[#24734f]',
-        rose: 'bg-[#fbe0da] text-[#c55e50]',
-        slate: 'bg-[#efe6da] text-[#746251]',
-        purple: 'bg-[#f3e8ff] text-[#7e22ce]',
-    };
-
-    return classes[tone];
-}
-
-function normalizeSearch(parts: Array<number | string | null | undefined>): string {
-    return parts
-        .filter((part): part is number | string => part !== null && part !== undefined)
-        .join(' ')
-        .toLowerCase();
-}
-
-function getInitials(value: string | null | undefined): string {
-    if (!value) return 'PA';
-    const initials = value
-        .split(/\s+/)
-        .filter(Boolean)
-        .slice(0, 2)
-        .map((part) => part[0]?.toUpperCase())
-        .join('');
-
-    return initials || 'PA';
-}
-
-function buildTimeline(days: number, now: number): TimelinePoint[] {
-    const today = new Date(now);
-
-    return Array.from({ length: days }, (_, index) => {
-        const date = new Date(today);
-        date.setDate(today.getDate() - (days - 1 - index));
-
-        return {
-            date: date.toISOString().slice(0, 10),
-            label: compactDate(date),
-        };
-    });
-}
-
-function sumAmount(items: AdminTransaction[]): number {
-    return items.reduce((sum, item) => sum + item.montant, 0);
 }
 
 export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
@@ -712,6 +221,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         evaluationsList = [] as AdminEvaluation[],
         artisansScores = [] as ArtisanScoreItem[],
         scoreLedger = [] as ScoreLedgerEntryItem[],
+        navBadges = {} as NonNullable<AdminPageProps['navBadges']>,
         financialKpis = {} as any,
         promoCodes = [] as PromoCodeItem[],
         communications = [],
@@ -720,6 +230,27 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         sectors = [],
         rolesPermissions = {},
         allPermissions = [],
+        auditLogs = undefined,
+        auditActions = [],
+        auditAdmins = [],
+        usersPage = undefined,
+        userStats = { total: 0, artisans_actifs: 0, clients_actifs: 0, fournisseurs_agrees: 0 },
+        pendingFournisseurs = [],
+        topArtisans: topArtisansProp = [],
+        transactionsPage = undefined,
+        transactionStats = { pending: 0, failed: 0, confirmed: 0, volume_24h: 0, escrow: 0, released: 0 },
+        litigesPage = undefined,
+        litigeStats = { open: 0, resolved: 0, high_risk: 0, missions_disputed: 0 },
+        evaluationsPage = undefined,
+        artisansScoresPage = undefined,
+        evaluationStats = { evaluations_total: 0, note_moyenne: 0, artisans_suivis: 0, scores_geles: 0 },
+        missionsPage = undefined,
+        ordersPage = undefined,
+        missionStats = { en_cours: 0, en_litige: 0, referent_required: 0, enrichies: 0 },
+        deliveryStats = { total: 0, in_transit: 0, awaiting_driver: 0, delivered: 0, by_status: {} },
+        kycUsersPage = undefined,
+        pendingFournisseursList = [],
+        kycStats = { pending: 0, artisans_pending: 0, fournisseurs_pending: 0, rejected: 0, registration_trend: [] },
         vitrineSlides = [],
         vitrineArtisanDuMois = [],
         vitrineArticles = [],
@@ -729,10 +260,21 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         vitrinePopups = [],
         vitrineSettings = [],
         contactMessages = [],
+        observability = undefined,
     } = (pageProps || {}) as Partial<AdminPageProps>;
 
+    // Capacités fines du backoffice (Chantier C6 / P2-10). `['*']` = accès total.
+    const permissions = auth?.permissions ?? [];
+    const canReviewKyc = can(permissions, 'admin.kyc.review');
+    const canManageUsers = can(permissions, 'admin.users.manage');
+    const canDeleteUsers = can(permissions, 'admin.users.delete');
+    const canArbitrateLitiges = can(permissions, 'admin.litiges.arbitrate');
+    const canViewRgpd = can(permissions, 'admin.rgpd.view');
+    const canManageRgpd = can(permissions, 'admin.rgpd.manage');
+    const canManageObservability = can(permissions, 'admin.observability.manage');
+    const canImpersonate = can(permissions, 'admin.users.impersonate');
+
     const [missionSubTab, setMissionSubTab] = useState<'chantiers' | 'livraisons'>('chantiers');
-    const [deliveryStatusFilter, setDeliveryStatusFilter] = useState<string>('all');
     const [selectedOrderForDetails, setSelectedOrderForDetails] = useState<AdminOrder | null>(null);
 
     const [notificationsOpen, setNotificationsOpen] = useState<boolean>(false);
@@ -852,6 +394,147 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         });
     };
 
+    // Journal d'audit (Chantier C3 / P0-4) — filtres serveur via rechargement partiel.
+    const auditParams = new URLSearchParams(window.location.search);
+    const [searchAudit, setSearchAudit] = useState(auditParams.get('search_audit') || '');
+    const [actionAudit, setActionAudit] = useState(auditParams.get('action_audit') || '');
+    const [adminAudit, setAdminAudit] = useState(auditParams.get('admin_audit') || '');
+    const [dateFromAudit, setDateFromAudit] = useState(auditParams.get('date_from_audit') || '');
+    const [dateToAudit, setDateToAudit] = useState(auditParams.get('date_to_audit') || '');
+
+    const auditOnly = { only: ['auditLogs', 'auditActions', 'auditAdmins'], preserveState: true, preserveScroll: true };
+
+    const handleFilterAudit = (e: React.FormEvent) => {
+        e.preventDefault();
+        router.get('/admin/audit-logs', {
+            search_audit: searchAudit,
+            action_audit: actionAudit,
+            admin_audit: adminAudit,
+            date_from_audit: dateFromAudit,
+            date_to_audit: dateToAudit,
+        }, auditOnly);
+    };
+
+    const handleResetAudit = () => {
+        setSearchAudit('');
+        setActionAudit('');
+        setAdminAudit('');
+        setDateFromAudit('');
+        setDateToAudit('');
+        router.get('/admin/audit-logs', {}, auditOnly);
+    };
+
+    // Utilisateurs (Chantier C4 / P1-6) — liste paginée + filtres serveur.
+    const usersTable = useServerTable({
+        path: '/admin/users',
+        only: ['usersPage'],
+        initial: { search_users: '', role_users: '', kyc_users: '' },
+        storageKey: 'users',
+    });
+
+    // Transactions (Chantier C4 / P1-6) — journal financier paginé + filtres serveur.
+    const txTable = useServerTable({
+        path: '/admin/transactions',
+        only: ['transactionsPage'],
+        initial: { search_tx: '', status_tx: '', type_tx: '', provider_tx: '' },
+        storageKey: 'transactions',
+    });
+
+    // Litiges (Chantier C4 / P1-6) — liste paginée + filtres serveur.
+    const litigesTable = useServerTable({
+        path: '/admin/litiges',
+        only: ['litigesPage', 'litigeStats'],
+        initial: { search_litige: '', statut_litige: '' },
+        storageKey: 'litiges',
+    });
+
+    // Évaluations & scores (Chantier C4 / P1-6) — deux listes paginées + recherche.
+    const evalTable = useServerTable({
+        path: '/admin/evaluations',
+        only: ['evaluationsPage', 'artisansScoresPage'],
+        initial: { search_eval: '', search_score: '' },
+        storageKey: 'evaluations',
+    });
+
+    // Missions (Chantier C4 / P1-6) — chantiers + livraisons paginés + filtres serveur.
+    const missionsTable = useServerTable({
+        path: '/admin/missions',
+        only: ['missionsPage', 'ordersPage', 'missionStats', 'deliveryStats'],
+        initial: { search_mission: '', search_order: '', status_order: '' },
+        storageKey: 'missions',
+    });
+
+    // KYC (Chantier C4 / P1-6) — file paginée + recherche serveur.
+    const kycTable = useServerTable({
+        path: '/admin/kyc',
+        only: ['kycUsersPage', 'kycStats'],
+        initial: { search_kyc: '' },
+        storageKey: 'kyc',
+    });
+
+    // Confirmations destructives normalisées + accessibles (Chantier C7 / P2-13).
+    const { confirm: askConfirm, dialog: confirmDialog } = useConfirm();
+
+    // Actions groupées (Chantier C5 / P1-9).
+    const kycSelection = useRowSelection();
+    const userSelection = useRowSelection();
+
+    const handleBulkKyc = async (decision: 'approuve' | 'rejete') => {
+        if (kycSelection.count === 0 || !canReviewKyc) return;
+        let rejection_reason = '';
+        if (decision === 'rejete') {
+            const answer = await askConfirm({
+                title: `Rejeter ${kycSelection.count} dossier(s) KYC`,
+                tone: 'danger',
+                confirmLabel: 'Rejeter',
+                promptLabel: 'Motif de rejet (10 caractères min.)',
+                promptMinLength: 10,
+            });
+            if (answer === false) return;
+            rejection_reason = String(answer);
+        } else {
+            const ok = await askConfirm({
+                title: `Approuver ${kycSelection.count} dossier(s) KYC ?`,
+                confirmLabel: 'Approuver',
+            });
+            if (!ok) return;
+        }
+        setActionLoading(true);
+        router.post('/admin/kyc/bulk-review', { user_ids: kycSelection.ids, decision, rejection_reason }, {
+            preserveScroll: true,
+            onSuccess: () => kycSelection.clear(),
+            onFinish: () => setActionLoading(false),
+        });
+    };
+
+    const handleBulkUserStatus = async (account_status: 'actif' | 'suspendu') => {
+        if (userSelection.count === 0 || !canManageUsers) return;
+        let account_status_reason = '';
+        if (account_status === 'suspendu') {
+            const answer = await askConfirm({
+                title: `Suspendre ${userSelection.count} compte(s)`,
+                tone: 'danger',
+                confirmLabel: 'Suspendre',
+                promptLabel: 'Motif de suspension (optionnel)',
+                promptOptional: true,
+            });
+            if (answer === false) return;
+            account_status_reason = String(answer);
+        } else {
+            const ok = await askConfirm({
+                title: `Réactiver ${userSelection.count} compte(s) ?`,
+                confirmLabel: 'Réactiver',
+            });
+            if (!ok) return;
+        }
+        setActionLoading(true);
+        router.post('/admin/users/bulk-status', { user_ids: userSelection.ids, account_status, account_status_reason }, {
+            preserveScroll: true,
+            onSuccess: () => userSelection.clear(),
+            onFinish: () => setActionLoading(false),
+        });
+    };
+
     const [themeMode, setThemeMode] = useState<ThemeMode>(() => {
         if (typeof window !== 'undefined' && window.localStorage) {
             return (localStorage.getItem('prosartisan_admin_theme') as ThemeMode) || 'light';
@@ -917,6 +600,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
     const [statusTargetUser, setStatusTargetUser] = useState<AdminUser | null>(null);
     const [selectedMissionForDetails, setSelectedMissionForDetails] = useState<AdminMission | null>(null);
     const [selectedTransactionForDetails, setSelectedTransactionForDetails] = useState<AdminTransaction | null>(null);
+    const [selectedUserForRgpd, setSelectedUserForRgpd] = useState<AdminUser | null>(null);
 
     const [commModalOpen, setCommModalOpen] = useState<boolean>(false);
     const [editingComm, setEditingComm] = useState<any>(null);
@@ -1055,17 +739,82 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         });
     };
 
-    const handleDeleteUser = (user: AdminUser): void => {
+    const handleDeleteUser = async (user: AdminUser): Promise<void> => {
+        if (!canDeleteUsers) return;
         if (auth?.user?.phone === user.phone || auth?.user?.email === user.email) {
-            window.alert('Vous ne pouvez pas supprimer votre propre compte.');
+            await askConfirm({
+                title: 'Action impossible',
+                message: 'Vous ne pouvez pas supprimer votre propre compte.',
+                confirmLabel: 'Compris',
+                cancelLabel: 'Fermer',
+            });
             return;
         }
 
-        if (window.confirm(`Êtes-vous sûr de vouloir supprimer définitivement l'utilisateur ${user.name} ? Cette action est irréversible.`)) {
-            router.delete(`/admin/users/${user.id}`, {
-                preserveScroll: true,
-            });
-        }
+        const ok = await askConfirm({
+            title: `Supprimer ${user.name} ?`,
+            message: 'Cette action est irréversible.',
+            tone: 'danger',
+            confirmLabel: 'Supprimer',
+        });
+        if (!ok) return;
+        router.delete(`/admin/users/${user.id}`, { preserveScroll: true });
+    };
+
+    const handleImpersonate = async (user: AdminUser): Promise<void> => {
+        if (!canImpersonate) return;
+        const ok = await askConfirm({
+            title: `Se connecter en tant que ${user.name} ?`,
+            message: 'Votre session basculera sur ce compte. Un bandeau permettra de revenir à votre compte administrateur.',
+            confirmLabel: 'Usurper la session',
+        });
+        if (!ok) return;
+        router.post(`/admin/users/${user.id}/impersonate`);
+    };
+
+    const handleAnonymizeUser = async (user: AdminUser): Promise<void> => {
+        if (!canManageRgpd) return;
+        const ok = await askConfirm({
+            title: `Anonymiser le compte #${user.id}`,
+            message: `Anonymisation RGPD irréversible de ${user.name}. Toutes les données personnelles seront expurgées.`,
+            tone: 'danger',
+            confirmLabel: 'Anonymiser',
+            requireText: 'ANONYMISER',
+        });
+        if (!ok) return;
+        setActionLoading(true);
+        router.post(`/admin/users/${user.id}/anonymize`, {}, {
+            preserveScroll: true,
+            onSuccess: () => setSelectedUserForRgpd(null),
+            onFinish: () => setActionLoading(false),
+        });
+    };
+
+    const handleRetryFailedJobs = async (): Promise<void> => {
+        if (!canManageObservability) return;
+        const ok = await askConfirm({ title: 'Relancer tous les jobs en échec ?', confirmLabel: 'Relancer' });
+        if (!ok) return;
+        setActionLoading(true);
+        router.post('/admin/observability/retry-failed-jobs', {}, {
+            preserveScroll: true,
+            onFinish: () => setActionLoading(false),
+        });
+    };
+
+    const handleFlushFailedJobs = async (): Promise<void> => {
+        if (!canManageObservability) return;
+        const ok = await askConfirm({
+            title: 'Purger la file des jobs en échec ?',
+            message: 'Les jobs en échec seront définitivement supprimés.',
+            tone: 'danger',
+            confirmLabel: 'Purger',
+        });
+        if (!ok) return;
+        setActionLoading(true);
+        router.post('/admin/observability/flush-failed-jobs', {}, {
+            preserveScroll: true,
+            onFinish: () => setActionLoading(false),
+        });
     };
 
     const openCreateCommModal = (): void => {
@@ -1223,302 +972,22 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         localStorage.setItem('prosartisan_admin_theme', themeMode);
     }, [themeMode]);
 
-    const analytics = useMemo(() => {
-        const filteredKyc = kycUsers.filter((user) =>
-            deferredSearch === ''
-                ? true
-                : normalizeSearch([user.id, user.name, user.phone, user.role, user.created_at]).includes(deferredSearch),
-        );
-
-        const filteredMissions = missions.filter((mission) =>
-            deferredSearch === ''
-                ? true
-                : normalizeSearch([
-                    mission.id,
-                    mission.description,
-                    mission.status,
-                    mission.gemini_category,
-                    mission.gemini_urgency,
-                    mission.client?.name,
-                    mission.artisan?.name,
-                    mission.client_address,
-                ]).includes(deferredSearch),
-        );
-
-        const filteredLitiges = litiges.filter((litige) =>
-            deferredSearch === ''
-                ? true
-                : normalizeSearch([
-                    litige.id,
-                    litige.mission_id,
-                    litige.description,
-                    litige.statut,
-                    litige.decision,
-                    litige.mission.client?.name,
-                    litige.mission.artisan?.name,
-                ]).includes(deferredSearch),
-        );
-
-        const filteredUsers = users.filter((user) =>
-            deferredSearch === ''
-                ? true
-                : normalizeSearch([user.id, user.name, user.email, user.phone, user.role, user.kyc_status, user.score_prosartisan]).includes(
-                    deferredSearch,
-                ),
-        );
-
-        const filteredTransactions = transactions.filter((transaction) =>
-            deferredSearch === ''
-                ? true
-                : normalizeSearch([
-                    transaction.id,
-                    transaction.type,
-                    transaction.provider,
-                    transaction.statut,
-                    transaction.wallet_source,
-                    transaction.wallet_dest,
-                    transaction.user?.name,
-                ]).includes(deferredSearch),
-        );
-
-        const filteredFournisseurs = fournisseurs.filter((fournisseur) =>
-            deferredSearch === ''
-                ? true
-                : normalizeSearch([
-                    fournisseur.id,
-                    fournisseur.nom_boutique,
-                    fournisseur.user?.name,
-                    fournisseur.user?.phone,
-                ]).includes(deferredSearch),
-        );
-
-        const confirmedTransactions = transactions.filter((transaction) => transaction.statut === 'confirme');
-        const pendingTransactions = transactions.filter((transaction) => transaction.statut === 'en_attente');
-        const failedTransactions = transactions.filter((transaction) => transaction.statut === 'echoue');
-        const escrowTransactions = confirmedTransactions.filter((transaction) => transaction.type === 'acompte');
-        const releasedTransactions = confirmedTransactions.filter((transaction) =>
-            ['liberation_jalon', 'paiement_fournisseur'].includes(transaction.type),
-        );
-        const todayTimeline = buildTimeline(7, now);
-        const activityTimeline = buildTimeline(15, now);
-        const monthlyUserCount = users.filter((user) => {
-            const createdAt = new Date(user.created_at);
-            const today = new Date(now);
-
-            return createdAt.getMonth() === today.getMonth() && createdAt.getFullYear() === today.getFullYear();
-        }).length;
-        const weeklyUserCount = users.filter((user) => new Date(user.created_at) >= new Date(now - 7 * 24 * 60 * 60 * 1000)).length;
-        const highRiskDisputes = filteredLitiges.filter((litige) => (litige.mission.montant_total ?? 0) >= 2_000_000);
-        const topArtisans = [...users]
-            .filter((user) => user.role === 'artisan')
-            .sort((left, right) => right.score_prosartisan - left.score_prosartisan)
-            .slice(0, 5);
-        const urgentKyc = [...filteredKyc]
-            .sort((left, right) => new Date(left.created_at).getTime() - new Date(right.created_at).getTime())
-            .slice(0, 6);
-        const recentActivity = [
-            ...kycUsers.map((user) => ({
-                date: user.created_at,
-                detail: `${user.name} • ${roleLabels[user.role] ?? user.role}`,
-                id: `kyc-${user.id}`,
-                title: 'Nouveau dossier KYC',
-                tone: 'amber' as const,
-            })),
-            ...litiges.map((litige) => ({
-                date: litige.created_at,
-                detail: `Mission #${litige.mission_id} • ${litige.statut}`,
-                id: `litige-${litige.id}`,
-                title: `Litige #${litige.id}`,
-                tone: litige.statut === 'resolu' ? ('green' as const) : ('rose' as const),
-            })),
-            ...transactions.map((transaction) => ({
-                date: transaction.created_at,
-                detail: `${transactionTypeLabels[transaction.type] ?? transaction.type} • ${money(transaction.montant)}`,
-                id: `tx-${transaction.id}`,
-                title: `Transaction #${transaction.id}`,
-                tone:
-                    transaction.statut === 'confirme'
-                        ? ('green' as const)
-                        : transaction.statut === 'echoue'
-                            ? ('rose' as const)
-                            : ('blue' as const),
-            })),
-        ]
-            .sort((left, right) => new Date(right.date).getTime() - new Date(left.date).getTime())
-            .slice(0, 8);
-
-        const acompteTrend = todayTimeline.map((point) => ({
-            label: point.label,
-            value: confirmedTransactions
-                .filter((transaction) => transaction.created_at.slice(0, 10) === point.date && transaction.type === 'acompte')
-                .reduce((sum, transaction) => sum + transaction.montant, 0),
-        }));
-
-        const releaseTrend = todayTimeline.map((point) => ({
-            label: point.label,
-            value: confirmedTransactions
-                .filter(
-                    (transaction) =>
-                        transaction.created_at.slice(0, 10) === point.date &&
-                        ['liberation_jalon', 'paiement_fournisseur'].includes(transaction.type),
-                )
-                .reduce((sum, transaction) => sum + transaction.montant, 0),
-        }));
-
-        const registrationTrend = activityTimeline.map((point) => ({
-            label: point.label,
-            value: users.filter((user) => user.created_at.slice(0, 10) === point.date).length,
-        }));
-
-        const operationsTrend = activityTimeline.map((point) => ({
-            label: point.label,
-            value:
-                kycUsers.filter((user) => user.created_at.slice(0, 10) === point.date).length +
-                litiges.filter((litige) => litige.created_at.slice(0, 10) === point.date).length +
-                transactions.filter((transaction) => transaction.created_at.slice(0, 10) === point.date).length,
-        }));
-
-        const missionStatusMetrics: MetricItem[] = [
-            {
-                description: 'Missions financées et terrain',
-                title: 'Missions en cours',
-                tone: 'green',
-                value: numberFormat.format(dashboard.missions_en_cours ?? filteredMissions.filter((mission) => mission.status === 'en_cours').length),
-            },
-            {
-                description: 'Escalade Référent nécessaire',
-                title: 'Seuil > 2M FCFA',
-                tone: 'amber',
-                value: numberFormat.format(dashboard.referent_required_open ?? 0),
-            },
-            {
-                description: 'Missions avec arbitrage',
-                title: 'Missions en litige',
-                tone: 'rose',
-                value: numberFormat.format(dashboard.missions_en_litige ?? filteredMissions.filter((mission) => mission.status === 'litige').length),
-            },
-            {
-                description: 'Analyses Gemini disponibles',
-                title: 'Missions enrichies',
-                tone: 'blue',
-                value: numberFormat.format(filteredMissions.filter((mission) => Boolean(mission.gemini_category)).length),
-            },
-        ];
-
-        const filteredEvaluations = (evaluationsList || []).filter((evaluation) =>
-            deferredSearch === ''
-                ? true
-                : normalizeSearch([
-                    evaluation.id,
-                    evaluation.note,
-                    evaluation.commentaire,
-                    evaluation.evaluateur?.name,
-                    evaluation.evalue?.name,
-                    evaluation.mission?.description,
-                ]).includes(deferredSearch),
-        );
-
-        const filteredArtisansScores = (artisansScores || []).filter((artisan) =>
-            deferredSearch === ''
-                ? true
-                : normalizeSearch([
-                    artisan.id,
-                    artisan.name,
-                    artisan.phone,
-                    artisan.score_prosartisan,
-                ]).includes(deferredSearch),
-        );
-
-        const filteredPromoCodes = (promoCodes || []).filter((promo) =>
-            deferredSearch === ''
-                ? true
-                : normalizeSearch([
-                    promo.id,
-                    promo.code,
-                    promo.description,
-                    promo.discount_type,
-                    promo.discount_value,
-                ]).includes(deferredSearch),
-        );
-
-        const filteredOrders = (orders || []).filter((order) => {
-            const matchesStatus = deliveryStatusFilter === 'all' || order.status === deliveryStatusFilter;
-            const matchesSearch = deferredSearch === '' || normalizeSearch([
-                order.id,
-                order.pickup_code,
-                order.reception_code,
-                order.status,
-                order.delivery_mode,
-                order.client?.name,
-                order.client?.phone,
-                order.driver?.name,
-                order.driver?.phone,
-                order.supplier?.name,
-                order.supplier?.phone,
-                order.supplier?.fournisseur_agree?.nom_boutique,
-                ...(order.items || []).map((i) => i.product?.name ?? ''),
-            ]).includes(deferredSearch);
-
-            return matchesStatus && matchesSearch;
-        });
-
-        const deliveryMetrics: MetricItem[] = [
-            {
-                description: 'Courses & livraisons enregistrées',
-                title: 'Total livraisons',
-                tone: 'blue',
-                value: numberFormat.format(orders?.length ?? 0),
-            },
-            {
-                description: 'Livreur en route / Colis récupéré',
-                title: 'En transit',
-                tone: 'purple',
-                value: numberFormat.format((orders || []).filter(o => ['shipping', 'driver_picked_up'].includes(o.status)).length),
-            },
-            {
-                description: 'Recherche ou assignation coursier',
-                title: 'En attente livreur',
-                tone: 'amber',
-                value: numberFormat.format((orders || []).filter(o => ['searching_driver', 'driver_assigned', 'prepared'].includes(o.status)).length),
-            },
-            {
-                description: 'Remises validées avec succès',
-                title: 'Livrées & Clôturées',
-                tone: 'green',
-                value: numberFormat.format((orders || []).filter(o => o.status === 'delivered').length),
-            },
-        ];
-
-        return {
-            acompteTrend,
-            activityTrend: operationsTrend,
-            confirmedTransactions,
-            escrowAmount: sumAmount(escrowTransactions),
-            failedTransactions,
-            filteredFournisseurs,
-            filteredKyc,
-            filteredLitiges,
-            filteredMissions,
-            filteredOrders,
-            deliveryMetrics,
-            filteredTransactions,
-            filteredUsers,
-            filteredEvaluations,
-            filteredArtisansScores,
-            filteredPromoCodes,
-            highRiskDisputes,
-            missionStatusMetrics,
-            monthlyUserCount,
-            pendingTransactions,
-            recentActivity,
-            registrationTrend,
-            releaseTrend,
-            releasedAmount: sumAmount(releasedTransactions),
-            topArtisans,
-            urgentKyc,
-            weeklyUserCount,
-        };
-    }, [dashboard, deferredSearch, fournisseurs, kycUsers, litiges, missions, orders, deliveryStatusFilter, transactions, users, evaluationsList, artisansScores, promoCodes, now]);
+    const analytics = useAdminAnalytics({
+        dashboard,
+        deferredSearch,
+        fournisseurs,
+        kycUsers,
+        litiges,
+        missions,
+        orders,
+        deliveryStatusFilter: 'all',
+        transactions,
+        users,
+        evaluationsList,
+        artisansScores,
+        promoCodes,
+        now,
+    });
 
     const totalUsers = dashboard.users_total ?? users.length;
     const artisansActifs = useMemo(() => dashboard.artisans_actifs ?? users.filter((user) => user.role === 'artisan' && user.kyc_status === 'actif').length, [dashboard.artisans_actifs, users]);
@@ -1534,7 +1003,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
     const firstError = Object.values(errors ?? {})[0];
     const bannerError = flash?.error ?? firstError;
 
-    const navigation: NavigationGroup[] = [
+    const navigation: NavigationGroup[] = ([
         {
             label: 'Pilotage',
             items: [
@@ -1552,7 +1021,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
             items: [
                 { count: totalUsers, id: 'users', label: tabMeta.users.label },
                 { id: 'evaluations', label: tabMeta.evaluations.label },
-                { count: analytics.pendingTransactions.length, id: 'transactions', label: tabMeta.transactions.label },
+                { count: navBadges.transactions_en_attente ?? analytics.pendingTransactions.length, id: 'transactions', label: tabMeta.transactions.label },
             ],
         },
         {
@@ -1560,12 +1029,16 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
             items: [
                 { id: 'settings', label: tabMeta.settings.label },
                 { id: 'roles_permissions', label: tabMeta.roles_permissions.label },
-                { count: (communications ?? []).filter(c => c.statut === 'publie').length, id: 'communications', label: tabMeta.communications.label },
-                { count: (promoCodes ?? []).filter(p => p.is_active).length, id: 'promo_codes', label: 'Codes Promo' },
-                { count: (contactMessages ?? []).filter(c => c.statut === 'nouveau').length, id: 'vitrine', label: tabMeta.vitrine.label },
+                { id: 'audit_logs', label: tabMeta.audit_logs.label },
+                { id: 'observability', label: tabMeta.observability.label },
+                { count: navBadges.communications_publiees ?? (communications ?? []).filter(c => c.statut === 'publie').length, id: 'communications', label: tabMeta.communications.label },
+                { count: navBadges.promo_codes_actifs ?? (promoCodes ?? []).filter(p => p.is_active).length, id: 'promo_codes', label: 'Codes Promo' },
+                { count: navBadges.contact_messages_nouveaux ?? (contactMessages ?? []).filter(c => c.statut === 'nouveau').length, id: 'vitrine', label: tabMeta.vitrine.label },
             ],
         },
-    ];
+    ] as NavigationGroup[])
+        .map((group) => ({ ...group, items: group.items.filter((item) => canOpenTab(permissions, item.id)) }))
+        .filter((group) => group.items.length > 0);
 
     const heroStats = useMemo(() => {
         switch (activeTab) {
@@ -1592,34 +1065,22 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                 ];
             case 'kyc':
                 return [
-                    { label: 'Dossiers ouverts', tone: 'amber' as const, value: numberFormat.format(kycPending) },
-                    {
-                        label: 'Artisans prioritaires',
-                        tone: 'green' as const,
-                        value: numberFormat.format(kycUsers.filter((user) => user.role === 'artisan').length),
-                    },
-                    { label: 'Fournisseurs à valider', tone: 'blue' as const, value: numberFormat.format(fournisseurs.length) },
-                    {
-                        label: 'Rejets récents',
-                        tone: 'rose' as const,
-                        value: numberFormat.format(users.filter((user) => user.kyc_status === 'rejete').length),
-                    },
+                    { label: 'Dossiers ouverts', tone: 'amber' as const, value: numberFormat.format(kycStats.pending || kycPending) },
+                    { label: 'Artisans prioritaires', tone: 'green' as const, value: numberFormat.format(kycStats.artisans_pending) },
+                    { label: 'Fournisseurs à valider', tone: 'blue' as const, value: numberFormat.format(kycStats.fournisseurs_pending) },
+                    { label: 'Rejets récents', tone: 'rose' as const, value: numberFormat.format(kycStats.rejected) },
                 ];
             case 'missions':
                 return [
-                    { label: 'Missions en cours', tone: 'green' as const, value: numberFormat.format(missionsInProgress) },
-                    { label: 'En litige', tone: 'rose' as const, value: numberFormat.format(dashboard.missions_en_litige ?? 0) },
-                    { label: 'Référent requis', tone: 'amber' as const, value: numberFormat.format(referentRequired) },
-                    {
-                        label: 'Montant piloté',
-                        tone: 'slate' as const,
-                        value: money(analytics.filteredMissions.reduce((sum, mission) => sum + (mission.montant_total ?? 0), 0)),
-                    },
+                    { label: 'Missions en cours', tone: 'green' as const, value: numberFormat.format(missionStats.en_cours || missionsInProgress) },
+                    { label: 'En litige', tone: 'rose' as const, value: numberFormat.format(missionStats.en_litige) },
+                    { label: 'Référent requis', tone: 'amber' as const, value: numberFormat.format(missionStats.referent_required || referentRequired) },
+                    { label: 'Livraisons actives', tone: 'slate' as const, value: numberFormat.format(deliveryStats.in_transit + deliveryStats.awaiting_driver) },
                 ];
             case 'litiges':
                 return [
-                    { label: 'Litiges ouverts', tone: 'rose' as const, value: numberFormat.format(openDisputes) },
-                    { label: 'Haute priorité', tone: 'amber' as const, value: numberFormat.format(analytics.highRiskDisputes.length) },
+                    { label: 'Litiges ouverts', tone: 'rose' as const, value: numberFormat.format(litigeStats.open || openDisputes) },
+                    { label: 'Haute priorité', tone: 'amber' as const, value: numberFormat.format(litigeStats.high_risk) },
                     { label: 'Référent requis', tone: 'blue' as const, value: numberFormat.format(referentRequired) },
                     { label: 'Alertes fraude', tone: 'slate' as const, value: numberFormat.format(fraudAlerts) },
                 ];
@@ -1632,10 +1093,10 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                 ];
             case 'transactions':
                 return [
-                    { label: 'Volume 24h', tone: 'amber' as const, value: money(volume24h) },
-                    { label: 'En attente', tone: 'blue' as const, value: numberFormat.format(analytics.pendingTransactions.length) },
-                    { label: 'Échouées', tone: 'rose' as const, value: numberFormat.format(analytics.failedTransactions.length) },
-                    { label: 'Fonds libérés', tone: 'green' as const, value: money(analytics.releasedAmount) },
+                    { label: 'Volume 24h', tone: 'amber' as const, value: money(transactionStats.volume_24h || volume24h) },
+                    { label: 'En attente', tone: 'blue' as const, value: numberFormat.format(transactionStats.pending) },
+                    { label: 'Échouées', tone: 'rose' as const, value: numberFormat.format(transactionStats.failed) },
+                    { label: 'Fonds libérés', tone: 'green' as const, value: money(transactionStats.released) },
                 ];
             case 'settings':
                 return [
@@ -1653,20 +1114,10 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                 ];
             case 'evaluations':
                 return [
-                    { label: 'Évaluations', tone: 'amber' as const, value: numberFormat.format(evaluationsList?.length ?? 0) },
-                    {
-                        label: 'Note moyenne',
-                        tone: 'green' as const,
-                        value: evaluationsList && evaluationsList.length > 0
-                            ? (evaluationsList.reduce((sum, e) => sum + e.note, 0) / evaluationsList.length).toFixed(1) + ' / 5'
-                            : 'N/A',
-                    },
-                    { label: 'Artisans suivis', tone: 'blue' as const, value: numberFormat.format(artisansScores?.length ?? 0) },
-                    {
-                        label: 'Scores gelés',
-                        tone: 'rose' as const,
-                        value: numberFormat.format(artisansScores?.filter((a) => a.score_frozen).length ?? 0),
-                    },
+                    { label: 'Évaluations', tone: 'amber' as const, value: numberFormat.format(evaluationStats.evaluations_total) },
+                    { label: 'Note moyenne', tone: 'green' as const, value: evaluationStats.evaluations_total > 0 ? `${evaluationStats.note_moyenne} / 5` : 'N/A' },
+                    { label: 'Artisans suivis', tone: 'blue' as const, value: numberFormat.format(evaluationStats.artisans_suivis) },
+                    { label: 'Scores gelés', tone: 'rose' as const, value: numberFormat.format(evaluationStats.scores_geles) },
                 ];
             case 'communications': {
                 const comms = communications ?? [];
@@ -1686,26 +1137,46 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                     { label: 'Vidéos & Recrut.', tone: 'slate' as const, value: `${(vitrineVideos ?? []).length} / ${(vitrineRecrutements ?? []).length}` },
                 ];
             }
+            case 'audit_logs': {
+                const logs = auditLogs?.data ?? [];
+                const failures = logs.filter((l) => l.action.includes('failed') || l.action.includes('denied')).length;
+                return [
+                    { label: 'Entrées (total)', tone: 'amber' as const, value: numberFormat.format(auditLogs?.total ?? 0) },
+                    { label: 'Page courante', tone: 'blue' as const, value: `${auditLogs?.current_page ?? 1} / ${auditLogs?.last_page ?? 1}` },
+                    { label: 'Admins actifs', tone: 'green' as const, value: numberFormat.format(auditAdmins.length) },
+                    { label: 'Échecs de connexion (page)', tone: failures > 0 ? ('rose' as const) : ('slate' as const), value: numberFormat.format(failures) },
+                ];
+            }
+            case 'observability': {
+                if (!observability) return [];
+                return [
+                    { label: 'Jobs en échec', tone: observability.queue.failed > 0 ? ('rose' as const) : ('green' as const), value: numberFormat.format(observability.queue.failed) },
+                    { label: 'Paiements KO (24 h)', tone: observability.payments.failed_24h > 0 ? ('rose' as const) : ('green' as const), value: numberFormat.format(observability.payments.failed_24h) },
+                    { label: 'Fraude GPS (7 j)', tone: observability.fraud.gps_attempts_7d > 0 ? ('amber' as const) : ('green' as const), value: numberFormat.format(observability.fraud.gps_attempts_7d) },
+                    { label: 'Bloquées Référent', tone: observability.referent.blocked > 0 ? ('amber' as const) : ('green' as const), value: numberFormat.format(observability.referent.blocked) },
+                ];
+            }
             default:
                 return [];
         }
     }, [
         activeTab,
-        analytics.failedTransactions.length,
-        analytics.filteredMissions,
-        analytics.highRiskDisputes.length,
-        analytics.pendingTransactions.length,
-        analytics.releasedAmount,
+        auditLogs,
+        observability,
+        auditAdmins.length,
+        transactionStats,
+        litigeStats,
+        evaluationStats,
+        missionStats,
+        deliveryStats,
+        kycStats,
         artisansActifs,
         clientsActifs,
         dashboard.kyc_en_attente,
         dashboard.litiges_ouverts,
-        dashboard.missions_en_litige,
-        fournisseurs.length,
         fournisseursAgrees,
         fraudAlerts,
         kycPending,
-        kycUsers,
         liveNotifications.length,
         missionsInProgress,
         openDisputes,
@@ -1713,10 +1184,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         referentRequired,
         totalUsers,
         unreadNotifsCount,
-        users,
         volume24h,
-        evaluationsList,
-        artisansScores,
         allPermissions?.length,
         communications,
         vitrineSlides,
@@ -1820,7 +1288,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         }
     };
 
-    const renderPagination = (links: any[]) => {
+    const renderPagination = (links: any[], only: string[] = ['allNotifications']) => {
         if (!links || links.length <= 3) return null;
         return (
             <div className="flex justify-center gap-1.5 mt-5">
@@ -1830,12 +1298,12 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                         href={link.url || '#'}
                         className={cn(
                             "px-3 py-1.5 rounded-xl text-xs font-semibold border transition",
-                            link.active 
-                                ? "bg-[#ebb95e] border-[#ebb95e] text-[#241b16]" 
+                            link.active
+                                ? "bg-[#ebb95e] border-[#ebb95e] text-[#241b16]"
                                 : "border-[var(--admin-border)] text-[var(--admin-text-soft)] hover:bg-white/40",
                             !link.url && "opacity-50 cursor-not-allowed"
                         )}
-                        only={['allNotifications']}
+                        only={only}
                         preserveScroll
                         preserveState
                         dangerouslySetInnerHTML={{ __html: link.label }}
@@ -1849,2241 +1317,215 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
     const adminContact = auth?.user?.email ?? auth?.user?.phone ?? 'Administrateur';
 
     return (
-        <>
-            <Head title="ProsArtisan Backoffice" />
-
-            <div className={cn('admin-shell min-h-screen', themeMode === 'dark' && 'admin-shell--dark')}>
-                <div className="relative z-10 flex min-h-screen">
-                    {/* Sidebar Mobile Overlay Backdrop */}
-                    {isMobileSidebarOpen && (
-                        <div 
-                            className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
-                            onClick={() => setIsMobileSidebarOpen(false)}
-                        />
-                    )}
-
-                    {/* Sidebar */}
-                    <aside className={cn(
-                        "admin-panel shrink-0 border-r px-5 py-6 bg-[var(--admin-bg)] transition-all duration-300",
-                        // Classes de positionnement mobile
-                        "fixed inset-y-0 left-0 z-50 w-[310px] flex flex-col lg:static lg:h-auto lg:translate-x-0",
-                        isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
-                        // Classes de positionnement desktop
-                        "lg:flex lg:flex-col"
-                    )}>
-                        <div className="flex items-center justify-between gap-3">
-                            <div className="flex items-center gap-3">
-                                <div className="flex h-12 w-auto px-2.5 items-center justify-center rounded-2xl bg-white text-[#241b16] shadow-sm border border-[var(--admin-border)]">
-                                    <img src="/img/prosartisan-logo.png" alt="ProsArtisan" className="h-7 w-auto object-contain" />
-                                </div>
-                                <div className="min-w-0">
-                                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--admin-muted)]">ProsArtisan</p>
-                                    <div className="flex items-center gap-2">
-                                        <h1 className="truncate text-xl font-semibold text-[var(--admin-text)]">Backoffice</h1>
-                                        <span className={cn('rounded-full border px-2 py-0.5 text-[11px] font-semibold', toneBadgeClasses('amber'))}>ADMIN</span>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            {/* Bouton fermeture sur mobile */}
-                            <button 
-                                type="button" 
-                                className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--admin-border)] bg-white/50 text-[var(--admin-text)] lg:hidden hover:bg-white/80 transition"
-                                onClick={() => setIsMobileSidebarOpen(false)}
-                                aria-label="Fermer le menu"
-                            >
-                                <CloseIcon className="h-5 w-5" />
-                            </button>
-                        </div>
-
-                        <div className="mt-8 space-y-7">
-                            {navigation.map((group) => (
-                                <div key={group.label}>
-                                    <p className="mb-3 px-3 text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--admin-muted)]">
-                                        {group.label}
-                                    </p>
-                                    <div className="space-y-1.5">
-                                        {group.items.map((item) => {
-                                            const isActive = item.id === activeTab;
-
-                                            return (
-                                                <Link
-                                                    key={item.id}
-                                                    href={tabRoutes[item.id]}
-                                                    className={cn(
-                                                        'admin-nav-link flex items-center justify-between gap-3 rounded-2xl px-3 py-3 text-sm font-medium transition',
-                                                        isActive && 'admin-nav-link--active',
-                                                    )}
-                                                >
-                                                    <span className="flex min-w-0 items-center gap-3">
-                                                        <span
-                                                            className={cn(
-                                                                'flex h-9 w-9 items-center justify-center rounded-xl',
-                                                                isActive ? 'bg-[#f8e4bc] text-[#b77918]' : 'bg-[#f5ecdf] text-[var(--admin-muted)]',
-                                                            )}
-                                                        >
-                                                            <TabIcon tab={item.id} />
-                                                        </span>
-                                                        <span className="truncate">{item.label}</span>
-                                                    </span>
-
-                                                    {typeof item.count === 'number' && item.count > 0 ? (
-                                                        <span className="rounded-full bg-white/80 px-2.5 py-1 text-xs font-semibold text-[#8a6b3d]">
-                                                            {item.count}
-                                                        </span>
-                                                    ) : null}
-                                                </Link>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-
-                        <div className="mt-auto space-y-4">
-                            <Surface className="rounded-[28px] p-4">
-                                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--admin-muted)]">Contexte marché</p>
-                                <div className="mt-3 space-y-3 text-sm text-[var(--admin-text-soft)]">
-                                    <InfoRow label="Pays" value="Côte d’Ivoire" />
-                                    <InfoRow label="Devise" value="FCFA" />
-                                    <InfoRow label="Paiements" value="Wave CI, Orange Money CI" />
-                                    <InfoRow label="Connectivité" value="Mode hors-ligne + USSD" />
-                                </div>
-                                <div className="border-t border-[var(--admin-border)] pt-3 mt-3">
-                                    <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--admin-muted)] mb-2">Cours des devises</p>
-                                    <div className="grid grid-cols-1 gap-2 text-xs">
-                                        <div className="flex justify-between items-center bg-white/45 rounded-xl px-2.5 py-1.5 border border-[var(--admin-border)]">
-                                            <span className="font-medium text-[var(--admin-text)]">1 EUR</span>
-                                            <span className="font-bold text-[#8a6b3d]">{exchangeRates ? `${exchangeRates.eurToXof} XOF` : '655.96 XOF'}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center bg-white/45 rounded-xl px-2.5 py-1.5 border border-[var(--admin-border)]">
-                                            <span className="font-medium text-[var(--admin-text)]">1 USD</span>
-                                            <span className="font-bold text-[#8a6b3d]">{exchangeRates ? `${exchangeRates.usdToXof} XOF` : '605.50 XOF'}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center bg-white/45 rounded-xl px-2.5 py-1.5 border border-[var(--admin-border)]">
-                                            <span className="font-medium text-[var(--admin-text)]">1 EUR</span>
-                                            <span className="font-bold text-[#8a6b3d]">{exchangeRates ? `${exchangeRates.eurToUsd} USD` : '1.0850 USD'}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </Surface>
-
-                            <Link
-                                href={tabRoutes.settings}
-                                className="flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium text-[var(--admin-text-soft)] transition hover:bg-white/50"
-                            >
-                                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#f5ecdf] text-[var(--admin-muted)]">
-                                    <TabIcon tab="settings" />
-                                </span>
-                                Paramètres
-                            </Link>
-                        </div>
-                    </aside>
-
-                    <div className="min-w-0 flex-1">
-                        {offlineActive && (
-                            <div className="bg-amber-500 text-[#241b16] px-4 py-2 text-center text-xs font-semibold flex items-center justify-center gap-2 shadow-inner border-b border-amber-600 animate-pulse">
-                                <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                    <path d="M18.36 5.64a9 9 0 0 1 0 12.73m-2.82-9.9a6 6 0 0 1 0 7.07m-2.83-4.24a3 3 0 0 1 0 1.41m.01-1.42v.01" strokeLinecap="round" strokeLinejoin="round" />
-                                </svg>
-                                <span>Mode hors-ligne actif • ProsArtisan bascule automatiquement sur les files d'attente locales et les interactions USSD.</span>
-                            </div>
-                        )}
-                        <header className="admin-panel sticky top-0 z-20 border-b px-4 py-4 lg:px-7">
-                            <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-                                <div className="flex min-w-0 flex-1 items-center gap-3">
-                                    {/* Bouton Hamburger sur mobile */}
-                                    <button
-                                        type="button"
-                                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[var(--admin-border)] bg-white/50 text-[var(--admin-text)] lg:hidden hover:bg-white/80 transition"
-                                        onClick={() => setIsMobileSidebarOpen(true)}
-                                        aria-label="Ouvrir le menu"
-                                    >
-                                        <MenuIcon className="h-6 w-6" />
-                                    </button>
-
-                                    <div className="admin-input flex w-full items-center gap-3 rounded-2xl px-4 py-3 xl:max-w-[420px]">
-                                        <SearchIcon className="h-5 w-5 text-[var(--admin-muted)]" />
-                                        <input
-                                            value={search}
-                                            onChange={(event) => setSearch(event.target.value)}
-                                            placeholder={searchPlaceholders[activeTab]}
-                                            className="w-full bg-transparent text-sm text-[var(--admin-text)] outline-none placeholder:text-[var(--admin-muted)]"
-                                        />
-                                    </div>
-
-                                    <div className="hidden items-center gap-2 xl:flex">
-                                        <button type="button" className="admin-button admin-button--ghost" onClick={refreshData}>
-                                            <RefreshIcon className="h-4 w-4" />
-                                            Rafraîchir
-                                        </button>
-                                        <span className={cn('rounded-full border px-3 py-2 text-xs font-semibold', toneBadgeClasses('slate'))}>
-                                            Session web active
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center justify-between gap-3">
-                                    <button
-                                        type="button"
-                                        className="admin-button admin-button--ghost"
-                                        onClick={() => setThemeMode((current) => (current === 'light' ? 'dark' : 'light'))}
-                                    >
-                                        {themeMode === 'light' ? <MoonIcon className="h-4 w-4" /> : <SunIcon className="h-4 w-4" />}
-                                        {themeMode === 'light' ? 'Sombre' : 'Clair'}
-                                    </button>
-
-                                    <div className="relative">
-                                        <button
-                                            type="button"
-                                            className={cn(
-                                                "relative rounded-2xl border p-3 text-[var(--admin-muted)] transition hover:bg-white/55",
-                                                notificationsOpen ? "border-[#ebb95e]/50 bg-white/70 text-[#241b16]" : "border-transparent"
-                                            )}
-                                            title="Notifications et alertes système"
-                                            aria-label="Notifications"
-                                            onClick={() => setNotificationsOpen((prev) => !prev)}
-                                        >
-                                            <BellIcon className="h-5 w-5" />
-                                            {unreadNotifsCount > 0 && (
-                                                <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#f15f57] px-1 text-[10px] font-extrabold text-white shadow-sm ring-2 ring-white">
-                                                    {unreadNotifsCount > 99 ? '99+' : unreadNotifsCount}
-                                                </span>
-                                            )}
-                                        </button>
-
-                                        {notificationsOpen && (
-                                            <>
-                                                {/* Backdrop for outside click */}
-                                                <div
-                                                    className="fixed inset-0 z-40"
-                                                    onClick={() => setNotificationsOpen(false)}
-                                                />
-
-                                                {/* Floating Popover Panel */}
-                                                <div className="absolute right-0 top-full mt-3 z-50 w-[360px] sm:w-[420px] max-w-[95vw] rounded-3xl border border-[var(--admin-border)] bg-[var(--admin-card)] shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150 overflow-hidden">
-                                                    {/* Header */}
-                                                    <div className="flex items-center justify-between border-b border-[var(--admin-border)]/60 bg-[var(--admin-card-header)]/80 px-4 py-3.5">
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#ebb95e]/20 text-[#8a5d16]">
-                                                                <BellIcon className="h-4.5 w-4.5" />
-                                                            </div>
-                                                            <div>
-                                                                <h3 className="text-sm font-bold text-[var(--admin-text)]">Centre de Notifications</h3>
-                                                                <p className="text-[11px] text-[var(--admin-muted)]">
-                                                                    {unreadNotifsCount > 0 ? `${unreadNotifsCount} alerte(s) non lue(s)` : 'Toutes les alertes sont traitées'}
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                        {unreadNotifsCount > 0 && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={handleMarkAllNotifsRead}
-                                                                className="rounded-full bg-[#ebb95e]/15 px-2.5 py-1 text-[11px] font-semibold text-[#8a5d16] hover:bg-[#ebb95e]/25 transition"
-                                                                title="Marquer tout comme lu"
-                                                            >
-                                                                Tout marquer lu
-                                                            </button>
-                                                        )}
-                                                    </div>
-
-                                                    {/* Filter Tabs */}
-                                                    <div className="flex border-b border-[var(--admin-border)]/40 bg-black/[0.02] px-3 py-2 gap-1.5 text-xs font-medium">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setNotifFilter('all')}
-                                                            className={cn(
-                                                                "rounded-xl px-2.5 py-1 transition",
-                                                                notifFilter === 'all' ? "bg-white text-[var(--admin-text)] font-semibold shadow-xs" : "text-[var(--admin-muted)] hover:text-[var(--admin-text)]"
-                                                            )}
-                                                        >
-                                                            Toutes ({liveNotifications.length})
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setNotifFilter('unread')}
-                                                            className={cn(
-                                                                "rounded-xl px-2.5 py-1 transition",
-                                                                notifFilter === 'unread' ? "bg-white text-[var(--admin-text)] font-semibold shadow-xs" : "text-[var(--admin-muted)] hover:text-[var(--admin-text)]"
-                                                            )}
-                                                        >
-                                                            Non lues ({unreadNotifsCount})
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setNotifFilter('alerts')}
-                                                            className={cn(
-                                                                "rounded-xl px-2.5 py-1 transition",
-                                                                notifFilter === 'alerts' ? "bg-white text-[var(--admin-text)] font-semibold shadow-xs" : "text-[var(--admin-muted)] hover:text-[var(--admin-text)]"
-                                                            )}
-                                                        >
-                                                            Alertes critiques
-                                                        </button>
-                                                    </div>
-
-                                                    {/* Notifications List */}
-                                                    <div className="max-h-[380px] overflow-y-auto divide-y divide-[var(--admin-border)]/40">
-                                                        {filteredNotifs.length === 0 ? (
-                                                            <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
-                                                                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 mb-2">
-                                                                    <CheckCircleIcon className="h-6 w-6" />
-                                                                </div>
-                                                                <p className="text-sm font-semibold text-[var(--admin-text)]">Aucune notification</p>
-                                                                <p className="text-xs text-[var(--admin-muted)] mt-0.5">Vous êtes parfaitement à jour sur toutes les activités du système.</p>
-                                                            </div>
-                                                        ) : (
-                                                            filteredNotifs.map((notif) => {
-                                                                const isUnread = !notif.read_at;
-                                                                return (
-                                                                    <div
-                                                                        key={notif.id}
-                                                                        className={cn(
-                                                                            "group flex items-start gap-3 p-3.5 transition hover:bg-black/[0.02]",
-                                                                            isUnread ? "bg-[#ebb95e]/[0.06]" : ""
-                                                                        )}
-                                                                    >
-                                                                        <div className="shrink-0 mt-0.5">
-                                                                            {notif.type === 'kyc' && (
-                                                                                <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-amber-500/15 text-amber-600">
-                                                                                    <ShieldIcon className="h-5 w-5" />
-                                                                                </div>
-                                                                            )}
-                                                                            {['litige', 'fraud', 'fraud_alert'].includes(notif.type) && (
-                                                                                <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-rose-500/15 text-rose-600">
-                                                                                    <AlertIcon className="h-5 w-5" />
-                                                                                </div>
-                                                                            )}
-                                                                            {['mission', 'referent'].includes(notif.type) && (
-                                                                                <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-blue-500/15 text-blue-600">
-                                                                                    <ClipboardIcon className="h-5 w-5" />
-                                                                                </div>
-                                                                            )}
-                                                                            {['payment', 'transaction'].includes(notif.type) && (
-                                                                                <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-emerald-500/15 text-emerald-600">
-                                                                                    <WalletIcon className="h-5 w-5" />
-                                                                                </div>
-                                                                            )}
-                                                                            {!['kyc', 'litige', 'fraud', 'fraud_alert', 'mission', 'referent', 'payment', 'transaction'].includes(notif.type) && (
-                                                                                <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[#ebb95e]/20 text-[#8a5d16]">
-                                                                                    <BellIcon className="h-5 w-5" />
-                                                                                </div>
-                                                                            )}
-                                                                        </div>
-
-                                                                        <div className="min-w-0 flex-1">
-                                                                            <div className="flex items-center justify-between gap-1 mb-0.5">
-                                                                                <p className={cn("text-xs font-semibold truncate", isUnread ? "text-[var(--admin-text)]" : "text-[var(--admin-text)]/80")}>
-                                                                                    {notif.title}
-                                                                                </p>
-                                                                                {isUnread && (
-                                                                                    <span className="h-2 w-2 rounded-full bg-[#f15f57] shrink-0" />
-                                                                                )}
-                                                                            </div>
-                                                                            <p className="text-xs text-[var(--admin-muted)] line-clamp-2 leading-relaxed">
-                                                                                {notif.body}
-                                                                            </p>
-                                                                            <div className="mt-2 flex items-center justify-between gap-2">
-                                                                                <span className="text-[10px] text-[var(--admin-muted)]">
-                                                                                    {new Date(notif.created_at).toLocaleDateString('fr-FR', {
-                                                                                        day: '2-digit',
-                                                                                        month: 'short',
-                                                                                        hour: '2-digit',
-                                                                                        minute: '2-digit',
-                                                                                    })}
-                                                                                </span>
-
-                                                                                <div className="flex items-center gap-1.5">
-                                                                                    {notif.action_url ? (
-                                                                                        <button
-                                                                                            type="button"
-                                                                                            onClick={() => handleMarkNotifRead(notif)}
-                                                                                            className="rounded-lg bg-[var(--admin-text)] text-[var(--admin-card)] px-2.5 py-1 text-[11px] font-semibold hover:opacity-90 transition cursor-pointer"
-                                                                                        >
-                                                                                            {notif.action_label || 'Consulter'}
-                                                                                        </button>
-                                                                                    ) : isUnread && typeof notif.id === 'number' && (
-                                                                                        <button
-                                                                                            type="button"
-                                                                                            onClick={() => handleMarkNotifRead(notif)}
-                                                                                            className="rounded-lg bg-black/5 hover:bg-black/10 text-[var(--admin-text)] px-2 py-1 text-[11px] font-semibold transition cursor-pointer"
-                                                                                        >
-                                                                                            Marquer lu
-                                                                                        </button>
-                                                                                    )}
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                );
-                                                            })
-                                                        )}
-                                                    </div>
-
-                                                    {/* Footer */}
-                                                    <div className="border-t border-[var(--admin-border)]/60 bg-[var(--admin-card-header)]/50 px-4 py-2.5 text-center">
-                                                        <p className="text-[11px] text-[var(--admin-muted)] flex items-center justify-center gap-1.5">
-                                                            <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />
-                                                            Synchronisation temps réel active
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </>
-                                        )}
-                                    </div>
-
-                                    <div className="hidden items-center gap-3 rounded-3xl bg-white/50 px-3 py-2 sm:flex">
-                                        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#ebb95e] text-sm font-bold text-[#241b16]">
-                                            {getInitials(adminName)}
-                                        </div>
-                                        <div className="min-w-0">
-                                            <p className="truncate text-sm font-semibold text-[var(--admin-text)]">{adminName}</p>
-                                            <p className="truncate text-xs text-[var(--admin-muted)]">{adminContact}</p>
-                                        </div>
-                                    </div>
-
-                                    <button
-                                        type="button"
-                                        className="rounded-2xl p-3 text-[var(--admin-muted)] transition hover:bg-white/55"
-                                        onClick={() => router.post('/admin/logout')}
-                                        title="Se déconnecter"
-                                        aria-label="Se déconnecter"
-                                    >
-                                        <LogoutIcon className="h-5 w-5" />
-                                    </button>
-                                </div>
-                            </div>
-                        </header>
-
-                        <main className="px-4 pb-32 pt-5 lg:px-7 lg:pb-24">
-                            <div className="mb-4 flex gap-2 overflow-x-auto pb-1 lg:hidden">
-                                {navigation.flatMap((group) => group.items).map((item) => (
-                                    <Link
-                                        key={item.id}
-                                        href={tabRoutes[item.id]}
-                                        className={cn(
-                                            'admin-chip whitespace-nowrap rounded-full border px-4 py-2 text-sm',
-                                            item.id === activeTab && 'border-[#ebb95e] bg-[#f8e8c8] text-[#8a5d16]',
-                                        )}
-                                    >
-                                        {item.label}
-                                    </Link>
-                                ))}
-                            </div>
-
-                            <Surface className="admin-hero rounded-[34px] p-6 lg:p-8">
-                                <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
-                                    <div className="max-w-3xl">
-                                        <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-[var(--admin-muted)]">
-                                            {tabMeta[activeTab].section}
-                                        </p>
-                                        <h2 className="mt-3 text-4xl font-semibold tracking-tight text-[var(--admin-text)]">
-                                            {tabMeta[activeTab].label}
-                                        </h2>
-                                        <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--admin-text-soft)]">
-                                            {tabMeta[activeTab].description}
-                                        </p>
-                                        <p className="mt-3 text-sm text-[var(--admin-muted)]">{fullDate(new Date())}</p>
-                                    </div>
-
-                                    <div className="grid gap-3 sm:grid-cols-2 xl:w-[480px]">
-                                        {heroStats.map((stat) => (
-                                            <div key={stat.label} className="rounded-[24px] bg-white/60 p-4 shadow-[0_18px_36px_rgba(147,119,74,0.08)]">
-                                                <p className="text-xs uppercase tracking-[0.22em] text-[var(--admin-muted)]">{stat.label}</p>
-                                                <div className="mt-2 flex items-center gap-2">
-                                                    <span className={cn('inline-flex h-8 w-8 items-center justify-center rounded-xl', toneIconClasses(stat.tone))}>
-                                                        <ToneIcon tone={stat.tone} className="h-4 w-4" />
-                                                    </span>
-                                                    <p className="text-lg font-semibold text-[var(--admin-text)]">{stat.value}</p>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </Surface>
-
-                            {flash?.success ? (
-                                <div className="mt-4 rounded-[24px] border border-[#c5dfca] bg-[#eef8f0] px-4 py-3 text-sm text-[#24734f]">
-                                    {flash.success}
-                                </div>
-                            ) : null}
-
-                            {bannerError ? (
-                                <div className="mt-4 rounded-[24px] border border-[#efc1b9] bg-[#fff3ef] px-4 py-3 text-sm text-[#b24f43]">
-                                    {bannerError}
-                                </div>
-                            ) : null}
-
-                            {refreshing || actionLoading ? (
-                                <div className="mt-4 rounded-[24px] border border-[#e2d5c2] bg-white/70 px-4 py-3 text-sm text-[var(--admin-text-soft)]">
-                                    Mise à jour du backoffice en cours...
-                                </div>
-                            ) : null}
-
+        <AdminShell
+            activeTab={activeTab}
+            navigation={navigation}
+            heroStats={heroStats}
+            themeMode={themeMode}
+            onToggleTheme={() => setThemeMode((current) => (current === 'light' ? 'dark' : 'light'))}
+            isMobileSidebarOpen={isMobileSidebarOpen}
+            onMobileSidebarChange={setIsMobileSidebarOpen}
+            search={search}
+            onSearchChange={setSearch}
+            onRefresh={refreshData}
+            refreshing={refreshing}
+            actionLoading={actionLoading}
+            offlineActive={offlineActive}
+            exchangeRates={exchangeRates}
+            notificationsOpen={notificationsOpen}
+            onNotificationsOpenChange={setNotificationsOpen}
+            notifFilter={notifFilter}
+            onNotifFilterChange={setNotifFilter}
+            liveNotifications={liveNotifications}
+            filteredNotifs={filteredNotifs}
+            unreadNotifsCount={unreadNotifsCount}
+            onMarkAllNotifsRead={handleMarkAllNotifsRead}
+            onMarkNotifRead={handleMarkNotifRead}
+            adminName={adminName}
+            adminContact={adminContact}
+            flash={flash}
+            bannerError={bannerError}
+        >
                             {activeTab === 'dashboard' ? (
-                                <section className="mt-5 space-y-5">
-                                    <div className="grid gap-4 xl:grid-cols-4">
-                                        {summaryCards.map((card) => (
-                                            <MetricCard
-                                                key={card.title}
-                                                description={card.description}
-                                                tone={card.tone}
-                                                trend={card.trend}
-                                                value={card.value}
-                                            >
-                                                {card.title}
-                                            </MetricCard>
-                                        ))}
-                                    </div>
-
-                                    <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
-                                        <Surface className="rounded-[32px] p-5 lg:p-6">
-                                            <SectionTitle
-                                                description="Acomptes encaissés versus fonds déjà libérés aux artisans et fournisseurs."
-                                                title="Flux financiers / 7 jours"
-                                            />
-                                            <DualLineChart
-                                                series={[
-                                                    { color: '#dfab4e', label: 'Acomptes confirmés', points: analytics.acompteTrend },
-                                                    { color: '#e16c5f', label: 'Fonds libérés', points: analytics.releaseTrend },
-                                                ]}
-                                            />
-                                        </Surface>
-
-                                        <Surface className="rounded-[32px] p-5 lg:p-6">
-                                            <SectionTitle
-                                                description="Charge combinée KYC, litiges et transactions à traiter."
-                                                title="Volume opérationnel / 15 jours"
-                                            />
-                                            <VolumeBarChart bars={analytics.activityTrend} color="#dfab4e" />
-                                        </Surface>
-                                    </div>
-
-                                    <div className="grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
-                                        <Surface className="rounded-[32px] p-5 lg:p-6">
-                                            <div className="flex items-center justify-between gap-3">
-                                                <SectionTitle
-                                                    description="Dossiers les plus anciens ou sensibles à prendre en main."
-                                                    title="File prioritaire"
-                                                />
-                                                <Link href={tabRoutes.kyc} className="text-sm font-medium text-[#8a6b3d] transition hover:text-[#6f531f]">
-                                                    Voir tout
-                                                </Link>
-                                            </div>
-
-                                            <div className="mt-5 space-y-3">
-                                                {analytics.urgentKyc.length === 0 ? (
-                                                    <EmptyState description="Aucun dossier urgent en attente de revue." title="File KYC vide" />
-                                                ) : (
-                                                    analytics.urgentKyc.map((user) => (
-                                                        <div key={user.id} className="rounded-[24px] border border-[var(--admin-border)] bg-white/60 p-4">
-                                                            <div className="flex items-start justify-between gap-3">
-                                                                <div className="flex min-w-0 items-start gap-3">
-                                                                    <AvatarBubble label={user.name} />
-                                                                    <div className="min-w-0">
-                                                                        <p className="truncate text-sm font-semibold text-[var(--admin-text)]">{user.name}</p>
-                                                                        <p className="text-xs text-[var(--admin-muted)]">{user.phone}</p>
-                                                                    </div>
-                                                                </div>
-                                                                <RoleBadge role={user.role} />
-                                                            </div>
-                                                            <div className="mt-3 flex flex-wrap gap-2">
-                                                                {user.kyc_documents.map((document) => (
-                                                                    <a
-                                                                        key={document.id}
-                                                                        href={document.file_url}
-                                                                        target="_blank"
-                                                                        rel="noreferrer"
-                                                                        className="rounded-full border border-[#e6d3b2] px-3 py-1 text-xs font-medium text-[#8b6732] transition hover:bg-[#fbf1db]"
-                                                                    >
-                                                                        {document.type.toUpperCase()}
-                                                                    </a>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    ))
-                                                )}
-                                            </div>
-                                        </Surface>
-
-                                        <Surface className="rounded-[32px] p-5 lg:p-6">
-                                            <div className="flex items-center justify-between gap-3">
-                                                <SectionTitle
-                                                    description="Signaux récents sur les paiements, validations et arbitrages."
-                                                    title="Activité récente"
-                                                />
-                                                <Link href={tabRoutes.transactions} className="text-sm font-medium text-[#8a6b3d] transition hover:text-[#6f531f]">
-                                                    Ouvrir finance
-                                                </Link>
-                                            </div>
-
-                                            <div className="mt-5 space-y-3">
-                                                {analytics.recentActivity.length === 0 ? (
-                                                    <EmptyState description="Aucune activité récente détectée." title="Journal vide" />
-                                                ) : (
-                                                    analytics.recentActivity.map((activity) => (
-                                                        <div key={activity.id} className="flex items-start gap-3 rounded-[24px] border border-[var(--admin-border)] bg-white/60 p-4">
-                                                            <div className={cn('mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl', toneIconClasses(activity.tone))}>
-                                                                <ActivityToneIcon tone={activity.tone} />
-                                                            </div>
-                                                            <div className="min-w-0">
-                                                                <p className="text-sm font-semibold text-[var(--admin-text)]">{activity.title}</p>
-                                                                <p className="mt-1 text-sm text-[var(--admin-text-soft)]">{activity.detail}</p>
-                                                                <p className="mt-1 text-xs text-[var(--admin-muted)]">{shortDate(activity.date)}</p>
-                                                            </div>
-                                                        </div>
-                                                    ))
-                                                )}
-                                            </div>
-                                        </Surface>
-                                    </div>
-
-                                    <div className="grid gap-5 xl:grid-cols-3">
-                                        <Surface className="rounded-[32px] p-5 lg:p-6">
-                                            <SectionTitle description="Vue sur les fonds sous séquestre actuellement confirmés." title="Séquestre" />
-                                            <p className="mt-5 text-4xl font-semibold text-[var(--admin-text)]">{money(analytics.escrowAmount)}</p>
-                                            <p className="mt-2 text-sm text-[var(--admin-text-soft)]">Acomptes clients confirmés et immobilisés pour les missions.</p>
-                                        </Surface>
-
-                                        <Surface className="rounded-[32px] p-5 lg:p-6">
-                                            <SectionTitle description="Montants déjà distribués selon OTP et règlements fournisseurs." title="Fonds libérés" />
-                                            <p className="mt-5 text-4xl font-semibold text-[var(--admin-text)]">{money(analytics.releasedAmount)}</p>
-                                            <p className="mt-2 text-sm text-[var(--admin-text-soft)]">Jalons validés et règlements matériaux exécutés.</p>
-                                        </Surface>
-
-                                        <Surface className="rounded-[32px] p-5 lg:p-6">
-                                            <SectionTitle description="Comptes artisans les plus solides pour le matching et le micro-crédit." title="Top Score ProsArtisan" />
-                                            <div className="mt-5 space-y-3">
-                                                {analytics.topArtisans.length === 0 ? (
-                                                    <EmptyState description="Aucun artisan scoré pour l’instant." title="Pas de classement" />
-                                                ) : (
-                                                    analytics.topArtisans.map((artisan) => (
-                                                        <div key={artisan.id} className="flex items-center justify-between rounded-[22px] border border-[var(--admin-border)] bg-white/60 px-4 py-3">
-                                                            <div className="min-w-0">
-                                                                <p className="truncate text-sm font-semibold text-[var(--admin-text)]">{artisan.name}</p>
-                                                                <p className="text-xs text-[var(--admin-muted)]">{artisan.phone}</p>
-                                                            </div>
-                                                            <span className={cn('rounded-full border px-3 py-1 text-xs font-semibold', toneBadgeClasses('blue'))}>
-                                                                {artisan.score_prosartisan}/1000
-                                                            </span>
-                                                        </div>
-                                                    ))
-                                                )}
-                                            </div>
-                                        </Surface>
-                                    </div>
-                                </section>
+                                <DashboardPanel
+                                    summaryCards={summaryCards}
+                                    acompteTrend={analytics.acompteTrend}
+                                    releaseTrend={analytics.releaseTrend}
+                                    activityTrend={analytics.activityTrend}
+                                    urgentKyc={analytics.urgentKyc}
+                                    recentActivity={analytics.recentActivity}
+                                    escrowAmount={analytics.escrowAmount}
+                                    releasedAmount={analytics.releasedAmount}
+                                    topArtisans={analytics.topArtisans}
+                                />
                             ) : null}
 
                             {activeTab === 'kyc' ? (
-                                <section className="mt-5 space-y-5">
-                                    <div className="grid gap-4 xl:grid-cols-4">
-                                        <MetricCard description="Clients, artisans et fournisseurs en attente" tone="amber" trend="À traiter sans friction" value={numberFormat.format(kycPending)}>
-                                            Dossiers ouverts
-                                        </MetricCard>
-                                        <MetricCard
-                                            description="Demandes à fort impact sur la disponibilité terrain"
-                                            tone="green"
-                                            trend="Priorité aux artisans"
-                                            value={numberFormat.format(kycUsers.filter((user) => user.role === 'artisan').length)}
-                                        >
-                                            Artisans en attente
-                                        </MetricCard>
-                                        <MetricCard
-                                            description="Boutiques à activer pour le scan des J-Codes"
-                                            tone="blue"
-                                            trend="Agrément fournisseur"
-                                            value={numberFormat.format(fournisseurs.length)}
-                                        >
-                                            Fournisseurs à revoir
-                                        </MetricCard>
-                                        <MetricCard
-                                            description="Comptes déjà bloqués après revue"
-                                            tone="rose"
-                                            trend="Historique des rejets"
-                                            value={numberFormat.format(users.filter((user) => user.kyc_status === 'rejete').length)}
-                                        >
-                                            Rejets connus
-                                        </MetricCard>
-                                    </div>
-
-                                    <div className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
-                                        <Surface className="rounded-[32px] p-5 lg:p-6">
-                                            <SectionTitle
-                                                description="Validation documentaire avec liens directs vers les pièces CNI et selfie."
-                                                title="Dossiers à traiter"
-                                            />
-
-                                            <DataTable className="mt-5">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Utilisateur</th>
-                                                        <th>Rôle</th>
-                                                        <th>Documents</th>
-                                                        <th>Déposé le</th>
-                                                        <th className="text-right">Actions</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {analytics.filteredKyc.length === 0 ? (
-                                                        <tr>
-                                                            <td colSpan={5}>
-                                                                <EmptyState description="Aucun dossier ne correspond à votre recherche." title="Rien à afficher" />
-                                                            </td>
-                                                        </tr>
-                                                    ) : (
-                                                        analytics.filteredKyc.map((user) => (
-                                                            <tr key={user.id}>
-                                                                <td>
-                                                                    <div className="flex items-center gap-3">
-                                                                        <AvatarBubble label={user.name} />
-                                                                        <div className="min-w-0">
-                                                                            <p className="truncate font-semibold text-[var(--admin-text)]">{user.name}</p>
-                                                                            <p className="text-xs text-[var(--admin-muted)]">{user.phone}</p>
-                                                                        </div>
-                                                                    </div>
-                                                                </td>
-                                                                <td>
-                                                                    <RoleBadge role={user.role} />
-                                                                </td>
-                                                                <td>
-                                                                    <div className="flex flex-wrap gap-2">
-                                                                        {user.kyc_documents.map((document) => (
-                                                                            <a
-                                                                                key={document.id}
-                                                                                href={document.file_url}
-                                                                                target="_blank"
-                                                                                rel="noreferrer"
-                                                                                className="rounded-full border border-[#e6d3b2] px-3 py-1 text-xs font-medium text-[#8b6732] transition hover:bg-[#fbf1db]"
-                                                                            >
-                                                                                Voir {document.type.toUpperCase()}
-                                                                            </a>
-                                                                        ))}
-                                                                    </div>
-                                                                </td>
-                                                                <td className="text-sm text-[var(--admin-text-soft)]">{shortDate(user.created_at)}</td>
-                                                                <td>
-                                                                    <div className="flex justify-end gap-2">
-                                                                        <button
-                                                                            type="button"
-                                                                            disabled={actionLoading}
-                                                                            onClick={() => handleKycDecision(user, 'approuve')}
-                                                                            className={actionButtonClass('success')}
-                                                                        >
-                                                                            Approuver
-                                                                        </button>
-                                                                        <button
-                                                                            type="button"
-                                                                            disabled={actionLoading}
-                                                                            onClick={() => handleKycDecision(user, 'rejete')}
-                                                                            className={actionButtonClass('danger')}
-                                                                        >
-                                                                            Rejeter
-                                                                        </button>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                        ))
-                                                    )}
-                                                </tbody>
-                                            </DataTable>
-                                        </Surface>
-
-                                        <div className="space-y-5">
-                                            <Surface className="rounded-[32px] p-5 lg:p-6">
-                                                <SectionTitle
-                                                    description="Demandes fournisseurs à activer avant les prochains scans J-Code."
-                                                    title="Boutiques à agréer"
-                                                />
-
-                                                <div className="mt-5 space-y-3">
-                                                    {analytics.filteredFournisseurs.length === 0 ? (
-                                                        <EmptyState description="Aucune boutique en attente." title="File fournisseur vide" />
-                                                    ) : (
-                                                        analytics.filteredFournisseurs.map((fournisseur) => (
-                                                            <div key={fournisseur.id} className="rounded-[24px] border border-[var(--admin-border)] bg-white/60 p-4">
-                                                                <p className="text-sm font-semibold text-[var(--admin-text)]">{fournisseur.nom_boutique}</p>
-                                                                <p className="mt-1 text-sm text-[var(--admin-text-soft)]">{fournisseur.user?.name ?? 'Contact inconnu'}</p>
-                                                                <p className="text-xs text-[var(--admin-muted)]">
-                                                                    {fournisseur.user?.phone ?? 'Téléphone non renseigné'} • {shortDate(fournisseur.created_at)}
-                                                                </p>
-                                                                <div className="mt-4 flex gap-2">
-                                                                    <button
-                                                                        type="button"
-                                                                        disabled={actionLoading}
-                                                                        onClick={() => handleFournisseurDecision(fournisseur, 'agree')}
-                                                                        className={actionButtonClass('success')}
-                                                                    >
-                                                                        Agréer
-                                                                    </button>
-                                                                    <button
-                                                                        type="button"
-                                                                        disabled={actionLoading}
-                                                                        onClick={() => handleFournisseurDecision(fournisseur, 'suspendu')}
-                                                                        className={actionButtonClass('danger')}
-                                                                    >
-                                                                        Suspendre
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        ))
-                                                    )}
-                                                </div>
-                                            </Surface>
-
-                                            <Surface className="rounded-[32px] p-5 lg:p-6">
-                                                <SectionTitle
-                                                    description="Vérifiez le numéro d'artisan et la carte CNMCI soumis par les artisans."
-                                                    title="Certifications CNMCI"
-                                                />
-
-                                                <div className="mt-5 space-y-3">
-                                                    {cnmciUsers.length === 0 ? (
-                                                        <EmptyState description="Aucune affiliation CNMCI en attente." title="File CNMCI vide" />
-                                                    ) : (
-                                                        cnmciUsers.map((artisan) => (
-                                                            <div key={artisan.id} className="rounded-[24px] border border-[var(--admin-border)] bg-white/60 p-4">
-                                                                <p className="text-sm font-semibold text-[var(--admin-text)]">{artisan.name}</p>
-                                                                <p className="mt-0.5 text-xs text-[var(--admin-muted)]">{artisan.phone}</p>
-                                                                
-                                                                <div className="mt-2 bg-[#fdfaf3] border border-[#f5ebcf] rounded-xl p-3">
-                                                                    <p className="text-xs text-[var(--admin-text-soft)]">
-                                                                        <strong className="text-[var(--admin-text)]">Numéro CNMCI :</strong> {artisan.cnmci_number || 'Non renseigné'}
-                                                                    </p>
-                                                                    {artisan.cnmci_card_url && (
-                                                                        <a
-                                                                            href={artisan.cnmci_card_url}
-                                                                            target="_blank"
-                                                                            rel="noreferrer"
-                                                                            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#8b6732] hover:underline mt-2"
-                                                                        >
-                                                                            <span>Voir l'image de la carte</span>
-                                                                            <span className="text-[10px]">↗</span>
-                                                                        </a>
-                                                                    )}
-                                                                </div>
-
-                                                                <div className="mt-4 flex gap-2">
-                                                                    <button
-                                                                        type="button"
-                                                                        disabled={actionLoading}
-                                                                        onClick={() => handleCnmciDecision(artisan.id, 'valide')}
-                                                                        className={actionButtonClass('success')}
-                                                                    >
-                                                                        Valider
-                                                                    </button>
-                                                                    <button
-                                                                        type="button"
-                                                                        disabled={actionLoading}
-                                                                        onClick={() => handleCnmciDecision(artisan.id, 'rejete')}
-                                                                        className={actionButtonClass('danger')}
-                                                                    >
-                                                                        Rejeter
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        ))
-                                                    )}
-                                                </div>
-                                            </Surface>
-
-                                            <Surface className="rounded-[32px] p-5 lg:p-6">
-                                                <SectionTitle description="Répartition des créations récentes de comptes." title="Nouveaux comptes / 15 jours" />
-                                                <VolumeBarChart bars={analytics.registrationTrend} color="#d59a37" />
-                                            </Surface>
-                                        </div>
-                                    </div>
-                                </section>
+                                <KycPanel
+                                    kycUsersPage={kycUsersPage}
+                                    pendingFournisseursList={pendingFournisseursList}
+                                    kycStats={kycStats}
+                                    cnmciUsers={cnmciUsers}
+                                    search={kycTable.filters.search_kyc}
+                                    onSearchChange={(v) => kycTable.set('search_kyc', v)}
+                                    onSubmit={kycTable.apply}
+                                    onReset={kycTable.reset}
+                                    renderPagination={(links) => renderPagination(links as any[], ['kycUsersPage', 'kycStats'])}
+                                    actionLoading={actionLoading}
+                                    isSelected={kycSelection.isSelected}
+                                    selectionCount={kycSelection.count}
+                                    onToggleRow={kycSelection.toggle}
+                                    onToggleAll={kycSelection.toggleAll}
+                                    onClearSelection={kycSelection.clear}
+                                    onBulkKyc={handleBulkKyc}
+                                    onKycDecision={handleKycDecision}
+                                    onFournisseurDecision={handleFournisseurDecision}
+                                    onCnmciDecision={handleCnmciDecision}
+                                    canReview={canReviewKyc}
+                                    canReviewFournisseurs={can(permissions, 'admin.fournisseurs.review')}
+                                />
                             ) : null}
 
                             {activeTab === 'missions' ? (
-                                <section className="mt-5 space-y-5">
-                                    {/* Sélecteur de sous-vue : Chantiers Artisans vs Livraisons & Courses Livreurs */}
-                                    <div className="flex flex-wrap items-center justify-between gap-4 rounded-[28px] border border-[var(--admin-border)] bg-white/60 p-2 backdrop-blur-md">
-                                        <div className="flex flex-wrap items-center gap-2">
-                                            <button
-                                                type="button"
-                                                onClick={() => setMissionSubTab('chantiers')}
-                                                className={cn(
-                                                    'flex items-center gap-2.5 rounded-[22px] px-5 py-2.5 text-sm font-semibold transition-all duration-200 shadow-sm',
-                                                    missionSubTab === 'chantiers'
-                                                        ? 'bg-[#1e293b] text-white shadow-md ring-2 ring-[#1e293b]/20'
-                                                        : 'text-[var(--admin-text-soft)] hover:bg-black/5 hover:text-[var(--admin-text)]'
-                                                )}
-                                            >
-                                                <span>🔨 Chantiers & Missions Artisans</span>
-                                                <span className={cn(
-                                                    'rounded-full px-2 py-0.5 text-xs font-bold',
-                                                    missionSubTab === 'chantiers' ? 'bg-white/20 text-white' : 'bg-black/5 text-[var(--admin-text-soft)]'
-                                                )}>
-                                                    {analytics.filteredMissions.length}
-                                                </span>
-                                            </button>
-
-                                            <button
-                                                type="button"
-                                                onClick={() => setMissionSubTab('livraisons')}
-                                                className={cn(
-                                                    'flex items-center gap-2.5 rounded-[22px] px-5 py-2.5 text-sm font-semibold transition-all duration-200 shadow-sm',
-                                                    missionSubTab === 'livraisons'
-                                                        ? 'bg-[#8a6b3d] text-white shadow-md ring-2 ring-[#8a6b3d]/20'
-                                                        : 'text-[var(--admin-text-soft)] hover:bg-black/5 hover:text-[var(--admin-text)]'
-                                                )}
-                                            >
-                                                <span>🛵 Livraisons Matériaux & Courses Livreurs</span>
-                                                <span className={cn(
-                                                    'rounded-full px-2 py-0.5 text-xs font-bold',
-                                                    missionSubTab === 'livraisons' ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-900'
-                                                )}>
-                                                    {analytics.filteredOrders.length}
-                                                </span>
-                                            </button>
-                                        </div>
-
-                                        <div className="px-3 text-xs text-[var(--admin-muted)] font-medium">
-                                            {missionSubTab === 'chantiers' ? 'Suivi des devis, jalons et séquestres artisans' : 'Suivi temps réel des coursiers, quincailleries et artisans'}
-                                        </div>
-                                    </div>
-
-                                    {missionSubTab === 'chantiers' ? (
-                                        <>
-                                            <div className="grid gap-4 xl:grid-cols-4">
-                                                {analytics.missionStatusMetrics.map((metric) => (
-                                                    <MetricCard
-                                                        key={metric.title}
-                                                        description={metric.description}
-                                                        tone={metric.tone}
-                                                        trend="Lecture en temps réel"
-                                                        value={metric.value}
-                                                    >
-                                                        {metric.title}
-                                                    </MetricCard>
-                                                ))}
-                                            </div>
-
-                                            <Surface className="rounded-[32px] p-5 lg:p-6">
-                                                <SectionTitle
-                                                    description="Vision claire des missions, enrichissement Gemini et montant piloté."
-                                                    title="Pipeline missions"
-                                                />
-
-                                                <DataTable className="mt-5">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Mission</th>
-                                                            <th>Client / Artisan</th>
-                                                            <th>Analyse Gemini</th>
-                                                            <th>Montant</th>
-                                                            <th>Zone</th>
-                                                            <th>Date</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {analytics.filteredMissions.length === 0 ? (
-                                                            <tr>
-                                                                <td colSpan={6}>
-                                                                    <EmptyState description="Aucune mission ne correspond à votre recherche." title="Mission introuvable" />
-                                                                </td>
-                                                            </tr>
-                                                        ) : (
-                                                            analytics.filteredMissions.map((mission) => (
-                                                                <tr 
-                                                                    key={mission.id}
-                                                                    onClick={() => setSelectedMissionForDetails(mission)}
-                                                                    className="cursor-pointer hover:bg-black/[0.02] transition"
-                                                                >
-                                                                    <td>
-                                                                        <div className="space-y-2">
-                                                                            <div className="flex items-center gap-2">
-                                                                                <span className="text-sm font-semibold text-[var(--admin-text)]">#{mission.id}</span>
-                                                                                <MissionStatusBadge status={mission.status} />
-                                                                            </div>
-                                                                            <p className="max-w-[280px] text-sm text-[var(--admin-text-soft)]">{mission.description}</p>
-                                                                        </div>
-                                                                    </td>
-                                                                    <td>
-                                                                        <div className="space-y-1 text-sm text-[var(--admin-text-soft)]">
-                                                                            <p>
-                                                                                <span className="font-medium text-[var(--admin-text)]">Client:</span> {mission.client?.name ?? 'Non renseigné'}
-                                                                            </p>
-                                                                            <p>
-                                                                                <span className="font-medium text-[var(--admin-text)]">Artisan:</span> {mission.artisan?.name ?? 'Non affecté'}
-                                                                            </p>
-                                                                        </div>
-                                                                    </td>
-                                                                    <td>
-                                                                        <div className="space-y-1 text-sm text-[var(--admin-text-soft)]">
-                                                                            <p className="font-semibold text-[var(--admin-text)]">{mission.gemini_category ?? 'Non classée'}</p>
-                                                                            <p>Urgence: {mission.gemini_urgency ?? 'N/A'}</p>
-                                                                            <p>
-                                                                                Estimation:{' '}
-                                                                                {mission.gemini_estimation_min && mission.gemini_estimation_max
-                                                                                    ? `${money(mission.gemini_estimation_min)} - ${money(mission.gemini_estimation_max)}`
-                                                                                    : 'Non disponible'}
-                                                                            </p>
-                                                                        </div>
-                                                                    </td>
-                                                                    <td className="text-sm font-semibold text-[var(--admin-text)]">
-                                                                        {mission.montant_total ? money(mission.montant_total) : 'Non défini'}
-                                                                    </td>
-                                                                    <td className="text-sm text-[var(--admin-text-soft)]">{mission.client_address ?? 'Adresse non renseignée'}</td>
-                                                                    <td className="text-sm text-[var(--admin-text-soft)]">{shortDate(mission.created_at)}</td>
-                                                                </tr>
-                                                            ))
-                                                        )}
-                                                    </tbody>
-                                                </DataTable>
-                                            </Surface>
-                                        </>
-                                    ) : (
-                                        <>
-                                            {/* Métriques KPI Livraisons */}
-                                            <div className="grid gap-4 xl:grid-cols-4">
-                                                {analytics.deliveryMetrics.map((metric) => (
-                                                    <MetricCard
-                                                        key={metric.title}
-                                                        description={metric.description}
-                                                        tone={metric.tone}
-                                                        trend="Suivi en direct"
-                                                        value={metric.value}
-                                                    >
-                                                        {metric.title}
-                                                    </MetricCard>
-                                                ))}
-                                            </div>
-
-                                            {/* Filtres d'état des livraisons */}
-                                            <div className="flex flex-wrap items-center gap-2 pt-1">
-                                                {[
-                                                    { id: 'all', label: 'Toutes les livraisons', count: (orders || []).length },
-                                                    { id: 'searching_driver', label: 'Recherche coursier', count: (orders || []).filter(o => o.status === 'searching_driver').length },
-                                                    { id: 'driver_assigned', label: 'Livreur assigné', count: (orders || []).filter(o => o.status === 'driver_assigned').length },
-                                                    { id: 'shipping', label: 'En cours de livraison', count: (orders || []).filter(o => ['shipping', 'driver_picked_up'].includes(o.status)).length },
-                                                    { id: 'delivered', label: 'Livrées & Clôturées', count: (orders || []).filter(o => o.status === 'delivered').length },
-                                                    { id: 'disputed', label: 'En litige', count: (orders || []).filter(o => o.status === 'disputed').length },
-                                                ].map((filterItem) => (
-                                                    <button
-                                                        key={filterItem.id}
-                                                        type="button"
-                                                        onClick={() => setDeliveryStatusFilter(filterItem.id)}
-                                                        className={cn(
-                                                            'rounded-full px-4 py-1.5 text-xs font-semibold transition border',
-                                                            deliveryStatusFilter === filterItem.id
-                                                                ? 'bg-[#8a6b3d] text-white border-[#8a6b3d] shadow-sm'
-                                                                : 'bg-white/80 text-[var(--admin-text-soft)] border-[var(--admin-border)] hover:bg-black/5'
-                                                        )}
-                                                    >
-                                                        {filterItem.label} ({filterItem.count})
-                                                    </button>
-                                                ))}
-                                            </div>
-
-                                            <Surface className="rounded-[32px] p-5 lg:p-6">
-                                                <SectionTitle
-                                                    description="Traçabilité 360° des courses, expéditions quincailleries et remises sur chantier aux artisans."
-                                                    title="Suivi des Livraisons & Courses Livreurs"
-                                                />
-
-                                                <DataTable className="mt-5">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Course / Commande</th>
-                                                            <th>Livreur (Coursier)</th>
-                                                            <th>Artisan / Destinataire</th>
-                                                            <th>Quincaillerie Fournisseur</th>
-                                                            <th>Matériaux</th>
-                                                            <th>Frais & Total</th>
-                                                            <th>Statut & Traçabilité</th>
-                                                            <th>Actions</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {analytics.filteredOrders.length === 0 ? (
-                                                            <tr>
-                                                                <td colSpan={8}>
-                                                                    <EmptyState description="Aucune livraison ne correspond à votre filtre ou recherche." title="Aucune livraison trouvée" />
-                                                                </td>
-                                                            </tr>
-                                                        ) : (
-                                                            analytics.filteredOrders.map((order) => (
-                                                                <tr
-                                                                    key={order.id}
-                                                                    onClick={() => setSelectedOrderForDetails(order)}
-                                                                    className="cursor-pointer hover:bg-black/[0.02] transition"
-                                                                >
-                                                                    <td>
-                                                                        <div className="space-y-1.5">
-                                                                            <div className="flex items-center gap-2">
-                                                                                <span className="text-sm font-bold text-[var(--admin-text)]">#{order.id}</span>
-                                                                                <DeliveryModeBadge mode={order.delivery_mode} />
-                                                                            </div>
-                                                                            <p className="text-xs text-[var(--admin-muted)]">{shortDate(order.created_at)}</p>
-                                                                        </div>
-                                                                    </td>
-                                                                    <td>
-                                                                        {order.driver ? (
-                                                                            <div className="space-y-1">
-                                                                                <p className="text-sm font-bold text-[var(--admin-text)] flex items-center gap-1.5">
-                                                                                    <span>🛵</span>
-                                                                                    <span>{order.driver.name}</span>
-                                                                                </p>
-                                                                                <a
-                                                                                    href={`tel:${order.driver.phone}`}
-                                                                                    onClick={(e) => e.stopPropagation()}
-                                                                                    className="text-xs text-[#8a6b3d] hover:underline font-mono"
-                                                                                >
-                                                                                    📞 {order.driver.phone}
-                                                                                </a>
-                                                                            </div>
-                                                                        ) : (
-                                                                            <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-800">
-                                                                                <span className="inline-block h-2 w-2 animate-ping rounded-full bg-amber-500" />
-                                                                                En attente d'assignation
-                                                                            </span>
-                                                                        )}
-                                                                    </td>
-                                                                    <td>
-                                                                        <div className="space-y-1 text-sm text-[var(--admin-text-soft)]">
-                                                                            <p className="font-bold text-[var(--admin-text)]">
-                                                                                {order.client?.name ?? 'Non renseigné'}
-                                                                                {order.client?.role ? (
-                                                                                    <span className="ml-1.5 text-[10px] uppercase font-semibold text-[var(--admin-muted)]">
-                                                                                        ({order.client.role})
-                                                                                    </span>
-                                                                                ) : null}
-                                                                            </p>
-                                                                            <p className="text-xs text-[var(--admin-muted)]">{order.client?.phone}</p>
-                                                                        </div>
-                                                                    </td>
-                                                                    <td>
-                                                                        <div className="space-y-1 text-sm text-[var(--admin-text-soft)]">
-                                                                            <p className="font-semibold text-[var(--admin-text)]">
-                                                                                🏪 {order.supplier?.fournisseur_agree?.nom_boutique ?? order.supplier?.name ?? 'Quincaillerie'}
-                                                                            </p>
-                                                                            <p className="text-xs text-[var(--admin-muted)]">{order.supplier?.phone}</p>
-                                                                        </div>
-                                                                    </td>
-                                                                    <td>
-                                                                        <div className="space-y-1">
-                                                                            <span className="rounded-full bg-black/5 px-2 py-0.5 text-xs font-semibold text-[var(--admin-text)]">
-                                                                                {order.items?.length ?? 0} article(s)
-                                                                            </span>
-                                                                            {order.items && order.items.length > 0 && (
-                                                                                <p className="max-w-[180px] truncate text-[11px] text-[var(--admin-muted)]">
-                                                                                    {order.items.map(i => i.product?.name ?? 'Article').join(', ')}
-                                                                                </p>
-                                                                            )}
-                                                                        </div>
-                                                                    </td>
-                                                                    <td>
-                                                                        <div className="space-y-1 text-xs">
-                                                                            <p className="font-bold text-[var(--admin-text)]">{money(order.total_amount || order.subtotal)}</p>
-                                                                            {order.delivery_cost > 0 && (
-                                                                                <p className="text-[#8a6b3d] font-medium">Livreur: {money(order.delivery_cost)}</p>
-                                                                            )}
-                                                                        </div>
-                                                                    </td>
-                                                                    <td>
-                                                                        <div className="space-y-1.5">
-                                                                            <DeliveryStatusBadge status={order.status} />
-                                                                            <div className="flex flex-wrap gap-1 text-[10px] font-mono text-[var(--admin-muted)]">
-                                                                                {order.pickup_code ? <span className="bg-white/80 border px-1.5 py-0.5 rounded">R: {order.pickup_code}</span> : null}
-                                                                                {order.reception_code ? <span className="bg-white/80 border px-1.5 py-0.5 rounded">C: {order.reception_code}</span> : null}
-                                                                            </div>
-                                                                        </div>
-                                                                    </td>
-                                                                    <td>
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                setSelectedOrderForDetails(order);
-                                                                            }}
-                                                                            className="rounded-xl border border-[var(--admin-border)] bg-white/80 px-3 py-1.5 text-xs font-bold text-[var(--admin-text)] hover:bg-[#8a6b3d] hover:text-white transition shadow-sm"
-                                                                        >
-                                                                            Suivi 360°
-                                                                        </button>
-                                                                    </td>
-                                                                </tr>
-                                                            ))
-                                                        )}
-                                                    </tbody>
-                                                </DataTable>
-                                            </Surface>
-                                        </>
-                                    )}
-                                </section>
+                                <MissionsPanel
+                                    missionSubTab={missionSubTab}
+                                    onMissionSubTabChange={setMissionSubTab}
+                                    deliveryStatusFilter={missionsTable.filters.status_order || 'all'}
+                                    onDeliveryStatusFilterChange={(id) => missionsTable.applyWith('status_order', id === 'all' ? '' : id)}
+                                    missionsPage={missionsPage}
+                                    ordersPage={ordersPage}
+                                    missionStats={missionStats}
+                                    deliveryStats={deliveryStats}
+                                    missionSearch={missionsTable.filters.search_mission}
+                                    onMissionSearchChange={(v) => missionsTable.set('search_mission', v)}
+                                    onMissionSubmit={missionsTable.apply}
+                                    orderSearch={missionsTable.filters.search_order}
+                                    onOrderSearchChange={(v) => missionsTable.set('search_order', v)}
+                                    onOrderSubmit={missionsTable.apply}
+                                    onResetFilters={missionsTable.reset}
+                                    exportParams={missionsTable.filters}
+                                    renderMissionPagination={(links) => renderPagination(links as any[], ['missionsPage'])}
+                                    renderOrderPagination={(links) => renderPagination(links as any[], ['ordersPage'])}
+                                    onSelectMission={setSelectedMissionForDetails}
+                                    onSelectOrder={setSelectedOrderForDetails}
+                                />
                             ) : null}
 
                             {activeTab === 'litiges' ? (
-                                <section className="mt-5 space-y-5">
-                                    <div className="grid gap-4 xl:grid-cols-4">
-                                        <MetricCard description="Dossiers non résolus" tone="rose" trend="À arbitrer" value={numberFormat.format(openDisputes)}>
-                                            Litiges actifs
-                                        </MetricCard>
-                                        <MetricCard
-                                            description="Dossiers au-dessus de 2 000 000 FCFA"
-                                            tone="amber"
-                                            trend="Visite Référent à prévoir"
-                                            value={numberFormat.format(analytics.highRiskDisputes.length)}
-                                        >
-                                            Haute priorité
-                                        </MetricCard>
-                                        <MetricCard description="Missions au statut litige" tone="blue" trend="Impact opérationnel" value={numberFormat.format(dashboard.missions_en_litige ?? 0)}>
-                                            Missions bloquées
-                                        </MetricCard>
-                                        <MetricCard description="Signaux potentiels de fraude" tone="slate" trend="Surveillance J-Code" value={numberFormat.format(fraudAlerts)}>
-                                            Alertes
-                                        </MetricCard>
-                                    </div>
-
-                                    <div className="grid gap-5 xl:grid-cols-2">
-                                        {analytics.filteredLitiges.length === 0 ? (
-                                            <Surface className="rounded-[32px] p-6 xl:col-span-2">
-                                                <EmptyState description="Aucun litige ne correspond à votre filtre." title="Aucun litige affiché" />
-                                            </Surface>
-                                        ) : (
-                                            analytics.filteredLitiges.map((litige) => (
-                                                <Surface key={litige.id} className="rounded-[32px] p-5 lg:p-6">
-                                                    <div className="flex flex-wrap items-center justify-between gap-3">
-                                                        <div>
-                                                            <div className="flex items-center gap-2">
-                                                                <h3 className="text-lg font-semibold text-[var(--admin-text)]">Litige #{litige.id}</h3>
-                                                                <LitigeStatusBadge status={litige.statut} />
-                                                            </div>
-                                                            <p className="mt-1 text-sm text-[var(--admin-muted)]">
-                                                                Mission #{litige.mission_id} • {shortDate(litige.created_at)}
-                                                            </p>
-                                                        </div>
-
-                                                        {litige.decision ? <DecisionBadge decision={litige.decision} /> : null}
-                                                    </div>
-
-                                                    <p className="mt-4 text-sm leading-6 text-[var(--admin-text-soft)]">{litige.description}</p>
-
-                                                    <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                                                        <InfoPill label="Client" value={litige.mission.client?.name ?? 'N/A'} />
-                                                        <InfoPill label="Artisan" value={litige.mission.artisan?.name ?? 'N/A'} />
-                                                        <InfoPill label="Montant" value={money(litige.mission.montant_total ?? 0)} />
-                                                    </div>
-
-                                                    {litige.statut !== 'resolu' ? (
-                                                        <div className="mt-5 flex flex-wrap gap-2">
-                                                            <button
-                                                                type="button"
-                                                                disabled={actionLoading}
-                                                                onClick={() => handleLitigeDecision(litige, 'client')}
-                                                                className={actionButtonClass('danger')}
-                                                            >
-                                                                Rembourser client
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                disabled={actionLoading}
-                                                                onClick={() => handleLitigeDecision(litige, 'artisan')}
-                                                                className={actionButtonClass('success')}
-                                                            >
-                                                                Payer artisan
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                disabled={actionLoading}
-                                                                onClick={() => handleLitigeDecision(litige, 'gel')}
-                                                                className={actionButtonClass('secondary')}
-                                                            >
-                                                                Geler et envoyer Référent
-                                                            </button>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="mt-5 space-y-2">
-                                                            <p className="text-sm text-[var(--admin-text-soft)]">
-                                                                Décision finale: {litige.decision ? litigeDecisionLabels[litige.decision] : 'Aucune'}
-                                                            </p>
-                                                            {litige.decision === 'artisan' && litige.resolution_payload?.invoice_path ? (
-                                                                <div className="mt-2">
-                                                                    <a
-                                                                        href={`/admin/litiges/${litige.id}/invoice`}
-                                                                        target="_blank"
-                                                                        rel="noreferrer"
-                                                                        className="inline-flex items-center gap-2 text-sm text-[#10B981] hover:underline font-semibold"
-                                                                    >
-                                                                        Télécharger la Facture de Décaissement
-                                                                    </a>
-                                                                </div>
-                                                            ) : null}
-                                                        </div>
-                                                    )}
-                                                </Surface>
-                                            ))
-                                        )}
-                                    </div>
-                                </section>
+                                <LitigesPanel
+                                    litigesPage={litigesPage}
+                                    litigeStats={litigeStats}
+                                    fraudAlerts={fraudAlerts}
+                                    search={litigesTable.filters.search_litige}
+                                    onSearchChange={(v) => litigesTable.set('search_litige', v)}
+                                    statusFilter={litigesTable.filters.statut_litige}
+                                    onStatusFilterChange={(v) => litigesTable.set('statut_litige', v)}
+                                    onSubmit={litigesTable.apply}
+                                    onReset={litigesTable.reset}
+                                    exportParams={litigesTable.filters}
+                                    renderPagination={(links) => renderPagination(links as any[], ['litigesPage', 'litigeStats'])}
+                                    actionLoading={actionLoading}
+                                    onDecision={handleLitigeDecision}
+                                    canArbitrate={canArbitrateLitiges}
+                                />
                             ) : null}
 
                             {activeTab === 'users' ? (
-                                <section className="mt-5 space-y-5">
-                                    <div className="grid gap-4 xl:grid-cols-4">
-                                        <MetricCard description="Base complète des comptes connectés à la plateforme" tone="amber" trend="Communauté totale" value={numberFormat.format(totalUsers)}>
-                                            Utilisateurs
-                                        </MetricCard>
-                                        <MetricCard description="Comptes artisans KYC actifs" tone="green" trend="Capacité terrain" value={numberFormat.format(artisansActifs)}>
-                                            Artisans actifs
-                                        </MetricCard>
-                                        <MetricCard description="Clients opérationnels avec KYC actif" tone="blue" trend="Demande solvable" value={numberFormat.format(clientsActifs)}>
-                                            Clients actifs
-                                        </MetricCard>
-                                        <MetricCard description="Boutiques déjà approuvées" tone="slate" trend="Réseau matériaux" value={numberFormat.format(fournisseursAgrees)}>
-                                            Fournisseurs agréés
-                                        </MetricCard>
-                                    </div>
-
-                                    <div className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
-                                        <Surface className="rounded-[32px] p-5 lg:p-6">
-                                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                                                <SectionTitle
-                                                    description="Vue consolidée des comptes, rôles, KYC et activité mission."
-                                                    title="Répertoire utilisateurs"
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={openCreateUserModal}
-                                                    className="admin-button admin-button--primary self-start sm:self-auto"
-                                                >
-                                                    Ajouter un utilisateur
-                                                </button>
-                                            </div>
-
-                                            <DataTable className="mt-5">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Utilisateur</th>
-                                                        <th>Rôle</th>
-                                                        <th>KYC</th>
-                                                        <th>Compte</th>
-                                                        <th>Score / Sécurité</th>
-                                                        <th>Missions</th>
-                                                        <th className="text-right">Actions</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {analytics.filteredUsers.length === 0 ? (
-                                                        <tr>
-                                                            <td colSpan={7}>
-                                                                <EmptyState description="Aucun compte ne correspond à votre recherche." title="Liste vide" />
-                                                            </td>
-                                                        </tr>
-                                                    ) : (
-                                                        analytics.filteredUsers.map((user) => (
-                                                            <tr key={user.id}>
-                                                                <td>
-                                                                    <div className="flex items-center gap-3">
-                                                                        <AvatarBubble label={user.name} />
-                                                                        <div className="min-w-0">
-                                                                            <p className="truncate font-semibold text-[var(--admin-text)]">{user.name}</p>
-                                                                            <p className="text-xs text-[var(--admin-muted)]">
-                                                                                #{user.id} • {user.email ?? user.phone}
-                                                                            </p>
-                                                                        </div>
-                                                                    </div>
-                                                                </td>
-                                                                <td>
-                                                                    <RoleBadge role={user.role} />
-                                                                </td>
-                                                                <td>
-                                                                    <KycStatusBadge status={user.kyc_status} />
-                                                                </td>
-                                                                <td>
-                                                                    <AccountStatusBadge status={user.account_status} />
-                                                                </td>
-                                                                <td className="text-sm">
-                                                                    <div className="flex flex-col gap-1">
-                                                                        <div className="flex items-center gap-1.5">
-                                                                            <span className="font-semibold text-[var(--admin-text)]">
-                                                                                {user.score_prosartisan} pts
-                                                                            </span>
-                                                                            {user.score_frozen ? (
-                                                                                <span className="rounded-full bg-[#fbe0da] px-1.5 py-0.5 text-[10px] font-semibold text-[#c55e50] border border-[#f2c1ba]">
-                                                                                    Gelé
-                                                                                </span>
-                                                                            ) : (
-                                                                                <span className="rounded-full bg-[#eef8f0] px-1.5 py-0.5 text-[10px] font-semibold text-[#24734f] border border-[#bfe0c8]">
-                                                                                    Actif
-                                                                                </span>
-                                                                            )}
-                                                                        </div>
-                                                                        {user.device_fingerprint ? (
-                                                                            <span className="text-[10px] text-[var(--admin-muted)] truncate max-w-[120px]" title={user.device_fingerprint}>
-                                                                                IMEI: {user.device_fingerprint.slice(0, 10)}...
-                                                                            </span>
-                                                                        ) : (
-                                                                            <span className="text-[10px] text-[var(--admin-muted)]">
-                                                                                Aucun device lié
-                                                                            </span>
-                                                                        )}
-                                                                    </div>
-                                                                </td>
-                                                                <td className="text-sm text-[var(--admin-text-soft)]">
-                                                                    Client: {user.missions_client_count} • Artisan: {user.missions_artisan_count}
-                                                                </td>
-                                                                <td>
-                                                                    <div className="flex justify-end gap-2">
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => openEditUserModal(user)}
-                                                                            className={actionButtonClass('secondary')}
-                                                                            title="Modifier"
-                                                                        >
-                                                                            Modifier
-                                                                        </button>
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => handleToggleUserStatus(user)}
-                                                                            className={actionButtonClass((user.account_status ?? 'actif') === 'actif' ? 'danger' : 'success')}
-                                                                            title={(user.account_status ?? 'actif') === 'actif' ? 'Suspendre' : 'Activer'}
-                                                                        >
-                                                                            {(user.account_status ?? 'actif') === 'actif' ? 'Suspendre' : 'Activer'}
-                                                                        </button>
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => handleDeleteUser(user)}
-                                                                            className={actionButtonClass('danger')}
-                                                                            title="Supprimer"
-                                                                        >
-                                                                            Supprimer
-                                                                        </button>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                        ))
-                                                    )}
-                                                </tbody>
-                                            </DataTable>
-                                        </Surface>
-
-                                        <div className="space-y-5">
-                                            <Surface className="rounded-[32px] p-5 lg:p-6">
-                                                <SectionTitle
-                                                    description="Demandes boutiques toujours en attente d’agrément."
-                                                    title="Fournisseurs en attente"
-                                                />
-
-                                                <div className="mt-5 space-y-3">
-                                                    {analytics.filteredFournisseurs.length === 0 ? (
-                                                        <EmptyState description="Aucune boutique en attente." title="Tout est à jour" />
-                                                    ) : (
-                                                        analytics.filteredFournisseurs.map((fournisseur) => (
-                                                            <div key={fournisseur.id} className="rounded-[24px] border border-[var(--admin-border)] bg-white/60 p-4">
-                                                                <p className="text-sm font-semibold text-[var(--admin-text)]">{fournisseur.nom_boutique}</p>
-                                                                <p className="mt-1 text-sm text-[var(--admin-text-soft)]">{fournisseur.user?.name ?? 'Contact inconnu'}</p>
-                                                                <p className="text-xs text-[var(--admin-muted)]">{fournisseur.user?.phone ?? 'Téléphone non renseigné'}</p>
-                                                                <div className="mt-4 flex gap-2">
-                                                                    <button
-                                                                        type="button"
-                                                                        disabled={actionLoading}
-                                                                        onClick={() => handleFournisseurDecision(fournisseur, 'agree')}
-                                                                        className={actionButtonClass('success')}
-                                                                    >
-                                                                        Agréer
-                                                                    </button>
-                                                                    <button
-                                                                        type="button"
-                                                                        disabled={actionLoading}
-                                                                        onClick={() => handleFournisseurDecision(fournisseur, 'suspendu')}
-                                                                        className={actionButtonClass('danger')}
-                                                                    >
-                                                                        Suspendre
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        ))
-                                                    )}
-                                                </div>
-                                            </Surface>
-
-                                            <Surface className="rounded-[32px] p-5 lg:p-6">
-                                                <SectionTitle description="Comptes artisans les mieux scorés pour les futures affectations." title="Top artisans" />
-                                                <div className="mt-5 space-y-3">
-                                                    {analytics.topArtisans.map((artisan) => (
-                                                        <div key={artisan.id} className="flex items-center justify-between rounded-[22px] border border-[var(--admin-border)] bg-white/60 px-4 py-3">
-                                                            <div className="min-w-0">
-                                                                <p className="truncate text-sm font-semibold text-[var(--admin-text)]">{artisan.name}</p>
-                                                                <p className="text-xs text-[var(--admin-muted)]">{artisan.phone}</p>
-                                                            </div>
-                                                            <span className={cn('rounded-full border px-3 py-1 text-xs font-semibold', toneBadgeClasses('green'))}>
-                                                                {artisan.score_prosartisan}/1000
-                                                            </span>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </Surface>
-                                        </div>
-                                    </div>
-                                </section>
+                                <UsersPanel
+                                    users={usersPage}
+                                    userStats={userStats}
+                                    pendingFournisseurs={pendingFournisseurs}
+                                    topArtisans={topArtisansProp}
+                                    search={usersTable.filters.search_users}
+                                    onSearchChange={(v) => usersTable.set('search_users', v)}
+                                    roleFilter={usersTable.filters.role_users}
+                                    onRoleFilterChange={(v) => usersTable.set('role_users', v)}
+                                    kycFilter={usersTable.filters.kyc_users}
+                                    onKycFilterChange={(v) => usersTable.set('kyc_users', v)}
+                                    onSubmit={usersTable.apply}
+                                    onReset={usersTable.reset}
+                                    exportParams={usersTable.filters}
+                                    renderPagination={(links) => renderPagination(links as any[], ['usersPage'])}
+                                    actionLoading={actionLoading}
+                                    isSelected={userSelection.isSelected}
+                                    selectionCount={userSelection.count}
+                                    onToggleRow={userSelection.toggle}
+                                    onToggleAll={userSelection.toggleAll}
+                                    onClearSelection={userSelection.clear}
+                                    onBulkStatus={handleBulkUserStatus}
+                                    onCreateUser={openCreateUserModal}
+                                    onEditUser={openEditUserModal}
+                                    onToggleUserStatus={handleToggleUserStatus}
+                                    onDeleteUser={handleDeleteUser}
+                                    onFournisseurDecision={handleFournisseurDecision}
+                                    canManage={canManageUsers}
+                                    canDelete={canDeleteUsers}
+                                    canReviewFournisseurs={can(permissions, 'admin.fournisseurs.review')}
+                                    canViewRgpd={canViewRgpd}
+                                    onOpenRgpd={setSelectedUserForRgpd}
+                                    canImpersonate={canImpersonate}
+                                    onImpersonate={handleImpersonate}
+                                />
                             ) : null}
 
                             {activeTab === 'transactions' ? (
-                                <section className="mt-5 space-y-6">
-                                    {/* 1. SOLDE GÉNÉRAL & COMPTE FINANCIER PROSARTISAN */}
-                                    <Surface className="rounded-[32px] p-5 lg:p-6 border border-[#e2d5c3]/60 bg-gradient-to-br from-white via-[#fcfaf7] to-[#f7f2ea]">
-                                        <SectionTitle
-                                            description="Solde global des commissions perçues, fonds séquestrés en cours et total distribué."
-                                            title="Solde Général & Compte Financier ProsArtisan"
-                                        />
-                                        <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                                            <MetricCard description="Commission cumulée (Chantiers + E-commerce)" tone="amber" trend="Revenus ProsArtisan" value={money(financialKpis?.solde_general?.total_commissions_cumulees ?? 0)}>
-                                                Solde Commissions
-                                            </MetricCard>
-                                            <MetricCard description="Main-d'œuvre réservée jalons" tone="blue" trend="Séquestre MO" value={money(financialKpis?.solde_general?.sequestre_mo_encours ?? analytics.escrowAmount)}>
-                                                Encours Séquestre MO
-                                            </MetricCard>
-                                            <MetricCard description="Achats matériaux en attente scan" tone="blue" trend="Séquestre Matériaux" value={money(financialKpis?.solde_general?.sequestre_materiaux_encours ?? 0)}>
-                                                Encours Matériaux
-                                            </MetricCard>
-                                            <MetricCard description="Artisans, fournisseurs et livreurs payés" tone="green" trend="Total Distribué" value={money(financialKpis?.solde_general?.total_libere_general ?? analytics.releasedAmount)}>
-                                                Total Libéré
-                                            </MetricCard>
-                                        </div>
-                                    </Surface>
-
-                                    {/* 2. KPIS RECOMMANDÉS PAR PROSARTISAN */}
-                                    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                                        <MetricCard description="Ratio missions entrées en arbitrage" tone={(financialKpis?.additional_kpis?.dispute_rate_percent ?? 0) > 5 ? "rose" : "green"} trend="Qualité réseau" value={`${financialKpis?.additional_kpis?.dispute_rate_percent ?? 0}%`}>
-                                            Taux de Litiges
-                                        </MetricCard>
-                                        <MetricCard description="Ratio devis validés par les clients" tone="amber" trend="Conversion Devis" value={`${financialKpis?.additional_kpis?.devis_conversion_rate_percent ?? 0}%`}>
-                                            Taux de Conversion Devis
-                                        </MetricCard>
-                                        <MetricCard description="Montant moyen par chantier validé" tone="blue" trend="AOV Chantier" value={money(financialKpis?.additional_kpis?.aov_chantier ?? 0)}>
-                                            Panier Moyen Chantier
-                                        </MetricCard>
-                                        <MetricCard description="Montant moyen par commande quincaillerie" tone="blue" trend="AOV Matériaux" value={money(financialKpis?.additional_kpis?.aov_ecommerce ?? 0)}>
-                                            Panier Moyen Matériaux
-                                        </MetricCard>
-                                    </div>
-
-                                    {/* 3. COMMISSIONS PAR CATÉGORIE DE MÉTIER ET PAR ANNÉE */}
-                                    <Surface className="rounded-[32px] p-5 lg:p-6">
-                                        <SectionTitle
-                                            description="Répartition des commissions de service perçues par secteur d'activité et par année."
-                                            title="Commissions par Catégorie de Métier & Année"
-                                        />
-                                        <DataTable className="mt-5">
-                                            <thead>
-                                                <tr>
-                                                    <th>Catégorie de Métier</th>
-                                                    <th>Année</th>
-                                                    <th>Missions Terminées</th>
-                                                    <th>Volume Brut Travaux</th>
-                                                    <th>Commission Nette ProsArtisan</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {(!financialKpis?.commissions_by_category_year || financialKpis.commissions_by_category_year.length === 0) ? (
-                                                    <tr>
-                                                        <td colSpan={5}>
-                                                            <EmptyState description="Aucune commission enregistrée par catégorie pour le moment." title="Aucune donnée métier" />
-                                                        </td>
-                                                    </tr>
-                                                ) : (
-                                                    financialKpis.commissions_by_category_year.map((row: any, idx: number) => (
-                                                        <tr key={idx} className="hover:bg-black/[0.02] transition">
-                                                            <td className="font-semibold text-[var(--admin-text)]">{row.category}</td>
-                                                            <td>
-                                                                <span className="inline-flex items-center rounded-md bg-[#8a6b3d]/10 px-2.5 py-1 text-xs font-bold text-[#8a6b3d]">
-                                                                    {row.year}
-                                                                </span>
-                                                            </td>
-                                                            <td className="text-sm text-[var(--admin-text-soft)]">{row.missions_count} mission(s)</td>
-                                                            <td className="text-sm font-semibold text-[var(--admin-text)]">{money(row.volume_brut)}</td>
-                                                            <td className="text-sm font-bold text-[#2e7d32]">{money(row.commission_net)}</td>
-                                                        </tr>
-                                                    ))
-                                                )}
-                                            </tbody>
-                                        </DataTable>
-                                    </Surface>
-
-                                    {/* 4. COMMISSIONS ET VOLUME PAR FOURNISSEUR & LIVREURS */}
-                                    <div className="grid gap-6 xl:grid-cols-2">
-                                        {/* TABLEAU FOURNISSEURS */}
-                                        <Surface className="rounded-[32px] p-5 lg:p-6">
-                                            <SectionTitle
-                                                description="Volume d'affaires matériaux et commissions générées par quincaillerie."
-                                                title="Commissions par Fournisseur"
-                                            />
-                                            <DataTable className="mt-5">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Boutique</th>
-                                                        <th>Commandes</th>
-                                                        <th>Volume Matériaux</th>
-                                                        <th>Commission 3%</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {(!financialKpis?.commissions_by_supplier || financialKpis.commissions_by_supplier.length === 0) ? (
-                                                        <tr>
-                                                            <td colSpan={4}>
-                                                                <EmptyState description="Aucune commande fournisseur enregistrée." title="Aucun fournisseur" />
-                                                            </td>
-                                                        </tr>
-                                                    ) : (
-                                                        financialKpis.commissions_by_supplier.map((sup: any) => (
-                                                            <tr key={sup.supplier_id} className="hover:bg-black/[0.02] transition">
-                                                                <td>
-                                                                    <p className="font-semibold text-[var(--admin-text)]">{sup.shop_name}</p>
-                                                                    <p className="text-xs text-[var(--admin-muted)]">{sup.supplier_phone}</p>
-                                                                </td>
-                                                                <td className="text-sm text-[var(--admin-text-soft)]">{sup.orders_count} commande(s)</td>
-                                                                <td className="text-sm font-semibold text-[var(--admin-text)]">{money(sup.volume_materiaux)}</td>
-                                                                <td className="text-sm font-bold text-[#8a6b3d]">{money(sup.commission_prosartisan)}</td>
-                                                            </tr>
-                                                        ))
-                                                    )}
-                                                </tbody>
-                                            </DataTable>
-                                        </Surface>
-
-                                        {/* TABLEAU LIVREURS */}
-                                        <Surface className="rounded-[32px] p-5 lg:p-6">
-                                            <SectionTitle
-                                                description="Volume de livraison et frais distribués aux livreurs."
-                                                title="Activité & Frais par Livreur"
-                                            />
-                                            <DataTable className="mt-5">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Livreur</th>
-                                                        <th>Livraisons</th>
-                                                        <th>Frais Générés</th>
-                                                        <th>Gains Libérés</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {(!financialKpis?.commissions_by_driver || financialKpis.commissions_by_driver.length === 0) ? (
-                                                        <tr>
-                                                            <td colSpan={4}>
-                                                                <EmptyState description="Aucun livreur enregistré ou course effectuée." title="Aucun livreur" />
-                                                            </td>
-                                                        </tr>
-                                                    ) : (
-                                                        financialKpis.commissions_by_driver.map((drv: any) => (
-                                                            <tr key={drv.driver_id} className="hover:bg-black/[0.02] transition">
-                                                                <td>
-                                                                    <p className="font-semibold text-[var(--admin-text)]">{drv.driver_name}</p>
-                                                                    <p className="text-xs text-[var(--admin-muted)]">{drv.driver_phone}</p>
-                                                                </td>
-                                                                <td className="text-sm text-[var(--admin-text-soft)]">{drv.deliveries_count} course(s)</td>
-                                                                <td className="text-sm font-semibold text-[var(--admin-text)]">{money(drv.total_frais_livraison)}</td>
-                                                                <td className="text-sm font-bold text-[#2e7d32]">{money(drv.gains_livreur_liberes)}</td>
-                                                            </tr>
-                                                        ))
-                                                    )}
-                                                </tbody>
-                                            </DataTable>
-                                        </Surface>
-                                    </div>
-
-                                    {/* 5. JOURNAL FINANCIER DES TRANSACTIONS */}
-                                    <Surface className="rounded-[32px] p-5 lg:p-6">
-                                        <SectionTitle
-                                            description="Flux Wave, Orange Money et remboursements classés par statut."
-                                            title="Journal financier des transactions"
-                                        />
-
-                                        <DataTable className="mt-5">
-                                            <thead>
-                                                <tr>
-                                                    <th>ID</th>
-                                                    <th>Type</th>
-                                                    <th>Montant</th>
-                                                    <th>Provider</th>
-                                                    <th>Statut</th>
-                                                    <th>Bénéficiaire</th>
-                                                    <th>Date</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {analytics.filteredTransactions.length === 0 ? (
-                                                    <tr>
-                                                        <td colSpan={7}>
-                                                            <EmptyState description="Aucune transaction ne correspond à votre recherche." title="Aucun flux trouvé" />
-                                                        </td>
-                                                    </tr>
-                                                ) : (
-                                                    analytics.filteredTransactions.map((transaction) => (
-                                                        <tr 
-                                                            key={transaction.id}
-                                                            onClick={() => setSelectedTransactionForDetails(transaction)}
-                                                            className="cursor-pointer hover:bg-black/[0.02] transition"
-                                                        >
-                                                            <td className="font-semibold text-[var(--admin-text)]">#{transaction.id}</td>
-                                                            <td className="text-sm text-[var(--admin-text-soft)]">{transactionTypeLabels[transaction.type] ?? transaction.type}</td>
-                                                            <td className="text-sm font-semibold text-[var(--admin-text)]">{money(transaction.montant)}</td>
-                                                            <td>
-                                                                <ProviderBadge provider={transaction.provider} />
-                                                            </td>
-                                                            <td>
-                                                                <TransactionStatusBadge status={transaction.statut} />
-                                                            </td>
-                                                            <td className="text-sm text-[var(--admin-text-soft)]">{transaction.user?.name ?? 'Non renseigné'}</td>
-                                                            <td className="text-sm text-[var(--admin-text-soft)]">{shortDate(transaction.created_at)}</td>
-                                                        </tr>
-                                                    ))
-                                                )}
-                                            </tbody>
-                                        </DataTable>
-                                    </Surface>
-                                </section>
+                                <TransactionsPanel
+                                    financialKpis={financialKpis}
+                                    transactionStats={transactionStats}
+                                    transactionsPage={transactionsPage}
+                                    search={txTable.filters.search_tx}
+                                    onSearchChange={(v) => txTable.set('search_tx', v)}
+                                    statusFilter={txTable.filters.status_tx}
+                                    onStatusFilterChange={(v) => txTable.set('status_tx', v)}
+                                    typeFilter={txTable.filters.type_tx}
+                                    onTypeFilterChange={(v) => txTable.set('type_tx', v)}
+                                    providerFilter={txTable.filters.provider_tx}
+                                    onProviderFilterChange={(v) => txTable.set('provider_tx', v)}
+                                    onSubmit={txTable.apply}
+                                    onReset={txTable.reset}
+                                    exportParams={txTable.filters}
+                                    renderPagination={(links) => renderPagination(links as any[], ['transactionsPage'])}
+                                    onSelectTransaction={setSelectedTransactionForDetails}
+                                />
                             ) : null}
 
                             {activeTab === 'settings' ? (
-                                <section className="mt-5 grid gap-5 xl:grid-cols-2">
-                                    <Surface className="rounded-[32px] p-5 lg:p-6">
-                                        <SectionTitle
-                                            description="Garde-fous fonctionnels à ne jamais contourner dans ProsArtisan."
-                                            title="Règles métier critiques"
-                                        />
-                                        <ul className="mt-5 space-y-2.5">
-                                            {[
-                                                { icon: ShieldIcon, text: 'Client et artisan doivent être KYC actifs avant toute mission ou transaction.' },
-                                                { icon: WalletIcon, text: "Le ratio de fragmentation matériaux / main d'œuvre reste figé après acceptation du devis." },
-                                                { icon: AlertIcon, text: 'Le scan J-Code doit toujours vérifier une distance fournisseur ≤ 100 m.' },
-                                                { icon: ClipboardIcon, text: 'Aucune libération de fonds sans OTP jalon validé côté client.' },
-                                                { icon: UsersIcon, text: 'Toute mission au-delà de 2 000 000 FCFA exige une validation physique Référent.' },
-                                                { icon: SettingsIcon, text: 'Les montants financiers restent en BIGINT FCFA, sans float ni double.' },
-                                            ].map((rule, index) => (
-                                                <li key={index} className="flex items-start gap-3 rounded-[18px] border border-[var(--admin-border)] bg-white/55 px-4 py-3">
-                                                    <rule.icon className="mt-0.5 h-4 w-4 shrink-0 text-[var(--admin-muted)]" />
-                                                    <span className="text-sm leading-6 text-[var(--admin-text-soft)]">{rule.text}</span>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </Surface>
-
-                                    <Surface className="rounded-[32px] p-5 lg:p-6">
-                                        <SectionTitle
-                                            description="Configuration métier et accès du poste administrateur courant."
-                                            title="Session backoffice"
-                                        />
-                                        <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                                            <InfoPill label="Admin" value={adminName} />
-                                            <InfoPill label="Contact" value={adminContact} />
-                                            <InfoPill label="Langue" value="Français" />
-                                            <InfoPill label="Paiements" value="Wave CI / Orange Money CI" />
-                                            <div className="flex items-center justify-between gap-3 rounded-[18px] border border-[var(--admin-border)] bg-white/55 px-4 py-3">
-                                                <div>
-                                                    <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Connectivité</p>
-                                                    <p className="mt-1 text-sm font-bold text-[var(--admin-text)]">
-                                                        {offlineActive ? 'Hors-ligne (+ USSD)' : 'En ligne'}
-                                                    </p>
-                                                </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setIsOfflineSimulated(prev => !prev)}
-                                                    className={cn(
-                                                        "rounded-lg px-2.5 py-1.5 text-xs font-semibold border transition",
-                                                        offlineActive
-                                                            ? "bg-amber-100 border-amber-300 text-amber-800"
-                                                            : "bg-green-100 border-green-300 text-green-800"
-                                                    )}
-                                                >
-                                                    {isOfflineSimulated ? 'Simulé' : 'Simuler Offline'}
-                                                </button>
-                                            </div>
-                                            <InfoPill label="Mobile" value="Android prioritaire" />
-                                        </div>
-                                        <div className="mt-5 flex flex-wrap gap-3">
-                                            <button type="button" className="admin-button admin-button--primary" onClick={refreshData}>
-                                                Rafraîchir les données
-                                            </button>
-                                            <button type="button" className="admin-button admin-button--ghost" onClick={() => router.post('/admin/logout')}>
-                                                Se déconnecter
-                                            </button>
-                                        </div>
-                                    </Surface>
-
-                                    <Surface className="rounded-[32px] p-5 lg:p-6 xl:col-span-2">
-                                        <SectionTitle
-                                            description="Modifiez en temps réel les pourcentages de commission, frais de service et configurations métier."
-                                            title="Gestion des Commissions & Paramètres"
-                                        />
-                                        <div className="mt-6 space-y-6">
-                                            {settingsList && settingsList.length > 0 ? (
-                                                settingsList.map((setting) => (
-                                                    <div key={setting.id} className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-2xl border border-[var(--admin-border)] bg-white/60">
-                                                        <div className="min-w-0 flex-1">
-                                                            <h4 className="font-semibold text-sm text-[var(--admin-text)]">{setting.label ?? setting.key}</h4>
-                                                            <p className="text-xs text-[var(--admin-muted)] mt-1">{setting.description}</p>
-                                                        </div>
-                                                        <div className="flex items-center gap-3 shrink-0">
-                                                            {setting.key === 'otp_delivery_channel' ? (
-                                                                <select
-                                                                    defaultValue={setting.value}
-                                                                    onChange={(e) => {
-                                                                        router.put(`/admin/settings/${setting.id}`, {
-                                                                            value: e.target.value,
-                                                                        }, { preserveScroll: true });
-                                                                    }}
-                                                                    className="admin-input w-48 rounded-xl px-3 py-2 text-sm text-center outline-none bg-white border border-[var(--admin-border)]"
-                                                                >
-                                                                    <option value="sms">SMS uniquement</option>
-                                                                    <option value="whatsapp">WhatsApp uniquement</option>
-                                                                    <option value="both">SMS & WhatsApp</option>
-                                                                </select>
-                                                            ) : setting.key.startsWith('block_') ? (
-                                                                <select
-                                                                    defaultValue={setting.value}
-                                                                    onChange={(e) => {
-                                                                        router.put(`/admin/settings/${setting.id}`, {
-                                                                            value: e.target.value,
-                                                                        }, { preserveScroll: true });
-                                                                    }}
-                                                                    className="admin-input w-48 rounded-xl px-3 py-2 text-sm text-center outline-none bg-white border border-[var(--admin-border)]"
-                                                                >
-                                                                    <option value="none">Accès normal</option>
-                                                                    <option value="new">Bloquer Nouveaux</option>
-                                                                    <option value="old">Bloquer Anciens</option>
-                                                                    <option value="all">Bloquer Tous</option>
-                                                                    <option value="hidden">Masquer l'icône (Mobile)</option>
-                                                                </select>
-                                                                                            ) : setting.key === 'app_access_disabled_message' || setting.key.startsWith('app_access_disabled_message_') ? (
-                                                                <textarea
-                                                                    defaultValue={setting.value}
-                                                                    onBlur={(e) => {
-                                                                        if (e.target.value !== setting.value) {
-                                                                            router.put(`/admin/settings/${setting.id}`, {
-                                                                                value: e.target.value,
-                                                                            }, { preserveScroll: true });
-                                                                        }
-                                                                    }}
-                                                                    rows={3}
-                                                                    className="admin-input w-72 rounded-xl px-3 py-2 text-sm outline-none bg-white border border-[var(--admin-border)] resize-y"
-                                                                />
-                                                            ) : (
-                                                                <input
-                                                                    type="text"
-                                                                    defaultValue={setting.value}
-                                                                    onBlur={(e) => {
-                                                                        if (e.target.value !== setting.value) {
-                                                                            router.put(`/admin/settings/${setting.id}`, {
-                                                                                value: e.target.value,
-                                                                            }, { preserveScroll: true });
-                                                                        }
-                                                                    }}
-                                                                    className="admin-input w-48 rounded-xl px-3 py-2 text-sm text-center outline-none"
-                                                                />
-                                                            )}
-                                                            <span className="text-xs text-[var(--admin-muted)] uppercase tracking-wider font-semibold">
-                                                                {setting.type}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                ))
-                                            ) : (
-                                                <p className="text-sm text-[var(--admin-muted)]">Aucun paramètre trouvé.</p>
-                                            )}
-                                        </div>
-                                    </Surface>
-
-                                    <Surface className="rounded-[32px] p-5 lg:p-6 xl:col-span-2">
-                                        <SectionTitle
-                                            description="Modifiez les noms des catégories (Secteurs) et sous-catégories (Métiers) de la plateforme."
-                                            title="Gestion des Catégories & Métiers"
-                                        />
-
-                                        {/* Nouvelles créations */}
-                                        <div className="mt-6 grid gap-6 lg:grid-cols-2 p-5 rounded-2xl border border-[var(--admin-border)] bg-amber-50/20">
-                                            {/* Création Catégorie */}
-                                            <form onSubmit={(e) => {
-                                                e.preventDefault();
-                                                const form = e.currentTarget;
-                                                const input = form.querySelector('input') as HTMLInputElement;
-                                                if (input.value.trim() !== '') {
-                                                    router.post('/admin/sectors', { name: input.value }, {
-                                                        preserveScroll: true,
-                                                        onSuccess: () => { input.value = ''; }
-                                                    });
-                                                }
-                                            }} className="space-y-3">
-                                                <h4 className="font-semibold text-sm text-[var(--admin-text)]">Créer une catégorie</h4>
-                                                <div className="flex flex-col sm:flex-row gap-2">
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Nom de la catégorie (ex: Électricité)"
-                                                        className="admin-input flex-1 rounded-xl px-3 py-2 text-sm outline-none bg-white border border-[var(--admin-border)] w-full"
-                                                    />
-                                                    <button type="submit" className="admin-button admin-button--primary text-xs py-2.5 px-4 shrink-0 w-full sm:w-auto">
-                                                        Ajouter
-                                                    </button>
-                                                </div>
-                                            </form>
-
-                                            {/* Création Sous-catégorie */}
-                                            <form onSubmit={(e) => {
-                                                e.preventDefault();
-                                                const form = e.currentTarget;
-                                                const select = form.querySelector('select') as HTMLSelectElement;
-                                                const input = form.querySelector('input') as HTMLInputElement;
-                                                if (select.value && input.value.trim() !== '') {
-                                                    router.post('/admin/trades', {
-                                                        sector_id: select.value,
-                                                        name: input.value
-                                                    }, {
-                                                        preserveScroll: true,
-                                                        onSuccess: () => { input.value = ''; }
-                                                    });
-                                                }
-                                            }} className="space-y-3">
-                                                <h4 className="font-semibold text-sm text-[var(--admin-text)]">Créer une sous-catégorie</h4>
-                                                <div className="flex flex-col sm:flex-row gap-2">
-                                                    <select
-                                                        className="admin-input rounded-xl px-3 py-2 text-sm outline-none bg-white border border-[var(--admin-border)] w-full sm:w-1/3"
-                                                        defaultValue=""
-                                                        required
-                                                    >
-                                                        <option value="" disabled>Sélectionner catégorie</option>
-                                                        {sectors?.map(s => (
-                                                            <option key={s.id} value={s.id}>{s.name}</option>
-                                                        ))}
-                                                    </select>
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Nom du métier (ex: Bobineur)"
-                                                        className="admin-input flex-1 rounded-xl px-3 py-2 text-sm outline-none bg-white border border-[var(--admin-border)] w-full"
-                                                        required
-                                                    />
-                                                    <button type="submit" className="admin-button admin-button--primary text-xs py-2.5 px-4 shrink-0 w-full sm:w-auto">
-                                                        Ajouter
-                                                    </button>
-                                                </div>
-                                            </form>
-                                        </div>
-
-                                        <div className="mt-6 space-y-6">
-                                            {sectors && sectors.length > 0 ? (
-                                                sectors.map((sector) => (
-                                                    <div key={sector.id} className="p-5 rounded-2xl border border-[var(--admin-border)] bg-white/60 space-y-4">
-                                                        <div className="flex items-center justify-between gap-4">
-                                                            <div className="flex-1">
-                                                                <span className="text-[10px] font-bold text-amber-600 uppercase">Catégorie (Secteur)</span>
-                                                                <input
-                                                                    type="text"
-                                                                    defaultValue={sector.name}
-                                                                    onBlur={(e) => {
-                                                                        if (e.target.value !== sector.name && e.target.value.trim() !== '') {
-                                                                            router.put(`/admin/sectors/${sector.id}`, {
-                                                                                name: e.target.value,
-                                                                            }, { preserveScroll: true });
-                                                                        }
-                                                                    }}
-                                                                    className="admin-input mt-1 w-full rounded-xl px-3 py-2 text-sm font-semibold outline-none"
-                                                                />
-                                                            </div>
-                                                            <div className="pt-5">
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => setExpandedSectors(prev => ({ ...prev, [sector.id]: !prev[sector.id] }))}
-                                                                    className="p-2 rounded-xl border border-[var(--admin-border)] bg-white hover:bg-slate-100 transition flex items-center gap-1.5 text-xs text-[var(--admin-muted)] font-medium"
-                                                                >
-                                                                    <span>{sector.trades?.length ?? 0} sous-catégories</span>
-                                                                    <svg
-                                                                        xmlns="http://www.w3.org/2000/svg"
-                                                                        viewBox="0 0 20 20"
-                                                                        fill="currentColor"
-                                                                        className={cn(
-                                                                            "w-4 h-4 transition-transform duration-200",
-                                                                            expandedSectors[sector.id] ? "rotate-180" : ""
-                                                                        )}
-                                                                    >
-                                                                        <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
-                                                                    </svg>
-                                                                </button>
-                                                            </div>
-                                                        </div>
-
-                                                        {expandedSectors[sector.id] && (
-                                                            <div className="pl-6 border-l-2 border-amber-200/50 space-y-3 pt-2">
-                                                                <span className="text-[10px] font-bold text-slate-500 uppercase">Sous-catégories (Métiers)</span>
-                                                                <div className="grid gap-3 sm:grid-cols-2">
-                                                                    {sector.trades && sector.trades.length > 0 ? (
-                                                                        sector.trades.map((trade) => (
-                                                                            <div key={trade.id} className="flex flex-col p-2 bg-white/40 border border-slate-100 rounded-xl">
-                                                                                <input
-                                                                                    type="text"
-                                                                                    defaultValue={trade.name}
-                                                                                    onBlur={(e) => {
-                                                                                        if (e.target.value !== trade.name && e.target.value.trim() !== '') {
-                                                                                            router.put(`/admin/trades/${trade.id}`, {
-                                                                                                name: e.target.value,
-                                                                                            }, { preserveScroll: true });
-                                                                                        }
-                                                                                    }}
-                                                                                    className="admin-input w-full rounded-lg px-2 py-1 text-xs outline-none bg-transparent hover:bg-white focus:bg-white"
-                                                                                />
-                                                                            </div>
-                                                                        ))
-                                                                    ) : (
-                                                                        <p className="text-xs text-[var(--admin-muted)]">Aucun métier associé.</p>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                ))
-                                            ) : (
-                                                <p className="text-sm text-[var(--admin-muted)]">Aucune catégorie trouvée.</p>
-                                            )}
-                                        </div>
-                                    </Surface>
-                                </section>
+                                <SettingsPanel
+                                    adminName={adminName}
+                                    adminContact={adminContact}
+                                    offlineActive={offlineActive}
+                                    isOfflineSimulated={isOfflineSimulated}
+                                    onToggleOfflineSimulated={() => setIsOfflineSimulated((prev) => !prev)}
+                                    onRefresh={refreshData}
+                                    settingsList={settingsList}
+                                    sectors={sectors}
+                                    expandedSectors={expandedSectors}
+                                    onToggleSector={(sectorId) => setExpandedSectors((prev) => ({ ...prev, [sectorId]: !prev[sectorId] }))}
+                                />
                             ) : null}
 
                             {activeTab === 'notifications' ? (
-                                <section className="mt-5 space-y-5">
-                                    <div className="flex gap-2 border-b border-[var(--admin-border)] pb-4">
-                                        <button
-                                            type="button"
-                                            onClick={() => setNotifTab('alerts')}
-                                            className={cn(
-                                                'rounded-xl px-4 py-2 text-sm font-semibold transition',
-                                                notifTab === 'alerts'
-                                                    ? 'bg-[#ebb95e] text-[#241b16]'
-                                                    : 'text-[var(--admin-text-soft)] hover:bg-white/40'
-                                            )}
-                                        >
-                                            Mes Alertes Admin ({liveNotifications.length})
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setNotifTab('history')}
-                                            className={cn(
-                                                'rounded-xl px-4 py-2 text-sm font-semibold transition',
-                                                notifTab === 'history'
-                                                    ? 'bg-[#ebb95e] text-[#241b16]'
-                                                    : 'text-[var(--admin-text-soft)] hover:bg-white/40'
-                                            )}
-                                        >
-                                            Historique Global & Audit
-                                        </button>
-                                    </div>
-
-                                    {notifTab === 'alerts' ? (
-                                        <Surface className="rounded-[32px] p-5 lg:p-6">
-                                            <div className="flex items-center justify-between gap-4 pb-4 border-b border-[var(--admin-border)]">
-                                                <div>
-                                                    <h3 className="text-lg font-bold text-[var(--admin-text)]">Centre de Notifications & Alertes</h3>
-                                                    <p className="text-xs text-[var(--admin-text-soft)]">Toutes les alertes système, alertes KYC, litiges et anomalies de sécurité de la plateforme ProsArtisan.</p>
-                                                </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={handleMarkAllNotifsRead}
-                                                    className="admin-button admin-button--secondary text-xs px-4 py-2"
-                                                >
-                                                    Tout marquer comme lu ({unreadNotifsCount})
-                                                </button>
-                                            </div>
-
-                                            <div className="mt-4 flex gap-2 border-b border-[var(--admin-border)] pb-3">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setNotifFilter('all')}
-                                                    className={cn('rounded-xl px-3 py-1.5 text-xs font-semibold transition', notifFilter === 'all' ? 'bg-[#ebb95e] text-[#241b16]' : 'text-[var(--admin-text-soft)] hover:bg-white/40')}
-                                                >
-                                                    Toutes ({liveNotifications.length})
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setNotifFilter('unread')}
-                                                    className={cn('rounded-xl px-3 py-1.5 text-xs font-semibold transition', notifFilter === 'unread' ? 'bg-[#ebb95e] text-[#241b16]' : 'text-[var(--admin-text-soft)] hover:bg-white/40')}
-                                                >
-                                                    Non lues ({unreadNotifsCount})
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setNotifFilter('alerts')}
-                                                    className={cn('rounded-xl px-3 py-1.5 text-xs font-semibold transition', notifFilter === 'alerts' ? 'bg-[#ebb95e] text-[#241b16]' : 'text-[var(--admin-text-soft)] hover:bg-white/40')}
-                                                >
-                                                    Alertes critiques
-                                                </button>
-                                            </div>
-
-                                            <div className="mt-4 space-y-3">
-                                                {filteredNotifs.length > 0 ? (
-                                                    filteredNotifs.map((n) => (
-                                                        <div key={n.id} className={cn('flex items-start justify-between gap-4 p-4 rounded-2xl border transition', !n.read_at ? 'bg-amber-500/10 border-amber-500/30' : 'bg-white/40 border-[var(--admin-border)]')}>
-                                                            <div className="flex gap-3">
-                                                                <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#f8e4bc] text-[#b77918]">
-                                                                    <BellIcon className="h-5 w-5" />
-                                                                </div>
-                                                                <div>
-                                                                    <div className="flex items-center gap-2">
-                                                                        <h4 className="text-sm font-bold text-[var(--admin-text)]">{n.title}</h4>
-                                                                        {!n.read_at && <span className="h-2 w-2 rounded-full bg-amber-500"></span>}
-                                                                    </div>
-                                                                    <p className="mt-1 text-xs text-[var(--admin-text-soft)]">{n.body}</p>
-                                                                    <span className="mt-2 block text-[10px] text-[var(--admin-muted)]">{shortDate(n.created_at)}</span>
-                                                                </div>
-                                                            </div>
-                                                            {n.action_url && (
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => handleMarkNotifRead(n)}
-                                                                    className="admin-button admin-button--primary text-xs px-3 py-1.5 shrink-0"
-                                                                >
-                                                                    {n.action_label || 'Consulter'}
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    ))
-                                                ) : (
-                                                    <p className="py-8 text-center text-sm text-[var(--admin-text-soft)]">Aucune notification disponible.</p>
-                                                )}
-                                            </div>
-                                        </Surface>
-                                    ) : (
-                                        <Surface className="rounded-[32px] p-5 lg:p-6 border border-[#e2d5c3]/60 bg-gradient-to-br from-white via-[#fcfaf7] to-[#f7f2ea]">
-                                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[var(--admin-border)]">
-                                                <div>
-                                                    <h3 className="text-lg font-bold text-[var(--admin-text)]">Historique Global & Preuve des échanges</h3>
-                                                    <p className="text-xs text-[var(--admin-text-soft)]">Suivi de toutes les interactions et notifications envoyées entre clients, artisans, fournisseurs et livreurs.</p>
-                                                </div>
-                                            </div>
-
-                                            {/* FILTRES */}
-                                            <form onSubmit={handleFilterNotifications} className="mt-5 grid gap-4 md:grid-cols-4 items-end bg-white/40 p-4 rounded-2xl border border-[var(--admin-border)]">
-                                                <div>
-                                                    <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--admin-muted)] mb-1.5">Rechercher</label>
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Message, nom, téléphone..."
-                                                        value={searchNotif}
-                                                        onChange={(e) => setSearchNotif(e.target.value)}
-                                                        className="w-full rounded-xl border border-[var(--admin-border)] bg-white px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--admin-muted)] mb-1.5">Rôle destinataire</label>
-                                                    <select
-                                                        value={roleNotif}
-                                                        onChange={(e) => setRoleNotif(e.target.value)}
-                                                        className="w-full rounded-xl border border-[var(--admin-border)] bg-white px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
-                                                    >
-                                                        <option value="">Tous les rôles</option>
-                                                        <option value="client">Client</option>
-                                                        <option value="artisan">Artisan</option>
-                                                        <option value="fournisseur">Fournisseur (Quincaillerie)</option>
-                                                        <option value="livreur">Livreur (Driver)</option>
-                                                        <option value="referent">Référent de zone</option>
-                                                        <option value="admin">Administrateur</option>
-                                                    </select>
-                                                </div>
-                                                <div>
-                                                    <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--admin-muted)] mb-1.5">Type de notification</label>
-                                                    <select
-                                                        value={typeNotif}
-                                                        onChange={(e) => setTypeNotif(e.target.value)}
-                                                        className="w-full rounded-xl border border-[var(--admin-border)] bg-white px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
-                                                    >
-                                                        <option value="">Tous les types</option>
-                                                        <option value="otp">OTP (SMS de validation)</option>
-                                                        <option value="payment">Paiements / Séquestre</option>
-                                                        <option value="litige">Litiges & Arbitrages</option>
-                                                        <option value="kyc">KYC / Inscriptions</option>
-                                                        <option value="mission">Missions / Devis</option>
-                                                        <option value="fraud_alert">Alertes Anti-Fraude</option>
-                                                    </select>
-                                                </div>
-                                                <div className="flex gap-2">
-                                                    <button
-                                                        type="submit"
-                                                        className="flex-1 bg-[#ebb95e] hover:bg-[#dca850] text-[#241b16] font-bold rounded-xl text-xs px-4 py-2 transition"
-                                                    >
-                                                        Filtrer
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={handleResetFilters}
-                                                        className="bg-white/60 hover:bg-white/80 border border-[var(--admin-border)] text-[var(--admin-text-soft)] font-bold rounded-xl text-xs px-3 py-2 transition"
-                                                    >
-                                                        Réinitialiser
-                                                    </button>
-                                                </div>
-                                            </form>
-
-                                            {/* TABLEAU */}
-                                            <DataTable className="mt-5">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Date</th>
-                                                        <th>Destinataire</th>
-                                                        <th>Type</th>
-                                                        <th>Notification</th>
-                                                        <th>Données (Audit/Litiges)</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {(!allNotifications?.data || allNotifications.data.length === 0) ? (
-                                                        <tr>
-                                                            <td colSpan={5}>
-                                                                <EmptyState description="Aucune notification trouvée dans l'historique global." title="Aucune notification" />
-                                                            </td>
-                                                        </tr>
-                                                    ) : (
-                                                        allNotifications.data.map((notif: any) => (
-                                                            <tr key={notif.id} className="hover:bg-black/[0.02] transition">
-                                                                <td className="text-xs text-[var(--admin-text-soft)] font-mono shrink-0 whitespace-nowrap">
-                                                                    {shortDate(notif.created_at)}
-                                                                </td>
-                                                                <td>
-                                                                    {notif.user ? (
-                                                                        <div>
-                                                                            <p className="font-semibold text-[var(--admin-text)] text-xs">{notif.user.name}</p>
-                                                                            <p className="text-[10px] text-[var(--admin-muted)]">{notif.user.phone} ({notif.user.role})</p>
-                                                                        </div>
-                                                                    ) : (
-                                                                        <p className="text-xs text-[var(--admin-muted)]">Système / Tous</p>
-                                                                    )}
-                                                                </td>
-                                                                <td>
-                                                                    <span className={cn(
-                                                                        "px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider shrink-0",
-                                                                        notif.type === 'otp' && "bg-rose-100 text-rose-700 border border-rose-300",
-                                                                        notif.type === 'payment' && "bg-emerald-100 text-emerald-700 border border-emerald-300",
-                                                                        notif.type === 'litige' && "bg-red-100 text-red-700 border border-red-300",
-                                                                        notif.type === 'kyc' && "bg-blue-100 text-blue-700 border border-blue-300",
-                                                                        notif.type === 'mission' && "bg-indigo-100 text-indigo-700 border border-indigo-300",
-                                                                        notif.type === 'fraud_alert' && "bg-amber-100 text-amber-700 border border-amber-300"
-                                                                    )}>
-                                                                        {notif.type}
-                                                                    </span>
-                                                                </td>
-                                                                <td className="max-w-xs md:max-w-md">
-                                                                    <p className="font-bold text-xs text-[var(--admin-text)]">{notif.title}</p>
-                                                                    <p className="text-[11px] text-[var(--admin-text-soft)] mt-0.5 whitespace-pre-line">{notif.body}</p>
-                                                                </td>
-                                                                <td>
-                                                                    {notif.data_json && Object.keys(notif.data_json).length > 0 ? (
-                                                                        <details className="cursor-pointer text-[10px] text-amber-800 font-mono">
-                                                                            <summary className="hover:underline text-[9px] font-bold text-amber-700">Voir JSON ({Object.keys(notif.data_json).length})</summary>
-                                                                            <pre className="mt-1 p-2 bg-black/[0.03] border border-black/10 rounded-lg overflow-x-auto text-[9px] leading-tight">
-                                                                                {JSON.stringify(notif.data_json, null, 2)}
-                                                                            </pre>
-                                                                        </details>
-                                                                    ) : (
-                                                                        <span className="text-[9px] text-[var(--admin-muted)]">-</span>
-                                                                    )}
-                                                                </td>
-                                                            </tr>
-                                                        ))
-                                                    )}
-                                                </tbody>
-                                            </DataTable>
-
-                                            {/* PAGINATION */}
-                                            {renderPagination(allNotifications?.links)}
-                                        </Surface>
-                                    )}
-                                </section>
+                                <NotificationsPanel
+                                    notifTab={notifTab}
+                                    onNotifTabChange={setNotifTab}
+                                    liveNotificationsCount={liveNotifications.length}
+                                    unreadNotifsCount={unreadNotifsCount}
+                                    notifFilter={notifFilter}
+                                    onNotifFilterChange={setNotifFilter}
+                                    filteredNotifs={filteredNotifs}
+                                    onMarkAllRead={handleMarkAllNotifsRead}
+                                    onMarkNotifRead={handleMarkNotifRead}
+                                    searchNotif={searchNotif}
+                                    onSearchNotifChange={setSearchNotif}
+                                    roleNotif={roleNotif}
+                                    onRoleNotifChange={setRoleNotif}
+                                    typeNotif={typeNotif}
+                                    onTypeNotifChange={setTypeNotif}
+                                    onFilterSubmit={handleFilterNotifications}
+                                    onFilterReset={handleResetFilters}
+                                    allNotifications={allNotifications}
+                                    renderPagination={renderPagination}
+                                />
                             ) : null}
 
                             {activeTab === 'roles_permissions' ? (
@@ -4091,8 +1533,41 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                     <RolesPermissionsPanel
                                         allPermissions={allPermissions ?? []}
                                         rolesPermissions={rolesPermissions ?? {}}
+                                        adminCapabilityCatalog={pageProps.adminCapabilityCatalog ?? {}}
+                                        admins={pageProps.admins ?? []}
                                     />
                                 </section>
+                            ) : null}
+
+                            {activeTab === 'audit_logs' ? (
+                                <AuditLogsPanel
+                                    auditLogs={auditLogs}
+                                    auditActions={auditActions}
+                                    auditAdmins={auditAdmins}
+                                    search={searchAudit}
+                                    onSearchChange={setSearchAudit}
+                                    actionFilter={actionAudit}
+                                    onActionFilterChange={setActionAudit}
+                                    adminFilter={adminAudit}
+                                    onAdminFilterChange={setAdminAudit}
+                                    dateFrom={dateFromAudit}
+                                    onDateFromChange={setDateFromAudit}
+                                    dateTo={dateToAudit}
+                                    onDateToChange={setDateToAudit}
+                                    onSubmit={handleFilterAudit}
+                                    onReset={handleResetAudit}
+                                    renderPagination={(links) => renderPagination(links as any[], ['auditLogs'])}
+                                />
+                            ) : null}
+
+                            {activeTab === 'observability' && observability ? (
+                                <ObservabilityPanel
+                                    snapshot={observability}
+                                    canManage={canManageObservability}
+                                    actionLoading={actionLoading}
+                                    onRetryJobs={handleRetryFailedJobs}
+                                    onFlushJobs={handleFlushFailedJobs}
+                                />
                             ) : null}
 
                             {activeTab === 'llm_admin' ? (
@@ -4114,667 +1589,50 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                             ) : null}
 
                             {activeTab === 'evaluations' ? (
-                                <section className="mt-5 space-y-5">
-                                    <div className="flex gap-2 border-b border-[var(--admin-border)] pb-4">
-                                        <button
-                                            type="button"
-                                            onClick={() => setEvalSubTab('list')}
-                                            className={cn(
-                                                'rounded-xl px-4 py-2 text-sm font-semibold transition',
-                                                evalSubTab === 'list'
-                                                    ? 'bg-[#ebb95e] text-[#241b16]'
-                                                    : 'text-[var(--admin-text-soft)] hover:bg-white/40'
-                                            )}
-                                        >
-                                            Évaluations clients ({analytics.filteredEvaluations.length})
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setEvalSubTab('artisans')}
-                                            className={cn(
-                                                'rounded-xl px-4 py-2 text-sm font-semibold transition',
-                                                evalSubTab === 'artisans'
-                                                    ? 'bg-[#ebb95e] text-[#241b16]'
-                                                    : 'text-[var(--admin-text-soft)] hover:bg-white/40'
-                                            )}
-                                        >
-                                            Scores ProsArtisan Artisans ({analytics.filteredArtisansScores.length})
-                                        </button>
-                                    </div>
-
-                                    {evalSubTab === 'list' ? (
-                                        <Surface className="rounded-[32px] p-5 lg:p-6">
-                                            <SectionTitle
-                                                description="Historique des évaluations des chantiers avec le détail des notes de fiabilité, intégrité, qualité et réactivité."
-                                                title="Liste des Évaluations"
-                                            />
-                                            <DataTable className="mt-5">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Mission</th>
-                                                        <th>Évaluateur (Client)</th>
-                                                        <th>Évalué (Artisan)</th>
-                                                        <th>Note Générale</th>
-                                                        <th>Critères ProsArtisan (F / I / Q / R)</th>
-                                                        <th>Commentaire</th>
-                                                        <th>Date</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {analytics.filteredEvaluations.length === 0 ? (
-                                                        <tr>
-                                                            <td colSpan={7}>
-                                                                <EmptyState description="Aucune évaluation ne correspond à vos filtres." title="Aucune évaluation trouvée" />
-                                                            </td>
-                                                        </tr>
-                                                    ) : (
-                                                        analytics.filteredEvaluations.map((evaluation) => (
-                                                            <tr key={evaluation.id}>
-                                                                <td className="font-medium text-[var(--admin-text)]">
-                                                                    Mission #{evaluation.mission_id}
-                                                                    {evaluation.mission && (
-                                                                        <span className="block text-xs text-[var(--admin-muted)] truncate max-w-[150px]">
-                                                                            {evaluation.mission.description}
-                                                                        </span>
-                                                                    )}
-                                                                </td>
-                                                                <td>
-                                                                    <div className="font-semibold text-[var(--admin-text)]">
-                                                                        {evaluation.evaluateur?.name ?? 'Client inconnu'}
-                                                                    </div>
-                                                                    <div className="text-xs text-[var(--admin-muted)]">
-                                                                        {evaluation.evaluateur?.phone}
-                                                                    </div>
-                                                                </td>
-                                                                <td>
-                                                                    <div className="font-semibold text-[var(--admin-text)]">
-                                                                        {evaluation.evalue?.name ?? 'Artisan inconnu'}
-                                                                    </div>
-                                                                    <div className="text-xs text-[var(--admin-muted)]">
-                                                                        {evaluation.evalue?.phone}
-                                                                    </div>
-                                                                </td>
-                                                                <td>
-                                                                    <div className="flex items-center gap-1">
-                                                                        <span className="font-bold text-[#b77918]">{evaluation.note}</span>
-                                                                        <span className="text-xs text-[var(--admin-muted)]">/ 5</span>
-                                                                        <div className="flex text-amber-500">
-                                                                            {Array.from({ length: 5 }).map((_, idx) => (
-                                                                                <svg
-                                                                                    key={idx}
-                                                                                    className={cn("h-3.5 w-3.5", idx < evaluation.note ? "fill-current" : "stroke-current fill-none")}
-                                                                                    viewBox="0 0 24 24"
-                                                                                >
-                                                                                    <path d="m12 2 2.68 5.44L21 8.6l-4.5 4.38 1.06 6.18L12 16.26l-5.56 2.9 1.06-6.18L3 8.6l6.32-.92L12 2Z" />
-                                                                                </svg>
-                                                                            ))}
-                                                                        </div>
-                                                                    </div>
-                                                                </td>
-                                                                <td>
-                                                                    <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-[var(--admin-text-soft)]">
-                                                                        <span>Fiabilité (40%) : <strong className="text-[var(--admin-text)]">{evaluation.fiabilite}/5</strong></span>
-                                                                        <span>Intégrité (30%) : <strong className="text-[var(--admin-text)]">{evaluation.integrite}/5</strong></span>
-                                                                        <span>Qualité (20%) : <strong className="text-[var(--admin-text)]">{evaluation.qualite}/5</strong></span>
-                                                                        <span>Réactivité (10%) : <strong className="text-[var(--admin-text)]">{evaluation.reactivite}/5</strong></span>
-                                                                    </div>
-                                                                </td>
-                                                                <td className="max-w-[200px] truncate text-sm italic text-[var(--admin-text-soft)]" title={evaluation.commentaire ?? ''}>
-                                                                    {evaluation.commentaire ?? 'Aucun commentaire'}
-                                                                </td>
-                                                                <td className="text-xs text-[var(--admin-muted)]">
-                                                                    {shortDate(evaluation.created_at)}
-                                                                </td>
-                                                            </tr>
-                                                        ))
-                                                    )}
-                                                </tbody>
-                                            </DataTable>
-                                        </Surface>
-                                    ) : (
-                                        <Surface className="rounded-[32px] p-5 lg:p-6">
-                                            <SectionTitle
-                                                description="Administration des réputations d'artisans. Gelez les scores pour geler les droits au micro-crédit en cas de litige."
-                                                title="Scores ProsArtisan des Artisans"
-                                            />
-                                            <DataTable className="mt-5">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Artisan</th>
-                                                        <th>Score ProsArtisan</th>
-                                                        <th>Évaluations reçues</th>
-                                                        <th>Moyennes critères (F / I / Q / R)</th>
-                                                        <th>Statut du Score</th>
-                                                        <th className="text-right">Actions</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {analytics.filteredArtisansScores.length === 0 ? (
-                                                        <tr>
-                                                            <td colSpan={6}>
-                                                                <EmptyState description="Aucun artisan ne correspond à votre recherche." title="Aucun résultat" />
-                                                            </td>
-                                                        </tr>
-                                                    ) : (
-                                                        analytics.filteredArtisansScores.map((artisan) => (
-                                                            <tr key={artisan.id}>
-                                                                <td>
-                                                                    <div className="font-semibold text-[var(--admin-text)]">{artisan.name}</div>
-                                                                    <div className="text-xs text-[var(--admin-muted)]">{artisan.phone}</div>
-                                                                </td>
-                                                                <td>
-                                                                    <span className={cn(
-                                                                        'rounded-full border px-3 py-1 text-xs font-bold',
-                                                                        artisan.score_prosartisan >= 700
-                                                                            ? 'border-green-300 bg-green-50 text-green-700'
-                                                                            : artisan.score_prosartisan >= 400
-                                                                                ? 'border-amber-300 bg-amber-50 text-amber-700'
-                                                                                : 'border-rose-300 bg-rose-50 text-rose-700'
-                                                                    )}>
-                                                                        {artisan.score_prosartisan} / 1000
-                                                                    </span>
-                                                                    {artisan.score_prosartisan >= 700 && (
-                                                                        <span className="ml-2 inline-flex items-center rounded bg-yellow-100 px-2 py-0.5 text-[10px] font-semibold text-yellow-800">
-                                                                            Micro-crédit éligible
-                                                                        </span>
-                                                                    )}
-                                                                </td>
-                                                                <td>
-                                                                    <span className="text-sm font-semibold">{artisan.evaluations_recues_count}</span>
-                                                                </td>
-                                                                <td>
-                                                                    <div className="grid grid-cols-2 gap-x-2 text-xs text-[var(--admin-text-soft)]">
-                                                                        <span>F: <strong>{Number(artisan.evaluations_recues_avg_fiabilite ?? 0).toFixed(1)}/5</strong></span>
-                                                                        <span>I: <strong>{Number(artisan.evaluations_recues_avg_integrite ?? 0).toFixed(1)}/5</strong></span>
-                                                                        <span>Q: <strong>{Number(artisan.evaluations_recues_avg_qualite ?? 0).toFixed(1)}/5</strong></span>
-                                                                        <span>R: <strong>{Number(artisan.evaluations_recues_avg_reactivite ?? 0).toFixed(1)}/5</strong></span>
-                                                                    </div>
-                                                                </td>
-                                                                <td>
-                                                                    {artisan.score_frozen ? (
-                                                                        <span className="rounded-full border border-rose-300 bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-600">
-                                                                            Gelé (Bloqué)
-                                                                        </span>
-                                                                    ) : (
-                                                                        <span className="rounded-full border border-green-300 bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-600">
-                                                                            Actif (Calculé)
-                                                                        </span>
-                                                                    )}
-                                                                </td>
-                                                                <td className="text-right">
-                                                                    <div className="flex justify-end gap-2">
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => setSelectedArtisanForLedger(artisan)}
-                                                                            className="rounded-full border border-[var(--admin-border)] hover:bg-[#f7efe2] text-[#8a6b3d] px-3.5 py-1.5 text-xs font-semibold transition"
-                                                                        >
-                                                                            Historique
-                                                                        </button>
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => handleToggleScoreFreeze(artisan)}
-                                                                            className={actionButtonClass(artisan.score_frozen ? 'success' : 'danger')}
-                                                                        >
-                                            {artisan.score_frozen ? 'Dégeler' : 'Geler'}
-                                                                        </button>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                        ))
-                                                    )}
-                                                </tbody>
-                                            </DataTable>
-                                        </Surface>
-                                    )}
-                                </section>
+                                <EvaluationsPanel
+                                    evalSubTab={evalSubTab}
+                                    onEvalSubTabChange={setEvalSubTab}
+                                    evaluationsPage={evaluationsPage}
+                                    artisansScoresPage={artisansScoresPage}
+                                    evaluationStats={evaluationStats}
+                                    evalSearch={evalTable.filters.search_eval}
+                                    onEvalSearchChange={(v) => evalTable.set('search_eval', v)}
+                                    onEvalSubmit={evalTable.apply}
+                                    scoreSearch={evalTable.filters.search_score}
+                                    onScoreSearchChange={(v) => evalTable.set('search_score', v)}
+                                    onScoreSubmit={evalTable.apply}
+                                    onResetFilters={evalTable.reset}
+                                    exportParams={{ search_eval: evalTable.filters.search_eval }}
+                                    renderEvalPagination={(links) => renderPagination(links as any[], ['evaluationsPage', 'artisansScoresPage'])}
+                                    renderScorePagination={(links) => renderPagination(links as any[], ['evaluationsPage', 'artisansScoresPage'])}
+                                    onSelectArtisanLedger={setSelectedArtisanForLedger}
+                                    onToggleScoreFreeze={handleToggleScoreFreeze}
+                                />
                             ) : null}
 
                             {activeTab === 'communications' ? (
-                                <section className="mt-5 space-y-6">
-                                    {/* Metric Cards Summary Header */}
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                                        <Surface className="rounded-[28px] p-5 border border-[var(--admin-border)] bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent">
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">Total Publications</span>
-                                                <div className="p-2 rounded-xl bg-amber-500/15 text-amber-600">
-                                                    <BellIcon className="h-5 w-5" />
-                                                </div>
-                                            </div>
-                                            <p className="mt-3 text-3xl font-extrabold text-[var(--admin-text)]">
-                                                {communications ? communications.length : 0}
-                                            </p>
-                                            <p className="mt-1 text-xs text-[var(--admin-text-soft)]">Toutes catégories confondues</p>
-                                        </Surface>
-
-                                        <Surface className="rounded-[28px] p-5 border border-[var(--admin-border)] bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent">
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Astuces "Le saviez-vous ?"</span>
-                                                <div className="p-2 rounded-xl bg-emerald-500/15 text-emerald-600">
-                                                    <span className="text-base">💡</span>
-                                                </div>
-                                            </div>
-                                            <p className="mt-3 text-3xl font-extrabold text-[var(--admin-text)]">
-                                                {communications ? communications.filter((c: any) => c.type === 'le_saviez_vous').length : 0}
-                                            </p>
-                                            <p className="mt-1 text-xs text-[var(--admin-text-soft)]">Conseils & astuces pratiques</p>
-                                        </Surface>
-
-                                        <Surface className="rounded-[28px] p-5 border border-[var(--admin-border)] bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-transparent">
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-[11px] font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400">Annonces Intérieures</span>
-                                                <div className="p-2 rounded-xl bg-blue-500/15 text-blue-600">
-                                                    <span className="text-base">📢</span>
-                                                </div>
-                                            </div>
-                                            <p className="mt-3 text-3xl font-extrabold text-[var(--admin-text)]">
-                                                {communications ? communications.filter((c: any) => c.type === 'annonce').length : 0}
-                                            </p>
-                                            <p className="mt-1 text-xs text-[var(--admin-text-soft)]">Communiqués & alertes plateforme</p>
-                                        </Surface>
-
-                                        <Surface className="rounded-[28px] p-5 border border-[var(--admin-border)] bg-gradient-to-br from-green-500/10 via-green-500/5 to-transparent">
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-[11px] font-bold uppercase tracking-wider text-green-700 dark:text-green-400">Actives / Publiées</span>
-                                                <div className="p-2 rounded-xl bg-green-500/15 text-green-600">
-                                                    <CheckCircleIcon className="h-5 w-5" />
-                                                </div>
-                                            </div>
-                                            <p className="mt-3 text-3xl font-extrabold text-[var(--admin-text)]">
-                                                {communications ? communications.filter((c: any) => c.statut === 'publie').length : 0}
-                                            </p>
-                                            <p className="mt-1 text-xs text-[var(--admin-text-soft)]">Visibles par les utilisateurs</p>
-                                        </Surface>
-                                    </div>
-
-                                    {/* Main Content Surface */}
-                                    <Surface className="rounded-[32px] p-5 lg:p-6 shadow-xl">
-                                        {/* Header & Controls Toolbar */}
-                                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-[var(--admin-border)] pb-5 mb-5">
-                                            <SectionTitle 
-                                                title="Gestion des Communications & Astuces" 
-                                                description="Publiez des annonces ou des conseils &quot;Le saviez-vous ?&quot; ciblés par rôle." 
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={openCreateCommModal}
-                                                className="self-start lg:self-center rounded-full bg-[#ebb95e] text-[#241b16] px-5 py-2.5 text-sm font-bold hover:opacity-90 transition flex items-center gap-2 shadow-md hover:shadow-lg active:scale-95 transform"
-                                            >
-                                                <PlusIcon className="h-4 w-4" /> Nouvelle publication
-                                            </button>
-                                        </div>
-
-                                        {/* Filter Bar */}
-                                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-6">
-                                            {/* Search Bar */}
-                                            <div className="relative flex-1">
-                                                <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--admin-muted)]" />
-                                                <input
-                                                    type="text"
-                                                    value={search}
-                                                    onChange={(e) => setSearch(e.target.value)}
-                                                    placeholder="Rechercher par titre ou contenu..."
-                                                    className="admin-input w-full rounded-full pl-10 pr-4 py-2 text-xs outline-none"
-                                                />
-                                            </div>
-
-                                            {/* Type Filter */}
-                                            <select
-                                                value={commTypeFilter}
-                                                onChange={(e) => setCommTypeFilter(e.target.value)}
-                                                className="admin-input rounded-full px-4 py-2 text-xs outline-none cursor-pointer bg-transparent"
-                                            >
-                                                <option value="all">Tous les types</option>
-                                                <option value="le_saviez_vous">💡 Le saviez-vous ?</option>
-                                                <option value="annonce">📢 Annonce</option>
-                                            </select>
-
-                                            {/* Status Filter */}
-                                            <select
-                                                value={commStatusFilter}
-                                                onChange={(e) => setCommStatusFilter(e.target.value)}
-                                                className="admin-input rounded-full px-4 py-2 text-xs outline-none cursor-pointer bg-transparent"
-                                            >
-                                                <option value="all">Tous les statuts</option>
-                                                <option value="publie">Publié</option>
-                                                <option value="brouillon">Brouillon</option>
-                                                <option value="cloture">Clôturé</option>
-                                            </select>
-                                        </div>
-
-                                        {/* Mobile Cards View (< md) */}
-                                        <div className="block md:hidden space-y-4">
-                                            {filteredCommunications.length === 0 ? (
-                                                <EmptyState 
-                                                    title="Aucune communication trouvée" 
-                                                    description="Ajustez vos filtres ou créez une nouvelle publication." 
-                                                />
-                                            ) : (
-                                                filteredCommunications.map((comm: any) => (
-                                                    <div 
-                                                        key={comm.id} 
-                                                        className="rounded-2xl border border-[var(--admin-border)] bg-white/50 dark:bg-white/5 p-4 space-y-3 transition hover:shadow-md"
-                                                    >
-                                                        {/* Card Top Header */}
-                                                        <div className="flex items-center justify-between gap-2">
-                                                            <span className={cn(
-                                                                "rounded-full px-2.5 py-1 text-[11px] font-bold border whitespace-nowrap inline-flex items-center gap-1.5",
-                                                                comm.type === 'le_saviez_vous' 
-                                                                    ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                                                                    : "border-blue-500/40 bg-blue-500/10 text-blue-600 dark:text-blue-400"
-                                                            )}>
-                                                                <span>{comm.type === 'le_saviez_vous' ? '💡' : '📢'}</span>
-                                                                <span>{comm.type === 'le_saviez_vous' ? 'Le saviez-vous ?' : 'Annonce'}</span>
-                                                            </span>
-
-                                                            <span className={cn(
-                                                                "rounded-full px-2.5 py-0.5 text-[10px] font-extrabold border uppercase tracking-wider",
-                                                                comm.statut === 'publie' ? "border-green-600/40 bg-green-500/15 text-green-700 dark:text-green-400" :
-                                                                comm.statut === 'cloture' ? "border-gray-600/40 bg-gray-500/15 text-gray-600 dark:text-gray-400" :
-                                                                "border-amber-600/40 bg-amber-500/15 text-amber-700 dark:text-amber-400"
-                                                            )}>
-                                                                {comm.statut}
-                                                            </span>
-                                                        </div>
-
-                                                        {/* Title & Description */}
-                                                        <div>
-                                                            <h4 className="font-bold text-sm text-[var(--admin-text)] leading-snug">{comm.titre}</h4>
-                                                            <p className="text-xs text-[var(--admin-text-soft)] mt-1 line-clamp-2 leading-relaxed">{comm.contenu}</p>
-                                                        </div>
-
-                                                        {/* Cibles */}
-                                                        <div className="flex flex-wrap gap-1.5 pt-1">
-                                                            <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--admin-muted)] self-center mr-1">Cibles:</span>
-                                                            {comm.cibles_json.map((role: string) => (
-                                                                <span key={role} className="rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-300 text-[10px] font-semibold px-2 py-0.5 capitalize">
-                                                                    {role}
-                                                                </span>
-                                                            ))}
-                                                        </div>
-
-                                                        {/* Footer & Actions */}
-                                                        <div className="pt-2 border-t border-[var(--admin-border)] flex items-center justify-between text-[11px] text-[var(--admin-text-soft)]">
-                                                            <div>
-                                                                <span className="font-medium text-[var(--admin-text)]">{comm.auteur?.name || 'Système'}</span>
-                                                                <span className="mx-1">•</span>
-                                                                <span>{new Date(comm.created_at).toLocaleDateString('fr-FR')}</span>
-                                                            </div>
-
-                                                            <select
-                                                                className="admin-input rounded-xl text-xs py-1 px-2.5 outline-none cursor-pointer"
-                                                                defaultValue=""
-                                                                onChange={(e) => {
-                                                                    const action = e.target.value;
-                                                                    if (action === 'edit') {
-                                                                        openEditCommModal(comm);
-                                                                    } else if (action === 'publish') {
-                                                                        if (window.confirm("Publier cette communication ?")) {
-                                                                            router.post(`/admin/communications/${comm.id}/publish`, {}, { preserveScroll: true });
-                                                                        }
-                                                                    } else if (action === 'cloturer') {
-                                                                        if (window.confirm("Clôturer (désactiver) cette publication ?")) {
-                                                                            router.post(`/admin/communications/${comm.id}/cloturer`, {}, { preserveScroll: true });
-                                                                        }
-                                                                    } else if (action === 'delete') {
-                                                                        if (window.confirm("Supprimer définitivement cette communication ?")) {
-                                                                            router.delete(`/admin/communications/${comm.id}`, { preserveScroll: true });
-                                                                        }
-                                                                    }
-                                                                    e.target.value = "";
-                                                                }}
-                                                            >
-                                                                <option value="" disabled>Actions...</option>
-                                                                {comm.statut === 'brouillon' && <option value="edit">Modifier</option>}
-                                                                {comm.statut === 'brouillon' && <option value="publish">Publier</option>}
-                                                                {comm.statut === 'publie' && <option value="cloturer">Désactiver</option>}
-                                                                {comm.statut === 'brouillon' && <option value="delete">Supprimer</option>}
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                ))
-                                            )}
-                                        </div>
-
-                                        {/* Desktop Table View (>= md) */}
-                                        <div className="hidden md:block overflow-x-auto">
-                                            <DataTable>
-                                                <thead>
-                                                    <tr>
-                                                        <th className="py-3 px-4 text-left text-xs font-bold uppercase tracking-wider text-[var(--admin-muted)]">Titre & Contenu</th>
-                                                        <th className="py-3 px-4 text-left text-xs font-bold uppercase tracking-wider text-[var(--admin-muted)]">Type</th>
-                                                        <th className="py-3 px-4 text-left text-xs font-bold uppercase tracking-wider text-[var(--admin-muted)]">Cibles</th>
-                                                        <th className="py-3 px-4 text-left text-xs font-bold uppercase tracking-wider text-[var(--admin-muted)]">Statut</th>
-                                                        <th className="py-3 px-4 text-left text-xs font-bold uppercase tracking-wider text-[var(--admin-muted)]">Auteur</th>
-                                                        <th className="py-3 px-4 text-left text-xs font-bold uppercase tracking-wider text-[var(--admin-muted)]">Dates</th>
-                                                        <th className="py-3 px-4 text-right text-xs font-bold uppercase tracking-wider text-[var(--admin-muted)]">Actions</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-[var(--admin-border)]">
-                                                    {filteredCommunications.length === 0 ? (
-                                                        <tr>
-                                                            <td colSpan={7} className="text-center py-10 text-[var(--admin-muted)]">
-                                                                Aucune communication enregistrée ou correspondant à vos critères de recherche.
-                                                            </td>
-                                                        </tr>
-                                                    ) : (
-                                                        filteredCommunications.map((comm: any) => (
-                                                            <tr key={comm.id} className="hover:bg-white/10 dark:hover:bg-white/5 transition">
-                                                                <td className="py-3.5 px-4 font-semibold text-[var(--admin-text)] max-w-xs">
-                                                                    <div className="font-bold text-sm leading-tight text-[var(--admin-text)]">{comm.titre}</div>
-                                                                    <div className="text-xs text-[var(--admin-text-soft)] font-normal line-clamp-1 mt-1">{comm.contenu}</div>
-                                                                </td>
-                                                                <td className="py-3.5 px-4 whitespace-nowrap">
-                                                                    <span className={cn(
-                                                                        "rounded-full px-3 py-1 text-xs font-bold border whitespace-nowrap inline-flex items-center gap-1.5",
-                                                                        comm.type === 'le_saviez_vous' 
-                                                                            ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-                                                                            : "border-blue-500/40 bg-blue-500/10 text-blue-700 dark:text-blue-400"
-                                                                    )}>
-                                                                        <span>{comm.type === 'le_saviez_vous' ? '💡' : '📢'}</span>
-                                                                        <span>{comm.type === 'le_saviez_vous' ? 'Le saviez-vous ?' : 'Annonce'}</span>
-                                                                    </span>
-                                                                </td>
-                                                                <td className="py-3.5 px-4 text-xs">
-                                                                    <div className="flex flex-wrap gap-1">
-                                                                        {comm.cibles_json.map((role: string) => (
-                                                                            <span key={role} className="rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-900 dark:text-amber-300 text-[10px] font-bold px-2 py-0.5 capitalize">
-                                                                                {role}
-                                                                            </span>
-                                                                        ))}
-                                                                    </div>
-                                                                </td>
-                                                                <td className="py-3.5 px-4 whitespace-nowrap">
-                                                                    <span className={cn(
-                                                                        "rounded-full px-2.5 py-0.5 text-xs font-extrabold border uppercase tracking-wider",
-                                                                        comm.statut === 'publie' ? "border-green-600/40 bg-green-500/15 text-green-700 dark:text-green-400" :
-                                                                        comm.statut === 'cloture' ? "border-gray-600/40 bg-gray-500/15 text-gray-600 dark:text-gray-400" :
-                                                                        "border-amber-600/40 bg-amber-500/15 text-amber-700 dark:text-amber-400"
-                                                                    )}>
-                                                                        {comm.statut}
-                                                                    </span>
-                                                                </td>
-                                                                <td className="py-3.5 px-4 text-xs font-medium text-[var(--admin-text)]">
-                                                                    {comm.auteur?.name || 'Système'}
-                                                                </td>
-                                                                <td className="py-3.5 px-4 text-xs text-[var(--admin-text-soft)] whitespace-nowrap">
-                                                                    <div>Créé : <span className="font-semibold">{new Date(comm.created_at).toLocaleDateString('fr-FR')}</span></div>
-                                                                    {comm.publie_at && <div>Publié : <span className="font-semibold">{new Date(comm.publie_at).toLocaleDateString('fr-FR')}</span></div>}
-                                                                    {comm.cloture_at && <div>Clôturé : <span className="font-semibold">{new Date(comm.cloture_at).toLocaleDateString('fr-FR')}</span></div>}
-                                                                </td>
-                                                                <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                                                                    <div className="flex justify-end">
-                                                                        <select
-                                                                            className="admin-input rounded-xl text-xs py-1.5 px-3 outline-none cursor-pointer font-semibold shadow-sm"
-                                                                            defaultValue=""
-                                                                            onChange={(e) => {
-                                                                                const action = e.target.value;
-                                                                                if (action === 'edit') {
-                                                                                    openEditCommModal(comm);
-                                                                                } else if (action === 'publish') {
-                                                                                    if (window.confirm("Publier cette communication ?")) {
-                                                                                        router.post(`/admin/communications/${comm.id}/publish`, {}, { preserveScroll: true });
-                                                                                    }
-                                                                                } else if (action === 'cloturer') {
-                                                                                    if (window.confirm("Clôturer (désactiver) cette publication ?")) {
-                                                                                        router.post(`/admin/communications/${comm.id}/cloturer`, {}, { preserveScroll: true });
-                                                                                    }
-                                                                                } else if (action === 'delete') {
-                                                                                    if (window.confirm("Supprimer définitivement cette communication ?")) {
-                                                                                        router.delete(`/admin/communications/${comm.id}`, { preserveScroll: true });
-                                                                                    }
-                                                                                }
-                                                                                e.target.value = "";
-                                                                            }}
-                                                                        >
-                                                                            <option value="" disabled>Actions...</option>
-                                                                            {comm.statut === 'brouillon' && <option value="edit">Modifier</option>}
-                                                                            {comm.statut === 'brouillon' && <option value="publish">Publier</option>}
-                                                                            {comm.statut === 'publie' && <option value="cloturer">Désactiver</option>}
-                                                                            {comm.statut === 'brouillon' && <option value="delete">Supprimer</option>}
-                                                                        </select>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                        ))
-                                                    )}
-                                                </tbody>
-                                            </DataTable>
-                                        </div>
-                                    </Surface>
-                                </section>
+                                <CommunicationsPanel
+                                    communications={communications}
+                                    filteredCommunications={filteredCommunications}
+                                    search={search}
+                                    onSearchChange={setSearch}
+                                    commTypeFilter={commTypeFilter}
+                                    onCommTypeFilterChange={setCommTypeFilter}
+                                    commStatusFilter={commStatusFilter}
+                                    onCommStatusFilterChange={setCommStatusFilter}
+                                    onCreate={openCreateCommModal}
+                                    onEdit={openEditCommModal}
+                                />
                             ) : null}
 
                             {activeTab === 'promo_codes' ? (
-                                <section className="mt-5 space-y-5">
-                                    <Surface className="rounded-[32px] p-5 lg:p-6">
-                                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-[var(--admin-border)] pb-5">
-                                            <div>
-                                                <h3 className="text-xl font-bold text-[var(--admin-text)] flex items-center gap-2">
-                                                    <span>🏷️ Gestion des Codes Promo</span>
-                                                    <span className="rounded-full bg-[#ebb95e]/20 text-[#8a5d16] text-xs font-bold px-2.5 py-0.5">
-                                                        {analytics.filteredPromoCodes.length} code(s)
-                                                    </span>
-                                                </h3>
-                                                <p className="text-xs text-[var(--admin-text-soft)] mt-1">
-                                                    Configurez des remises applicables lors du paiement des commandes e-commerce matériaux & articles.
-                                                </p>
-                                            </div>
-                                            <div className="flex items-center gap-3">
-                                                <button
-                                                    type="button"
-                                                    onClick={openCreatePromoModal}
-                                                    className="inline-flex items-center gap-2 rounded-full bg-[#ebb95e] text-[#241b16] px-5 py-2.5 text-xs font-bold hover:opacity-90 transition shadow-sm"
-                                                >
-                                                    <PlusIcon className="h-4 w-4" />
-                                                    Nouveau Code Promo
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        <div className="mt-5 overflow-x-auto">
-                                            <DataTable>
-                                                <thead>
-                                                    <tr>
-                                                        <th className="py-3 px-4 text-left text-xs font-bold uppercase tracking-wider text-[var(--admin-muted)]">Code & Description</th>
-                                                        <th className="py-3 px-4 text-left text-xs font-bold uppercase tracking-wider text-[var(--admin-muted)]">Remise</th>
-                                                        <th className="py-3 px-4 text-left text-xs font-bold uppercase tracking-wider text-[var(--admin-muted)]">Conditions</th>
-                                                        <th className="py-3 px-4 text-left text-xs font-bold uppercase tracking-wider text-[var(--admin-muted)]">Utilisations</th>
-                                                        <th className="py-3 px-4 text-left text-xs font-bold uppercase tracking-wider text-[var(--admin-muted)]">Période</th>
-                                                        <th className="py-3 px-4 text-left text-xs font-bold uppercase tracking-wider text-[var(--admin-muted)]">Statut</th>
-                                                        <th className="py-3 px-4 text-right text-xs font-bold uppercase tracking-wider text-[var(--admin-muted)]">Actions</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-[var(--admin-border)]">
-                                                    {analytics.filteredPromoCodes.length === 0 ? (
-                                                        <tr>
-                                                            <td colSpan={7} className="text-center py-10 text-[var(--admin-muted)]">
-                                                                Aucun code promo trouvé. Cliquez sur "Nouveau Code Promo" pour en créer un.
-                                                            </td>
-                                                        </tr>
-                                                    ) : (
-                                                        analytics.filteredPromoCodes.map((promo) => (
-                                                            <tr key={promo.id} className="hover:bg-white/10 dark:hover:bg-white/5 transition">
-                                                                <td className="py-3.5 px-4">
-                                                                    <div className="font-mono font-bold text-sm text-[var(--admin-text)] flex items-center gap-1.5">
-                                                                        <span className="px-2.5 py-0.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-300">
-                                                                            {promo.code}
-                                                                        </span>
-                                                                    </div>
-                                                                    {promo.description && (
-                                                                        <div className="text-xs text-[var(--admin-text-soft)] mt-1 max-w-xs truncate">
-                                                                            {promo.description}
-                                                                        </div>
-                                                                    )}
-                                                                </td>
-                                                                <td className="py-3.5 px-4 whitespace-nowrap">
-                                                                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
-                                                                        {promo.discount_type === 'percent' ? `-${promo.discount_value}%` : `-${money(promo.discount_value)}`}
-                                                                    </span>
-                                                                </td>
-                                                                <td className="py-3.5 px-4 text-xs text-[var(--admin-text-soft)]">
-                                                                    <div>Min : <strong>{promo.min_order_amount > 0 ? money(promo.min_order_amount) : 'Aucun'}</strong></div>
-                                                                    {promo.max_discount_amount ? (
-                                                                        <div>Plafond : <strong>{money(promo.max_discount_amount)}</strong></div>
-                                                                    ) : null}
-                                                                </td>
-                                                                <td className="py-3.5 px-4 text-xs text-[var(--admin-text)] whitespace-nowrap">
-                                                                    <div className="font-bold">{promo.used_count} {promo.usage_limit ? `/ ${promo.usage_limit}` : 'utilisations'}</div>
-                                                                    {promo.usage_limit ? (
-                                                                        <div className="w-24 h-1.5 bg-black/10 rounded-full mt-1.5 overflow-hidden">
-                                                                            <div
-                                                                                className="h-full bg-[#ebb95e] rounded-full"
-                                                                                style={{ width: `${Math.min(100, (promo.used_count / promo.usage_limit) * 100)}%` }}
-                                                                            />
-                                                                        </div>
-                                                                    ) : null}
-                                                                </td>
-                                                                <td className="py-3.5 px-4 text-xs text-[var(--admin-text-soft)] whitespace-nowrap">
-                                                                    {promo.expires_at ? (
-                                                                        <div>Expire : <strong>{new Date(promo.expires_at).toLocaleDateString('fr-FR')}</strong></div>
-                                                                    ) : (
-                                                                        <span className="text-emerald-600 font-semibold">Illimitée</span>
-                                                                    )}
-                                                                </td>
-                                                                <td className="py-3.5 px-4 whitespace-nowrap">
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => handleTogglePromo(promo)}
-                                                                        className={cn(
-                                                                            "rounded-full px-3 py-1 text-xs font-bold border transition cursor-pointer",
-                                                                            promo.is_active
-                                                                                ? "border-green-600/40 bg-green-500/15 text-green-700 dark:text-green-400 hover:bg-green-500/25"
-                                                                                : "border-red-600/40 bg-red-500/15 text-red-700 dark:text-red-400 hover:bg-red-500/25"
-                                                                        )}
-                                                                    >
-                                                                        {promo.is_active ? '● Actif' : '○ Inactif'}
-                                                                    </button>
-                                                                </td>
-                                                                <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                                                                    <div className="flex justify-end gap-2">
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => openEditPromoModal(promo)}
-                                                                            className="rounded-lg px-2.5 py-1 text-xs font-semibold bg-black/5 hover:bg-black/10 text-[var(--admin-text)] transition"
-                                                                        >
-                                                                            Modifier
-                                                                        </button>
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => handleDeletePromo(promo)}
-                                                                            className="rounded-lg px-2.5 py-1 text-xs font-semibold bg-red-500/10 hover:bg-red-500/20 text-red-600 transition"
-                                                                        >
-                                                                            Supprimer
-                                                                        </button>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                        ))
-                                                    )}
-                                                </tbody>
-                                            </DataTable>
-                                        </div>
-                                    </Surface>
-                                </section>
+                                <PromoCodesPanel
+                                    filteredPromoCodes={analytics.filteredPromoCodes}
+                                    onCreate={openCreatePromoModal}
+                                    onEdit={openEditPromoModal}
+                                    onToggle={handleTogglePromo}
+                                    onDelete={handleDeletePromo}
+                                />
                             ) : null}
 
                             {activeTab === 'vitrine' ? (
@@ -4793,1767 +1651,87 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                     />
                                 </section>
                             ) : null}
-                        </main>
-
-                        <footer className="px-4 pb-6 lg:px-7">
-                            <div className="border-t border-[var(--admin-border)] pt-6 text-sm text-[var(--admin-text-soft)]">
-                                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--admin-muted)]">Administration</p>
-                                <p className="mt-2 text-xl font-semibold text-[var(--admin-text)]">ProsArtisan Backoffice</p>
-                                <p className="mt-1 max-w-3xl">
-                                    Pilotage des validations, des opérations terrain, des litiges et des flux financiers dans une seule interface.
-                                </p>
-                                <div className="mt-4">
-                                    <Link href="/cgu" className="hover:text-[var(--admin-text)] hover:underline">Conditions Générales d'Utilisation</Link>
-                                </div>
-                            </div>
-                        </footer>
-                    </div>
-                </div>
-
                 {commModalOpen && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                        <div className="admin-panel admin-surface w-full max-w-[550px] rounded-[32px] border p-6 lg:p-8 shadow-2xl relative">
-                            <div className="flex items-center justify-between border-b border-[var(--admin-border)] pb-4">
-                                <h2 className="text-xl font-bold text-[var(--admin-text)]">
-                                    {editingComm ? 'Modifier la publication' : 'Créer une publication'}
-                                </h2>
-                                <button
-                                    type="button"
-                                    onClick={() => setCommModalOpen(false)}
-                                    className="rounded-full p-2 text-[var(--admin-muted)] hover:bg-white/10 hover:text-[var(--admin-text)] transition"
-                                    title="Fermer"
-                                    aria-label="Fermer"
-                                >
-                                    <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                        <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
-                                    </svg>
-                                </button>
-                            </div>
-
-                            <form onSubmit={handleCommSubmit} className="mt-6 space-y-4">
-                                <label className="block space-y-1">
-                                    <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Type de communication</span>
-                                    <select
-                                        value={commForm.data.type}
-                                        onChange={(e) => commForm.setData('type', e.target.value)}
-                                        className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none"
-                                        required
-                                    >
-                                        <option value="annonce">Communication interne</option>
-                                        <option value="le_saviez_vous">Le saviez-vous ?</option>
-                                    </select>
-                                </label>
-
-                                <label className="block space-y-1">
-                                    <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Intitulé / Titre</span>
-                                    <input
-                                        type="text"
-                                        value={commForm.data.titre}
-                                        onChange={(e) => commForm.setData('titre', e.target.value)}
-                                        className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none"
-                                        required
-                                    />
-                                </label>
-
-                                <label className="block space-y-1">
-                                    <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Description / Contenu</span>
-                                    <textarea
-                                        value={commForm.data.contenu}
-                                        onChange={(e) => commForm.setData('contenu', e.target.value)}
-                                        className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none h-24 resize-none"
-                                        required
-                                    />
-                                </label>
-
-                                <div className="space-y-1">
-                                    <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Espaces cibles</span>
-                                    <div className="grid grid-cols-2 gap-2 mt-2">
-                                        <label className="flex items-center gap-2 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={commForm.data.cibles.includes('client') && commForm.data.cibles.includes('artisan') && commForm.data.cibles.includes('livreur') && commForm.data.cibles.includes('fournisseur')}
-                                                onChange={(e) => {
-                                                    if (e.target.checked) {
-                                                        commForm.setData('cibles', ['client', 'artisan', 'livreur', 'fournisseur']);
-                                                    } else {
-                                                        commForm.setData('cibles', []);
-                                                    }
-                                                }}
-                                                className="rounded border-[var(--admin-border)]"
-                                            />
-                                            <span className="text-sm text-[var(--admin-text)]">TOUS</span>
-                                        </label>
-                                        {['client', 'artisan', 'livreur', 'fournisseur'].map((role) => (
-                                            <label key={role} className="flex items-center gap-2 cursor-pointer capitalize">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={commForm.data.cibles.includes(role)}
-                                                    onChange={(e) => {
-                                                        if (e.target.checked) {
-                                                            commForm.setData('cibles', [...commForm.data.cibles, role]);
-                                                        } else {
-                                                            commForm.setData('cibles', commForm.data.cibles.filter((r) => r !== role));
-                                                        }
-                                                    }}
-                                                    className="rounded border-[var(--admin-border)]"
-                                                />
-                                                <span className="text-sm text-[var(--admin-text)]">
-                                                    {role === 'client' ? 'Clients' : role === 'artisan' ? 'Artisans' : role === 'livreur' ? 'Livreur' : 'Fournisseur'}
-                                                </span>
-                                            </label>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className="pt-2 border-t border-[var(--admin-border)] flex justify-between text-xs text-[var(--admin-text-soft)]">
-                                    <div>Auteur : <strong>{auth?.user?.name || 'Admin'}</strong></div>
-                                    <div>Date : <strong>{new Date().toLocaleDateString('fr-FR')}</strong></div>
-                                </div>
-
-                                <div className="pt-4 flex justify-end gap-3">
-                                    <button
-                                        type="button"
-                                        onClick={() => setCommModalOpen(false)}
-                                        className="rounded-full border border-[var(--admin-border)] px-5 py-2.5 text-sm font-semibold hover:bg-white/10 transition"
-                                    >
-                                        Annuler
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        disabled={commForm.processing}
-                                        className="rounded-full bg-[#ebb95e] text-[#241b16] px-6 py-2.5 text-sm font-semibold hover:opacity-90 transition disabled:opacity-50"
-                                    >
-                                        Enregistrer Brouillon
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
+                    <CommunicationFormModal
+                        form={commForm}
+                        editing={editingComm}
+                        adminName={auth?.user?.name ?? ''}
+                        onSubmit={handleCommSubmit}
+                        onClose={() => setCommModalOpen(false)}
+                    />
                 )}
 
                 {promoModalOpen && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                        <div className="admin-panel admin-surface w-full max-w-[550px] rounded-[32px] border p-6 lg:p-8 shadow-2xl relative">
-                            <div className="flex items-center justify-between border-b border-[var(--admin-border)] pb-4">
-                                <h2 className="text-xl font-bold text-[var(--admin-text)]">
-                                    {editingPromo ? `Modifier le code ${editingPromo.code}` : 'Créer un nouveau code promo'}
-                                </h2>
-                                <button
-                                    type="button"
-                                    onClick={() => setPromoModalOpen(false)}
-                                    className="rounded-full p-2 text-[var(--admin-muted)] hover:bg-white/10 hover:text-[var(--admin-text)] transition"
-                                    title="Fermer"
-                                >
-                                    <CloseIcon className="h-5 w-5" />
-                                </button>
-                            </div>
-
-                            <form onSubmit={handlePromoSubmit} className="mt-6 space-y-4">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <label className="block space-y-1">
-                                        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Code Promo *</span>
-                                        <input
-                                            type="text"
-                                            value={promoForm.data.code}
-                                            onChange={(e) => promoForm.setData('code', e.target.value.toUpperCase())}
-                                            placeholder="ex: PROS225"
-                                            className="admin-input w-full rounded-2xl px-4 py-3 text-sm font-mono font-bold outline-none"
-                                            required
-                                        />
-                                    </label>
-
-                                    <label className="block space-y-1">
-                                        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Type de réduction *</span>
-                                        <select
-                                            value={promoForm.data.discount_type}
-                                            onChange={(e) => promoForm.setData('discount_type', e.target.value as 'percent' | 'fixed')}
-                                            className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none"
-                                        >
-                                            <option value="percent">Pourcentage (%)</option>
-                                            <option value="fixed">Montant fixe (FCFA)</option>
-                                        </select>
-                                    </label>
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <label className="block space-y-1">
-                                        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">
-                                            Valeur de la réduction ({promoForm.data.discount_type === 'percent' ? '%' : 'FCFA'}) *
-                                        </span>
-                                        <input
-                                            type="number"
-                                            min="1"
-                                            value={promoForm.data.discount_value}
-                                            onChange={(e) => promoForm.setData('discount_value', Number(e.target.value))}
-                                            className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none"
-                                            required
-                                        />
-                                    </label>
-
-                                    <label className="block space-y-1">
-                                        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Montant min commande (FCFA)</span>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            value={promoForm.data.min_order_amount}
-                                            onChange={(e) => promoForm.setData('min_order_amount', Number(e.target.value))}
-                                            placeholder="0"
-                                            className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none"
-                                        />
-                                    </label>
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <label className="block space-y-1">
-                                        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Plafond réduction (FCFA)</span>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            value={promoForm.data.max_discount_amount}
-                                            onChange={(e) => promoForm.setData('max_discount_amount', Number(e.target.value))}
-                                            placeholder="Optionnel"
-                                            className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none"
-                                        />
-                                    </label>
-
-                                    <label className="block space-y-1">
-                                        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Limite d'utilisations</span>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            value={promoForm.data.usage_limit}
-                                            onChange={(e) => promoForm.setData('usage_limit', Number(e.target.value))}
-                                            placeholder="Optionnel (ex: 500)"
-                                            className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none"
-                                        />
-                                    </label>
-                                </div>
-
-                                <label className="block space-y-1">
-                                    <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Description</span>
-                                    <input
-                                        type="text"
-                                        value={promoForm.data.description}
-                                        onChange={(e) => promoForm.setData('description', e.target.value)}
-                                        placeholder="Description de la campagne promotionnelle"
-                                        className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none"
-                                    />
-                                </label>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <label className="block space-y-1">
-                                        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Date d'expiration</span>
-                                        <input
-                                            type="date"
-                                            value={promoForm.data.expires_at}
-                                            onChange={(e) => promoForm.setData('expires_at', e.target.value)}
-                                            className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none"
-                                        />
-                                    </label>
-
-                                    <label className="flex items-center gap-3 pt-6 cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            checked={promoForm.data.is_active}
-                                            onChange={(e) => promoForm.setData('is_active', e.target.checked)}
-                                            className="rounded border-[var(--admin-border)] h-5 w-5"
-                                        />
-                                        <span className="text-sm font-semibold text-[var(--admin-text)]">Code Promo Actif</span>
-                                    </label>
-                                </div>
-
-                                <div className="pt-4 flex justify-end gap-3 border-t border-[var(--admin-border)]">
-                                    <button
-                                        type="button"
-                                        onClick={() => setPromoModalOpen(false)}
-                                        className="rounded-full border border-[var(--admin-border)] px-5 py-2.5 text-sm font-semibold hover:bg-white/10 transition"
-                                    >
-                                        Annuler
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        disabled={promoForm.processing}
-                                        className="rounded-full bg-[#ebb95e] text-[#241b16] px-6 py-2.5 text-sm font-semibold hover:opacity-90 transition disabled:opacity-50"
-                                    >
-                                        {editingPromo ? 'Mettre à jour' : 'Créer le Code Promo'}
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
+                    <PromoCodeFormModal
+                        form={promoForm}
+                        editing={editingPromo}
+                        onSubmit={handlePromoSubmit}
+                        onClose={() => setPromoModalOpen(false)}
+                    />
                 )}
 
                 {userModalOpen && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                        <div className="admin-panel admin-surface w-full max-w-[550px] rounded-[32px] border p-6 lg:p-8 shadow-2xl relative">
-                            <div className="flex items-center justify-between border-b border-[var(--admin-border)] pb-4">
-                                <h2 className="text-xl font-bold text-[var(--admin-text)]">
-                                    {editingUser ? 'Modifier l’utilisateur' : 'Créer un utilisateur'}
-                                </h2>
-                                <button
-                                    type="button"
-                                    onClick={() => setUserModalOpen(false)}
-                                    className="rounded-full p-2 text-[var(--admin-muted)] hover:bg-white/10 hover:text-[var(--admin-text)] transition"
-                                    title="Fermer"
-                                    aria-label="Fermer"
-                                >
-                                    <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                        <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
-                                    </svg>
-                                </button>
-                            </div>
-
-                            <form onSubmit={handleUserFormSubmit} className="mt-6 space-y-4">
-                                <label className="block space-y-1">
-                                    <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Nom complet</span>
-                                    <input
-                                        type="text"
-                                        value={userForm.data.name}
-                                        onChange={(e) => userForm.setData('name', e.target.value)}
-                                        className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none"
-                                        required
-                                    />
-                                    {userForm.errors.name && <p className="text-xs text-[#b24f43]">{userForm.errors.name}</p>}
-                                </label>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <label className="block space-y-1">
-                                        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Téléphone</span>
-                                        <input
-                                            type="text"
-                                            value={userForm.data.phone}
-                                            onChange={(e) => userForm.setData('phone', e.target.value)}
-                                            className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none"
-                                            required
-                                            placeholder="+225..."
-                                        />
-                                        {userForm.errors.phone && <p className="text-xs text-[#b24f43]">{userForm.errors.phone}</p>}
-                                    </label>
-
-                                    <label className="block space-y-1">
-                                        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">E-mail</span>
-                                        <input
-                                            type="email"
-                                            value={userForm.data.email}
-                                            onChange={(e) => userForm.setData('email', e.target.value)}
-                                            className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none"
-                                            placeholder="exemple@email.com"
-                                        />
-                                        {userForm.errors.email && <p className="text-xs text-[#b24f43]">{userForm.errors.email}</p>}
-                                    </label>
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <label className="block space-y-1">
-                                        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Rôle</span>
-                                        <select
-                                            value={userForm.data.role}
-                                            onChange={(e) => userForm.setData('role', e.target.value as any)}
-                                            className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none bg-transparent"
-                                        >
-                                            <option value="client">Client</option>
-                                            <option value="artisan">Artisan</option>
-                                            <option value="fournisseur">Fournisseur</option>
-                                            <option value="referent">Référent</option>
-                                            <option value="admin">Administrateur</option>
-                                        </select>
-                                        {userForm.errors.role && <p className="text-xs text-[#b24f43]">{userForm.errors.role}</p>}
-                                    </label>
-
-                                    <label className="block space-y-1">
-                                        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Mot de passe</span>
-                                        <input
-                                            type="password"
-                                            value={userForm.data.password}
-                                            onChange={(e) => userForm.setData('password', e.target.value)}
-                                            className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none"
-                                            required={!editingUser}
-                                            placeholder={editingUser ? 'Laisser vide pour ne pas changer' : 'Minimum 6 caractères'}
-                                        />
-                                        {userForm.errors.password && <p className="text-xs text-[#b24f43]">{userForm.errors.password}</p>}
-                                    </label>
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <label className="block space-y-1">
-                                        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Statut KYC</span>
-                                        <select
-                                            value={userForm.data.kyc_status}
-                                            onChange={(e) => userForm.setData('kyc_status', e.target.value as any)}
-                                            className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none bg-transparent"
-                                        >
-                                            <option value="en_attente">En attente</option>
-                                            <option value="actif">Actif (Approuvé)</option>
-                                            <option value="rejete">Rejeté</option>
-                                        </select>
-                                        {userForm.errors.kyc_status && <p className="text-xs text-[#b24f43]">{userForm.errors.kyc_status}</p>}
-                                    </label>
-
-                                    <label className="block space-y-1">
-                                        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Statut du compte</span>
-                                        <select
-                                            value={userForm.data.account_status}
-                                            onChange={(e) => userForm.setData('account_status', e.target.value as any)}
-                                            className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none bg-transparent"
-                                        >
-                                            <option value="actif">Actif</option>
-                                            <option value="suspendu">Suspendu</option>
-                                        </select>
-                                        {userForm.errors.account_status && <p className="text-xs text-[#b24f43]">{userForm.errors.account_status}</p>}
-                                    </label>
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <label className="block space-y-1">
-                                        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Gel de Score ProsArtisan</span>
-                                        <select
-                                            value={userForm.data.score_frozen ? 'oui' : 'non'}
-                                            onChange={(e) => userForm.setData('score_frozen', e.target.value === 'oui')}
-                                            className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none bg-transparent"
-                                        >
-                                            <option value="non">Actif (Non gelé)</option>
-                                            <option value="oui">Gelé (Bloqué)</option>
-                                        </select>
-                                        {userForm.errors.score_frozen && <p className="text-xs text-[#b24f43]">{userForm.errors.score_frozen}</p>}
-                                    </label>
-
-                                    <label className="block space-y-1">
-                                        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Empreinte de l'appareil (IMEI)</span>
-                                        <input
-                                            type="text"
-                                            value={userForm.data.device_fingerprint}
-                                            onChange={(e) => userForm.setData('device_fingerprint', e.target.value)}
-                                            className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none"
-                                            placeholder="Empreinte IMEI / Appareil"
-                                        />
-                                        {userForm.errors.device_fingerprint && <p className="text-xs text-[#b24f43]">{userForm.errors.device_fingerprint}</p>}
-                                    </label>
-                                </div>
-
-                                <div className="flex justify-end gap-3 pt-4 border-t border-[var(--admin-border)]">
-                                    <button
-                                        type="button"
-                                        onClick={() => setUserModalOpen(false)}
-                                        className="admin-button admin-button--ghost"
-                                    >
-                                        Annuler
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        disabled={userForm.processing}
-                                        className="admin-button admin-button--primary"
-                                    >
-                                        {userForm.processing ? 'Enregistrement...' : 'Enregistrer'}
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
+                    <UserFormModal
+                        form={userForm}
+                        editing={editingUser}
+                        onSubmit={handleUserFormSubmit}
+                        onClose={() => setUserModalOpen(false)}
+                    />
                 )}
 
                 {statusModalOpen && statusTargetUser && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                        <div className="admin-panel admin-surface w-full max-w-[450px] rounded-[32px] border p-6 shadow-2xl relative">
-                            <div className="flex items-center justify-between border-b border-[var(--admin-border)] pb-4">
-                                <h2 className="text-lg font-bold text-[var(--admin-text)]">
-                                    Suspendre le compte de {statusTargetUser.name}
-                                </h2>
-                                <button
-                                    type="button"
-                                    onClick={() => setStatusModalOpen(false)}
-                                    className="rounded-full p-2 text-[var(--admin-muted)] hover:bg-white/10 hover:text-[var(--admin-text)] transition"
-                                    title="Fermer"
-                                    aria-label="Fermer"
-                                >
-                                    <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                        <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
-                                    </svg>
-                                </button>
-                            </div>
-
-                            <form onSubmit={handleStatusSubmit} className="mt-5 space-y-4">
-                                <p className="text-sm text-[var(--admin-text-soft)]">
-                                    Veuillez indiquer le motif de suspension du compte. Ce motif sera visible pour l'utilisateur.
-                                </p>
-                                <label className="block space-y-1">
-                                    <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Motif de suspension</span>
-                                    <textarea
-                                        value={statusForm.data.account_status_reason}
-                                        onChange={(e) => statusForm.setData('account_status_reason', e.target.value)}
-                                        className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none h-24 resize-none"
-                                        required
-                                        placeholder="Ex: Documents non conformes ou comportement abusif signalé..."
-                                    />
-                                    {statusForm.errors.account_status_reason && (
-                                        <p className="text-xs text-[#b24f43]">{statusForm.errors.account_status_reason}</p>
-                                    )}
-                                </label>
-
-                                <div className="flex justify-end gap-3 pt-3">
-                                    <button
-                                        type="button"
-                                        onClick={() => setStatusModalOpen(false)}
-                                        className="admin-button admin-button--ghost"
-                                    >
-                                        Annuler
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        disabled={statusForm.processing}
-                                        className="admin-button bg-[#f15f57] text-white hover:bg-[#dd4d45]"
-                                    >
-                                        {statusForm.processing ? 'Suspension...' : 'Suspendre le compte'}
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
+                    <StatusFormModal
+                        form={statusForm}
+                        targetUser={statusTargetUser}
+                        onSubmit={handleStatusSubmit}
+                        onClose={() => setStatusModalOpen(false)}
+                    />
                 )}
 
+
                 {selectedArtisanForLedger && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                        <div className="admin-panel admin-surface w-full max-w-[700px] rounded-[32px] border p-6 lg:p-8 shadow-2xl relative">
-                            <div className="flex items-center justify-between border-b border-[var(--admin-border)] pb-4">
-                                <div>
-                                    <h2 className="text-xl font-bold text-[var(--admin-text)]">
-                                        Historique ProsArtisan : {selectedArtisanForLedger.name}
-                                    </h2>
-                                    <p className="text-xs text-[var(--admin-muted)] mt-1">
-                                        Score actuel : {selectedArtisanForLedger.score_prosartisan}/1000 • {selectedArtisanForLedger.score_frozen ? 'Score Gelé' : 'Score Dynamique'}
-                                    </p>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={() => setSelectedArtisanForLedger(null)}
-                                    className="rounded-full p-2 text-[var(--admin-muted)] hover:bg-white/10 hover:text-[var(--admin-text)] transition"
-                                    title="Fermer"
-                                    aria-label="Fermer"
-                                >
-                                    <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                        <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
-                                    </svg>
-                                </button>
-                            </div>
-
-                            <div className="mt-6 max-h-[400px] overflow-y-auto space-y-3 pr-1">
-                                {scoreLedger.filter(entry => entry.user_id === selectedArtisanForLedger.id).length === 0 ? (
-                                    <EmptyState description="Aucun événement enregistré dans le Ledger pour cet artisan." title="Historique vide" />
-                                ) : (
-                                    scoreLedger
-                                        .filter(entry => entry.user_id === selectedArtisanForLedger.id)
-                                        .map((entry) => (
-                                            <div key={entry.id} className="rounded-2xl border border-[var(--admin-border)] bg-white/60 p-4 flex items-start justify-between gap-4">
-                                                <div className="min-w-0">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className={cn(
-                                                            'rounded-md px-2 py-0.5 text-[10px] font-bold uppercase',
-                                                            entry.points > 0
-                                                                ? 'bg-green-100 text-green-800'
-                                                                : 'bg-rose-100 text-rose-800'
-                                                        )}>
-                                                            {entry.points > 0 ? `+${entry.points}` : entry.points} points
-                                                        </span>
-                                                        <span className="text-xs text-[var(--admin-muted)]">
-                                                            Poids de crédibilité: {entry.credibility_factor}
-                                                        </span>
-                                                    </div>
-                                                    <p className="mt-2 text-sm font-semibold text-[var(--admin-text)]">{entry.description}</p>
-                                                    <span className="mt-1 block text-xs text-[var(--admin-muted)]">Type: {entry.event_type}</span>
-                                                </div>
-                                                <span className="text-xs text-[var(--admin-muted)] shrink-0">
-                                                    {shortDate(entry.created_at)}
-                                                </span>
-                                            </div>
-                                        ))
-                                )}
-                            </div>
-
-                            <div className="mt-6 flex justify-end">
-                                <button
-                                    type="button"
-                                    onClick={() => setSelectedArtisanForLedger(null)}
-                                    className="admin-button admin-button--ghost"
-                                >
-                                    Fermer
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                    <ArtisanLedgerModal
+                        artisan={selectedArtisanForLedger}
+                        scoreLedger={scoreLedger}
+                        onClose={() => setSelectedArtisanForLedger(null)}
+                    />
                 )}
 
                 {selectedMissionForDetails && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                        <div className="admin-panel admin-surface w-full max-w-[850px] rounded-[32px] border p-6 lg:p-8 shadow-2xl relative max-h-[85vh] overflow-y-auto">
-                            <div className="flex items-center justify-between border-b border-[var(--admin-border)] pb-4">
-                                <div className="space-y-1">
-                                    <h2 className="text-xl font-bold text-[var(--admin-text)] flex items-center gap-3">
-                                        <span>Détails de la mission #{selectedMissionForDetails.id}</span>
-                                        <MissionStatusBadge status={selectedMissionForDetails.status} />
-                                    </h2>
-                                    <p className="text-xs text-[var(--admin-muted)]">Créée le {shortDate(selectedMissionForDetails.created_at)}</p>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={() => setSelectedMissionForDetails(null)}
-                                    className="rounded-full p-2 text-[var(--admin-muted)] hover:bg-white/10 hover:text-[var(--admin-text)] transition"
-                                    title="Fermer"
-                                >
-                                    <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                        <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
-                                    </svg>
-                                </button>
-                            </div>
-
-                            <div className="mt-6 space-y-6">
-                                {/* Informations Générales */}
-                                <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
-                                    <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-white/40">
-                                        <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Description</p>
-                                        <p className="mt-1 text-sm text-[var(--admin-text)] font-medium">{selectedMissionForDetails.description}</p>
-                                    </div>
-                                    <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-white/40">
-                                        <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Client</p>
-                                        <p className="mt-1 text-sm text-[var(--admin-text)] font-bold">{selectedMissionForDetails.client?.name ?? 'Non renseigné'}</p>
-                                        <p className="text-xs text-[var(--admin-muted)]">{selectedMissionForDetails.client?.phone}</p>
-                                    </div>
-                                    <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-white/40">
-                                        <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Artisan</p>
-                                        <p className="mt-1 text-sm text-[var(--admin-text)] font-bold">{selectedMissionForDetails.artisan?.name ?? 'Non affecté'}</p>
-                                        <p className="text-xs text-[var(--admin-muted)]">{selectedMissionForDetails.artisan?.phone}</p>
-                                    </div>
-                                </div>
-
-                                {/* Analyse IA & Finance */}
-                                <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
-                                    <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-white/40">
-                                        <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Analyse Gemini IA</p>
-                                        <p className="mt-1 text-sm text-[var(--admin-text)] font-semibold">{selectedMissionForDetails.gemini_category ?? 'Non classée'}</p>
-                                        <p className="text-xs text-[var(--admin-text-soft)]">Urgence : {selectedMissionForDetails.gemini_urgency ?? 'N/A'}</p>
-                                    </div>
-                                    <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-white/40">
-                                        <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Financement total</p>
-                                        <p className="mt-1 text-base font-bold text-[#8a6b3d]">{selectedMissionForDetails.montant_total ? money(selectedMissionForDetails.montant_total) : 'Non défini'}</p>
-                                        {selectedMissionForDetails.montant_materiaux && (
-                                            <p className="text-xs text-[var(--admin-text-soft)]">Matériaux : {money(selectedMissionForDetails.montant_materiaux)}</p>
-                                        )}
-                                    </div>
-                                    <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-white/40">
-                                        <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Main d'œuvre & Ratio</p>
-                                        <p className="mt-1 text-sm font-semibold text-[var(--admin-text)]">
-                                            {selectedMissionForDetails.montant_mo ? money(selectedMissionForDetails.montant_mo) : 'Non défini'}
-                                        </p>
-                                        {selectedMissionForDetails.ratio_materiaux && (
-                                            <p className="text-xs text-[var(--admin-text-soft)]">Ratio Mat : {(Number(selectedMissionForDetails.ratio_materiaux) * 100).toFixed(0)}%</p>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Historique des Jalons (Milestones) */}
-                                <div className="space-y-2.5">
-                                    <h3 className="text-sm font-bold text-[var(--admin-text)] uppercase tracking-wider">Historique des Jalons</h3>
-                                    {selectedMissionForDetails.jalons && selectedMissionForDetails.jalons.length > 0 ? (
-                                        <div className="overflow-x-auto rounded-2xl border border-[var(--admin-border)] bg-white/30">
-                                            <table className="min-w-full divide-y divide-[var(--admin-border)] text-xs text-left">
-                                                <thead className="bg-[#fcf8f2] text-[var(--admin-muted)] font-semibold uppercase">
-                                                    <tr>
-                                                        <th className="px-4 py-2">Ordre</th>
-                                                        <th className="px-4 py-2">Description</th>
-                                                        <th className="px-4 py-2">Montant</th>
-                                                        <th className="px-4 py-2">Statut</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-[var(--admin-border)]">
-                                                    {selectedMissionForDetails.jalons.map((jalon: any) => (
-                                                        <tr key={jalon.id}>
-                                                            <td className="px-4 py-2 font-bold">#{jalon.ordre}</td>
-                                                            <td className="px-4 py-2">{jalon.description}</td>
-                                                            <td className="px-4 py-2 font-medium">{money(jalon.montant)}</td>
-                                                            <td className="px-4 py-2">
-                                                                <span className={cn('px-2 py-0.5 rounded-full border text-[10px] font-bold', 
-                                                                    jalon.statut === 'paye' || jalon.statut === 'valide' ? 'border-green-300 bg-green-50 text-green-700' : 'border-amber-300 bg-amber-50 text-amber-700'
-                                                                )}>
-                                                                    {jalon.statut}
-                                                                </span>
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    ) : (
-                                        <p className="text-xs text-[var(--admin-muted)] italic">Aucun jalon défini.</p>
-                                    )}
-                                </div>
-
-                                {/* Historique des J-Codes */}
-                                <div className="space-y-2.5">
-                                    <h3 className="text-sm font-bold text-[var(--admin-text)] uppercase tracking-wider">Historique des J-Codes (Matériaux)</h3>
-                                    {selectedMissionForDetails.jcodes && selectedMissionForDetails.jcodes.length > 0 ? (
-                                        <div className="overflow-x-auto rounded-2xl border border-[var(--admin-border)] bg-white/30">
-                                            <table className="min-w-full divide-y divide-[var(--admin-border)] text-xs text-left">
-                                                <thead className="bg-[#fcf8f2] text-[var(--admin-muted)] font-semibold uppercase">
-                                                    <tr>
-                                                        <th className="px-4 py-2">Code</th>
-                                                        <th className="px-4 py-2">Montant</th>
-                                                        <th className="px-4 py-2">Statut</th>
-                                                        <th className="px-4 py-2">Fournisseur</th>
-                                                        <th className="px-4 py-2">Date d'utilisation</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-[var(--admin-border)]">
-                                                    {selectedMissionForDetails.jcodes.map((jcode: any) => (
-                                                        <tr key={jcode.id}>
-                                                            <td className="px-4 py-2 font-mono font-bold text-[#8a6b3d]">{jcode.code}</td>
-                                                            <td className="px-4 py-2 font-medium">{money(jcode.montant)}</td>
-                                                            <td className="px-4 py-2">
-                                                                <span className={cn('px-2 py-0.5 rounded-full border text-[10px] font-bold', 
-                                                                    jcode.statut === 'utilise' ? 'border-green-300 bg-green-50 text-green-700' : 'border-amber-300 bg-amber-50 text-amber-700'
-                                                                )}>
-                                                                    {jcode.statut}
-                                                                </span>
-                                                            </td>
-                                                            <td className="px-4 py-2">{jcode.fournisseur?.nom_boutique ?? jcode.fournisseur?.name ?? 'Non scanné'}</td>
-                                                            <td className="px-4 py-2">{jcode.scanned_at ? shortDate(jcode.scanned_at) : 'En attente'}</td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    ) : (
-                                        <p className="text-xs text-[var(--admin-muted)] italic">Aucun J-Code généré.</p>
-                                    )}
-                                </div>
-
-                                {/* Historique des Transactions Financières */}
-                                <div className="space-y-2.5">
-                                    <h3 className="text-sm font-bold text-[var(--admin-text)] uppercase tracking-wider">Transactions liées</h3>
-                                    {selectedMissionForDetails.transactions && selectedMissionForDetails.transactions.length > 0 ? (
-                                        <div className="overflow-x-auto rounded-2xl border border-[var(--admin-border)] bg-white/30">
-                                            <table className="min-w-full divide-y divide-[var(--admin-border)] text-xs text-left">
-                                                <thead className="bg-[#fcf8f2] text-[var(--admin-muted)] font-semibold uppercase">
-                                                    <tr>
-                                                        <th className="px-4 py-2">Type</th>
-                                                        <th className="px-4 py-2">Montant</th>
-                                                        <th className="px-4 py-2">Moyen</th>
-                                                        <th className="px-4 py-2">Statut</th>
-                                                        <th className="px-4 py-2">Date</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-[var(--admin-border)]">
-                                                    {selectedMissionForDetails.transactions.map((tx: any) => (
-                                                        <tr key={tx.id}>
-                                                            <td className="px-4 py-2 font-semibold">{transactionTypeLabels[tx.type] ?? tx.type}</td>
-                                                            <td className="px-4 py-2 font-bold">{money(tx.montant)}</td>
-                                                            <td className="px-4 py-2">
-                                                                <ProviderBadge provider={tx.provider} />
-                                                            </td>
-                                                            <td className="px-4 py-2">
-                                                                <TransactionStatusBadge status={tx.statut} />
-                                                            </td>
-                                                            <td className="px-4 py-2 text-[var(--admin-muted)]">{shortDate(tx.created_at)}</td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    ) : (
-                                        <p className="text-xs text-[var(--admin-muted)] italic">Aucune transaction enregistrée.</p>
-                                    )}
-                                </div>
-
-                                {/* Livraisons associées au Client ou Artisan */}
-                                {orders && orders.some(o => o.client_id === (selectedMissionForDetails.client as any)?.id || o.client_id === (selectedMissionForDetails.artisan as any)?.id) && (
-                                    <div className="space-y-2.5">
-                                        <h3 className="text-sm font-bold text-[var(--admin-text)] uppercase tracking-wider flex items-center gap-2">
-                                            <span>🛵 Courses & Livraisons Liées</span>
-                                        </h3>
-                                        <div className="grid gap-3 sm:grid-cols-2">
-                                            {orders
-                                                .filter(o => o.client_id === (selectedMissionForDetails.client as any)?.id || o.client_id === (selectedMissionForDetails.artisan as any)?.id)
-                                                .map((ord) => (
-                                                    <div
-                                                        key={ord.id}
-                                                        onClick={() => setSelectedOrderForDetails(ord)}
-                                                        className="rounded-2xl border border-[var(--admin-border)] bg-white/60 p-3 hover:border-[#8a6b3d] cursor-pointer transition flex items-center justify-between"
-                                                    >
-                                                        <div>
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="font-bold text-xs">Course #{ord.id}</span>
-                                                                <DeliveryStatusBadge status={ord.status} />
-                                                            </div>
-                                                            <p className="text-xs text-[var(--admin-text-soft)] mt-1">
-                                                                {ord.driver ? `🛵 ${ord.driver.name}` : 'En attente de coursier'}
-                                                            </p>
-                                                        </div>
-                                                        <div className="text-right">
-                                                            <span className="font-bold text-xs text-[#8a6b3d]">{money(ord.total_amount || ord.subtotal)}</span>
-                                                            <p className="text-[10px] text-[var(--admin-muted)]">{shortDate(ord.created_at)}</p>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
+                    <MissionDetailModal
+                        mission={selectedMissionForDetails}
+                        orders={ordersPage?.data ?? orders}
+                        onClose={() => setSelectedMissionForDetails(null)}
+                        onSelectOrder={setSelectedOrderForDetails}
+                    />
                 )}
 
                 {selectedOrderForDetails && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                        <div className="admin-panel admin-surface w-full max-w-[850px] rounded-[32px] border p-6 lg:p-8 shadow-2xl relative max-h-[88vh] overflow-y-auto">
-                            <div className="flex items-center justify-between border-b border-[var(--admin-border)] pb-4">
-                                <div className="space-y-1">
-                                    <div className="flex flex-wrap items-center gap-3">
-                                        <h2 className="text-xl font-bold text-[var(--admin-text)]">
-                                            Suivi 360° Livraison #{selectedOrderForDetails.id}
-                                        </h2>
-                                        <DeliveryStatusBadge status={selectedOrderForDetails.status} />
-                                        <DeliveryModeBadge mode={selectedOrderForDetails.delivery_mode} />
-                                    </div>
-                                    <p className="text-xs text-[var(--admin-muted)]">
-                                        Créée le {new Date(selectedOrderForDetails.created_at).toLocaleString('fr-FR')}
-                                        {selectedOrderForDetails.delivered_at && ` • Livrée le ${new Date(selectedOrderForDetails.delivered_at).toLocaleString('fr-FR')}`}
-                                    </p>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={() => setSelectedOrderForDetails(null)}
-                                    className="rounded-full p-2 text-[var(--admin-muted)] hover:bg-white/10 hover:text-[var(--admin-text)] transition"
-                                    title="Fermer"
-                                >
-                                    <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                        <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
-                                    </svg>
-                                </button>
-                            </div>
-
-                            <div className="mt-6 rounded-2xl border border-[var(--admin-border)] bg-[#fcf8f2]/60 p-4">
-                                <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-muted)] mb-3">Progression de la Course</p>
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
-                                    <div className={cn('p-2 rounded-xl border', selectedOrderForDetails.status !== 'unpaid' ? 'bg-green-50 border-green-300 text-green-800 font-bold' : 'bg-gray-50 text-gray-400')}>
-                                        <span>1. Payée / Séquestrée</span>
-                                    </div>
-                                    <div className={cn('p-2 rounded-xl border', ['prepared', 'searching_driver', 'driver_assigned', 'driver_picked_up', 'shipping', 'delivered'].includes(selectedOrderForDetails.status) ? 'bg-green-50 border-green-300 text-green-800 font-bold' : 'bg-gray-50 text-gray-400')}>
-                                        <span>2. Préparée en boutique</span>
-                                    </div>
-                                    <div className={cn('p-2 rounded-xl border', ['driver_assigned', 'driver_picked_up', 'shipping', 'delivered'].includes(selectedOrderForDetails.status) ? 'bg-green-50 border-green-300 text-green-800 font-bold' : selectedOrderForDetails.status === 'searching_driver' ? 'bg-amber-50 border-amber-300 text-amber-800 font-bold animate-pulse' : 'bg-gray-50 text-gray-400')}>
-                                        <span>3. Coursier assigné</span>
-                                    </div>
-                                    <div className={cn('p-2 rounded-xl border', selectedOrderForDetails.status === 'delivered' ? 'bg-green-100 border-green-400 text-green-900 font-bold' : ['shipping', 'driver_picked_up'].includes(selectedOrderForDetails.status) ? 'bg-purple-50 border-purple-300 text-purple-800 font-bold animate-pulse' : 'bg-gray-50 text-gray-400')}>
-                                        <span>4. Remise validée</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="mt-6 space-y-6">
-                                <div className="grid gap-4 sm:grid-cols-3">
-                                    <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-white/50">
-                                        <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--admin-muted)] flex items-center gap-1">
-                                            <span>🛵 Livreur (Coursier)</span>
-                                        </p>
-                                        {selectedOrderForDetails.driver ? (
-                                            <div className="mt-2 space-y-1">
-                                                <p className="text-sm font-bold text-[var(--admin-text)]">{selectedOrderForDetails.driver.name}</p>
-                                                <p className="text-xs text-[var(--admin-muted)]">{selectedOrderForDetails.driver.role ?? 'Livreur'}</p>
-                                                <div className="pt-1.5">
-                                                    <a
-                                                        href={`tel:${selectedOrderForDetails.driver.phone}`}
-                                                        className="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 border border-amber-200 px-2.5 py-1 text-xs font-mono font-bold text-[#8a6b3d] hover:bg-amber-100 transition"
-                                                    >
-                                                        📞 {selectedOrderForDetails.driver.phone}
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <p className="mt-2 text-xs text-amber-700 italic">Aucun livreur encore affecté.</p>
-                                        )}
-                                    </div>
-
-                                    <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-white/50">
-                                        <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--admin-muted)] flex items-center gap-1">
-                                            <span>👷 Destinataire sur chantier</span>
-                                        </p>
-                                        <div className="mt-2 space-y-1">
-                                            <p className="text-sm font-bold text-[var(--admin-text)]">
-                                                {selectedOrderForDetails.client?.name ?? 'Non renseigné'}
-                                                {selectedOrderForDetails.client?.role && (
-                                                    <span className="ml-1.5 text-[10px] uppercase font-semibold text-[var(--admin-muted)]">
-                                                        ({selectedOrderForDetails.client.role})
-                                                    </span>
-                                                )}
-                                            </p>
-                                            <div className="pt-1.5">
-                                                <a
-                                                    href={`tel:${selectedOrderForDetails.client?.phone}`}
-                                                    className="inline-flex items-center gap-1.5 rounded-lg bg-slate-50 border border-slate-200 px-2.5 py-1 text-xs font-mono font-bold text-[var(--admin-text)] hover:bg-slate-100 transition"
-                                                >
-                                                    📞 {selectedOrderForDetails.client?.phone ?? 'N/A'}
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-white/50">
-                                        <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--admin-muted)] flex items-center gap-1">
-                                            <span>🏪 Quincaillerie de collecte</span>
-                                        </p>
-                                        <div className="mt-2 space-y-1">
-                                            <p className="text-sm font-bold text-[var(--admin-text)]">
-                                                {selectedOrderForDetails.supplier?.fournisseur_agree?.nom_boutique ?? selectedOrderForDetails.supplier?.name ?? 'Quincaillerie'}
-                                            </p>
-                                            <div className="pt-1.5">
-                                                <a
-                                                    href={`tel:${selectedOrderForDetails.supplier?.phone}`}
-                                                    className="inline-flex items-center gap-1.5 rounded-lg bg-slate-50 border border-slate-200 px-2.5 py-1 text-xs font-mono font-bold text-[var(--admin-text)] hover:bg-slate-100 transition"
-                                                >
-                                                    📞 {selectedOrderForDetails.supplier?.phone ?? 'N/A'}
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="grid gap-4 sm:grid-cols-2">
-                                    <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-white/40 flex items-center justify-between">
-                                        <div>
-                                            <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--admin-muted)]">Code Retrait Quincaillerie</p>
-                                            <p className="mt-1 font-mono text-base font-bold text-[#8a6b3d]">{selectedOrderForDetails.pickup_code || 'N/A'}</p>
-                                        </div>
-                                        <span className="text-xs text-[var(--admin-muted)]">Scanné/saisi lors de la collecte</span>
-                                    </div>
-
-                                    <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-white/40 flex items-center justify-between">
-                                        <div>
-                                            <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--admin-muted)]">Code Réception Chantier</p>
-                                            <p className="mt-1 font-mono text-base font-bold text-green-700">{selectedOrderForDetails.reception_code || 'N/A'}</p>
-                                        </div>
-                                        <span className="text-xs text-[var(--admin-muted)]">Validé à la remise au chantier</span>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-2.5">
-                                    <h3 className="text-sm font-bold text-[var(--admin-text)] uppercase tracking-wider">Articles & Matériaux Commandés</h3>
-                                    {selectedOrderForDetails.items && selectedOrderForDetails.items.length > 0 ? (
-                                        <div className="overflow-x-auto rounded-2xl border border-[var(--admin-border)] bg-white/30">
-                                            <table className="min-w-full divide-y divide-[var(--admin-border)] text-xs text-left">
-                                                <thead className="bg-[#fcf8f2] text-[var(--admin-muted)] font-semibold uppercase">
-                                                    <tr>
-                                                        <th className="px-4 py-2.5">Article</th>
-                                                        <th className="px-4 py-2.5">Quantité</th>
-                                                        <th className="px-4 py-2.5">Prix unitaire</th>
-                                                        <th className="px-4 py-2.5">Total</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-[var(--admin-border)]">
-                                                    {selectedOrderForDetails.items.map((item) => (
-                                                        <tr key={item.id}>
-                                                            <td className="px-4 py-2.5 font-bold text-[var(--admin-text)]">
-                                                                {item.product?.name ?? `Produit #${item.supplier_product_id}`}
-                                                            </td>
-                                                            <td className="px-4 py-2.5 font-semibold">
-                                                                {item.quantity} {item.product?.unit ?? 'unité(s)'}
-                                                            </td>
-                                                            <td className="px-4 py-2.5">{money(item.unit_price)}</td>
-                                                            <td className="px-4 py-2.5 font-bold text-[var(--admin-text)]">
-                                                                {money(item.quantity * item.unit_price)}
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    ) : (
-                                        <p className="text-xs text-[var(--admin-muted)] italic">Aucun détail d'article disponible.</p>
-                                    )}
-                                </div>
-
-                                <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-[#fcf8f2] space-y-2 text-sm">
-                                    <div className="flex justify-between">
-                                        <span className="text-[var(--admin-text-soft)]">Sous-total Matériaux</span>
-                                        <span className="font-semibold text-[var(--admin-text)]">{money(selectedOrderForDetails.subtotal)}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-[var(--admin-text-soft)]">Frais de livraison Livreur</span>
-                                        <span className="font-semibold text-[#8a6b3d]">{money(selectedOrderForDetails.delivery_cost)}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-[var(--admin-text-soft)]">Commission ProsArtisan</span>
-                                        <span className="font-semibold text-[var(--admin-text)]">{money(selectedOrderForDetails.platform_fee)}</span>
-                                    </div>
-                                    <div className="flex justify-between pt-2 border-t border-[var(--admin-border)] text-base font-bold">
-                                        <span className="text-[var(--admin-text)]">Total Général Séquestré</span>
-                                        <span className="text-[#8a6b3d]">{money(selectedOrderForDetails.total_amount || selectedOrderForDetails.subtotal)}</span>
-                                    </div>
-                                </div>
-
-                                {(selectedOrderForDetails.pickup_photo_url || selectedOrderForDetails.delivery_photo_url) && (
-                                    <div className="space-y-2.5">
-                                        <h3 className="text-sm font-bold text-[var(--admin-text)] uppercase tracking-wider">Preuves Photographiques</h3>
-                                        <div className="grid gap-4 sm:grid-cols-2">
-                                            {selectedOrderForDetails.pickup_photo_url && (
-                                                <div className="p-3 rounded-2xl border border-[var(--admin-border)] bg-white/40">
-                                                    <p className="text-xs font-semibold text-[var(--admin-text)] mb-2">📸 Ramassage Quincaillerie</p>
-                                                    <img
-                                                        src={selectedOrderForDetails.pickup_photo_url}
-                                                        alt="Photo ramassage"
-                                                        className="w-full h-40 object-cover rounded-xl border"
-                                                    />
-                                                </div>
-                                            )}
-                                            {selectedOrderForDetails.delivery_photo_url && (
-                                                <div className="p-3 rounded-2xl border border-[var(--admin-border)] bg-white/40">
-                                                    <p className="text-xs font-semibold text-[var(--admin-text)] mb-2">📸 Livraison sur Chantier</p>
-                                                    <img
-                                                        src={selectedOrderForDetails.delivery_photo_url}
-                                                        alt="Photo livraison"
-                                                        className="w-full h-40 object-cover rounded-xl border"
-                                                    />
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
+                    <OrderDetailModal
+                        order={selectedOrderForDetails}
+                        onClose={() => setSelectedOrderForDetails(null)}
+                    />
                 )}
 
                 {selectedTransactionForDetails && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                        <div className="admin-panel admin-surface w-full max-w-[550px] rounded-[32px] border p-6 lg:p-8 shadow-2xl relative animate-in fade-in zoom-in duration-200">
-                            <div className="flex items-center justify-between border-b border-[var(--admin-border)] pb-4">
-                                <div className="space-y-1">
-                                    <h2 className="text-xl font-bold text-[var(--admin-text)] flex items-center gap-3">
-                                        <span>Transaction #{selectedTransactionForDetails.id}</span>
-                                        <TransactionStatusBadge status={selectedTransactionForDetails.statut} />
-                                    </h2>
-                                    <p className="text-xs text-[var(--admin-muted)]">Enregistrée le {shortDate(selectedTransactionForDetails.created_at)}</p>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={() => setSelectedTransactionForDetails(null)}
-                                    className="rounded-full p-2 text-[var(--admin-muted)] hover:bg-white/10 hover:text-[var(--admin-text)] transition"
-                                    title="Fermer"
-                                >
-                                    <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                        <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
-                                    </svg>
-                                </button>
-                            </div>
-
-                            <div className="mt-6 space-y-4 text-sm">
-                                <div className="flex justify-between py-2.5 border-b border-[var(--admin-border)]">
-                                    <span className="text-[var(--admin-muted)]">Type de transaction</span>
-                                    <span className="font-semibold text-[var(--admin-text)]">{transactionTypeLabels[selectedTransactionForDetails.type] ?? selectedTransactionForDetails.type}</span>
-                                </div>
-                                <div className="flex justify-between py-2.5 border-b border-[var(--admin-border)]">
-                                    <span className="text-[var(--admin-muted)]">Montant</span>
-                                    <span className="font-bold text-[#8a6b3d] text-base">{money(selectedTransactionForDetails.montant)}</span>
-                                </div>
-                                <div className="flex justify-between py-2.5 border-b border-[var(--admin-border)]">
-                                    <span className="text-[var(--admin-muted)]">Moyen de paiement</span>
-                                    <span className="font-semibold text-[var(--admin-text)]">
-                                        <ProviderBadge provider={selectedTransactionForDetails.provider} />
-                                    </span>
-                                </div>
-                                <div className="flex justify-between py-2.5 border-b border-[var(--admin-border)]">
-                                    <span className="text-[var(--admin-muted)]">Référence externe</span>
-                                    <span className="font-mono text-xs bg-slate-100/80 border border-slate-200 rounded px-1.5 py-0.5 text-[var(--admin-text)]">
-                                        {selectedTransactionForDetails.reference_externe ?? 'N/A'}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between py-2.5 border-b border-[var(--admin-border)]">
-                                    <span className="text-[var(--admin-muted)]">Provenance (Source)</span>
-                                    <span className="font-medium text-[var(--admin-text)]">{selectedTransactionForDetails.wallet_source}</span>
-                                </div>
-                                <div className="flex justify-between py-2.5 border-b border-[var(--admin-border)]">
-                                    <span className="text-[var(--admin-muted)]">Destination</span>
-                                    <span className="font-medium text-[var(--admin-text)]">{selectedTransactionForDetails.wallet_dest}</span>
-                                </div>
-                                <div className="flex justify-between py-2.5 border-b border-[var(--admin-border)]">
-                                    <span className="text-[var(--admin-muted)]">Bénéficiaire</span>
-                                    <span className="font-semibold text-[var(--admin-text)]">{selectedTransactionForDetails.user?.name ?? 'Non renseigné'}</span>
-                                </div>
-                                {selectedTransactionForDetails.mission && (
-                                    <div className="flex justify-between py-2.5 border-b border-[var(--admin-border)]">
-                                        <span className="text-[var(--admin-muted)]">Mission associée</span>
-                                        <span className="font-semibold text-blue-700">#{selectedTransactionForDetails.mission.id} - {selectedTransactionForDetails.mission.description}</span>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
+                    <TransactionDetailModal
+                        transaction={selectedTransactionForDetails}
+                        onClose={() => setSelectedTransactionForDetails(null)}
+                    />
                 )}
 
-                <BottomDock activeTab={activeTab} />
-            </div>
-        </>
-    );
-}
-
-function Surface({ children, className = '' }: { children: ReactNode; className?: string }) {
-    return <section className={cn('admin-panel admin-surface border', className)}>{children}</section>;
-}
-
-function MetricCard({
-    children,
-    description,
-    tone,
-    trend,
-    value,
-}: {
-    children: ReactNode;
-    description: string;
-    tone: Tone;
-    trend: string;
-    value: string;
-}) {
-    return (
-        <Surface className="admin-metric-card rounded-[30px] p-5 lg:p-6">
-            <div className={cn('flex h-12 w-12 items-center justify-center rounded-2xl', toneIconClasses(tone))}>
-                <ToneIcon tone={tone} className="h-5 w-5" />
-            </div>
-            <p className="mt-5 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--admin-muted)]">{children}</p>
-            <p className="mt-1.5 text-4xl font-semibold tracking-tight text-[var(--admin-text)]">{value}</p>
-            <p className="mt-2 text-sm text-[var(--admin-text-soft)]">{description}</p>
-            <p className="mt-3 text-xs font-medium text-[var(--admin-muted)]">{trend}</p>
-        </Surface>
-    );
-}
-
-function SectionTitle({ description, title }: { description: string; title: string }) {
-    return (
-        <div>
-            <h3 className="text-2xl font-semibold tracking-tight text-[var(--admin-text)]">{title}</h3>
-            <p className="mt-1 text-sm leading-6 text-[var(--admin-text-soft)]">{description}</p>
-        </div>
-    );
-}
-
-function DataTable({ children, className = '' }: { children: ReactNode; className?: string }) {
-    return (
-        <div className={cn('overflow-x-auto', className)}>
-            <table className="admin-table min-w-full">{children}</table>
-        </div>
-    );
-}
-
-function EmptyState({ description, title }: { description: string; title: string }) {
-    return (
-        <div className="rounded-[24px] border border-dashed border-[var(--admin-border)] bg-white/45 px-5 py-8 text-center">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-[var(--admin-border)] bg-white/60 text-[var(--admin-muted)]">
-                <InboxIcon className="h-5 w-5" />
-            </div>
-            <p className="text-base font-semibold text-[var(--admin-text)]">{title}</p>
-            <p className="mt-2 text-sm text-[var(--admin-text-soft)]">{description}</p>
-        </div>
-    );
-}
-
-function AvatarBubble({ label }: { label: string }) {
-    return (
-        <span className="admin-avatar flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#ebb95e] text-sm font-bold text-[#241b16]">
-            {getInitials(label)}
-        </span>
-    );
-}
-
-function InfoRow({ label, value }: { label: string; value: string }) {
-    return (
-        <div className="flex items-center justify-between gap-3">
-            <span className="text-[var(--admin-muted)]">{label}</span>
-            <span className="text-right font-medium text-[var(--admin-text)]">{value}</span>
-        </div>
-    );
-}
-
-function InfoPill({ label, value }: { label: string; value: string }) {
-    return (
-        <div className="rounded-[22px] border border-[var(--admin-border)] bg-white/60 px-4 py-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--admin-muted)]">{label}</p>
-            <p className="mt-2 text-sm font-medium text-[var(--admin-text)]">{value}</p>
-        </div>
-    );
-}
-
-function RoleBadge({ role }: { role: string }) {
-    const toneMap: Record<string, Tone> = {
-        admin: 'amber',
-        artisan: 'green',
-        client: 'blue',
-        fournisseur: 'slate',
-        referent: 'rose',
-        livreur: 'amber',
-    };
-
-    return <span className={cn('rounded-full border px-3 py-1 text-xs font-semibold', toneBadgeClasses(toneMap[role] ?? 'slate'))}>{roleLabels[role] ?? role}</span>;
-}
-
-function KycStatusBadge({ status }: { status: string }) {
-    const toneMap: Record<string, Tone> = {
-        actif: 'green',
-        en_attente: 'amber',
-        rejete: 'rose',
-    };
-
-    return <span className={cn('rounded-full border px-3 py-1 text-xs font-semibold', toneBadgeClasses(toneMap[status] ?? 'slate'))}>{kycStatusLabels[status] ?? status}</span>;
-}
-
-function AccountStatusBadge({ status }: { status?: string | null }) {
-    const isActif = (status ?? 'actif') === 'actif';
-    return (
-        <span className={cn('rounded-full border px-3 py-1 text-xs font-semibold', toneBadgeClasses(isActif ? 'green' : 'rose'))}>
-            {isActif ? 'Actif' : 'Suspendu'}
-        </span>
-    );
-}
-
-function MissionStatusBadge({ status }: { status: string }) {
-    const toneMap: Record<string, Tone> = {
-        annulee: 'slate',
-        en_attente: 'amber',
-        en_cours: 'green',
-        financee: 'blue',
-        litige: 'rose',
-        terminee: 'slate',
-    };
-
-    return (
-        <span className={cn('rounded-full border px-3 py-1 text-xs font-semibold', toneBadgeClasses(toneMap[status] ?? 'slate'))}>
-            {missionStatusLabels[status] ?? status}
-        </span>
-    );
-}
-
-function LitigeStatusBadge({ status }: { status: string }) {
-    const toneMap: Record<string, Tone> = {
-        en_cours: 'amber',
-        ouvert: 'rose',
-        resolu: 'green',
-    };
-
-    return <span className={cn('rounded-full border px-3 py-1 text-xs font-semibold', toneBadgeClasses(toneMap[status] ?? 'slate'))}>{status}</span>;
-}
-
-function DecisionBadge({ decision }: { decision: string }) {
-    const toneMap: Record<string, Tone> = {
-        artisan: 'green',
-        client: 'rose',
-        gel: 'amber',
-    };
-
-    return (
-        <span className={cn('rounded-full border px-3 py-1 text-xs font-semibold', toneBadgeClasses(toneMap[decision] ?? 'slate'))}>
-            {litigeDecisionLabels[decision] ?? decision}
-        </span>
-    );
-}
-
-function ProviderBadge({ provider }: { provider: string }) {
-    const toneMap: Record<string, Tone> = {
-        orange_money: 'amber',
-        virement_bancaire: 'slate',
-        wave: 'blue',
-    };
-
-    return (
-        <span className={cn('rounded-full border px-3 py-1 text-xs font-semibold', toneBadgeClasses(toneMap[provider] ?? 'slate'))}>
-            {providerLabels[provider] ?? provider}
-        </span>
-    );
-}
-
-function TransactionStatusBadge({ status }: { status: string }) {
-    const toneMap: Record<string, Tone> = {
-        confirme: 'green',
-        echoue: 'rose',
-        en_attente: 'blue',
-    };
-
-    return <span className={cn('rounded-full border px-3 py-1 text-xs font-semibold', toneBadgeClasses(toneMap[status] ?? 'slate'))}>{status}</span>;
-}
-
-function DeliveryStatusBadge({ status }: { status: string }) {
-    const toneMap: Record<string, Tone> = {
-        paid: 'blue',
-        prepared: 'amber',
-        searching_driver: 'amber',
-        driver_assigned: 'purple',
-        driver_picked_up: 'purple',
-        shipping: 'purple',
-        delivered: 'green',
-        disputed: 'rose',
-    };
-
-    const labelMap: Record<string, string> = {
-        paid: 'Payée (En attente préparation)',
-        prepared: 'Préparée (Prête pour coursier)',
-        searching_driver: 'Recherche coursier...',
-        driver_assigned: 'Livreur assigné',
-        driver_picked_up: 'Colis récupéré',
-        shipping: 'En livraison (En transit)',
-        delivered: 'Livrée & Réceptionnée',
-        disputed: 'En litige',
-    };
-
-    return (
-        <span className={cn('rounded-full border px-2.5 py-1 text-xs font-semibold', toneBadgeClasses(toneMap[status] ?? 'slate'))}>
-            {labelMap[status] ?? status}
-        </span>
-    );
-}
-
-function DeliveryModeBadge({ mode }: { mode: string }) {
-    const isDelivery = mode === 'delivery';
-    return (
-        <span className={cn('rounded-full border px-2.5 py-0.5 text-[11px] font-semibold', isDelivery ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-blue-50 text-blue-700 border-blue-200')}>
-            {isDelivery ? '🛵 Livraison coursier' : '🏪 Retrait direct'}
-        </span>
-    );
-}
-
-function DualLineChart({ series }: { series: DualSeries[] }) {
-    const points = series[0]?.points ?? [];
-
-    if (series.length === 0 || points.length === 0) {
-        return <EmptyState description="Pas assez de données pour tracer ce graphique." title="Graphique indisponible" />;
-    }
-
-    const width = 720;
-    const height = 290;
-    const paddingX = 36;
-    const paddingTop = 28;
-    const paddingBottom = 46;
-    const maxValue = Math.max(...series.flatMap((entry) => entry.points.map((point) => point.value)), 1);
-    const xStep = points.length > 1 ? (width - paddingX * 2) / (points.length - 1) : 0;
-    const graphHeight = height - paddingTop - paddingBottom;
-    const toY = (value: number): number => paddingTop + graphHeight - (value / maxValue) * graphHeight;
-
-    return (
-        <div className="mt-5 rounded-[28px] border border-[var(--admin-border)] bg-white/60 p-4">
-            <svg viewBox={`0 0 ${width} ${height}`} className="h-64 w-full overflow-visible">
-                <defs>
-                    {series.map((entry, seriesIndex) => (
-                        <linearGradient key={entry.label} id={`chart-grad-${seriesIndex}`} x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor={entry.color} stopOpacity="0.22" />
-                            <stop offset="100%" stopColor={entry.color} stopOpacity="0" />
-                        </linearGradient>
-                    ))}
-                </defs>
-
-                {Array.from({ length: 5 }, (_, index) => {
-                    const ratio = index / 4;
-                    const y = paddingTop + graphHeight * ratio;
-
-                    return (
-                        <line
-                            key={index}
-                            x1={paddingX}
-                            y1={y}
-                            x2={width - paddingX}
-                            y2={y}
-                            stroke="rgba(194, 170, 136, 0.35)"
-                            strokeDasharray="4 7"
-                        />
-                    );
-                })}
-
-                {series.map((entry, seriesIndex) => {
-                    if (entry.points.length < 2) return null;
-                    const firstX = paddingX;
-                    const lastX = paddingX + (entry.points.length - 1) * xStep;
-                    const bottom = paddingTop + graphHeight;
-                    const polygonPoints = [
-                        ...entry.points.map((point, index) => `${paddingX + index * xStep},${toY(point.value)}`),
-                        `${lastX},${bottom}`,
-                        `${firstX},${bottom}`,
-                    ].join(' ');
-
-                    return (
-                        <polygon
-                            key={`fill-${entry.label}`}
-                            points={polygonPoints}
-                            fill={`url(#chart-grad-${seriesIndex})`}
-                        />
-                    );
-                })}
-
-                {series.map((entry) => {
-                    const polyline = entry.points.map((point, index) => `${paddingX + index * xStep},${toY(point.value)}`).join(' ');
-
-                    return <polyline key={entry.label} fill="none" points={polyline} stroke={entry.color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />;
-                })}
-
-                {series.map((entry) =>
-                    entry.points.map((point, index) => (
-                        <circle
-                            key={`${entry.label}-dot-${index}`}
-                            cx={paddingX + index * xStep}
-                            cy={toY(point.value)}
-                            r="4"
-                            fill="white"
-                            stroke={entry.color}
-                            strokeWidth="2.5"
-                        />
-                    )),
+                {selectedUserForRgpd && (
+                    <PersonalDataModal
+                        user={selectedUserForRgpd}
+                        canAnonymize={canManageRgpd}
+                        actionLoading={actionLoading}
+                        onAnonymize={handleAnonymizeUser}
+                        onClose={() => setSelectedUserForRgpd(null)}
+                    />
                 )}
 
-                {points.map((point, index) => {
-                    const x = paddingX + index * xStep;
+                {confirmDialog}
 
-                    return (
-                        <text key={point.label} x={x} y={height - 12} textAnchor="middle" fontSize="11" fill="rgba(110, 91, 66, 0.72)">
-                            {point.label}
-                        </text>
-                    );
-                })}
-            </svg>
-
-            <div className="mt-3 flex flex-wrap gap-5">
-                {series.map((entry) => (
-                    <div key={entry.label} className="flex items-center gap-2 text-sm text-[var(--admin-text-soft)]">
-                        <span
-                            className="h-3 w-3 rounded-full border-2 border-white shadow-sm"
-                            ref={(el) => {
-                                if (el) el.style.backgroundColor = entry.color;
-                            }}
-                        />
-                        {entry.label}
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
-}
-
-function VolumeBarChart({ bars, color }: { bars: ChartPoint[]; color: string }) {
-    const maxValue = Math.max(...bars.map((bar) => bar.value), 1);
-
-    return (
-        <div className="mt-5 rounded-[28px] border border-[var(--admin-border)] bg-white/60 p-4">
-            <div className="mb-2 flex items-center justify-end gap-1">
-                <span className="text-[11px] text-[var(--admin-muted)]">max</span>
-                <span className="text-[11px] font-semibold text-[var(--admin-text)]">{maxValue}</span>
-            </div>
-            <div className="flex h-52 items-end gap-1.5 overflow-hidden rounded-[20px] bg-[rgba(255,255,255,0.55)] p-3">
-                {bars.map((bar) => {
-                    const heightPercent = Math.max((bar.value / maxValue) * 100, bar.value > 0 ? 8 : 3);
-
-                    return (
-                        <div key={bar.label} className="group flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1.5">
-                            <span className="text-[10px] font-medium text-[var(--admin-text)] opacity-0 transition-opacity group-hover:opacity-100">
-                                {bar.value > 0 ? bar.value : ''}
-                            </span>
-                            <div
-                                className="w-full rounded-t-[10px] transition-all duration-500 group-hover:opacity-100"
-                                ref={(el) => {
-                                    if (el) {
-                                        el.style.backgroundColor = color;
-                                        el.style.height = `${heightPercent}%`;
-                                        el.style.opacity = '0.82';
-                                    }
-                                }}
-                            />
-                            <span className="text-[10px] text-[var(--admin-muted)]">{bar.label}</span>
-                        </div>
-                    );
-                })}
-            </div>
-        </div>
-    );
-}
-
-function BottomDock({ activeTab }: { activeTab: AdminTab }) {
-    return (
-        <div className="pointer-events-none fixed bottom-4 right-4 z-30 hidden lg:block">
-            <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-[var(--admin-border)] bg-white/80 p-2 shadow-[0_18px_38px_rgba(125,96,57,0.16)] backdrop-blur-xl">
-                {quickDockTabs.map((tab) => (
-                    <Link
-                        key={tab}
-                        href={tabRoutes[tab]}
-                        className={cn(
-                            'rounded-full px-4 py-2 text-sm font-medium transition',
-                            activeTab === tab ? 'bg-[#f4e2bf] text-[#7d571b]' : 'text-[var(--admin-text-soft)] hover:bg-[#f7efe2]',
-                        )}
-                    >
-                        {tabMeta[tab].label}
-                    </Link>
-                ))}
-            </div>
-        </div>
-    );
-}
-
-function TabIcon({ className = 'h-5 w-5', tab }: { className?: string; tab: AdminTab }) {
-    switch (tab) {
-        case 'llm_admin':
-            return <InboxIcon className={className} />;
-        case 'ai_dashboard':
-            return <SettingsIcon className={className} />;
-        case 'dashboard':
-            return <DashboardIcon className={className} />;
-        case 'kyc':
-            return <ShieldIcon className={className} />;
-        case 'missions':
-            return <ClipboardIcon className={className} />;
-        case 'litiges':
-            return <AlertIcon className={className} />;
-        case 'users':
-            return <UsersIcon className={className} />;
-        case 'transactions':
-            return <WalletIcon className={className} />;
-        case 'settings':
-            return <SettingsIcon className={className} />;
-        case 'evaluations':
-            return <StarIcon className={className} />;
-        case 'communications':
-            return <BellIcon className={className} />;
-        case 'notifications':
-            return <BellIcon className={className} />;
-        case 'vitrine':
-            return <ArchiveIcon className={className} />;
-        default:
-            return <DashboardIcon className={className} />;
-    }
-}
-
-
-function ToneIcon({ className = 'h-5 w-5', tone }: { className?: string; tone: Tone }) {
-    switch (tone) {
-        case 'amber':
-            return <StarIcon className={className} />;
-        case 'green':
-            return <TrendUpIcon className={className} />;
-        case 'rose':
-            return <AlertIcon className={className} />;
-        case 'blue':
-            return <ClockIcon className={className} />;
-        case 'slate':
-            return <ArchiveIcon className={className} />;
-    }
-}
-
-function ActivityToneIcon({ tone }: { tone: Tone }) {
-    const cls = 'h-5 w-5';
-    switch (tone) {
-        case 'amber': return <ShieldIcon className={cls} />;
-        case 'green': return <CheckCircleIcon className={cls} />;
-        case 'rose': return <AlertIcon className={cls} />;
-        case 'blue': return <WalletIcon className={cls} />;
-        case 'slate': return <ArchiveIcon className={cls} />;
-    }
-}
-
-function TrendUpIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-            <path d="M3 17 9 11l4 4 8-9" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M21 8h-5v5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-    );
-}
-
-function StarIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-            <path d="m12 2 2.68 5.44L21 8.6l-4.5 4.38 1.06 6.18L12 16.26l-5.56 2.9 1.06-6.18L3 8.6l6.32-.92L12 2Z" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-    );
-}
-
-function ClockIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="9" />
-            <path d="M12 7v5l3 3" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-    );
-}
-
-function ArchiveIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-            <rect x="3" y="4" width="18" height="4" rx="1.5" />
-            <path d="M5 8v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8" strokeLinecap="round" />
-            <path d="M10 13h4" strokeLinecap="round" />
-        </svg>
-    );
-}
-
-function CheckCircleIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="9" />
-            <path d="m8.5 12.5 2 2 5-5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-    );
-}
-
-function InboxIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-            <path d="M4 4h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z" strokeLinecap="round" />
-            <path d="M3 14h4l2 3h6l2-3h4" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-    );
-}
-
-function actionButtonClass(variant: 'danger' | 'secondary' | 'success'): string {
-    const base = 'inline-flex items-center justify-center rounded-full px-4 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50';
-
-    const variants: Record<typeof variant, string> = {
-        danger: 'bg-[#f15f57] text-white hover:bg-[#dd4d45]',
-        secondary: 'bg-[#f0e5d3] text-[#6f531f] hover:bg-[#e4d4bb]',
-        success: 'bg-[#2f9a65] text-white hover:bg-[#248052]',
-    };
-
-    return `${base} ${variants[variant]}`;
-}
-
-function SearchIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-            <circle cx="11" cy="11" r="7" />
-            <path d="m20 20-3.5-3.5" strokeLinecap="round" />
-        </svg>
-    );
-}
-
-function RefreshIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-            <path d="M21 12a9 9 0 1 1-2.64-6.36" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M21 4v6h-6" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-    );
-}
-
-function MoonIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-            <path d="M20.4 15.1A8.5 8.5 0 1 1 8.9 3.6a7 7 0 1 0 11.5 11.5Z" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-    );
-}
-
-function SunIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="4" />
-            <path d="M12 2v2.2M12 19.8V22M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2 12h2.2M19.8 12H22M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6" strokeLinecap="round" />
-        </svg>
-    );
-}
-
-function BellIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-            <path d="M15 17H5.8A1.8 1.8 0 0 1 4 15.2c0-.4.1-.7.3-1l1.2-2a5 5 0 0 0 .7-2.5V9a5.8 5.8 0 1 1 11.6 0v.7a5 5 0 0 0 .7 2.5l1.2 2c.2.3.3.6.3 1A1.8 1.8 0 0 1 18.2 17H15Z" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M10 20a2.5 2.5 0 0 0 4 0" strokeLinecap="round" />
-        </svg>
-    );
-}
-
-function LogoutIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-            <path d="M10 7V5.5A2.5 2.5 0 0 1 12.5 3h5A2.5 2.5 0 0 1 20 5.5v13a2.5 2.5 0 0 1-2.5 2.5h-5A2.5 2.5 0 0 1 10 18.5V17" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M15 12H4" strokeLinecap="round" />
-            <path d="m8 8-4 4 4 4" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-    );
-}
-
-function DashboardIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-            <rect x="3.5" y="3.5" width="7" height="7" rx="1.6" />
-            <rect x="13.5" y="3.5" width="7" height="7" rx="1.6" />
-            <rect x="3.5" y="13.5" width="7" height="7" rx="1.6" />
-            <rect x="13.5" y="13.5" width="7" height="7" rx="1.6" />
-        </svg>
-    );
-}
-
-function ShieldIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-            <path d="M12 3s5 2 7 3v5c0 5-3.4 8-7 10-3.6-2-7-5-7-10V6c2-1 7-3 7-3Z" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="m9.5 12 1.6 1.8 3.4-3.8" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-    );
-}
-
-function ClipboardIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-            <rect x="6" y="4.5" width="12" height="16" rx="2" />
-            <path d="M9 4.5h6a1.5 1.5 0 0 1 1.5 1.5v0A1.5 1.5 0 0 1 15 7.5H9A1.5 1.5 0 0 1 7.5 6v0A1.5 1.5 0 0 1 9 4.5Z" />
-            <path d="M9 12h6M9 16h4" strokeLinecap="round" />
-        </svg>
-    );
-}
-
-function AlertIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-            <path d="M12 4 3.8 18.2A1.2 1.2 0 0 0 4.8 20h14.4a1.2 1.2 0 0 0 1-1.8L12 4Z" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M12 9v4.5M12 17h.01" strokeLinecap="round" />
-        </svg>
-    );
-}
-
-function UsersIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-            <path d="M16 19v-1.2A3.8 3.8 0 0 0 12.2 14H7.8A3.8 3.8 0 0 0 4 17.8V19" strokeLinecap="round" />
-            <circle cx="10" cy="8" r="3" />
-            <path d="M20 19v-1.2a3.5 3.5 0 0 0-2.5-3.4" strokeLinecap="round" />
-            <path d="M16.5 5.3a3 3 0 0 1 0 5.4" strokeLinecap="round" />
-        </svg>
-    );
-}
-
-function WalletIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-            <path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H18a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6.5A2.5 2.5 0 0 1 4 16.5v-9Z" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M4 8h12.5A1.5 1.5 0 0 0 18 6.5v0A1.5 1.5 0 0 0 16.5 5H6.5" strokeLinecap="round" />
-            <path d="M16 13h4" strokeLinecap="round" />
-        </svg>
-    );
-}
-
-function SettingsIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-            <path d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z" />
-            <path d="m19.4 15 .9 1.6-1.7 3-1.8-.3a7.9 7.9 0 0 1-1.7 1l-.5 1.8H9.4l-.5-1.8a7.9 7.9 0 0 1-1.7-1l-1.8.3-1.7-3 .9-1.6a8.6 8.6 0 0 1 0-2l-.9-1.6 1.7-3 1.8.3c.5-.4 1.1-.7 1.7-1l.5-1.8h4.2l.5 1.8c.6.3 1.2.6 1.7 1l1.8-.3 1.7 3-.9 1.6c.2.7.2 1.3 0 2Z" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-    );
-}
-
-function PlusIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-            <path d="M12 4.5v15m7.5-7.5h-15" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-    );
-}
-
-function MenuIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-            <path d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-    );
-}
-
-function CloseIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-            <path d="M6 18 18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
+        </AdminShell>
     );
 }

@@ -41,6 +41,8 @@ class User extends Authenticatable
         'payment_phone',
         'preferred_payment_provider',
         'cgu_accepted_at',
+        'anonymized_at',
+        'anonymized_by',
     ];
 
     protected $hidden = ['password', 'remember_token', 'position', 'google_2fa_secret'];
@@ -51,6 +53,7 @@ class User extends Authenticatable
             'password'         => 'hashed',
             'blocked_at'       => 'datetime',
             'cgu_accepted_at'  => 'datetime',
+            'anonymized_at'    => 'datetime',
             'wallet_materiaux' => 'integer',
             'wallet_mo'        => 'integer',
             'score_prosartisan'=> 'integer',
@@ -313,6 +316,22 @@ class User extends Authenticatable
         );
 
         return $row ? ['lat' => (float) $row->lat, 'lng' => (float) $row->lng] : null;
+    }
+
+    /**
+     * Capacités fines du backoffice admin (Chantier C6 / P2-10).
+     *
+     * @return array<int, string> Liste des capacités, ou `['*']` pour un accès total.
+     */
+    public function adminCapabilities(): array
+    {
+        return app(\App\Services\Admin\AdminPermissionService::class)->capabilitiesFor($this);
+    }
+
+    public function adminCan(string $capability): bool
+    {
+        return $this->role === 'admin'
+            && app(\App\Services\Admin\AdminPermissionService::class)->userCan($this, $capability);
     }
 
     public function isCnmciVerified(): bool

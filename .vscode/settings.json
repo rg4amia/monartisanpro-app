@@ -18,5 +18,7 @@
     "**/frontend_flutter/build/**": true,
     "**/build/**": true
   },
-  "java.configuration.updateBuildConfiguration": "interactive"
+  "java.configuration.updateBuildConfiguration": "interactive",
+  "claudeCode.enableNewConversationShortcut": true,
+  "claudeCode.preferredLocation": "sidebar"
 }

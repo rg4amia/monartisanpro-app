@@ -107,4 +107,15 @@ return [
         'rest_api_key' => env('ONESIGNAL_REST_API_KEY'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Telegram — alertes d'observabilité du backoffice (Chantier C7 / P2-12)
+    |--------------------------------------------------------------------------
+    */
+
+    'telegram' => [
+        'bot_token' => env('TELEGRAM_BOT_TOKEN'),
+        'chat_id' => env('TELEGRAM_ALERT_CHAT_ID'),
+    ],
+
 ];

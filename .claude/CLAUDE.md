@@ -291,6 +291,10 @@ SELECT ST_X(position) AS lng, ST_Y(position) AS lat FROM users WHERE id = :id;
 6. **Floutage GPS artisan** : ne jamais retourner la position exacte au client — appliquer un offset aléatoire de ~50 m en PHP avant de sérialiser la réponse
 7. **Montants FCFA** : toujours `BIGINT`, jamais de `FLOAT` ou `DOUBLE` pour les montants financiers
 8. **Colonnes JSON** : utiliser `JSON` MySQL (pas de texte brut), toujours valider le schéma en PHP avant insertion
+9. **Permissions fines du backoffice** : `/admin/*` = `role='admin'` (`admin.only`) + capacité `admin.<x>` par route (`can:` + Gates d'`AdminPermissionService`, table pivot `admin_permission_user`). Sans capacité affectée ou avec `admin.full-access` → accès total. Les super admins protégés (`config('prosartisan.super_admins')`, env `SUPER_ADMIN_EMAILS`, défaut `admin@prosartisan.ci`) ont un accès total **inconditionnel et non restreignable** ; secours : `php artisan admin:full-access`.
+10. **Journal d'audit admin** : toute action sensible du backoffice écrit dans `admin_activity_logs` (append-only, best-effort) via `AdminActivityLogger` ; l'échec du log ne bloque jamais l'action.
+11. **RGPD** : la vue des données personnelles, l'export JSON de portabilité et l'anonymisation tracée (`anonymized_at`/`anonymized_by`, PII expurgées, ligne `users` conservée) sont gérés par `AdminGdprService` (capacités `admin.rgpd.view` / `admin.rgpd.manage`). Ne jamais supprimer la ligne `users` : intégrité des écritures financières et du journal d'audit.
+12. **Usurpation de session** : `admin.users.impersonate` permet au super admin de « se connecter en tant que » un utilisateur non-admin ; retour via `/admin/stop-impersonating` (hors `admin.only`) ; début et fin audités ; jamais un autre admin, soi-même ou un compte anonymisé.
 
 ---
 

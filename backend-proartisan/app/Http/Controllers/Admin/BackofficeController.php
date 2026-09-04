@@ -3,100 +3,168 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\BulkReviewKycRequest;
+use App\Http\Requests\Admin\BulkUserStatusRequest;
+use App\Http\Requests\Admin\ReviewCnmciRequest;
 use App\Http\Requests\Admin\ReviewFournisseurRequest;
 use App\Http\Requests\Admin\ReviewKycRequest;
+use App\Http\Requests\Admin\StoreCommunicationRequest;
+use App\Http\Requests\Admin\StorePromoCodeRequest;
+use App\Http\Requests\Admin\StoreSectorRequest;
+use App\Http\Requests\Admin\StoreTradeRequest;
+use App\Http\Requests\Admin\StoreUserRequest;
+use App\Http\Requests\Admin\SyncAdminPermissionsRequest;
+use App\Http\Requests\Admin\ToggleUserStatusRequest;
+use App\Http\Requests\Admin\UpdateAiSettingsRequest;
+use App\Http\Requests\Admin\UpdateSettingRequest;
+use App\Http\Requests\Admin\UpdateTradeRequest;
+use App\Http\Requests\Admin\UpdateUserRequest;
 use App\Http\Requests\Litige\ArbitrateLitigeRequest;
+use App\Models\Communication;
 use App\Models\FournisseurAgree;
 use App\Models\Litige;
-use App\Models\User;
-use App\Models\Communication;
 use App\Models\Notification;
+use App\Models\PromoCode;
+use App\Models\Sector;
+use App\Models\Setting;
+use App\Models\Trade;
+use App\Models\User;
+use App\Services\Admin\AdminExportService;
+use App\Services\Admin\AdminActivityLogger;
+use App\Services\Admin\AdminGdprService;
+use App\Services\Admin\AdminPanelData;
+use App\Services\Admin\AdminPermissionService;
+use App\Services\Admin\AdminPromoCodeService;
+use App\Services\Admin\AdminSettingsService;
+use App\Services\Admin\AdminTaxonomyService;
+use App\Services\Admin\AdminUserService;
 use App\Services\AdminService;
 use App\Services\CommunicationService;
-use App\Http\Requests\Admin\StoreCommunicationRequest;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Artisan;
 use Inertia\Inertia;
 use Inertia\Response;
-use App\Models\Vitrine\VitrineSlide;
-use App\Models\Vitrine\VitrineArtisanDuMois;
-use App\Models\Vitrine\VitrineArticle;
-use App\Models\Vitrine\VitrineVideo;
-use App\Models\Vitrine\VitrineFormation;
-use App\Models\Vitrine\VitrineRecrutement;
-use App\Models\Vitrine\VitrinePopup;
-use App\Models\Vitrine\VitrineSetting;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class BackofficeController extends Controller
 {
-    public function __construct(private AdminService $adminService) {}
+    public function __construct(
+        private AdminService $adminService,
+        private AdminPanelData $panelData,
+    ) {}
+
+    /**
+     * Rend une page du backoffice avec ses props spécifiques + les props
+     * partagées du layout (badges de navigation, cloche de notifications).
+     */
+    private function page(string $component, array $props = []): Response
+    {
+        return Inertia::render($component, array_merge($this->panelData->shared(), $props));
+    }
 
     public function dashboard(): Response
     {
-        Inertia::share('financialKpis', $this->adminService->getFinancialKpis());
-        return $this->renderPage('admin/dashboard');
+        return $this->page('admin/dashboard', $this->panelData->dashboard());
     }
 
-    public function kyc(): Response
+    public function kyc(Request $request): Response
     {
-        return $this->renderPage('admin/kyc');
+        return $this->page('admin/kyc', $this->panelData->kyc($request));
     }
 
-    public function missions(): Response
+    public function missions(Request $request): Response
     {
-        return $this->renderPage('admin/missions');
+        return $this->page('admin/missions', $this->panelData->missions($request));
     }
 
-    public function litiges(): Response
+    public function litiges(Request $request): Response
     {
-        return $this->renderPage('admin/litiges');
+        return $this->page('admin/litiges', $this->panelData->litiges($request));
     }
 
-    public function users(): Response
+    public function users(Request $request): Response
     {
-        return $this->renderPage('admin/users');
+        return $this->page('admin/users', $this->panelData->users($request));
     }
 
-    public function transactions(): Response
+    public function transactions(Request $request): Response
     {
-        Inertia::share('financialKpis', $this->adminService->getFinancialKpis());
-        return $this->renderPage('admin/transactions');
+        return $this->page('admin/transactions', $this->panelData->transactions($request));
     }
 
     public function settings(): Response
     {
-        return $this->renderPage('admin/settings');
+        return $this->page('admin/settings', $this->panelData->settings());
     }
 
     public function rolesPermissions(): Response
     {
-        return $this->renderPage('admin/roles-permissions');
+        return $this->page('admin/roles-permissions', $this->panelData->rolesPermissions());
     }
 
-    public function evaluations(): Response
+    public function evaluations(Request $request): Response
     {
-        return $this->renderPage('admin/evaluations');
+        return $this->page('admin/evaluations', $this->panelData->evaluations($request));
+    }
+
+    public function personalData(User $user, AdminGdprService $gdpr): JsonResponse
+    {
+        return response()->json($gdpr->personalData($user));
+    }
+
+    public function exportPersonalData(User $user, AdminGdprService $gdpr): StreamedResponse
+    {
+        $data = $gdpr->personalData($user);
+        $filename = sprintf('donnees_personnelles_user_%d_%s.json', $user->id, now()->format('Y-m-d'));
+
+        return response()->streamDownload(function () use ($data): void {
+            echo json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        }, $filename, ['Content-Type' => 'application/json']);
+    }
+
+    public function anonymizeUser(Request $request, User $user, AdminGdprService $gdpr): RedirectResponse
+    {
+        try {
+            $gdpr->anonymize($user, $request->user());
+        } catch (\LogicException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return back()->with('success', "Compte #{$user->id} anonymisé (RGPD).");
+    }
+
+    public function syncAdminPermissions(SyncAdminPermissionsRequest $request, User $user, AdminPermissionService $permissions): RedirectResponse
+    {
+        try {
+            $permissions->sync($user, $request->validated('capabilities'), $request->user());
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return back()->with('error', $e->validator->errors()->first());
+        }
+
+        return back()->with('success', "Droits de {$user->name} mis à jour.");
     }
 
     public function communications(): Response
     {
-        return $this->renderPage('admin/communications');
+        return $this->page('admin/communications', $this->panelData->communications());
     }
 
-    public function notifications(): Response
+    public function notifications(Request $request): Response
     {
-        return $this->renderPage('admin/notifications');
+        return $this->page('admin/notifications', $this->panelData->notifications($request));
     }
 
     public function promoCodes(): Response
     {
-        return $this->renderPage('admin/promo-codes');
+        return $this->page('admin/promo-codes', $this->panelData->promoCodes());
     }
 
     public function storeCommunication(StoreCommunicationRequest $request, CommunicationService $service): RedirectResponse
     {
         $service->store($request->validated(), $request->user());
+
         return back()->with('success', 'Communication créée en brouillon.');
     }
 
@@ -104,6 +172,7 @@ class BackofficeController extends Controller
     {
         try {
             $service->update($communication, $request->validated());
+
             return back()->with('success', 'Communication modifiée.');
         } catch (\LogicException $e) {
             return back()->with('error', $e->getMessage());
@@ -114,6 +183,7 @@ class BackofficeController extends Controller
     {
         try {
             $service->destroy($communication);
+
             return back()->with('success', 'Communication supprimée.');
         } catch (\LogicException $e) {
             return back()->with('error', $e->getMessage());
@@ -124,6 +194,7 @@ class BackofficeController extends Controller
     {
         try {
             $service->publish($communication);
+
             return back()->with('success', 'Communication publiée.');
         } catch (\LogicException $e) {
             return back()->with('error', $e->getMessage());
@@ -134,29 +205,30 @@ class BackofficeController extends Controller
     {
         try {
             $service->cloturer($communication);
+
             return back()->with('success', 'Communication clôturée (désactivée).');
         } catch (\LogicException $e) {
             return back()->with('error', $e->getMessage());
         }
     }
 
-    public function toggleScoreFreeze(Request $request, User $user): RedirectResponse
+    public function toggleScoreFreeze(User $user, AdminUserService $users): RedirectResponse
     {
-        if ($user->role !== 'artisan') {
-            return back()->with('error', 'Seuls les scores des artisans peuvent être gelés/dégelés.');
+        try {
+            $frozen = $users->toggleScoreFreeze($user);
+        } catch (\LogicException $e) {
+            return back()->with('error', $e->getMessage());
         }
 
-        $user->update([
-            'score_frozen' => !$user->score_frozen,
-        ]);
+        $status = $frozen ? 'gelé' : 'dégelé';
 
-        $status = $user->score_frozen ? 'gelé' : 'dégelé';
         return back()->with('success', "Le score ProsArtisan de l'artisan {$user->name} a été {$status} avec succès.");
     }
 
     public function llmAdmin(): Response
     {
-        return $this->renderPage('admin/llm-admin');
+        // Le panneau LLM charge ses données via ses propres endpoints XHR (api/llm/*).
+        return $this->page('admin/llm-admin');
     }
 
     public function reviewKyc(ReviewKycRequest $request, User $user): RedirectResponse
@@ -171,21 +243,34 @@ class BackofficeController extends Controller
         return back()->with('success', 'Dossier KYC traité avec succès.');
     }
 
-    public function reviewCnmci(Request $request, User $user): RedirectResponse
+    public function bulkReviewKyc(BulkReviewKycRequest $request): RedirectResponse
     {
-        if ($user->role !== 'artisan') {
-            return back()->with('error', 'Seuls les artisans peuvent posséder un profil CNMCI.');
+        $count = $this->adminService->bulkReviewKyc(
+            $request->user(),
+            $request->validated('user_ids'),
+            $request->validated('decision'),
+            $request->validated('rejection_reason'),
+        );
+
+        return back()->with('success', "{$count} dossier(s) KYC traité(s).");
+    }
+
+    public function bulkUserStatus(BulkUserStatusRequest $request, AdminUserService $users): RedirectResponse
+    {
+        $count = $users->bulkToggleStatus($request->validated('user_ids'), $request->validated());
+
+        return back()->with('success', "{$count} compte(s) mis à jour.");
+    }
+
+    public function reviewCnmci(ReviewCnmciRequest $request, User $user, AdminUserService $users): RedirectResponse
+    {
+        try {
+            $users->reviewCnmci($user, $request->validated('decision'));
+        } catch (\LogicException $e) {
+            return back()->with('error', $e->getMessage());
         }
 
-        $data = $request->validate([
-            'decision' => ['required', 'in:valide,rejete'],
-        ]);
-
-        $user->update([
-            'cnmci_status' => $data['decision'],
-        ]);
-
-        $msg = $data['decision'] === 'valide'
+        $msg = $request->validated('decision') === 'valide'
             ? 'Affiliation CNMCI validée avec succès.'
             : 'Affiliation CNMCI rejetée.';
 
@@ -217,6 +302,7 @@ class BackofficeController extends Controller
     public function markNotificationRead(Notification $notification): RedirectResponse
     {
         $notification->update(['read_at' => now()]);
+
         return back()->with('success', 'Notification marquée comme lue.');
     }
 
@@ -224,192 +310,79 @@ class BackofficeController extends Controller
     {
         Notification::where(function ($q) use ($request) {
             $q->where('user_id', $request->user()->id)
-              ->orWhereNull('user_id');
+                ->orWhereNull('user_id');
         })->whereNull('read_at')->update(['read_at' => now()]);
 
         return back()->with('success', 'Toutes les notifications ont été marquées comme lues.');
     }
 
-    public function storeUser(Request $request): RedirectResponse
+    public function storeUser(StoreUserRequest $request, AdminUserService $users): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20|unique:users,phone',
-            'email' => 'nullable|string|email|max:255|unique:users,email',
-            'role' => 'required|string|in:client,artisan,fournisseur,referent,admin',
-            'password' => 'required|string|min:6',
-            'kyc_status' => 'required|string|in:en_attente,actif,rejete',
-            'account_status' => 'required|string|in:actif,suspendu',
-            'score_frozen' => 'nullable|boolean',
-            'device_fingerprint' => 'nullable|string|max:255',
-        ], [
-            'name.required' => 'Le nom complet est obligatoire.',
-            'phone.required' => 'Le numéro de téléphone est obligatoire.',
-            'phone.unique' => 'Ce numéro de téléphone est déjà utilisé.',
-            'email.email' => 'L’adresse e-mail doit être valide.',
-            'email.unique' => 'Cette adresse e-mail est déjà utilisée.',
-            'role.required' => 'Le rôle est obligatoire.',
-            'password.required' => 'Le mot de passe est obligatoire.',
-            'password.min' => 'Le mot de passe doit contenir au moins 6 caractères.',
-        ]);
-
-        $validated['password'] = bcrypt($validated['password']);
-        $validated['score_frozen'] = $request->boolean('score_frozen');
-
-        User::create($validated);
+        $users->create($request->validated());
 
         return back()->with('success', 'Utilisateur créé avec succès.');
     }
 
-    public function updateUser(Request $request, User $user): RedirectResponse
+    public function updateUser(UpdateUserRequest $request, User $user, AdminUserService $users): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20|unique:users,phone,' . $user->id,
-            'email' => 'nullable|string|email|max:255|unique:users,email,' . $user->id,
-            'role' => 'required|string|in:client,artisan,fournisseur,referent,admin',
-            'password' => 'nullable|string|min:6',
-            'kyc_status' => 'required|string|in:en_attente,actif,rejete',
-            'account_status' => 'required|string|in:actif,suspendu',
-            'score_frozen' => 'nullable|boolean',
-            'device_fingerprint' => 'nullable|string|max:255',
-        ], [
-            'name.required' => 'Le nom complet est obligatoire.',
-            'phone.required' => 'Le numéro de téléphone est obligatoire.',
-            'phone.unique' => 'Ce numéro de téléphone est déjà utilisé.',
-            'email.email' => 'L’adresse e-mail doit être valide.',
-            'email.unique' => 'Cette adresse e-mail est déjà utilisée.',
-            'role.required' => 'Le rôle est obligatoire.',
-            'password.min' => 'Le mot de passe doit contenir au moins 6 caractères.',
-        ]);
-
-        if (!empty($validated['password'])) {
-            $validated['password'] = bcrypt($validated['password']);
-        } else {
-            unset($validated['password']);
-        }
-
-        $validated['score_frozen'] = $request->boolean('score_frozen');
-
-        $user->update($validated);
+        $users->update($user, $request->validated());
 
         return back()->with('success', 'Utilisateur modifié avec succès.');
     }
 
-    public function destroyUser(User $user): RedirectResponse
+    public function destroyUser(User $user, AdminUserService $users): RedirectResponse
     {
-        if (Auth::id() === $user->id) {
-            return back()->with('error', 'Vous ne pouvez pas supprimer votre propre compte administrateur.');
+        try {
+            $users->delete($user);
+        } catch (\LogicException $e) {
+            return back()->with('error', $e->getMessage());
         }
-
-        $user->delete();
 
         return back()->with('success', 'Utilisateur supprimé avec succès.');
     }
 
-    public function toggleUserStatus(Request $request, User $user): RedirectResponse
+    public function toggleUserStatus(ToggleUserStatusRequest $request, User $user, AdminUserService $users): RedirectResponse
     {
-        if (Auth::id() === $user->id) {
-            return back()->with('error', 'Vous ne pouvez pas désactiver votre propre compte administrateur.');
+        try {
+            $users->toggleStatus($user, $request->validated());
+        } catch (\LogicException $e) {
+            return back()->with('error', $e->getMessage());
         }
-
-        $validated = $request->validate([
-            'account_status' => 'required|string|in:actif,suspendu',
-            'account_status_reason' => 'nullable|string|max:255',
-        ]);
-
-        $user->update([
-            'account_status' => $validated['account_status'],
-            'account_status_reason' => $validated['account_status_reason'] ?? null,
-            'blocked_at' => $validated['account_status'] === 'suspendu' ? now() : null,
-        ]);
 
         return back()->with('success', 'Statut de l’utilisateur mis à jour.');
     }
 
-    public function updateSetting(Request $request, \App\Models\Setting $setting): RedirectResponse
+    public function updateSetting(UpdateSettingRequest $request, Setting $setting, AdminSettingsService $settings): RedirectResponse
     {
-        $validated = $request->validate([
-            'value' => 'nullable|string',
-        ]);
-
-        $setting->update([
-            'value' => $validated['value'],
-        ]);
+        $settings->updateSetting($setting, $request->validated('value'));
 
         return back()->with('success', 'Paramètre mis à jour.');
     }
 
-    public function updateSector(Request $request, \App\Models\Sector $sector): RedirectResponse
+    public function updateSector(StoreSectorRequest $request, Sector $sector, AdminTaxonomyService $taxonomy): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:100',
-        ], [
-            'name.required' => 'Le nom du secteur est obligatoire.',
-        ]);
-
-        $sector->update([
-            'name' => $validated['name'],
-        ]);
+        $taxonomy->updateSector($sector, $request->validated('name'));
 
         return back()->with('success', 'Secteur (catégorie) mis à jour.');
     }
 
-    public function updateTrade(Request $request, \App\Models\Trade $trade): RedirectResponse
+    public function updateTrade(UpdateTradeRequest $request, Trade $trade, AdminTaxonomyService $taxonomy): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:100',
-        ], [
-            'name.required' => 'Le nom du métier est obligatoire.',
-        ]);
-
-        $trade->update([
-            'name' => $validated['name'],
-        ]);
+        $taxonomy->updateTrade($trade, $request->validated('name'));
 
         return back()->with('success', 'Métier (sous-catégorie) mis à jour.');
     }
 
-    public function storeSector(Request $request): RedirectResponse
+    public function storeSector(StoreSectorRequest $request, AdminTaxonomyService $taxonomy): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:100|unique:sectors,name',
-        ], [
-            'name.required' => 'Le nom de la catégorie est obligatoire.',
-            'name.unique' => 'Cette catégorie existe déjà.',
-        ]);
-
-        \App\Models\Sector::create([
-            'name' => $validated['name'],
-        ]);
+        $taxonomy->createSector($request->validated('name'));
 
         return back()->with('success', 'Nouvelle catégorie créée avec succès.');
     }
 
-    public function storeTrade(Request $request): RedirectResponse
+    public function storeTrade(StoreTradeRequest $request, AdminTaxonomyService $taxonomy): RedirectResponse
     {
-        $validated = $request->validate([
-            'sector_id' => 'required|exists:sectors,id',
-            'name' => 'required|string|max:100',
-        ], [
-            'sector_id.required' => 'La catégorie parente est obligatoire.',
-            'sector_id.exists' => 'La catégorie parente sélectionnée n\'existe pas.',
-            'name.required' => 'Le nom de la sous-catégorie est obligatoire.',
-        ]);
-
-        // Vérifie si la sous-catégorie existe déjà pour ce secteur
-        $exists = \App\Models\Trade::where('sector_id', $validated['sector_id'])
-            ->where('name', $validated['name'])
-            ->exists();
-
-        if ($exists) {
-            return back()->withErrors(['name' => 'Cette sous-catégorie existe déjà dans cette catégorie.']);
-        }
-
-        \App\Models\Trade::create([
-            'sector_id' => $validated['sector_id'],
-            'name' => $validated['name'],
-        ]);
+        $taxonomy->createTrade($request->validated());
 
         return back()->with('success', 'Nouvelle sous-catégorie créée avec succès.');
     }
@@ -419,8 +392,8 @@ class BackofficeController extends Controller
         $payload = $litige->resolution_payload ?? [];
         $path = $payload['invoice_path'] ?? null;
 
-        if (!$path || !file_exists($path)) {
-            abort(404, "Facture de décaissement introuvable.");
+        if (! $path || ! file_exists($path)) {
+            abort(404, 'Facture de décaissement introuvable.');
         }
 
         return response()->download($path, "facture_decaissement_litige_{$litige->id}.pdf", [
@@ -428,332 +401,82 @@ class BackofficeController extends Controller
         ]);
     }
 
-    private function renderPage(string $component): Response
-    {
-        $promoCodes = [];
-        try {
-            if (\Illuminate\Support\Facades\Schema::hasTable('promo_codes')) {
-                $promoCodes = \App\Models\PromoCode::orderByDesc('created_at')->get();
-            }
-        } catch (\Throwable $e) {
-            $promoCodes = [];
-        }
-
-        $sectors = [];
-        try {
-            if (\Illuminate\Support\Facades\Schema::hasTable('sectors')) {
-                $sectors = \App\Models\Sector::with('trades')->get();
-            }
-        } catch (\Throwable $e) {
-            $sectors = [];
-        }
-
-        $settingsList = [];
-        try {
-            if (\Illuminate\Support\Facades\Schema::hasTable('settings')) {
-                $settingsList = \App\Models\Setting::all();
-            }
-        } catch (\Throwable $e) {
-            $settingsList = [];
-        }
-
-        $communications = [];
-        try {
-            if (\Illuminate\Support\Facades\Schema::hasTable('communications')) {
-                $communications = Communication::with('auteur:id,name,phone')
-                    ->orderByDesc('updated_at')
-                    ->limit(100)
-                    ->get();
-            }
-        } catch (\Throwable $e) {
-            $communications = [];
-        }
-
-        $adminNotifications = [];
-        try {
-            if (\Illuminate\Support\Facades\Schema::hasTable('notifications')) {
-                $adminNotifications = Notification::where(function ($q) {
-                        if (Auth::check()) {
-                            $q->where('user_id', Auth::id())
-                              ->orWhereNull('user_id');
-                        } else {
-                            $q->whereNull('user_id');
-                        }
-                    })
-                    ->orderByDesc('created_at')
-                    ->limit(30)
-                    ->get();
-            }
-        } catch (\Throwable $e) {
-            $adminNotifications = [];
-        }
-
-        $allNotifications = [];
-        try {
-            if (\Illuminate\Support\Facades\Schema::hasTable('notifications')) {
-                $notifQuery = Notification::with('user:id,name,phone,role');
-
-                if ($search = request()->query('search_notification')) {
-                    $notifQuery->where(function ($q) use ($search) {
-                        $q->where('title', 'like', "%{$search}%")
-                          ->orWhere('body', 'like', "%{$search}%")
-                          ->orWhere('type', 'like', "%{$search}%")
-                          ->orWhereHas('user', function ($u) use ($search) {
-                              $u->where('name', 'like', "%{$search}%")
-                                ->orWhere('phone', 'like', "%{$search}%");
-                          });
-                    });
-                }
-
-                if ($role = request()->query('role_notification')) {
-                    $notifQuery->whereHas('user', function ($u) use ($role) {
-                        $u->where('role', $role);
-                    });
-                }
-
-                if ($type = request()->query('type_notification')) {
-                    $notifQuery->where('type', $type);
-                }
-
-                $allNotifications = $notifQuery->orderByDesc('created_at')
-                    ->paginate(50)
-                    ->withQueryString();
-            }
-        } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error("Erreur listing notifications backoffice: " . $e->getMessage());
-            $allNotifications = [];
-        }
-
-        $allPermissions = [];
-        $rolesPermissions = [
-            'client' => [],
-            'artisan' => [],
-            'fournisseur' => [],
-            'referent' => [],
-            'livreur' => [],
-            'admin' => [],
-        ];
-        try {
-            if (\Illuminate\Support\Facades\Schema::hasTable('permissions') && \Illuminate\Support\Facades\Schema::hasTable('permission_role')) {
-                $allPermissions = \App\Models\Permission::all();
-                foreach (['client', 'artisan', 'fournisseur', 'referent', 'livreur', 'admin'] as $role) {
-                    $rolesPermissions[$role] = \Illuminate\Support\Facades\DB::table('permission_role')
-                        ->join('permissions', 'permission_role.permission_id', '=', 'permissions.id')
-                        ->where('permission_role.role', $role)
-                        ->pluck('permissions.name')
-                        ->toArray();
-                }
-            }
-        } catch (\Throwable $e) {
-            // Keep default empty permissions
-        }
-
-        $orders = [];
-        try {
-            if (\Illuminate\Support\Facades\Schema::hasTable('orders')) {
-                $orders = $this->adminService->listOrders(null, null, null, 150)->items();
-            }
-        } catch (\Throwable $e) {
-            $orders = [];
-        }
-
-        $vitrineSlides = [];
-        $vitrineArtisanDuMois = [];
-        $vitrineArticles = [];
-        $vitrineVideos = [];
-        $vitrineFormations = [];
-        $vitrineRecrutements = [];
-        $vitrinePopups = [];
-        $vitrineSettings = [];
-        $contactMessages = [];
-
-        try {
-            if (\Illuminate\Support\Facades\Schema::hasTable('vitrine_slides')) {
-                $vitrineSlides = VitrineSlide::ordered()->get();
-                $vitrineArtisanDuMois = VitrineArtisanDuMois::with(['user:id,name,phone,role,score_prosartisan', 'user.artisanProfile.trade'])->get();
-                $vitrineArticles = VitrineArticle::with('auteur:id,name')->latest()->get();
-                $vitrineVideos = VitrineVideo::ordered()->get();
-                $vitrineFormations = VitrineFormation::orderBy('date_debut')->get();
-                $vitrineRecrutements = VitrineRecrutement::latest()->get();
-                $vitrinePopups = VitrinePopup::latest()->get();
-                $vitrineSettings = VitrineSetting::all();
-            }
-            if (\Illuminate\Support\Facades\Schema::hasTable('contact_messages')) {
-                $contactMessages = \App\Models\ContactMessage::with(['artisan:id,name,phone', 'traitePar:id,name'])->latest()->get();
-            }
-        } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error("Erreur chargement vitrine backoffice: " . $e->getMessage());
-        }
-
-        return Inertia::render($component, [
-            'dashboard' => $this->adminService->dashboard(),
-            'fournisseurs' => $this->adminService->pendingFournisseurs(60)->items(),
-            'kycUsers' => $this->adminService->pendingKyc(null, 60)->items(),
-            'cnmciUsers' => User::where('role', 'artisan')
-                ->where('cnmci_status', 'en_attente')
-                ->orderByDesc('updated_at')
-                ->get(),
-            'litiges' => $this->adminService->listLitiges(null, 60)->items(),
-            'missions' => $this->adminService->listMissions(null, null, 100)->items(),
-            'orders' => $orders,
-            'transactions' => $this->adminService->listTransactions(null, null, 100)->items(),
-            'users' => $this->adminService->listUsers(null, null, null, 100)->items(),
-            'evaluationsList' => $this->adminService->listEvaluations(100)->items(),
-            'artisansScores' => $this->adminService->listArtisansScores(),
-            'settingsList' => $settingsList,
-            'promoCodes' => $promoCodes,
-            'sectors' => $sectors,
-            'communications' => $communications,
-            'adminNotifications' => $adminNotifications,
-            'allNotifications' => $allNotifications,
-            'allPermissions' => $allPermissions,
-            'rolesPermissions' => $rolesPermissions,
-            'vitrineSlides' => $vitrineSlides,
-            'vitrineArtisanDuMois' => $vitrineArtisanDuMois,
-            'vitrineArticles' => $vitrineArticles,
-            'vitrineVideos' => $vitrineVideos,
-            'vitrineFormations' => $vitrineFormations,
-            'vitrineRecrutements' => $vitrineRecrutements,
-            'vitrinePopups' => $vitrinePopups,
-            'vitrineSettings' => $vitrineSettings,
-            'contactMessages' => $contactMessages,
-        ]);
-    }
-
     public function aiDashboard(): Response
     {
-        // 1. Statistics
-        $totalCost = \Illuminate\Support\Facades\DB::table('ai_usage_logs')->sum('estimated_cost_usd') ?? 0;
-        $totalRequests = \Illuminate\Support\Facades\DB::table('ai_usage_logs')->count();
-        $averageResponseTime = \Illuminate\Support\Facades\DB::table('ai_usage_logs')->avg('response_time_ms') ?? 0;
-        $successRate = $totalRequests > 0 
-            ? (\Illuminate\Support\Facades\DB::table('ai_usage_logs')->where('status_code', 200)->count() / $totalRequests) * 100 
-            : 100;
-
-        // 2. Costs by model
-        $costsByModel = \Illuminate\Support\Facades\DB::table('ai_usage_logs')
-            ->select('model_name', \Illuminate\Support\Facades\DB::raw('SUM(estimated_cost_usd) as cost'), \Illuminate\Support\Facades\DB::raw('COUNT(*) as count'))
-            ->groupBy('model_name')
-            ->get();
-
-        // 3. Last 50 logs
-        $logs = \Illuminate\Support\Facades\DB::table('ai_usage_logs')
-            ->leftJoin('users', 'ai_usage_logs.user_id', '=', 'users.id')
-            ->select('ai_usage_logs.*', 'users.email as user_email')
-            ->orderBy('ai_usage_logs.created_at', 'desc')
-            ->limit(50)
-            ->get();
-
-        // 4. Daily consumption for the last 30 days
-        $dailyUsage = \Illuminate\Support\Facades\DB::table('ai_usage_logs')
-            ->select(
-                \Illuminate\Support\Facades\DB::raw('DATE(created_at) as date'),
-                \Illuminate\Support\Facades\DB::raw('SUM(estimated_cost_usd) as cost'),
-                \Illuminate\Support\Facades\DB::raw('SUM(total_tokens) as tokens'),
-                \Illuminate\Support\Facades\DB::raw('COUNT(*) as requests')
-            )
-            ->groupBy(\Illuminate\Support\Facades\DB::raw('DATE(created_at)'))
-            ->orderBy('date', 'asc')
-            ->limit(30)
-            ->get();
-
-        // 5. Settings
-        $settings = \Illuminate\Support\Facades\DB::table('ai_settings')->pluck('value', 'key');
-
-        Inertia::share('stats', [
-            'total_cost' => (float)$totalCost,
-            'total_requests' => $totalRequests,
-            'avg_response_time' => round($averageResponseTime, 2),
-            'success_rate' => round($successRate, 1)
-        ]);
-        Inertia::share('costsByModel', $costsByModel);
-        Inertia::share('dailyUsage', $dailyUsage);
-        Inertia::share('logs', $logs);
-        Inertia::share('settings', $settings);
-
-        return $this->renderPage('admin/ai-dashboard');
+        return $this->page('admin/ai-dashboard', $this->panelData->aiDashboard());
     }
 
-    public function updateAiSettings(Request $request)
+    public function updateAiSettings(UpdateAiSettingsRequest $request, AdminSettingsService $settings): RedirectResponse
     {
-        $validated = $request->validate([
-            'daily_user_limit' => 'required|integer|min:0',
-            'ai_enabled' => 'required|in:0,1'
-        ]);
+        $settings->updateAiSettings($request->validated());
 
-        foreach ($validated as $key => $value) {
-            \Illuminate\Support\Facades\DB::table('ai_settings')
-                ->updateOrInsert(
-                    ['key' => $key],
-                    ['value' => (string)$value, 'updated_at' => now()]
-                );
-        }
-
-        return redirect()->back()->with('success', 'Paramètres IA mis à jour avec succès.');
+        return back()->with('success', 'Paramètres IA mis à jour avec succès.');
     }
 
-    public function storePromoCode(Request $request): RedirectResponse
+    public function storePromoCode(StorePromoCodeRequest $request, AdminPromoCodeService $promoCodes): RedirectResponse
     {
-        $validated = $request->validate([
-            'code' => 'required|string|max:50|unique:promo_codes,code',
-            'description' => 'nullable|string|max:255',
-            'discount_type' => 'required|in:percent,fixed',
-            'discount_value' => 'required|integer|min:1',
-            'min_order_amount' => 'nullable|integer|min:0',
-            'max_discount_amount' => 'nullable|integer|min:0',
-            'usage_limit' => 'nullable|integer|min:1',
-            'starts_at' => 'nullable|date',
-            'expires_at' => 'nullable|date',
-            'is_active' => 'nullable|boolean',
-        ]);
+        $promoCode = $promoCodes->create($request->validated());
 
-        $validated['code'] = strtoupper(trim($validated['code']));
-        $validated['min_order_amount'] = $validated['min_order_amount'] ?? 0;
-        $validated['is_active'] = $request->boolean('is_active', true);
-
-        \App\Models\PromoCode::create($validated);
-
-        return back()->with('success', "Code promo {$validated['code']} créé avec succès.");
+        return back()->with('success', "Code promo {$promoCode->code} créé avec succès.");
     }
 
-    public function updatePromoCode(Request $request, \App\Models\PromoCode $promoCode): RedirectResponse
+    public function updatePromoCode(StorePromoCodeRequest $request, PromoCode $promoCode, AdminPromoCodeService $promoCodes): RedirectResponse
     {
-        $validated = $request->validate([
-            'code' => 'required|string|max:50|unique:promo_codes,code,' . $promoCode->id,
-            'description' => 'nullable|string|max:255',
-            'discount_type' => 'required|in:percent,fixed',
-            'discount_value' => 'required|integer|min:1',
-            'min_order_amount' => 'nullable|integer|min:0',
-            'max_discount_amount' => 'nullable|integer|min:0',
-            'usage_limit' => 'nullable|integer|min:1',
-            'starts_at' => 'nullable|date',
-            'expires_at' => 'nullable|date',
-            'is_active' => 'nullable|boolean',
-        ]);
-
-        $validated['code'] = strtoupper(trim($validated['code']));
-        $validated['is_active'] = $request->boolean('is_active', $promoCode->is_active);
-
-        $promoCode->update($validated);
+        $promoCodes->update($promoCode, $request->validated());
 
         return back()->with('success', "Code promo {$promoCode->code} mis à jour.");
     }
 
-    public function destroyPromoCode(\App\Models\PromoCode $promoCode): RedirectResponse
+    public function destroyPromoCode(PromoCode $promoCode): RedirectResponse
     {
         $promoCode->delete();
+
         return back()->with('success', 'Code promo supprimé.');
     }
 
-    public function togglePromoCode(\App\Models\PromoCode $promoCode): RedirectResponse
+    public function togglePromoCode(PromoCode $promoCode, AdminPromoCodeService $promoCodes): RedirectResponse
     {
-        $promoCode->update(['is_active' => !$promoCode->is_active]);
-        $status = $promoCode->is_active ? 'activé' : 'désactivé';
+        $active = $promoCodes->toggle($promoCode);
+        $status = $active ? 'activé' : 'désactivé';
+
         return back()->with('success', "Code promo {$promoCode->code} {$status}.");
     }
 
     public function vitrine(): Response
     {
-        return $this->renderPage('admin/vitrine');
+        return $this->page('admin/vitrine', $this->panelData->vitrine());
+    }
+
+    public function auditLogs(Request $request): Response
+    {
+        return $this->page('admin/audit-logs', $this->panelData->auditLogs($request));
+    }
+
+    public function observability(): Response
+    {
+        return $this->page('admin/observability', $this->panelData->observability());
+    }
+
+    public function retryFailedJobs(Request $request, AdminActivityLogger $audit): RedirectResponse
+    {
+        Artisan::call('queue:retry', ['id' => ['all']]);
+        $audit->log('observability.jobs_retried', null, [], actor: $request->user());
+
+        return back()->with('success', 'Jobs en échec relancés.');
+    }
+
+    public function flushFailedJobs(Request $request, AdminActivityLogger $audit): RedirectResponse
+    {
+        Artisan::call('queue:flush');
+        $audit->log('observability.jobs_flushed', null, [], actor: $request->user());
+
+        return back()->with('success', 'File des jobs en échec purgée.');
+    }
+
+    public function exportCsv(Request $request, string $resource, AdminExportService $exports): StreamedResponse
+    {
+        abort_unless(in_array($resource, AdminExportService::RESOURCES, true), 404);
+
+        return $exports->stream($resource, $request);
     }
 }
