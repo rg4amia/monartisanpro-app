@@ -41,6 +41,12 @@ class AdminGdprTest extends TestCase
     public function test_personal_data_requires_rgpd_view_capability(): void
     {
         $target = User::factory()->create(['role' => 'client']);
+        KycDocument::create([
+            'user_id' => $target->id,
+            'type' => 'cni',
+            'file_url' => 'https://cdn.example.test/kyc/cni.jpg',
+            'statut' => 'en_attente',
+        ]);
 
         $this->actingAs($this->restrictedAdmin(['admin.users.view']))
             ->getJson("/admin/users/{$target->id}/personal-data")
@@ -50,12 +56,13 @@ class AdminGdprTest extends TestCase
             ->getJson("/admin/users/{$target->id}/personal-data")
             ->assertOk()
             ->assertJsonStructure([
-                'user' => ['id', 'name', 'phone', 'cgu_accepted_at', 'anonymized_at'],
-                'kyc_documents',
+                'user' => ['id', 'name', 'phone', 'cgu_accepted_at', 'anonymized_at', 'cnmci_card_url'],
+                'kyc_documents' => [['id', 'type', 'status', 'file_url', 'created_at']],
                 'evaluations_given',
                 'missions_as_client',
                 'activity_trace',
-            ]);
+            ])
+            ->assertJsonPath('kyc_documents.0.file_url', 'https://cdn.example.test/kyc/cni.jpg');
     }
 
     public function test_anonymize_requires_rgpd_manage_capability(): void
