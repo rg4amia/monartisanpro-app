@@ -47,8 +47,8 @@ return [
         'secret_key' => env('WAVE_SECRET_KEY'),
         'webhook_secret' => env('WAVE_WEBHOOK_SECRET'),
         'currency' => env('WAVE_CURRENCY', 'XOF'), // FCFA
-        'success_url' => env('WAVE_SUCCESS_URL', env('APP_URL') . '/payment/success'),
-        'error_url' => env('WAVE_ERROR_URL', env('APP_URL') . '/payment/error'),
+        'success_url' => env('WAVE_SUCCESS_URL', env('APP_URL').'/payment/success'),
+        'error_url' => env('WAVE_ERROR_URL', env('APP_URL').'/payment/error'),
     ],
 
     'orange_money' => [
@@ -59,9 +59,9 @@ return [
         'merchant_id' => env('ORANGE_MONEY_MERCHANT_ID'),
         'auth_header' => env('ORANGE_MONEY_AUTH_HEADER'),
         'currency' => env('ORANGE_MONEY_CURRENCY', 'XOF'), // FCFA
-        'return_url' => env('ORANGE_MONEY_RETURN_URL', env('APP_URL') . '/payment/return'),
-        'cancel_url' => env('ORANGE_MONEY_CANCEL_URL', env('APP_URL') . '/payment/cancel'),
-        'notif_url' => env('ORANGE_MONEY_NOTIF_URL', env('APP_URL') . '/api/webhooks/orange-money'),
+        'return_url' => env('ORANGE_MONEY_RETURN_URL', env('APP_URL').'/payment/return'),
+        'cancel_url' => env('ORANGE_MONEY_CANCEL_URL', env('APP_URL').'/payment/cancel'),
+        'notif_url' => env('ORANGE_MONEY_NOTIF_URL', env('APP_URL').'/api/webhooks/orange-money'),
     ],
 
     'infobip' => [
@@ -116,6 +116,26 @@ return [
     'telegram' => [
         'bot_token' => env('TELEGRAM_BOT_TOKEN'),
         'chat_id' => env('TELEGRAM_ALERT_CHAT_ID'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Yandex Maps — une clé par API (jamais commitées)
+    |--------------------------------------------------------------------------
+    | - distance_matrix : distances/durées de trajet réelles (coût livraison, ETA)
+    | - geolocation     : position approximative via wifi/cellulaire (fallback)
+    | - mapkit          : rendu carte côté mobile (consommé par le build Flutter,
+    |                     exposé ici pour centraliser le secret / la CI)
+    */
+
+    'yandex' => [
+        'distance_matrix_key' => env('YANDEX_DISTANCE_MATRIX_API_KEY'),
+        'geolocation_key' => env('YANDEX_GEOLOCATION_API_KEY'),
+        'mapkit_key' => env('YANDEX_MAPKIT_API_KEY'),
+        'distance_matrix_url' => env(
+            'YANDEX_DISTANCE_MATRIX_URL',
+            'https://api.routing.yandex.net/v2/distancematrix',
+        ),
     ],
 
 ];

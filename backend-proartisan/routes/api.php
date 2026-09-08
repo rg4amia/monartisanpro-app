@@ -1,35 +1,40 @@
 <?php
 
-use App\Http\Controllers\Api\V1\ArtisanController;
+use App\Http\Controllers\Admin\LlmAdminController;
 use App\Http\Controllers\Api\V1\AdminController;
 use App\Http\Controllers\Api\V1\AdminRolePermissionController;
+use App\Http\Controllers\Api\V1\ArtisanController;
+use App\Http\Controllers\Api\V1\ArtisanStockController;
 use App\Http\Controllers\Api\V1\AuthController;
-use App\Http\Controllers\Api\V1\DevisController;
+use App\Http\Controllers\Api\V1\CommunicationController;
+use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\DeliveryController;
-use App\Http\Controllers\Api\V1\OrderController;
+use App\Http\Controllers\Api\V1\DevisController;
 use App\Http\Controllers\Api\V1\EvaluationController;
 use App\Http\Controllers\Api\V1\JalonController;
 use App\Http\Controllers\Api\V1\JCodeController;
 use App\Http\Controllers\Api\V1\KycController;
 use App\Http\Controllers\Api\V1\LitigeController;
 use App\Http\Controllers\Api\V1\LitigeJuryController;
-use App\Http\Controllers\Api\V1\ParrainageController;
-use App\Http\Controllers\Api\V1\MissionController;
 use App\Http\Controllers\Api\V1\MicroCreditController;
+use App\Http\Controllers\Api\V1\MissionController;
 use App\Http\Controllers\Api\V1\NotificationController;
+use App\Http\Controllers\Api\V1\OrderController;
+use App\Http\Controllers\Api\V1\ParrainageController;
 use App\Http\Controllers\Api\V1\PaymentController;
+use App\Http\Controllers\Api\V1\PromoCodeController;
+use App\Http\Controllers\Api\V1\ReferentController;
 use App\Http\Controllers\Api\V1\SectorController;
+use App\Http\Controllers\Api\V1\SettingController;
 use App\Http\Controllers\Api\V1\SmsController;
-use App\Http\Controllers\Api\V1\SupplierCatalogController;
 use App\Http\Controllers\Api\V1\Supplier\SupplierDashboardController;
+use App\Http\Controllers\Api\V1\SupplierCatalogController;
 use App\Http\Controllers\Api\V1\TransactionController;
-use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\UploadController;
-use App\Http\Controllers\Api\V1\WebhookController;
-use App\Http\Controllers\Api\V1\CommunicationController;
-use App\Http\Controllers\Admin\LlmAdminController;
+use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\UssdController;
 use App\Http\Controllers\Api\V1\VitrineController;
+use App\Http\Controllers\Api\V1\WebhookController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -43,53 +48,53 @@ Route::prefix('v1')->group(function () {
     // ─────────────────────────────────────────────────────────────────────────
 
     Route::prefix('auth')->middleware('throttle:auth')->group(function () {
-        Route::post('/send-otp',   [AuthController::class, 'sendOtp']);
+        Route::post('/send-otp', [AuthController::class, 'sendOtp']);
         Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
-        Route::post('/register',   [AuthController::class, 'register']);
+        Route::post('/register', [AuthController::class, 'register']);
         Route::post('/reset-phone-request', [AuthController::class, 'requestResetPhoneLost']);
         Route::post('/reset-phone-confirm', [AuthController::class, 'confirmResetPhoneLost']);
     });
 
-    Route::get('/settings/app-access', [\App\Http\Controllers\Api\V1\SettingController::class, 'getAppAccess']);
-    Route::post('/promo-codes/verify', [\App\Http\Controllers\Api\V1\PromoCodeController::class, 'verify']);
+    Route::get('/settings/app-access', [SettingController::class, 'getAppAccess']);
+    Route::post('/promo-codes/verify', [PromoCodeController::class, 'verify']);
 
     // ── Webhooks (sans authentification pour les callbacks externes) ─────────
     Route::prefix('webhooks')->middleware('throttle:webhook')->group(function () {
-        Route::post('/wave',         [WebhookController::class, 'wave']);
+        Route::post('/wave', [WebhookController::class, 'wave']);
         Route::post('/orange-money', [WebhookController::class, 'orangeMoney']);
     });
 
     // ── Vitrine publique (Front Office — sans authentification) ──────────────
     Route::prefix('vitrine')->group(function () {
-        Route::get('/slides',            [VitrineController::class, 'slides']);
-        Route::get('/artisan-du-mois',   [VitrineController::class, 'artisanDuMois']);
-        Route::get('/artisans-stars',    [VitrineController::class, 'artisansStars']);
-        Route::get('/artisans',          [VitrineController::class, 'artisans']);
-        Route::get('/artisans/{id}',     [VitrineController::class, 'artisanShow']);
-        Route::get('/articles',          [VitrineController::class, 'articles']);
-        Route::get('/articles/{slug}',   [VitrineController::class, 'articleShow']);
-        Route::get('/videos',            [VitrineController::class, 'videos']);
-        Route::get('/formations',        [VitrineController::class, 'formations']);
-        Route::get('/recrutements',      [VitrineController::class, 'recrutements']);
-        Route::get('/popup',             [VitrineController::class, 'popup']);
-        Route::get('/settings',          [VitrineController::class, 'settings']);
-        Route::post('/contact',          [VitrineController::class, 'contact']);
+        Route::get('/slides', [VitrineController::class, 'slides']);
+        Route::get('/artisan-du-mois', [VitrineController::class, 'artisanDuMois']);
+        Route::get('/artisans-stars', [VitrineController::class, 'artisansStars']);
+        Route::get('/artisans', [VitrineController::class, 'artisans']);
+        Route::get('/artisans/{id}', [VitrineController::class, 'artisanShow']);
+        Route::get('/articles', [VitrineController::class, 'articles']);
+        Route::get('/articles/{slug}', [VitrineController::class, 'articleShow']);
+        Route::get('/videos', [VitrineController::class, 'videos']);
+        Route::get('/formations', [VitrineController::class, 'formations']);
+        Route::get('/recrutements', [VitrineController::class, 'recrutements']);
+        Route::get('/popup', [VitrineController::class, 'popup']);
+        Route::get('/settings', [VitrineController::class, 'settings']);
+        Route::post('/contact', [VitrineController::class, 'contact']);
     });
 
     // ── Validation Hors-Ligne USSD & SMS ─────────────────────────────────────
-    Route::post('/ussd',          [UssdController::class, 'handle']);
-    Route::post('/sms/incoming',  [UssdController::class, 'incomingSms']);
+    Route::post('/ussd', [UssdController::class, 'handle']);
+    Route::post('/sms/incoming', [UssdController::class, 'incomingSms']);
 
     // ─────────────────────────────────────────────────────────────────────────
     // ROUTES PROTÉGÉES (Sanctum token)
     // ─────────────────────────────────────────────────────────────────────────
 
     Route::middleware(['auth:sanctum', 'account.active', 'throttle:api'])->group(function () {
-        Route::get('/dashboard', [\App\Http\Controllers\Api\V1\DashboardController::class, 'index']);
+        Route::get('/dashboard', [DashboardController::class, 'index']);
 
         // ── Auth ─────────────────────────────────────────────────────────────
         Route::prefix('auth')->group(function () {
-            Route::get('/me',      [AuthController::class, 'me']);
+            Route::get('/me', [AuthController::class, 'me']);
             Route::post('/logout', [AuthController::class, 'logout']);
             Route::post('/change-phone', [AuthController::class, 'changePhoneConnected']);
             Route::post('/accept-cgu', [AuthController::class, 'acceptCgu']);
@@ -100,9 +105,9 @@ Route::prefix('v1')->group(function () {
 
         // ── KYC ──────────────────────────────────────────────────────────────
         Route::prefix('kyc')->group(function () {
-            Route::post('/upload-cni',    [KycController::class, 'uploadCni']);
+            Route::post('/upload-cni', [KycController::class, 'uploadCni']);
             Route::post('/upload-selfie', [KycController::class, 'uploadSelfie']);
-            Route::get('/status',         [KycController::class, 'status']);
+            Route::get('/status', [KycController::class, 'status']);
         });
 
         // ── Commandes Catalogue E-Commerce ───────────────────────────────────
@@ -112,30 +117,30 @@ Route::prefix('v1')->group(function () {
         Route::post('/orders/{order}/verify-delivery', [OrderController::class, 'verifyDelivery']);
 
         // ── Codes Promo ──────────────────────────────────────────────────────
-        Route::apiResource('promo-codes', \App\Http\Controllers\Api\V1\PromoCodeController::class)->except(['create', 'edit']);
-        Route::post('/promo-codes/{promoCode}/toggle', [\App\Http\Controllers\Api\V1\PromoCodeController::class, 'toggle']);
+        Route::apiResource('promo-codes', PromoCodeController::class)->except(['create', 'edit']);
+        Route::post('/promo-codes/{promoCode}/toggle', [PromoCodeController::class, 'toggle']);
 
         // ── Logistique & Livraisons (Courses) ──────────────────────────────────
         Route::get('/deliveries/available', [DeliveryController::class, 'available'])->middleware('kyc.verified');
         Route::post('/deliveries/{order}/accept', [DeliveryController::class, 'accept'])->middleware('kyc.verified');
 
         // ── Utilisateurs ─────────────────────────────────────────────────────
-        Route::put('/users/{user}',          [UserController::class, 'update']);
+        Route::put('/users/{user}', [UserController::class, 'update']);
         Route::put('/users/{user}/location', [UserController::class, 'updateLocation']);
-        Route::put('/users/{user}/role',     [UserController::class, 'setRole']);
-        Route::post('/users/{user}/cnmci',   [UserController::class, 'updateCnmci']);
-        Route::delete('/users/{user}',       [UserController::class, 'destroy']);
+        Route::put('/users/{user}/role', [UserController::class, 'setRole']);
+        Route::post('/users/{user}/cnmci', [UserController::class, 'updateCnmci']);
+        Route::delete('/users/{user}', [UserController::class, 'destroy']);
 
         // ── Artisans ──────────────────────────────────────────────────────────
-        Route::get('/artisans',              [ArtisanController::class, 'nearby'])->middleware('kyc.verified');
-        Route::get('/artisans/{user}',       [ArtisanController::class, 'show']);
+        Route::get('/artisans', [ArtisanController::class, 'nearby'])->middleware('kyc.verified');
+        Route::get('/artisans/{user}', [ArtisanController::class, 'show']);
         Route::get('/artisans/{user}/score', [ArtisanController::class, 'score']);
         Route::get('/artisans/{user}/report', [ArtisanController::class, 'downloadReport']);
-        
-        Route::apiResource('artisan-stock', \App\Http\Controllers\Api\V1\ArtisanStockController::class)->except(['show']);
+
+        Route::apiResource('artisan-stock', ArtisanStockController::class)->except(['show']);
 
         // ── Secteurs & Métiers ────────────────────────────────────────────────
-        Route::get('/sectors',                 [SectorController::class, 'index']);
+        Route::get('/sectors', [SectorController::class, 'index']);
         Route::get('/sectors/{sector}/trades', [SectorController::class, 'trades']);
 
         // ── Fournisseurs & catalogue ─────────────────────────────────────────
@@ -150,45 +155,46 @@ Route::prefix('v1')->group(function () {
         Route::get('/supplier/litiges', [SupplierDashboardController::class, 'litiges'])->middleware('supplier.only');
 
         // ── Missions ──────────────────────────────────────────────────────────
-        Route::get('/missions',                      [MissionController::class, 'index']);
-        Route::post('/missions',                     [MissionController::class, 'store'])->middleware(['can:mission.create', 'kyc.verified']);
-        Route::get('/missions/{mission}',            [MissionController::class, 'show']);
-        Route::post('/missions/estimate',            [MissionController::class, 'estimate'])->middleware('can:mission.estimate');
-        Route::put('/missions/{mission}/status',     [MissionController::class, 'updateStatus']);
+        Route::get('/missions', [MissionController::class, 'index']);
+        Route::post('/missions', [MissionController::class, 'store'])->middleware(['can:mission.create', 'kyc.verified']);
+        Route::get('/missions/{mission}', [MissionController::class, 'show']);
+        Route::get('/missions/{mission}/site-map', [MissionController::class, 'siteMap']);
+        Route::post('/missions/estimate', [MissionController::class, 'estimate'])->middleware('can:mission.estimate');
+        Route::put('/missions/{mission}/status', [MissionController::class, 'updateStatus']);
         Route::post('/missions/{mission}/accept-request', [MissionController::class, 'acceptRequest']);
         Route::post('/missions/{mission}/reject-request', [MissionController::class, 'rejectRequest']);
-        Route::post('/missions/{mission}/referent-validate', [\App\Http\Controllers\Api\V1\ReferentController::class, 'validateMission'])->middleware(['can:mission.referent-validate', 'kyc.verified']);
+        Route::post('/missions/{mission}/referent-validate', [ReferentController::class, 'validateMission'])->middleware(['can:mission.referent-validate', 'kyc.verified']);
 
         // ── Devis ────────────────────────────────────────────────────────────
-        Route::get('/missions/{mission}/devis',      [DevisController::class, 'index']);
-        Route::post('/missions/{mission}/devis',     [DevisController::class, 'store'])->middleware(['can:devis.create', 'kyc.verified']);
+        Route::get('/missions/{mission}/devis', [DevisController::class, 'index']);
+        Route::post('/missions/{mission}/devis', [DevisController::class, 'store'])->middleware(['can:devis.create', 'kyc.verified']);
         Route::get('/missions/{mission}/devis/suggest', [DevisController::class, 'suggest'])->middleware('kyc.verified');
-        Route::get('/devis/{devis}',                 [DevisController::class, 'show']);
-        Route::put('/devis/{devis}',                 [DevisController::class, 'update'])->middleware('can:devis.update');
-        Route::post('/devis/{devis}/accept',         [DevisController::class, 'accept'])->middleware('can:devis.accept');
-        Route::post('/devis/{devis}/refuse',         [DevisController::class, 'refuse'])->middleware('can:devis.refuse');
+        Route::get('/devis/{devis}', [DevisController::class, 'show']);
+        Route::put('/devis/{devis}', [DevisController::class, 'update'])->middleware('can:devis.update');
+        Route::post('/devis/{devis}/accept', [DevisController::class, 'accept'])->middleware('can:devis.accept');
+        Route::post('/devis/{devis}/refuse', [DevisController::class, 'refuse'])->middleware('can:devis.refuse');
 
         // ── Jalons ────────────────────────────────────────────────────────────
-        Route::get('/missions/{mission}/jalons',     [JalonController::class, 'index']);
-        Route::put('/jalons/{jalon}/submit',         [JalonController::class, 'submit'])->middleware(['can:jalon.submit', 'kyc.verified']);
-        Route::post('/jalons/{jalon}/photos',        [JalonController::class, 'uploadPhotos'])->middleware(['can:jalon.upload-photos', 'kyc.verified']);
-        Route::post('/jalons/{jalon}/request-otp',   [JalonController::class, 'requestOtp'])->middleware(['can:jalon.request-otp', 'kyc.verified']);
-        Route::post('/jalons/{jalon}/validate-otp',  [JalonController::class, 'validateOtp'])->middleware(['can:jalon.validate-otp', 'kyc.verified']);
+        Route::get('/missions/{mission}/jalons', [JalonController::class, 'index']);
+        Route::put('/jalons/{jalon}/submit', [JalonController::class, 'submit'])->middleware(['can:jalon.submit', 'kyc.verified']);
+        Route::post('/jalons/{jalon}/photos', [JalonController::class, 'uploadPhotos'])->middleware(['can:jalon.upload-photos', 'kyc.verified']);
+        Route::post('/jalons/{jalon}/request-otp', [JalonController::class, 'requestOtp'])->middleware(['can:jalon.request-otp', 'kyc.verified']);
+        Route::post('/jalons/{jalon}/validate-otp', [JalonController::class, 'validateOtp'])->middleware(['can:jalon.validate-otp', 'kyc.verified']);
         Route::post('/jalons/{jalon}/accept-proofs', [JalonController::class, 'acceptProofs'])->middleware(['can:jalon.validate-otp', 'kyc.verified']);
 
         // ── J-Codes ───────────────────────────────────────────────────────────
-        Route::post('/jcodes',                       [JCodeController::class, 'store'])->middleware(['can:jcode.create', 'kyc.verified']);
-        Route::get('/jcodes/active',                 [JCodeController::class, 'active']);
-        Route::get('/jcodes/{jcode}',                [JCodeController::class, 'show']);
-        Route::post('/jcodes/{jcode}/scan',          [JCodeController::class, 'scan'])->middleware(['can:jcode.scan', 'kyc.verified']);
+        Route::post('/jcodes', [JCodeController::class, 'store'])->middleware(['can:jcode.create', 'kyc.verified']);
+        Route::get('/jcodes/active', [JCodeController::class, 'active']);
+        Route::get('/jcodes/{jcode}', [JCodeController::class, 'show']);
+        Route::post('/jcodes/{jcode}/scan', [JCodeController::class, 'scan'])->middleware(['can:jcode.scan', 'kyc.verified']);
         Route::post('/jcodes/{jcode}/photo-materiaux', [JCodeController::class, 'uploadPhotoMateriaux'])->middleware('can:jcode.upload-photo-materials');
 
         // ── Paiements (Wave & Orange Money) ───────────────────────────────────
         Route::prefix('payments')->group(function () {
-            Route::post('/initiate',               [PaymentController::class, 'initiatePayment']);
-            Route::post('/jalons/{jalon}/pay',     [PaymentController::class, 'initiateJalonPayment']);
-            Route::get('/{transaction}/status',    [PaymentController::class, 'checkStatus']);
-            Route::get('/history',                 [PaymentController::class, 'history']);
+            Route::post('/initiate', [PaymentController::class, 'initiatePayment']);
+            Route::post('/jalons/{jalon}/pay', [PaymentController::class, 'initiateJalonPayment']);
+            Route::get('/{transaction}/status', [PaymentController::class, 'checkStatus']);
+            Route::get('/history', [PaymentController::class, 'history']);
         });
 
         // ── Micro-crédit ───────────────────────────────────────────────────────
@@ -198,13 +204,13 @@ Route::prefix('v1')->group(function () {
         });
 
         // ── Wallet & Transactions ─────────────────────────────────────────────
-        Route::get('/transactions',    [TransactionController::class, 'index']);
+        Route::get('/transactions', [TransactionController::class, 'index']);
         Route::get('/wallets/balance', [TransactionController::class, 'balance']);
 
         // ── Litiges ───────────────────────────────────────────────────────────
-        Route::get('/litiges',               [LitigeController::class, 'index']);
-        Route::post('/litiges',              [LitigeController::class, 'store']);
-        Route::get('/litiges/{litige}',      [LitigeController::class, 'show']);
+        Route::get('/litiges', [LitigeController::class, 'index']);
+        Route::post('/litiges', [LitigeController::class, 'store']);
+        Route::get('/litiges/{litige}', [LitigeController::class, 'show']);
         Route::post('/litiges/{litige}/preuves', [LitigeController::class, 'storeEvidence']);
         Route::post('/litiges/{litige}/evaluate-sla', [LitigeController::class, 'evaluateSla']);
         Route::put('/litiges/{litige}/arbitrage', [LitigeController::class, 'arbitrage']);
@@ -220,14 +226,14 @@ Route::prefix('v1')->group(function () {
 
         // ── Commandes e-Commerce (Fournisseurs & Livraison) ─────────────────────
         Route::prefix('orders')->group(function () {
-            Route::get('/',                                  [\App\Http\Controllers\Api\V1\OrderController::class, 'index']);
-            Route::post('/',                                 [\App\Http\Controllers\Api\V1\OrderController::class, 'store']);
-            Route::get('/{order}',                           [\App\Http\Controllers\Api\V1\OrderController::class, 'show']);
-            Route::post('/{order}/prepared',                 [\App\Http\Controllers\Api\V1\OrderController::class, 'markPrepared']);
-            Route::post('/{order}/verify-pickup',            [\App\Http\Controllers\Api\V1\OrderController::class, 'verifyPickup']);
-            Route::post('/{order}/verify-delivery',          [\App\Http\Controllers\Api\V1\OrderController::class, 'verifyDelivery']);
-            Route::post('/{order}/dispute',                  [\App\Http\Controllers\Api\V1\OrderController::class, 'dispute']);
-            Route::post('/{order}/waiting-surge',            [\App\Http\Controllers\Api\V1\OrderController::class, 'applyWaitingSurge']);
+            Route::get('/', [OrderController::class, 'index']);
+            Route::post('/', [OrderController::class, 'store']);
+            Route::get('/{order}', [OrderController::class, 'show']);
+            Route::post('/{order}/prepared', [OrderController::class, 'markPrepared']);
+            Route::post('/{order}/verify-pickup', [OrderController::class, 'verifyPickup']);
+            Route::post('/{order}/verify-delivery', [OrderController::class, 'verifyDelivery']);
+            Route::post('/{order}/dispute', [OrderController::class, 'dispute']);
+            Route::post('/{order}/waiting-surge', [OrderController::class, 'applyWaitingSurge']);
         });
 
         // ── Parrainages ────────────────────────────────────────────────────────
@@ -235,18 +241,18 @@ Route::prefix('v1')->group(function () {
         Route::get('/parrainages', [ParrainageController::class, 'index']);
 
         // ── Notifications ─────────────────────────────────────────────────────
-        Route::get('/notifications',                     [NotificationController::class, 'index']);
+        Route::get('/notifications', [NotificationController::class, 'index']);
         Route::put('/notifications/{notification}/read', [NotificationController::class, 'markRead']);
-        Route::post('/notifications/mark-all-read',      [NotificationController::class, 'markAllRead']);
+        Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllRead']);
 
         // ── Communications (app mobile — publications actives) ─────────────
         Route::get('/communications/active', [CommunicationController::class, 'activeForUser']);
 
         // ── SMS (Admin/Testing) ───────────────────────────────────────────────
         Route::prefix('sms')->group(function () {
-            Route::post('/send',        [SmsController::class, 'send']);
-            Route::get('/',             [SmsController::class, 'viewAll']);
-            Route::get('/{uid}',        [SmsController::class, 'view']);
+            Route::post('/send', [SmsController::class, 'send']);
+            Route::get('/', [SmsController::class, 'viewAll']);
+            Route::get('/{uid}', [SmsController::class, 'view']);
         });
 
         // ── Administration ─────────────────────────────────────────────────────
@@ -258,8 +264,8 @@ Route::prefix('v1')->group(function () {
             Route::get('/permissions', [AdminRolePermissionController::class, 'listPermissions']);
             Route::post('/roles-permissions/assign', [AdminRolePermissionController::class, 'assign']);
             Route::post('/roles-permissions/revoke', [AdminRolePermissionController::class, 'revoke']);
-            
-            Route::put('/settings/app-access', [\App\Http\Controllers\Api\V1\SettingController::class, 'updateAppAccess']);
+
+            Route::put('/settings/app-access', [SettingController::class, 'updateAppAccess']);
 
             Route::get('/kyc/pending', [AdminController::class, 'pendingKyc']);
             Route::post('/kyc/{user}/review', [AdminController::class, 'reviewKyc']);

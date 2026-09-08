@@ -1,8 +1,24 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+}
+
+// Clé Yandex MapKit : jamais commitée. Ordre de résolution :
+//   1. variable d'environnement YANDEX_MAPKIT_API_KEY (CI)
+//   2. android/local.properties → yandex.mapkit.apiKey (poste dev)
+//   3. chaîne vide (la carte ne s'affichera pas, build non bloqué)
+val yandexMapKitApiKey: String = run {
+    System.getenv("YANDEX_MAPKIT_API_KEY")?.takeIf { it.isNotBlank() }?.let { return@run it }
+    val props = Properties()
+    val f = rootProject.file("local.properties")
+    if (f.exists()) {
+        f.inputStream().use { props.load(it) }
+    }
+    props.getProperty("yandex.mapkit.apiKey", "")
 }
 
 android {
@@ -28,6 +44,9 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        // Injecté dans AndroidManifest.xml (<meta-data com.yandex.maps.api_key>)
+        manifestPlaceholders["YANDEX_MAPKIT_API_KEY"] = yandexMapKitApiKey
     }
 
     buildTypes {

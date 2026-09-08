@@ -961,9 +961,10 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
             const SizedBox(height: 12),
             TextField(
               controller: textController,
+              textCapitalization: TextCapitalization.characters,
               decoration: InputDecoration(
-                hintText: 'Ex: RET-${mission.id}',
-                helperText: 'Pour tester, saisissez : RET-${mission.id}',
+                hintText: 'Code de retrait fournisseur',
+                helperText: 'Communiqué par la quincaillerie lors de l\'enlèvement.',
                 border:
                     OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               ),
@@ -1007,9 +1008,10 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
             const SizedBox(height: 12),
             TextField(
               controller: textController,
+              textCapitalization: TextCapitalization.characters,
               decoration: InputDecoration(
-                hintText: 'Ex: REC-${mission.id}',
-                helperText: 'Pour tester, saisissez : REC-${mission.id}',
+                hintText: 'Code de réception client (OTP)',
+                helperText: 'Demandez le code OTP affiché sur l\'app du client.',
                 border:
                     OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               ),

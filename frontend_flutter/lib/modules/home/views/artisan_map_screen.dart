@@ -13,6 +13,7 @@ import 'package:yandex_maps_mapkit/yandex_map.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/models/artisan_model.dart';
+import '../../../shared/widgets/map_offline_notice.dart';
 import '../controllers/home_controller.dart';
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
@@ -66,6 +67,15 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
   /// Lie chaque PlacemarkMapObject → ArtisanModel via userData
   final Map<mk.PlacemarkMapObject, ArtisanModel> _placemarkIndex = {};
 
+  /// Worker GetX à disposer pour éviter les listeners cumulés.
+  Worker? _artisanWorker;
+
+  /// Cache d'icônes rendues (clé = couleur + score + golden).
+  static final Map<String, Uint8List> _iconCache = {};
+
+  /// Jeton d'annulation pour la boucle de rendu asynchrone.
+  int _plotGeneration = 0;
+
   ArtisanModel? _selectedArtisan;
   bool _mapReady = false;
 
@@ -74,6 +84,14 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
     super.initState();
     final c = Get.find<HomeController>();
     if (c.artisans.isEmpty) c.searchByCategory(null);
+  }
+
+  @override
+  void dispose() {
+    _artisanWorker?.dispose();
+    _tapListeners.clear();
+    _placemarkIndex.clear();
+    super.dispose();
   }
 
   // ─── Lifecycle carte ────────────────────────────────────────────────────────
@@ -88,8 +106,10 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
     _centerOnUser(animated: false);
     _plotArtisans();
 
-    // Réagir aux changements de liste
-    ever(Get.find<HomeController>().artisans, (_) => _plotArtisans());
+    // Réagir aux changements de liste (worker disposé dans dispose()).
+    _artisanWorker?.dispose();
+    _artisanWorker =
+        ever(Get.find<HomeController>().artisans, (_) => _plotArtisans());
   }
 
   // ─── Caméra ──────────────────────────────────────────────────────────────────
@@ -127,6 +147,7 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
         locationSettings:
             const LocationSettings(accuracy: LocationAccuracy.high),
       );
+      if (!mounted || _mapWindow == null) return;
       _moveCamera(
         pos.latitude,
         pos.longitude,
@@ -135,6 +156,7 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
       );
       unawaited(_plotUserPosition(pos.latitude, pos.longitude));
     } catch (_) {
+      if (!mounted || _mapWindow == null) return;
       _moveCamera(_kAbidjanLat, _kAbidjanLng, 12.0, animated: animated);
     }
   }
@@ -144,9 +166,10 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
   Future<void> _plotUserPosition(double lat, double lng) async {
     final col = _userCollection;
     if (col == null) return;
-    col.clear();
 
     final bytes = await _renderUserIcon();
+    if (!mounted || _userCollection == null) return;
+    col.clear();
     col.addPlacemarkWithImageStyle(
       mk.Point(latitude: lat, longitude: lng),
       mk_image.ImageProvider.fromImageProvider(MemoryImage(bytes)),
@@ -160,11 +183,13 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
     final col = _artisanCollection;
     if (col == null) return;
 
+    final generation = ++_plotGeneration;
+
     col.clear();
     _placemarkIndex.clear();
     _tapListeners.clear();
 
-    final artisans = Get.find<HomeController>().artisans;
+    final artisans = Get.find<HomeController>().artisans.toList();
 
     for (final artisan in artisans) {
       if (artisan.location == null) continue;
@@ -174,11 +199,17 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
       final color = artisan.isGoldenMarker
           ? const Color(0xFFFBBF24)
           : const Color(0xFF64748B);
-      final bytes = await _renderArtisanIcon(
+      final bytes = await _artisanIconBytes(
         color,
         artisan.scoreProsArtisan.toString(),
         artisan.isGoldenMarker,
       );
+
+      // La liste a changé ou l'écran est démonté pendant le rendu async.
+      if (!mounted || generation != _plotGeneration ||
+          _artisanCollection == null) {
+        return;
+      }
 
       final pm = col.addPlacemarkWithImageStyle(
         mk.Point(latitude: lat, longitude: lng),
@@ -192,18 +223,7 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
       _placemarkIndex[pm] = artisan;
 
       final listener = _ArtisanTapListener((obj, point) {
-        ArtisanModel? found;
-
-        // Find using coordinate comparison to avoid FFI object wrapper inequality issues
-        for (final entry in _placemarkIndex.entries) {
-          final entryPoint = entry.key.geometry;
-          if ((entryPoint.latitude - point.latitude).abs() < 0.005 &&
-              (entryPoint.longitude - point.longitude).abs() < 0.005) {
-            found = entry.value;
-            break;
-          }
-        }
-
+        final found = _nearestArtisan(point);
         if (found != null) {
           setState(() {
             _selectedArtisan = found;
@@ -221,6 +241,37 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
       _tapListeners.add(listener);
       pm.addTapListener(listener);
     }
+  }
+
+  /// Retourne l'artisan dont le marqueur est le plus proche du point tapé
+  /// (évite les collisions d'un simple seuil de tolérance).
+  ArtisanModel? _nearestArtisan(mk.Point point) {
+    ArtisanModel? best;
+    double bestDist = double.infinity;
+    for (final entry in _placemarkIndex.entries) {
+      final p = entry.key.geometry;
+      final d = (p.latitude - point.latitude) * (p.latitude - point.latitude) +
+          (p.longitude - point.longitude) * (p.longitude - point.longitude);
+      if (d < bestDist) {
+        bestDist = d;
+        best = entry.value;
+      }
+    }
+    return best;
+  }
+
+  /// Rendu d'icône mis en cache par (couleur, score, golden).
+  Future<Uint8List> _artisanIconBytes(
+    Color color,
+    String score,
+    bool isGolden,
+  ) async {
+    final key = '${score}_$isGolden';
+    final cached = _iconCache[key];
+    if (cached != null) return cached;
+    final bytes = await _renderArtisanIcon(color, score, isGolden);
+    _iconCache[key] = bytes;
+    return bytes;
   }
 
   // ─── Rendu icônes via Canvas ─────────────────────────────────────────────────
@@ -404,6 +455,14 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
                 Get.find<HomeController>().searchByCategory(cat);
               },
             ),
+          ),
+
+          // ── Avertissement carte hors-ligne ──
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 150,
+            left: 12,
+            right: 12,
+            child: const MapOfflineNotice(margin: EdgeInsets.zero),
           ),
 
           // ── Zoom Controls & My Location ──
@@ -851,26 +910,28 @@ class _ArtisanBottomPanel extends StatelessWidget {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              artisan.distance ?? 'à 0,8 km',
+                              artisan.distance ?? 'Position approximative',
                               style: const TextStyle(
                                 color: Color(0xFF64748B),
                                 fontSize: 13,
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            const Icon(
-                              Icons.circle,
-                              size: 4,
-                              color: Color(0xFFCBD5E1),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              artisan.trade ?? 'Tailleur',
-                              style: const TextStyle(
-                                color: Color(0xFF64748B),
-                                fontSize: 13,
+                            if (artisan.trade != null) ...[
+                              const SizedBox(width: 8),
+                              const Icon(
+                                Icons.circle,
+                                size: 4,
+                                color: Color(0xFFCBD5E1),
                               ),
-                            ),
+                              const SizedBox(width: 8),
+                              Text(
+                                artisan.trade!,
+                                style: const TextStyle(
+                                  color: Color(0xFF64748B),
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                         if (artisan.nightInterventionAvailable) ...[
@@ -945,38 +1006,6 @@ class _ArtisanBottomPanel extends StatelessWidget {
                   ),
                   child:
                       const Icon(Icons.chat_bubble, color: Color(0xFF4F46E5)),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 24,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF4F46E5),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Container(
-                  width: 6,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE2E8F0),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Container(
-                  width: 6,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE2E8F0),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
                 ),
               ],
             ),

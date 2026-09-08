@@ -5,66 +5,129 @@ namespace App\Services;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Service de calcul d'itinéraire (distance + durée réelles).
+ *
+ * Fournisseurs, dans l'ordre de préférence :
+ *   1. Yandex Distance Matrix API  (services.yandex.distance_matrix_key)
+ *   2. Google Directions API       (services.google.maps_api_key / GOOGLE_MAPS_API_KEY)
+ *   3. Repli géodésique Haversine  (toujours disponible, aucune clé)
+ *
+ * Le nom de classe est conservé pour compatibilité (mocké dans plusieurs tests).
+ * Le contrat public reste `getDirections(array $from, array $to): array` avec
+ * `['distance' => mètres, 'duration' => secondes, 'source' => string]`.
+ */
 class GoogleMapsService
 {
-    private ?string $apiKey;
+    private ?string $yandexKey;
+
+    private string $yandexUrl;
+
+    private ?string $googleKey;
 
     public function __construct()
     {
-        $this->apiKey = config('services.google.maps_api_key') ?? env('GOOGLE_MAPS_API_KEY');
+        $this->yandexKey = config('services.yandex.distance_matrix_key');
+        $this->yandexUrl = config(
+            'services.yandex.distance_matrix_url',
+            'https://api.routing.yandex.net/v2/distancematrix'
+        );
+        $this->googleKey = config('services.google.maps_api_key') ?? env('GOOGLE_MAPS_API_KEY');
     }
 
     /**
-     * Récupère la distance (mètres) et la durée (secondes) de trajet réel via Google Directions API.
-     * Si l'API échoue ou n'est pas configurée, bascule vers un calcul de distance géodésique (Haversine).
+     * Distance (mètres) et durée (secondes) de trajet entre deux points
+     * `['lat' => float, 'lng' => float]`.
      */
     public function getDirections(array $from, array $to): array
     {
-        if (!$this->apiKey) {
-            Log::warning('Google Maps API Key manquante. Utilisation du fallback Haversine.');
-            return $this->fallbackHaversine($from, $to);
+        if ($this->yandexKey) {
+            $result = $this->tryYandex($from, $to);
+            if ($result !== null) {
+                return $result;
+            }
         }
 
-        try {
-            $origin = "{$from['lat']},{$from['lng']}";
-            $destination = "{$to['lat']},{$to['lng']}";
-
-            $response = Http::timeout(5)->get('https://maps.googleapis.com/maps/api/directions/json', [
-                'origin' => $origin,
-                'destination' => $destination,
-                'key' => $this->apiKey,
-                'mode' => 'driving',
-            ]);
-
-            if ($response->successful()) {
-                $data = $response->json();
-                if (isset($data['routes'][0]['legs'][0])) {
-                    $leg = $data['routes'][0]['legs'][0];
-                    $distance = $leg['distance']['value']; // en mètres
-                    $duration = $leg['duration']['value']; // en secondes
-                    return [
-                        'distance' => $distance,
-                        'duration' => $duration,
-                        'source' => 'google_maps',
-                    ];
-                }
-                Log::warning('Aucune route trouvée par Google Maps. Utilisation du fallback.', ['data' => $data]);
-            } else {
-                Log::error('Erreur API Google Maps Directions : ' . $response->body());
+        if ($this->googleKey) {
+            $result = $this->tryGoogle($from, $to);
+            if ($result !== null) {
+                return $result;
             }
-        } catch (\Exception $e) {
-            Log::error('Exception lors de l\'appel Google Maps Directions : ' . $e->getMessage());
+        }
+
+        if (! $this->yandexKey && ! $this->googleKey) {
+            Log::warning('Aucune clé Maps (Yandex/Google) configurée. Fallback Haversine.');
         }
 
         return $this->fallbackHaversine($from, $to);
     }
 
+    private function tryYandex(array $from, array $to): ?array
+    {
+        try {
+            $response = Http::timeout(5)->get($this->yandexUrl, [
+                'apikey' => $this->yandexKey,
+                'origins' => "{$from['lat']},{$from['lng']}",
+                'destinations' => "{$to['lat']},{$to['lng']}",
+                'mode' => 'driving',
+            ]);
+
+            if ($response->successful()) {
+                $element = $response->json('rows.0.elements.0');
+                if (is_array($element) && ($element['status'] ?? null) === 'OK') {
+                    return [
+                        'distance' => (int) ($element['distance']['value'] ?? 0),
+                        'duration' => (int) ($element['duration']['value'] ?? 0),
+                        'source' => 'yandex_distance_matrix',
+                    ];
+                }
+                Log::warning('Yandex Distance Matrix : aucune route.', ['body' => $response->json()]);
+            } else {
+                Log::error('Erreur API Yandex Distance Matrix : '.$response->status());
+            }
+        } catch (\Throwable $e) {
+            Log::error('Exception Yandex Distance Matrix : '.$e->getMessage());
+        }
+
+        return null;
+    }
+
+    private function tryGoogle(array $from, array $to): ?array
+    {
+        try {
+            $response = Http::timeout(5)->get('https://maps.googleapis.com/maps/api/directions/json', [
+                'origin' => "{$from['lat']},{$from['lng']}",
+                'destination' => "{$to['lat']},{$to['lng']}",
+                'key' => $this->googleKey,
+                'mode' => 'driving',
+            ]);
+
+            if ($response->successful()) {
+                $leg = $response->json('routes.0.legs.0');
+                if (is_array($leg) && isset($leg['distance']['value'], $leg['duration']['value'])) {
+                    return [
+                        'distance' => (int) $leg['distance']['value'],
+                        'duration' => (int) $leg['duration']['value'],
+                        'source' => 'google_maps',
+                    ];
+                }
+                Log::warning('Google Maps : aucune route.', ['data' => $response->json()]);
+            } else {
+                Log::error('Erreur API Google Maps Directions : '.$response->body());
+            }
+        } catch (\Throwable $e) {
+            Log::error('Exception Google Maps Directions : '.$e->getMessage());
+        }
+
+        return null;
+    }
+
     /**
-     * Calcul de distance à vol d'oiseau (Haversine) avec estimation du temps à 40 km/h de moyenne.
+     * Distance à vol d'oiseau (Haversine) + estimation de durée à 40 km/h.
      */
     private function fallbackHaversine(array $from, array $to): array
     {
-        $earthRadius = 6371000; // en mètres
+        $earthRadius = 6371000; // mètres
 
         $latFrom = deg2rad($from['lat']);
         $lonFrom = deg2rad($from['lng']);
@@ -74,17 +137,18 @@ class GoogleMapsService
         $latDelta = $latTo - $latFrom;
         $lonDelta = $lonTo - $lonFrom;
 
-        $angle = 2 * asin(sqrt(pow(sin($latDelta / 2), 2) +
-            cos($latFrom) * cos($latTo) * pow(sin($lonDelta / 2), 2)));
+        $angle = 2 * asin(sqrt(
+            pow(sin($latDelta / 2), 2) +
+            cos($latFrom) * cos($latTo) * pow(sin($lonDelta / 2), 2)
+        ));
 
-        $distance = $angle * $earthRadius; // en mètres
+        $distance = $angle * $earthRadius;
 
-        // Estimation de durée : vitesse moyenne de 40 km/h (soit ~11.11 m/s) en ville
-        $averageSpeedMs = 11.11;
-        $duration = (int)($distance / $averageSpeedMs); // en secondes
+        // Vitesse moyenne urbaine ~40 km/h (~11.11 m/s)
+        $duration = (int) ($distance / 11.11);
 
         return [
-            'distance' => (int)$distance,
+            'distance' => (int) $distance,
             'duration' => $duration,
             'source' => 'haversine_fallback',
         ];

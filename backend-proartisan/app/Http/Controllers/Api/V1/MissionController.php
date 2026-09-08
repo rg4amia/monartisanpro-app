@@ -8,6 +8,15 @@ use App\Http\Resources\MissionResource;
 use App\Models\Mission;
 use App\Services\MissionService;
 use App\Services\NotificationService;
+use App\States\Mission\CancelledState;
+use App\States\Mission\CompletedState;
+use App\States\Mission\DisputedState;
+use App\States\Mission\DraftState;
+use App\States\Mission\FundedLockedState;
+use App\States\Mission\InProgressState;
+use App\States\Mission\PendingApprovalState;
+use App\States\Mission\PendingArtisanAcceptanceState;
+use App\States\Mission\PendingFundingState;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -23,33 +32,33 @@ class MissionController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $user     = $request->user();
-        $status   = $request->query('status');
+        $user = $request->user();
+        $status = $request->query('status');
 
         $query = match ($user->role) {
-            'client'  => Mission::where('client_id', $user->id),
+            'client' => Mission::where('client_id', $user->id),
             'artisan' => Mission::where('artisan_id', $user->id),
-            default   => Mission::where('client_id', $user->id)->orWhere('artisan_id', $user->id),
+            default => Mission::where('client_id', $user->id)->orWhere('artisan_id', $user->id),
         };
 
         if ($status) {
             if ($user->role === 'artisan') {
                 $mappedStatuses = match ($status) {
                     'en_attente' => ['draft', 'pending_funding', 'pending_artisan_acceptance'],
-                    'financee'   => ['funded_locked'],
-                    'en_cours'   => ['in_progress', 'pending_approval'],
-                    'terminee'   => ['completed'],
-                    'litige'     => ['disputed'],
-                    'annulee'    => ['cancelled'],
-                    default      => [$status],
+                    'financee' => ['funded_locked'],
+                    'en_cours' => ['in_progress', 'pending_approval'],
+                    'terminee' => ['completed'],
+                    'litige' => ['disputed'],
+                    'annulee' => ['cancelled'],
+                    default => [$status],
                 };
             } else {
                 $mappedStatuses = match ($status) {
-                    'en_cours'   => ['draft', 'pending_artisan_acceptance', 'pending_funding', 'funded_locked', 'in_progress', 'pending_approval'],
-                    'terminee'   => ['completed'],
-                    'litige'     => ['disputed'],
-                    'annulee'    => ['cancelled'],
-                    default      => [$status],
+                    'en_cours' => ['draft', 'pending_artisan_acceptance', 'pending_funding', 'funded_locked', 'in_progress', 'pending_approval'],
+                    'terminee' => ['completed'],
+                    'litige' => ['disputed'],
+                    'annulee' => ['cancelled'],
+                    default => [$status],
                 };
             }
             $query->whereIn('status', $mappedStatuses);
@@ -61,11 +70,11 @@ class MissionController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => MissionResource::collection($missions->items()),
-            'meta'    => [
-                'total'        => $missions->total(),
+            'data' => MissionResource::collection($missions->items()),
+            'meta' => [
+                'total' => $missions->total(),
                 'current_page' => $missions->currentPage(),
-                'last_page'    => $missions->lastPage(),
+                'last_page' => $missions->lastPage(),
             ],
         ]);
     }
@@ -95,7 +104,7 @@ class MissionController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => new MissionResource($mission->load('client', 'jalons', 'requestedSector', 'requestedTrade')),
+            'data' => new MissionResource($mission->load('client', 'jalons', 'requestedSector', 'requestedTrade')),
         ], 201);
     }
 
@@ -124,7 +133,95 @@ class MissionController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => new MissionResource($mission),
+            'data' => new MissionResource($mission),
+        ]);
+    }
+
+    /**
+     * Carte du chantier (espace artisan / client) : position du client qui a
+     * accepté et financé la mission + fournisseurs chez qui des matériaux ont
+     * été retirés pour ce devis (liés via les J-Codes).
+     *
+     * GET /api/v1/missions/{mission}/site-map
+     */
+    public function siteMap(Mission $mission, Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (
+            $mission->client_id !== $user->id
+            && $mission->artisan_id !== $user->id
+            && $user->role !== 'admin'
+        ) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Accès refusé.',
+            ], 403);
+        }
+
+        // La position exacte du client n'est révélée à l'artisan qu'une fois la
+        // mission financée (séquestre constitué) — cohérent avec MissionResource.
+        $paidStatuses = [
+            'funded_locked', 'financee',
+            'in_progress', 'en_cours',
+            'pending_approval',
+            'completed', 'terminee',
+            'disputed', 'litige',
+        ];
+        $revealClient = $user->role === 'admin'
+            || $user->id === $mission->client_id
+            || ($user->id === $mission->artisan_id
+                && in_array((string) $mission->status, $paidStatuses, true));
+
+        $mission->load('client');
+
+        $client = null;
+        if (
+            $revealClient
+            && $mission->client_latitude !== null
+            && $mission->client_longitude !== null
+        ) {
+            $client = [
+                'name' => $mission->client?->name,
+                'address' => $mission->client_address,
+                'coordinates' => [
+                    'lat' => (float) $mission->client_latitude,
+                    'lng' => (float) $mission->client_longitude,
+                ],
+            ];
+        }
+
+        $suppliers = $mission->jcodes()
+            ->with('fournisseur.fournisseurAgree')
+            ->get()
+            ->groupBy('fournisseur_id')
+            ->map(function ($group) {
+                $fournisseur = $group->first()->fournisseur;
+                $agree = $fournisseur?->fournisseurAgree;
+                $coords = $agree?->getPositionCoords();
+
+                if (! $fournisseur || ! $coords) {
+                    return null;
+                }
+
+                return [
+                    'id' => $fournisseur->id,
+                    'name' => $agree->nom_boutique ?: $fournisseur->name,
+                    'coordinates' => $coords,
+                    'jcodeCount' => $group->count(),
+                    'montant' => (int) $group->sum('montant'),
+                ];
+            })
+            ->filter()
+            ->values();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'mission_id' => $mission->id,
+                'client' => $client,
+                'suppliers' => $suppliers,
+            ],
         ]);
     }
 
@@ -135,7 +232,7 @@ class MissionController extends Controller
     {
         $data = $request->validate([
             'description' => ['required', 'string', 'min:10'],
-            'category'    => ['nullable', 'string', 'max:100'],
+            'category' => ['nullable', 'string', 'max:100'],
             'location_address' => ['nullable', 'string', 'max:255'],
         ]);
 
@@ -143,7 +240,7 @@ class MissionController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $estimate,
+            'data' => $estimate,
         ]);
     }
 
@@ -162,20 +259,20 @@ class MissionController extends Controller
         $data = $request->validate([
             'status' => [
                 'required',
-                'in:en_attente,financee,en_cours,terminee,litige,annulee,draft,pending_funding,funded_locked,in_progress,pending_approval,completed,disputed,cancelled'
+                'in:en_attente,financee,en_cours,terminee,litige,annulee,draft,pending_funding,funded_locked,in_progress,pending_approval,completed,disputed,cancelled',
             ],
         ]);
 
         $status = $data['status'];
         $stateClass = match ($status) {
-            'draft', 'en_attente' => \App\States\Mission\DraftState::class,
-            'pending_funding' => \App\States\Mission\PendingFundingState::class,
-            'funded_locked', 'financee' => \App\States\Mission\FundedLockedState::class,
-            'in_progress', 'en_cours' => \App\States\Mission\InProgressState::class,
-            'pending_approval' => \App\States\Mission\PendingApprovalState::class,
-            'completed', 'terminee' => \App\States\Mission\CompletedState::class,
-            'disputed', 'litige' => \App\States\Mission\DisputedState::class,
-            'cancelled', 'annulee' => \App\States\Mission\CancelledState::class,
+            'draft', 'en_attente' => DraftState::class,
+            'pending_funding' => PendingFundingState::class,
+            'funded_locked', 'financee' => FundedLockedState::class,
+            'in_progress', 'en_cours' => InProgressState::class,
+            'pending_approval' => PendingApprovalState::class,
+            'completed', 'terminee' => CompletedState::class,
+            'disputed', 'litige' => DisputedState::class,
+            'cancelled', 'annulee' => CancelledState::class,
             default => $status,
         };
 
@@ -183,7 +280,7 @@ class MissionController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => new MissionResource($mission->fresh()),
+            'data' => new MissionResource($mission->fresh()),
         ]);
     }
 
@@ -212,11 +309,11 @@ class MissionController extends Controller
             return response()->json(['success' => false, 'message' => 'Accès refusé.'], 403);
         }
 
-        if (!$mission->status instanceof \App\States\Mission\PendingArtisanAcceptanceState) {
+        if (! $mission->status instanceof PendingArtisanAcceptanceState) {
             return response()->json(['success' => false, 'message' => 'Statut invalide.'], 400);
         }
 
-        $mission->status->transitionTo(\App\States\Mission\DraftState::class);
+        $mission->status->transitionTo(DraftState::class);
 
         if ($mission->client) {
             $this->notificationService->send(
@@ -234,7 +331,7 @@ class MissionController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Demande acceptée.',
-            'data'    => new MissionResource($mission),
+            'data' => new MissionResource($mission),
         ]);
     }
 
@@ -256,7 +353,7 @@ class MissionController extends Controller
             return response()->json(['success' => false, 'message' => 'Accès refusé.'], 403);
         }
 
-        if (!$mission->status instanceof \App\States\Mission\PendingArtisanAcceptanceState) {
+        if (! $mission->status instanceof PendingArtisanAcceptanceState) {
             return response()->json(['success' => false, 'message' => 'Statut invalide.'], 400);
         }
 
@@ -275,7 +372,7 @@ class MissionController extends Controller
         $client = $mission->client;
 
         $mission->update(['artisan_id' => null]);
-        $mission->status->transitionTo(\App\States\Mission\DraftState::class);
+        $mission->status->transitionTo(DraftState::class);
 
         if ($client) {
             $this->notificationService->send(
@@ -293,7 +390,7 @@ class MissionController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Demande refusée, mission remise en recherche d\'artisan.',
-            'data'    => new MissionResource($mission),
+            'data' => new MissionResource($mission),
         ]);
     }
 }

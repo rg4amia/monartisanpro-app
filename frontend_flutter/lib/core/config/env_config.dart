@@ -115,15 +115,44 @@ class EnvConfig {
     defaultValue: false,
   );
 
-  // ── Clés de services tiers (surcharge au build via --dart-define) ──────────
-  // Valeurs par défaut = clés de développement ; à surcharger en CI/CD prod.
+  // ── Clés de services tiers ────────────────────────────────────────────────
+  // AUCUNE clé n'est stockée en dur : elles sont injectées au build via
+  //   flutter run --dart-define-from-file=env.json
+  // (fichier gitignoré, gabarit dans env.example.json). En CI, `env.json` est
+  // généré depuis les secrets GitHub.
+
+  /// Clé Yandex MapKit SDK (rendu de la carte).
   static const String yandexMapKitApiKey = String.fromEnvironment(
     'YANDEX_MAPKIT_API_KEY',
-    defaultValue: 'REVOKED-YANDEX-KEY',
   );
+
+  /// Clé Yandex Distance Matrix API (distances/durées — non utilisée côté mobile
+  /// pour l'instant, le calcul reste serveur ; exposée pour usage futur).
+  static const String yandexDistanceMatrixApiKey = String.fromEnvironment(
+    'YANDEX_DISTANCE_MATRIX_API_KEY',
+  );
+
+  /// Clé Yandex Geolocation API (position approximative wifi/cellulaire).
+  static const String yandexGeolocationApiKey = String.fromEnvironment(
+    'YANDEX_GEOLOCATION_API_KEY',
+  );
+
+  /// `true` si la clé MapKit est absente du build (carte non fonctionnelle).
+  static bool get isYandexMapKitConfigured => yandexMapKitApiKey.isNotEmpty;
 
   static const String oneSignalAppId = String.fromEnvironment(
     'ONESIGNAL_APP_ID',
     defaultValue: '00d061c8-977b-405a-a207-e2d87846670b',
+  );
+
+  /// Serveur de calcul d'itinéraire (OSRM) pour la carte livreur.
+  ///
+  /// La valeur par défaut est le serveur de démonstration public d'OSRM :
+  /// rate-limité, sans SLA, NON destiné à la production. En prod, pointer vers
+  /// une instance dédiée :
+  ///   flutter build apk --dart-define=OSRM_BASE_URL=https://osrm.prosartisan.net
+  static const String osrmBaseUrl = String.fromEnvironment(
+    'OSRM_BASE_URL',
+    defaultValue: 'https://router.project-osrm.org',
   );
 }

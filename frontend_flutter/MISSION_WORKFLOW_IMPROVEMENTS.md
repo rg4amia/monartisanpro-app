@@ -5,11 +5,14 @@
 ### 1. **Configuration Yandex Maps** ✅
 
 - **Problème** : La carte Yandex Maps ne s'affichait pas
-- **Solution** : Ajout de la clé API dans `AndroidManifest.xml`
-- **Fichier modifié** : `android/app/src/main/AndroidManifest.xml`
+- **Solution** : Clé API injectée au build (jamais commitée) via
+  `--dart-define-from-file=env.json` + `manifestPlaceholders` Gradle.
+- **Fichiers** : `android/app/src/main/AndroidManifest.xml` (placeholder
+  `${YANDEX_MAPKIT_API_KEY}`), `android/app/build.gradle.kts`, `env.example.json`.
+- Détails : voir `YANDEX_MAPS_TROUBLESHOOTING.md`.
 
 ```xml
-<meta-data android:name="com.yandex.maps.api_key" android:value="REVOKED-YANDEX-KEY"/>
+<meta-data android:name="com.yandex.maps.api_key" android:value="${YANDEX_MAPKIT_API_KEY}"/>
 ```
 
 ### 2. **Nouveau Workflow de Sélection d'Artisans** ✅

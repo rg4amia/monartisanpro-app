@@ -18,6 +18,7 @@ abstract class Routes {
   static const missionRequest = '/mission-request';
   static const artisanProfile = '/artisan-profile';
   static const missionTracking = '/mission-tracking';
+  static const missionSiteMap = '/mission-site-map';
   static const quote = '/quote';
   static const quoteBuilder = '/quote-builder';
   static const jcode = '/jcode';

@@ -11,6 +11,7 @@ import 'package:yandex_maps_mapkit/yandex_map.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/models/artisan_model.dart';
+import '../../../shared/widgets/map_offline_notice.dart';
 import '../../../shared/widgets/score_prosartisan.dart';
 import '../controllers/artisan_selection_controller.dart';
 
@@ -48,6 +49,12 @@ class _ArtisanSelectionMapState extends State<ArtisanSelectionMap> {
 
   final List<_ArtisanTapListener> _tapListeners = [];
   final Map<mk.PlacemarkMapObject, ArtisanModel> _placemarkIndex = {};
+
+  /// Cache d'icônes rendues (clé = score + golden + selected).
+  static final Map<String, Uint8List> _iconCache = {};
+
+  /// Jeton d'annulation pour la boucle de rendu asynchrone.
+  int _plotGeneration = 0;
 
   late final Worker _artisanWorker;
 
@@ -170,6 +177,8 @@ class _ArtisanSelectionMapState extends State<ArtisanSelectionMap> {
     final artisanCollection = _artisanCollection;
     if (artisanCollection == null) return;
 
+    final generation = ++_plotGeneration;
+
     artisanCollection.clear();
     _placemarkIndex.clear();
     _tapListeners.clear();
@@ -181,12 +190,17 @@ class _ArtisanSelectionMapState extends State<ArtisanSelectionMap> {
       if (location == null) continue;
 
       final isSelected = artisan.id == _selectedArtisan?.id;
-      final bytes = await _renderArtisanMarker(
+      final bytes = await _artisanMarkerBytes(
         score: artisan.scoreProsArtisan,
         isGolden: artisan.isGoldenMarker,
         isSelected: isSelected,
       );
-      if (!mounted) return;
+      // La liste/sélection a changé ou l'écran est démonté pendant le rendu.
+      if (!mounted ||
+          generation != _plotGeneration ||
+          _artisanCollection == null) {
+        return;
+      }
 
       final placemark = artisanCollection.addPlacemarkWithImageStyle(
         mk.Point(
@@ -203,15 +217,7 @@ class _ArtisanSelectionMapState extends State<ArtisanSelectionMap> {
       _placemarkIndex[placemark] = artisan;
 
       final listener = _ArtisanTapListener((mapObject, point) {
-        ArtisanModel? tapped;
-        for (final entry in _placemarkIndex.entries) {
-          final entryPoint = entry.key.geometry;
-          if ((entryPoint.latitude - point.latitude).abs() < 0.0001 &&
-              (entryPoint.longitude - point.longitude).abs() < 0.0001) {
-            tapped = entry.value;
-            break;
-          }
-        }
+        final tapped = _nearestArtisan(point);
         if (tapped == null) {
           return false;
         }
@@ -229,6 +235,40 @@ class _ArtisanSelectionMapState extends State<ArtisanSelectionMap> {
       _tapListeners.add(listener);
       placemark.addTapListener(listener);
     }
+  }
+
+  /// Artisan dont le marqueur est le plus proche du point tapé.
+  ArtisanModel? _nearestArtisan(mk.Point point) {
+    ArtisanModel? best;
+    double bestDist = double.infinity;
+    for (final entry in _placemarkIndex.entries) {
+      final p = entry.key.geometry;
+      final d = (p.latitude - point.latitude) * (p.latitude - point.latitude) +
+          (p.longitude - point.longitude) * (p.longitude - point.longitude);
+      if (d < bestDist) {
+        bestDist = d;
+        best = entry.value;
+      }
+    }
+    return best;
+  }
+
+  /// Rendu de marqueur mis en cache par (score, golden, selected).
+  Future<Uint8List> _artisanMarkerBytes({
+    required int score,
+    required bool isGolden,
+    required bool isSelected,
+  }) async {
+    final key = '${score}_${isGolden}_$isSelected';
+    final cached = _iconCache[key];
+    if (cached != null) return cached;
+    final bytes = await _renderArtisanMarker(
+      score: score,
+      isGolden: isGolden,
+      isSelected: isSelected,
+    );
+    _iconCache[key] = bytes;
+    return bytes;
   }
 
   void _syncSelectedArtisan() {
@@ -447,7 +487,12 @@ class _ArtisanSelectionMapState extends State<ArtisanSelectionMap> {
               top: 14,
               left: 14,
               right: 14,
-              child: _MapSummaryCard(controller: widget.controller),
+              child: Column(
+                children: [
+                  _MapSummaryCard(controller: widget.controller),
+                  const MapOfflineNotice(margin: EdgeInsets.only(top: 8)),
+                ],
+              ),
             ),
             if (_mapReady)
               Positioned(
@@ -635,8 +680,8 @@ class _MapSummaryCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   controller.nightIntervention.value
-                      ? 'Affichage limite aux artisans disponibles la nuit. Positions approximatives.'
-                      : 'Positions approximatives affichees pour proteger les artisans.',
+                      ? 'Affichage limité aux artisans disponibles la nuit. Positions approximatives.'
+                      : 'Positions approximatives affichées pour protéger les artisans.',
                   style: const TextStyle(
                     fontSize: 12,
                     color: _Palette.muted,
@@ -758,7 +803,7 @@ class _MapHintCard extends StatelessWidget {
           SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Touchez un repere sur la carte pour voir le profil rapide et choisir un artisan.',
+              'Touchez un repère sur la carte pour voir le profil rapide et choisir un artisan.',
               style: TextStyle(
                 fontSize: 13,
                 height: 1.35,
@@ -811,7 +856,7 @@ class _MapEmptyCard extends StatelessWidget {
           SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Aucun artisan geolocalise n\'a ete trouve dans cette zone pour le moment.',
+              'Aucun artisan géolocalisé n\'a été trouvé dans cette zone pour le moment.',
               style: TextStyle(
                 fontSize: 13,
                 height: 1.35,
@@ -914,7 +959,7 @@ class _SelectedArtisanCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        artisan.trade ?? 'Metier non renseigne',
+                        artisan.trade ?? 'Métier non renseigné',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -1007,7 +1052,7 @@ class _SelectedArtisanCard extends StatelessWidget {
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    'Position approximative affichee pour proteger l\'artisan.',
+                    'Position approximative affichée pour protéger l\'artisan.',
                     style: const TextStyle(
                       fontSize: 12,
                       color: _Palette.muted,

@@ -9,6 +9,7 @@ import '../../core/network/network_executor.dart';
 import '../../core/network/sync_service.dart';
 import '../models/jalon_model.dart';
 import '../models/mission_model.dart';
+import '../models/mission_site_map.dart';
 
 class MissionRepository {
   final ApiClient _client = ApiClient();
@@ -127,6 +128,26 @@ class MissionRepository {
       }
       rethrow;
     }
+  }
+
+  /// Carte du chantier : position du client (mission financée) + fournisseurs
+  /// des J-Codes de la mission.
+  Future<MissionSiteMap> getSiteMap(int missionId) async {
+    final res = await NetworkExecutor.run(
+      () => _client.get(ApiEndpoints.missionSiteMap(missionId)),
+    );
+
+    final data = res.data;
+    final Map<String, dynamic> payload;
+    if (data is Map && data['data'] is Map) {
+      payload = Map<String, dynamic>.from(data['data'] as Map);
+    } else if (data is Map) {
+      payload = Map<String, dynamic>.from(data);
+    } else {
+      throw Exception('Format de réponse inattendu pour getSiteMap');
+    }
+
+    return MissionSiteMap.fromJson(payload);
   }
 
   /// Crée une nouvelle mission

@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:yandex_maps_mapkit/yandex_map.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/map_offline_notice.dart';
 import '../controllers/location_picker_controller.dart';
 
 class LocationPickerScreen extends GetView<LocationPickerController> {
@@ -196,6 +197,7 @@ class LocationPickerScreen extends GetView<LocationPickerController> {
                       ],
                     );
                   }),
+                  const MapOfflineNotice(margin: EdgeInsets.only(top: 10)),
                 ],
               ),
             ),

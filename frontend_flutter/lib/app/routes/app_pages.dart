@@ -33,6 +33,7 @@ import '../../modules/missions/views/devis_creation_screen.dart';
 import '../../modules/missions/views/devis_review_screen.dart';
 import '../../modules/missions/views/location_picker_screen.dart';
 import '../../modules/missions/views/mission_request_screen.dart';
+import '../../modules/missions/views/mission_site_map_screen.dart';
 import '../../modules/missions/views/mission_tracking_screen.dart';
 import '../../modules/missions/views/missions_screen.dart';
 import '../../modules/missions/views/referent_validation_screen.dart';
@@ -120,6 +121,10 @@ class AppPages {
       name: Routes.missionTracking,
       page: () => const MissionTrackingScreen(),
       binding: MissionsBinding(),
+    ),
+    GetPage(
+      name: Routes.missionSiteMap,
+      page: () => const MissionSiteMapScreen(),
     ),
 
     // Artisan

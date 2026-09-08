@@ -39,6 +39,10 @@ GetStorage*
 *_cache.lock
 cache_metadata.lock
 
+# Secrets injectés au build (voir env.example.json) — NE JAMAIS commiter
+/env.json
+/android/key.properties
+
 # Release artifacts
 *.apk
 *.aab

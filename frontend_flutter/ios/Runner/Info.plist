@@ -46,7 +46,7 @@
         <key>UIApplicationSupportsIndirectInputEvents</key>
         <true/>
         <key>YMKMapKitApiKey</key>
-        <string>REVOKED-YANDEX-KEY</string>
+        <string>$(YANDEX_MAPKIT_API_KEY)</string>
         <key>NSCameraUsageDescription</key>
         <string>We need access to your camera to take profile photos</string>
         <key>NSLocationWhenInUseUsageDescription</key>

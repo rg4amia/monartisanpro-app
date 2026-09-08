@@ -83,9 +83,29 @@ jobs:
         working-directory: frontend_flutter
         run: flutter pub get
 
+      # Secrets injectés au build (jamais commités). Définir dans
+      # Settings → Secrets → Actions : YANDEX_MAPKIT_API_KEY,
+      # YANDEX_DISTANCE_MATRIX_API_KEY, YANDEX_GEOLOCATION_API_KEY.
+      - name: Inject build secrets
+        working-directory: frontend_flutter
+        env:
+          YANDEX_MAPKIT_API_KEY: ${{ secrets.YANDEX_MAPKIT_API_KEY }}
+          YANDEX_DISTANCE_MATRIX_API_KEY: ${{ secrets.YANDEX_DISTANCE_MATRIX_API_KEY }}
+          YANDEX_GEOLOCATION_API_KEY: ${{ secrets.YANDEX_GEOLOCATION_API_KEY }}
+        run: |
+          cat > env.json <<EOF
+          {
+            "YANDEX_MAPKIT_API_KEY": "${YANDEX_MAPKIT_API_KEY}",
+            "YANDEX_DISTANCE_MATRIX_API_KEY": "${YANDEX_DISTANCE_MATRIX_API_KEY}",
+            "YANDEX_GEOLOCATION_API_KEY": "${YANDEX_GEOLOCATION_API_KEY}",
+            "OSRM_BASE_URL": "https://router.project-osrm.org"
+          }
+          EOF
+          echo "yandex.mapkit.apiKey=${YANDEX_MAPKIT_API_KEY}" >> android/local.properties
+
       - name: Build APK (release)
         working-directory: frontend_flutter
-        run: flutter build apk --release
+        run: flutter build apk --release --dart-define-from-file=env.json
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

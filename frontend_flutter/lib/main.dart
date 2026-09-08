@@ -55,7 +55,13 @@ Future<void> main() async {
       // Teste production → émulateur → scan réseau local (port 8000)
       await EnvConfig.init();
 
-      // Yandex MapKit — clé API (surchargeable via --dart-define=YANDEX_MAPKIT_API_KEY)
+      // Yandex MapKit — clé injectée au build via --dart-define-from-file=env.json
+      if (!EnvConfig.isYandexMapKitConfigured) {
+        debugPrint(
+          '[MapKit] YANDEX_MAPKIT_API_KEY absente du build : les cartes ne '
+          's\'afficheront pas. Lancez avec --dart-define-from-file=env.json.',
+        );
+      }
       await mapkit_init.initMapkit(
         apiKey: EnvConfig.yandexMapKitApiKey,
         locale: 'fr_FR',

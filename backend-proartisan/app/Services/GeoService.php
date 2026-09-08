@@ -85,14 +85,28 @@ class GeoService
     }
 
     /**
-     * Floutage de la position GPS : offset aléatoire d'environ 50 m.
+     * Floutage de la position GPS : offset d'environ 50 m.
      * NE JAMAIS retourner la position exacte d'un artisan au client.
+     *
+     * Lorsqu'un [$seed] est fourni (ex: l'id de l'artisan), l'offset est
+     * DÉTERMINISTE et STABLE dans le temps : le marqueur ne « saute » plus à
+     * chaque requête et, surtout, un client ne peut plus recouvrer la position
+     * réelle en moyennant plusieurs réponses successives. Le seed est mélangé à
+     * `APP_KEY` via HMAC : l'offset reste imprévisible sans la clé serveur.
      */
-    public function blurPosition(float $lat, float $lng, int $radiusMeters = 50): array
+    public function blurPosition(float $lat, float $lng, int $radiusMeters = 50, ?string $seed = null): array
     {
         $delta = $radiusMeters / 111000;
-        $angle = mt_rand(0, 359);
-        $r = $delta * sqrt(mt_rand(0, 100) / 100);
+
+        if ($seed !== null) {
+            $hash = hash_hmac('sha256', $seed, (string) config('app.key'));
+            $angle = hexdec(substr($hash, 0, 8)) % 360;
+            $r = $delta * sqrt((hexdec(substr($hash, 8, 8)) % 1000) / 1000);
+        } else {
+            $angle = mt_rand(0, 359);
+            $r = $delta * sqrt(mt_rand(0, 100) / 100);
+        }
+
         $blurredLat = $lat + $r * cos(deg2rad($angle));
         $blurredLng = $lng + $r * sin(deg2rad($angle));
 

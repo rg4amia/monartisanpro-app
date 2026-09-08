@@ -3,15 +3,18 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:yandex_maps_mapkit/mapkit.dart' as mk;
 import 'package:yandex_maps_mapkit/yandex_map.dart';
 
+import '../../../core/config/env_config.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../data/models/mission_model.dart';
+import '../../../shared/widgets/map_offline_notice.dart';
 import '../controllers/home_controller.dart';
 
 enum DeliveryPhase {
@@ -49,14 +52,23 @@ class _DeliveryRoutePlannerScreenState
   late double _clientLat;
   late double _clientLng;
 
+  /// `true` tant qu'au moins une position affichée est dérivée (fournisseur ou
+  /// client absent de la mission) et non une vraie coordonnée GPS.
+  bool _coordsApproximate = false;
+
   String? _routeDistanceText;
   String? _routeDurationText;
+
+  /// `true` quand la distance affichée est une estimation à vol d'oiseau
+  /// (aucun itinéraire routier OSRM disponible).
+  bool _routeIsEstimate = false;
 
   @override
   void initState() {
     super.initState();
     _initPhase();
     _initCoordinates();
+    _resolveDriverPosition();
   }
 
   void _initPhase() {
@@ -75,18 +87,66 @@ class _DeliveryRoutePlannerScreenState
     if (gps.isNotEmpty) {
       final parts = gps.split(',');
       if (parts.length == 2) {
-        _driverLat = double.tryParse(parts[0].trim()) ?? 5.3484;
-        _driverLng = double.tryParse(parts[1].trim()) ?? -4.0169;
+        _driverLat = double.tryParse(parts[0].trim()) ?? _driverLat;
+        _driverLng = double.tryParse(parts[1].trim()) ?? _driverLng;
       }
     }
 
-    // Coordonnées fournisseur et client réalistes calculées à partir de l'ID de la mission
+    // Positions dérivées (repli) si la mission ne porte pas les vraies
+    // coordonnées du fournisseur / client. Utilisées uniquement pour cadrer la
+    // carte : l'UI signale alors qu'elles sont approximatives.
     final rand = Random(widget.mission.id);
-    _supplierLat = _driverLat + (rand.nextDouble() * 0.012 + 0.005);
-    _supplierLng = _driverLng + (rand.nextDouble() * 0.012 + 0.005);
+    final derivedSupplierLat = _driverLat + (rand.nextDouble() * 0.012 + 0.005);
+    final derivedSupplierLng = _driverLng + (rand.nextDouble() * 0.012 + 0.005);
+    final derivedClientLat =
+        derivedSupplierLat + (rand.nextDouble() * 0.015 + 0.008);
+    final derivedClientLng =
+        derivedSupplierLng - (rand.nextDouble() * 0.015 + 0.008);
 
-    _clientLat = _supplierLat + (rand.nextDouble() * 0.015 + 0.008);
-    _clientLng = _supplierLng - (rand.nextDouble() * 0.015 + 0.008);
+    final supplierLat = widget.mission.supplierLatitude;
+    final supplierLng = widget.mission.supplierLongitude;
+    final clientLat = widget.mission.clientLatitude;
+    final clientLng = widget.mission.clientLongitude;
+
+    final hasSupplier = supplierLat != null && supplierLng != null;
+    final hasClient = clientLat != null && clientLng != null;
+
+    _supplierLat = hasSupplier ? supplierLat : derivedSupplierLat;
+    _supplierLng = hasSupplier ? supplierLng : derivedSupplierLng;
+    _clientLat = hasClient ? clientLat : derivedClientLat;
+    _clientLng = hasClient ? clientLng : derivedClientLng;
+
+    _coordsApproximate = !hasSupplier || !hasClient;
+  }
+
+  /// Tente d'obtenir la position GPS réelle du livreur ; ne bloque pas l'écran.
+  Future<void> _resolveDriverPosition() async {
+    try {
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        if (mounted) await _updateMapElements();
+        return;
+      }
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 6),
+        ),
+      );
+      if (!mounted) return;
+      _driverLat = pos.latitude;
+      _driverLng = pos.longitude;
+      _homeController.driverGpsCoords.value =
+          '${pos.latitude.toStringAsFixed(6)}, ${pos.longitude.toStringAsFixed(6)}';
+      await _updateMapElements();
+    } catch (_) {
+      // On garde la position par défaut / stockée, mais on recentre quand même.
+      if (mounted) await _updateMapElements();
+    }
   }
 
   void _onMapCreated(mk.MapWindow mapWindow) {
@@ -107,8 +167,9 @@ class _DeliveryRoutePlannerScreenState
     double lng2,
   ) async {
     try {
+      final base = EnvConfig.osrmBaseUrl.replaceAll(RegExp(r'/+$'), '');
       final url = Uri.parse(
-        'https://router.project-osrm.org/route/v1/driving/$lng1,$lat1;$lng2,$lat2?overview=full&geometries=geojson',
+        '$base/route/v1/driving/$lng1,$lat1;$lng2,$lat2?overview=full&geometries=geojson',
       );
       final response = await http.get(url).timeout(const Duration(seconds: 4));
       if (response.statusCode == 200) {
@@ -130,6 +191,7 @@ class _DeliveryRoutePlannerScreenState
           }
 
           if (coords != null && coords.isNotEmpty) {
+            _routeIsEstimate = false;
             return coords.map((c) {
               final pair = c as List;
               final lng = (pair[0] as num).toDouble();
@@ -143,7 +205,13 @@ class _DeliveryRoutePlannerScreenState
       debugPrint('[RoutePlanner] OSRM routing fallback: $e');
     }
 
-    // Fallback lissé avec waypoints virtuels suivant des angles de rue
+    // Repli : pas d'itinéraire routier disponible → estimation à vol d'oiseau
+    // (clairement signalée comme « ~ » dans l'UI, jamais présentée comme exacte).
+    final straightKm = _haversineKm(lat1, lng1, lat2, lng2);
+    _routeIsEstimate = true;
+    _routeDistanceText = '~ ${straightKm.toStringAsFixed(1)} km';
+    _routeDurationText = null;
+
     final points = <mk.Point>[];
     const steps = 12;
     for (int i = 0; i <= steps; i++) {
@@ -232,6 +300,9 @@ class _DeliveryRoutePlannerScreenState
         lng2: _clientLng,
       );
     }
+
+    // Le HUD lit _routeDistanceText / _routeDurationText renseignés ci-dessus.
+    if (mounted) setState(() {});
   }
 
   void _focusCamera({
@@ -246,9 +317,21 @@ class _DeliveryRoutePlannerScreenState
     final centerLat = (lat1 + lat2) / 2;
     final centerLng = (lng1 + lng2) / 2;
 
+    // Zoom adapté à la distance entre les deux points pour qu'ils restent visibles.
+    final spanKm = _haversineKm(lat1, lng1, lat2, lng2);
+    final double zoom = spanKm > 20
+        ? 10.5
+        : spanKm > 10
+            ? 11.5
+            : spanKm > 5
+                ? 12.5
+                : spanKm > 2
+                    ? 13.5
+                    : 14.5;
+
     final center = mk.CameraPosition(
       mk.Point(latitude: centerLat, longitude: centerLng),
-      zoom: 14.0,
+      zoom: zoom,
       azimuth: 0.0,
       tilt: 0.0,
     );
@@ -259,6 +342,21 @@ class _DeliveryRoutePlannerScreenState
           const mk.Animation(type: mk.AnimationType.Smooth, duration: 1.0),
     );
   }
+
+  /// Distance à vol d'oiseau en kilomètres (formule de Haversine).
+  double _haversineKm(double lat1, double lng1, double lat2, double lng2) {
+    const earthRadiusKm = 6371.0;
+    final dLat = _deg2rad(lat2 - lat1);
+    final dLng = _deg2rad(lng2 - lng1);
+    final a = sin(dLat / 2) * sin(dLat / 2) +
+        cos(_deg2rad(lat1)) *
+            cos(_deg2rad(lat2)) *
+            sin(dLng / 2) *
+            sin(dLng / 2);
+    return earthRadiusKm * 2 * atan2(sqrt(a), sqrt(1 - a));
+  }
+
+  double _deg2rad(double deg) => deg * pi / 180.0;
 
   Future<void> _launchExternalNavigation(
     double destLat,
@@ -294,8 +392,7 @@ class _DeliveryRoutePlannerScreenState
   }
 
   void _promptPickupValidation() {
-    final textController =
-        TextEditingController(text: 'RET-${widget.mission.id}');
+    final textController = TextEditingController();
     Get.dialog(
       AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -321,9 +418,10 @@ class _DeliveryRoutePlannerScreenState
             const SizedBox(height: 14),
             TextField(
               controller: textController,
+              textCapitalization: TextCapitalization.characters,
               decoration: InputDecoration(
                 labelText: 'Code de retrait fournisseur',
-                hintText: 'Ex: RET-${widget.mission.id}',
+                hintText: 'Communiqué par la quincaillerie',
                 border:
                     OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 prefixIcon: const Icon(Icons.qr_code_scanner_rounded),
@@ -349,10 +447,11 @@ class _DeliveryRoutePlannerScreenState
             ),
             onPressed: () async {
               Get.back();
-              await _homeController.handleDriverPickupFromStore(
+              final ok = await _homeController.handleDriverPickupFromStore(
                 widget.mission,
                 textController.text.trim(),
               );
+              if (!ok || !mounted) return;
               setState(() {
                 _currentPhase = DeliveryPhase.delivery;
               });
@@ -369,8 +468,7 @@ class _DeliveryRoutePlannerScreenState
   }
 
   void _promptDeliveryValidation() {
-    final textController =
-        TextEditingController(text: 'REC-${widget.mission.id}');
+    final textController = TextEditingController();
     Get.dialog(
       AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -396,9 +494,10 @@ class _DeliveryRoutePlannerScreenState
             const SizedBox(height: 14),
             TextField(
               controller: textController,
+              textCapitalization: TextCapitalization.characters,
               decoration: InputDecoration(
                 labelText: 'Code de réception client (OTP)',
-                hintText: 'Ex: REC-${widget.mission.id}',
+                hintText: 'Code affiché sur l\'app du client',
                 border:
                     OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 prefixIcon: const Icon(Icons.pin_outlined),
@@ -424,10 +523,11 @@ class _DeliveryRoutePlannerScreenState
             ),
             onPressed: () async {
               Get.back();
-              await _homeController.handleDriverDropoffToClient(
+              final ok = await _homeController.handleDriverDropoffToClient(
                 widget.mission,
                 textController.text.trim(),
               );
+              if (!ok || !mounted) return;
               setState(() {
                 _currentPhase = DeliveryPhase.completed;
               });
@@ -469,8 +569,8 @@ class _DeliveryRoutePlannerScreenState
           IconButton(
             icon:
                 const Icon(Icons.my_location_rounded, color: AppColors.primary),
-            tooltip: 'Recentrer la carte',
-            onPressed: () => _updateMapElements(),
+            tooltip: 'Actualiser ma position et recentrer',
+            onPressed: () => _resolveDriverPosition(),
           ),
         ],
       ),
@@ -490,7 +590,14 @@ class _DeliveryRoutePlannerScreenState
             top: 12,
             left: 16,
             right: 16,
-            child: _buildTopHud(),
+            child: Column(
+              children: [
+                _buildTopHud(),
+                const MapOfflineNotice(
+                  margin: EdgeInsets.only(top: 8),
+                ),
+              ],
+            ),
           ),
 
           // ── Bottom Floating Action Panel ──
@@ -613,6 +720,32 @@ class _DeliveryRoutePlannerScreenState
                       color: Color(0xFF0F172A),
                     ),
                   ),
+                  if ((_coordsApproximate || _routeIsEstimate) &&
+                      !isCompleted) ...[
+                    const SizedBox(height: 3),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.info_outline_rounded,
+                          size: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            _coordsApproximate
+                                ? 'Positions approximatives — GPS partenaire indisponible. Utilisez le bouton GPS pour la navigation.'
+                                : 'Distance estimée à vol d\'oiseau (itinéraire routier indisponible).',
+                            style: const TextStyle(
+                              fontSize: 10.5,
+                              height: 1.25,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),

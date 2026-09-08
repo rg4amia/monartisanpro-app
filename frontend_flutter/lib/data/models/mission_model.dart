@@ -23,6 +23,8 @@ class MissionModel {
   final String? clientPhone;
   final double? clientLatitude;
   final double? clientLongitude;
+  final double? supplierLatitude;
+  final double? supplierLongitude;
 
   const MissionModel({
     required this.id,
@@ -49,6 +51,8 @@ class MissionModel {
     this.clientPhone,
     this.clientLatitude,
     this.clientLongitude,
+    this.supplierLatitude,
+    this.supplierLongitude,
   });
 
   bool get needsReferent => montantTotal > 2000000;
@@ -183,7 +187,44 @@ class MissionModel {
           : (json['clientLongitude'] != null
               ? double.tryParse(json['clientLongitude'].toString())
               : null),
+      supplierLatitude: _parseCoord(
+        json,
+        mapKeys: const ['supplierCoordinates', 'fournisseurCoordinates'],
+        flatKeys: const ['supplierLatitude', 'supplier_latitude'],
+        axis: 'lat',
+      ),
+      supplierLongitude: _parseCoord(
+        json,
+        mapKeys: const ['supplierCoordinates', 'fournisseurCoordinates'],
+        flatKeys: const ['supplierLongitude', 'supplier_longitude'],
+        axis: 'lng',
+      ),
     );
+  }
+
+  /// Extrait une coordonnée soit d'un objet imbriqué (`{lat, lng}`), soit d'une
+  /// clé plate. Retourne `null` si absente.
+  static double? _parseCoord(
+    Map<String, dynamic> json, {
+    required List<String> mapKeys,
+    required List<String> flatKeys,
+    required String axis,
+  }) {
+    for (final key in mapKeys) {
+      final value = json[key];
+      if (value is Map<String, dynamic>) {
+        final raw = value[axis] ?? value[axis == 'lat' ? 'latitude' : 'longitude'];
+        final parsed = double.tryParse(raw?.toString() ?? '');
+        if (parsed != null) return parsed;
+      }
+    }
+    for (final key in flatKeys) {
+      if (json[key] != null) {
+        final parsed = double.tryParse(json[key].toString());
+        if (parsed != null) return parsed;
+      }
+    }
+    return null;
   }
 
   Map<String, dynamic> toJson() => {
@@ -211,6 +252,8 @@ class MissionModel {
         'clientPhone': clientPhone,
         'clientLatitude': clientLatitude,
         'clientLongitude': clientLongitude,
+        'supplierLatitude': supplierLatitude,
+        'supplierLongitude': supplierLongitude,
       };
 
   MissionModel copyWith({
@@ -238,6 +281,8 @@ class MissionModel {
     String? clientPhone,
     double? clientLatitude,
     double? clientLongitude,
+    double? supplierLatitude,
+    double? supplierLongitude,
   }) {
     return MissionModel(
       id: id ?? this.id,
@@ -264,6 +309,8 @@ class MissionModel {
       clientPhone: clientPhone ?? this.clientPhone,
       clientLatitude: clientLatitude ?? this.clientLatitude,
       clientLongitude: clientLongitude ?? this.clientLongitude,
+      supplierLatitude: supplierLatitude ?? this.supplierLatitude,
+      supplierLongitude: supplierLongitude ?? this.supplierLongitude,
     );
   }
 

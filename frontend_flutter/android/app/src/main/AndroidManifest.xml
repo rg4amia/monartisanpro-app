@@ -11,8 +11,9 @@
 
     <application
         android:label="ProsArtisan" android:name="${applicationName}" android:icon="@mipmap/launcher_icon" android:usesCleartextTraffic="true">
-        <!-- Yandex Maps API Key -->
-        <meta-data android:name="com.yandex.maps.api_key" android:value="REVOKED-YANDEX-KEY"/>
+        <!-- Yandex Maps API Key — injectée par build.gradle.kts (manifestPlaceholders)
+             depuis android/local.properties (yandex.mapkit.apiKey) ou l'env YANDEX_MAPKIT_API_KEY -->
+        <meta-data android:name="com.yandex.maps.api_key" android:value="${YANDEX_MAPKIT_API_KEY}"/>
 
         <activity
             android:name=".MainActivity" android:exported="true" android:launchMode="singleTop" android:taskAffinity="" android:theme="@style/LaunchTheme" android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode" android:hardwareAccelerated="true" android:windowSoftInputMode="adjustResize">

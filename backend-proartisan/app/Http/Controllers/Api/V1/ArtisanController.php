@@ -6,8 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\ArtisanResource;
 use App\Models\User;
 use App\Services\GeoService;
-use App\Services\ScoreService;
 use App\Services\PdfService;
+use App\Services\ScoreService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -37,7 +37,7 @@ class ArtisanController extends Controller
             'lng.required' => 'La longitude est obligatoire.',
         ]);
 
-        $radius   = $data['radius'] ?? config('prosartisan.gps.nearby_artisan_radius', 2000);
+        $radius = $data['radius'] ?? config('prosartisan.gps.nearby_artisan_radius', 2000);
         $isFallback = false;
 
         $artisans = $this->geoService->nearbyArtisans(
@@ -74,11 +74,12 @@ class ArtisanController extends Controller
                 return null;
             }
 
-            // Flouter la position GPS avant envoi
+            // Flouter la position GPS avant envoi (offset stable par artisan)
             $blurred = $this->geoService->blurPosition(
                 (float) $row->lat,
                 (float) $row->lng,
-                $blurRadius
+                $blurRadius,
+                (string) $row->id
             );
 
             return new ArtisanResource($user, (float) $row->distance_metres, $blurred);
@@ -86,13 +87,13 @@ class ArtisanController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $result,
-            'meta'    => [
-                'total'       => $result->count(),
-                'radius'      => $radius,
+            'data' => $result,
+            'meta' => [
+                'total' => $result->count(),
+                'radius' => $radius,
                 'is_fallback' => $isFallback,
                 'intervention_nuit' => (bool) ($data['intervention_nuit'] ?? false),
-                'center'      => ['lat' => (float) $data['lat'], 'lng' => (float) $data['lng']],
+                'center' => ['lat' => (float) $data['lat'], 'lng' => (float) $data['lng']],
             ],
         ]);
     }
@@ -112,14 +113,19 @@ class ArtisanController extends Controller
         $user->load('artisanProfile.sector', 'artisanProfile.trade', 'evaluationsRecues', 'commune');
         $coords = $user->getPositionCoords();
 
-        // Flouter la position
+        // Flouter la position (offset stable par artisan)
         $blurred = $coords
-            ? $this->geoService->blurPosition($coords['lat'], $coords['lng'])
+            ? $this->geoService->blurPosition(
+                $coords['lat'],
+                $coords['lng'],
+                config('prosartisan.gps.artisan_blur_radius', 50),
+                (string) $user->id
+            )
             : null;
 
         return response()->json([
             'success' => true,
-            'data'    => new ArtisanResource($user, null, $blurred),
+            'data' => new ArtisanResource($user, null, $blurred),
         ]);
     }
 
@@ -139,7 +145,7 @@ class ArtisanController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $scoreDetail,
+            'data' => $scoreDetail,
         ]);
     }
 

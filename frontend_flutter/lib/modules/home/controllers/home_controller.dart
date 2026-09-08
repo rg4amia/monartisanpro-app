@@ -541,6 +541,12 @@ class HomeController extends GetxController {
                   supplier?['name'] ??
                   'Quincaillerie Partenaire';
           final clientName = _asMap(order['client'])?['name'] ?? 'Client';
+          final (supLat, supLng) = _coordsFrom(
+            _asMap(_asMap(supplier?['fournisseur_agree'])?['coordinates']) ??
+                _asMap(supplier?['coordinates']),
+          );
+          final (cliLat, cliLng) =
+              _coordsFrom(_asMap(_asMap(order['client'])?['coordinates']));
           final deliveryCost =
               (order['delivery_cost'] as num?)?.toInt() ?? 1500;
           final totalAmount = (order['total_amount'] as num?)?.toInt() ?? 0;
@@ -565,6 +571,10 @@ class HomeController extends GetxController {
             urgency: 'moyen',
             location: 'Abidjan',
             paymentStatus: 'funded',
+            supplierLatitude: supLat,
+            supplierLongitude: supLng,
+            clientLatitude: cliLat,
+            clientLongitude: cliLng,
           );
         }).toList();
       } else {
@@ -592,6 +602,12 @@ class HomeController extends GetxController {
                   supplier?['name'] ??
                   'Quincaillerie Partenaire';
           final clientName = _asMap(order['client'])?['name'] ?? 'Client';
+          final (supLat, supLng) = _coordsFrom(
+            _asMap(_asMap(supplier?['fournisseur_agree'])?['coordinates']) ??
+                _asMap(supplier?['coordinates']),
+          );
+          final (cliLat, cliLng) =
+              _coordsFrom(_asMap(_asMap(order['client'])?['coordinates']));
           final deliveryCost =
               (order['delivery_cost'] as num?)?.toInt() ?? 1500;
           final totalAmount = (order['total_amount'] as num?)?.toInt() ?? 0;
@@ -616,6 +632,10 @@ class HomeController extends GetxController {
             urgency: 'moyen',
             location: 'Abidjan',
             paymentStatus: 'funded',
+            supplierLatitude: supLat,
+            supplierLongitude: supLng,
+            clientLatitude: cliLat,
+            clientLongitude: cliLng,
           );
         }).toList();
 
@@ -676,7 +696,8 @@ class HomeController extends GetxController {
     }
   }
 
-  Future<void> handleDriverPickupFromStore(
+  /// Retourne `true` uniquement si le backend a validé le code de retrait.
+  Future<bool> handleDriverPickupFromStore(
     MissionModel mission,
     String code,
   ) async {
@@ -699,45 +720,33 @@ class HomeController extends GetxController {
           colorText: Colors.white,
         );
         await _loadDriverMissions();
-      } else {
-        Get.snackbar(
-          'Code invalide',
-          res['message'] ?? 'Le code d\'enlèvement du magasin est incorrect.',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: AppColors.danger,
-          colorText: Colors.white,
-        );
+        return true;
       }
+
+      Get.snackbar(
+        'Code invalide',
+        res['message'] ?? 'Le code d\'enlèvement du magasin est incorrect.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColors.danger,
+        colorText: Colors.white,
+      );
+      return false;
     } catch (e) {
-      final correctCode = 'RET-${mission.id}';
-      if (code.trim() == correctCode ||
-          code.trim() == '5561' ||
-          code.trim() == 'RET-5561') {
-        final updatedMission = mission.copyWith(
-          status: 'en_cours',
-          statusGemini: 'shipping',
-        );
-        driverActiveMissions.value = driverActiveMissions
-            .map((m) => m.id == mission.id ? updatedMission : m)
-            .toList();
-        Get.snackbar(
-          'Colis enlevé',
-          'Le colis est en route vers le client.',
-          backgroundColor: AppColors.success,
-          colorText: Colors.white,
-        );
-      } else {
-        Get.snackbar(
-          'Code invalide',
-          'Le code d\'enlèvement du magasin est incorrect.',
-          backgroundColor: AppColors.danger,
-          colorText: Colors.white,
-        );
-      }
+      // Aucune validation locale : le code de retrait doit être vérifié par le
+      // backend (règle d'or #8). En cas d'échec réseau, on n'avance pas l'état.
+      Get.snackbar(
+        'Validation impossible',
+        'Le code de retrait n\'a pas pu être vérifié. Vérifiez votre connexion et réessayez.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColors.danger,
+        colorText: Colors.white,
+      );
+      return false;
     }
   }
 
-  Future<void> handleDriverDropoffToClient(
+  /// Retourne `true` uniquement si le backend a validé le code de réception.
+  Future<bool> handleDriverDropoffToClient(
     MissionModel mission,
     String code,
   ) async {
@@ -758,42 +767,28 @@ class HomeController extends GetxController {
           colorText: Colors.white,
         );
         await _loadDriverMissions();
-      } else {
-        Get.snackbar(
-          'Code invalide',
-          res['message'] ?? 'Le code de réception du client est incorrect.',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: AppColors.danger,
-          colorText: Colors.white,
-        );
+        return true;
       }
+
+      Get.snackbar(
+        'Code invalide',
+        res['message'] ?? 'Le code de réception du client est incorrect.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColors.danger,
+        colorText: Colors.white,
+      );
+      return false;
     } catch (e) {
-      final correctCode = 'REC-${mission.id}';
-      if (code.trim() == correctCode ||
-          code.trim() == '3012' ||
-          code.trim() == 'REC-3012') {
-        final deliveryFee = mission.montantMo > 0 ? mission.montantMo : 1500;
-        walletMo.value += deliveryFee;
-        StorageService.saveDriverWalletBalance(walletMo.value);
-
-        driverActiveMissions.removeWhere((m) => m.id == mission.id);
-
-        Get.snackbar(
-          'Livraison validée',
-          'Votre portefeuille a été crédité de ${Formatters.fcfa(deliveryFee)}.',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: AppColors.success,
-          colorText: Colors.white,
-        );
-      } else {
-        Get.snackbar(
-          'Code invalide',
-          'Le code de réception du client est incorrect.',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: AppColors.danger,
-          colorText: Colors.white,
-        );
-      }
+      // Aucune validation locale : le code de réception (OTP) doit être vérifié
+      // par le backend (règle d'or #8). Pas de crédit portefeuille hors-ligne.
+      Get.snackbar(
+        'Validation impossible',
+        'Le code de réception n\'a pas pu être vérifié. Vérifiez votre connexion et réessayez.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColors.danger,
+        colorText: Colors.white,
+      );
+      return false;
     }
   }
 
@@ -802,6 +797,19 @@ class HomeController extends GetxController {
     if (value is int) return value;
     if (value is double) return value.toInt();
     return int.tryParse(value.toString()) ?? 0;
+  }
+
+  /// Extrait `lat`/`lng` d'un objet `coordinates` (`{lat, lng}`) sérialisé par
+  /// l'API (User + FournisseurAgree l'exposent via `$appends`).
+  static (double?, double?) _coordsFrom(Map<String, dynamic>? coordinates) {
+    if (coordinates == null) return (null, null);
+    final lat = double.tryParse(
+      (coordinates['lat'] ?? coordinates['latitude'])?.toString() ?? '',
+    );
+    final lng = double.tryParse(
+      (coordinates['lng'] ?? coordinates['longitude'])?.toString() ?? '',
+    );
+    return (lat, lng);
   }
 
   /// Cast défensif d'une valeur JSON dynamique en `Map` typée (ou `null`).
