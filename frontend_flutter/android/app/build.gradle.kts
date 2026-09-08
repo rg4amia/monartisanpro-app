@@ -54,12 +54,25 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+
+            // Rétrécissement : supprime le code et les ressources inutilisés
+            // (~30-40 % de moins sur le .dex + assets). Règles dans proguard-rules.pro.
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
         }
     }
 
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
+        // .so compressés dans l'APK → téléchargement plus léger.
+        jniLibs {
+            useLegacyPackaging = true
         }
     }
 }
