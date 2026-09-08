@@ -8,7 +8,7 @@ Add the following to your `.env` file:
 
 ```env
 SMS_PROVIDER=smspro # Use 'log' for development, 'smspro' for production
-SMS_API_TOKEN=1227|Gjd4N2x6qRYdnwWybpkJfoA87LbCFAFnvpNK2NPwa4861d63 
+SMS_API_TOKEN=votre_token_smspro_ici
 SMS_BASE_URL=https://app.smspro.africa/api/v3
 SMS_SENDER_ID=ProsArtisan          # Max 11 characters
 ```

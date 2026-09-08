@@ -41,7 +41,7 @@ TELEGRAM_CHAT_ID=987654321
 Ouvrez `backend-proartisan/.env` et remplacez :
 
 ```env
-TELEGRAM_CHAT_ID='8715763356'  ← ANCIEN (incorrect)
+TELEGRAM_CHAT_ID='<ID_DU_BOT>'  ← ANCIEN (incorrect)
 ```
 
 Par :

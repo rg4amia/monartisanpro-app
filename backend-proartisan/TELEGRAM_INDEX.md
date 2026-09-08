@@ -101,8 +101,8 @@ Log::channel('telegram_bot')->error('Exception capturée', [
 Votre configuration actuelle dans `.env` :
 
 ```env
-TELEGRAM_BOT_TOKEN='8715763356:AAFPM6f1DALdYxn5gU6_DLX_-wZl6ZRtEJE' ✅
-TELEGRAM_CHAT_ID='8715763356' ❌ INCORRECT
+TELEGRAM_BOT_TOKEN='<VOTRE_TOKEN_BOT>' ✅
+TELEGRAM_CHAT_ID='<ID_DU_BOT>' ❌ INCORRECT
 ```
 
 **Erreur** : Le Chat ID est l'ID du bot. Les bots ne peuvent pas s'envoyer de messages.

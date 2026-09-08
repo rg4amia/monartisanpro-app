@@ -7,8 +7,8 @@ Votre bot Telegram : **@ProsArtisanBot**
 ### Configuration actuelle (INCORRECTE)
 
 ```env
-TELEGRAM_BOT_TOKEN='8715763356:AAFPM6f1DALdYxn5gU6_DLX_-wZl6ZRtEJE' ✅
-TELEGRAM_CHAT_ID='8715763356' ❌ (c'est l'ID du bot, pas du chat)
+TELEGRAM_BOT_TOKEN='<VOTRE_TOKEN_BOT>' ✅
+TELEGRAM_CHAT_ID='<ID_DU_BOT>' ❌ (c'est l'ID du bot, pas du chat)
 ```
 
 **Problème** : Les bots ne peuvent pas s'envoyer de messages. Vous devez obtenir votre Chat ID personnel.

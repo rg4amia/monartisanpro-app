@@ -5,8 +5,8 @@
 Votre configuration actuelle dans `.env` :
 
 ```env
-TELEGRAM_BOT_TOKEN='8715763356:AAFPM6f1DALdYxn5gU6_DLX_-wZl6ZRtEJE'
-TELEGRAM_CHAT_ID='8715763356'  ← INCORRECT
+TELEGRAM_BOT_TOKEN='<VOTRE_TOKEN_BOT>'
+TELEGRAM_CHAT_ID='<ID_DU_BOT>'  ← INCORRECT
 ```
 
 **Erreur** : Le `TELEGRAM_CHAT_ID` est identique à l'ID du bot. Les bots ne peuvent pas s'envoyer de messages.
@@ -32,7 +32,7 @@ Exécutez cette commande dans votre terminal :
 
 ```bash
 cd backend-proartisan
-curl "https://api.telegram.org/bot8715763356:AAFPM6f1DALdYxn5gU6_DLX_-wZl6ZRtEJE/getUpdates"
+curl "https://api.telegram.org/bot<VOTRE_TOKEN_BOT>/getUpdates"
 ```
 
 Vous verrez une réponse JSON comme celle-ci :

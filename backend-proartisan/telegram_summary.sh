@@ -42,7 +42,7 @@ cat << 'EOF'
 ═══════════════════════════════════════════════════════════════════════════
 
 Votre .env contient :
-  TELEGRAM_CHAT_ID='8715763356'  ❌ INCORRECT
+  TELEGRAM_CHAT_ID='<ID_DU_BOT>'  ❌ INCORRECT
 
 C'est l'ID du bot, pas du chat. Les bots ne peuvent pas s'envoyer de messages.
 

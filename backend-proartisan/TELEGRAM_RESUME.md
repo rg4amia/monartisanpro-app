@@ -11,7 +11,7 @@ Status: 403
 Body: {"ok":false,"error_code":403,"description":"Forbidden: bots can't send messages to bots"}
 ```
 
-**Cause** : Le `TELEGRAM_CHAT_ID` dans `.env` est identique à l'ID du bot (`8715763356`), ce qui est incorrect. Les bots ne peuvent pas s'envoyer de messages à eux-mêmes.
+**Cause** : Le `TELEGRAM_CHAT_ID` dans `.env` est identique à l'ID du bot (`<ID_DU_BOT>`), ce qui est incorrect. Les bots ne peuvent pas s'envoyer de messages à eux-mêmes.
 
 ### 2. Identification du bot
 
@@ -58,8 +58,8 @@ Lien direct : <https://t.me/ProsArtisanBot>
 ### Problème actuel
 
 ```env
-TELEGRAM_BOT_TOKEN='8715763356:AAFPM6f1DALdYxn5gU6_DLX_-wZl6ZRtEJE' ✅
-TELEGRAM_CHAT_ID='8715763356' ❌ INCORRECT
+TELEGRAM_BOT_TOKEN='<VOTRE_TOKEN_BOT>' ✅
+TELEGRAM_CHAT_ID='<ID_DU_BOT>' ❌ INCORRECT
 ```
 
 ### Solution en 5 étapes
@@ -99,7 +99,7 @@ TELEGRAM_CHAT_ID=987654321
 Ouvrez `backend-proartisan/.env` et remplacez :
 
 ```env
-TELEGRAM_CHAT_ID='8715763356'
+TELEGRAM_CHAT_ID='<ID_DU_BOT>'
 ```
 
 Par le Chat ID fourni par le script :

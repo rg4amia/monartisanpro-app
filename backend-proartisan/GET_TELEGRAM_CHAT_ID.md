@@ -5,8 +5,8 @@
 Votre `.env` contient :
 
 ```
-TELEGRAM_BOT_TOKEN='8715763356:AAFPM6f1DALdYxn5gU6_DLX_-wZl6ZRtEJE'
-TELEGRAM_CHAT_ID='8715763356'  ← INCORRECT (c'est l'ID du bot, pas du chat)
+TELEGRAM_BOT_TOKEN='<VOTRE_TOKEN_BOT>'
+TELEGRAM_CHAT_ID='<ID_DU_BOT>'  ← INCORRECT (c'est l'ID du bot, pas du chat)
 ```
 
 **Erreur** : `Forbidden: bots can't send messages to bots`
@@ -35,7 +35,7 @@ php artisan tinker --execute="\$response = Http::get('https://api.telegram.org/b
 Ou utilisez cette commande curl :
 
 ```bash
-curl "https://api.telegram.org/bot8715763356:AAFPM6f1DALdYxn5gU6_DLX_-wZl6ZRtEJE/getUpdates"
+curl "https://api.telegram.org/bot<VOTRE_TOKEN_BOT>/getUpdates"
 ```
 
 ### Étape 3 : Trouver votre Chat ID dans la réponse
@@ -88,7 +88,7 @@ TELEGRAM_CHAT_ID='987654321'  # Remplacez par votre vrai Chat ID
 ### Étape 2 : Récupérer le Chat ID du groupe
 
 ```bash
-curl "https://api.telegram.org/bot8715763356:AAFPM6f1DALdYxn5gU6_DLX_-wZl6ZRtEJE/getUpdates"
+curl "https://api.telegram.org/bot<VOTRE_TOKEN_BOT>/getUpdates"
 ```
 
 Le Chat ID d'un groupe commence par un `-` (négatif), par exemple : `-1001234567890`
@@ -176,8 +176,8 @@ if ($response->successful()) {
 # 1. Envoyez un message à votre bot dans Telegram
 # 2. Exécutez cette commande :
 
-curl -s "https://api.telegram.org/bot8715763356:AAFPM6f1DALdYxn5gU6_DLX_-wZl6ZRtEJE/getUpdates" | jq '.result[0].message.chat.id'
+curl -s "https://api.telegram.org/bot<VOTRE_TOKEN_BOT>/getUpdates" | jq '.result[0].message.chat.id'
 
 # Si vous n'avez pas jq installé :
-curl "https://api.telegram.org/bot8715763356:AAFPM6f1DALdYxn5gU6_DLX_-wZl6ZRtEJE/getUpdates" | grep -o '"chat":{"id":[0-9-]*' | grep -o '[0-9-]*$'
+curl "https://api.telegram.org/bot<VOTRE_TOKEN_BOT>/getUpdates" | grep -o '"chat":{"id":[0-9-]*' | grep -o '[0-9-]*$'
 ```
