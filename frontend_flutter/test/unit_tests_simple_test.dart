@@ -321,6 +321,42 @@ void main() {
       expect(mission.montantTotal, 100000);
     });
 
+    test('should parse supplier & client coordinates from nested objects', () {
+      final json = {
+        'id': 1,
+        'clientId': 10,
+        'artisanId': 5,
+        'status': 'en_cours',
+        'montantTotal': 100000,
+        'montantMateriaux': 60000,
+        'montantMo': 40000,
+        'ratioMateriaux': 0.6,
+        'createdAt': '2026-02-27T10:00:00Z',
+        'supplierCoordinates': {'lat': 5.35, 'lng': -4.02},
+        'clientCoordinates': {'lat': 5.36, 'lng': -4.01},
+      };
+
+      final mission = MissionModel.fromJson(json);
+
+      expect(mission.supplierLatitude, 5.35);
+      expect(mission.supplierLongitude, -4.02);
+      expect(mission.clientLatitude, 5.36);
+      expect(mission.clientLongitude, -4.01);
+    });
+
+    test('supplier coordinates are null when absent', () {
+      final mission = MissionModel.fromJson({
+        'id': 2,
+        'status': 'en_cours',
+        'montantTotal': 1000,
+        'ratioMateriaux': 1.0,
+        'createdAt': '2026-02-27T10:00:00Z',
+      });
+
+      expect(mission.supplierLatitude, isNull);
+      expect(mission.supplierLongitude, isNull);
+    });
+
     test('should convert MissionModel to JSON', () {
       const mission = MissionModel(
         id: 1,
