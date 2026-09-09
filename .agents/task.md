@@ -18,3 +18,11 @@
 - [x] **3. Validation & Tests**
   - [x] Exécuter les tests unitaires et fonctionnels backend (`OrderWorkflowTest`, `DevisPaymentFlowTest`)
   - [x] Compiler l'application mobile et s'assurer qu'il n'y a pas d'erreur de compilation
+- [x] **4. Maîtrise des Générations APK & Résilience Système**
+  - [x] Identifier et neutraliser l'instabilité de `prosartisan-armeabi-v7a.apk` sur processeurs 64-bit
+  - [x] Générer et centraliser `prosartisan-arm64-v8a.apk` (64-bit prioritaire pour smartphones modernes)
+  - [x] Compiler et centraliser `prosartisan-app-universal.apk` (tout-terrain 32/64 bits)
+  - [x] Standardiser l'IA sur `gemini-1.5-flash` avec support gateway `base_url` et fallback heuristique
+  - [x] Initialiser les valeurs par défaut financières (`montant_total = 0`, etc.) sur `missions` pour MySQL strict
+  - [x] Sécuriser le bouton de sélection d'artisan avec loader réactif et anti-double clic
+  - [x] Consigner et documenter les règles 37-40 dans `PRD.md` et 45-48 dans `AGENTS.md`
