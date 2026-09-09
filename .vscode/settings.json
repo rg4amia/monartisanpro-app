@@ -12,11 +12,17 @@
   ],
   "files.exclude": {
     "**/frontend_flutter/build": true,
-    "**/build": true
+    "**/build": true,
+    "**/.dart_tool": true
   },
   "files.watcherExclude": {
     "**/frontend_flutter/build/**": true,
-    "**/build/**": true
+    "**/build/**": true,
+    "**/.dart_tool/**": true,
+    "**/ios/Flutter/ephemeral/**": true,
+    "**/macos/Flutter/ephemeral/**": true,
+    "**/linux/flutter/ephemeral/**": true,
+    "**/windows/flutter/ephemeral/**": true
   },
   "java.configuration.updateBuildConfiguration": "interactive",
   "claudeCode.enableNewConversationShortcut": true,
