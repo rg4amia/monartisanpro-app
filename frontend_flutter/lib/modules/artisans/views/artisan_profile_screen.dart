@@ -438,6 +438,7 @@ void _showQuoteRequestModal(BuildContext context, ArtisanModel a) {
   final urgency = 'moyen'.obs;
   final photos = <XFile>[].obs;
   final video = Rx<XFile?>(null);
+  final isSubmitting = false.obs;
 
   Future<void> pickImage() async {
     if (photos.length >= 5) {
@@ -623,93 +624,87 @@ void _showQuoteRequestModal(BuildContext context, ArtisanModel a) {
               const SizedBox(height: 24),
 
               // Submit Button
-              ElevatedButton.icon(
-                onPressed: () async {
-                  final text = descCtrl.text.trim();
-                  if (text.length < 20) {
-                    Get.snackbar(
-                      'Description insuffisante',
-                      'Veuillez saisir au moins 20 caractères pour décrire vos travaux.',
-                      snackPosition: SnackPosition.TOP,
-                      backgroundColor: AppColors.warning,
-                      colorText: Colors.white,
-                    );
-                    return;
-                  }
+              Obx(() => ElevatedButton.icon(
+                onPressed: isSubmitting.value
+                    ? null
+                    : () async {
+                        final text = descCtrl.text.trim();
+                        if (text.length < 20) {
+                          Get.snackbar(
+                            'Description insuffisante',
+                            'Veuillez saisir au moins 20 caractères pour décrire vos travaux.',
+                            snackPosition: SnackPosition.TOP,
+                            backgroundColor: AppColors.warning,
+                            colorText: Colors.white,
+                          );
+                          return;
+                        }
 
-                  // 1. Show loading progress indicator
-                  unawaited(
-                    Get.dialog(
-                      const Center(
-                        child: CircularProgressIndicator(),
-                      ),
-                      barrierDismissible: false,
-                    ),
-                  );
+                        isSubmitting.value = true;
 
-                  try {
-                    final missionsController =
-                        Get.isRegistered<MissionsController>()
-                            ? Get.find<MissionsController>()
-                            : Get.put(MissionsController());
+                        try {
+                          final missionsController =
+                              Get.isRegistered<MissionsController>()
+                                  ? Get.find<MissionsController>()
+                                  : Get.put(MissionsController());
 
-                    // 2. Upload photos and videos first
-                    final List<String> uploadedUrls = [];
-                    for (final photo in photos) {
-                      final url =
-                          await missionsController.uploadFile(photo.path);
-                      uploadedUrls.add(url);
-                    }
-                    if (video.value != null) {
-                      final url = await missionsController
-                          .uploadFile(video.value!.path);
-                      uploadedUrls.add(url);
-                    }
+                          // 1. Upload photos and videos first
+                          final List<String> uploadedUrls = [];
+                          for (final photo in photos) {
+                            final url =
+                                await missionsController.uploadFile(photo.path);
+                            uploadedUrls.add(url);
+                          }
+                          if (video.value != null) {
+                            final url = await missionsController
+                                .uploadFile(video.value!.path);
+                            uploadedUrls.add(url);
+                          }
 
-                    // 3. Create the mission request
-                    final mission = await missionsController.createMission(
-                      artisanId: a.id,
-                      description: text,
-                      category: a.trade ?? 'Travaux généraux',
-                      urgency: urgency.value,
-                      photos: uploadedUrls.isNotEmpty ? uploadedUrls : null,
-                    );
+                          // 2. Create the mission request
+                          final mission = await missionsController.createMission(
+                            artisanId: a.id,
+                            description: text,
+                            category: a.trade ?? 'Travaux généraux',
+                            urgency: urgency.value,
+                            photos: uploadedUrls.isNotEmpty ? uploadedUrls : null,
+                          );
 
-                    Get.back(); // Close loading dialog
-                    Get.back(); // Close bottom sheet modal
+                          if (mission != null) {
+                            if (context.mounted) {
+                              Navigator.of(context).pop(); // Close bottom sheet modal
+                            }
+                            unawaited(
+                              Get.toNamed(
+                                Routes.missionTracking,
+                                arguments: mission,
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          String errorMsg =
+                              'Une erreur est survenue lors du téléversement ou de la création';
+                          if (e is DioException) {
+                            errorMsg = (e.response?.data
+                                    as Map<String, dynamic>?)?['message'] ??
+                                e.message ??
+                                errorMsg;
+                          } else if (e.toString().contains('Fichier rejeté')) {
+                            errorMsg = e.toString();
+                          }
 
-                    if (mission != null) {
-                      unawaited(
-                        Get.toNamed(
-                          Routes.missionTracking,
-                          arguments: mission,
-                        ),
-                      );
-                    }
-                  } catch (e) {
-                    Get.back(); // Close loading dialog
-
-                    String errorMsg =
-                        'Une erreur est survenue lors du téléversement ou de la création';
-                    if (e is DioException) {
-                      errorMsg = (e.response?.data
-                              as Map<String, dynamic>?)?['message'] ??
-                          e.message ??
-                          errorMsg;
-                    } else if (e.toString().contains('Fichier rejeté')) {
-                      errorMsg = e.toString();
-                    }
-
-                    Get.snackbar(
-                      'Erreur',
-                      errorMsg,
-                      snackPosition: SnackPosition.TOP,
-                      backgroundColor: Colors.red,
-                      colorText: Colors.white,
-                      duration: const Duration(seconds: 6),
-                    );
-                  }
-                },
+                          Get.snackbar(
+                            'Erreur',
+                            errorMsg,
+                            snackPosition: SnackPosition.TOP,
+                            backgroundColor: Colors.red,
+                            colorText: Colors.white,
+                            duration: const Duration(seconds: 6),
+                          );
+                        } finally {
+                          isSubmitting.value = false;
+                        }
+                      },
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   backgroundColor: AppColors.client,
@@ -717,12 +712,28 @@ void _showQuoteRequestModal(BuildContext context, ArtisanModel a) {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                icon: const Icon(Icons.send_outlined, color: Colors.white),
-                label: const Text(
-                  'ENVOYER LA DEMANDE DE DEVIS',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                icon: isSubmitting.value
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.send_outlined, color: Colors.white),
+                label: Text(
+                  isSubmitting.value
+                      ? 'ENVOI EN COURS...'
+                      : 'ENVOYER LA DEMANDE DE DEVIS',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: Colors.white,
+                  ),
                 ),
               ),
+            ),
             ],
           ),
         ),

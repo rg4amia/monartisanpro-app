@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -5,6 +7,7 @@ import '../../../app/routes/app_routes.dart';
 import '../controllers/services_controller.dart';
 import '../models/sector_model.dart';
 import '../models/trade_model.dart';
+import '../utils/service_icon_helper.dart';
 
 class ServicesScreen extends StatelessWidget {
   const ServicesScreen({super.key});
@@ -145,22 +148,24 @@ class ServicesScreen extends StatelessWidget {
     );
   }
 
-  void _showTradesBottomSheet(
+  Future<void> _showTradesBottomSheet(
     BuildContext context,
     ServicesController controller,
     SectorModel sector,
-  ) {
-    controller.loadTrades(sector);
+  ) async {
+    unawaited(controller.loadTrades(sector));
+    final sectorColor = ServiceIconHelper.getSectorColor(sector.name, sector.color);
+    final sectorIcon = ServiceIconHelper.getSectorIcon(sector.name, sector.icon);
 
-    showModalBottomSheet(
+    final selected = await showModalBottomSheet<Map<String, dynamic>?>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.7,
+        height: MediaQuery.of(context).size.height * 0.75,
         decoration: const BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
           children: [
@@ -173,11 +178,21 @@ class ServicesScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
                 children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: sectorColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(sectorIcon, color: sectorColor, size: 24),
+                  ),
+                  const SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -185,16 +200,16 @@ class ServicesScreen extends StatelessWidget {
                         Text(
                           'Services de ${sector.name}',
                           style: const TextStyle(
-                            fontSize: 20,
+                            fontSize: 18,
                             fontWeight: FontWeight.w700,
                             color: Color(0xFF0F172A),
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 2),
                         const Text(
-                          'Sélectionnez une tâche spécifique',
+                          'Sélectionnez une spécialité ou tout le secteur',
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 13,
                             color: Color(0xFF64748B),
                           ),
                         ),
@@ -220,34 +235,103 @@ class ServicesScreen extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
+            // Option to select whole sector directly
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: InkWell(
+                onTap: () {
+                  Navigator.pop(context, {
+                    'sector': sector,
+                    'trade': null,
+                    'category': sector.name,
+                  });
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: sectorColor.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: sectorColor.withValues(alpha: 0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.check_circle_outline_rounded, color: sectorColor, size: 20),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Sélectionner tout le secteur "${sector.name}"',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: sectorColor,
+                          ),
+                        ),
+                      ),
+                      Icon(Icons.arrow_forward_ios_rounded, color: sectorColor, size: 14),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Spécialités précises :',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
             Expanded(
               child: Obx(() {
                 if (controller.isLoadingTrades.value) {
-                  return const Center(
+                  return Center(
                     child: CircularProgressIndicator(
-                      color: Color(0xFF4F46E5),
+                      color: sectorColor,
                     ),
                   );
                 }
 
                 if (controller.trades.isEmpty) {
-                  return const Center(
-                    child: Text('Aucune tâche spécifique disponible'),
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.info_outline_rounded, color: Colors.grey.shade400, size: 36),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Aucune spécialité distincte enregistrée',
+                          style: TextStyle(color: Color(0xFF64748B), fontSize: 13),
+                        ),
+                      ],
+                    ),
                   );
                 }
 
                 return ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
                   itemCount: controller.trades.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 8),
                   itemBuilder: (context, index) {
                     final trade = controller.trades[index];
                     return _TradeItem(
                       trade: trade,
+                      sector: sector,
                       onTap: () {
-                        Navigator.pop(context);
-                        controller.selectTrade(trade);
+                        Navigator.pop(context, {
+                          'sector': sector,
+                          'trade': trade,
+                          'category': trade.name,
+                        });
                       },
                     );
                   },
@@ -258,6 +342,10 @@ class ServicesScreen extends StatelessWidget {
         ),
       ),
     );
+
+    if (selected != null) {
+      Get.back(result: selected);
+    }
   }
 }
 
@@ -270,42 +358,10 @@ class _ServiceCard extends StatelessWidget {
     required this.onTap,
   });
 
-  IconData _getIcon() {
-    switch (sector.name.toLowerCase()) {
-      case 'plumbing':
-        return Icons.plumbing_outlined;
-      case 'electricity':
-        return Icons.electric_bolt_outlined;
-      case 'masonry':
-        return Icons.foundation_outlined;
-      case 'painting':
-        return Icons.format_paint_outlined;
-      case 'carpentry':
-        return Icons.carpenter_outlined;
-      case 'air conditioning':
-        return Icons.ac_unit_outlined;
-      case 'tailoring':
-        return Icons.checkroom_outlined;
-      case 'electronics':
-        return Icons.devices_outlined;
-      default:
-        return Icons.build_outlined;
-    }
-  }
-
-  Color _getColor() {
-    if (sector.color != null) {
-      try {
-        return Color(int.parse(sector.color!.replaceFirst('#', '0xFF')));
-      } catch (_) {}
-    }
-    return const Color(0xFF4F46E5);
-  }
-
   @override
   Widget build(BuildContext context) {
-    final color = _getColor();
-    final icon = _getIcon();
+    final color = ServiceIconHelper.getSectorColor(sector.name, sector.color);
+    final icon = ServiceIconHelper.getSectorIcon(sector.name, sector.icon);
 
     return GestureDetector(
       onTap: onTap,
@@ -328,8 +384,9 @@ class _ServiceCard extends StatelessWidget {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(14),
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: color.withValues(alpha: 0.2)),
               ),
               child: Icon(icon, color: color, size: 28),
             ),
@@ -347,11 +404,11 @@ class _ServiceCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
+                  const Text(
                     'Voir les services disponibles',
                     style: TextStyle(
                       fontSize: 13,
-                      color: const Color(0xFF64748B),
+                      color: Color(0xFF64748B),
                     ),
                   ),
                 ],
@@ -371,19 +428,24 @@ class _ServiceCard extends StatelessWidget {
 
 class _TradeItem extends StatelessWidget {
   final TradeModel trade;
+  final SectorModel? sector;
   final VoidCallback onTap;
 
   const _TradeItem({
     required this.trade,
+    this.sector,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final color = ServiceIconHelper.getSectorColor(sector?.name ?? trade.name, sector?.color);
+    final icon = ServiceIconHelper.getSectorIcon(trade.name, sector?.icon);
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: const Color(0xFFF8FAFC),
           borderRadius: BorderRadius.circular(12),
@@ -392,16 +454,16 @@ class _TradeItem extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              width: 40,
-              height: 40,
+              width: 42,
+              height: 42,
               decoration: BoxDecoration(
-                color: const Color(0xFF4F46E5).withValues(alpha: 0.1),
+                color: color.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(
-                Icons.build_outlined,
-                color: Color(0xFF4F46E5),
-                size: 20,
+              child: Icon(
+                icon,
+                color: color,
+                size: 22,
               ),
             ),
             const SizedBox(width: 12),
@@ -409,7 +471,7 @@ class _TradeItem extends StatelessWidget {
               child: Text(
                 trade.name,
                 style: const TextStyle(
-                  fontSize: 15,
+                  fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: Color(0xFF0F172A),
                 ),
@@ -418,7 +480,7 @@ class _TradeItem extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: const Color(0xFF4F46E5),
+                color: color,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Text(

@@ -58,6 +58,10 @@ Route::prefix('v1')->group(function () {
     Route::get('/settings/app-access', [SettingController::class, 'getAppAccess']);
     Route::post('/promo-codes/verify', [PromoCodeController::class, 'verify']);
 
+    // ── Secteurs & Métiers (Taxonomie publique) ─────────────────────────────
+    Route::get('/sectors', [SectorController::class, 'index']);
+    Route::get('/sectors/{sector}/trades', [SectorController::class, 'trades']);
+
     // ── Webhooks (sans authentification pour les callbacks externes) ─────────
     Route::prefix('webhooks')->middleware('throttle:webhook')->group(function () {
         Route::post('/wave', [WebhookController::class, 'wave']);

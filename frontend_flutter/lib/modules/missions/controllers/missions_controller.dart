@@ -159,7 +159,10 @@ class MissionsController extends GetxController {
   }
 
   /// Demande une estimation Gemini AI
-  Future<void> estimate(String description, String category) async {
+  Future<Map<String, dynamic>?> estimate(
+    String description, [
+    String? category,
+  ]) async {
     isEstimating.value = true;
     estimateResult.value = null;
     errorMsg.value = null;
@@ -178,13 +181,16 @@ class MissionsController extends GetxController {
         snackPosition: SnackPosition.TOP,
         duration: const Duration(seconds: 2),
       );
+      return result;
     } on DioException catch (e) {
       errorMsg.value = _handleDioError(e);
       estimateResult.value = null;
       _showErrorSnackbar('Échec de l\'estimation IA: ${errorMsg.value}');
+      return null;
     } catch (e) {
       estimateResult.value = null;
       _showErrorSnackbar('Impossible de générer une estimation');
+      return null;
     } finally {
       isEstimating.value = false;
     }

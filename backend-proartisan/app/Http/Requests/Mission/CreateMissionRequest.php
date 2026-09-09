@@ -29,13 +29,10 @@ class CreateMissionRequest extends FormRequest
             'photos.*'    => ['string'],
         ];
 
-        if ($user && !$user->payment_phone) {
-            $rules['payment_phone'] = ['required', 'string', 'max:20'];
-            $rules['preferred_payment_provider'] = ['required', 'in:wave,orange_money'];
-        } else {
-            $rules['payment_phone'] = ['nullable', 'string', 'max:20'];
-            $rules['preferred_payment_provider'] = ['nullable', 'in:wave,orange_money'];
-        }
+        // Les coordonnées de paiement Mobile Money sont facultatives lors de la demande de devis
+        // Elles seront obligatoires au moment du financement/séquestre (Phase 2).
+        $rules['payment_phone'] = ['nullable', 'string', 'max:20'];
+        $rules['preferred_payment_provider'] = ['nullable', 'in:wave,orange_money,mtn_money,moov_money'];
 
         return $rules;
     }

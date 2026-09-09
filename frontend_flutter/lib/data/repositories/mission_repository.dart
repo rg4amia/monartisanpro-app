@@ -209,12 +209,19 @@ class MissionRepository {
   /// Demande une estimation IA Gemini pour une mission
   Future<Map<String, dynamic>> estimate({
     required String description,
-    required String category,
+    String? category,
   }) async {
+    final payload = <String, dynamic>{
+      'description': description,
+    };
+    if (category != null && category.trim().isNotEmpty) {
+      payload['category'] = category.trim();
+    }
+
     final res = await NetworkExecutor.run(
       () => _client.post(
         ApiEndpoints.missionEstimate,
-        data: {'description': description, 'category': category},
+        data: payload,
       ),
       maxRetries: 2, // Moins de tentatives pour l'IA (coût API)
     );

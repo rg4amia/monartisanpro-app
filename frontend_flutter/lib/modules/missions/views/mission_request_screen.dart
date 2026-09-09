@@ -5,7 +5,9 @@ import 'package:image_picker/image_picker.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../core/storage/storage_service.dart';
 import '../../../core/utils/bypass_validator.dart';
-import '../../../data/models/sector_model.dart';
+import '../../services/models/sector_model.dart';
+import '../../services/models/trade_model.dart';
+import '../../services/utils/service_icon_helper.dart';
 import '../controllers/missions_controller.dart';
 
 // ─── Design Tokens ────────────────────────────────────────────────────────────
@@ -95,20 +97,71 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
   }
 
   Future<void> _runGeminiEstimate() async {
-    if (_selectedCategory.value.isEmpty) {
-      Get.snackbar('Erreur', 'Veuillez sélectionner une catégorie');
+    final desc = _descCtrl.text.trim();
+    if (desc.length < 10) {
+      Get.snackbar(
+        'Description requise',
+        'Veuillez d\'abord décrire votre problème (au moins 10 caractères) pour lancer l\'analyse IA.',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.amber.shade800,
+        colorText: Colors.white,
+      );
       return;
     }
 
-    if (_descCtrl.text.trim().length < 10) {
-      Get.snackbar('Erreur', 'Veuillez fournir plus de détails');
-      return;
-    }
-
-    await _missionsController.estimate(
-      _descCtrl.text.trim(),
-      _selectedCategory.value,
+    final result = await _missionsController.estimate(
+      desc,
+      _selectedCategory.value.isNotEmpty ? _selectedCategory.value : null,
     );
+
+    if (result != null) {
+      final detectedCategory = result['category']?.toString();
+      if (detectedCategory != null &&
+          detectedCategory.isNotEmpty &&
+          _selectedCategory.value.isEmpty) {
+        _selectedCategory.value = detectedCategory;
+      }
+    }
+  }
+
+  Future<void> _openCategorySelector() async {
+    final result = await showModalBottomSheet<dynamic>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _QuickCategoryBottomSheet(
+        onSelected: (cat) => Navigator.pop(ctx, {'category': cat}),
+        onOpenFullServices: () async {
+          Navigator.pop(ctx);
+          final res = await Get.toNamed(Routes.services);
+          if (res != null) {
+            _applyCategorySelection(res);
+          }
+        },
+      ),
+    );
+
+    if (result != null) {
+      _applyCategorySelection(result);
+    }
+  }
+
+  void _applyCategorySelection(dynamic result) {
+    if (result != null && result is Map) {
+      final trade = result['trade'] as TradeModel?;
+      final sector = result['sector'] as SectorModel?;
+      final category =
+          result['category'] as String? ?? trade?.name ?? sector?.name ?? '';
+      if (category.isNotEmpty) {
+        _selectedCategory.value = category;
+      }
+      if (sector != null) {
+        _selectedCategoryId.value = sector.id;
+      }
+      if (trade != null) {
+        _selectedTradeId.value = trade.id;
+      }
+    }
   }
 
   @override
@@ -130,35 +183,11 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
                     Obx(
                       () => _selectedCategory.value.isEmpty
                           ? _SelectServiceButton(
-                              onTap: () async {
-                                final result = await Get.toNamed(
-                                  Routes.services,
-                                );
-                                if (result != null && result is Map) {
-                                  final trade = result['trade'] as TradeModel?;
-                                  final sector =
-                                      result['sector'] as SectorModel?;
-                                  _selectedCategory.value = trade?.name ?? '';
-                                  _selectedCategoryId.value = sector?.id ?? 0;
-                                  _selectedTradeId.value = trade?.id ?? 0;
-                                }
-                              },
+                              onTap: _openCategorySelector,
                             )
                           : _SelectedServiceCard(
                               category: _selectedCategory.value,
-                              onChangeTap: () async {
-                                final result = await Get.toNamed(
-                                  Routes.services,
-                                );
-                                if (result != null && result is Map) {
-                                  final trade = result['trade'] as TradeModel?;
-                                  final sector =
-                                      result['sector'] as SectorModel?;
-                                  _selectedCategory.value = trade?.name ?? '';
-                                  _selectedCategoryId.value = sector?.id ?? 0;
-                                  _selectedTradeId.value = trade?.id ?? 0;
-                                }
-                              },
+                              onChangeTap: _openCategorySelector,
                             ),
                     ),
                     const SizedBox(height: 24),
@@ -610,31 +639,34 @@ class _SelectedServiceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final color = ServiceIconHelper.getSectorColor(category);
+    final icon = ServiceIconHelper.getSectorIcon(category);
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: _C.primaryLight,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _C.primary),
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
       ),
       child: Row(
         children: [
           Container(
-            width: 40,
-            height: 40,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
-              color: _C.primary,
-              borderRadius: BorderRadius.circular(10),
+              color: color,
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.check, color: Colors.white, size: 20),
+            child: Icon(icon, color: Colors.white, size: 24),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Service sélectionné',
+                  'Catégorie sélectionnée',
                   style: TextStyle(
                     fontSize: 12,
                     color: _C.muted,
@@ -661,6 +693,177 @@ class _SelectedServiceCard extends StatelessWidget {
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: _C.primary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _QuickCategoryBottomSheet extends StatelessWidget {
+  final ValueChanged<String> onSelected;
+  final VoidCallback onOpenFullServices;
+
+  const _QuickCategoryBottomSheet({
+    required this.onSelected,
+    required this.onOpenFullServices,
+  });
+
+  static const List<String> popularCategories = [
+    'Plomberie',
+    'Électricité',
+    'Maçonnerie',
+    'Menuiserie',
+    'Peinture & Revêtements',
+    'Climatisation & Froid',
+    'Serrurerie',
+    'Mécanique Auto & Moto',
+    'Soudure & Métallerie',
+    'Sécurité & Domotique',
+    'Nettoyage & Entretien',
+    'Jardinage & Espaces verts',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.75,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        children: [
+          const SizedBox(height: 12),
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: const Color(0xFFE5E7EB),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text(
+                        'Sélectionner une catégorie',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: _C.ink,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Choisissez le domaine correspondant à vos travaux',
+                        style: TextStyle(fontSize: 13, color: _C.muted),
+                      ),
+                    ],
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(Icons.close, size: 18, color: _C.muted),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Expanded(
+            child: GridView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: 2.2,
+              ),
+              itemCount: popularCategories.length,
+              itemBuilder: (context, index) {
+                final category = popularCategories[index];
+                final color = ServiceIconHelper.getSectorColor(category);
+                final icon = ServiceIconHelper.getSectorIcon(category);
+
+                return InkWell(
+                  onTap: () => onSelected(category),
+                  borderRadius: BorderRadius.circular(14),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: color.withValues(alpha: 0.25)),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 38,
+                          height: 38,
+                          decoration: BoxDecoration(
+                            color: color,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(icon, color: Colors.white, size: 20),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            category,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: color,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+            child: SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: onOpenFullServices,
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  side: const BorderSide(color: _C.primary),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                icon: const Icon(Icons.explore_outlined, color: _C.primary, size: 20),
+                label: const Text(
+                  'Explorer tous les métiers & spécialités',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: _C.primary,
+                  ),
+                ),
               ),
             ),
           ),
