@@ -145,11 +145,6 @@ Route::prefix('v1')->group(function () {
 
         Route::apiResource('artisan-stock', ArtisanStockController::class)->except(['show']);
 
-        // ── Secteurs & Métiers ────────────────────────────────────────────────
-        Route::get('/sectors', [SectorController::class, 'index']);
-        Route::get('/sectors/{sector}/trades', [SectorController::class, 'trades']);
-        Route::get('/intervention-types', [InterventionTypeController::class, 'index']);
-
         // ── Fournisseurs & catalogue ─────────────────────────────────────────
         Route::get('/fournisseurs', [SupplierCatalogController::class, 'suppliers'])->middleware('kyc.verified');
         Route::get('/fournisseurs/{user}/articles', [SupplierCatalogController::class, 'supplierProducts']);
