@@ -8,6 +8,7 @@ class ArtisanController extends GetxController {
   final score = Rx<Map<String, dynamic>?>(null);
   final isLoading = false.obs;
   final fromSelection = false.obs;
+  final isSubmittingSelection = false.obs;
 
   @override
   void onInit() {

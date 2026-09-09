@@ -84,33 +84,49 @@ class MissionController extends Controller
      */
     public function store(CreateMissionRequest $request): JsonResponse
     {
-        $user = $request->user();
+        try {
+            $user = $request->user();
 
-        if (! $user->isKycActif()) {
+            if (! $user->isKycActif()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Votre KYC doit être validé pour créer une mission.',
+                ], 403);
+            }
+
+            try {
+                if ($request->filled('payment_phone')) {
+                    $user->update([
+                        'payment_phone' => $request->input('payment_phone'),
+                        'preferred_payment_provider' => $request->input('preferred_payment_provider', 'wave'),
+                    ]);
+                } elseif (! $user->payment_phone && $user->phone) {
+                    $user->update([
+                        'payment_phone' => $user->phone,
+                        'preferred_payment_provider' => 'wave',
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Impossible de synchroniser le téléphone de paiement: ' . $e->getMessage());
+            }
+
+            $mission = $this->missionService->create($user, $request->validated());
+
+            return response()->json([
+                'success' => true,
+                'data' => new MissionResource($mission->load('client', 'jalons', 'requestedSector', 'requestedTrade')),
+            ], 201);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Erreur lors de la création de la mission: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'payload' => $request->all(),
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Votre KYC doit être validé pour créer une mission.',
-            ], 403);
+                'message' => 'Erreur lors de la création: ' . $e->getMessage(),
+            ], 500);
         }
-
-        if ($request->filled('payment_phone')) {
-            $user->update([
-                'payment_phone' => $request->input('payment_phone'),
-                'preferred_payment_provider' => $request->input('preferred_payment_provider', 'wave'),
-            ]);
-        } elseif (! $user->payment_phone && $user->phone) {
-            $user->update([
-                'payment_phone' => $user->phone,
-                'preferred_payment_provider' => 'wave',
-            ]);
-        }
-
-        $mission = $this->missionService->create($user, $request->validated());
-
-        return response()->json([
-            'success' => true,
-            'data' => new MissionResource($mission->load('client', 'jalons', 'requestedSector', 'requestedTrade')),
-        ], 201);
     }
 
     /**

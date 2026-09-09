@@ -26,6 +26,10 @@ class AiMonitoringService
                 'input' => 0.03 / 1000000,
                 'output' => 0.12 / 1000000
             ],
+            'gemini-1.5-flash' => [
+                'input' => 0.075 / 1000000,
+                'output' => 0.30 / 1000000
+            ],
             'gemini-2.0-flash' => [
                 'input' => 0.075 / 1000000,
                 'output' => 0.30 / 1000000

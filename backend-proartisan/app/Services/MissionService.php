@@ -34,6 +34,8 @@ class MissionService
             ? \App\States\Mission\PendingArtisanAcceptanceState::class 
             : \App\States\Mission\DraftState::class;
 
+        $locationAddress = $data['location_address'] ?? $data['location'] ?? null;
+
         $mission = Mission::create([
             'client_id'           => $client->id,
             'artisan_id'          => $data['artisan_id'] ?? null,
@@ -44,7 +46,11 @@ class MissionService
             'status'              => $initialState,
             'client_latitude'     => $data['lat'] ?? null,
             'client_longitude'    => $data['lng'] ?? null,
-            'client_address'      => $data['location_address'] ?? null,
+            'client_address'      => $locationAddress,
+            'montant_total'       => 0,
+            'montant_materiaux'   => 0,
+            'montant_mo'          => 0,
+            'ratio_materiaux'     => 0.0000,
         ]);
 
         // Enrichissement Gemini

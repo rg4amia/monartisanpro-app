@@ -9,11 +9,22 @@ class GeminiService
 {
     private string $apiKey;
     private string $model;
+    private string $baseUrl;
 
     public function __construct()
     {
         $this->apiKey = config('services.gemini.api_key') ?? '';
         $this->model = config('services.gemini.model', 'gemini-1.5-flash');
+        $this->baseUrl = config('services.gemini.base_url', 'https://generativelanguage.googleapis.com');
+    }
+
+    private function getEndpointUrl(): string
+    {
+        $base = rtrim($this->baseUrl, '/');
+        if (!str_contains($base, 'models')) {
+            $base .= "/v1beta/models/{$this->model}:generateContent";
+        }
+        return "{$base}?key={$this->apiKey}";
     }
 
     /**
@@ -34,7 +45,7 @@ class GeminiService
                     'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
                 ])->withOptions([
                     'curl' => [CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4]
-                ])->post("https://generativelanguage.googleapis.com/v1beta/models/{$this->model}:generateContent?key={$this->apiKey}", [
+                ])->post($this->getEndpointUrl(), [
                 'contents' => [
                     [
                         'parts' => [
@@ -58,7 +69,7 @@ class GeminiService
                 ];
             }
 
-            Log::error('Gemini API Error', ['body' => $response->body()]);
+            Log::error('Gemini API Error', ['status' => $response->status(), 'body' => $response->body()]);
         } catch (\Exception $e) {
             Log::error('Gemini Exception', ['message' => $e->getMessage()]);
         }
@@ -162,7 +173,7 @@ class GeminiService
                 'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
             ])->withOptions([
                 'curl' => [CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4]
-            ])->post("https://generativelanguage.googleapis.com/v1beta/models/{$this->model}:generateContent?key={$this->apiKey}", [
+            ])->post($this->getEndpointUrl(), [
                 'contents' => [
                     [
                         'parts' => [
@@ -182,7 +193,7 @@ class GeminiService
                 }
             }
 
-            Log::error('Gemini Devis Suggestion Error', ['body' => $response->body()]);
+            Log::error('Gemini Devis Suggestion Error', ['status' => $response->status(), 'body' => $response->body()]);
         } catch (\Exception $e) {
             Log::error('Gemini Devis Suggestion Exception', ['message' => $e->getMessage()]);
         }
@@ -345,7 +356,7 @@ class GeminiService
                 'User-Agent' => 'Mozilla/5.0'
             ])->withOptions([
                 'curl' => [CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4]
-            ])->post("https://generativelanguage.googleapis.com/v1beta/models/{$this->model}:generateContent?key={$this->apiKey}", [
+            ])->post($this->getEndpointUrl(), [
                 'contents' => [
                     [
                         'parts' => [
@@ -374,7 +385,7 @@ class GeminiService
                 ];
             }
 
-            Log::error('Gemini Media API Error', ['body' => $response->body()]);
+            Log::error('Gemini Media API Error', ['status' => $response->status(), 'body' => $response->body()]);
         } catch (\Exception $e) {
             Log::error('Gemini Media Exception', ['message' => $e->getMessage()]);
         }

@@ -96,7 +96,9 @@ class ArtisanSelectionController extends GetxController {
   }
 
   Future<void> selectArtisan(ArtisanModel artisan) async {
-    final missionsController = Get.find<MissionsController>();
+    final missionsController = Get.isRegistered<MissionsController>()
+        ? Get.find<MissionsController>()
+        : Get.put(MissionsController());
 
     isLoading.value = true;
     try {
@@ -132,16 +134,11 @@ class ArtisanSelectionController extends GetxController {
       if (mission != null) {
         // Redirection vers le suivi de mission avec la mission créée
         unawaited(Get.offNamed(Routes.missionTracking, arguments: mission));
-      } else {
-        // Si mission est null, c'est qu'une erreur s'est produite
-        // Le message d'erreur a déjà été affiché par le controller
-        Get.back(); // Retour à l'écran précédent
       }
     } catch (e) {
-      // Erreur inattendue non gérée par le controller
       Get.snackbar(
         'Erreur',
-        'Une erreur inattendue s\'est produite',
+        'Une erreur s\'est produite : $e',
         snackPosition: SnackPosition.TOP,
       );
     } finally {

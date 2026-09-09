@@ -620,6 +620,13 @@ class MissionsController extends GetxController {
           }
           return 'Données invalides';
         case 500:
+          final data500 = e.response!.data;
+          if (data500 is Map && data500.containsKey('message') && data500['message'] != null) {
+            final msg = data500['message'].toString().trim();
+            if (msg.isNotEmpty) {
+              return msg;
+            }
+          }
           return 'Erreur serveur. Veuillez réessayer.';
         default:
           return 'Erreur réseau (code $statusCode)';

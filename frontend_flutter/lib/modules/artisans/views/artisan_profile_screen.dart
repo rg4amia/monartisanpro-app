@@ -233,19 +233,27 @@ class ArtisanProfileScreen extends StatelessWidget {
                       width: double.infinity,
                       child: c.fromSelection.value
                           ? ElevatedButton.icon(
-                              onPressed: () {
-                                if (Get.isRegistered<
-                                    ArtisanSelectionController>()) {
-                                  Get.find<ArtisanSelectionController>()
-                                      .selectArtisan(a);
-                                } else {
-                                  Get.snackbar(
-                                    'Erreur',
-                                    'Impossible de sélectionner cet artisan',
-                                    snackPosition: SnackPosition.TOP,
-                                  );
-                                }
-                              },
+                              onPressed: c.isSubmittingSelection.value
+                                  ? null
+                                  : () async {
+                                      if (Get.isRegistered<
+                                          ArtisanSelectionController>()) {
+                                        c.isSubmittingSelection.value = true;
+                                        try {
+                                          await Get.find<
+                                                  ArtisanSelectionController>()
+                                              .selectArtisan(a);
+                                        } finally {
+                                          c.isSubmittingSelection.value = false;
+                                        }
+                                      } else {
+                                        Get.snackbar(
+                                          'Erreur',
+                                          'Impossible de sélectionner cet artisan',
+                                          snackPosition: SnackPosition.TOP,
+                                        );
+                                      }
+                                    },
                               style: ElevatedButton.styleFrom(
                                 padding:
                                     const EdgeInsets.symmetric(vertical: 14),
@@ -254,13 +262,24 @@ class ArtisanProfileScreen extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
-                              icon: const Icon(
-                                Icons.check_circle_outline,
-                                color: Colors.white,
-                              ),
-                              label: const Text(
-                                'Choisir cet artisan',
-                                style: TextStyle(
+                              icon: c.isSubmittingSelection.value
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : const Icon(
+                                      Icons.check_circle_outline,
+                                      color: Colors.white,
+                                    ),
+                              label: Text(
+                                c.isSubmittingSelection.value
+                                    ? 'Sélection en cours...'
+                                    : 'Choisir cet artisan',
+                                style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                 ),
