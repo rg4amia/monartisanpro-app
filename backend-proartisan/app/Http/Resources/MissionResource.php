@@ -49,6 +49,8 @@ class MissionResource extends JsonResource
             ] : null,
             'requestedSectorId' => $this->requested_sector_id,
             'requestedTradeId' => $this->requested_trade_id,
+            'interventionTypeId' => $this->intervention_type_id,
+            'interventionTypeName' => $this->relationLoaded('interventionType') ? $this->interventionType?->name : null,
             'client' => $this->when(
                 $this->relationLoaded('client'),
                 fn () => [

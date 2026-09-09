@@ -14,6 +14,7 @@ import '../../../data/models/supplier_product_model.dart';
 import '../../../data/repositories/devis_repository.dart';
 import '../../../data/repositories/payment_repository.dart';
 import '../../../data/repositories/supplier_catalog_repository.dart';
+import '../../auth/controllers/auth_controller.dart';
 
 class DevisController extends GetxController {
   final DevisRepository _repo = DevisRepository();
@@ -43,11 +44,26 @@ class DevisController extends GetxController {
   final lignes = <DevisLigne>[].obs;
   final jalons = <DevisJalon>[].obs;
 
+  // Coordonnées Mobile Money de l'artisan, demandées uniquement si absentes
+  // de son profil (sinon la création de devis échoue côté serveur).
+  final paymentPhone = ''.obs;
+  final preferredProvider = 'wave'.obs;
+
   // Mission associée
   int? missionId;
+  // Devis complémentaire (matériaux) soumis après un devis initial de
+  // déplacement/diagnostic déjà accepté et financé.
+  bool isAvenant = false;
 
-  void prepareDraftForMission(int id) {
+  bool get needsPaymentPhone {
+    if (!Get.isRegistered<AuthController>()) return false;
+    final user = Get.find<AuthController>().currentUser.value;
+    return user != null && (user.paymentPhone == null || user.paymentPhone!.isEmpty);
+  }
+
+  void prepareDraftForMission(int id, {bool isAvenant = false}) {
     if (missionId == id &&
+        this.isAvenant == isAvenant &&
         (lignes.isNotEmpty ||
             jalons.isNotEmpty ||
             selectedSupplier.value != null)) {
@@ -55,12 +71,15 @@ class DevisController extends GetxController {
     }
 
     missionId = id;
+    this.isAvenant = isAvenant;
     currentDevis.value = null;
     errorMsg.value = null;
     selectedSupplier.value = null;
     supplierProducts.clear();
     lignes.clear();
     jalons.clear();
+    paymentPhone.value = '';
+    preferredProvider.value = 'wave';
   }
 
   final isAiLoading = false.obs;
@@ -431,11 +450,20 @@ class DevisController extends GetxController {
       return false;
     }
 
+    if (needsPaymentPhone && paymentPhone.value.trim().isEmpty) {
+      errorMsg.value =
+          'Indiquez le numéro Mobile Money sur lequel vous serez payé';
+      return false;
+    }
+
     return true;
   }
 
   /// Crée un nouveau devis (artisan)
-  Future<bool> createDevis({required int missionId}) async {
+  Future<bool> createDevis({
+    required int missionId,
+    int? interventionTypeId,
+  }) async {
     if (!validateDevis()) {
       _showErrorSnackbar(errorMsg.value!);
       return false;
@@ -449,6 +477,17 @@ class DevisController extends GetxController {
         missionId: missionId,
         lignes: lignes.toList(),
         jalons: jalons.toList(),
+        isAvenant: isAvenant,
+        materialsRequired: materialLines.isNotEmpty,
+        interventionTypeId: interventionTypeId,
+        paymentPhone:
+            needsPaymentPhone && paymentPhone.value.trim().isNotEmpty
+                ? paymentPhone.value.trim()
+                : null,
+        preferredPaymentProvider:
+            needsPaymentPhone && paymentPhone.value.trim().isNotEmpty
+                ? preferredProvider.value
+                : null,
       );
 
       currentDevis.value = devis;

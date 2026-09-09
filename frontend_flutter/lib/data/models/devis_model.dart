@@ -137,6 +137,9 @@ class DevisModel {
   final int? serverMontantTotal;
   final int? serverMontantMateriaux;
   final int? serverMontantMo;
+  final bool materialsRequired;
+  final int? interventionTypeId;
+  final bool isAvenant;
 
   const DevisModel({
     required this.id,
@@ -153,6 +156,9 @@ class DevisModel {
     this.serverMontantTotal,
     this.serverMontantMateriaux,
     this.serverMontantMo,
+    this.materialsRequired = true,
+    this.interventionTypeId,
+    this.isAvenant = false,
   });
 
   int get totalMo =>
@@ -215,6 +221,14 @@ class DevisModel {
         serverMontantMo: _parseNullableInt(
           json['montantMo'] ?? json['montant_mo'],
         ),
+        materialsRequired: (json['materialsRequired'] ??
+                json['materials_required'] ??
+                true) ==
+            true,
+        interventionTypeId: _parseNullableInt(
+          json['interventionTypeId'] ?? json['intervention_type_id'],
+        ),
+        isAvenant: (json['isAvenant'] ?? json['is_avenant'] ?? false) == true,
       );
 
   Map<String, dynamic> toJson() => {
@@ -232,6 +246,9 @@ class DevisModel {
         if (serverMontantMateriaux != null)
           'montantMateriaux': serverMontantMateriaux,
         if (serverMontantMo != null) 'montantMo': serverMontantMo,
+        'materialsRequired': materialsRequired,
+        if (interventionTypeId != null) 'interventionTypeId': interventionTypeId,
+        'isAvenant': isAvenant,
       };
 
   static int _parseInt(dynamic value) {

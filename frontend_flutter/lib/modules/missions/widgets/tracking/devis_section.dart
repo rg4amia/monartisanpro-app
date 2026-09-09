@@ -46,6 +46,7 @@ class DevisSection extends StatelessWidget {
             _EmptyDevis(mission: mission, isArtisan: isArtisan)
           else
             _DevisRecap(
+              mission: mission,
               devis: devis!,
               isArtisan: isArtisan,
             ),
@@ -94,8 +95,13 @@ class _EmptyDevis extends StatelessWidget {
 }
 
 class _DevisRecap extends StatelessWidget {
-  const _DevisRecap({required this.devis, required this.isArtisan});
+  const _DevisRecap({
+    required this.mission,
+    required this.devis,
+    required this.isArtisan,
+  });
 
+  final MissionModel mission;
   final DevisModel devis;
   final bool isArtisan;
 
@@ -166,6 +172,32 @@ class _DevisRecap extends StatelessWidget {
             label: const Text('Voir le devis'),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+            ),
+          ),
+        ],
+        if (isArtisan &&
+            devis.statut == 'accepte' &&
+            !devis.materialsRequired &&
+            !devis.isAvenant) ...[
+          const SizedBox(height: 14),
+          Text(
+            'Ce devis ne couvrait que le déplacement/diagnostic. '
+            'Une fois le besoin en matériaux identifié sur place, soumettez '
+            'le devis complémentaire pour le chiffrer.',
+            style: const TextStyle(
+              fontSize: 12,
+              color: AppColors.textSecondary,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 10),
+          ElevatedButton.icon(
+            onPressed: () => openDevisCreation(mission, isAvenant: true),
+            icon: const Icon(Icons.add_circle_outline, size: 18),
+            label: const Text('Soumettre le devis matériaux'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.accent,
               foregroundColor: Colors.white,
             ),
           ),

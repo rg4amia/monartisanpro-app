@@ -42,6 +42,9 @@ class ApiEndpoints {
   static const String sectors = '/sectors';
   static String sectorTrades(int id) => '/sectors/$id/trades';
 
+  // Types d'intervention
+  static const String interventionTypes = '/intervention-types';
+
   // Missions
   static const String missions = '/missions';
   static String mission(int id) => '/missions/$id';

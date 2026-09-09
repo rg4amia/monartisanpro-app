@@ -7,8 +7,17 @@ import '../../controllers/missions_controller.dart';
 
 /// Ouvre l'écran de création de devis pour [mission] et, au retour d'un
 /// devis créé, rafraîchit la mission et notifie l'artisan.
-Future<void> openDevisCreation(MissionModel mission) async {
-  final result = await Get.toNamed(Routes.devisCreation, arguments: mission);
+///
+/// [isAvenant] : soumission du devis complémentaire (matériaux) après un
+/// devis initial de déplacement/diagnostic déjà accepté et financé.
+Future<void> openDevisCreation(
+  MissionModel mission, {
+  bool isAvenant = false,
+}) async {
+  final result = await Get.toNamed(
+    Routes.devisCreation,
+    arguments: {'mission': mission, 'isAvenant': isAvenant},
+  );
   if (result != true || !Get.isRegistered<MissionsController>()) {
     return;
   }
@@ -18,8 +27,10 @@ Future<void> openDevisCreation(MissionModel mission) async {
     controller.loadMission(mission.id, forceRefresh: true);
 
     Get.snackbar(
-      'Devis créé',
-      'Votre devis a été envoyé au client pour validation.',
+      isAvenant ? 'Avenant créé' : 'Devis créé',
+      isAvenant
+          ? 'Votre devis complémentaire a été envoyé au client pour validation.'
+          : 'Votre devis a été envoyé au client pour validation.',
       snackPosition: SnackPosition.TOP,
       duration: const Duration(seconds: 3),
     );

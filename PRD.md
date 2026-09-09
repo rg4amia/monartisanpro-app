@@ -32,7 +32,7 @@
 
 ### 🔍 Phase 1 : Diagnostic & Matching Géospatial
 #### Workflow — Phase 1
-1. Le client décrit son problème. L'API **Gemini** analyse la demande, classe la catégorie, évalue l'urgence, et propose une estimation de prix.
+1. Le client décrit son problème et sélectionne le **type d'intervention** souhaité dans une liste (`GET /intervention-types` : Maintenance, Assistance, Dépannage, ou simple Déplacement / Diagnostic). L'API **Gemini** analyse la demande, classe la catégorie, évalue l'urgence, et propose une estimation de prix.
 2. Le système recherche les artisans actifs dans un rayon $\le$ 2 km à l'aide de requêtes spatiales MySQL (`ST_Distance_Sphere`).
 3. La position GPS exacte de l'artisan est floutée d'environ 50 mètres pour préserver sa vie privée.
 4. Tri par **Score de Réputation ProsArtisan** (enregistré sous la colonne `score_prosartisan` en BDD).
@@ -47,12 +47,13 @@
 
 ### 💵 Phase 2 : Devis & Séquestre (Escrow)
 #### Workflow — Phase 2
-1. L'artisan formule une proposition de devis (lignes matériaux, lignes MO, jalons).
-2. Le client accepte le devis et paie l'acompte total via Wave ou Orange Money.
-3. Les fonds sont fragmentés et bloqués :
+1. L'artisan formule une proposition de devis (lignes matériaux, lignes MO, jalons), héritant par défaut du type d'intervention choisi par le client à l'étape précédente.
+2. **Devis en deux temps (optionnel)** : si le besoin réel ne peut être évalué qu'en présentiel, l'artisan soumet d'abord un devis de simple déplacement/diagnostic (sans ligne matériaux). Une fois ce devis accepté et financé, il soumet — une fois le chantier examiné — un second devis intégrant les matériaux sous forme d'**avenant**, qui complète le séquestre déjà constitué sans repartir de zéro.
+3. Le client accepte le devis et paie l'acompte total via Wave ou Orange Money.
+4. Les fonds sont fragmentés et bloqués :
    * `wallet_materiaux` : Réservé exclusivement à la quincaillerie fournisseur.
    * `wallet_mo` : Débloqué jalon par jalon pour l'artisan.
-4. Le ratio matériaux/MO est figé à l'acceptation et devient **strictement immuable**.
+5. Le ratio matériaux/MO est figé à l'acceptation et devient **strictement immuable**.
 
 ---
 
@@ -176,6 +177,7 @@ Note : Pour les prestations chantiers de l'Artisan.
 38. **Résilience, Passerelle & Pricing de l'IA Gemini (`services.gemini`) :** Le modèle officiel retenu pour l'analyse de diagnostic et l'estimation prédictive est `gemini-1.5-flash` (avec son barème de coût configuré dans `AiMonitoringService`). Le service d'IA (`GeminiService`) supporte nativement un `base_url` configurable (Cloudflare AI Gateway, proxy d'entreprise ou endpoint direct Google). En cas de non-disponibilité, d'erreur HTTP (404, 500, quota 429), le système ne bloque jamais le diagnostic ou la création de mission : il bascule immédiatement et silencieusement sur l'estimateur heuristique par mots-clés (`keywordEstimate`) avec journalisation claire du code HTTP d'erreur.
 39. **Intégrité des Données Financières à la Création de Mission (MySQL strict) :** Les colonnes financières `montant_total`, `montant_materiaux`, `montant_mo` et `ratio_materiaux` de la table `missions` étant définies `NOT NULL` sans valeur par défaut native en base de données, la méthode d'initialisation de mission (`MissionService::createMission`) doit obligatoirement initialiser ces champs à `0` (et `0.0000` pour le ratio) dès la phase pré-devis. L'adresse textuelle et les coordonnées géographiques intègrent un fallback automatique pour prévenir toute erreur HTTP 500 lors de la formulation d'une demande de devis.
 40. **Réactivité & Protection Anti-Rebond du Choix d'Artisan (Mobile) :** L'action de sélection d'artisan sur `ArtisanProfileScreen` est régie par une propriété réactive `isSubmittingSelection` affichant un spinner de chargement et désactivant le bouton pour prévenir les clics multiples ou l'impression de gel UI. La récupération du contrôleur de missions utilise une résolution sécurisée (`Get.isRegistered() ? Get.find() : Get.put()`), et la vue n'est pas fermée prématurément en cas d'erreur afin de garantir la lisibilité des alertes/snackbars pour l'utilisateur.
+41. **Type d'Intervention & Devis Complémentaire en Deux Temps (Diagnostic → Matériaux) :** Le client sélectionne obligatoirement un type d'intervention (référentiel public `intervention_types` : Maintenance, Assistance, Dépannage, Déplacement / Diagnostic, exposé via `GET /intervention-types`) lors de la demande de mission ; le champ est nullable côté API pour ne pas casser les anciennes versions mobiles déjà installées, avec repli automatique sur le premier type disponible. Le devis de l'artisan hérite par défaut de ce type. Pour un besoin nécessitant un diagnostic préalable, l'artisan soumet un premier devis de simple déplacement/diagnostic (`materials_required = false`), le fait accepter et financer normalement, puis soumet le devis matériaux complémentaire comme **avenant** (Règle d'Or 21) une fois le chantier examiné sur place — sans jamais réinitialiser la mission déjà financée. Le numéro Mobile Money de réception de l'artisan (`payment_phone`/`preferred_payment_provider`) reste **obligatoire et jamais déduit automatiquement** de son téléphone de connexion à la création d'un devis (contrairement au client, qui ne fait que payer — Règle d'Or 34) ; l'écran mobile de création de devis le demande explicitement lorsqu'il est absent, pour éviter un blocage générique HTTP 422 "Données invalides".
 
 ### Formule mathématique du Score ProsArtisan
 Le score d'un artisan $S(t)$ est calculé sur une échelle de 0 à 1000 :
@@ -267,4 +269,5 @@ Le backoffice (Laravel 12 + Inertia 2 + React 19 + TypeScript) a fait l'objet d'
 5. **Maîtrise du Découpage par Architecture APK (`arm64-v8a` vs Universel) :** [COMPLÉTÉ] Génération ciblée de la version 64-bit native `prosartisan-arm64-v8a.apk` (31.9 Mo) pour éliminer les instabilités de mémoire et les crashs de bibliothèques natives (Yandex MapKit / Skia) sur smartphones modernes, et de la version universelle multi-architectures `prosartisan-app-universal.apk` (82 Mo) pour les déploiements tout-terrain. Centralisation des fichiers à la racine du dépôt GitHub.
 6. **Résilience et Passerelle d'IA Gemini :** [COMPLÉTÉ] Mise à niveau vers le modèle `gemini-1.5-flash`, paramétrage des passerelles IA (Cloudflare AI Gateway) via `base_url`, et tolérance aux pannes réseau avec bascule automatique vers le fallback heuristique par mots-clés sans blocage de l'utilisateur.
 7. **Intégrité Financière SQL des Missions & Protection Anti-Rebond :** [COMPLÉTÉ] Initialisation systématique des valeurs par défaut financières (`montant_total = 0`, `ratio_materiaux = 0.0000`) pour satisfaire les contraintes MySQL strictes lors de la création de missions, sécurisation anti-double clic de la sélection d'artisan avec loader réactif et persistance des messages d'erreur.
+8. **Type d'Intervention & Devis Diagnostic → Matériaux (Avenant) :** [COMPLÉTÉ] Sélecteur de type d'intervention (`intervention_types`) à la demande de mission, hérité par le devis de l'artisan ; possibilité de soumettre un premier devis de simple déplacement/diagnostic sans matériaux puis, une fois le besoin identifié sur site, un devis complémentaire matériaux sous forme d'avenant sur la mission déjà financée. Collecte explicite du numéro Mobile Money de l'artisan (`PaymentPhoneSection`) sur l'écran de création de devis lorsqu'il est absent du profil, corrigeant un blocage générique "Données invalides" à la soumission.
 

@@ -10,11 +10,13 @@ class SubmitButton extends StatelessWidget {
   const SubmitButton({
     required this.controller,
     required this.missionId,
+    this.interventionTypeId,
     super.key,
   });
 
   final DevisController controller;
   final int? missionId;
+  final int? interventionTypeId;
 
   @override
   Widget build(BuildContext context) {
@@ -28,6 +30,7 @@ class SubmitButton extends StatelessWidget {
               : () async {
                   final success = await controller.createDevis(
                     missionId: missionId!,
+                    interventionTypeId: interventionTypeId,
                   );
                   if (success) {
                     WidgetsBinding.instance.addPostFrameCallback((_) {

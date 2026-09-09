@@ -92,7 +92,9 @@ class DevisService
             ? filter_var($data['materials_required'], FILTER_VALIDATE_BOOLEAN)
             : $hasMaterials;
 
-        $interventionTypeId = $payload['intervention_type_id'] ?? null;
+        // Par défaut, un devis hérite du type d'intervention choisi par le
+        // client à la demande de mission ; l'artisan peut le surcharger.
+        $interventionTypeId = $payload['intervention_type_id'] ?? $mission->intervention_type_id ?? null;
 
         // 1. Si les matériaux sont requis, on doit sélectionner au moins un article du catalogue fournisseur agréé
         if ($materialsRequired) {

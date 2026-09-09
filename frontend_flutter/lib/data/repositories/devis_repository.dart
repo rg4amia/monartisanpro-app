@@ -63,12 +63,23 @@ class DevisRepository {
     required int missionId,
     required List<DevisLigne> lignes,
     required List<DevisJalon> jalons,
+    bool isAvenant = false,
+    bool? materialsRequired,
+    int? interventionTypeId,
+    String? paymentPhone,
+    String? preferredPaymentProvider,
   }) async {
     final res = await _client.post(
       ApiEndpoints.missionDevis(missionId),
       data: {
         'lignes_json': lignes.map((l) => l.toJson()).toList(),
         'jalons_json': jalons.map((j) => j.toJson()).toList(),
+        if (isAvenant) 'is_avenant': true,
+        if (materialsRequired != null) 'materials_required': materialsRequired,
+        if (interventionTypeId != null) 'intervention_type_id': interventionTypeId,
+        if (paymentPhone != null) 'payment_phone': paymentPhone,
+        if (preferredPaymentProvider != null)
+          'preferred_payment_provider': preferredPaymentProvider,
       },
     );
     final devis = DevisModel.fromJson(

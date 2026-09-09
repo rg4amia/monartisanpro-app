@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\DeliveryController;
 use App\Http\Controllers\Api\V1\DevisController;
 use App\Http\Controllers\Api\V1\EvaluationController;
+use App\Http\Controllers\Api\V1\InterventionTypeController;
 use App\Http\Controllers\Api\V1\JalonController;
 use App\Http\Controllers\Api\V1\JCodeController;
 use App\Http\Controllers\Api\V1\KycController;
@@ -61,6 +62,7 @@ Route::prefix('v1')->group(function () {
     // ── Secteurs & Métiers (Taxonomie publique) ─────────────────────────────
     Route::get('/sectors', [SectorController::class, 'index']);
     Route::get('/sectors/{sector}/trades', [SectorController::class, 'trades']);
+    Route::get('/intervention-types', [InterventionTypeController::class, 'index']);
 
     // ── Webhooks (sans authentification pour les callbacks externes) ─────────
     Route::prefix('webhooks')->middleware('throttle:webhook')->group(function () {
@@ -146,6 +148,7 @@ Route::prefix('v1')->group(function () {
         // ── Secteurs & Métiers ────────────────────────────────────────────────
         Route::get('/sectors', [SectorController::class, 'index']);
         Route::get('/sectors/{sector}/trades', [SectorController::class, 'trades']);
+        Route::get('/intervention-types', [InterventionTypeController::class, 'index']);
 
         // ── Fournisseurs & catalogue ─────────────────────────────────────────
         Route::get('/fournisseurs', [SupplierCatalogController::class, 'suppliers'])->middleware('kyc.verified');

@@ -17,6 +17,7 @@ class ArtisanSelectionController extends GetxController {
   final selectedCategory = ''.obs;
   final selectedCategoryId = 0.obs;
   final selectedTradeId = 0.obs;
+  final selectedInterventionTypeId = 0.obs;
   final clientLatitude = 0.0.obs;
   final clientLongitude = 0.0.obs;
   final missionDescription = ''.obs;
@@ -47,6 +48,7 @@ class ArtisanSelectionController extends GetxController {
     final nextCategory = (data['category'] ?? '').toString();
     final nextCategoryId = _parseInt(data['categoryId']);
     final nextTradeId = _parseInt(data['tradeId']);
+    final nextInterventionTypeId = _parseInt(data['interventionTypeId']);
     final nextLatitude = _parseDouble(data['latitude']);
     final nextLongitude = _parseDouble(data['longitude']);
     final nextDescription = (data['description'] ?? '').toString();
@@ -60,6 +62,7 @@ class ArtisanSelectionController extends GetxController {
         selectedCategory.value == nextCategory &&
         selectedCategoryId.value == nextCategoryId &&
         selectedTradeId.value == nextTradeId &&
+        selectedInterventionTypeId.value == nextInterventionTypeId &&
         clientLatitude.value == nextLatitude &&
         clientLongitude.value == nextLongitude &&
         missionDescription.value == nextDescription &&
@@ -75,6 +78,7 @@ class ArtisanSelectionController extends GetxController {
     selectedCategory.value = nextCategory;
     selectedCategoryId.value = nextCategoryId;
     selectedTradeId.value = nextTradeId;
+    selectedInterventionTypeId.value = nextInterventionTypeId;
     clientLatitude.value = nextLatitude;
     clientLongitude.value = nextLongitude;
     missionDescription.value = nextDescription;
@@ -124,6 +128,9 @@ class ArtisanSelectionController extends GetxController {
         sectorId:
             selectedCategoryId.value > 0 ? selectedCategoryId.value : null,
         tradeId: selectedTradeId.value > 0 ? selectedTradeId.value : null,
+        interventionTypeId: selectedInterventionTypeId.value > 0
+            ? selectedInterventionTypeId.value
+            : null,
         lat: clientLatitude.value != 0.0 ? clientLatitude.value : null,
         lng: clientLongitude.value != 0.0 ? clientLongitude.value : null,
         location:

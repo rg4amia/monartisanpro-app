@@ -60,7 +60,7 @@ Tu m'assistes sur le développement de **ProsArtisan**, une plateforme marketpla
 
 ### Phase 1 — Diagnostic & Matching
 
-- Client décrit son besoin (texte + photos)
+- Client décrit son besoin (texte + photos) et sélectionne un **type d'intervention** (`intervention_type_id`, référentiel `intervention_types` : Maintenance, Assistance, Dépannage, Déplacement / Diagnostic)
 - **Gemini API** retourne : catégorie, urgence, estimation FCFA
 - Recherche artisans dans rayon ≤ 2 km via **ST_Distance_Sphere** (MySQL)
 - Position artisan floutée à 50 m via calcul d'offset aléatoire en PHP avant envoi au client
@@ -68,7 +68,8 @@ Tu m'assistes sur le développement de **ProsArtisan**, une plateforme marketpla
 
 ### Phase 2 — Devis & Séquestre
 
-- Artisan crée un devis : lignes main d'œuvre + lignes matériaux + jalons (montants + dates)
+- Artisan crée un devis : lignes main d'œuvre + lignes matériaux + jalons (montants + dates) ; le devis hérite par défaut du type d'intervention choisi par le client à la demande de mission
+- Pour un besoin nécessitant un diagnostic préalable, l'artisan peut soumettre un premier devis de simple **déplacement/diagnostic** (`materials_required = false`, sans ligne matériaux) ; une fois le chantier examiné sur place, il soumet le devis complémentaire intégrant les matériaux comme **avenant** (`is_avenant = true`, Règle 21) sur la mission déjà financée
 - Client accepte le devis → paie l'acompte (Wave ou Orange Money)
 - **Fragmentation automatique du séquestre** en deux wallets :
   - `wallet_materiaux` (ex : 65%) → bloqué, réservé fournisseur
@@ -138,33 +139,50 @@ CREATE TABLE users (
   SPATIAL INDEX idx_position (position)
 ) ENGINE=InnoDB;
 
+-- Types d'intervention (référentiel public, sélectionné par le client à la demande de mission)
+CREATE TABLE intervention_types (
+  id             BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  name           VARCHAR(100) NOT NULL UNIQUE,  -- Maintenance, Assistance, Dépannage, Déplacement / Diagnostic...
+  requires_labor BOOLEAN NOT NULL DEFAULT TRUE, -- une ligne main d'œuvre est-elle obligatoire pour ce type ?
+  created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
 -- Missions
 CREATE TABLE missions (
-  id                 BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  client_id          BIGINT UNSIGNED NOT NULL,
-  artisan_id         BIGINT UNSIGNED NOT NULL,
-  status             ENUM('en_attente','financee','en_cours','terminee','litige') NOT NULL DEFAULT 'en_attente',
-  montant_total      BIGINT NOT NULL,       -- FCFA
-  montant_materiaux  BIGINT NOT NULL,       -- FCFA
-  montant_mo         BIGINT NOT NULL,       -- FCFA
-  ratio_materiaux    DECIMAL(5,4) NOT NULL, -- ex: 0.6500 — fixé à l'acceptation, immuable
-  created_at         TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at         TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  id                    BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  client_id             BIGINT UNSIGNED NOT NULL,
+  artisan_id            BIGINT UNSIGNED NOT NULL,
+  intervention_type_id  BIGINT UNSIGNED NULL,   -- type choisi par le client (repli sur le 1er type si absent)
+  status                ENUM('en_attente','financee','en_cours','terminee','litige') NOT NULL DEFAULT 'en_attente',
+  montant_total         BIGINT NOT NULL,       -- FCFA
+  montant_materiaux     BIGINT NOT NULL,       -- FCFA
+  montant_mo            BIGINT NOT NULL,       -- FCFA
+  ratio_materiaux       DECIMAL(5,4) NOT NULL, -- ex: 0.6500 — fixé à l'acceptation, immuable
+  created_at            TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at            TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (client_id)  REFERENCES users(id),
-  FOREIGN KEY (artisan_id) REFERENCES users(id)
+  FOREIGN KEY (artisan_id) REFERENCES users(id),
+  FOREIGN KEY (intervention_type_id) REFERENCES intervention_types(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 -- Devis
 CREATE TABLE devis (
-  id          BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  mission_id  BIGINT UNSIGNED NOT NULL,
-  artisan_id  BIGINT UNSIGNED NOT NULL,
+  id                    BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  mission_id            BIGINT UNSIGNED NOT NULL,
+  artisan_id            BIGINT UNSIGNED NOT NULL,
+  intervention_type_id  BIGINT UNSIGNED NULL,   -- hérité de la mission, surchargeable par l'artisan
+  materials_required    BOOLEAN NOT NULL DEFAULT TRUE, -- false = devis de simple déplacement/diagnostic
+  is_avenant            BOOLEAN NOT NULL DEFAULT FALSE, -- devis complémentaire sur mission déjà financée (Règle 21)
+  parent_devis_id       BIGINT UNSIGNED NULL,
   lignes_json JSON NOT NULL,   -- [{"type":"mo"|"mat","description":"...","montant":5000}]
   jalons_json JSON NOT NULL,   -- [{"ordre":1,"description":"...","montant":10000,"date_cible":"2025-03-01"}]
   statut      ENUM('brouillon','soumis','accepte','refuse') NOT NULL DEFAULT 'brouillon',
   created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (mission_id) REFERENCES missions(id),
-  FOREIGN KEY (artisan_id) REFERENCES users(id)
+  FOREIGN KEY (artisan_id) REFERENCES users(id),
+  FOREIGN KEY (intervention_type_id) REFERENCES intervention_types(id) ON DELETE SET NULL,
+  FOREIGN KEY (parent_devis_id) REFERENCES devis(id)
 ) ENGINE=InnoDB;
 
 -- Jalons
@@ -338,6 +356,7 @@ SELECT ST_X(position) AS lng, ST_Y(position) AS lat FROM users WHERE id = :id;
 46. **Résilience et Passerelle d'IA Gemini (`services.gemini`)** : Le modèle officiel de production est `gemini-1.5-flash` (avec son tarif configuré dans `AiMonitoringService`). `GeminiService::getEndpointUrl()` supporte nativement un endpoint de passerelle/proxy via la clé `config('services.gemini.base_url')` (ex: Cloudflare AI Gateway). En cas d'indisponibilité ou d'erreur HTTP (404, 500, quota 429), le système bascule immédiatement et silencieusement sur l'heuristique par mots-clés (`keywordEstimate`) avec journalisation claire du code HTTP d'erreur, sans bloquer l'expérience utilisateur ni la création de mission.
 47. **Initialisation des Ratios & Valeurs Financières par Défaut (`missions` MySQL)** : Les colonnes financières `montant_total`, `montant_materiaux`, `montant_mo` et `ratio_materiaux` de la table `missions` étant `NOT NULL` sans valeur par défaut native en base de données, la méthode `MissionService::createMission` initialise impérativement `montant_total = 0`, `montant_materiaux = 0`, `montant_mo = 0`, `ratio_materiaux = 0.0000` lors de la création d'une demande de devis pour éliminer toute erreur 500 MySQL strict. L'adresse textuelle et les coordonnées géographiques intègrent un fallback automatique en cas d'omission.
 48. **Sélection Réactive d'Artisan & Persistance des Alertes (Mobile)** : L'action de sélection d'artisan sur `ArtisanProfileScreen` est régie par un flag réactif `isSubmittingSelection` affichant un indicateur de chargement et bloquant les clics multiples pour éviter toute soumission concurrente. La récupération du contrôleur de missions utilise une résolution sécurisée (`Get.isRegistered() ? Get.find() : Get.put()`). En cas d'erreur de requête API, l'écran ne doit JAMAIS être fermé prématurément (`Get.back()`) afin de maintenir la visibilité des Snackbars d'alerte pour l'utilisateur.
+49. **Type d'Intervention à la Demande de Mission & Devis Complémentaire en Deux Temps** : Le client sélectionne obligatoirement (côté UI mobile ; nullable côté API pour compatibilité des anciennes versions déjà installées, avec repli automatique sur le premier `intervention_type` disponible via `MissionService::create`) un type d'intervention lors de la demande de mission (`GET /intervention-types` — référentiel `intervention_types` : Maintenance, Assistance, Dépannage, Déplacement / Diagnostic). Le devis créé par l'artisan hérite par défaut du type choisi par le client (`DevisService::create`), surchargeable si besoin. Pour un besoin nécessitant un diagnostic préalable, l'artisan soumet un premier devis de simple déplacement/diagnostic (`materials_required = false`, aucune ligne matériaux), le fait accepter et financer normalement, puis soumet le devis complémentaire intégrant les matériaux comme **avenant** (`is_avenant = true`, Règle 21) une fois le besoin identifié sur site — sans jamais réinitialiser le statut ni le séquestre déjà constitué de la mission. L'écran mobile de création de devis (`DevisCreationScreen` / `PaymentPhoneSection`) collecte explicitement `payment_phone`/`preferred_payment_provider` lorsque l'artisan n'en a pas encore renseigné dans son profil, afin d'éviter un blocage générique HTTP 422 "Données invalides" côté `CreateDevisRequest` (ce champ reste volontairement **obligatoire et jamais déduit automatiquement** du téléphone de connexion pour un rôle qui *reçoit* des fonds — à la différence du client qui, lui, ne fait que payer, cf. Règle 42).
 
 ---
 

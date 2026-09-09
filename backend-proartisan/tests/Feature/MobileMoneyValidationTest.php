@@ -16,37 +16,54 @@ class MobileMoneyValidationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_client_must_provide_mobile_money_when_requesting_devis_if_missing(): void
+    public function test_client_mobile_money_is_optional_when_requesting_a_mission_and_defaults_from_phone(): void
     {
+        // RÈGLE (commit 3369e1b2, "déblocage... demande de devis") : contrairement
+        // à l'artisan/fournisseur/livreur qui reçoivent des fonds et doivent
+        // confirmer explicitement leur numéro Mobile Money, le client qui demande
+        // une mission n'a pas encore besoin de payer : le champ est facultatif et
+        // retombe sur son numéro de connexion si absent. Il devra fournir des
+        // coordonnées de paiement explicites au moment du financement du devis
+        // (cf. CreateDevisRequest côté artisan / acceptation du devis).
         /** @var User $client */
         $client = User::factory()->create([
             'name' => 'Client Test',
+            'role' => 'client',
+            'kyc_status' => 'actif',
+            'phone' => '+2250709090909',
+            'payment_phone' => null,
+            'preferred_payment_provider' => null,
+        ]);
+
+        // 1. Create mission without payment_phone -> succeeds, defaults from own phone
+        $response = $this->actingAs($client)
+            ->postJson('/api/v1/missions', [
+                'description' => 'Besoin de reparer la toiture de ma maison principale.',
+            ]);
+
+        $response->assertCreated();
+        $this->assertEquals('+2250709090909', $client->fresh()->payment_phone);
+        $this->assertEquals('wave', $client->fresh()->preferred_payment_provider);
+
+        // 2. Supply explicit payment details -> succeeds and overrides the default
+        $client2 = User::factory()->create([
+            'name' => 'Client Test 2',
             'role' => 'client',
             'kyc_status' => 'actif',
             'payment_phone' => null,
             'preferred_payment_provider' => null,
         ]);
 
-        // 1. Attempt to create mission without payment_phone -> 422 Validation Error
-        $response = $this->actingAs($client)
+        $responseSuccess = $this->actingAs($client2)
             ->postJson('/api/v1/missions', [
                 'description' => 'Besoin de reparer la toiture de ma maison principale.',
-            ]);
-
-        $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['payment_phone', 'preferred_payment_provider']);
-
-        // 2. Supply payment details in request -> succeeds and updates profile
-        $responseSuccess = $this->actingAs($client)
-            ->postJson('/api/v1/missions', [
-                'description' => 'Besoin de reparer la toiture de ma maison principale.',
-                'payment_phone' => '0709090909',
-                'preferred_payment_provider' => 'wave',
+                'payment_phone' => '0711112222',
+                'preferred_payment_provider' => 'orange_money',
             ]);
 
         $responseSuccess->assertCreated();
-        $this->assertEquals('0709090909', $client->fresh()->payment_phone);
-        $this->assertEquals('wave', $client->fresh()->preferred_payment_provider);
+        $this->assertEquals('0711112222', $client2->fresh()->payment_phone);
+        $this->assertEquals('orange_money', $client2->fresh()->preferred_payment_provider);
     }
 
     public function test_artisan_must_provide_mobile_money_when_submitting_devis_if_missing(): void

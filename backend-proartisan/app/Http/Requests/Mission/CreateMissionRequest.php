@@ -20,6 +20,11 @@ class CreateMissionRequest extends FormRequest
             'artisan_id'   => ['nullable', 'integer', 'exists:users,id'],
             'sector_id'    => ['nullable', 'integer', 'exists:sectors,id'],
             'trade_id'     => ['nullable', 'integer', 'exists:trades,id'],
+            // Nullable pour compatibilité avec les anciennes versions mobiles déjà
+            // installées : la nouvelle UI rend ce champ obligatoire, mais le
+            // backend retombe sur un type d'intervention par défaut si absent
+            // (cf. MissionService::create).
+            'intervention_type_id' => ['nullable', 'integer', 'exists:intervention_types,id'],
             'category'     => ['nullable', 'string', 'max:100'],
             'description' => ['required', 'string', 'min:20', 'max:2000', new NoContactInformation()],
             'lat'         => ['nullable', 'numeric', 'between:-90,90'],

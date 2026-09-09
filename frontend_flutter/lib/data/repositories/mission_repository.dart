@@ -7,6 +7,7 @@ import '../../core/network/api_client.dart';
 import '../../core/network/api_endpoints.dart';
 import '../../core/network/network_executor.dart';
 import '../../core/network/sync_service.dart';
+import '../../modules/services/models/intervention_type_model.dart';
 import '../models/jalon_model.dart';
 import '../models/mission_model.dart';
 import '../models/mission_site_map.dart';
@@ -158,6 +159,7 @@ class MissionRepository {
     required String urgency,
     int? sectorId,
     int? tradeId,
+    int? interventionTypeId,
     double? lat,
     double? lng,
     String? location,
@@ -171,6 +173,7 @@ class MissionRepository {
       'urgency': urgency,
       if (sectorId != null) 'sector_id': sectorId,
       if (tradeId != null) 'trade_id': tradeId,
+      if (interventionTypeId != null) 'intervention_type_id': interventionTypeId,
       if (lat != null) 'lat': lat,
       if (lng != null) 'lng': lng,
       if (location != null) 'location_address': location,
@@ -192,6 +195,21 @@ class MissionRepository {
     }
 
     return MissionModel.fromJson(missionData);
+  }
+
+  /// Liste des types d'intervention proposés au client (ex: simple
+  /// déplacement/diagnostic vs. intervention complète avec matériaux).
+  Future<List<InterventionTypeModel>> getInterventionTypes() async {
+    final res = await NetworkExecutor.run(
+      () => _client.get(ApiEndpoints.interventionTypes),
+    );
+    final data = res.data;
+    final List<dynamic> list = data is Map && data.containsKey('data')
+        ? data['data'] as List<dynamic>
+        : (data as List<dynamic>);
+    return list
+        .map((e) => InterventionTypeModel.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   /// Upload un fichier (image/vidéo) et retourne son URL publique

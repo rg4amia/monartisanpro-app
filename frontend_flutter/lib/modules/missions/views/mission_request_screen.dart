@@ -5,6 +5,8 @@ import 'package:image_picker/image_picker.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../core/storage/storage_service.dart';
 import '../../../core/utils/bypass_validator.dart';
+import '../../../data/repositories/mission_repository.dart';
+import '../../services/models/intervention_type_model.dart';
 import '../../services/models/sector_model.dart';
 import '../../services/models/trade_model.dart';
 import '../../services/utils/service_icon_helper.dart';
@@ -42,9 +44,15 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
   final _photos = <XFile>[].obs;
   final _video = Rx<XFile?>(null);
 
+  final _interventionTypes = <InterventionTypeModel>[].obs;
+  final _selectedInterventionTypeId = Rxn<int>();
+  final _isLoadingInterventionTypes = false.obs;
+  final MissionRepository _missionRepository = MissionRepository();
+
   @override
   void initState() {
     super.initState();
+    _loadInterventionTypes();
 
     // RÈGLE CRITIQUE : Vérifier KYC avant création mission
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -74,6 +82,18 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
   void dispose() {
     _descCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadInterventionTypes() async {
+    _isLoadingInterventionTypes.value = true;
+    try {
+      final types = await _missionRepository.getInterventionTypes();
+      _interventionTypes.value = types;
+    } catch (_) {
+      // Silencieux : le backend applique un type par défaut si absent.
+    } finally {
+      _isLoadingInterventionTypes.value = false;
+    }
   }
 
   Future<void> _pickImage() async {
@@ -211,6 +231,16 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
                     _SectionTitle(title: 'Options d\'intervention'),
                     const SizedBox(height: 12),
                     Obx(
+                      () => _InterventionTypeSelector(
+                        types: _interventionTypes,
+                        isLoading: _isLoadingInterventionTypes.value,
+                        selectedId: _selectedInterventionTypeId.value,
+                        onSelected: (id) =>
+                            _selectedInterventionTypeId.value = id,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Obx(
                       () => _NightInterventionCard(
                         enabled: _nightIntervention.value,
                         onChanged: (value) => _nightIntervention.value = value,
@@ -264,6 +294,13 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
                           );
                           return;
                         }
+                        if (_selectedInterventionTypeId.value == null) {
+                          Get.snackbar(
+                            'Erreur',
+                            'Veuillez sélectionner le type d\'intervention souhaité',
+                          );
+                          return;
+                        }
 
                         final bypassError =
                             BypassValidator.validate(_descCtrl.text);
@@ -283,6 +320,8 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
                             'category': _selectedCategory.value,
                             'categoryId': _selectedCategoryId.value,
                             'tradeId': _selectedTradeId.value,
+                            'interventionTypeId':
+                                _selectedInterventionTypeId.value,
                             'description': _descCtrl.text,
                             'locationAddress': _location.value,
                             'locationDetail': _locationDetail.value,
@@ -463,6 +502,78 @@ String _formatFcfa(dynamic amount) {
       );
 
   return '$formatted FCFA';
+}
+
+class _InterventionTypeSelector extends StatelessWidget {
+  final List<InterventionTypeModel> types;
+  final bool isLoading;
+  final int? selectedId;
+  final ValueChanged<int> onSelected;
+
+  const _InterventionTypeSelector({
+    required this.types,
+    required this.isLoading,
+    required this.selectedId,
+    required this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8),
+        child: SizedBox(
+          height: 20,
+          width: 20,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      );
+    }
+
+    if (types.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Que souhaitez-vous demander à l\'artisan ?',
+          style: TextStyle(fontSize: 13, color: _C.muted),
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: types.map((type) {
+            final selected = type.id == selectedId;
+            return GestureDetector(
+              onTap: () => onSelected(type.id),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: selected ? _C.primary : _C.surface,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: selected ? _C.primary : _C.subtle,
+                  ),
+                ),
+                child: Text(
+                  type.name,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: selected ? Colors.white : _C.ink,
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
 }
 
 class _NightInterventionCard extends StatelessWidget {

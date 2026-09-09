@@ -64,7 +64,7 @@ class MissionController extends Controller
             $query->whereIn('status', $mappedStatuses);
         }
 
-        $missions = $query->with(['client', 'artisan', 'jalons', 'requestedSector', 'requestedTrade'])
+        $missions = $query->with(['client', 'artisan', 'jalons', 'requestedSector', 'requestedTrade', 'interventionType'])
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
@@ -150,6 +150,7 @@ class MissionController extends Controller
             'devis',
             'requestedSector',
             'requestedTrade',
+            'interventionType',
         ]);
 
         return response()->json([
@@ -347,7 +348,7 @@ class MissionController extends Controller
         }
 
         $mission->refresh();
-        $mission->load(['client', 'artisan', 'jalons', 'requestedSector', 'requestedTrade']);
+        $mission->load(['client', 'artisan', 'jalons', 'requestedSector', 'requestedTrade', 'interventionType']);
 
         return response()->json([
             'success' => true,
@@ -406,7 +407,7 @@ class MissionController extends Controller
         }
 
         $mission->refresh();
-        $mission->load(['client', 'artisan', 'jalons', 'requestedSector', 'requestedTrade']);
+        $mission->load(['client', 'artisan', 'jalons', 'requestedSector', 'requestedTrade', 'interventionType']);
 
         return response()->json([
             'success' => true,

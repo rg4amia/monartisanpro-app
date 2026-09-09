@@ -25,6 +25,8 @@ class MissionModel {
   final double? clientLongitude;
   final double? supplierLatitude;
   final double? supplierLongitude;
+  final int? interventionTypeId;
+  final String? interventionTypeName;
 
   const MissionModel({
     required this.id,
@@ -53,6 +55,8 @@ class MissionModel {
     this.clientLongitude,
     this.supplierLatitude,
     this.supplierLongitude,
+    this.interventionTypeId,
+    this.interventionTypeName,
   });
 
   bool get needsReferent => montantTotal > 2000000;
@@ -199,6 +203,12 @@ class MissionModel {
         flatKeys: const ['supplierLongitude', 'supplier_longitude'],
         axis: 'lng',
       ),
+      interventionTypeId: json['interventionTypeId'] != null ||
+              json['intervention_type_id'] != null
+          ? _parseInt(json['interventionTypeId'] ?? json['intervention_type_id'])
+          : null,
+      interventionTypeName: (json['interventionTypeName'] ??
+          json['intervention_type_name']) as String?,
     );
   }
 
@@ -254,6 +264,8 @@ class MissionModel {
         'clientLongitude': clientLongitude,
         'supplierLatitude': supplierLatitude,
         'supplierLongitude': supplierLongitude,
+        'interventionTypeId': interventionTypeId,
+        'interventionTypeName': interventionTypeName,
       };
 
   MissionModel copyWith({

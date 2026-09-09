@@ -10,6 +10,7 @@ import '../widgets/devis_creation/jalons_section.dart';
 import '../widgets/devis_creation/labor_section.dart';
 import '../widgets/devis_creation/materials_section.dart';
 import '../widgets/devis_creation/mission_info_card.dart';
+import '../widgets/devis_creation/payment_phone_section.dart';
 import '../widgets/devis_creation/recap_section.dart';
 import '../widgets/devis_creation/submit_button.dart';
 import '../widgets/devis_creation/supplier_section.dart';
@@ -40,16 +41,26 @@ class _DevisCreationScreenState extends State<DevisCreationScreen> {
         ? Get.find<DevisController>()
         : Get.put(DevisController());
 
+    bool isAvenant = false;
     final args = Get.arguments;
     if (args is MissionModel) {
       mission = args;
       missionId = args.id;
     } else if (args is int) {
       missionId = args;
+    } else if (args is Map) {
+      final rawMission = args['mission'];
+      if (rawMission is MissionModel) {
+        mission = rawMission;
+        missionId = rawMission.id;
+      } else if (args['missionId'] is int) {
+        missionId = args['missionId'] as int;
+      }
+      isAvenant = args['isAvenant'] == true;
     }
 
     if (missionId != null) {
-      controller.prepareDraftForMission(missionId!);
+      controller.prepareDraftForMission(missionId!, isAvenant: isAvenant);
     }
 
     controller.loadSuppliers();
@@ -83,6 +94,8 @@ class _DevisCreationScreenState extends State<DevisCreationScreen> {
                     const SizedBox(height: 24),
                     JalonsSection(controller: controller),
                     const SizedBox(height: 24),
+                    PaymentPhoneSection(controller: controller),
+                    const SizedBox(height: 24),
                     RecapSection(controller: controller),
                     const SizedBox(height: 100),
                   ],
@@ -95,6 +108,7 @@ class _DevisCreationScreenState extends State<DevisCreationScreen> {
       floatingActionButton: SubmitButton(
         controller: controller,
         missionId: missionId,
+        interventionTypeId: mission?.interventionTypeId,
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );

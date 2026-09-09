@@ -36,11 +36,18 @@ class MissionService
 
         $locationAddress = $data['location_address'] ?? $data['location'] ?? null;
 
+        // RÈGLE : le client sélectionne le type d'intervention souhaité à la
+        // demande de devis. Les anciennes versions mobiles ne l'envoient pas
+        // encore : on retombe alors sur le premier type disponible.
+        $interventionTypeId = $data['intervention_type_id']
+            ?? \App\Models\InterventionType::orderBy('id')->value('id');
+
         $mission = Mission::create([
             'client_id'           => $client->id,
             'artisan_id'          => $data['artisan_id'] ?? null,
             'requested_sector_id' => $data['sector_id'] ?? null,
             'requested_trade_id'  => $data['trade_id'] ?? null,
+            'intervention_type_id' => $interventionTypeId,
             'description'         => $data['description'],
             'photos_json'         => $data['photos'] ?? null,
             'status'              => $initialState,
