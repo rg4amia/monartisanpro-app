@@ -6,6 +6,7 @@ use App\Models\AiUserQuota;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 /**
@@ -86,5 +87,27 @@ class AiQuotaEnforcementTest extends TestCase
         $this->actingAs($user, 'sanctum')
             ->postJson('/api/v1/search', ['tags' => ['fissure_structure']])
             ->assertStatus(429);
+    }
+
+    public function test_chat_never_leaks_the_raw_gemini_error_body_to_the_user(): void
+    {
+        config(['services.gemini.api_key' => 'test-key', 'services.qdrant.url' => null]);
+        Http::fake([
+            '*' => Http::response([
+                'error' => ['code' => 429, 'message' => 'You exceeded your current quota, please check your plan and billing details.'],
+            ], 429),
+        ]);
+
+        $user = User::factory()->create(['role' => 'artisan']);
+
+        $response = $this->actingAs($user, 'sanctum')
+            ->postJson('/api/v1/chat', ['message' => 'Comment devenir propriétaire ?'])
+            ->assertOk();
+
+        $reply = $response->json('response');
+        $this->assertStringNotContainsStringIgnoringCase('exceeded your current quota', $reply);
+        $this->assertStringNotContainsStringIgnoringCase('Erreur API Gemini', $reply);
+        $this->assertStringNotContainsStringIgnoringCase('billing', $reply);
+        $this->assertStringContainsString('assistant IA', $reply);
     }
 }

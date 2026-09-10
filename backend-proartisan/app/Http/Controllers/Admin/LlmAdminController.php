@@ -573,7 +573,7 @@ class LlmAdminController extends Controller
         $reply = '';
 
         if ($geminiKey) {
-            $reply = $this->callGeminiApi($geminiKey, $userMsg, $contextTexts, $trade);
+            $reply = $this->callGeminiApi($geminiKey, $userMsg, $contextTexts, $trade, $ragMatches);
         } else {
             $reply = $this->localChatFallback($userMsg, $ragMatches);
         }
@@ -726,7 +726,7 @@ class LlmAdminController extends Controller
         ];
     }
 
-    private function callGeminiApi(string $key, string $userMsg, array $contextTexts, string $trade = 'Maçon'): string
+    private function callGeminiApi(string $key, string $userMsg, array $contextTexts, string $trade = 'Maçon', array $ragMatches = []): string
     {
         $prompt = "Tu es un assistant BTP expert pour la plateforme ProsArtisan en Côte d'Ivoire. L'utilisateur connecté est un artisan de catégorie : **{$trade}**.\n";
         $prompt .= "Adapte le ton, le vocabulaire technique et les conseils spécifiquement pour le métier de **{$trade}** (ex: pour un maçon parle de dosages/ciments CPJ 42.5/32.5, pour un plombier de diamètres/pente/colle/SODECl, pour un électricien de sections de câbles/terre/disjoncteurs, pour un peintre de préparation/peinture Pliolite/humidité).\n";
@@ -768,14 +768,34 @@ class LlmAdminController extends Controller
             } else {
                 AiMonitoringService::log($model, 'chat', 0, 0, $responseTimeMs, $response->status(), $response->body());
 
-                return 'Erreur API Gemini (Status '.$response->status().'): '.$response->body();
+                return $this->gracefulChatDegradation($userMsg, $ragMatches, $response->status());
             }
         } catch (\Exception $e) {
             $responseTimeMs = (microtime(true) - $startTime) * 1000;
             AiMonitoringService::log($model, 'chat', 0, 0, $responseTimeMs, 500, $e->getMessage());
 
-            return 'Exception Gemini: '.$e->getMessage();
+            return $this->gracefulChatDegradation($userMsg, $ragMatches, 503);
         }
+    }
+
+    /**
+     * Réponse de repli lisible quand l'API Gemini est indisponible (quota
+     * fournisseur épuisé, panne, time-out…). On ne renvoie JAMAIS le corps
+     * d'erreur brut à l'artisan : soit la fiche technique locale correspondante,
+     * soit un message d'attente clair.
+     */
+    private function gracefulChatDegradation(string $userMsg, array $ragMatches, int $status): string
+    {
+        $intro = $status === 429
+            ? "🛠️ L'assistant IA est très sollicité en ce moment et a atteint sa limite d'utilisation pour l'instant. Réessaie dans quelques minutes."
+            : "🛠️ L'assistant IA est momentanément indisponible. Réessaie dans un instant.";
+
+        if (! empty($ragMatches)) {
+            return $intro."\n\nEn attendant, voici ce que dit notre base technique ProsArtisan :\n\n".
+                $this->localChatFallback($userMsg, $ragMatches);
+        }
+
+        return $intro."\n\nTu peux aussi consulter les fiches de l'onglet Diagnostic pour une réponse immédiate.";
     }
 
     private function localChatFallback(string $userMsg, array $ragMatches): string
