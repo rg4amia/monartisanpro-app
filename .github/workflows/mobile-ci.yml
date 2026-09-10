@@ -86,19 +86,27 @@ jobs:
       # Secrets injectés au build (jamais commités). Définir dans
       # Settings → Secrets → Actions : YANDEX_MAPKIT_API_KEY,
       # YANDEX_DISTANCE_MATRIX_API_KEY, YANDEX_GEOLOCATION_API_KEY.
+      # OSRM_BASE_URL : optionnel — pointer vers une instance OSRM dédiée
+      # (ex. https://osrm.prosartisan.net) pour des itinéraires fiables ;
+      # sans secret, on retombe sur le serveur de démonstration public
+      # (rate-limité, souvent injoignable depuis l'Afrique de l'Ouest).
       - name: Inject build secrets
         working-directory: frontend_flutter
         env:
           YANDEX_MAPKIT_API_KEY: ${{ secrets.YANDEX_MAPKIT_API_KEY }}
           YANDEX_DISTANCE_MATRIX_API_KEY: ${{ secrets.YANDEX_DISTANCE_MATRIX_API_KEY }}
           YANDEX_GEOLOCATION_API_KEY: ${{ secrets.YANDEX_GEOLOCATION_API_KEY }}
+          OSRM_BASE_URL: ${{ secrets.OSRM_BASE_URL || 'https://router.project-osrm.org' }}
         run: |
+          if [ -z "${YANDEX_MAPKIT_API_KEY}" ]; then
+            echo "::warning::YANDEX_MAPKIT_API_KEY absent des secrets — la carte Yandex n'affichera aucune tuile dans cet APK."
+          fi
           cat > env.json <<EOF
           {
             "YANDEX_MAPKIT_API_KEY": "${YANDEX_MAPKIT_API_KEY}",
             "YANDEX_DISTANCE_MATRIX_API_KEY": "${YANDEX_DISTANCE_MATRIX_API_KEY}",
             "YANDEX_GEOLOCATION_API_KEY": "${YANDEX_GEOLOCATION_API_KEY}",
-            "OSRM_BASE_URL": "https://router.project-osrm.org"
+            "OSRM_BASE_URL": "${OSRM_BASE_URL}"
           }
           EOF
           echo "yandex.mapkit.apiKey=${YANDEX_MAPKIT_API_KEY}" >> android/local.properties

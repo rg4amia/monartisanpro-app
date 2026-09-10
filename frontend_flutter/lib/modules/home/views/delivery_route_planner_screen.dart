@@ -171,7 +171,10 @@ class _DeliveryRoutePlannerScreenState
       final url = Uri.parse(
         '$base/route/v1/driving/$lng1,$lat1;$lng2,$lat2?overview=full&geometries=geojson',
       );
-      final response = await http.get(url).timeout(const Duration(seconds: 4));
+      // 10 s : le serveur OSRM public est lent depuis l'Afrique de l'Ouest et
+      // 4 s suffisaient rarement → l'itinéraire routier ne s'affichait jamais et
+      // on retombait systématiquement sur l'estimation à vol d'oiseau.
+      final response = await http.get(url).timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) {
         final data = json.decode(response.body) as Map<String, dynamic>;
         final routes = data['routes'];
