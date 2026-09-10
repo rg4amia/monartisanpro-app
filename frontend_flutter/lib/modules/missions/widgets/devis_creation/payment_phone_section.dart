@@ -16,7 +16,7 @@ class PaymentPhoneSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      if (!controller.needsPaymentPhone) {
+      if (!controller.requiresPaymentPhone.value) {
         return const SizedBox.shrink();
       }
 

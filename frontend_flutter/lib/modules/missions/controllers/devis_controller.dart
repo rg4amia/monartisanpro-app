@@ -11,15 +11,16 @@ import '../../../data/models/devis_model.dart';
 import '../../../data/models/payment_model.dart';
 import '../../../data/models/supplier_model.dart';
 import '../../../data/models/supplier_product_model.dart';
+import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/devis_repository.dart';
 import '../../../data/repositories/payment_repository.dart';
 import '../../../data/repositories/supplier_catalog_repository.dart';
-import '../../auth/controllers/auth_controller.dart';
 
 class DevisController extends GetxController {
   final DevisRepository _repo = DevisRepository();
   final PaymentRepository _paymentRepo = PaymentRepository();
   final SupplierCatalogRepository _catalogRepo = SupplierCatalogRepository();
+  final AuthRepository _authRepo = AuthRepository();
 
   final devisList = <DevisModel>[].obs;
   final currentDevis = Rx<DevisModel?>(null);
@@ -49,16 +50,33 @@ class DevisController extends GetxController {
   final paymentPhone = ''.obs;
   final preferredProvider = 'wave'.obs;
 
+  // Vrai lorsque l'artisan n'a pas encore de numéro Mobile Money enregistré
+  // sur son profil : la section de saisie doit alors être affichée et le
+  // numéro transmis à la création du devis. Observable (et non un getter
+  // dérivé d'`AuthController`, non persistant après le parcours d'auth) pour
+  // rester lisible dans un `Obx` sans jamais lever d'`ObxError`.
+  final requiresPaymentPhone = false.obs;
+
   // Mission associée
   int? missionId;
   // Devis complémentaire (matériaux) soumis après un devis initial de
   // déplacement/diagnostic déjà accepté et financé.
   bool isAvenant = false;
 
-  bool get needsPaymentPhone {
-    if (!Get.isRegistered<AuthController>()) return false;
-    final user = Get.find<AuthController>().currentUser.value;
-    return user != null && (user.paymentPhone == null || user.paymentPhone!.isEmpty);
+  bool get needsPaymentPhone => requiresPaymentPhone.value;
+
+  /// Interroge le profil serveur pour savoir si l'artisan doit saisir un
+  /// numéro Mobile Money avant de pouvoir soumettre un devis. Silencieux :
+  /// en cas d'échec réseau on n'affiche pas la section (le backend reste
+  /// juge et renverra le cas échéant l'erreur de validation).
+  Future<void> refreshPaymentPhoneRequirement() async {
+    try {
+      final user = await _authRepo.me();
+      final phone = user.paymentPhone?.trim() ?? '';
+      requiresPaymentPhone.value = phone.isEmpty;
+    } catch (_) {
+      requiresPaymentPhone.value = false;
+    }
   }
 
   void prepareDraftForMission(int id, {bool isAvenant = false}) {

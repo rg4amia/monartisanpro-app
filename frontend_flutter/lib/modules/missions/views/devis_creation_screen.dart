@@ -64,6 +64,7 @@ class _DevisCreationScreenState extends State<DevisCreationScreen> {
     }
 
     controller.loadSuppliers();
+    controller.refreshPaymentPhoneRequirement();
   }
 
   @override
