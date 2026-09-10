@@ -842,9 +842,6 @@ class HomeController extends GetxController {
     try {
       await _userRepo.updateProfile(
         userId: userId,
-        name: userName.value.isNotEmpty
-            ? userName.value
-            : (StorageService.getName() ?? 'Client'),
         paymentPhone: newPaymentPhone.trim(),
         preferredPaymentProvider: provider,
       );

@@ -17,7 +17,10 @@ class UserController extends Controller
         //$this->authorize('update', $user);
 
         $data = $request->validate([
-            'name' => ['sometimes', 'string', 'min:2', 'max:100'],
+            // Aligné sur la validation d'inscription (max:255) : `name` est
+            // revalidé à chaque mise à jour de profil, une borne plus stricte
+            // ici rejetterait des comptes déjà valides.
+            'name' => ['sometimes', 'string', 'min:2', 'max:255'],
             'fcm_token' => ['sometimes', 'nullable', 'string'],
             'intervention_nuit' => ['sometimes', 'boolean'],
             'sector_id' => ['sometimes', 'nullable', 'exists:sectors,id'],

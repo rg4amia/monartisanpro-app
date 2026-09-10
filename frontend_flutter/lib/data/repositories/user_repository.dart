@@ -35,17 +35,22 @@ class UserRepository {
 
   Future<Map<String, dynamic>> updateProfile({
     required int userId,
-    required String name,
+    String? name,
     bool? nightInterventionAvailable,
     int? sectorId,
     int? tradeId,
     String? paymentPhone,
     String? preferredPaymentProvider,
   }) async {
+    // On ne transmet `name` que si l'appelant modifie réellement ce champ :
+    // le backend revalide `name` (min:2) à chaque envoi, donc renvoyer un nom
+    // vide ou trop court — cas d'un profil incomplet qui associe seulement son
+    // numéro Mobile Money — ferait échouer toute la mise à jour en 422.
+    final trimmedName = name?.trim();
     final response = await _client.put(
       ApiEndpoints.updateUser(userId),
       data: {
-        'name': name,
+        if (trimmedName != null && trimmedName.isNotEmpty) 'name': trimmedName,
         if (nightInterventionAvailable != null)
           'intervention_nuit': nightInterventionAvailable,
         if (sectorId != null) 'sector_id': sectorId,

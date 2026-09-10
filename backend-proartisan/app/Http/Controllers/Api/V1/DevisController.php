@@ -38,10 +38,16 @@ class DevisController extends Controller
         }
 
         if ($request->has('payment_phone')) {
-            $user->update([
-                'payment_phone' => $request->input('payment_phone'),
-                'preferred_payment_provider' => $request->input('preferred_payment_provider'),
-            ]);
+            // La synchro du numéro de paiement ne doit jamais faire échouer la
+            // soumission du devis elle-même (cf. MissionController::store).
+            try {
+                $user->update([
+                    'payment_phone' => $request->input('payment_phone'),
+                    'preferred_payment_provider' => $request->input('preferred_payment_provider'),
+                ]);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Impossible de synchroniser le téléphone de paiement (devis): ' . $e->getMessage());
+            }
         }
 
         try {

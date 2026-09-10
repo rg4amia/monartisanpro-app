@@ -54,9 +54,6 @@ class SettingsController extends GetxController {
     try {
       await _userRepo.updateProfile(
         userId: userId,
-        name: userName.value.isNotEmpty
-            ? userName.value
-            : (StorageService.getName() ?? 'Utilisateur'),
         paymentPhone: newPaymentPhone.trim(),
         preferredPaymentProvider: provider,
       );

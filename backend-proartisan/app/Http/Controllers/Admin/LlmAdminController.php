@@ -896,7 +896,9 @@ class LlmAdminController extends Controller
 
         if ($geminiKey) {
             try {
-                $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={$geminiKey}";
+                $geminiModel = config('services.gemini.model', 'gemini-2.0-flash');
+                $geminiBaseUrl = config('services.gemini.base_url', 'https://generativelanguage.googleapis.com');
+                $url = "{$geminiBaseUrl}/v1beta/models/{$geminiModel}:generateContent?key={$geminiKey}";
                 $response = Http::post($url, [
                     'contents' => [
                         [
