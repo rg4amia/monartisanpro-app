@@ -40,9 +40,12 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
 
-    // LLM Assistant Public routes
-    Route::post('/chat', [LlmAdminController::class, 'chat']);
-    Route::post('/search', [LlmAdminController::class, 'search']);
+    // LLM Assistant Public routes — throttle 'ai' : protège le quota Gemini
+    // facturé contre l'abus (par utilisateur si token Sanctum, sinon par IP).
+    Route::middleware('throttle:ai')->group(function () {
+        Route::post('/chat', [LlmAdminController::class, 'chat']);
+        Route::post('/search', [LlmAdminController::class, 'search']);
+    });
 
     // ─────────────────────────────────────────────────────────────────────────
     // ROUTES PUBLIQUES (sans authentification)

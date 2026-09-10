@@ -2,64 +2,52 @@
 <html lang="fr">
 
 <head>
-  <script src="config.js?v=3"></script>
+  <script src="config.js?v=5"></script>
   <script>
-    // Auth token for the embedded WebView.
-    // In the Flutter app, a real Sanctum token should be injected via
-    // JavaScript channel. This fallback ensures the client works in dev
-    // when opened directly in a browser.
-    if (!localStorage.getItem("auth_token")) {
-      console.warn("[ProsArtisan] No auth token found — using dev bypass.");
-      localStorage.setItem("auth_token", "bypass-token");
-      localStorage.setItem("user_email", "dev@prosartisan.ci");
-    }
+    // Jeton d'auth de la WebView : l'app Flutter le passe dans le fragment
+    // d'URL (#token=...), non transmis au serveur donc absent des logs Apache.
+    (function () {
+      try {
+        var h = new URLSearchParams((location.hash || "").replace(/^#/, ""));
+        var t = h.get("token");
+        if (t) {
+          localStorage.setItem("auth_token", t);
+          h.delete("token"); // on retire le jeton de l'URL, on garde le reste (#trade=)
+          var rest = h.toString();
+          history.replaceState(null, "", location.pathname + location.search + (rest ? "#" + rest : ""));
+        }
+      } catch (e) { /* noop */ }
+      // Bypass de dev UNIQUEMENT en local (jamais en production).
+      var isLocal = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+      if (isLocal && !localStorage.getItem("auth_token")) {
+        localStorage.setItem("auth_token", "bypass-token");
+        localStorage.setItem("user_email", "dev@prosartisan.ci");
+      }
+    })();
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ProsArtisan Mobile - Assistant Chantier</title>
-  <link rel="stylesheet" href="client.css?v=4">
-  <!-- Tailwind CDN uniquement pour les utilitaires de grille rapides de premier niveau -->
+  <link rel="stylesheet" href="client.css?v=5">
+  <!-- Tailwind : utilitaires de mise en page rapides. TODO: inliner une build
+       statique pour supprimer cette dépendance CDN (échoue hors-ligne). -->
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
 <body>
 
-  <!-- PHONE VIEWPORT WRAPPER -->
+  <!-- Conteneur applicatif (l'en-tête / la barre de statut sont fournis par
+       l'app Flutter qui héberge cette page dans une WebView). -->
   <div class="app-wrapper">
 
-    <!-- Phone Top Notch -->
-    <div class="phone-notch"></div>
-
-    <!-- Phone Status Bar -->
-    <div class="status-bar">
-      <div class="time">18:59</div>
-      <div class="status-icons">
-        <span id="badge-network" class="network-badge">WIFI</span>
-        <span>📶</span>
-        <span>🔋</span>
-      </div>
-    </div>
-
-    <!-- Application Header -->
-    <header class="app-header">
-      <div class="app-logo">
-        🛡️ Pros<span>Artisan</span>
-      </div>
-      <div class="flex items-center gap-1.5">
-        <select id="select-artisan-trade" title="Sélectionner le métier de l'artisan" class="bg-slate-900 border border-slate-700 text-[10px] text-white rounded px-2 py-1 font-bold outline-none cursor-pointer">
-          <option value="Maçon" selected>🏗️ Maçon</option>
-          <option value="Plombier">🚰 Plombier</option>
-          <option value="Électricien">⚡ Électricien</option>
-          <option value="Peintre">🎨 Peintre</option>
-        </select>
-        <button class="settings-btn" id="nav-settings" title="Paramètres Réseau">
-          <span>⚙️</span>
-        </button>
-        <button class="settings-btn" id="btn-client-logout" title="Déconnexion">
-          <span>🚪</span>
-        </button>
-      </div>
-    </header>
+    <!-- Sélecteur de métier : masqué, piloté par le fragment d'URL (#trade=)
+         que passe l'app Flutter selon le profil de l'artisan connecté. -->
+    <select id="select-artisan-trade" class="hidden" aria-hidden="true">
+      <option value="Maçon" selected>Maçon</option>
+      <option value="Plombier">Plombier</option>
+      <option value="Électricien">Électricien</option>
+      <option value="Peintre">Peintre</option>
+    </select>
 
     <!-- APP MAIN CONTENT (SCROLLABLE) -->
     <main class="app-content" id="main-content">
@@ -77,26 +65,8 @@
           <div class="upload-zone" id="upload-zone">
             <span class="upload-icon">🧱</span>
             <div class="upload-text">Prendre une Photo / Choisir Image</div>
-            <div class="upload-subtext">Glissez-déposez ou cliquez ici</div>
+            <div class="upload-subtext">Appuyez ici pour l'appareil photo ou la galerie</div>
             <input type="file" id="image-upload" class="hidden" accept="image/*" title="Choisir un fichier image">
-          </div>
-
-          <!-- Presets for easy demo testing -->
-          <div class="text-[10px] text-slate-400 font-semibold mt-3">OU CHOISIR UN CAS D'ÉTUDE DE CHANTIER :</div>
-          <div class="preset-grid" id="preset-container">
-            <!-- Rempli par client.js -->
-          </div>
-
-          <!-- Simulation size compression indicator -->
-          <div id="compress-indicator" class="compress-indicator hidden">
-            <div class="compress-header">
-              <span class="text-cyan-400">Compression d'image (3G Ready)</span>
-              <span id="compress-percentage" class="text-slate-400">100%</span>
-            </div>
-            <div class="compress-progress">
-              <div id="compress-bar" class="compress-bar"></div>
-            </div>
-            <div id="compress-text" class="compress-details">Optimisation du poids...</div>
           </div>
         </section>
 
@@ -118,11 +88,6 @@
               <span>🎤</span>
             </button>
           </div>
-
-          <!-- Fake voice links -->
-          <span class="voice-simulation-link" id="btn-simulate-voice">
-            ⚡ Simuler la dictée vocale (Nouchi)
-          </span>
         </section>
 
         <!-- MODULE 3: DYNAMIC FILTERS -->
@@ -242,49 +207,7 @@
         </section>
       </div>
 
-      <!-- ==================== OFFLINE SYNC LOG CONSOLE ==================== -->
-      <section class="glass-card">
-        <div class="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-2">Logs & File de Synchronisation
-          locale</div>
-        <div class="console-panel" id="console-logs">
-          <!-- Logs client insérés en JS -->
-        </div>
-      </section>
-
     </main>
-
-    <!-- SETTINGS MODAL (OVERLAY) -->
-    <div class="modal-overlay hidden" id="settings-modal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3 class="text-white font-bold text-sm">Paramètres Réseau du Simulateur</h3>
-          <button class="modal-close" id="btn-close-settings">×</button>
-        </div>
-
-        <div class="modal-option-group">
-          <label class="modal-option-label" for="setting-network">Qualité de connexion</label>
-          <select id="setting-network"
-            class="w-full bg-slate-900 border border-slate-700 text-xs text-white rounded p-2 focus:ring-1 focus:ring-cyan-500">
-            <option value="wifi" selected>Wifi (Fibre - Latence standard 400ms)</option>
-            <option value="3g">3G Restreinte (Latence dégradée 2400ms)</option>
-            <option value="offline">Hors-ligne (Réseau coupé - Fallback SQLite Local)</option>
-          </select>
-        </div>
-
-        <div class="mt-4 pt-3 border-t border-slate-800 flex justify-between items-center">
-          <span class="text-[10px] text-slate-400">Cache RAG Local (SQLite) :</span>
-          <button id="btn-clear-local-cache"
-            class="px-2.5 py-1 bg-red-950/40 text-red-400 hover:bg-red-900/50 hover:text-red-300 border border-red-500/20 text-[10px] font-bold rounded-lg transition">
-            🗑️ Vider le cache
-          </button>
-        </div>
-
-        <p class="text-[10px] text-slate-400 leading-relaxed mt-3">
-          Basculez en mode <strong>Hors-ligne</strong> pour simuler un chantier en zone blanche (ex: périphérie
-          d'Abidjan) et tester le modèle de vision ONNX local et la file d'attente SQLite locale.
-        </p>
-      </div>
-    </div>
 
     <!-- BOTTOM TAB NAVIGATION -->
     <nav class="bottom-nav">
@@ -300,7 +223,7 @@
 
   </div>
 
-  <script type="module" src="client.js?v=4"></script>
+  <script type="module" src="client.js?v=5"></script>
 </body>
 
 </html>

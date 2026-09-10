@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:frontend_flutter/core/config/env_config.dart';
+import 'package:frontend_flutter/core/storage/storage_service.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -15,17 +16,31 @@ class IaAssistantScreen extends StatefulWidget {
 }
 
 class _IaAssistantScreenState extends State<IaAssistantScreen> {
-  late final WebViewController _controller;
+  WebViewController? _controller;
   bool _isLoading = true;
   bool _hasError = false;
   String _errorMessage = '';
   int _retryCount = 0;
   static const int _maxRetries = 3;
 
+  /// Jeton Sanctum de l'artisan, passé à client.html via le fragment d'URL
+  /// (non transmis au serveur, donc absent des logs Apache).
+  String? _authToken;
+
   @override
   void initState() {
     super.initState();
     _requestPermissions();
+    _bootstrap();
+  }
+
+  Future<void> _bootstrap() async {
+    try {
+      _authToken = await StorageService.getToken();
+    } catch (_) {
+      _authToken = null;
+    }
+    if (!mounted) return;
     _initWebView();
   }
 
@@ -94,7 +109,7 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
         'fileSize': fileSize,
       });
 
-      await _controller.runJavaScript(
+      await _controller?.runJavaScript(
         '(() => { const data = $jsData; window.handleFlutterImage(data.base64, data.filename, data.fileSize); })()',
       );
     } catch (e) {
@@ -111,13 +126,17 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
   }
 
   /// Construit l'URL de client.html à partir de l'URL API résolue.
+  /// Le jeton Sanctum est passé dans le fragment (`#token=`), jamais dans la
+  /// query string : un fragment n'est pas envoyé au serveur ni journalisé.
   String _buildAssistantUrl() {
     final uri = Uri.parse(EnvConfig.baseUrl);
     final host = uri.host;
     final timestamp = DateTime.now().millisecondsSinceEpoch;
-    return uri.hasPort
-        ? '${uri.scheme}://$host:${uri.port}/client.html?t=$timestamp'
-        : '${uri.scheme}://$host/client.html?t=$timestamp';
+    final authority = uri.hasPort ? '$host:${uri.port}' : host;
+    final fragment = (_authToken != null && _authToken!.isNotEmpty)
+        ? '#token=${Uri.encodeComponent(_authToken!)}'
+        : '';
+    return '${uri.scheme}://$authority/client.html?t=$timestamp$fragment';
   }
 
   void _initWebView() {
@@ -181,7 +200,7 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
                   debugPrint(
                     '[IaAssistant] Retry automatique $_retryCount/$_maxRetries → $assistantUrl',
                   );
-                  _controller.loadRequest(Uri.parse(assistantUrl));
+                  _controller?.loadRequest(Uri.parse(assistantUrl));
                 }
               });
             } else {
@@ -256,7 +275,12 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
     debugPrint(
       '[IaAssistant] Retry → $assistantUrl (mode: ${EnvConfig.currentMode})',
     );
-    unawaited(_controller.loadRequest(Uri.parse(assistantUrl)));
+    final controller = _controller;
+    if (controller != null) {
+      unawaited(controller.loadRequest(Uri.parse(assistantUrl)));
+    } else {
+      _initWebView();
+    }
   }
 
   @override
@@ -305,8 +329,8 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
       body: SafeArea(
         child: Stack(
           children: [
-            // WebView
-            WebViewWidget(controller: _controller),
+            // WebView (le contrôleur est prêt après lecture du jeton d'auth)
+            if (_controller != null) WebViewWidget(controller: _controller!),
 
             // Loading spinner avec indicateur de retry
             if (_isLoading && !_hasError)

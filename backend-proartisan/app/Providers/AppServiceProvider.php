@@ -2,16 +2,24 @@
 
 namespace App\Providers;
 
+use App\Models\Jalon;
+use App\Models\Litige;
+use App\Models\Mission;
+use App\Models\Order;
+use App\Models\Transaction;
+use App\Models\WalletTransaction;
+use App\Observers\AdminDashboardCacheObserver;
+use App\Services\Admin\AdminPermissionService;
 use Carbon\CarbonImmutable;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Cache\RateLimiting\Limit;
-use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\Facades\Gate;
-use Illuminate\Http\Request;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -57,10 +65,10 @@ class AppServiceProvider extends ServiceProvider
      */
     protected function configureAdminGates(): void
     {
-        foreach (\App\Services\Admin\AdminPermissionService::allCapabilityNames() as $capability) {
+        foreach (AdminPermissionService::allCapabilityNames() as $capability) {
             Gate::define($capability, function ($user) use ($capability): bool {
                 return $user->role === 'admin'
-                    && app(\App\Services\Admin\AdminPermissionService::class)->userCan($user, $capability);
+                    && app(AdminPermissionService::class)->userCan($user, $capability);
             });
         }
     }
@@ -94,15 +102,15 @@ class AppServiceProvider extends ServiceProvider
      */
     protected function configureAdminDashboardCache(): void
     {
-        $observer = \App\Observers\AdminDashboardCacheObserver::class;
+        $observer = AdminDashboardCacheObserver::class;
 
         foreach ([
-            \App\Models\Transaction::class,
-            \App\Models\WalletTransaction::class,
-            \App\Models\Mission::class,
-            \App\Models\Litige::class,
-            \App\Models\Jalon::class,
-            \App\Models\Order::class,
+            Transaction::class,
+            WalletTransaction::class,
+            Mission::class,
+            Litige::class,
+            Jalon::class,
+            Order::class,
         ] as $model) {
             if (class_exists($model)) {
                 $model::observe($observer);
@@ -119,6 +127,8 @@ class AppServiceProvider extends ServiceProvider
             RateLimiter::for('api', fn () => Limit::none());
             RateLimiter::for('auth', fn () => Limit::none());
             RateLimiter::for('webhook', fn () => Limit::none());
+            RateLimiter::for('ai', fn () => Limit::none());
+
             return;
         }
 
@@ -132,6 +142,18 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('webhook', function (Request $request) {
             return Limit::perMinute(60)->by($request->ip());
+        });
+
+        // Assistant IA (chat BTP + recherche RAG). Ces appels consomment le
+        // quota Gemini facturé : on plafonne agressivement, par utilisateur
+        // authentifié si possible, sinon par IP pour les invités.
+        RateLimiter::for('ai', function (Request $request) {
+            $key = $request->user()?->id ? 'user:'.$request->user()->id : 'ip:'.$request->ip();
+
+            return [
+                Limit::perMinute(10)->by($key),
+                Limit::perDay($request->user()?->id ? 150 : 40)->by($key),
+            ];
         });
     }
 }

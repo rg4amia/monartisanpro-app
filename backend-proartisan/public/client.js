@@ -60,6 +60,7 @@ class ClientAppManager {
   init() {
     this.setupCache();
     this.setupDOM();
+    this.applyUrlContext();
     this.bindEvents();
     this.setupSpeechRecognition();
 
@@ -70,6 +71,22 @@ class ClientAppManager {
     };
 
     this.log("system", "Application ProsArtisan Mobile initialisée.");
+  }
+
+  /**
+   * L'app Flutter passe le contexte de l'artisan dans le fragment d'URL
+   * (#trade=Plombier) — non transmis au serveur. On aligne le sélecteur de
+   * métier (masqué) en conséquence.
+   */
+  applyUrlContext() {
+    try {
+      const h = new URLSearchParams((location.hash || "").replace(/^#/, ""));
+      const trade = h.get("trade");
+      if (trade && this.dom.selectArtisanTrade) {
+        const opt = [...this.dom.selectArtisanTrade.options].find(o => o.value === trade);
+        if (opt) this.dom.selectArtisanTrade.value = trade;
+      }
+    } catch (e) { /* noop */ }
   }
 
   // Initialisation du cache hors-ligne avec des données de démo par défaut
@@ -160,18 +177,23 @@ class ClientAppManager {
   }
 
   bindEvents() {
-    // Changement de réseau
-    this.dom.selectNetwork.addEventListener("change", (e) => {
-      this.setNetwork(e.target.value);
-    });
-
-    // Clic sur Paramètres
-    this.dom.navSettings.addEventListener("click", () => {
-      this.dom.settingsModal.classList.remove("hidden");
-    });
-    this.dom.btnCloseSettings.addEventListener("click", () => {
-      this.dom.settingsModal.classList.add("hidden");
-    });
+    // Simulateur réseau / paramètres / déconnexion : éléments retirés de l'UI
+    // (fournis par l'app Flutter hôte). Gardés optionnels pour compat.
+    if (this.dom.selectNetwork) {
+      this.dom.selectNetwork.addEventListener("change", (e) => {
+        this.setNetwork(e.target.value);
+      });
+    }
+    if (this.dom.navSettings && this.dom.settingsModal) {
+      this.dom.navSettings.addEventListener("click", () => {
+        this.dom.settingsModal.classList.remove("hidden");
+      });
+    }
+    if (this.dom.btnCloseSettings && this.dom.settingsModal) {
+      this.dom.btnCloseSettings.addEventListener("click", () => {
+        this.dom.settingsModal.classList.add("hidden");
+      });
+    }
 
     if (this.dom.btnClearLocalCache) {
       this.dom.btnClearLocalCache.addEventListener("click", () => {
@@ -232,7 +254,7 @@ class ClientAppManager {
       this.dom.navChat.classList.remove("active");
     });
 
-    // Rendu des presets de pathologies
+    // Rendu des presets de pathologies (cas d'étude de démo — retirés de l'UI)
     this.renderPresets();
 
     // Importation de fichier photo
@@ -280,17 +302,19 @@ class ClientAppManager {
       this.dom.uploadInput.value = "";
       this.dom.uploadZone.innerHTML = `<span class="upload-icon">🧱</span>
                                       <div class="upload-text">Prendre une Photo / Choisir Image</div>
-                                      <div class="upload-subtext">Glissez-déposez ou cliquez ici</div>`;
-      this.dom.compressIndicator.classList.add("hidden");
+                                      <div class="upload-subtext">Appuyez ici pour l'appareil photo ou la galerie</div>`;
+      if (this.dom.compressIndicator) this.dom.compressIndicator.classList.add("hidden");
       this.dom.dictationInput.value = "";
       this.dom.btnDiagnose.disabled = true;
     });
 
-    // Simulation voix Nouchi
-    this.dom.btnSimulateVoice.addEventListener("click", () => this.simulateNouchiDictation());
+    if (this.dom.btnSimulateVoice) {
+      this.dom.btnSimulateVoice.addEventListener("click", () => this.simulateNouchiDictation());
+    }
   }
 
   renderPresets() {
+    if (!this.dom.presetContainer) return;
     this.dom.presetContainer.innerHTML = PATHOLOGY_PRESETS.map(p => `
       <div class="preset-thumb" data-id="${p.id}" id="preset-${p.id}">
         <img src="${p.image}" alt="${p.title}" />
@@ -423,6 +447,8 @@ class ClientAppManager {
   }
 
   simulateCompression(filename, originalSize = 3450000) {
+    // Indicateur de compression (démo) retiré de l'UI : no-op si absent.
+    if (!this.dom.compressIndicator || !this.dom.compressBar || !this.dom.compressText) return;
     this.dom.compressIndicator.classList.remove("hidden");
     this.dom.compressBar.style.width = "0%";
     this.dom.compressText.textContent = "Traitement en cours...";
@@ -928,17 +954,18 @@ class ClientAppManager {
   setNetwork(state) {
     this.networkState = state;
 
-    // Style du badge réseau
-    this.dom.badgeNetwork.classList.remove("offline", "latency-3g");
-    this.dom.badgeNetwork.textContent = state.toUpperCase();
+    // Badge réseau (démo) retiré de l'UI : mise à jour conditionnelle.
+    const badge = this.dom.badgeNetwork;
+    if (badge) {
+      badge.classList.remove("offline", "latency-3g");
+      badge.textContent = state.toUpperCase();
+    }
 
     if (state === "offline") {
-      this.dom.badgeNetwork.classList.add("offline");
-      this.dom.badgeNetwork.textContent = "OFFLINE";
+      if (badge) { badge.classList.add("offline"); badge.textContent = "OFFLINE"; }
       this.log("network", "Réseau déconnecté. Passage en cache local SQLite.");
     } else if (state === "3g") {
-      this.dom.badgeNetwork.classList.add("latency-3g");
-      this.dom.badgeNetwork.textContent = "3G LENTE";
+      if (badge) { badge.classList.add("latency-3g"); badge.textContent = "3G LENTE"; }
       this.log("network", "Réseau restreint. Activation de la latence 3G dégradée.");
 
       // Essayer de synchroniser la queue si on repasse en ligne
@@ -964,6 +991,12 @@ class ClientAppManager {
 
   // --- JOURNALISATION SUR LE TERMINAL MOBILE ---
   log(category, message) {
+    // Console de logs (démo) retirée de l'UI : on garde une trace en console
+    // navigateur pour le debug, sans casser les nombreux appels existants.
+    if (!this.dom.consoleLogs) {
+      try { console.debug(`[${category}] ${message}`); } catch (e) { /* noop */ }
+      return;
+    }
     const time = new Date().toLocaleTimeString();
 
     const line = document.createElement("div");
@@ -1181,13 +1214,18 @@ class ClientAppManager {
       try {
         const res = await dbInstance.apiFetch("/api/v1/chat", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: dbInstance.getHeaders(),
           body: JSON.stringify({
             message: text,
             history: this.chatHistory,
             trade: selectedTrade
           })
         });
+        if (res.status === 429) {
+          this.removeChatTyping(typingBubbleId);
+          this.renderChatMessage("bot", "Trop de questions d'affilée, Boss. Patiente une minute avant de relancer l'assistant.");
+          return;
+        }
         const data = await res.json();
         botResponse = data.response;
         sources = data.sources || [];
