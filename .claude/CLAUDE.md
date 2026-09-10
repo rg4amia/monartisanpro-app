@@ -295,6 +295,7 @@ SELECT ST_X(position) AS lng, ST_Y(position) AS lat FROM users WHERE id = :id;
 10. **Journal d'audit admin** : toute action sensible du backoffice écrit dans `admin_activity_logs` (append-only, best-effort) via `AdminActivityLogger` ; l'échec du log ne bloque jamais l'action.
 11. **RGPD** : la vue des données personnelles, l'export JSON de portabilité et l'anonymisation tracée (`anonymized_at`/`anonymized_by`, PII expurgées, ligne `users` conservée) sont gérés par `AdminGdprService` (capacités `admin.rgpd.view` / `admin.rgpd.manage`). Ne jamais supprimer la ligne `users` : intégrité des écritures financières et du journal d'audit.
 12. **Usurpation de session** : `admin.users.impersonate` permet au super admin de « se connecter en tant que » un utilisateur non-admin ; retour via `/admin/stop-impersonating` (hors `admin.only`) ; début et fin audités ; jamais un autre admin, soi-même ou un compte anonymisé.
+13. **Quotas IA (mobile)** : `POST /api/v1/chat` et `/api/v1/search` sont sous `auth:sanctum` ; `AiMonitoringService::checkUserLimit()` fait autorité (blocage individuel, limite jour/mois effective = surcharge `ai_user_quotas` sinon global `ai_settings`, comptée sur `ai_usage_logs` en succès) → HTTP 429 au dépassement. Backoffice : onglet « Suivi & Coûts IA » (`admin.ai.manage`), `PUT /admin/ai-dashboard/quotas/{user}` audité. Modèle Gemini : `gemini-3.6-flash` via `config('services.gemini.model')` (jamais `env()`). Le chat ne restitue jamais l'erreur brute Gemini. Assistant IA mobile servi par `GET /assistant` (jeton via `#token=`).
 
 ---
 
