@@ -138,8 +138,11 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
       ..setUserAgent(
         'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
       )
-      ..clearCache()
-      ..clearLocalStorage()
+      // On ne vide PLUS le cache/localStorage à chaque ouverture : sur une
+      // connexion lente (chantier), cela reforçait le re-téléchargement complet
+      // de client.html + client.js (~60 Ko) + Tailwind CDN à chaque visite de
+      // l'onglet, d'où l'écran d'erreur bloquant et les fonctions (photo,
+      // galerie, chat) inaccessibles.
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (String url) {

@@ -297,6 +297,19 @@ jobs:
             </IfModule>
             EOF
             echo "✅ Root .htaccess configured"
+
+            # Sync des fichiers statiques de l'Assistant IA Chantier (WebView mobile).
+            # prosartisan.net sert client.html & co DEPUIS public_html/ (le .htaccess
+            # ci-dessus ne route vers Laravel que /api, /admin, /sanctum, /storage,
+            # /build). Sans cette copie, la WebView charge une version figée déposée
+            # manuellement autrefois (ancien onglet « Stocks Map », bridge photo KO).
+            echo "🔧 Sync Assistant IA (client.html)..."
+            for f in client.html client.js client.css config.js db.js; do
+              if [ -f "$BACKEND_PATH/public/$f" ]; then
+                cp -f "$BACKEND_PATH/public/$f" "$PUBLIC_HTML/$f" 2>/dev/null && echo "  ↳ $f" || echo "  ⚠️ $f non copié"
+              fi
+            done
+
             echo "✅ Deployment completed successfully!"
             echo "🌐 Site available at: https://prosartisan.net"
             echo "📌 Deployed branch: $BRANCH"
