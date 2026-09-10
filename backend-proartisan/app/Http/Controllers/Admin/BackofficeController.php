@@ -16,6 +16,7 @@ use App\Http\Requests\Admin\StoreUserRequest;
 use App\Http\Requests\Admin\SyncAdminPermissionsRequest;
 use App\Http\Requests\Admin\ToggleUserStatusRequest;
 use App\Http\Requests\Admin\UpdateAiSettingsRequest;
+use App\Http\Requests\Admin\UpdateAiUserQuotaRequest;
 use App\Http\Requests\Admin\UpdateSettingRequest;
 use App\Http\Requests\Admin\UpdateTradeRequest;
 use App\Http\Requests\Admin\UpdateUserRequest;
@@ -29,8 +30,8 @@ use App\Models\Sector;
 use App\Models\Setting;
 use App\Models\Trade;
 use App\Models\User;
-use App\Services\Admin\AdminExportService;
 use App\Services\Admin\AdminActivityLogger;
+use App\Services\Admin\AdminExportService;
 use App\Services\Admin\AdminGdprService;
 use App\Services\Admin\AdminPanelData;
 use App\Services\Admin\AdminPermissionService;
@@ -44,6 +45,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -139,7 +141,7 @@ class BackofficeController extends Controller
     {
         try {
             $permissions->sync($user, $request->validated('capabilities'), $request->user());
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             return back()->with('error', $e->validator->errors()->first());
         }
 
@@ -401,9 +403,9 @@ class BackofficeController extends Controller
         ]);
     }
 
-    public function aiDashboard(): Response
+    public function aiDashboard(Request $request): Response
     {
-        return $this->page('admin/ai-dashboard', $this->panelData->aiDashboard());
+        return $this->page('admin/ai-dashboard', $this->panelData->aiDashboard($request));
     }
 
     public function updateAiSettings(UpdateAiSettingsRequest $request, AdminSettingsService $settings): RedirectResponse
@@ -411,6 +413,13 @@ class BackofficeController extends Controller
         $settings->updateAiSettings($request->validated());
 
         return back()->with('success', 'Paramètres IA mis à jour avec succès.');
+    }
+
+    public function updateAiUserQuota(UpdateAiUserQuotaRequest $request, User $user, AdminSettingsService $settings): RedirectResponse
+    {
+        $settings->updateUserAiQuota($user, $request->validated());
+
+        return back()->with('success', "Quota IA de {$user->name} mis à jour.");
     }
 
     public function storePromoCode(StorePromoCodeRequest $request, AdminPromoCodeService $promoCodes): RedirectResponse

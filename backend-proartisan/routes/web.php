@@ -5,16 +5,18 @@ use App\Http\Controllers\Admin\BackofficeController;
 use App\Http\Controllers\Admin\ImpersonationController;
 use App\Http\Controllers\Admin\LlmAdminController;
 use App\Http\Controllers\Admin\VitrineAdminController;
+use App\Http\Controllers\Api\V1\PaymentController;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 Route::get('/', function () {
     $frontUrl = env('FRONT_URL', 'https://www.prosartisan.net');
-    
+
     $frontHost = parse_url($frontUrl, PHP_URL_HOST);
     $currentHost = request()->getHost();
 
     if ($currentHost === $frontHost) {
-        return \Inertia\Inertia::render('welcome');
+        return Inertia::render('welcome');
     }
 
     return redirect($frontUrl);
@@ -35,7 +37,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::middleware('auth')->post('/stop-impersonating', [ImpersonationController::class, 'stop'])->name('stop-impersonating');
 
     Route::middleware(['auth', 'admin.only'])->group(function () {
-        Route::get('/', fn() => redirect()->route('admin.dashboard'))->name('index');
+        Route::get('/', fn () => redirect()->route('admin.dashboard'))->name('index');
 
         // Accès ouvert à tout administrateur (Chantier C6 / P2-10).
         Route::get('/dashboard', [BackofficeController::class, 'dashboard'])->name('dashboard');
@@ -99,6 +101,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/llm-admin', [BackofficeController::class, 'llmAdmin'])->middleware('can:admin.llm.manage')->name('llm-admin');
         Route::get('/ai-dashboard', [BackofficeController::class, 'aiDashboard'])->middleware('can:admin.ai.manage')->name('ai-dashboard');
         Route::post('/ai-dashboard/settings', [BackofficeController::class, 'updateAiSettings'])->middleware('can:admin.ai.manage')->name('ai-dashboard.settings.update');
+        Route::put('/ai-dashboard/quotas/{user}', [BackofficeController::class, 'updateAiUserQuota'])->middleware('can:admin.ai.manage')->name('ai-dashboard.quotas.update');
 
         // Marketing
         Route::get('/promo-codes', [BackofficeController::class, 'promoCodes'])->middleware('can:admin.promo.manage')->name('promo-codes');
@@ -181,7 +184,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
     });
 });
 
-Route::get('/pay', [\App\Http\Controllers\Api\V1\PaymentController::class, 'showMockPay'])->name('payment.mock.pay');
-Route::post('/pay/validate', [\App\Http\Controllers\Api\V1\PaymentController::class, 'validateMockPay'])->name('payment.mock.validate');
+Route::get('/pay', [PaymentController::class, 'showMockPay'])->name('payment.mock.pay');
+Route::post('/pay/validate', [PaymentController::class, 'validateMockPay'])->name('payment.mock.validate');
 
 // Trigger deploy: SSH test 7

@@ -21,6 +21,7 @@ use App\Models\Vitrine\VitrineSetting;
 use App\Models\Vitrine\VitrineSlide;
 use App\Models\Vitrine\VitrineVideo;
 use App\Services\AdminService;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -415,7 +416,7 @@ class AdminPanelData
     /**
      * Onglet « Suivi & Coûts IA » — agrégats de la table `ai_usage_logs`.
      */
-    public function aiDashboard(): array
+    public function aiDashboard(Request $request): array
     {
         $totalCost = DB::table('ai_usage_logs')->sum('estimated_cost_usd') ?? 0;
         $totalRequests = DB::table('ai_usage_logs')->count();
@@ -459,7 +460,56 @@ class AdminPanelData
             'dailyUsage' => $dailyUsage,
             'logs' => $logs,
             'settings' => DB::table('ai_settings')->pluck('value', 'key'),
+            'aiUserQuotasPage' => $this->aiUserQuotas($request),
         ];
+    }
+
+    /**
+     * Consommation + surcharge de quota IA par utilisateur mobile (paginé,
+     * filtrable). Les agrégats `ai_usage_logs` sont calculés par sous-requêtes
+     * corrélées, indépendantes de la page courante.
+     */
+    private function aiUserQuotas(Request $request): LengthAwarePaginator
+    {
+        $search = $request->query('search_aiq') ?: null;
+        $role = $request->query('role_aiq') ?: null;
+
+        $usageSince = fn (\DateTimeInterface $since) => DB::table('ai_usage_logs')
+            ->selectRaw('count(*)')
+            ->whereColumn('ai_usage_logs.user_id', 'users.id')
+            ->whereIn('action_type', ['chat', 'search'])
+            ->where('status_code', 200)
+            ->where('created_at', '>=', $since);
+
+        $cost30d = DB::table('ai_usage_logs')
+            ->selectRaw('COALESCE(SUM(estimated_cost_usd), 0)')
+            ->whereColumn('ai_usage_logs.user_id', 'users.id')
+            ->where('created_at', '>=', now()->subDays(30));
+
+        return User::query()
+            ->whereIn('role', ['client', 'artisan', 'fournisseur'])
+            ->when($search, fn ($q) => $q->where(fn ($sub) => $sub
+                ->where('name', 'like', "%{$search}%")
+                ->orWhere('phone', 'like', "%{$search}%")))
+            ->when($role, fn ($q) => $q->where('role', $role))
+            ->leftJoin('ai_user_quotas', 'ai_user_quotas.user_id', '=', 'users.id')
+            ->select(
+                'users.id',
+                'users.name',
+                'users.phone',
+                'users.role',
+                'ai_user_quotas.daily_limit as override_daily',
+                'ai_user_quotas.monthly_limit as override_monthly',
+                'ai_user_quotas.blocked as blocked',
+                'ai_user_quotas.note as note',
+            )
+            ->selectSub($usageSince(now()->subDay()), 'requests_24h')
+            ->selectSub($usageSince(now()->subDays(30)), 'requests_30d')
+            ->selectSub($cost30d, 'cost_30d')
+            ->orderByDesc('requests_30d')
+            ->orderBy('users.name')
+            ->paginate(25)
+            ->withQueryString();
     }
 
     // ─────────────────────────────────────────────────────────────

@@ -42,12 +42,11 @@ class APIDatabaseClient {
     if (res.status === 401) {
       localStorage.removeItem("auth_token");
       localStorage.removeItem("user_email");
-      if (!window.location.pathname.endsWith("login.html")) {
-        if (window.location.pathname.includes("client")) {
-          window.location.href = "login.html?redirect=client.html";
-        } else {
-          window.location.href = "login.html";
-        }
+      // Dans la WebView de l'app (page /assistant ou client.html), il n'y a pas
+      // de login.html : on ne navigue nulle part, l'appelant affiche un message.
+      const inApp = /assistant|client/.test(window.location.pathname);
+      if (!inApp && !window.location.pathname.endsWith("login.html")) {
+        window.location.href = "login.html";
       }
       throw new Error("Session expirée. Veuillez vous reconnecter.");
     }

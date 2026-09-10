@@ -231,6 +231,14 @@ class LlmAdminController extends Controller
             'image_name' => 'nullable|string',
         ]);
 
+        // Quota IA par utilisateur (partagé avec le chat BTP).
+        if (! AiMonitoringService::checkUserLimit()) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Quota d\'interactions IA atteint. Réessayez plus tard.',
+            ], 429);
+        }
+
         $queryTags = $validated['tags'] ?? [];
         $filters = $validated['filters'] ?? [];
 
@@ -463,11 +471,11 @@ class LlmAdminController extends Controller
             'trade' => 'nullable|string',
         ]);
 
-        // Rate limiting check
+        // Quota IA par utilisateur (global + surcharge/blocage individuel).
         if (! AiMonitoringService::checkUserLimit()) {
             return response()->json([
                 'success' => false,
-                'error' => 'Quota d\'interactions journalier atteint. Réessayez demain.',
+                'error' => 'Quota d\'interactions IA atteint. Réessayez plus tard.',
             ], 429);
         }
 
@@ -570,10 +578,16 @@ class LlmAdminController extends Controller
             $reply = $this->localChatFallback($userMsg, $ragMatches);
         }
 
-        return response()->json([
+        $payload = [
             'response' => $reply,
             'sources' => $sources,
-        ]);
+        ];
+
+        if ($request->user()) {
+            $payload['quota'] = AiMonitoringService::remainingFor($request->user()->id);
+        }
+
+        return response()->json($payload);
     }
 
     private function hasMatchingWord(string $title, string $userMsgLower): bool
@@ -626,8 +640,9 @@ class LlmAdminController extends Controller
         $prompt .= "- 'bouclier_autorite': L'argumentaire de vulgarisation en français ivoirien, rassurant et professionnel, pour expliquer le problème au propriétaire de la maison et le convaincre de faire les bons travaux de réparation durables (par exemple: 'Propriétaire, ...' ou 'Tonton, ...').\n\n";
         $prompt .= 'Ne retourne aucun texte en dehors du JSON.';
 
+        $model = config('services.gemini.model', 'gemini-3.6-flash');
+        $startTime = microtime(true);
         try {
-            $model = config('services.gemini.model', 'gemini-3.6-flash');
             $baseUrl = config('services.gemini.base_url', 'https://generativelanguage.googleapis.com');
             $url = "{$baseUrl}/v1beta/models/{$model}:generateContent?key={$key}";
             $response = Http::withHeaders([
@@ -650,6 +665,19 @@ class LlmAdminController extends Controller
                 ],
             ]);
 
+            $responseTimeMs = (microtime(true) - $startTime) * 1000;
+            $promptTokens = (int) ($response->json('usageMetadata.promptTokenCount') ?? 0);
+            $completionTokens = (int) ($response->json('usageMetadata.candidatesTokenCount') ?? 0);
+            AiMonitoringService::log(
+                $model,
+                'search',
+                $promptTokens,
+                $completionTokens,
+                $responseTimeMs,
+                $response->status(),
+                $response->successful() ? null : $response->body(),
+            );
+
             if ($response->successful()) {
                 $text = $response->json('candidates.0.content.parts.0.text') ?? '';
                 $text = preg_replace('/^```json\s*/i', '', $text);
@@ -662,6 +690,7 @@ class LlmAdminController extends Controller
                 }
             }
         } catch (\Exception $e) {
+            AiMonitoringService::log($model, 'search', 0, 0, (microtime(true) - $startTime) * 1000, 500, $e->getMessage());
             Log::error('Multimodal analysis failed: '.$e->getMessage());
         }
 

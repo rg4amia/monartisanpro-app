@@ -2,7 +2,7 @@
 <html lang="fr">
 
 <head>
-  <script src="config.js?v=5"></script>
+  <script src="config.js?v=6"></script>
   <script>
     // Jeton d'auth de la WebView : l'app Flutter le passe dans le fragment
     // d'URL (#token=...), non transmis au serveur donc absent des logs Apache.
@@ -28,7 +28,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ProsArtisan Mobile - Assistant Chantier</title>
-  <link rel="stylesheet" href="client.css?v=5">
+  <link rel="stylesheet" href="client.css?v=6">
   <!-- Tailwind : utilitaires de mise en page rapides. TODO: inliner une build
        statique pour supprimer cette dépendance CDN (échoue hors-ligne). -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -171,7 +171,7 @@
         <section class="glass-card neon-purple-border flex flex-col h-[400px]">
           <div class="card-title flex items-center justify-between pb-2 border-b border-white/10">
             <span class="flex items-center gap-1">💬 Assistant BTP ProsArtisan</span>
-            <span class="text-[8px] bg-purple-500/20 text-purple-400 px-1.5 py-0.5 rounded-full uppercase font-bold">En
+            <span id="chat-quota" class="text-[8px] bg-purple-500/20 text-purple-400 px-1.5 py-0.5 rounded-full uppercase font-bold">En
               Ligne</span>
           </div>
 
@@ -223,7 +223,7 @@
 
   </div>
 
-  <script type="module" src="client.js?v=5"></script>
+  <script type="module" src="client.js?v=6"></script>
 </body>
 
 </html>

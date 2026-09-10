@@ -4,7 +4,7 @@
  * Gère la communication API, la synthèse/reconnaissance vocale et les simulations offline/3G.
  */
 
-import { dbInstance } from "./db.js?v=4";
+import { dbInstance } from "./db.js?v=6";
 
 function determineTagsFromFilename(filename) {
   const name = (filename || "").toLowerCase();
@@ -1221,14 +1221,22 @@ class ClientAppManager {
             trade: selectedTrade
           })
         });
+        if (res.status === 401) {
+          this.removeChatTyping(typingBubbleId);
+          this.renderChatMessage("bot", "Session expirée. Ferme puis rouvre l'Assistant IA depuis l'application pour te reconnecter.");
+          return;
+        }
         if (res.status === 429) {
           this.removeChatTyping(typingBubbleId);
-          this.renderChatMessage("bot", "Trop de questions d'affilée, Boss. Patiente une minute avant de relancer l'assistant.");
+          let msg = "Ton quota d'utilisation de l'IA est atteint pour le moment. Réessaie plus tard.";
+          try { const j = await res.json(); if (j && j.error) msg = j.error; } catch (e) { /* noop */ }
+          this.renderChatMessage("bot", msg);
           return;
         }
         const data = await res.json();
         botResponse = data.response;
         sources = data.sources || [];
+        if (data.quota) this.renderQuotaBadge(data.quota);
       } catch (err) {
         console.error(err);
         botResponse = "Désolé Boss, une erreur est survenue lors de la communication avec le serveur de chat.";
@@ -1243,6 +1251,18 @@ class ClientAppManager {
     this.chatHistory.push({ sender: "bot", text: botResponse });
 
     this.log("rag", `Chatbot : Réponse fournie pour "${text.substring(0, 30)}..."`);
+  }
+
+  /** Met à jour le badge « quota restant » de l'en-tête du chat. */
+  renderQuotaBadge(quota) {
+    const el = document.getElementById("chat-quota");
+    if (!el || !quota) return;
+    if (quota.daily_limit == null) {
+      el.textContent = "En Ligne";
+      return;
+    }
+    const left = Math.max(0, quota.daily_limit - quota.daily_used);
+    el.textContent = `${left} restantes`;
   }
 
   renderChatMessage(sender, text, sources = []) {

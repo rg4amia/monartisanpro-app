@@ -40,9 +40,12 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
 
-    // LLM Assistant Public routes — throttle 'ai' : protège le quota Gemini
-    // facturé contre l'abus (par utilisateur si token Sanctum, sinon par IP).
-    Route::middleware('throttle:ai')->group(function () {
+    // Assistant IA (chat BTP + recherche RAG). Authentifié : le jeton Sanctum
+    // est injecté par la WebView (#token=). `auth:sanctum` permet à
+    // AiMonitoringService::checkUserLimit() et aux logs `ai_usage_logs` de
+    // connaître l'utilisateur, donc d'appliquer un quota par utilisateur.
+    // `throttle:ai` reste un garde-fou anti-rafale (par utilisateur).
+    Route::middleware(['auth:sanctum', 'throttle:ai'])->group(function () {
         Route::post('/chat', [LlmAdminController::class, 'chat']);
         Route::post('/search', [LlmAdminController::class, 'search']);
     });

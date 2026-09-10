@@ -15,6 +15,7 @@ class UpdateAiSettingsRequest extends FormRequest
     {
         return [
             'daily_user_limit' => ['required', 'integer', 'min:0'],
+            'monthly_user_limit' => ['sometimes', 'integer', 'min:0'],
             'ai_enabled' => ['required', 'in:0,1'],
         ];
     }
@@ -24,6 +25,7 @@ class UpdateAiSettingsRequest extends FormRequest
         return [
             'daily_user_limit.required' => 'La limite journalière par utilisateur est obligatoire.',
             'daily_user_limit.min' => 'La limite journalière ne peut pas être négative.',
+            'monthly_user_limit.min' => 'La limite mensuelle ne peut pas être négative.',
             'ai_enabled.required' => 'L’état d’activation de l’IA est obligatoire.',
         ];
     }
