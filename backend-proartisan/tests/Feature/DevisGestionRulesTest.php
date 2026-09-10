@@ -76,6 +76,63 @@ class DevisGestionRulesTest extends TestCase
         $response3->assertCreated();
     }
 
+    public function test_jalon_date_cible_must_be_in_the_future_for_a_standard_mission(): void
+    {
+        $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
+        $artisan = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif']);
+
+        $mission = Mission::create([
+            'client_id' => $client->id,
+            'description' => 'Test mission description long enough',
+            'status' => 'draft',
+        ]);
+
+        $response = $this->actingAs($artisan)
+            ->postJson("/api/v1/missions/{$mission->id}/devis", [
+                'materials_required' => false,
+                'intervention_type_id' => 1,
+                'lignes' => [
+                    ['type' => 'mo', 'description' => 'Diagnostic', 'montant' => 5000],
+                ],
+                'jalons' => [
+                    ['ordre' => 1, 'description' => 'Visite et diagnostic', 'montant' => 5000, 'date_cible' => now()->toDateString()],
+                ],
+            ]);
+
+        $response->assertStatus(422);
+        $this->assertContains(
+            'La date cible doit être dans le futur.',
+            collect($response->json('errors'))->flatten()->all()
+        );
+    }
+
+    public function test_urgent_mission_allows_a_same_day_jalon_date(): void
+    {
+        $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
+        $artisan = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif']);
+
+        $mission = Mission::create([
+            'client_id' => $client->id,
+            'description' => 'Fuite importante, intervention le jour même',
+            'status' => 'draft',
+            'gemini_urgency' => 'urgent',
+        ]);
+
+        $response = $this->actingAs($artisan)
+            ->postJson("/api/v1/missions/{$mission->id}/devis", [
+                'materials_required' => false,
+                'intervention_type_id' => 1,
+                'lignes' => [
+                    ['type' => 'mo', 'description' => 'Diagnostic', 'montant' => 5000],
+                ],
+                'jalons' => [
+                    ['ordre' => 1, 'description' => 'Visite et diagnostic', 'montant' => 5000, 'date_cible' => now()->toDateString()],
+                ],
+            ]);
+
+        $response->assertCreated();
+    }
+
     public function test_mission_cannot_be_processed_when_devis_is_pending(): void
     {
         $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);

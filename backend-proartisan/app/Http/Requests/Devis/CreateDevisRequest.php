@@ -16,6 +16,12 @@ class CreateDevisRequest extends FormRequest
     public function rules(): array
     {
         $user = $this->user();
+
+        // Missions urgentes : le sinistre/diagnostic peut être émis et traité
+        // le jour même. On autorise alors une date cible de jalon égale à
+        // aujourd'hui ; sinon elle doit être strictement dans le futur.
+        $dateCibleRule = $this->allowsSameDayMilestone() ? 'after_or_equal:today' : 'after:today';
+
         $rules = [
             'materials_required'     => ['nullable', 'boolean'],
             'intervention_type_id'   => ['nullable', 'integer', 'exists:intervention_types,id'],
@@ -47,13 +53,13 @@ class CreateDevisRequest extends FormRequest
             'jalons_json.*.ordre'    => ['required_with:jalons_json', 'integer', 'min:1'],
             'jalons_json.*.description' => ['required_with:jalons_json', 'string', 'max:255', new NoContactInformation()],
             'jalons_json.*.montant'  => ['required_with:jalons_json', 'integer', 'min:1000'],
-            'jalons_json.*.date_cible' => ['required_with:jalons_json', 'date', 'after:today'],
+            'jalons_json.*.date_cible' => ['required_with:jalons_json', 'date', $dateCibleRule],
 
             'jalons'                 => ['sometimes', 'array', 'min:1'],
             'jalons.*.ordre'         => ['required_with:jalons', 'integer', 'min:1'],
             'jalons.*.description'   => ['required_with:jalons', 'string', 'max:255', new NoContactInformation()],
             'jalons.*.montant'       => ['required_with:jalons', 'integer', 'min:1000'],
-            'jalons.*.date_cible'    => ['required_with:jalons', 'date', 'after:today'],
+            'jalons.*.date_cible'    => ['required_with:jalons', 'date', $dateCibleRule],
         ];
 
         if ($user && !$user->payment_phone) {
@@ -65,6 +71,24 @@ class CreateDevisRequest extends FormRequest
         }
 
         return $rules;
+    }
+
+    /**
+     * Vrai lorsque la mission rattachée est marquée « urgent » : le devis
+     * (déplacement/diagnostic ou sinistre) peut alors porter un jalon daté
+     * du jour même.
+     */
+    protected function allowsSameDayMilestone(): bool
+    {
+        $mission = $this->route('mission');
+
+        if (! $mission instanceof \App\Models\Mission) {
+            $devis = $this->route('devis');
+            $mission = $devis instanceof \App\Models\Devis ? $devis->mission : null;
+        }
+
+        return $mission instanceof \App\Models\Mission
+            && $mission->gemini_urgency === 'urgent';
     }
 
     public function messages(): array
@@ -86,6 +110,7 @@ class CreateDevisRequest extends FormRequest
             'jalons_json.min'                    => 'Le devis doit comporter au moins un jalon.',
             'jalons_json.*.montant.min'          => 'Le montant d\'un jalon doit être d\'au moins 1 000 FCFA.',
             'jalons_json.*.date_cible.after'     => 'La date cible d\'un jalon doit être postérieure à aujourd\'hui.',
+            'jalons_json.*.date_cible.after_or_equal' => 'La date cible d\'un jalon ne peut pas être dans le passé.',
             'jalons_json.*.date_cible.date'      => 'La date cible d\'un jalon est invalide.',
             'payment_phone.required'             => 'Indiquez le numéro Mobile Money sur lequel vous serez payé.',
             'preferred_payment_provider.required' => 'Choisissez votre opérateur Mobile Money (Wave ou Orange Money).',

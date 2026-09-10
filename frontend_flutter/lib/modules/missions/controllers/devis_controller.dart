@@ -63,6 +63,11 @@ class DevisController extends GetxController {
   // déplacement/diagnostic déjà accepté et financé.
   bool isAvenant = false;
 
+  // Mission marquée « urgent » : le sinistre/diagnostic peut être émis et
+  // traité le jour même, on autorise donc une date cible de jalon égale à
+  // aujourd'hui (le backend applique la même règle `after_or_equal:today`).
+  bool allowSameDayMilestone = false;
+
   bool get needsPaymentPhone => requiresPaymentPhone.value;
 
   /// Interroge le profil serveur pour savoir si l'artisan doit saisir un
@@ -462,7 +467,8 @@ class DevisController extends GetxController {
     }
 
     // Contraintes serveur sur chaque jalon (CreateDevisRequest) : montant
-    // >= 1 000 FCFA et date cible strictement postérieure à aujourd'hui.
+    // >= 1 000 FCFA et date cible dans le futur — ou dès aujourd'hui pour
+    // une mission urgente (`allowSameDayMilestone`).
     final now = DateTime.now();
     final todayDate = DateTime(now.year, now.month, now.day);
     for (final jalon in jalons) {
@@ -472,12 +478,18 @@ class DevisController extends GetxController {
         return false;
       }
 
-      final targetDate = DateTime.tryParse(jalon.dateCible);
-      if (targetDate == null ||
-          !DateTime(targetDate.year, targetDate.month, targetDate.day)
-              .isAfter(todayDate)) {
-        errorMsg.value =
-            'Jalon "${jalon.description}" : la date cible doit être postérieure à aujourd\'hui.';
+      final parsed = DateTime.tryParse(jalon.dateCible);
+      final targetDate = parsed == null
+          ? null
+          : DateTime(parsed.year, parsed.month, parsed.day);
+      final dateValid = targetDate != null &&
+          (allowSameDayMilestone
+              ? !targetDate.isBefore(todayDate)
+              : targetDate.isAfter(todayDate));
+      if (!dateValid) {
+        errorMsg.value = allowSameDayMilestone
+            ? 'Jalon "${jalon.description}" : la date cible ne peut pas être dans le passé.'
+            : 'Jalon "${jalon.description}" : la date cible doit être postérieure à aujourd\'hui.';
         return false;
       }
     }

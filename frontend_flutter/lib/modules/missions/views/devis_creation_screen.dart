@@ -63,6 +63,11 @@ class _DevisCreationScreenState extends State<DevisCreationScreen> {
       controller.prepareDraftForMission(missionId!, isAvenant: isAvenant);
     }
 
+    // Mission urgente : autoriser un jalon daté du jour même (sinistre /
+    // diagnostic émis et traité le jour de l'acceptation de la mission).
+    controller.allowSameDayMilestone =
+        (mission?.urgency ?? '').toLowerCase() == 'urgent';
+
     controller.loadSuppliers();
     controller.refreshPaymentPhoneRequirement();
   }
