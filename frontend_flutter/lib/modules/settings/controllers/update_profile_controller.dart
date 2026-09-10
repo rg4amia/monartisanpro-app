@@ -302,11 +302,13 @@ class UpdateProfileController extends GetxController {
     if (result != null && result is Map) {
       final sector = result['sector'] as SectorModel?;
       final trade = result['trade'] as TradeModel?;
-      if (sector != null && trade != null) {
+      // `trade` peut être null quand l'artisan choisit « tout le secteur » :
+      // on enregistre alors le secteur seul et on efface la spécialité.
+      if (sector != null) {
         selectedSectorId.value = sector.id;
-        selectedTradeId.value = trade.id;
+        selectedTradeId.value = trade?.id;
         selectedSectorName.value = sector.name;
-        selectedTradeName.value = trade.name;
+        selectedTradeName.value = trade?.name;
       }
     }
   }
@@ -346,6 +348,9 @@ class UpdateProfileController extends GetxController {
             isArtisan.value ? nightInterventionsEnabled.value : null,
         sectorId: isArtisan.value ? selectedSectorId.value : null,
         tradeId: isArtisan.value ? selectedTradeId.value : null,
+        clearTradeId: isArtisan.value &&
+            selectedSectorId.value != null &&
+            selectedTradeId.value == null,
         paymentPhone: paymentPhoneController.text.trim().isNotEmpty
             ? paymentPhoneController.text.trim()
             : null,

@@ -248,12 +248,13 @@ class _CategorySelectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasCategory = controller.selectedSectorName.value != null;
-    final categoryText = hasCategory
-        ? "${controller.selectedSectorName.value} — ${controller.selectedTradeName.value ?? 'Non spécifié'}"
-        : 'Aucune catégorie définie';
+    return Obx(() {
+      final hasCategory = controller.selectedSectorName.value != null;
+      final categoryText = hasCategory
+          ? "${controller.selectedSectorName.value} — ${controller.selectedTradeName.value ?? 'Tout le secteur'}"
+          : 'Aucune catégorie définie';
 
-    return Container(
+      return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: _C.surface,
@@ -329,6 +330,7 @@ class _CategorySelectionCard extends StatelessWidget {
         ],
       ),
     );
+    });
   }
 }
 
@@ -339,10 +341,11 @@ class _LocationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isSet = controller.selectedLatitude.value != null &&
-        controller.selectedLongitude.value != null;
+    return Obx(() {
+      final isSet = controller.selectedLatitude.value != null &&
+          controller.selectedLongitude.value != null;
 
-    return Container(
+      return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: _C.surface,
@@ -417,6 +420,7 @@ class _LocationCard extends StatelessWidget {
         ],
       ),
     );
+    });
   }
 }
 
@@ -489,7 +493,9 @@ class _NightModeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return Obx(() {
+      final loading = controller.isProfileLoading.value;
+      return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: _C.surface,
@@ -527,7 +533,7 @@ class _NightModeCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  controller.isProfileLoading.value
+                  loading
                       ? 'Chargement de votre disponibilité actuelle...'
                       : 'Activez ce mode si vous acceptez les demandes entre 18h et 7h.',
                   style: const TextStyle(
@@ -542,13 +548,14 @@ class _NightModeCard extends StatelessWidget {
           Switch(
             value: controller.nightInterventionsEnabled.value,
             activeThumbColor: _C.primary,
-            onChanged: controller.isProfileLoading.value
+            onChanged: loading
                 ? null
                 : (value) => controller.nightInterventionsEnabled.value = value,
           ),
         ],
       ),
     );
+    });
   }
 }
 

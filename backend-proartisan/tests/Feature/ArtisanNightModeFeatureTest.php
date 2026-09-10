@@ -3,13 +3,46 @@
 namespace Tests\Feature;
 
 use App\Models\ArtisanProfile;
+use App\Models\Sector;
+use App\Models\Trade;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class ArtisanNightModeFeatureTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_artisan_can_select_a_whole_sector_without_a_specific_trade(): void
+    {
+        $artisan = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif']);
+        $sector = Sector::create(['name' => 'Plomberie']);
+        $trade = Trade::create(['sector_id' => $sector->id, 'name' => 'Plombier sanitaire']);
+
+        ArtisanProfile::create([
+            'user_id' => $artisan->id,
+            'intervient_la_nuit' => false,
+            'sector_id' => $sector->id,
+            'trade_id' => $trade->id,
+        ]);
+
+        // L'artisan repasse sur « tout le secteur » : trade_id doit être effacé.
+        $this->actingAs($artisan)
+            ->putJson("/api/v1/users/{$artisan->id}", [
+                'sector_id' => $sector->id,
+                'trade_id' => null,
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.artisanProfile.sectorId', $sector->id)
+            ->assertJsonPath('data.artisanProfile.tradeId', null);
+
+        $this->assertDatabaseHas('artisan_profiles', [
+            'user_id' => $artisan->id,
+            'sector_id' => $sector->id,
+            'trade_id' => null,
+        ]);
+    }
 
     public function test_artisan_can_enable_night_intervention_from_profile(): void
     {
@@ -93,7 +126,7 @@ class ArtisanNightModeFeatureTest extends TestCase
             'kyc_status' => 'actif',
             'name' => 'Artisan Distant',
             // Position éloignée de Abidjan Cocody (~12 km)
-            'position' => \Illuminate\Support\Facades\DB::raw("ST_SRID(POINT(-4.0200, 5.4500), 4326)"),
+            'position' => DB::raw('ST_SRID(POINT(-4.0200, 5.4500), 4326)'),
         ]);
 
         ArtisanProfile::create([

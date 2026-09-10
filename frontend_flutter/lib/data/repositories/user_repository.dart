@@ -39,6 +39,7 @@ class UserRepository {
     bool? nightInterventionAvailable,
     int? sectorId,
     int? tradeId,
+    bool clearTradeId = false,
     String? paymentPhone,
     String? preferredPaymentProvider,
   }) async {
@@ -54,7 +55,10 @@ class UserRepository {
         if (nightInterventionAvailable != null)
           'intervention_nuit': nightInterventionAvailable,
         if (sectorId != null) 'sector_id': sectorId,
-        if (tradeId != null) 'trade_id': tradeId,
+        if (tradeId != null)
+          'trade_id': tradeId
+        else if (clearTradeId)
+          'trade_id': null,
         if (paymentPhone != null) 'payment_phone': paymentPhone,
         if (preferredPaymentProvider != null)
           'preferred_payment_provider': preferredPaymentProvider,
