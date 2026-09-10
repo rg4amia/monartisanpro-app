@@ -117,10 +117,13 @@ class JalonsSection extends StatelessWidget {
                   controller: dateController,
                   readOnly: true,
                   onTap: () async {
+                    // La date cible d'un jalon doit être strictement dans le
+                    // futur : le backend valide `after:today`. On interdit donc
+                    // la sélection d'aujourd'hui (première date = demain).
                     final date = await showDatePicker(
                       context: context,
                       initialDate: DateTime.now().add(const Duration(days: 7)),
-                      firstDate: DateTime.now(),
+                      firstDate: DateTime.now().add(const Duration(days: 1)),
                       lastDate: DateTime.now().add(const Duration(days: 365)),
                     );
                     if (date != null) {

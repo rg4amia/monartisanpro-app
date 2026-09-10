@@ -461,6 +461,27 @@ class DevisController extends GetxController {
       }
     }
 
+    // Contraintes serveur sur chaque jalon (CreateDevisRequest) : montant
+    // >= 1 000 FCFA et date cible strictement postérieure à aujourd'hui.
+    final now = DateTime.now();
+    final todayDate = DateTime(now.year, now.month, now.day);
+    for (final jalon in jalons) {
+      if (jalon.montant < 1000) {
+        errorMsg.value =
+            'Jalon "${jalon.description}" : le montant doit être d\'au moins 1 000 FCFA.';
+        return false;
+      }
+
+      final targetDate = DateTime.tryParse(jalon.dateCible);
+      if (targetDate == null ||
+          !DateTime(targetDate.year, targetDate.month, targetDate.day)
+              .isAfter(todayDate)) {
+        errorMsg.value =
+            'Jalon "${jalon.description}" : la date cible doit être postérieure à aujourd\'hui.';
+        return false;
+      }
+    }
+
     final totalJalons = jalons.fold(0, (sum, j) => sum + j.montant);
     if (totalJalons != totalGeneral) {
       errorMsg.value =
@@ -932,8 +953,22 @@ class DevisController extends GetxController {
           return 'Devis introuvable';
         case 422:
           final data = e.response!.data;
-          if (data is Map && data.containsKey('message')) {
-            return data['message'] as String;
+          if (data is Map) {
+            // Le backend renvoie un message générique « Données invalides. »
+            // et le détail champ par champ dans `errors` : on remonte le
+            // premier message précis pour que l'artisan sache quoi corriger.
+            final errors = data['errors'];
+            if (errors is Map && errors.isNotEmpty) {
+              final firstEntry = errors.values.first;
+              if (firstEntry is List && firstEntry.isNotEmpty) {
+                return firstEntry.first.toString();
+              }
+              return firstEntry.toString();
+            }
+            final message = data['message'];
+            if (message is String && message.isNotEmpty) {
+              return message;
+            }
           }
           return 'Données invalides';
         case 500:

@@ -223,7 +223,8 @@ class QuoteBuilderScreen extends GetView<DevisController> {
                 final picked = await showDatePicker(
                   context: context,
                   initialDate: DateTime.now().add(const Duration(days: 7)),
-                  firstDate: DateTime.now(),
+                  // Le backend valide `after:today` : au plus tôt demain.
+                  firstDate: DateTime.now().add(const Duration(days: 1)),
                   lastDate: DateTime.now().add(const Duration(days: 365)),
                 );
                 if (picked != null) {

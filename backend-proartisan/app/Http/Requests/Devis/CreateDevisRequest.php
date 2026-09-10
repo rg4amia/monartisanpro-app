@@ -78,6 +78,18 @@ class CreateDevisRequest extends FormRequest
             'jalons.min'                   => 'Le devis doit comporter au moins un jalon.',
             'jalons.*.montant.min'         => 'Le montant d\'un jalon doit être d\'au moins 1 000 FCFA.',
             'jalons.*.date_cible.after'    => 'La date cible doit être dans le futur.',
+
+            // Variantes `*_json` : clés réellement envoyées par l'app mobile.
+            'lignes_json.min'                    => 'Le devis doit comporter au moins une ligne.',
+            'lignes_json.*.type.in'              => 'Le type doit être "mo" (main d\'œuvre) ou "mat" (matériaux).',
+            'lignes_json.*.montant.min'          => 'Le montant d\'une ligne ne peut pas être négatif.',
+            'jalons_json.min'                    => 'Le devis doit comporter au moins un jalon.',
+            'jalons_json.*.montant.min'          => 'Le montant d\'un jalon doit être d\'au moins 1 000 FCFA.',
+            'jalons_json.*.date_cible.after'     => 'La date cible d\'un jalon doit être postérieure à aujourd\'hui.',
+            'jalons_json.*.date_cible.date'      => 'La date cible d\'un jalon est invalide.',
+            'payment_phone.required'             => 'Indiquez le numéro Mobile Money sur lequel vous serez payé.',
+            'preferred_payment_provider.required' => 'Choisissez votre opérateur Mobile Money (Wave ou Orange Money).',
+            'preferred_payment_provider.in'      => 'Opérateur Mobile Money invalide.',
         ];
     }
 }
