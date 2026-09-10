@@ -50,7 +50,7 @@ class JalonService
 
     public function analyzePhotos(Jalon $jalon): array
     {
-        $geminiKey = env('GEMINI_API_KEY');
+        $geminiKey = config('services.gemini.api_key');
         if (!$geminiKey || $geminiKey === 'PLACEHOLDER_KEY') {
             if (str_contains(strtolower($jalon->description), 'frauduleux') || str_contains(strtolower($jalon->description), 'incohérent')) {
                 return ['approved' => false, 'reason' => 'Analyse visuelle : La photo montre un seau vide ou des outils non conformes au jalon.'];

@@ -627,7 +627,7 @@ class LlmAdminController extends Controller
         $prompt .= 'Ne retourne aucun texte en dehors du JSON.';
 
         try {
-            $model = config('services.gemini.model', 'gemini-3.6-flash');
+            $model = config('services.gemini.model', 'gemini-2.0-flash');
             $baseUrl = config('services.gemini.base_url', 'https://generativelanguage.googleapis.com');
             $url = "{$baseUrl}/v1beta/models/{$model}:generateContent?key={$key}";
             $response = Http::withHeaders([
@@ -711,7 +711,7 @@ class LlmAdminController extends Controller
         }
 
         $startTime = microtime(true);
-        $model = config('services.gemini.model', 'gemini-3.6-flash');
+        $model = config('services.gemini.model', 'gemini-2.0-flash');
         try {
             $baseUrl = config('services.gemini.base_url', 'https://generativelanguage.googleapis.com');
             $url = "{$baseUrl}/v1beta/models/{$model}:generateContent?key={$key}";
@@ -866,7 +866,7 @@ class LlmAdminController extends Controller
         ]);
 
         $userMsg = trim($request->input('message'));
-        $geminiKey = env('GEMINI_API_KEY');
+        $geminiKey = config('services.gemini.api_key');
 
         $litige->loadMissing(['mission.client', 'mission.artisan']);
 
