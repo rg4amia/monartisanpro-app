@@ -468,3 +468,18 @@ export interface KycStats {
     rejected: number;
     registration_trend: Array<{ label: string; value: number }>;
 }
+
+// Ligne du tableau « Quotas & consommation IA par utilisateur » (onglet ai_dashboard).
+export interface AiUserQuotaRow {
+    id: number;
+    name: string;
+    phone: string | null;
+    role: string;
+    override_daily: number | null;
+    override_monthly: number | null;
+    blocked: boolean | number | null;
+    note: string | null;
+    requests_24h: number;
+    requests_30d: number;
+    cost_30d: number | string;
+}

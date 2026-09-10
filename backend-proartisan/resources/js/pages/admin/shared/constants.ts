@@ -199,6 +199,8 @@ export const auditActionLabels: Record<string, string> = {
     'trade.updated': 'Modification de sous-catégorie',
     'setting.updated': 'Modification de paramètre',
     'ai_settings.updated': 'Modification des paramètres IA',
+    'ai_quota.updated': "Modification d'un quota IA utilisateur",
+    'ai_quota.reset': "Réinitialisation d'un quota IA utilisateur",
     'admin.permissions_updated': "Droits d'un administrateur modifiés",
     'observability.jobs_retried': 'Relance des jobs en échec',
     'observability.jobs_flushed': 'Purge des jobs en échec',

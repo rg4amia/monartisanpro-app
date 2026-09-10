@@ -532,3 +532,93 @@ export function StatusFormModal({
         </div>
     );
 }
+
+export function AiQuotaFormModal({
+    form,
+    targetName,
+    globalDailyLimit,
+    globalMonthlyLimit,
+    onSubmit,
+    onClose,
+}: {
+    form: InertiaForm;
+    targetName: string;
+    globalDailyLimit: number;
+    globalMonthlyLimit: number;
+    onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+    onClose: () => void;
+}) {
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className="admin-panel admin-surface w-full max-w-[480px] rounded-[32px] border p-6 shadow-2xl relative">
+                <div className="flex items-center justify-between border-b border-[var(--admin-border)] pb-4">
+                    <h2 className="text-lg font-bold text-[var(--admin-text)]">Quota IA — {targetName}</h2>
+                    <CloseButton onClose={onClose} />
+                </div>
+
+                <form onSubmit={onSubmit} className="mt-5 space-y-4">
+                    <p className="text-sm text-[var(--admin-text-soft)]">
+                        Laisser vide pour appliquer la limite globale ({globalDailyLimit > 0 ? `${globalDailyLimit}/j` : 'illimité'},{' '}
+                        {globalMonthlyLimit > 0 ? `${globalMonthlyLimit}/mois` : 'illimité/mois'}). Mettre <strong>0</strong> pour un accès illimité propre à cet utilisateur.
+                    </p>
+
+                    <div className="grid grid-cols-2 gap-3">
+                        <label className="block space-y-1">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Limite / jour</span>
+                            <input
+                                type="number"
+                                min={0}
+                                value={form.data.daily_limit}
+                                onChange={(e) => form.setData('daily_limit', e.target.value)}
+                                className="admin-input w-full rounded-xl px-3 py-2 text-sm outline-none"
+                                placeholder="défaut"
+                            />
+                            {form.errors.daily_limit && <p className="text-xs text-[#b24f43]">{form.errors.daily_limit}</p>}
+                        </label>
+                        <label className="block space-y-1">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Limite / mois</span>
+                            <input
+                                type="number"
+                                min={0}
+                                value={form.data.monthly_limit}
+                                onChange={(e) => form.setData('monthly_limit', e.target.value)}
+                                className="admin-input w-full rounded-xl px-3 py-2 text-sm outline-none"
+                                placeholder="défaut"
+                            />
+                            {form.errors.monthly_limit && <p className="text-xs text-[#b24f43]">{form.errors.monthly_limit}</p>}
+                        </label>
+                    </div>
+
+                    <label className="flex items-center gap-3">
+                        <input
+                            type="checkbox"
+                            checked={form.data.blocked}
+                            onChange={(e) => form.setData('blocked', e.target.checked)}
+                            className="h-4 w-4 rounded border-[var(--admin-border)]"
+                        />
+                        <span className="text-sm font-semibold text-[var(--admin-text)]">Bloquer complètement l'accès à l'IA pour cet utilisateur</span>
+                    </label>
+
+                    <label className="block space-y-1">
+                        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Note interne (optionnel)</span>
+                        <textarea
+                            value={form.data.note}
+                            onChange={(e) => form.setData('note', e.target.value)}
+                            className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none h-20 resize-none"
+                            maxLength={500}
+                            placeholder="Ex: abus détecté le 12/09, quota réduit temporairement."
+                        />
+                        {form.errors.note && <p className="text-xs text-[#b24f43]">{form.errors.note}</p>}
+                    </label>
+
+                    <div className="flex justify-end gap-3 pt-3">
+                        <button type="button" onClick={onClose} className="admin-button admin-button--ghost">Annuler</button>
+                        <button type="submit" disabled={form.processing} className="admin-button admin-button--primary">
+                            {form.processing ? 'Enregistrement...' : 'Enregistrer'}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}

@@ -4,6 +4,7 @@ import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 import AiDashboardPanel from './ai-dashboard-panel';
+import { AiQuotasPanel } from './panels/AiQuotasPanel';
 import { useAdminAnalytics } from './hooks/useAdminAnalytics';
 import { useRowSelection } from './hooks/useRowSelection';
 import { useServerTable } from './hooks/useServerTable';
@@ -13,7 +14,7 @@ import { CommunicationsPanel } from './panels/CommunicationsPanel';
 import { DashboardPanel } from './panels/DashboardPanel';
 import { ArtisanLedgerModal, MissionDetailModal, OrderDetailModal, TransactionDetailModal } from './panels/DetailModals';
 import { EvaluationsPanel } from './panels/EvaluationsPanel';
-import { CommunicationFormModal, PromoCodeFormModal, StatusFormModal, UserFormModal } from './panels/FormModals';
+import { AiQuotaFormModal, CommunicationFormModal, PromoCodeFormModal, StatusFormModal, UserFormModal } from './panels/FormModals';
 import { KycPanel } from './panels/KycPanel';
 import { LitigesPanel } from './panels/LitigesPanel';
 import { MissionsPanel } from './panels/MissionsPanel';
@@ -33,6 +34,7 @@ import type {
     AdminTab,
     AdminTransaction,
     AdminUser,
+    AiUserQuotaRow,
     ArtisanScoreItem,
     AuditAdminOption,
     DashboardData,
@@ -143,6 +145,8 @@ interface AdminPageProps {
     kycUsersPage?: Paginated<KycUser>;
     pendingFournisseursList?: FournisseurItem[];
     kycStats?: KycStats;
+    // Onglet « Suivi & Coûts IA » (props non typées via `pageProps as any` — sauf la liste paginée).
+    aiUserQuotasPage?: Paginated<AiUserQuotaRow>;
     adminNotifications?: AdminNotificationItem[];
     allNotifications?: PaginatedNotifications;
     communications?: Array<{
@@ -251,6 +255,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         kycUsersPage = undefined,
         pendingFournisseursList = [],
         kycStats = { pending: 0, artisans_pending: 0, fournisseurs_pending: 0, rejected: 0, registration_trend: [] },
+        aiUserQuotasPage = undefined,
         vitrineSlides = [],
         vitrineArtisanDuMois = [],
         vitrineArticles = [],
@@ -273,6 +278,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
     const canManageRgpd = can(permissions, 'admin.rgpd.manage');
     const canManageObservability = can(permissions, 'admin.observability.manage');
     const canImpersonate = can(permissions, 'admin.users.impersonate');
+    const canManageAi = can(permissions, 'admin.ai.manage');
 
     const [missionSubTab, setMissionSubTab] = useState<'chantiers' | 'livraisons'>('chantiers');
     const [selectedOrderForDetails, setSelectedOrderForDetails] = useState<AdminOrder | null>(null);
@@ -470,6 +476,14 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         only: ['kycUsersPage', 'kycStats'],
         initial: { search_kyc: '' },
         storageKey: 'kyc',
+    });
+
+    // Quotas IA par utilisateur (onglet « Suivi & Coûts IA »).
+    const aiQuotaTable = useServerTable({
+        path: '/admin/ai-dashboard',
+        only: ['aiUserQuotasPage'],
+        initial: { search_aiq: '', role_aiq: '' },
+        storageKey: 'ai_quotas',
     });
 
     // Confirmations destructives normalisées + accessibles (Chantier C7 / P2-13).
@@ -956,6 +970,45 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                 preserveScroll: true,
             });
         }
+    };
+
+    // ── Quota IA par utilisateur ──────────────────────────────────────────────
+    const [aiQuotaModalOpen, setAiQuotaModalOpen] = useState<boolean>(false);
+    const [aiQuotaTarget, setAiQuotaTarget] = useState<AiUserQuotaRow | null>(null);
+    const aiQuotaForm = useForm<{ daily_limit: string; monthly_limit: string; blocked: boolean; note: string }>({
+        daily_limit: '',
+        monthly_limit: '',
+        blocked: false,
+        note: '',
+    });
+
+    const openEditAiQuota = (row: AiUserQuotaRow): void => {
+        setAiQuotaTarget(row);
+        aiQuotaForm.clearErrors();
+        aiQuotaForm.setData({
+            daily_limit: row.override_daily === null ? '' : String(row.override_daily),
+            monthly_limit: row.override_monthly === null ? '' : String(row.override_monthly),
+            blocked: Boolean(row.blocked),
+            note: row.note ?? '',
+        });
+        setAiQuotaModalOpen(true);
+    };
+
+    const handleAiQuotaSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
+        event.preventDefault();
+        if (aiQuotaForm.processing || !aiQuotaTarget) return;
+        aiQuotaForm.transform((data) => ({
+            ...data,
+            daily_limit: data.daily_limit === '' ? null : Number(data.daily_limit),
+            monthly_limit: data.monthly_limit === '' ? null : Number(data.monthly_limit),
+        }));
+        aiQuotaForm.put(`/admin/ai-dashboard/quotas/${aiQuotaTarget.id}`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setAiQuotaModalOpen(false);
+                aiQuotaForm.reset();
+            },
+        });
     };
 
     const handleTogglePromo = (promo: PromoCodeItem): void => {
@@ -1577,13 +1630,26 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                             ) : null}
 
                             {activeTab === 'ai_dashboard' ? (
-                                <section className="mt-5">
+                                <section className="mt-5 space-y-6">
                                     <AiDashboardPanel
                                         stats={(pageProps as any).stats}
                                         costsByModel={(pageProps as any).costsByModel}
                                         dailyUsage={(pageProps as any).dailyUsage}
                                         logs={(pageProps as any).logs}
                                         settings={(pageProps as any).settings}
+                                    />
+                                    <AiQuotasPanel
+                                        aiUserQuotasPage={aiUserQuotasPage}
+                                        globalDailyLimit={Number((pageProps as any).settings?.daily_user_limit ?? 0)}
+                                        search={aiQuotaTable.filters.search_aiq}
+                                        onSearchChange={(v) => aiQuotaTable.set('search_aiq', v)}
+                                        roleFilter={aiQuotaTable.filters.role_aiq}
+                                        onRoleFilterChange={(v) => aiQuotaTable.applyWith('role_aiq', v)}
+                                        onSubmit={aiQuotaTable.apply}
+                                        onReset={aiQuotaTable.reset}
+                                        renderPagination={(links) => renderPagination(links as any[], ['aiUserQuotasPage'])}
+                                        canManage={canManageAi}
+                                        onEditQuota={openEditAiQuota}
                                     />
                                 </section>
                             ) : null}
@@ -1685,6 +1751,17 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                         targetUser={statusTargetUser}
                         onSubmit={handleStatusSubmit}
                         onClose={() => setStatusModalOpen(false)}
+                    />
+                )}
+
+                {aiQuotaModalOpen && aiQuotaTarget && (
+                    <AiQuotaFormModal
+                        form={aiQuotaForm}
+                        targetName={aiQuotaTarget.name}
+                        globalDailyLimit={Number((pageProps as any).settings?.daily_user_limit ?? 0)}
+                        globalMonthlyLimit={Number((pageProps as any).settings?.monthly_user_limit ?? 0)}
+                        onSubmit={handleAiQuotaSubmit}
+                        onClose={() => setAiQuotaModalOpen(false)}
                     />
                 )}
 

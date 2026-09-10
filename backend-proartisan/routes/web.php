@@ -26,6 +26,15 @@ Route::inertia('/cgu', 'cgu', ['defaultTab' => 'cgu'])->name('cgu');
 Route::inertia('/politique-confidentialite', 'cgu', ['defaultTab' => 'privacy'])->name('privacy');
 Route::inertia('/privacy', 'cgu', ['defaultTab' => 'privacy']);
 
+// Assistant IA Chantier (WebView mobile). La page HTML + ses assets vivent dans
+// public/ ; servir via une route évite la copie manuelle au docroot (qui dérivait).
+Route::get('/assistant', function () {
+    return response()->file(public_path('client.html'), [
+        'Content-Type' => 'text/html; charset=UTF-8',
+        'Cache-Control' => 'no-store',
+    ]);
+})->name('assistant');
+
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::middleware('guest')->group(function () {
         Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');

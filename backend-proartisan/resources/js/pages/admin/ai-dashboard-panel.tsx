@@ -48,6 +48,7 @@ interface AiDashboardPanelProps {
 
 export default function AiDashboardPanel({ stats, costsByModel, dailyUsage, logs, settings }: AiDashboardPanelProps) {
     const [dailyLimit, setDailyLimit] = useState(settings.daily_user_limit || '20');
+    const [monthlyLimit, setMonthlyLimit] = useState(settings.monthly_user_limit || '0');
     const [aiEnabled, setAiEnabled] = useState(settings.ai_enabled === '1');
     const [isSaving, setIsSaving] = useState(false);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -60,6 +61,7 @@ export default function AiDashboardPanel({ stats, costsByModel, dailyUsage, logs
         try {
             await axios.post('/admin/ai-dashboard/settings', {
                 daily_user_limit: parseInt(dailyLimit, 10),
+                monthly_user_limit: parseInt(monthlyLimit, 10) || 0,
                 ai_enabled: aiEnabled ? '1' : '0'
             });
             setSuccessMessage('Paramètres IA mis à jour avec succès.');
@@ -159,6 +161,21 @@ export default function AiDashboardPanel({ stats, costsByModel, dailyUsage, logs
                                 />
                             </div>
                             <p className="mt-1 text-xs text-slate-500">Mettre 0 pour aucune limite journalière.</p>
+                        </div>
+
+                        {/* Monthly limit */}
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Limite mensuelle par utilisateur</label>
+                            <div className="mt-1 flex rounded-md shadow-sm">
+                                <input
+                                    type="number"
+                                    min="0"
+                                    value={monthlyLimit}
+                                    onChange={(e) => setMonthlyLimit(e.target.value)}
+                                    className="block w-full rounded-md border-slate-300 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                />
+                            </div>
+                            <p className="mt-1 text-xs text-slate-500">Mettre 0 pour aucune limite mensuelle. Une surcharge par utilisateur reste prioritaire.</p>
                         </div>
 
                         {successMessage && (

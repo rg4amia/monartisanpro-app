@@ -125,9 +125,10 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
     }
   }
 
-  /// Construit l'URL de client.html à partir de l'URL API résolue.
-  /// Le jeton Sanctum est passé dans le fragment (`#token=`), jamais dans la
-  /// query string : un fragment n'est pas envoyé au serveur ni journalisé.
+  /// Construit l'URL de la page Assistant (`/assistant`, servie par Laravel)
+  /// à partir de l'URL API résolue. Le jeton Sanctum passe dans le fragment
+  /// (`#token=`), jamais dans la query string : un fragment n'est pas envoyé
+  /// au serveur ni journalisé.
   String _buildAssistantUrl() {
     final uri = Uri.parse(EnvConfig.baseUrl);
     final host = uri.host;
@@ -136,7 +137,7 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
     final fragment = (_authToken != null && _authToken!.isNotEmpty)
         ? '#token=${Uri.encodeComponent(_authToken!)}'
         : '';
-    return '${uri.scheme}://$authority/client.html?t=$timestamp$fragment';
+    return '${uri.scheme}://$authority/assistant?t=$timestamp$fragment';
   }
 
   void _initWebView() {

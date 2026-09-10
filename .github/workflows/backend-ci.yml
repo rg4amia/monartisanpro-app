@@ -256,9 +256,10 @@ jobs:
             RewriteCond %{REQUEST_URI} !^/monartisanpro-app/backend-proartisan/public/
             RewriteRule ^(.*)$ monartisanpro-app/backend-proartisan/public/$1 [L]
 
-            # 2. ROUTAGE DE LARAVEL SUR LE DOMAINE PRINCIPAL (api, admin, sanctum, storage, build)
-            # Permet d'accéder au panel admin, à l'API et aux assets Vite
-            RewriteCond %{REQUEST_URI} ^/(api|admin|sanctum|storage|build) [NC]
+            # 2. ROUTAGE DE LARAVEL SUR LE DOMAINE PRINCIPAL
+            # Panel admin, API, assets Vite, + l'Assistant IA Chantier (page
+            # /assistant servie par Laravel + ses fichiers statiques client.*).
+            RewriteCond %{REQUEST_URI} ^/(api|admin|sanctum|storage|build|assistant|client\.(html|js|css)|config\.js|db\.js) [NC]
             RewriteCond %{REQUEST_URI} !^/monartisanpro-app/backend-proartisan/public/
             RewriteRule ^(.*)$ monartisanpro-app/backend-proartisan/public/$1 [L]
 
@@ -298,16 +299,11 @@ jobs:
             EOF
             echo "✅ Root .htaccess configured"
 
-            # Sync des fichiers statiques de l'Assistant IA Chantier (WebView mobile).
-            # prosartisan.net sert client.html & co DEPUIS public_html/ (le .htaccess
-            # ci-dessus ne route vers Laravel que /api, /admin, /sanctum, /storage,
-            # /build). Sans cette copie, la WebView charge une version figée déposée
-            # manuellement autrefois (ancien onglet « Stocks Map », bridge photo KO).
-            echo "🔧 Sync Assistant IA (client.html)..."
+            # L'Assistant IA Chantier (client.html & assets) est désormais routé
+            # vers Laravel public/ par le .htaccess ci-dessus (règle 2) — plus de
+            # copie manuelle au docroot. On purge une éventuelle vieille copie.
             for f in client.html client.js client.css config.js db.js; do
-              if [ -f "$BACKEND_PATH/public/$f" ]; then
-                cp -f "$BACKEND_PATH/public/$f" "$PUBLIC_HTML/$f" 2>/dev/null && echo "  ↳ $f" || echo "  ⚠️ $f non copié"
-              fi
+              rm -f "$PUBLIC_HTML/$f" 2>/dev/null || true
             done
 
             echo "✅ Deployment completed successfully!"
