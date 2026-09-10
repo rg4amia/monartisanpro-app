@@ -627,7 +627,7 @@ class LlmAdminController extends Controller
         $prompt .= 'Ne retourne aucun texte en dehors du JSON.';
 
         try {
-            $model = config('services.gemini.model', 'gemini-2.0-flash');
+            $model = config('services.gemini.model', 'gemini-3.6-flash');
             $baseUrl = config('services.gemini.base_url', 'https://generativelanguage.googleapis.com');
             $url = "{$baseUrl}/v1beta/models/{$model}:generateContent?key={$key}";
             $response = Http::withHeaders([
@@ -711,7 +711,7 @@ class LlmAdminController extends Controller
         }
 
         $startTime = microtime(true);
-        $model = config('services.gemini.model', 'gemini-2.0-flash');
+        $model = config('services.gemini.model', 'gemini-3.6-flash');
         try {
             $baseUrl = config('services.gemini.base_url', 'https://generativelanguage.googleapis.com');
             $url = "{$baseUrl}/v1beta/models/{$model}:generateContent?key={$key}";
@@ -896,7 +896,7 @@ class LlmAdminController extends Controller
 
         if ($geminiKey) {
             try {
-                $geminiModel = config('services.gemini.model', 'gemini-2.0-flash');
+                $geminiModel = config('services.gemini.model', 'gemini-3.6-flash');
                 $geminiBaseUrl = config('services.gemini.base_url', 'https://generativelanguage.googleapis.com');
                 $url = "{$geminiBaseUrl}/v1beta/models/{$geminiModel}:generateContent?key={$geminiKey}";
                 $response = Http::post($url, [
