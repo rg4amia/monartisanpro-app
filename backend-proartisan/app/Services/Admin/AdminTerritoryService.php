@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\DB;
 
 class AdminTerritoryService
 {
+    public function __construct(private AdminDashboardCache $dashboardCache) {}
+
     /**
      * Référentiel des 14 Districts / Régions de Côte d'Ivoire.
      */
@@ -263,21 +265,23 @@ class AdminTerritoryService
      */
     public function getDistrictsHeatmap(): array
     {
-        $breakdown = [];
-        foreach (self::DISTRICTS as $slug => $data) {
-            $stats = $this->getTerritorySummary($slug, null);
-            $breakdown[$slug] = [
-                'name' => $data['short_name'],
-                'full_name' => $data['name'],
-                'chef_lieu' => $data['chef_lieu'],
-                'actors_count' => $stats['actors']['total_actors'],
-                'missions_count' => $stats['missions']['total'],
-                'volume_fcfa' => $stats['missions']['total_volume_fcfa'],
-                'realization_rate' => $stats['missions']['realization_rate'],
-                'dispute_rate' => $stats['missions']['dispute_rate'],
-            ];
-        }
-        return $breakdown;
+        return $this->dashboardCache->territoryDistricts(function () {
+            $breakdown = [];
+            foreach (self::DISTRICTS as $slug => $data) {
+                $stats = $this->getTerritorySummary($slug, null);
+                $breakdown[$slug] = [
+                    'name' => $data['short_name'],
+                    'full_name' => $data['name'],
+                    'chef_lieu' => $data['chef_lieu'],
+                    'actors_count' => $stats['actors']['total_actors'],
+                    'missions_count' => $stats['missions']['total'],
+                    'volume_fcfa' => $stats['missions']['total_volume_fcfa'],
+                    'realization_rate' => $stats['missions']['realization_rate'],
+                    'dispute_rate' => $stats['missions']['dispute_rate'],
+                ];
+            }
+            return $breakdown;
+        });
     }
 
     /**
@@ -285,23 +289,25 @@ class AdminTerritoryService
      */
     public function getCommunesHeatmap(): array
     {
-        $breakdown = [];
-        foreach (self::ABIDJAN_COMMUNES as $slug => $data) {
-            $stats = $this->getTerritorySummary('abidjan', $slug);
-            $breakdown[$slug] = [
-                'name' => $data['name'],
-                'type' => $data['type'],
-                'actors_count' => $stats['actors']['total_actors'],
-                'artisans_count' => $stats['actors']['artisans'],
-                'fournisseurs_count' => $stats['actors']['fournisseurs'],
-                'livreurs_count' => $stats['actors']['livreurs'],
-                'clients_count' => $stats['actors']['clients'],
-                'missions_count' => $stats['missions']['total'],
-                'volume_fcfa' => $stats['missions']['total_volume_fcfa'],
-                'realization_rate' => $stats['missions']['realization_rate'],
-            ];
-        }
-        return $breakdown;
+        return $this->dashboardCache->territoryCommunes(function () {
+            $breakdown = [];
+            foreach (self::ABIDJAN_COMMUNES as $slug => $data) {
+                $stats = $this->getTerritorySummary('abidjan', $slug);
+                $breakdown[$slug] = [
+                    'name' => $data['name'],
+                    'type' => $data['type'],
+                    'actors_count' => $stats['actors']['total_actors'],
+                    'artisans_count' => $stats['actors']['artisans'],
+                    'fournisseurs_count' => $stats['actors']['fournisseurs'],
+                    'livreurs_count' => $stats['actors']['livreurs'],
+                    'clients_count' => $stats['actors']['clients'],
+                    'missions_count' => $stats['missions']['total'],
+                    'volume_fcfa' => $stats['missions']['total_volume_fcfa'],
+                    'realization_rate' => $stats['missions']['realization_rate'],
+                ];
+            }
+            return $breakdown;
+        });
     }
 
     /**
@@ -415,7 +421,10 @@ class AdminTerritoryService
 
         if ($communeSlug && isset(self::ABIDJAN_COMMUNES[$communeSlug])) {
             $communeName = self::ABIDJAN_COMMUNES[$communeSlug]['name'];
-            $query->whereHas('commune', fn($cq) => $cq->where('slug', $communeSlug)->orWhere('name', 'like', "%{$communeName}%"));
+            $query->whereHas('commune', function ($cq) use ($communeSlug, $communeName) {
+                $cq->where('slug', $communeSlug);
+                $this->orWhereVilleMatch($cq, 'name', $communeName);
+            });
             return;
         }
 
@@ -424,12 +433,37 @@ class AdminTerritoryService
             $query->whereHas('commune', function ($cq) use ($villes) {
                 $cq->where(function ($sub) use ($villes) {
                     foreach ($villes as $v) {
-                        $sub->orWhere('name', 'like', "%{$v}%")
-                            ->orWhere('city', 'like', "%{$v}%");
+                        $this->orWhereVilleMatch($sub, 'name', $v);
+                        $this->orWhereVilleMatch($sub, 'city', $v);
                     }
                 });
             });
         }
+    }
+
+    /**
+     * Ajoute une condition `OR column = ville` bornée par un séparateur de mot
+     * (espace, virgule, tiret, début/fin de chaîne) afin d'éviter qu'une ville
+     * courte (ex: "Man", "Divo", "Bouna") ne matche par simple sous-chaîne une
+     * adresse sans rapport (ex: "Allemagne", "Dividende"). N'utilise que LIKE,
+     * portable identiquement en SQLite (tests) et MySQL (production).
+     */
+    private function orWhereVilleMatch(Builder $query, string $column, string $ville): void
+    {
+        $ville = trim($ville);
+        if ($ville === '') {
+            return;
+        }
+
+        $query->orWhere($column, $ville)
+            ->orWhere($column, 'like', "{$ville} %")
+            ->orWhere($column, 'like', "% {$ville}")
+            ->orWhere($column, 'like', "% {$ville} %")
+            ->orWhere($column, 'like', "{$ville},%")
+            ->orWhere($column, 'like', "%, {$ville}")
+            ->orWhere($column, 'like', "%,{$ville}%")
+            ->orWhere($column, 'like', "{$ville}-%")
+            ->orWhere($column, 'like', "%-{$ville}");
     }
 
     /**
@@ -440,8 +474,8 @@ class AdminTerritoryService
         if ($communeModel) {
             $name = $communeModel->name;
             $query->where(function ($q) use ($name, $communeModel) {
-                $q->where('client_address', 'like', "%{$name}%")
-                    ->orWhereHas('client', fn($cq) => $cq->where('commune_id', $communeModel->id))
+                $this->orWhereVilleMatch($q, 'client_address', $name);
+                $q->orWhereHas('client', fn($cq) => $cq->where('commune_id', $communeModel->id))
                     ->orWhereHas('artisan', fn($aq) => $aq->where('commune_id', $communeModel->id));
             });
             return;
@@ -450,8 +484,8 @@ class AdminTerritoryService
         if ($communeSlug && isset(self::ABIDJAN_COMMUNES[$communeSlug])) {
             $name = self::ABIDJAN_COMMUNES[$communeSlug]['name'];
             $query->where(function ($q) use ($name, $communeSlug) {
-                $q->where('client_address', 'like', "%{$name}%")
-                    ->orWhereHas('client', fn($cq) => $cq->whereHas('commune', fn($sub) => $sub->where('slug', $communeSlug)))
+                $this->orWhereVilleMatch($q, 'client_address', $name);
+                $q->orWhereHas('client', fn($cq) => $cq->whereHas('commune', fn($sub) => $sub->where('slug', $communeSlug)))
                     ->orWhereHas('artisan', fn($aq) => $aq->whereHas('commune', fn($sub) => $sub->where('slug', $communeSlug)));
             });
             return;
@@ -461,13 +495,14 @@ class AdminTerritoryService
             $villes = self::DISTRICTS[$districtSlug]['villes'];
             $query->where(function ($q) use ($villes) {
                 foreach ($villes as $v) {
-                    $q->orWhere('client_address', 'like', "%{$v}%");
+                    $this->orWhereVilleMatch($q, 'client_address', $v);
                 }
                 $q->orWhereHas('client', function ($cq) use ($villes) {
                     $cq->whereHas('commune', function ($sub) use ($villes) {
                         $sub->where(function ($w) use ($villes) {
                             foreach ($villes as $v) {
-                                $w->orWhere('name', 'like', "%{$v}%")->orWhere('city', 'like', "%{$v}%");
+                                $this->orWhereVilleMatch($w, 'name', $v);
+                                $this->orWhereVilleMatch($w, 'city', $v);
                             }
                         });
                     });

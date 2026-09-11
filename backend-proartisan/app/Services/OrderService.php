@@ -225,6 +225,8 @@ class OrderService
             throw new \Exception("Profil fournisseur incomplet ou non agréé.");
         }
 
+        // Peut réévaluer et relever order->vehicle_class si les articles sont
+        // plus lourds que la classe initialement choisie (voir Règle d'Or logistique).
         $deliveryCost = $this->pricingService->calculateOrderDeliveryCost($order);
 
         $order->update([
@@ -233,6 +235,7 @@ class OrderService
             'driver_assigned_at' => now(),
             'delivery_cost' => $deliveryCost,
             'total_amount' => $order->subtotal + $order->platform_fee + $deliveryCost,
+            'vehicle_class' => $order->vehicle_class,
         ]);
 
         // Créer la transaction Mobile Money pour le montant de la course

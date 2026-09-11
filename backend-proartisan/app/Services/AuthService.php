@@ -87,6 +87,39 @@ class AuthService
             ]);
         }
 
+        if ($deviceFingerprint && ($user->account_status ?? 'actif') === 'actif') {
+            $bannedOnSameDevice = User::where('device_fingerprint', $deviceFingerprint)
+                ->where('id', '!=', $user->id)
+                ->where('account_status', 'banni')
+                ->exists();
+
+            if ($bannedOnSameDevice) {
+                $user->update([
+                    'account_status' => 'banni',
+                    'account_status_reason' => 'Réinscription détectée depuis un appareil déjà associé à un compte banni.',
+                    'blocked_at' => now(),
+                ]);
+
+                try {
+                    $admins = User::where('role', 'admin')->get();
+                    foreach ($admins as $admin) {
+                        app(\App\Services\NotificationService::class)->send(
+                            $admin,
+                            'fraud_alert',
+                            'Tentative de contournement de bannissement détectée',
+                            "Le compte #{$user->id} ({$user->phone}) a été bloqué automatiquement : appareil déjà associé à un compte précédemment banni."
+                        );
+                    }
+                } catch (\Throwable $e) {
+                    // Best-effort : l'échec de la notification ne doit jamais bloquer le blocage du compte.
+                }
+
+                throw ValidationException::withMessages([
+                    'account' => ['Votre compte a été bloqué : cet appareil est associé à un compte précédemment banni.'],
+                ]);
+            }
+        }
+
         if ($user->isArtisan() && $deviceFingerprint) {
             if ($user->device_fingerprint === null) {
                 $user->update(['device_fingerprint' => $deviceFingerprint]);

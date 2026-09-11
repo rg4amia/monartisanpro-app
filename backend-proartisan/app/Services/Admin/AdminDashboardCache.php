@@ -21,9 +21,15 @@ class AdminDashboardCache
 
     public const FINANCIAL_KPIS_KEY = 'admin:financial_kpis:'.self::VERSION;
 
+    public const TERRITORY_DISTRICTS_KEY = 'admin:territory:districts:'.self::VERSION;
+
+    public const TERRITORY_COMMUNES_KEY = 'admin:territory:communes:'.self::VERSION;
+
     private const DASHBOARD_TTL = 60;      // secondes
 
     private const FINANCIAL_KPIS_TTL = 120; // secondes
+
+    private const TERRITORY_TTL = 60;      // secondes
 
     /**
      * @template T
@@ -47,9 +53,33 @@ class AdminDashboardCache
         return Cache::remember(self::FINANCIAL_KPIS_KEY, self::FINANCIAL_KPIS_TTL, $callback);
     }
 
+    /**
+     * @template T
+     *
+     * @param  \Closure(): T  $callback
+     * @return T
+     */
+    public function territoryDistricts(\Closure $callback)
+    {
+        return Cache::remember(self::TERRITORY_DISTRICTS_KEY, self::TERRITORY_TTL, $callback);
+    }
+
+    /**
+     * @template T
+     *
+     * @param  \Closure(): T  $callback
+     * @return T
+     */
+    public function territoryCommunes(\Closure $callback)
+    {
+        return Cache::remember(self::TERRITORY_COMMUNES_KEY, self::TERRITORY_TTL, $callback);
+    }
+
     public function flush(): void
     {
         Cache::forget(self::DASHBOARD_KEY);
         Cache::forget(self::FINANCIAL_KPIS_KEY);
+        Cache::forget(self::TERRITORY_DISTRICTS_KEY);
+        Cache::forget(self::TERRITORY_COMMUNES_KEY);
     }
 }

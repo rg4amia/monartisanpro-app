@@ -68,6 +68,43 @@ class Sprint3ComplianceTest extends TestCase
         $this->assertSame(300, $artisan->fresh()->score_prosartisan);
     }
 
+    public function test_banned_artisan_cannot_evade_ban_by_registering_new_account_on_same_device(): void
+    {
+        // Artisan précédemment banni, avec son empreinte d'appareil déjà connue.
+        User::factory()->create([
+            'role' => 'artisan',
+            'phone' => '+2250100000001',
+            'kyc_status' => 'rejete',
+            'account_status' => 'banni',
+            'device_fingerprint' => 'device-fraudster-001',
+        ]);
+
+        // Nouveau numéro de téléphone, nouvel artisan, mais même appareil physique.
+        $newArtisan = User::factory()->create([
+            'role' => 'artisan',
+            'phone' => '+2250100000002',
+            'kyc_status' => 'en_attente',
+            'account_status' => 'actif',
+            'device_fingerprint' => null,
+        ]);
+
+        $otpService = app(OtpService::class);
+        $otpService->sendOtp($newArtisan->phone);
+        $otp = \Illuminate\Support\Facades\DB::table('otps')->where('phone', $newArtisan->phone)->value('code');
+
+        $response = $this->postJson('/api/v1/auth/verify-otp', [
+            'phone' => $newArtisan->phone,
+            'otp' => $otp,
+            'device_fingerprint' => 'device-fraudster-001',
+        ]);
+
+        $response->assertStatus(422);
+
+        $newArtisan->refresh();
+        $this->assertSame('banni', $newArtisan->account_status);
+        $this->assertNotNull($newArtisan->blocked_at);
+    }
+
     public function test_jury_prosartisan_assignment_voting_and_consensus(): void
     {
         /** @var User $client */

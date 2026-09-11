@@ -102,6 +102,26 @@ class DeliveryPricingService
             ['lat' => (float) $toLat, 'lng' => (float) $toLng]
         );
 
+        // Si Yandex/Google sont indisponibles (repli Haversine interne), tenter
+        // OSRM (routage réel gratuit, déjà utilisé pour le tracé livreur) avant
+        // de se contenter d'une estimation à vol d'oiseau.
+        if (($directions['source'] ?? null) === 'haversine_fallback' && $this->osrmService) {
+            $osrmRoute = $this->osrmService->calculateRoute(
+                (float) $fromLat,
+                (float) $fromLng,
+                (float) $toLat,
+                (float) $toLng
+            );
+
+            if (($osrmRoute['is_fallback'] ?? true) === false) {
+                $directions = [
+                    'distance' => (float) $osrmRoute['distance_km'] * 1000,
+                    'duration' => (float) $osrmRoute['duration_min'] * 60,
+                    'source'   => 'osrm',
+                ];
+            }
+        }
+
         $distanceMeters = (float) ($directions['distance'] ?? 0);
         $durationSeconds = (float) ($directions['duration'] ?? 0);
 
@@ -164,8 +184,8 @@ class DeliveryPricingService
         elseif ($timeDecimal >= 17.0 && $timeDecimal <= 20.0) {
             $surge = 1.40;
         }
-        // Nuit profonde (22h00 à 05h00)
-        elseif ($timeDecimal >= 22.0 || $timeDecimal <= 5.0) {
+        // Nuit profonde (22h00 à 06h00)
+        elseif ($timeDecimal >= 22.0 || $timeDecimal < 6.0) {
             $surge = 1.20;
         }
 
@@ -246,6 +266,11 @@ class DeliveryPricingService
 
     /**
      * Calcule le coût de livraison d'une commande existante.
+     *
+     * Applique la classe de véhicule effective la plus sévère entre celle choisie
+     * par le client/livreur et celle recommandée automatiquement à partir des
+     * articles commandés, afin qu'une commande de matériaux lourds (ciment, fer…)
+     * ne puisse jamais être facturée au tarif "moto" par simple omission côté client.
      */
     public function calculateOrderDeliveryCost(Order $order): int
     {
@@ -256,19 +281,40 @@ class DeliveryPricingService
         $items = [];
         foreach ($order->items as $orderItem) {
             $items[] = [
-                'name'     => $orderItem->supplierProduct?->name ?? '',
+                'name'     => $orderItem->product?->name ?? '',
                 'quantity' => $orderItem->quantity,
             ];
+        }
+
+        $requestedVehicle = $order->vehicle_class ?? 'moto';
+        $recommendedVehicle = $this->recommendVehicleClass($items);
+        $effectiveVehicle = $this->highestSeverityVehicleClass($requestedVehicle, $recommendedVehicle);
+
+        if ($effectiveVehicle !== $order->vehicle_class) {
+            $order->vehicle_class = $effectiveVehicle;
         }
 
         $estimate = $this->estimateFare([
             'from'             => $from,
             'to'               => $to,
-            'vehicle_class'    => $order->vehicle_class ?? 'moto',
+            'vehicle_class'    => $effectiveVehicle,
             'surge_multiplier' => $order->surge_multiplier ?? 1.0,
             'items'            => $items,
         ]);
 
         return $estimate['delivery_cost'];
+    }
+
+    /**
+     * Retourne la classe de véhicule la plus sévère (donc la plus chère/adaptée)
+     * entre deux classes, selon l'ordre moto < voiture < cargo.
+     */
+    private function highestSeverityVehicleClass(string $a, string $b): string
+    {
+        $severity = ['moto' => 0, 'voiture' => 1, 'cargo' => 2];
+        $rankA = $severity[$a] ?? 0;
+        $rankB = $severity[$b] ?? 0;
+
+        return $rankA >= $rankB ? $a : $b;
     }
 }

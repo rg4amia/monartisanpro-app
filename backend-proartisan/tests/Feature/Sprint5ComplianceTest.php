@@ -26,6 +26,20 @@ class Sprint5ComplianceTest extends TestCase
             'statut' => 'agree',
         ]);
 
+        // Article léger : la classe de véhicule choisie par le client (moto/voiture)
+        // est honorée telle quelle, car aucune recommandation cargo ne la supplante.
+        $lightProduct = SupplierProduct::create([
+            'supplier_id' => $supplier->id,
+            'sku' => 'VIS-INOX',
+            'name' => 'Boîte de vis inox',
+            'description' => 'Petite quincaillerie',
+            'unit_price' => 5000,
+            'stock_quantity' => 100,
+            'status' => 'active',
+        ]);
+
+        // Article lourd (ciment) : force la classe cargo côté serveur quelle que
+        // soit la classe choisie par le client (Règle métier anti sous-évaluation).
         $product = SupplierProduct::create([
             'supplier_id' => $supplier->id,
             'sku' => 'CIM-425',
@@ -55,7 +69,7 @@ class Sprint5ComplianceTest extends TestCase
                 'delivery_mode' => 'delivery',
                 'items' => [
                     [
-                        'supplier_product_id' => $product->id,
+                        'supplier_product_id' => $lightProduct->id,
                         'quantity' => 1,
                     ]
                 ],
@@ -79,7 +93,7 @@ class Sprint5ComplianceTest extends TestCase
                 'delivery_mode' => 'delivery',
                 'items' => [
                     [
-                        'supplier_product_id' => $product->id,
+                        'supplier_product_id' => $lightProduct->id,
                         'quantity' => 1,
                     ]
                 ],
