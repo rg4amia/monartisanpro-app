@@ -143,14 +143,34 @@ class AdminPanelData
             'commune' => $commune,
             'search' => $request->query('search', ''),
         ];
+        $entitiesPage = $this->territoryService->getTerritoryEntities($filters, (int) $request->query('per_page', 15))->withQueryString();
+
+        $districtsList = [];
+        foreach (AdminTerritoryService::DISTRICTS as $slug => $data) {
+            $districtsList[] = array_merge($data, [
+                'id' => $slug,
+                'slug' => $slug,
+            ]);
+        }
+
+        $communesList = [];
+        foreach (AdminTerritoryService::ABIDJAN_COMMUNES as $slug => $data) {
+            $communesList[] = array_merge($data, [
+                'id' => $slug,
+                'slug' => $slug,
+                'district_slug' => 'abidjan',
+            ]);
+        }
 
         return [
             'territorySummary' => $this->territoryService->getTerritorySummary($district, $commune),
             'districtsHeatmap' => $this->territoryService->getDistrictsHeatmap(),
             'communesHeatmap' => $this->territoryService->getCommunesHeatmap(),
-            'districtsList' => array_values(AdminTerritoryService::DISTRICTS),
-            'communesList' => array_values(AdminTerritoryService::ABIDJAN_COMMUNES),
-            'territoryEntitiesPage' => $this->territoryService->getTerritoryEntities($filters, (int) $request->query('per_page', 15))->withQueryString(),
+            'districtsList' => $districtsList,
+            'communesList' => $communesList,
+            'entities' => $entitiesPage,
+            'territoryEntitiesPage' => $entitiesPage,
+            'filters' => $filters,
         ];
     }
 

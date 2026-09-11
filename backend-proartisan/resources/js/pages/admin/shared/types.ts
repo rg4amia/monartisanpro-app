@@ -94,34 +94,39 @@ export interface TerritoryZone {
 }
 
 export interface TerritoryActors {
-    clients: number;
-    artisans: number;
-    artisans_kyc_actif: number;
-    fournisseurs: number;
-    livreurs: number;
-    total_actors: number;
+    clients?: number | { total?: number; with_active_missions?: number };
+    artisans?: number | { total?: number; kyc_actif?: number; kyc_actif_percent?: number };
+    artisans_kyc_actif?: number;
+    fournisseurs?: number | { total?: number; agreed?: number };
+    livreurs?: number | { total?: number; active_courses?: number };
+    total_actors?: number;
 }
 
 export interface TerritoryMissions {
-    total: number;
-    en_cours: number;
-    completed: number;
-    disputed: number;
-    realization_rate: number;
-    dispute_rate: number;
-    total_volume_fcfa: number;
+    total?: number;
+    en_cours?: number;
+    completed?: number;
+    terminee?: number;
+    disputed?: number;
+    litige?: number;
+    realization_rate?: number;
+    dispute_rate?: number;
+    total_volume_fcfa?: number;
+    financial_volume_fcfa?: number;
 }
 
 export interface TerritoryReputation {
-    avg_rating: number;
-    avg_score_prosartisan: number;
+    avg_rating?: number;
+    average_artisan_rating?: number;
+    avg_score_prosartisan?: number;
+    total_reviews?: number;
 }
 
 export interface TerritorySummary {
-    zone: TerritoryZone;
-    actors: TerritoryActors;
-    missions: TerritoryMissions;
-    reputation: TerritoryReputation;
+    zone?: TerritoryZone;
+    actors?: TerritoryActors;
+    missions?: TerritoryMissions;
+    reputation?: TerritoryReputation;
 }
 
 export interface DistrictHeatmapItem {
@@ -133,6 +138,7 @@ export interface DistrictHeatmapItem {
     volume_fcfa: number;
     realization_rate: number;
     dispute_rate: number;
+    disputes_count?: number;
 }
 
 export interface CommuneHeatmapItem {
@@ -146,10 +152,12 @@ export interface CommuneHeatmapItem {
     missions_count: number;
     volume_fcfa: number;
     realization_rate: number;
+    disputes_count?: number;
 }
 
 export interface DistrictListItem {
     id: string;
+    slug?: string;
     name: string;
     short_name: string;
     chef_lieu: string;
@@ -161,13 +169,15 @@ export interface DistrictListItem {
 export interface CommuneListItem {
     name: string;
     type: string;
+    slug?: string;
+    district_slug?: string;
     lat: number;
     lng: number;
 }
 
 export interface TerritoryEntityItem {
     id: number;
-    type: 'user' | 'mission';
+    type: string;
     role?: string;
     name?: string;
     phone?: string;
@@ -181,7 +191,10 @@ export interface TerritoryEntityItem {
     contact?: string;
     status?: string;
     montant?: number;
+    amount_fcfa?: number;
     location?: string;
+    district?: string;
+    action_url?: string;
     created_at?: string;
 }
 

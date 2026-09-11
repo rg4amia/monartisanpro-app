@@ -667,8 +667,8 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
     const filteredCommunications = useMemo(() => {
         if (!communications) return [];
         return communications.filter((comm: any) => {
-            const matchesSearch = !deferredSearch || 
-                comm.titre.toLowerCase().includes(deferredSearch) || 
+            const matchesSearch = !deferredSearch ||
+                comm.titre.toLowerCase().includes(deferredSearch) ||
                 comm.contenu.toLowerCase().includes(deferredSearch);
             const matchesType = commTypeFilter === 'all' || comm.type === commTypeFilter;
             const matchesStatus = commStatusFilter === 'all' || comm.statut === commStatusFilter;
@@ -1458,7 +1458,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                 />
                             ) : null}
 
-                            {activeTab === 'cartography' && territorySummary ? (
+                            {activeTab === 'cartography' ? (
                                 <CartographyPanel
                                     territorySummary={territorySummary}
                                     districtsHeatmap={districtsHeatmap ?? {}}

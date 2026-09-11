@@ -16,3 +16,4 @@ export * from './a11y';
 export * from './ConfirmDialog';
 export * from './loading';
 export * from './permissions';
+export * from './ErrorBoundary';

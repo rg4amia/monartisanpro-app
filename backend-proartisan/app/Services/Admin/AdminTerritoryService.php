@@ -241,14 +241,19 @@ class AdminTerritoryService
                 'total' => $missionsTotal,
                 'en_cours' => $missionsInProgress,
                 'completed' => $missionsCompleted,
+                'terminee' => $missionsCompleted,
                 'disputed' => $missionsDisputed,
+                'litige' => $missionsDisputed,
                 'realization_rate' => $realizationRate,
                 'dispute_rate' => $disputeRate,
                 'total_volume_fcfa' => $totalVolumeFcfa,
+                'financial_volume_fcfa' => $totalVolumeFcfa,
             ],
             'reputation' => [
                 'avg_rating' => $avgRating,
+                'average_artisan_rating' => $avgRating,
                 'avg_score_prosartisan' => $avgScore,
+                'total_reviews' => $missionIds->isNotEmpty() ? Evaluation::whereIn('mission_id', $missionIds)->count() : 0,
             ],
         ];
     }
@@ -337,7 +342,7 @@ class AdminTerritoryService
             return $query->paginate($perPage)->through(function (Mission $mission) {
                 return [
                     'id' => $mission->id,
-                    'type' => 'mission',
+                    'type' => $mission->status === 'disputed' ? 'litige' : 'mission',
                     'title' => "Mission #{$mission->id} — " . ($mission->category ?: 'Travaux'),
                     'subtitle' => $mission->description ? \Illuminate\Support\Str::limit($mission->description, 60) : 'Chantier',
                     'actor_name' => $mission->artisan?->name ?? 'Non assigné',
@@ -345,7 +350,9 @@ class AdminTerritoryService
                     'contact' => $mission->artisan?->phone ?? ($mission->client?->phone ?? '-'),
                     'status' => (string) $mission->status,
                     'montant' => (int) $mission->montant_total,
+                    'amount_fcfa' => (int) $mission->montant_total,
                     'location' => $mission->location_address ?: 'Côte d\'Ivoire',
+                    'action_url' => "/admin/missions?search_mission=" . $mission->id,
                     'created_at' => $mission->created_at?->toIso8601String(),
                 ];
             });
@@ -378,13 +385,19 @@ class AdminTerritoryService
         return $query->paginate($perPage)->through(function (User $user) {
             return [
                 'id' => $user->id,
-                'type' => 'user',
+                'type' => $user->role,
                 'role' => $user->role,
                 'name' => $user->name,
+                'title' => $user->name,
+                'subtitle' => $user->role ? ucfirst($user->role) . ($user->phone ? ' • ' . $user->phone : '') : 'Utilisateur',
                 'phone' => $user->phone,
+                'contact' => $user->phone,
+                'status' => $user->kyc_status,
                 'kyc_status' => $user->kyc_status,
                 'score_prosartisan' => (int) $user->score_prosartisan,
                 'commune' => $user->commune?->name ?? ($user->city ?? 'Abidjan'),
+                'location' => $user->commune?->name ?? ($user->city ?? 'Abidjan'),
+                'action_url' => "/admin/users?search_user=" . urlencode($user->phone ?: $user->name),
                 'created_at' => $user->created_at?->toIso8601String(),
             ];
         });
