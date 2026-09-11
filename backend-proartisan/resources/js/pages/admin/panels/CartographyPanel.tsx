@@ -19,6 +19,7 @@ import type {
     TerritoryEntityItem,
 } from '../shared/types';
 import { IvoryCoastMapSvg } from './IvoryCoastMapSvg';
+import type { CityGeoData } from './ivoryCoastGeoData';
 
 export interface CartographyPanelProps {
     territorySummary?: TerritorySummary;
@@ -163,6 +164,15 @@ export function CartographyPanel({
         setSelectedCommune(slug);
         setCurrentPage(1);
         fetchTerritoryStats({ district: selectedDistrict, commune: slug, entityType, search: searchQuery, page: 1 });
+    };
+
+    // Déclencheur lors de la sélection d'une Ville / Pôle urbain
+    const handleSelectCity = (city: CityGeoData) => {
+        setSelectedDistrict(city.districtSlug);
+        setSelectedCommune(null);
+        setSearchQuery(city.name);
+        setCurrentPage(1);
+        fetchTerritoryStats({ district: city.districtSlug, commune: null, entityType, search: city.name, page: 1 });
     };
 
     // Changement d'onglet d'entité
@@ -427,6 +437,7 @@ export function CartographyPanel({
                     onSelectDistrict={handleSelectDistrict}
                     onSelectCommune={handleSelectCommune}
                     onSwitchViewMode={handleSwitchViewMode}
+                    onSelectCity={handleSelectCity}
                 />
 
                 {/* 5. Tableau Dynamique Récapitulatif Actualisé à Chaque Filtre */}

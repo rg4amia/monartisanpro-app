@@ -198,4 +198,13 @@ export interface TerritoryEntityItem {
     created_at?: string;
 }
 
+export type HeatmapMetricMode = 'actors' | 'volume' | 'rate';
+
+export interface MapViewport {
+    x: number;
+    y: number;
+    scale: number;
+}
+
+
 
