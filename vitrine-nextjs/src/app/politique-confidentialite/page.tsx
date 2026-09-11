@@ -2,15 +2,11 @@
 
 import React from 'react';
 import Link from 'next/link';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
 import { Shield, Lock, EyeOff, Server, Clock, Mail, ChevronRight, CheckCircle2 } from 'lucide-react';
 
 export default function PolitiqueConfidentialitePage() {
     return (
         <div className="min-h-screen bg-[#faf8f5] text-[#2c221e] flex flex-col font-sans">
-            <Navbar />
-
             {/* Hero Banner */}
             <div className="bg-gradient-to-r from-[#17261d] via-[#1f3528] to-[#17261d] text-white pt-36 pb-20 px-4 sm:px-6 lg:px-8 border-b border-emerald-500/20">
                 <div className="max-w-4xl mx-auto text-center space-y-4">
@@ -255,8 +251,6 @@ export default function PolitiqueConfidentialitePage() {
                 </div>
 
             </main>
-
-            <Footer />
         </div>
     );
 }

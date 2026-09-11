@@ -2,15 +2,11 @@
 
 import React from 'react';
 import Link from 'next/link';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
 import { ShieldCheck, Lock, FileText, Scale, CheckCircle2, ChevronRight, AlertTriangle } from 'lucide-react';
 
 export default function CguPage() {
     return (
         <div className="min-h-screen bg-[#faf8f5] text-[#2c221e] flex flex-col font-sans">
-            <Navbar />
-
             {/* Hero Banner */}
             <div className="bg-gradient-to-r from-[#201815] via-[#2c221e] to-[#201815] text-white pt-36 pb-20 px-4 sm:px-6 lg:px-8 border-b border-[#ebb95e]/20">
                 <div className="max-w-4xl mx-auto text-center space-y-4">
@@ -223,8 +219,6 @@ export default function CguPage() {
                 </div>
 
             </main>
-
-            <Footer />
         </div>
     );
 }
