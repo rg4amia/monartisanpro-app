@@ -70,6 +70,18 @@ class _DeliveryRoutePlannerScreenState
   bool _isTelemetryActive = false;
   double? _lastSpeedKmh;
 
+  /// Repère du livreur affiché pendant la phase de retrait (`pickup`), gardé
+  /// en référence pour pouvoir le déplacer directement à chaque tick de
+  /// télémétrie sans effacer/redessiner tout l'itinéraire.
+  mk.PlacemarkMapObject? _driverPlacemark;
+
+  /// Empêche deux appels concurrents à [_updateMapElements] (carte prête,
+  /// position GPS résolue, tick de télémétrie peuvent tous se déclencher
+  /// presque simultanément à l'ouverture de l'écran) : sans cette garde,
+  /// l'un pouvait effacer les objets tracés par l'autre pendant que celui-ci
+  /// attendait encore la réponse OSRM, laissant la carte sans itinéraire.
+  bool _isUpdatingRoute = false;
+
   @override
   void initState() {
     super.initState();
@@ -136,13 +148,32 @@ class _DeliveryRoutePlannerScreenState
         heading: pos.heading >= 0 ? pos.heading : null,
       );
 
-      if (mounted) {
-        _homeController.driverGpsCoords.value =
-            '${pos.latitude.toStringAsFixed(6)}, ${pos.longitude.toStringAsFixed(6)}';
-        if (_mapReady && _pinsCollection != null) {
+      if (!mounted) return;
+      _homeController.driverGpsCoords.value =
+          '${pos.latitude.toStringAsFixed(6)}, ${pos.longitude.toStringAsFixed(6)}';
+
+      // Pendant le trajet vers le fournisseur, on déplace juste le repère du
+      // livreur sur sa position réelle : appeler _updateMapElements() ici à
+      // chaque tick (comme précédemment) effaçait puis recalculait tout
+      // l'itinéraire via OSRM toutes les 15 s, ce qui pouvait laisser la
+      // carte sans tracé le temps que la nouvelle requête réseau aboutisse
+      // (voire indéfiniment en cas d'appels concurrents qui s'annulaient
+      // mutuellement au démarrage de l'écran). Le tracé routier ne change
+      // pas tant que le fournisseur ne bouge pas : inutile de le refaire et
+      // de re-solliciter le serveur OSRM public à chaque tick.
+      if (_mapReady && _currentPhase == DeliveryPhase.pickup) {
+        final marker = _driverPlacemark;
+        if (marker != null) {
+          try {
+            marker.geometry =
+                mk.Point(latitude: _driverLat, longitude: _driverLng);
+          } catch (_) {}
+        } else if (_pinsCollection != null) {
           await _updateMapElements();
         }
       }
+
+      if (mounted) setState(() {});
     } catch (_) {}
   }
 
@@ -312,75 +343,89 @@ class _DeliveryRoutePlannerScreenState
   }
 
   Future<void> _updateMapElements() async {
+    // Sans cette garde, un second appel (carte prête / position GPS résolue /
+    // tick de télémétrie, tous déclenchés indépendamment) pouvait effacer les
+    // objets ajoutés par un appel précédent encore en attente de la réponse
+    // OSRM, laissant la carte sans itinéraire jusqu'au prochain rafraîchissement.
+    if (_isUpdatingRoute) return;
     final pins = _pinsCollection;
     final routes = _routesCollection;
     if (pins == null || routes == null) return;
 
-    pins.clear();
-    routes.clear();
+    _isUpdatingRoute = true;
+    try {
+      pins.clear();
+      routes.clear();
+      _driverPlacemark = null;
 
-    if (_currentPhase == DeliveryPhase.pickup) {
-      // ── ÉTAPE 1 : Livreur -> Fournisseur ──
-      final pDriver = pins.addPlacemark();
-      pDriver.geometry = mk.Point(latitude: _driverLat, longitude: _driverLng);
+      if (_currentPhase == DeliveryPhase.pickup) {
+        // ── ÉTAPE 1 : Livreur -> Fournisseur ──
+        final pDriver = pins.addPlacemark();
+        pDriver.geometry =
+            mk.Point(latitude: _driverLat, longitude: _driverLng);
+        _driverPlacemark = pDriver;
 
-      final pSupplier = pins.addPlacemark();
-      pSupplier.geometry =
-          mk.Point(latitude: _supplierLat, longitude: _supplierLng);
+        final pSupplier = pins.addPlacemark();
+        pSupplier.geometry =
+            mk.Point(latitude: _supplierLat, longitude: _supplierLng);
 
-      final points = await _fetchRoadRoutePoints(
-        _driverLat,
-        _driverLng,
-        _supplierLat,
-        _supplierLng,
-      );
-      try {
-        final poly = routes.addPolyline();
-        poly.geometry = mk.Polyline(points);
-        poly.setStrokeColor(const Color(0xFFF59E0B)); // Orange
-        // ignore: deprecated_member_use
-        poly.strokeWidth = 5.0;
-      } catch (_) {}
+        final points = await _fetchRoadRoutePoints(
+          _driverLat,
+          _driverLng,
+          _supplierLat,
+          _supplierLng,
+        );
+        try {
+          final poly = routes.addPolyline();
+          poly.geometry = mk.Polyline(points);
+          poly.setStrokeColor(const Color(0xFFF59E0B)); // Orange
+          // ignore: deprecated_member_use
+          poly.strokeWidth = 5.0;
+        } catch (_) {}
 
-      _focusCamera(
-        lat1: _driverLat,
-        lng1: _driverLng,
-        lat2: _supplierLat,
-        lng2: _supplierLng,
-      );
-    } else if (_currentPhase == DeliveryPhase.delivery) {
-      // ── ÉTAPE 2 : Fournisseur -> Client ──
-      final pPickup = pins.addPlacemark();
-      pPickup.geometry =
-          mk.Point(latitude: _supplierLat, longitude: _supplierLng);
+        _focusCamera(
+          lat1: _driverLat,
+          lng1: _driverLng,
+          lat2: _supplierLat,
+          lng2: _supplierLng,
+        );
+      } else if (_currentPhase == DeliveryPhase.delivery) {
+        // ── ÉTAPE 2 : Fournisseur -> Client ──
+        final pPickup = pins.addPlacemark();
+        pPickup.geometry =
+            mk.Point(latitude: _supplierLat, longitude: _supplierLng);
 
-      final pClient = pins.addPlacemark();
-      pClient.geometry = mk.Point(latitude: _clientLat, longitude: _clientLng);
+        final pClient = pins.addPlacemark();
+        pClient.geometry =
+            mk.Point(latitude: _clientLat, longitude: _clientLng);
 
-      final points = await _fetchRoadRoutePoints(
-        _supplierLat,
-        _supplierLng,
-        _clientLat,
-        _clientLng,
-      );
-      try {
-        final poly = routes.addPolyline();
-        poly.geometry = mk.Polyline(points);
-        poly.setStrokeColor(const Color(0xFF10B981)); // Vert
-        // ignore: deprecated_member_use
-        poly.strokeWidth = 5.0;
-      } catch (_) {}
+        final points = await _fetchRoadRoutePoints(
+          _supplierLat,
+          _supplierLng,
+          _clientLat,
+          _clientLng,
+        );
+        try {
+          final poly = routes.addPolyline();
+          poly.geometry = mk.Polyline(points);
+          poly.setStrokeColor(const Color(0xFF10B981)); // Vert
+          // ignore: deprecated_member_use
+          poly.strokeWidth = 5.0;
+        } catch (_) {}
 
-      _focusCamera(
-        lat1: _supplierLat,
-        lng1: _supplierLng,
-        lat2: _clientLat,
-        lng2: _clientLng,
-      );
+        _focusCamera(
+          lat1: _supplierLat,
+          lng1: _supplierLng,
+          lat2: _clientLat,
+          lng2: _clientLng,
+        );
+      }
+
+      // Le HUD lit _routeDistanceText / _routeDurationText renseignés ci-dessus.
+      if (mounted) setState(() {});
+    } finally {
+      _isUpdatingRoute = false;
     }
-
-    // Le HUD lit _routeDistanceText / _routeDurationText renseignés ci-dessus.
-    if (mounted) setState(() {});
   }
 
   void _focusCamera({
