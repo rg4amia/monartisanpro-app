@@ -4,10 +4,10 @@ import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 import AiDashboardPanel from './ai-dashboard-panel';
-import LlmAdminPanel from './llm-admin-panel';
 import { useAdminAnalytics } from './hooks/useAdminAnalytics';
 import { useRowSelection } from './hooks/useRowSelection';
 import { useServerTable } from './hooks/useServerTable';
+import LlmAdminPanel from './llm-admin-panel';
 import { AiQuotasPanel } from './panels/AiQuotasPanel';
 import { AuditLogsPanel } from './panels/AuditLogsPanel';
 import { CartographyPanel } from './panels/CartographyPanel';
