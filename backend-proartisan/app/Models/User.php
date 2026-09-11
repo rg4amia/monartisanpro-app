@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Enums\WalletType;
 use App\Enums\WalletOperation;
 use App\Models\WalletTransaction;
+use Illuminate\Database\Eloquent\Builder;
 
 class User extends Authenticatable
 {
@@ -134,12 +135,12 @@ class User extends Authenticatable
 
     // ── Scopes ──────────────────────────────────────────────────────────────
 
-    public function scopeArtisans($q)
+    public function scopeArtisans(Builder $q): Builder
     {
         return $q->where('role', 'artisan');
     }
 
-    public function scopeKycActif($q)
+    public function scopeKycActif(Builder $q): Builder
     {
         return $q->where('kyc_status', 'actif');
     }
@@ -164,6 +165,11 @@ class User extends Authenticatable
     public function supplierProducts()
     {
         return $this->hasMany(SupplierProduct::class, 'supplier_id');
+    }
+
+    public function supplierCashouts()
+    {
+        return $this->hasMany(SupplierCashout::class, 'supplier_id');
     }
 
     public function kycDocuments()
@@ -228,12 +234,12 @@ class User extends Authenticatable
         return $this->getWalletBalance(WalletType::WALLET_MO);
     }
 
-    public function setWalletMateriauxAttribute($value): void
+    public function setWalletMateriauxAttribute(int|float|string|null $value): void
     {
         $this->attributes['wallet_materiaux'] = $value;
     }
 
-    public function setWalletMoAttribute($value): void
+    public function setWalletMoAttribute(int|float|string|null $value): void
     {
         $this->attributes['wallet_mo'] = $value;
     }
@@ -339,7 +345,7 @@ class User extends Authenticatable
         return $this->cnmci_status === 'valide';
     }
 
-    public function scopeCnmciVerified($query)
+    public function scopeCnmciVerified(Builder $query): Builder
     {
         return $query->where('cnmci_status', 'valide');
     }
@@ -352,5 +358,10 @@ class User extends Authenticatable
     public function getKycSelfiePathAttribute(): ?string
     {
         return $this->kycDocuments()->where('type', 'selfie')->latest()->value('file_url');
+    }
+
+    public function fraudAlerts(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(\App\Models\FraudAlert::class, 'user_id');
     }
 }

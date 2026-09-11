@@ -28,6 +28,8 @@ describe('canOpenTab()', () => {
     it('gate les onglets sensibles sur leur capacité', () => {
         expect(canOpenTab(['admin.observability.view'], 'observability')).toBe(true);
         expect(canOpenTab(['admin.kyc.view'], 'observability')).toBe(false);
+        expect(canOpenTab(['admin.territory.view'], 'cartography')).toBe(true);
+        expect(canOpenTab(['admin.kyc.view'], 'cartography')).toBe(false);
         expect(canOpenTab(['*'], 'roles_permissions')).toBe(true);
     });
 });

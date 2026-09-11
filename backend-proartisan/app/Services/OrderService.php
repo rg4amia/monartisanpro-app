@@ -15,10 +15,21 @@ use Illuminate\Support\Str;
 
 class OrderService
 {
+    private OsrmRoutingService $osrmService;
+    private RealtimeEventService $realtimeEventService;
+    private DeliveryPricingService $pricingService;
+
     public function __construct(
         private GoogleMapsService $mapsService,
-        private WalletService $walletService
-    ) {}
+        private WalletService $walletService,
+        ?OsrmRoutingService $osrmService = null,
+        ?RealtimeEventService $realtimeEventService = null,
+        ?DeliveryPricingService $pricingService = null,
+    ) {
+        $this->osrmService = $osrmService ?? app(OsrmRoutingService::class);
+        $this->realtimeEventService = $realtimeEventService ?? app(RealtimeEventService::class);
+        $this->pricingService = $pricingService ?? app(DeliveryPricingService::class);
+    }
 
     /**
      * Crée une commande et calcule les coûts associés.
@@ -208,34 +219,13 @@ class OrderService
             throw new \Exception("Seul un livreur peut accepter cette course.");
         }
 
-        // Calcul dynamique des frais de livraison (Distance x Temps) via Google Maps
+        // Calcul dynamique des frais de livraison via DeliveryPricingService
         $supplierProfile = $order->supplier->fournisseurAgree;
         if (!$supplierProfile) {
             throw new \Exception("Profil fournisseur incomplet ou non agréé.");
         }
 
-        $from = $supplierProfile->getPositionCoords();
-        $to = $order->client->getPositionCoords();
-
-        $vehicleMultiplier = match ($order->vehicle_class) {
-            'voiture' => 1.5,
-            'cargo'   => 2.5,
-            default   => 1.0,
-        };
-        $surgeMultiplier = (float) ($order->surge_multiplier ?? 1.0);
-
-        if (!$from || !$to) {
-            // Si coordonnées manquantes, on applique un tarif forfaitaire par défaut
-            $deliveryCost = (int) round(2500 * $vehicleMultiplier * $surgeMultiplier);
-        } else {
-            $directions = $this->mapsService->getDirections($from, $to);
-            $distanceKm = $directions['distance'] / 1000;
-            $durationMin = $directions['duration'] / 60;
-
-            // Formule de calcul : 150 FCFA / km + 50 FCFA / min, minimum 1000 FCFA
-            $rawCost = (($distanceKm * 150) + ($durationMin * 50)) * $vehicleMultiplier * $surgeMultiplier;
-            $deliveryCost = (int) max(1000, round($rawCost));
-        }
+        $deliveryCost = $this->pricingService->calculateOrderDeliveryCost($order);
 
         $order->update([
             'driver_id' => $driver->id,
@@ -722,5 +712,174 @@ class OrderService
                 \Illuminate\Support\Facades\Log::warning("Notification livreur échouée pour user {$driver->id}: " . $e->getMessage());
             }
         }
+    }
+
+    /**
+     * Enregistre un point GPS télémétrique du livreur et diffuse l'événement SSE en temps réel.
+     */
+    public function recordDriverLocation(
+        Order $order,
+        User $driver,
+        float $lat,
+        float $lng,
+        ?float $speed = null,
+        ?float $heading = null,
+        ?int $battery = null,
+    ): \App\Models\DeliveryTracking {
+        if ($order->driver_id !== $driver->id) {
+            throw new \Exception("Ce livreur n'est pas assigné à cette commande.");
+        }
+
+        $tracking = \App\Models\DeliveryTracking::create([
+            'order_id'      => $order->id,
+            'driver_id'     => $driver->id,
+            'latitude'      => $lat,
+            'longitude'     => $lng,
+            'speed_kmh'     => $speed,
+            'heading'       => $heading,
+            'battery_level' => $battery,
+            'created_at'    => now(),
+        ]);
+
+        // Mettre à jour la position courante du profil livreur
+        try {
+            $driver->update([
+                'position' => DB::raw("ST_SRID(POINT({$lng}, {$lat}), 4326)"),
+            ]);
+        } catch (\Throwable $e) {
+            // Ignorer si la colonne spatiale a des spécificités en environnement de test
+        }
+
+        // Diffusion temps réel SSE via RealtimeEventService (Lot 2)
+        $payload = [
+            'order_id'      => $order->id,
+            'driver_id'     => $driver->id,
+            'driver_name'   => $driver->name,
+            'latitude'      => $lat,
+            'longitude'     => $lng,
+            'speed_kmh'     => $speed,
+            'heading'       => $heading,
+            'battery_level' => $battery,
+            'recorded_at'   => now()->toIso8601String(),
+        ];
+
+        // 1. Diffusion au canal de la commande
+        $this->realtimeEventService->publish(
+            'order',
+            $order->id,
+            'driver_position_updated',
+            $payload,
+            'Livreur en mouvement'
+        );
+
+        // 2. Si rattaché à une mission chantier, diffusion au canal de la mission
+        $missionId = $order->items()->whereNotNull('mission_id')->value('mission_id');
+        if ($missionId) {
+            $this->realtimeEventService->publish(
+                'mission',
+                $missionId,
+                'driver_position_updated',
+                $payload,
+                'Livreur de matériaux en approche'
+            );
+        }
+
+        return $tracking;
+    }
+
+    /**
+     * Récupère le package complet de suivi 360° de la livraison pour mobile et backoffice.
+     */
+    public function getDeliveryTrackingData(Order $order): array
+    {
+        $order->loadMissing(['supplier.fournisseurAgree', 'client', 'driver', 'latestTracking']);
+
+        $supplierPos = $order->supplier?->fournisseurAgree?->getPositionCoords();
+        $clientPos = $order->client?->getPositionCoords();
+        if (! $clientPos && $order->delivery_latitude && $order->delivery_longitude) {
+            $clientPos = [
+                'lat' => (float) $order->delivery_latitude,
+                'lng' => (float) $order->delivery_longitude,
+            ];
+        }
+        $latest = $order->latestTracking;
+
+        $route = null;
+        if ($supplierPos && $clientPos) {
+            $route = $this->osrmService->calculateRoute(
+                (float) $supplierPos['lat'],
+                (float) $supplierPos['lng'],
+                (float) $clientPos['lat'],
+                (float) $clientPos['lng']
+            );
+        }
+
+        return [
+            'order_id'          => $order->id,
+            'status'            => $order->status,
+            'delivery_mode'     => $order->delivery_mode,
+            'supplier'          => [
+                'id'       => $order->supplier_id,
+                'name'     => $order->supplier?->fournisseurAgree?->nom_boutique ?? $order->supplier?->name,
+                'phone'    => $order->supplier?->phone,
+                'position' => $supplierPos,
+            ],
+            'client'            => [
+                'id'       => $order->client_id,
+                'name'     => $order->client?->name,
+                'phone'    => $order->client?->phone,
+                'position' => $clientPos,
+            ],
+            'driver'            => $order->driver ? [
+                'id'       => $order->driver->id,
+                'name'     => $order->driver->name,
+                'phone'    => $order->driver->phone,
+                'position' => $latest ? [
+                    'lat'   => $latest->latitude,
+                    'lng'   => $latest->longitude,
+                    'speed' => $latest->speed_kmh,
+                    'heading' => $latest->heading,
+                    'updated_at' => $latest->created_at?->toIso8601String(),
+                ] : null,
+            ] : null,
+            'route'             => $route,
+            'routing'           => $route,
+            'driver_latest_position' => $latest ? [
+                'latitude'      => $latest->latitude,
+                'longitude'     => $latest->longitude,
+                'speed_kmh'     => $latest->speed_kmh,
+                'heading'       => $latest->heading,
+                'battery_level' => $latest->battery_level,
+                'recorded_at'   => $latest->created_at?->toIso8601String(),
+            ] : null,
+            'codes'             => [
+                'pickup_code'    => $order->pickup_code,
+                'reception_code' => $order->reception_code,
+            ],
+            'pickup_code'       => $order->pickup_code,
+            'reception_code'    => $order->reception_code,
+            'pickup_photo_url'  => $order->pickup_photo_url,
+            'delivery_photo_url'=> $order->delivery_photo_url,
+            'delivery_cost'     => $order->delivery_cost,
+        ];
+    }
+
+    /**
+     * Recherche les livreurs vérifiés à proximité du point d'enlèvement (magasin).
+     */
+    public function findNearbyDrivers(float $lat, float $lng, float $radiusKm = 10.0, ?string $vehicleClass = null): \Illuminate\Support\Collection
+    {
+        $query = User::whereIn('role', ['livreur', 'driver'])
+            ->where('kyc_status', 'actif');
+
+        return $query->get()->filter(function ($driver) use ($lat, $lng, $radiusKm) {
+            $coords = $driver->getPositionCoords();
+            if (!$coords) {
+                return false;
+            }
+
+            $dist = $this->osrmService->haversineDistanceKm($lat, $lng, (float) $coords['lat'], (float) $coords['lng']);
+            return $dist <= $radiusKm;
+        })->values();
     }
 }

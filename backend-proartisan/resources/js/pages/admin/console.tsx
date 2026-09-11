@@ -10,6 +10,7 @@ import { useRowSelection } from './hooks/useRowSelection';
 import { useServerTable } from './hooks/useServerTable';
 import LlmAdminPanel from './llm-admin-panel';
 import { AuditLogsPanel } from './panels/AuditLogsPanel';
+import { CartographyPanel } from './panels/CartographyPanel';
 import { CommunicationsPanel } from './panels/CommunicationsPanel';
 import { DashboardPanel } from './panels/DashboardPanel';
 import { ArtisanLedgerModal, MissionDetailModal, OrderDetailModal, TransactionDetailModal } from './panels/DetailModals';
@@ -37,11 +38,17 @@ import type {
     AiUserQuotaRow,
     ArtisanScoreItem,
     AuditAdminOption,
+    CommuneHeatmapItem,
+    CommuneListItem,
     DashboardData,
     DeliveryStats,
+    DistrictHeatmapItem,
+    DistrictListItem,
+    DocumentStats,
     EvaluationStats,
     FlashMessages,
     FournisseurItem,
+    GeneratedDocumentItem,
     KycStats,
     KycUser,
     LitigeItem,
@@ -55,6 +62,8 @@ import type {
     SettingItem,
     PromoCodeItem,
     ScoreLedgerEntryItem,
+    TerritoryEntityItem,
+    TerritorySummary,
     ThemeMode,
     TransactionStats,
     UserStats,
@@ -133,6 +142,8 @@ interface AdminPageProps {
     topArtisans?: AdminUser[];
     transactionsPage?: Paginated<AdminTransaction>;
     transactionStats?: TransactionStats;
+    documentsPage?: Paginated<GeneratedDocumentItem>;
+    documentStats?: DocumentStats;
     litigesPage?: Paginated<LitigeItem>;
     litigeStats?: LitigeStats;
     evaluationsPage?: Paginated<AdminEvaluation>;
@@ -169,8 +180,25 @@ interface AdminPageProps {
     vitrineFormations?: any[];
     vitrineRecrutements?: any[];
     vitrinePopups?: any[];
-    vitrineSettings?: any[];
     contactMessages?: any[];
+    territorySummary?: TerritorySummary;
+    districtsHeatmap?: Record<string, DistrictHeatmapItem>;
+    communesHeatmap?: Record<string, CommuneHeatmapItem>;
+    districtsList?: DistrictListItem[];
+    communesList?: CommuneListItem[];
+    entities?: {
+        data: TerritoryEntityItem[];
+        current_page: number;
+        last_page: number;
+        total: number;
+        per_page: number;
+    };
+    filters?: {
+        district: string | null;
+        commune: string | null;
+        entity_type: string;
+        search: string;
+    };
 }
 
 interface AuditNotificationItem extends AdminNotificationItem {
@@ -243,6 +271,8 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         topArtisans: topArtisansProp = [],
         transactionsPage = undefined,
         transactionStats = { pending: 0, failed: 0, confirmed: 0, volume_24h: 0, escrow: 0, released: 0 },
+        documentsPage = undefined,
+        documentStats = { total_documents: 0, total_montant_certifie: 0, recus_jalons_mo: 0, recus_quincaillerie: 0, rapports_et_litiges: 0 },
         litigesPage = undefined,
         litigeStats = { open: 0, resolved: 0, high_risk: 0, missions_disputed: 0 },
         evaluationsPage = undefined,
@@ -266,6 +296,13 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         vitrineSettings = [],
         contactMessages = [],
         observability = undefined,
+        territorySummary = undefined,
+        districtsHeatmap = {},
+        communesHeatmap = {},
+        districtsList = [],
+        communesList = [],
+        entities = { data: [], current_page: 1, last_page: 1, total: 0, per_page: 15 },
+        filters = { district: null, commune: null, entity_type: 'all', search: '' },
     } = (pageProps || {}) as Partial<AdminPageProps>;
 
     // Capacités fines du backoffice (Chantier C6 / P2-10). `['*']` = accès total.
@@ -1061,6 +1098,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
             label: 'Pilotage',
             items: [
                 { id: 'dashboard', label: tabMeta.dashboard.label },
+                { id: 'cartography', label: tabMeta.cartography.label },
                 { count: kycPending, id: 'kyc', label: tabMeta.kyc.label },
                 { count: missionsInProgress, id: 'missions', label: tabMeta.missions.label },
                 { count: openDisputes, id: 'litiges', label: tabMeta.litiges.label },
@@ -1115,6 +1153,13 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                     { label: 'Missions en cours', tone: 'green' as const, value: numberFormat.format(missionsInProgress) },
                     { label: 'KYC à valider', tone: 'blue' as const, value: numberFormat.format(kycPending) },
                     { label: 'Volume 24h', tone: 'slate' as const, value: money(volume24h) },
+                ];
+            case 'cartography':
+                return [
+                    { label: 'Territoire', tone: 'amber' as const, value: territorySummary?.zone?.name ?? 'Côte d’Ivoire' },
+                    { label: 'Districts', tone: 'blue' as const, value: '14' },
+                    { label: 'Communes Abidjan', tone: 'green' as const, value: '13' },
+                    { label: 'Couverture Réseau', tone: 'slate' as const, value: '100%' },
                 ];
             case 'kyc':
                 return [
@@ -1413,6 +1458,18 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                 />
                             ) : null}
 
+                            {activeTab === 'cartography' && territorySummary ? (
+                                <CartographyPanel
+                                    territorySummary={territorySummary}
+                                    districtsHeatmap={districtsHeatmap ?? {}}
+                                    communesHeatmap={communesHeatmap ?? {}}
+                                    districtsList={districtsList ?? []}
+                                    communesList={communesList ?? []}
+                                    entities={entities ?? { data: [], current_page: 1, last_page: 1, total: 0, per_page: 15 }}
+                                    filters={filters}
+                                />
+                            ) : null}
+
                             {activeTab === 'kyc' ? (
                                 <KycPanel
                                     kycUsersPage={kycUsersPage}
@@ -1539,6 +1596,9 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                     exportParams={txTable.filters}
                                     renderPagination={(links) => renderPagination(links as any[], ['transactionsPage'])}
                                     onSelectTransaction={setSelectedTransactionForDetails}
+                                    settingsList={settingsList}
+                                    documentsPage={documentsPage}
+                                    documentStats={documentStats}
                                 />
                             ) : null}
 

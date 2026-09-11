@@ -1,5 +1,6 @@
 // Modales de détail (lecture seule) du backoffice — extraites de console.tsx (Chantier C2).
 
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
 import {
@@ -177,6 +178,7 @@ export function MissionDetailModal({
                                             <th className="px-4 py-2">Ordre</th>
                                             <th className="px-4 py-2">Description</th>
                                             <th className="px-4 py-2">Montant</th>
+                                            <th className="px-4 py-2">Conformité IA</th>
                                             <th className="px-4 py-2">Statut</th>
                                         </tr>
                                     </thead>
@@ -186,6 +188,26 @@ export function MissionDetailModal({
                                                 <td className="px-4 py-2 font-bold">#{jalon.ordre}</td>
                                                 <td className="px-4 py-2">{jalon.description}</td>
                                                 <td className="px-4 py-2 font-medium">{money(jalon.montant)}</td>
+                                                <td className="px-4 py-2">
+                                                    {jalon.conformity_score !== undefined && jalon.conformity_score !== null ? (
+                                                        <span
+                                                            title={jalon.vision_analysis_json?.summary ?? ''}
+                                                            className={cn(
+                                                                'inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold cursor-help',
+                                                                jalon.conformity_score >= 70
+                                                                    ? 'border-emerald-300 bg-emerald-50 text-emerald-800'
+                                                                    : jalon.conformity_score >= 40
+                                                                    ? 'border-amber-300 bg-amber-50 text-amber-800'
+                                                                    : 'border-rose-300 bg-rose-50 text-rose-800'
+                                                            )}
+                                                        >
+                                                            {jalon.conformity_score >= 70 ? '👁️' : jalon.conformity_score >= 40 ? '⚠️' : '🚨'}
+                                                            {jalon.conformity_score}%
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-[10px] text-[var(--admin-muted)] italic">-</span>
+                                                    )}
+                                                </td>
                                                 <td className="px-4 py-2">
                                                     <span className={cn('px-2 py-0.5 rounded-full border text-[10px] font-bold',
                                                         jalon.statut === 'paye' || jalon.statut === 'valide' ? 'border-green-300 bg-green-50 text-green-700' : 'border-amber-300 bg-amber-50 text-amber-700',
@@ -314,6 +336,48 @@ export function MissionDetailModal({
 }
 
 export function OrderDetailModal({ order, onClose }: { order: AdminOrder; onClose: () => void }) {
+    const [liveTelemetry, setLiveTelemetry] = useState<any>(null);
+    const [loadingTelemetry, setLoadingTelemetry] = useState(false);
+
+    const loadTelemetryManually = async () => {
+        setLoadingTelemetry(true);
+        try {
+            const res = await fetch(`/api/v1/orders/${order.id}/tracking`, {
+                headers: { Accept: 'application/json' },
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setLiveTelemetry(data.tracking);
+            }
+        } catch (e) {
+            console.error('Erreur chargement télémétrie:', e);
+        } finally {
+            setLoadingTelemetry(false);
+        }
+    };
+
+    useEffect(() => {
+        if (!['driver_assigned', 'shipping', 'driver_picked_up', 'searching_driver'].includes(order.status)) {
+            return;
+        }
+
+        let isMounted = true;
+        fetch(`/api/v1/orders/${order.id}/tracking`, {
+            headers: { Accept: 'application/json' },
+        })
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data) => {
+                if (isMounted && data?.tracking) {
+                    setLiveTelemetry(data.tracking);
+                }
+            })
+            .catch(() => {});
+
+        return () => {
+            isMounted = false;
+        };
+    }, [order.id, order.status]);
+
     return (
         <div role="dialog" aria-modal="true" aria-label="Fenêtre de détail" className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
             <div className="admin-panel admin-surface w-full max-w-[850px] rounded-[32px] border p-6 lg:p-8 shadow-2xl relative max-h-[88vh] overflow-y-auto">
@@ -331,7 +395,18 @@ export function OrderDetailModal({ order, onClose }: { order: AdminOrder; onClos
                             {order.delivered_at && ` • Livrée le ${new Date(order.delivered_at).toLocaleString('fr-FR')}`}
                         </p>
                     </div>
-                    <CloseButton onClose={onClose} />
+                    <div className="flex items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={loadTelemetryManually}
+                            disabled={loadingTelemetry}
+                            className="rounded-xl border border-[var(--admin-border)] bg-white/70 px-3 py-1.5 text-xs font-semibold text-[var(--admin-text)] hover:bg-[#8a6b3d] hover:text-white transition shadow-sm"
+                            title="Actualiser la télémétrie et le tracé OSRM"
+                        >
+                            {loadingTelemetry ? 'Actualisation...' : '🛰️ Actualiser OSRM'}
+                        </button>
+                        <CloseButton onClose={onClose} />
+                    </div>
                 </div>
 
                 <div className="mt-6 rounded-2xl border border-[var(--admin-border)] bg-[#fcf8f2]/60 p-4">
@@ -351,6 +426,54 @@ export function OrderDetailModal({ order, onClose }: { order: AdminOrder; onClos
                         </div>
                     </div>
                 </div>
+
+                {/* Télémétrie OSRM et Watchdog en direct */}
+                {liveTelemetry && (
+                    <div className="mt-4 rounded-2xl border border-blue-200 bg-blue-50/50 p-4">
+                        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                            <span className="text-xs font-bold uppercase tracking-wider text-blue-900 flex items-center gap-1.5">
+                                <span className="h-2 w-2 rounded-full bg-blue-600 animate-ping" />
+                                <span>Télémétrie & Tracé Routier OSRM</span>
+                            </span>
+                            <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-[10px] font-bold text-blue-800">
+                                Moteur : {liveTelemetry.routing?.source === 'osrm' ? 'OSRM API v5' : 'Estimation Haversine'}
+                            </span>
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                            <div className="rounded-xl border border-blue-200 bg-white/80 p-2.5">
+                                <p className="text-[10px] uppercase font-bold text-[var(--admin-muted)]">Distance Routière</p>
+                                <p className="mt-1 text-base font-bold text-blue-900">
+                                    {liveTelemetry.routing?.distance_km ?? '--'} km
+                                </p>
+                            </div>
+                            <div className="rounded-xl border border-blue-200 bg-white/80 p-2.5">
+                                <p className="text-[10px] uppercase font-bold text-[var(--admin-muted)]">Temps Estimé (ETA)</p>
+                                <p className="mt-1 text-base font-bold text-blue-900">
+                                    {liveTelemetry.routing?.duration_minutes ?? '--'} min
+                                </p>
+                            </div>
+                            <div className="rounded-xl border border-blue-200 bg-white/80 p-2.5">
+                                <p className="text-[10px] uppercase font-bold text-[var(--admin-muted)]">Vitesse Coursier</p>
+                                <p className="mt-1 text-base font-bold text-blue-900">
+                                    {liveTelemetry.driver_latest_position?.speed_kmh != null ? `${liveTelemetry.driver_latest_position.speed_kmh} km/h` : 'À l\'arrêt'}
+                                </p>
+                            </div>
+                            <div className="rounded-xl border border-blue-200 bg-white/80 p-2.5">
+                                <p className="text-[10px] uppercase font-bold text-[var(--admin-muted)]">Batterie Mobile</p>
+                                <p className="mt-1 text-base font-bold text-blue-900">
+                                    {liveTelemetry.driver_latest_position?.battery_level != null ? `${liveTelemetry.driver_latest_position.battery_level}%` : 'N/A'}
+                                </p>
+                            </div>
+                        </div>
+
+                        {liveTelemetry.driver_latest_position && (
+                            <p className="mt-2.5 text-right text-[10px] text-blue-700">
+                                Dernière balise GPS reçue le {new Date(liveTelemetry.driver_latest_position.recorded_at).toLocaleTimeString('fr-FR')}
+                            </p>
+                        )}
+                    </div>
+                )}
 
                 <div className="mt-6 space-y-6">
                     <div className="grid gap-4 sm:grid-cols-3">
@@ -572,6 +695,18 @@ export function TransactionDetailModal({ transaction, onClose }: { transaction: 
                             <span className="font-semibold text-blue-700">#{transaction.mission.id} - {transaction.mission.description}</span>
                         </div>
                     )}
+
+                    <div className="pt-4 flex items-center justify-end gap-3 border-t border-[var(--admin-border)]">
+                        <a
+                            href={`/admin/transactions/${transaction.id}/receipt`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition"
+                        >
+                            <span>📥</span>
+                            <span>Télécharger le Reçu Officiel (PDF)</span>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>

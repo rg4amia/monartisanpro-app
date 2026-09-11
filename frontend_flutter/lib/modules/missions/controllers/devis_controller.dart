@@ -143,6 +143,49 @@ class DevisController extends GetxController {
     }
   }
 
+  final isVoiceLoading = false.obs;
+  final voiceTranscription = RxnString();
+
+  Future<bool> parseVoiceQuote(String audioPath) async {
+    if (missionId == null) return false;
+    isVoiceLoading.value = true;
+    try {
+      final suggestion = await _repo.parseVoiceQuote(missionId!, audioPath);
+
+      final List<dynamic> suggestedLignes = suggestion['lignes'] ?? [];
+      lignes.value = suggestedLignes
+          .map((l) => DevisLigne.fromJson(l as Map<String, dynamic>))
+          .toList();
+
+      final List<dynamic> suggestedJalons = suggestion['jalons'] ?? [];
+      jalons.value = suggestedJalons
+          .map((j) => DevisJalon.fromJson(j as Map<String, dynamic>))
+          .toList();
+
+      voiceTranscription.value = suggestion['transcription'] as String?;
+
+      Get.snackbar(
+        'Dictée Vocale IA',
+        'Devis transcrit et généré avec succès !',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: const Color(0xFFD1FAE5),
+        colorText: const Color(0xFF065F46),
+      );
+      return true;
+    } catch (e) {
+      Get.snackbar(
+        'Erreur Dictée Vocale',
+        'Impossible d\'analyser l\'enregistrement audio.',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: const Color(0xFFFEE2E2),
+        colorText: const Color(0xFF991B1B),
+      );
+      return false;
+    } finally {
+      isVoiceLoading.value = false;
+    }
+  }
+
   List<DevisLigne> get laborLines =>
       lignes.where((ligne) => ligne.type == 'mo').toList();
 

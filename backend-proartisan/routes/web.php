@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminCashoutController;
+use App\Http\Controllers\Admin\AdminDocumentController;
+use App\Http\Controllers\Admin\AdminFraudController;
 use App\Http\Controllers\Admin\AuthenticatedSessionController;
 use App\Http\Controllers\Admin\BackofficeController;
 use App\Http\Controllers\Admin\ImpersonationController;
@@ -62,8 +65,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/kyc/{user}/cnmci-review', [BackofficeController::class, 'reviewCnmci'])->middleware('can:admin.kyc.review')->name('kyc.cnmci-review');
         Route::post('/fournisseurs/{fournisseur}/review', [BackofficeController::class, 'reviewFournisseur'])->middleware('can:admin.fournisseurs.review')->name('fournisseurs.review');
 
-        // Missions
+        // Missions & Cartographie
         Route::get('/missions', [BackofficeController::class, 'missions'])->middleware('can:admin.missions.view')->name('missions');
+        Route::get('/cartographie', [BackofficeController::class, 'cartography'])->middleware('can:admin.territory.view')->name('cartography');
+        Route::get('/cartographie/stats', [\App\Http\Controllers\Admin\AdminTerritoryController::class, 'stats'])->middleware('can:admin.territory.view')->name('cartography.stats');
 
         // Litiges
         Route::get('/litiges', [BackofficeController::class, 'litiges'])->middleware('can:admin.litiges.view')->name('litiges');
@@ -85,9 +90,26 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/users/{user}/personal-data/export', [BackofficeController::class, 'exportPersonalData'])->middleware('can:admin.rgpd.view')->name('users.personal-data.export');
         Route::post('/users/{user}/anonymize', [BackofficeController::class, 'anonymizeUser'])->middleware('can:admin.rgpd.manage')->name('users.anonymize');
 
-        // Finance
+        // Finance & Cash-Out Quincaillerie
         Route::get('/transactions', [BackofficeController::class, 'transactions'])->middleware('can:admin.transactions.view')->name('transactions');
+        Route::post('/cashouts', [AdminCashoutController::class, 'store'])->middleware('can:admin.transactions.manage')->name('cashouts.store');
+        Route::post('/cashouts/{cashout}/approve', [AdminCashoutController::class, 'approve'])->middleware('can:admin.transactions.manage')->name('cashouts.approve');
+        Route::post('/cashouts/{cashout}/complete', [AdminCashoutController::class, 'complete'])->middleware('can:admin.transactions.manage')->name('cashouts.complete');
+        Route::post('/cashouts/{cashout}/reject', [AdminCashoutController::class, 'reject'])->middleware('can:admin.transactions.manage')->name('cashouts.reject');
         Route::get('/exports/{resource}', [BackofficeController::class, 'exportCsv'])->middleware('can:admin.exports')->name('exports');
+
+        // Documents & Reçus de Décaissement
+        Route::get('/documents', [AdminDocumentController::class, 'index'])->middleware('can:admin.transactions.view')->name('documents.index');
+        Route::get('/documents/{document}/download', [AdminDocumentController::class, 'download'])->middleware('can:admin.transactions.view')->name('documents.download');
+        Route::post('/documents/sync', [AdminDocumentController::class, 'sync'])->middleware('can:admin.transactions.manage')->name('documents.sync');
+        Route::get('/transactions/{transaction}/receipt', [AdminDocumentController::class, 'receiptForTransaction'])->middleware('can:admin.transactions.view')->name('transactions.receipt');
+        Route::get('/cashouts/{cashout}/receipt', [AdminDocumentController::class, 'receiptForCashout'])->middleware('can:admin.transactions.view')->name('cashouts.receipt');
+
+        // Sécurité & Anti-Fraude (Lot 3)
+        Route::post('/fraud-alerts/{fraudAlert}/hold', [AdminFraudController::class, 'hold'])->middleware('can:admin.fraud.manage')->name('fraud-alerts.hold');
+        Route::post('/fraud-alerts/{fraudAlert}/release', [AdminFraudController::class, 'release'])->middleware('can:admin.fraud.manage')->name('fraud-alerts.release');
+        Route::post('/fraud-alerts/{fraudAlert}/confirm', [AdminFraudController::class, 'confirm'])->middleware('can:admin.fraud.manage')->name('fraud-alerts.confirm');
+        Route::post('/fraud-alerts/{fraudAlert}/dismiss', [AdminFraudController::class, 'dismiss'])->middleware('can:admin.fraud.manage')->name('fraud-alerts.dismiss');
 
         // Qualité
         Route::get('/evaluations', [BackofficeController::class, 'evaluations'])->middleware('can:admin.evaluations.view')->name('evaluations');

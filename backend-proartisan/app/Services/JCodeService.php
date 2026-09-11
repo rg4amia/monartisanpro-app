@@ -161,6 +161,14 @@ class JCodeService
         if (! $gpsCheck['valid']) {
             Log::warning("[GPS FRAUD ALERT] J-Code {$jcode->code} | Fournisseur #{$fournisseur->id} | Distance: {$gpsCheck['distance']} m (max: {$gpsCheck['max']} m)");
 
+            app(\App\Services\FraudDetectionService::class)->analyzeJCodeRedemption(
+                $jcode,
+                $fournisseur,
+                $lat,
+                $lng,
+                (float) $gpsCheck['distance']
+            );
+
             $this->notificationService->sendAdmin(
                 'alert',
                 'Tentative de fraude J-Code',
@@ -174,6 +182,15 @@ class JCodeService
                 'gps' => ["Position GPS invalide. Distance {$gpsCheck['distance']} m (maximum {$gpsCheck['max']} m). Transaction bloquée."],
             ]);
         }
+
+        // Analyse anti-collusion et cadence de rachat J-Code (même si GPS valide)
+        app(\App\Services\FraudDetectionService::class)->analyzeJCodeRedemption(
+            $jcode,
+            $fournisseur,
+            $lat,
+            $lng,
+            (float) ($gpsCheck['distance'] ?? 0)
+        );
 
         // Si aucun article n'est spécifié, on sert tout ce qui reste disponible
         if (empty($servedItems)) {

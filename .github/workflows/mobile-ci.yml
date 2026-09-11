@@ -98,6 +98,7 @@ jobs:
           YANDEX_GEOLOCATION_API_KEY: ${{ secrets.YANDEX_GEOLOCATION_API_KEY }}
           OSRM_BASE_URL: ${{ secrets.OSRM_BASE_URL || 'https://router.project-osrm.org' }}
         run: |
+          OSRM_URL="${OSRM_BASE_URL:-https://router.project-osrm.org}"
           if [ -z "${YANDEX_MAPKIT_API_KEY}" ]; then
             echo "::warning::YANDEX_MAPKIT_API_KEY absent des secrets — la carte Yandex n'affichera aucune tuile dans cet APK."
           fi
@@ -106,7 +107,7 @@ jobs:
             "YANDEX_MAPKIT_API_KEY": "${YANDEX_MAPKIT_API_KEY}",
             "YANDEX_DISTANCE_MATRIX_API_KEY": "${YANDEX_DISTANCE_MATRIX_API_KEY}",
             "YANDEX_GEOLOCATION_API_KEY": "${YANDEX_GEOLOCATION_API_KEY}",
-            "OSRM_BASE_URL": "${OSRM_BASE_URL}"
+            "OSRM_BASE_URL": "${OSRM_URL}"
           }
           EOF
           echo "yandex.mapkit.apiKey=${YANDEX_MAPKIT_API_KEY}" >> android/local.properties

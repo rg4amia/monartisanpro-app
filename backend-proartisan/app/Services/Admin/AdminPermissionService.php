@@ -39,6 +39,7 @@ class AdminPermissionService
             ],
             'missions' => [
                 'admin.missions.view' => 'Consulter les missions et livraisons',
+                'admin.territory.view' => 'Consulter la cartographie interactive et les statistiques territoriales',
             ],
             'litiges' => [
                 'admin.litiges.view' => 'Consulter les dossiers de litige',
@@ -56,11 +57,16 @@ class AdminPermissionService
             ],
             'finance' => [
                 'admin.transactions.view' => 'Consulter les transactions et flux financiers',
+                'admin.transactions.manage' => 'Gérer et valider les opérations de trésorerie et retraits cash-out',
                 'admin.exports' => 'Générer les exports CSV du backoffice',
             ],
             'qualite' => [
                 'admin.evaluations.view' => 'Consulter les évaluations et scores',
                 'admin.fournisseurs.review' => 'Valider ou suspendre un fournisseur agréé',
+            ],
+            'securite' => [
+                'admin.fraud.view' => 'Consulter les alertes anti-fraude et de collusion',
+                'admin.fraud.manage' => 'Geler les fonds, confirmer ou classer les alertes de fraude',
             ],
             'plateforme' => [
                 'admin.settings.manage' => 'Modifier les paramètres métier de la plateforme',

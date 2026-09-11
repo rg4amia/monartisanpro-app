@@ -46,6 +46,19 @@ class JalonController extends Controller
 
         $this->jalonService->submit($jalon, $request->validated()['photos'] ?? []);
 
+        try {
+            app(\App\Services\RealtimeEventService::class)->broadcast(
+                $jalon->mission_id,
+                'jalon_updated',
+                [
+                    'jalon_id' => $jalon->id,
+                    'statut' => $jalon->fresh()->statut,
+                    'ordre' => $jalon->ordre,
+                    'action' => 'submitted',
+                ]
+            );
+        } catch (\Throwable $e) {}
+
         return response()->json([
             'success' => true,
             'message' => 'Jalon soumis. Le client recevra un OTP de validation.',
@@ -117,6 +130,20 @@ class JalonController extends Controller
         }
 
         $jalon->refresh();
+
+        try {
+            app(\App\Services\RealtimeEventService::class)->broadcast(
+                $jalon->mission_id,
+                'jalon_updated',
+                [
+                    'jalon_id' => $jalon->id,
+                    'statut' => $jalon->statut,
+                    'ordre' => $jalon->ordre,
+                    'action' => 'validated',
+                ]
+            );
+        } catch (\Throwable $e) {}
+
         $message = $jalon->mission->referent_required
             ? 'Jalon validé. Un référent de zone doit confirmer avant le paiement (mission > 2 000 000 FCFA).'
             : 'Jalon validé et paiement libéré vers l\'artisan.';

@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CommunicationController;
 use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\DeliveryController;
+use App\Http\Controllers\Api\V1\DeliveryTrackingController;
 use App\Http\Controllers\Api\V1\DevisController;
 use App\Http\Controllers\Api\V1\EvaluationController;
 use App\Http\Controllers\Api\V1\InterventionTypeController;
@@ -124,6 +125,7 @@ Route::prefix('v1')->group(function () {
 
         // ── Commandes Catalogue E-Commerce ───────────────────────────────────
         Route::apiResource('orders', OrderController::class)->only(['index', 'store', 'show']);
+        Route::post('/orders/estimate-delivery', [OrderController::class, 'estimateDelivery']);
         Route::post('/orders/{order}/prepared', [OrderController::class, 'markPrepared']);
         Route::post('/orders/{order}/verify-pickup', [OrderController::class, 'verifyPickup']);
         Route::post('/orders/{order}/verify-delivery', [OrderController::class, 'verifyDelivery']);
@@ -133,6 +135,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/promo-codes/{promoCode}/toggle', [PromoCodeController::class, 'toggle']);
 
         // ── Logistique & Livraisons (Courses) ──────────────────────────────────
+        Route::post('/deliveries/estimate', [OrderController::class, 'estimateDelivery']);
         Route::get('/deliveries/available', [DeliveryController::class, 'available'])->middleware('kyc.verified');
         Route::post('/deliveries/{order}/accept', [DeliveryController::class, 'accept'])->middleware('kyc.verified');
 
@@ -173,10 +176,20 @@ Route::prefix('v1')->group(function () {
         Route::post('/missions/{mission}/reject-request', [MissionController::class, 'rejectRequest']);
         Route::post('/missions/{mission}/referent-validate', [ReferentController::class, 'validateMission'])->middleware(['can:mission.referent-validate', 'kyc.verified']);
 
+        // ── Messagerie de Chantier In-App ──────────────────────────────────────
+        Route::get('/missions/{mission}/messages', [\App\Http\Controllers\Api\V1\MissionChatController::class, 'index']);
+        Route::post('/missions/{mission}/messages', [\App\Http\Controllers\Api\V1\MissionChatController::class, 'store'])->middleware('throttle:60,1');
+        Route::post('/missions/{mission}/messages/{message}/read', [\App\Http\Controllers\Api\V1\MissionChatController::class, 'markAsRead']);
+
+        // ── Flux Événements Temps Réel (SSE Hostinger) ────────────────────────
+        Route::get('/missions/{mission}/stream', [\App\Http\Controllers\Api\V1\MissionStreamController::class, 'stream']);
+        Route::get('/missions/{mission}/events', [\App\Http\Controllers\Api\V1\MissionStreamController::class, 'events']);
+
         // ── Devis ────────────────────────────────────────────────────────────
         Route::get('/missions/{mission}/devis', [DevisController::class, 'index']);
         Route::post('/missions/{mission}/devis', [DevisController::class, 'store'])->middleware(['can:devis.create', 'kyc.verified']);
         Route::get('/missions/{mission}/devis/suggest', [DevisController::class, 'suggest'])->middleware('kyc.verified');
+        Route::post('/missions/{mission}/devis/voice-quote', [DevisController::class, 'parseVoiceQuote'])->middleware(['can:devis.create', 'kyc.verified', 'throttle:ai']);
         Route::get('/devis/{devis}', [DevisController::class, 'show']);
         Route::put('/devis/{devis}', [DevisController::class, 'update'])->middleware('can:devis.update');
         Route::post('/devis/{devis}/accept', [DevisController::class, 'accept'])->middleware('can:devis.accept');
@@ -242,6 +255,19 @@ Route::prefix('v1')->group(function () {
             Route::post('/{order}/verify-delivery', [OrderController::class, 'verifyDelivery']);
             Route::post('/{order}/dispute', [OrderController::class, 'dispute']);
             Route::post('/{order}/waiting-surge', [OrderController::class, 'applyWaitingSurge']);
+
+            // Suivi GPS & Télémétrie Livreur (Lot 4)
+            Route::post('/{order}/location', [DeliveryTrackingController::class, 'updateLocation']);
+            Route::get('/{order}/tracking', [DeliveryTrackingController::class, 'getTracking']);
+            Route::post('/{order}/pickup', [DeliveryTrackingController::class, 'verifyPickup']);
+            Route::post('/{order}/deliver', [DeliveryTrackingController::class, 'verifyDelivery']);
+            Route::post('/{order}/reassign', [DeliveryTrackingController::class, 'reassign']);
+        });
+
+        // ── Courses de Livraison (Livreurs agréés KYC) ─────────────────────────
+        Route::prefix('deliveries')->middleware('kyc.verified')->group(function () {
+            Route::get('/available', [DeliveryController::class, 'available']);
+            Route::post('/{order}/accept', [DeliveryController::class, 'accept']);
         });
 
         // ── Parrainages ────────────────────────────────────────────────────────

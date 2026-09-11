@@ -14,7 +14,7 @@ return new class extends Migration
             $table->unsignedTinyInteger('ordre');
             $table->string('description');
             $table->bigInteger('montant');
-            $table->enum('statut', ['en_attente', 'soumis', 'valide', 'paye'])->default('en_attente');
+            $table->enum('statut', ['en_attente', 'soumis', 'valide', 'valide_suspendu', 'paye'])->default('en_attente');
             $table->string('otp_code', 4)->nullable();
             $table->timestamp('otp_expires_at')->nullable();
             $table->json('photos_json')->nullable();

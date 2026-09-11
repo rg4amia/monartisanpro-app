@@ -168,6 +168,18 @@ class DevisController extends Controller
 
         $this->devisService->accept($devis, $transaction);
 
+        try {
+            app(\App\Services\RealtimeEventService::class)->broadcast(
+                $devis->mission_id,
+                'mission_status',
+                [
+                    'status' => (string) $devis->mission->fresh()->status,
+                    'devis_id' => $devis->id,
+                    'is_avenant' => (bool) $devis->is_avenant,
+                ]
+            );
+        } catch (\Throwable $e) {}
+
         return response()->json([
             'success' => true,
             'message' => $devis->is_avenant
@@ -218,6 +230,55 @@ class DevisController extends Controller
         }
 
         $suggestion = $geminiService->suggestDevis($mission);
+
+        return response()->json([
+            'success' => true,
+            'data'    => $suggestion,
+        ]);
+    }
+
+    /**
+     * Analyse un enregistrement audio pour pré-remplir le devis (Voice-to-Quote).
+     */
+    public function parseVoiceQuote(Mission $mission, Request $request, \App\Services\GeminiService $geminiService): JsonResponse
+    {
+        $user = $request->user();
+
+        if ($user->role !== 'artisan') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Seul un artisan peut utiliser la dictée vocale de devis.',
+            ], 403);
+        }
+
+        // Vérification des quotas IA
+        if (! \App\Services\AiMonitoringService::checkUserLimit($user->id)) {
+            return response()->json([
+                'success' => false,
+                'message' => "Quota d'assistance IA atteint pour aujourd'hui. Saisissez votre devis manuellement ou réessayez demain.",
+            ], 429);
+        }
+
+        $request->validate([
+            'audio' => ['required', 'file', 'max:10240'], // Max 10 Mo
+        ]);
+
+        $file = $request->file('audio');
+        $mimeType = $file->getMimeType() ?: 'audio/m4a';
+        if (str_contains($mimeType, 'octet-stream') || empty($mimeType)) {
+            $ext = strtolower($file->getClientOriginalExtension());
+            $mimeType = match ($ext) {
+                'mp3' => 'audio/mp3',
+                'wav' => 'audio/wav',
+                'aac' => 'audio/aac',
+                'ogg' => 'audio/ogg',
+                default => 'audio/m4a',
+            };
+        }
+
+        $audioBase64 = base64_encode(file_get_contents($file->getPathname()));
+
+        $suggestion = $geminiService->parseVoiceQuote($mission, $audioBase64, $mimeType, $user->id);
 
         return response()->json([
             'success' => true,

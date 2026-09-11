@@ -41,6 +41,8 @@ class AdminPanelData
         private AdminService $adminService,
         private AdminPermissionService $adminPermissions,
         private AdminObservabilityService $observability,
+        private \App\Services\GeneratedDocumentService $documentService,
+        private AdminTerritoryService $territoryService,
     ) {}
 
     /**
@@ -129,6 +131,30 @@ class AdminPanelData
     }
 
     /**
+     * Onglet « Cartographie & Territoires » — indicateurs géographiques et ventilation par région/commune.
+     */
+    public function cartography(Request $request): array
+    {
+        $district = $request->query('district');
+        $commune = $request->query('commune');
+        $filters = [
+            'entity_type' => $request->query('entity_type', 'all'),
+            'district' => $district,
+            'commune' => $commune,
+            'search' => $request->query('search', ''),
+        ];
+
+        return [
+            'territorySummary' => $this->territoryService->getTerritorySummary($district, $commune),
+            'districtsHeatmap' => $this->territoryService->getDistrictsHeatmap(),
+            'communesHeatmap' => $this->territoryService->getCommunesHeatmap(),
+            'districtsList' => array_values(AdminTerritoryService::DISTRICTS),
+            'communesList' => array_values(AdminTerritoryService::ABIDJAN_COMMUNES),
+            'territoryEntitiesPage' => $this->territoryService->getTerritoryEntities($filters, (int) $request->query('per_page', 15))->withQueryString(),
+        ];
+    }
+
+    /**
      * Onglet « Litiges » (Chantier C4 / P1-6) — liste paginée + filtres serveur.
      */
     public function litiges(Request $request): array
@@ -209,6 +235,11 @@ class AdminPanelData
             )->withQueryString(),
             'transactionStats' => $this->adminService->transactionStats(),
             'financialKpis' => $this->adminService->getFinancialKpis(),
+            'documentsPage' => $this->documentService->listDocuments([
+                'search' => $request->query('search_doc') ?: null,
+                'type'   => $request->query('type_doc') ?: null,
+            ], 30)->withQueryString(),
+            'documentStats' => $this->documentService->getStats(),
         ];
     }
 

@@ -6,6 +6,7 @@ use App\Models\Jalon;
 use App\Models\Litige;
 use App\Models\Mission;
 use App\Models\Order;
+use App\Models\SupplierCashout;
 use App\Models\Transaction;
 use App\Models\WalletTransaction;
 use App\Observers\AdminDashboardCacheObserver;
@@ -111,6 +112,7 @@ class AppServiceProvider extends ServiceProvider
             Litige::class,
             Jalon::class,
             Order::class,
+            SupplierCashout::class,
         ] as $model) {
             if (class_exists($model)) {
                 $model::observe($observer);

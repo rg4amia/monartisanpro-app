@@ -2,6 +2,7 @@
 
 namespace App\Services\Admin;
 
+use App\Models\FraudAlert;
 use App\Models\Mission;
 use App\Models\Notification;
 use App\Models\ScoreLedgerEntry;
@@ -119,10 +120,45 @@ class AdminObservabilityService
     {
         $attempts = ScoreLedgerEntry::where('event_type', 'fraude_gps_tentative');
 
+        $fraudAlerts = FraudAlert::query();
+        $openAlertsCount = (clone $fraudAlerts)->ouvertes()->count();
+        $criticalAlertsCount = (clone $fraudAlerts)->critiques()->ouvertes()->count();
+        $paymentHoldsCount = (clone $fraudAlerts)->where('action_taken', 'payment_hold')->whereIn('statut', ['ouverte', 'en_analyse'])->count();
+
+        $alertsList = (clone $fraudAlerts)
+            ->with(['user:id,name,phone,role', 'targetUser:id,name,phone,role', 'mission:id,montant_total'])
+            ->latest()
+            ->limit(20)
+            ->get()
+            ->map(fn (FraudAlert $a) => [
+                'id' => $a->id,
+                'reference' => $a->reference,
+                'mission_id' => $a->mission_id,
+                'user_name' => $a->user?->name ?? 'Inconnu',
+                'user_phone' => $a->user?->phone,
+                'user_role' => $a->user?->role,
+                'target_name' => $a->targetUser?->name,
+                'target_phone' => $a->targetUser?->phone,
+                'target_role' => $a->targetUser?->role,
+                'type' => $a->type,
+                'severity' => $a->severity,
+                'risk_score' => $a->risk_score,
+                'statut' => $a->statut,
+                'action_taken' => $a->action_taken,
+                'reasons' => $a->reasons_json ?? [],
+                'metadata' => $a->metadata_json ?? [],
+                'created_at' => optional($a->created_at)->toIso8601String(),
+            ])
+            ->all();
+
         return [
             'gps_attempts_7d' => (clone $attempts)->where('created_at', '>=', now()->subDays(7))->count(),
             'gps_attempts_total' => (clone $attempts)->count(),
             'unread_alerts' => Notification::whereNull('read_at')->where('type', 'alert')->count(),
+            'open_alerts_count' => $openAlertsCount,
+            'critical_alerts_count' => $criticalAlertsCount,
+            'payment_holds_count' => $paymentHoldsCount,
+            'alerts_list' => $alertsList,
             'recent' => (clone $attempts)
                 ->with('user:id,name,phone')
                 ->latest()

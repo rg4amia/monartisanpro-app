@@ -13,6 +13,7 @@ use App\Models\Evaluation;
 use App\Models\ScoreLedgerEntry;
 use App\Models\Order;
 use App\Models\Jalon;
+use App\Models\SupplierCashout;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\DB;
@@ -41,7 +42,7 @@ class AdminService
             'referent_required_open' => Mission::where('referent_required', true)
                 ->whereIn('status', ['funded_locked', 'in_progress', 'disputed'])
                 ->count(),
-            'recent_fraud_alerts'    => JCode::where('statut', 'actif')->count(), // Placeholder for actual fraud tracking
+            'recent_fraud_alerts'    => \App\Models\FraudAlert::ouvertes()->count(),
             'volume_transactions_24h' => Transaction::where('created_at', '>=', now()->subDay())->sum('montant'),
         ]);
     }
@@ -594,9 +595,123 @@ class AdminService
             $totalLibereLivreurs = \Illuminate\Support\Facades\Schema::hasTable('orders') ? (int) Order::where('status', 'delivered')->sum('delivery_cost') : 0;
             $totalLibereGeneral = $totalLibereArtisans + $totalLibereFournisseurs + $totalLibereLivreurs;
 
+            // 1.b. Retraits Cash-Out Quincaillerie & Commissions Partenaires
+            $totalCashoutsCompleted = 0;
+            $totalCashoutsCommission = 0;
+            $totalCashoutsPending = 0;
+            $totalCashoutsBrut = 0;
+            $cashoutsBySupplier = collect([]);
+            $recentCashouts = collect([]);
+
+            if (\Illuminate\Support\Facades\Schema::hasTable('supplier_cashouts')) {
+                $totalCashoutsCompleted = (int) SupplierCashout::where('statut', 'complete')->sum('montant_net');
+                $totalCashoutsBrut = (int) SupplierCashout::where('statut', 'complete')->sum('montant_brut');
+                $totalCashoutsCommission = (int) SupplierCashout::where('statut', 'complete')->sum('montant_commission');
+                $totalCashoutsPending = (int) SupplierCashout::where('statut', 'en_attente')->count();
+
+                $recentCashouts = SupplierCashout::with('supplier:id,name,phone')
+                    ->latest()
+                    ->take(15)
+                    ->get()
+                    ->map(function ($c) {
+                        return [
+                            'id' => $c->id,
+                            'reference' => $c->reference,
+                            'supplier_id' => $c->supplier_id,
+                            'supplier_name' => $c->supplier?->name ?? 'Quincaillerie #' . $c->supplier_id,
+                            'supplier_phone' => $c->supplier?->phone ?? '-',
+                            'beneficiary_name' => $c->beneficiary_name,
+                            'beneficiary_phone' => $c->beneficiary_phone,
+                            'montant_brut' => $c->montant_brut,
+                            'commission_rate' => (float) $c->commission_rate,
+                            'montant_commission' => $c->montant_commission,
+                            'montant_net' => $c->montant_net,
+                            'statut' => $c->statut,
+                            'mode_retrait' => $c->mode_retrait,
+                            'created_at' => $c->created_at?->toIso8601String(),
+                        ];
+                    });
+
+                if (\Illuminate\Support\Facades\Schema::hasTable('fournisseurs_agrees')) {
+                    $cashoutsBySupplier = DB::table('supplier_cashouts')
+                        ->join('users', 'supplier_cashouts.supplier_id', '=', 'users.id')
+                        ->leftJoin('fournisseurs_agrees', 'fournisseurs_agrees.user_id', '=', 'users.id')
+                        ->select(
+                            'users.id as supplier_id',
+                            'users.name as supplier_name',
+                            'users.phone as supplier_phone',
+                            DB::raw("COALESCE(fournisseurs_agrees.nom_boutique, users.name) as shop_name"),
+                            DB::raw("COUNT(supplier_cashouts.id) as total_operations"),
+                            DB::raw("COALESCE(SUM(CASE WHEN supplier_cashouts.statut = 'complete' THEN supplier_cashouts.montant_brut ELSE 0 END), 0) as volume_brut_retraits"),
+                            DB::raw("COALESCE(SUM(CASE WHEN supplier_cashouts.statut = 'complete' THEN supplier_cashouts.montant_commission ELSE 0 END), 0) as total_commissions_gagnees")
+                        )
+                        ->groupBy('users.id', 'users.name', 'users.phone', 'fournisseurs_agrees.nom_boutique')
+                        ->orderByDesc('volume_brut_retraits')
+                        ->get();
+                }
+            }
+
+            // 1.c. Trésorerie Globale (Entrées / Sorties Réelles)
+            $totalEntreesAcomptes = 0;
+            if (\Illuminate\Support\Facades\Schema::hasTable('transactions')) {
+                $totalEntreesAcomptes = (int) DB::table('transactions')
+                    ->where('type', 'acompte')
+                    ->where('statut', 'confirme')
+                    ->sum('montant');
+            }
+            $totalEntreesEcommerce = 0;
+            if (\Illuminate\Support\Facades\Schema::hasTable('orders')) {
+                $totalEntreesEcommerce = (int) DB::table('orders')
+                    ->whereIn('status', ['paid', 'prepared', 'searching_driver', 'driver_assigned', 'driver_picked_up', 'shipping', 'delivered'])
+                    ->sum('total_amount');
+            }
+            $totalEntrees = $totalEntreesAcomptes + $totalEntreesEcommerce;
+            if ($totalEntrees === 0 && \Illuminate\Support\Facades\Schema::hasTable('missions')) {
+                $totalEntrees = (int) Mission::whereIn('status', ['funded_locked', 'in_progress', 'completed', 'disputed', 'litige'])->sum('montant_total');
+            }
+
+            $totalSorties = $totalLibereGeneral + $totalCashoutsCompleted;
+            $soldeTresorerieNet = $totalEntrees - $totalSorties;
+
+            // 1.d. Séquestre Bloqué sur Litiges (Fonds Gelés en attente d'Arbitrage)
+            $montantBloqueLitiges = 0;
+            $missionsBloqueesLitigesCount = 0;
+            if (\Illuminate\Support\Facades\Schema::hasTable('missions')) {
+                $litigeMissionIds = [];
+                if (\Illuminate\Support\Facades\Schema::hasTable('litiges')) {
+                    $litigeMissionIds = DB::table('litiges')
+                        ->whereIn('statut', ['ouvert', 'en_cours'])
+                        ->pluck('mission_id')
+                        ->all();
+                }
+
+                $missionsLitigeQuery = Mission::where(function ($q) use ($litigeMissionIds) {
+                    $q->whereIn('status', ['disputed', 'litige']);
+                    if (!empty($litigeMissionIds)) {
+                        $q->orWhereIn('id', $litigeMissionIds);
+                    }
+                });
+
+                $missionsBloqueesLitigesCount = $missionsLitigeQuery->count();
+                $montantBloqueLitiges = (int) ($missionsLitigeQuery->sum('montant_total') ?? 0);
+            }
+
+            // Taux de commission Cashout actuel
+            $currentCashoutRate = 0.025;
+            if (\Illuminate\Support\Facades\Schema::hasTable('settings')) {
+                $rateSetting = DB::table('settings')->where('key', 'commission_cashout_quincaillerie')->first();
+                if ($rateSetting && is_numeric($rateSetting->value)) {
+                    $currentCashoutRate = (float) $rateSetting->value;
+                }
+            }
+
             // 2. Commissions par catégorie de métier et par année
             $commissionsByCategoryYear = collect([]);
             if (\Illuminate\Support\Facades\Schema::hasTable('jalons') && \Illuminate\Support\Facades\Schema::hasTable('missions')) {
+                $yearExpression = config('database.default') === 'sqlite'
+                    ? "strftime('%Y', COALESCE(jalons.paye_at, jalons.updated_at))"
+                    : "YEAR(COALESCE(jalons.paye_at, jalons.updated_at))";
+
                 $commissionsByCategoryYear = DB::table('jalons')
                     ->join('missions', 'jalons.mission_id', '=', 'missions.id')
                     ->leftJoin('devis', function ($join) {
@@ -606,7 +721,7 @@ class AdminService
                     ->where('jalons.statut', '=', 'paye')
                     ->select(
                         DB::raw("COALESCE(NULLIF(missions.gemini_category, ''), 'Général / Divers') as category"),
-                        DB::raw("YEAR(COALESCE(jalons.paye_at, jalons.updated_at)) as year"),
+                        DB::raw("{$yearExpression} as year"),
                         DB::raw("COUNT(DISTINCT missions.id) as missions_count"),
                         DB::raw("SUM(jalons.montant) as volume_brut"),
                         DB::raw("ROUND(SUM(jalons.montant * COALESCE(devis.commission_service_ratio, 0.10) / (1 + COALESCE(devis.commission_service_ratio, 0.10)))) as commission_net")
@@ -694,7 +809,23 @@ class AdminService
                     'total_libere_artisans' => $totalLibereArtisans,
                     'total_libere_fournisseurs' => $totalLibereFournisseurs,
                     'total_libere_livreurs' => $totalLibereLivreurs,
+                    'total_entrees' => $totalEntrees,
+                    'total_sorties' => $totalSorties,
+                    'solde_tresorerie_net' => $soldeTresorerieNet,
+                    'sequestre_bloque_litiges' => $montantBloqueLitiges,
+                    'missions_bloquees_litiges_count' => $missionsBloqueesLitigesCount,
+                    'total_cashouts_libere' => $totalCashoutsCompleted,
                 ],
+                'cashout_kpis' => [
+                    'commission_rate' => $currentCashoutRate,
+                    'commission_rate_percent' => round($currentCashoutRate * 100, 2),
+                    'total_cashouts_brut' => $totalCashoutsBrut,
+                    'total_cashouts_net' => $totalCashoutsCompleted,
+                    'total_commissions_quincailleries' => $totalCashoutsCommission,
+                    'pending_cashouts_count' => $totalCashoutsPending,
+                ],
+                'cashouts_by_supplier' => $cashoutsBySupplier,
+                'recent_cashouts' => $recentCashouts,
                 'commissions_by_category_year' => $commissionsByCategoryYear,
                 'commissions_by_supplier' => $commissionsBySupplier,
                 'commissions_by_driver' => $commissionsByDriver,
@@ -707,6 +838,9 @@ class AdminService
                 ],
             ];
         } catch (\Throwable $e) {
+            if (app()->environment('testing')) {
+                throw $e;
+            }
             \Illuminate\Support\Facades\Log::error('Erreur getFinancialKpis: ' . $e->getMessage());
             return [
                 'solde_general' => [
@@ -720,7 +854,23 @@ class AdminService
                     'total_libere_artisans' => 0,
                     'total_libere_fournisseurs' => 0,
                     'total_libere_livreurs' => 0,
+                    'total_entrees' => 0,
+                    'total_sorties' => 0,
+                    'solde_tresorerie_net' => 0,
+                    'sequestre_bloque_litiges' => 0,
+                    'missions_bloquees_litiges_count' => 0,
+                    'total_cashouts_libere' => 0,
                 ],
+                'cashout_kpis' => [
+                    'commission_rate' => 0.025,
+                    'commission_rate_percent' => 2.5,
+                    'total_cashouts_brut' => 0,
+                    'total_cashouts_net' => 0,
+                    'total_commissions_quincailleries' => 0,
+                    'pending_cashouts_count' => 0,
+                ],
+                'cashouts_by_supplier' => [],
+                'recent_cashouts' => [],
                 'commissions_by_category_year' => [],
                 'commissions_by_supplier' => [],
                 'commissions_by_driver' => [],

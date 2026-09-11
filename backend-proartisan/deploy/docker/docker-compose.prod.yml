@@ -1,0 +1,110 @@
+version: '3.8'
+
+services:
+  # 1. Backend Laravel (PHP-FPM 8.3)
+  app:
+    build:
+      context: ../../
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    working_dir: /var/www/backend-proartisan
+    volumes:
+      - ../../storage:/var/www/backend-proartisan/storage
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+    env_file:
+      - ../../.env
+    depends_on:
+      - db
+      - redis
+    networks:
+      - prosartisan-network
+
+  # 2. Queue Workers (Supervisor / Artisan Queue Work)
+  worker:
+    build:
+      context: ../../
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    working_dir: /var/www/backend-proartisan
+    command: php artisan queue:work --sleep=3 --tries=3 --max-time=3600 --memory=512 --timeout=120
+    volumes:
+      - ../../storage:/var/www/backend-proartisan/storage
+    env_file:
+      - ../../.env
+    depends_on:
+      - app
+      - db
+      - redis
+    networks:
+      - prosartisan-network
+
+  # 3. Planificateur de tâches (Scheduler Daemon)
+  scheduler:
+    build:
+      context: ../../
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    working_dir: /var/www/backend-proartisan
+    command: php artisan schedule:work
+    volumes:
+      - ../../storage:/var/www/backend-proartisan/storage
+    env_file:
+      - ../../.env
+    depends_on:
+      - app
+      - db
+      - redis
+    networks:
+      - prosartisan-network
+
+  # 4. Serveur Web Nginx
+  web:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../../public:/var/www/backend-proartisan/public:ro
+    depends_on:
+      - app
+    networks:
+      - prosartisan-network
+
+  # 5. Base de données MySQL 8.0 (avec support géospatial InnoDB SRID 4326)
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-prosartisan}
+      MYSQL_USER: ${DB_USERNAME:-prosartisan}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_secret}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - prosartisan-network
+
+  # 6. Cache & Files d'attente Redis
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-null}
+    volumes:
+      - redis-data:/data
+    networks:
+      - prosartisan-network
+
+networks:
+  prosartisan-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
+    driver: local
+  redis-data:
+    driver: local

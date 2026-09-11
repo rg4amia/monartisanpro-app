@@ -81,6 +81,11 @@ class BackofficeController extends Controller
         return $this->page('admin/missions', $this->panelData->missions($request));
     }
 
+    public function cartography(Request $request): Response
+    {
+        return $this->page('admin/cartography', $this->panelData->cartography($request));
+    }
+
     public function litiges(Request $request): Response
     {
         return $this->page('admin/litiges', $this->panelData->litiges($request));

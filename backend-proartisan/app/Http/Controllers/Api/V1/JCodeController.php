@@ -119,6 +119,20 @@ class JCodeController extends Controller
         );
 
         try {
+            app(\App\Services\RealtimeEventService::class)->broadcast(
+                $jcode->mission_id,
+                'jcode_scanned',
+                [
+                    'jcode_id' => $jcode->id,
+                    'code' => $jcode->code,
+                    'fully_consumed' => (bool) ($result['fully_consumed'] ?? false),
+                    'montant_utilise' => (int) ($result['montant_utilise'] ?? 0),
+                    'montant_restant' => (int) ($result['montant_restant'] ?? 0),
+                ]
+            );
+        } catch (\Throwable $e) {}
+
+        try {
             return response()->json([
                 'success'  => true,
                 'message'  => $result['fully_consumed']

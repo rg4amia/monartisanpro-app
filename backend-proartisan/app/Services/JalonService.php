@@ -15,7 +15,12 @@ class JalonService
         private OtpService $otpService,
         private WalletService $walletService,
         private NotificationService $notificationService,
-    ) {}
+        private ?FraudDetectionService $fraudService = null,
+        private ?GeminiService $geminiService = null,
+    ) {
+        $this->fraudService = $fraudService ?? app(FraudDetectionService::class);
+        $this->geminiService = $geminiService ?? app(GeminiService::class);
+    }
 
     public function submit(Jalon $jalon, array $photos = []): void
     {
@@ -23,12 +28,25 @@ class JalonService
             $jalon->update(['photos_json' => $photos]);
         }
 
-        $analysis = $this->analyzePhotos($jalon);
-        if (!$analysis['approved']) {
+        $analysis = $this->analyzePhotos($jalon, $photos);
+
+        // Sauvegarde de l'analyse visuelle multimodale et du score sur le jalon
+        $jalon->update([
+            'conformity_score'     => $analysis['conformity_score'] ?? null,
+            'vision_analysis_json' => $analysis,
+        ]);
+
+        if (!$analysis['approved'] || ($analysis['conformity_score'] !== null && $analysis['conformity_score'] < 40)) {
+            // Signalement automatique au centre anti-fraude
+            $this->fraudService->recordVisionAnomaly($jalon, $analysis);
+
+            $reason = $analysis['summary'] ?? $analysis['reason'] ?? 'Preuve visuelle jugée non conforme aux travaux spécifiés.';
             throw ValidationException::withMessages([
-                'photos' => [$analysis['reason']],
+                'photos' => [$reason],
             ]);
         }
+
+        $this->fraudService->analyzeMilestoneSubmission($jalon, $photos);
 
         $jalon->update([
             'statut'      => 'soumis',
@@ -48,73 +66,9 @@ class JalonService
         );
     }
 
-    public function analyzePhotos(Jalon $jalon): array
+    public function analyzePhotos(Jalon $jalon, array $photos = []): array
     {
-        $geminiKey = config('services.gemini.api_key');
-        if (!$geminiKey || $geminiKey === 'PLACEHOLDER_KEY') {
-            if (str_contains(strtolower($jalon->description), 'frauduleux') || str_contains(strtolower($jalon->description), 'incohérent')) {
-                return ['approved' => false, 'reason' => 'Analyse visuelle : La photo montre un seau vide ou des outils non conformes au jalon.'];
-            }
-            return ['approved' => true, 'reason' => 'Simulation : Analyse visuelle conforme.'];
-        }
-
-        $photos = $jalon->photos_json ?? [];
-        if (empty($photos)) {
-            return ['approved' => true, 'reason' => 'Aucune photo à analyser.'];
-        }
-
-        $photo = $photos[0];
-        $path = $photo['path'] ?? null;
-
-        if (!$path || !Storage::disk('public')->exists($path)) {
-            return ['approved' => true, 'reason' => 'Fichier photo introuvable localement.'];
-        }
-
-        $fileData = base64_encode(Storage::disk('public')->get($path));
-        /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
-        $disk = Storage::disk('public');
-        $mimeType = $disk->mimeType($path) ?? 'image/jpeg';
-
-        $prompt = "Tu es un expert en inspection de chantiers de BTP en Côte d'Ivoire. L'artisan prétend avoir terminé le jalon suivant : '{$jalon->description}'.\n";
-        $prompt .= "Regarde attentivement l'image de preuve fournie. Est-elle cohérente avec le travail décrit ? Par exemple, si la description parle de couler une dalle en béton et que l'image montre juste un terrain vague vide ou un seau de peinture vide, c'est incohérent. Sois bienveillant mais juste.\n";
-        $prompt .= "Réponds STRICTEMENT par un objet JSON valide avec les clés suivantes :\n";
-        $prompt .= "{\n  \"approved\": true ou false,\n  \"reason\": \"Explication détaillée en français\"\n}";
-
-        try {
-            $geminiModel = config('services.gemini.model', 'gemini-3.6-flash');
-            $geminiBaseUrl = config('services.gemini.base_url', 'https://generativelanguage.googleapis.com');
-            $url = "{$geminiBaseUrl}/v1beta/models/{$geminiModel}:generateContent?key={$geminiKey}";
-            $response = Http::post($url, [
-                'contents' => [
-                    [
-                        'parts' => [
-                            ['text' => $prompt],
-                            [
-                                'inline_data' => [
-                                    'mime_type' => $mimeType,
-                                    'data' => $fileData,
-                                ]
-                            ]
-                        ]
-                    ]
-                ],
-                'generationConfig' => [
-                    'responseMimeType' => 'application/json'
-                ]
-            ]);
-
-            if ($response->successful()) {
-                $jsonText = $response->json('candidates.0.content.parts.0.text');
-                $result = json_decode($jsonText, true);
-                if (isset($result['approved'])) {
-                    return $result;
-                }
-            }
-        } catch (\Exception $e) {
-            Log::error('Vision API error: ' . $e->getMessage());
-        }
-
-        return ['approved' => true, 'reason' => 'Échec de l\'analyse de vision, approbation par défaut.'];
+        return $this->geminiService->analyzeMilestoneVision($jalon, $photos);
     }
 
     /**
@@ -160,7 +114,25 @@ class JalonService
             return false;
         }
 
+        $submittedAt = $jalon->updated_at;
         $jalon->update(['statut' => 'valide', 'valide_at' => now(), 'otp_code' => null]);
+
+        // Détection de fraude / collusion (ex: validation ultra-rapide < 120s)
+        $fraudAlert = $this->fraudService->analyzeMilestoneValidation($jalon, $client, $submittedAt);
+        if ($fraudAlert && $fraudAlert->action_taken === 'payment_hold') {
+            $jalon->update(['statut' => 'valide_suspendu']);
+            Log::warning("[FRAUD PAYMENT HOLD] Jalon #{$jalon->id} suspendu suite à l'alerte #{$fraudAlert->reference}");
+
+            $this->notificationService->send(
+                $jalon->mission->artisan,
+                'fraud_alert',
+                'Contrôle de sécurité en cours',
+                "La validation du jalon #{$jalon->ordre} fait l'objet d'une vérification de sécurité avant libération des fonds.",
+                ['mission_id' => $jalon->mission_id, 'jalon_id' => $jalon->id]
+            );
+
+            return true;
+        }
 
         // RÈGLE : missions > 2M FCFA → validation physique Référent requise
         $seuil = config('prosartisan.mission.referent_threshold', 2000000);

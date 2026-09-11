@@ -5,6 +5,7 @@ import '../../../app/routes/app_routes.dart';
 import '../../../core/storage/storage_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/models/mission_model.dart';
+import '../../chat/views/chat_screen.dart';
 import '../controllers/missions_controller.dart';
 import '../widgets/tracking/bottom_actions.dart';
 import '../widgets/tracking/budget_section.dart';
@@ -63,6 +64,16 @@ class _MissionTrackingScreenState extends State<MissionTrackingScreen> {
         backgroundColor: AppColors.surface,
         surfaceTintColor: AppColors.surface,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.chat_bubble_outline),
+            tooltip: 'Discussion de chantier',
+            onPressed: () {
+              final mId = _missionId ?? controller.currentMission.value?.id;
+              if (mId != null) {
+                Get.to(() => ChatScreen(missionId: mId));
+              }
+            },
+          ),
           Obx(() {
             final mission = controller.currentMission.value;
             const revealed = {'financee', 'en_cours', 'terminee', 'litige'};
@@ -79,6 +90,18 @@ class _MissionTrackingScreenState extends State<MissionTrackingScreen> {
             );
           }),
         ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          final mId = _missionId ?? controller.currentMission.value?.id;
+          if (mId != null) {
+            Get.to(() => ChatScreen(missionId: mId));
+          }
+        },
+        backgroundColor: const Color(0xFF4F46E5),
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.chat),
+        label: const Text('Discussion'),
       ),
       body: Obx(() {
         final mission = controller.currentMission.value;

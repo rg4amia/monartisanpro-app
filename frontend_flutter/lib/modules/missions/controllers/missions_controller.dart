@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 
 import '../../../app/routes/app_routes.dart';
+import '../../../core/network/realtime_stream_service.dart';
 import '../../../data/models/devis_model.dart';
 import '../../../data/models/jalon_model.dart';
 import '../../../data/models/mission_model.dart';
@@ -27,10 +28,20 @@ class MissionsController extends GetxController {
   final estimateResult = Rx<Map<String, dynamic>?>(null);
   final isEstimating = false.obs;
 
+  RealtimeStreamService? _missionStreamService;
+  StreamSubscription<RealtimeEvent>? _missionStreamSub;
+
   @override
   void onInit() {
     super.onInit();
     loadMissions();
+  }
+
+  @override
+  void onClose() {
+    _missionStreamSub?.cancel();
+    _missionStreamService?.dispose();
+    super.onClose();
   }
 
   /// Charge la liste des missions avec gestion d'erreur améliorée
@@ -107,6 +118,8 @@ class MissionsController extends GetxController {
         currentMissionDevis.clear();
       }
 
+      _attachRealtimeStream(id);
+
       errorMsg.value = null;
     } on DioException catch (e) {
       errorMsg.value = _handleDioError(e);
@@ -126,6 +139,22 @@ class MissionsController extends GetxController {
         isLoading.value = false;
       }
     }
+  }
+
+  /// Écoute le flux temps réel SSE (compatible Hostinger) pour actualiser la mission
+  void _attachRealtimeStream(int id) {
+    if (_missionStreamService?.missionId == id) return;
+    _missionStreamSub?.cancel();
+    _missionStreamService?.dispose();
+    _missionStreamService = RealtimeStreamService(missionId: id);
+    _missionStreamSub = _missionStreamService!.events.listen((event) {
+      if (event.type == 'mission_status' ||
+          event.type == 'jalon_updated' ||
+          event.type == 'jcode_scanned') {
+        loadMission(id, showLoader: false, forceRefresh: true);
+      }
+    });
+    _missionStreamService!.start();
   }
 
   DevisModel? get latestDevis =>

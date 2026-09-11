@@ -14,6 +14,7 @@ import '../../../core/config/env_config.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../data/models/mission_model.dart';
+import '../../../data/repositories/order_repository.dart';
 import '../../../shared/widgets/map_offline_notice.dart';
 import '../controllers/home_controller.dart';
 
@@ -35,6 +36,7 @@ class DeliveryRoutePlannerScreen extends StatefulWidget {
 class _DeliveryRoutePlannerScreenState
     extends State<DeliveryRoutePlannerScreen> {
   final HomeController _homeController = Get.find<HomeController>();
+  final OrderRepository _orderRepo = OrderRepository();
 
   mk.MapWindow? _mapWindow;
   mk.MapObjectCollection? _pinsCollection;
@@ -63,12 +65,85 @@ class _DeliveryRoutePlannerScreenState
   /// (aucun itinéraire routier OSRM disponible).
   bool _routeIsEstimate = false;
 
+  // ── Télémétrie en direct (Option 3 / Lot 4) ──
+  Timer? _telemetryTimer;
+  bool _isTelemetryActive = false;
+  double? _lastSpeedKmh;
+
   @override
   void initState() {
     super.initState();
     _initPhase();
     _initCoordinates();
     _resolveDriverPosition();
+    _startTelemetryPublisher();
+  }
+
+  @override
+  void dispose() {
+    _stopTelemetryPublisher();
+    super.dispose();
+  }
+
+  void _startTelemetryPublisher() {
+    _stopTelemetryPublisher();
+    if (_currentPhase == DeliveryPhase.completed) return;
+
+    // Envoi initial immédiat
+    _emitDriverTelemetry();
+
+    // Envoi périodique toutes les 15 secondes
+    _telemetryTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+      if (_currentPhase == DeliveryPhase.completed) {
+        _stopTelemetryPublisher();
+        return;
+      }
+      _emitDriverTelemetry();
+    });
+
+    if (mounted) {
+      setState(() => _isTelemetryActive = true);
+    }
+  }
+
+  void _stopTelemetryPublisher() {
+    _telemetryTimer?.cancel();
+    _telemetryTimer = null;
+    if (_isTelemetryActive && mounted) {
+      setState(() => _isTelemetryActive = false);
+    }
+  }
+
+  Future<void> _emitDriverTelemetry() async {
+    try {
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 5),
+        ),
+      );
+
+      _driverLat = pos.latitude;
+      _driverLng = pos.longitude;
+      final speedKmh = pos.speed > 0 ? (pos.speed * 3.6) : 0.0;
+      _lastSpeedKmh = speedKmh;
+
+      await _orderRepo.sendDriverLocation(
+        widget.mission.id,
+        latitude: pos.latitude,
+        longitude: pos.longitude,
+        speedKmh: speedKmh,
+        heading: pos.heading >= 0 ? pos.heading : null,
+      );
+
+      if (mounted) {
+        _homeController.driverGpsCoords.value =
+            '${pos.latitude.toStringAsFixed(6)}, ${pos.longitude.toStringAsFixed(6)}';
+        if (_mapReady && _pinsCollection != null) {
+          await _updateMapElements();
+        }
+      }
+    } catch (_) {}
   }
 
   void _initPhase() {
@@ -459,6 +534,7 @@ class _DeliveryRoutePlannerScreenState
                 _currentPhase = DeliveryPhase.delivery;
               });
               unawaited(_updateMapElements());
+              unawaited(_emitDriverTelemetry());
             },
             child: const Text(
               'Valider Enlèvement',
@@ -534,6 +610,7 @@ class _DeliveryRoutePlannerScreenState
               setState(() {
                 _currentPhase = DeliveryPhase.completed;
               });
+              _stopTelemetryPublisher();
             },
             child: const Text(
               'Confirmer Livraison',
@@ -723,6 +800,36 @@ class _DeliveryRoutePlannerScreenState
                       color: Color(0xFF0F172A),
                     ),
                   ),
+                  if (!isCompleted) ...[
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: _isTelemetryActive
+                                ? const Color(0xFF10B981)
+                                : const Color(0xFF94A3B8),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          _isTelemetryActive
+                              ? (_lastSpeedKmh != null && _lastSpeedKmh! > 1.0
+                                  ? 'Télémétrie en direct • ${_lastSpeedKmh!.toStringAsFixed(0)} km/h'
+                                  : 'Télémétrie en direct • Émission 15s')
+                              : 'Télémétrie GPS en attente',
+                          style: const TextStyle(
+                            fontSize: 10.5,
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                   if ((_coordsApproximate || _routeIsEstimate) &&
                       !isCompleted) ...[
                     const SizedBox(height: 3),

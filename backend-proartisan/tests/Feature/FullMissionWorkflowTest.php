@@ -221,6 +221,12 @@ class FullMissionWorkflowTest extends TestCase
             $jalon->refresh();
             $this->assertNotNull($jalon->otp_code);
 
+            // Simuler un délai d'inspection normal par le client (> 120s)
+            $jalon->timestamps = false;
+            $jalon->updated_at = now()->subMinutes(15);
+            $jalon->save();
+            $jalon->timestamps = true;
+
             $this->actingAs($client)
                 ->postJson("/api/v1/jalons/{$jalon->id}/validate-otp", [
                     'otp' => $jalon->otp_code,

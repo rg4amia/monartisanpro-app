@@ -19,6 +19,7 @@ import {
     shortDate,
     Surface,
 } from '../shared';
+import { DeliveriesTrackingSection } from './DeliveriesTrackingSection';
 import type { AdminMission, AdminOrder, DeliveryStats, MetricItem, MissionStats, Paginated } from '../shared';
 
 type MissionSubTab = 'chantiers' | 'livraisons';
@@ -269,6 +270,9 @@ export function MissionsPanel({
                             </MetricCard>
                         ))}
                     </div>
+
+                    {/* Radar & Watchdog Livraisons en direct */}
+                    <DeliveriesTrackingSection orders={filteredOrders} onSelectOrder={onSelectOrder} />
 
                     {/* Filtres d'état des livraisons */}
                     <div className="flex flex-wrap items-center gap-2 pt-1">

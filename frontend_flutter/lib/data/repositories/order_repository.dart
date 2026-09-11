@@ -106,6 +106,46 @@ class OrderRepository {
     return res.data;
   }
 
+  /// Émission télémétrique périodique GPS du livreur en course (Option 3 / Lot 4)
+  Future<Map<String, dynamic>> sendDriverLocation(
+    int orderId, {
+    required double latitude,
+    required double longitude,
+    double? speedKmh,
+    double? heading,
+    int? batteryLevel,
+  }) async {
+    try {
+      final res = await _client.post(
+        ApiEndpoints.orderLocation(orderId),
+        data: {
+          'latitude': latitude,
+          'longitude': longitude,
+          if (speedKmh != null) 'speed_kmh': speedKmh,
+          if (heading != null) 'heading': heading,
+          if (batteryLevel != null) 'battery_level': batteryLevel,
+        },
+      );
+      if (res.data is Map<String, dynamic>) {
+        return res.data as Map<String, dynamic>;
+      }
+    } catch (_) {
+      // Ignorer l'erreur réseau ponctuelle de télémétrie pour ne pas interrompre le trajet
+    }
+    return <String, dynamic>{};
+  }
+
+  /// Récupération de la position en temps réel et tracé pour suivi 360°
+  Future<Map<String, dynamic>> getOrderTracking(int orderId) async {
+    try {
+      final res = await _client.get(ApiEndpoints.orderTracking(orderId));
+      if (res.data is Map<String, dynamic>) {
+        return res.data as Map<String, dynamic>;
+      }
+    } catch (_) {}
+    return <String, dynamic>{};
+  }
+
   Future<void> _invalidateMyOrders() async {
     await _store.init();
     await _store.invalidate(_myOrdersKey);

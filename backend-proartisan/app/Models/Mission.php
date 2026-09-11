@@ -152,4 +152,16 @@ class Mission extends Model
     {
         return $this->devis()->where('statut', 'soumis')->exists();
     }
+
+    public function messages()
+    {
+        return $this->hasMany(MissionMessage::class)->orderBy('created_at', 'asc');
+    }
+
+    public function isFunded(): bool
+    {
+        return $this->status instanceof FundedLockedState
+            || $this->status instanceof InProgressState
+            || $this->status instanceof CompletedState;
+    }
 }

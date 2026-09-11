@@ -53,6 +53,12 @@ class ApiEndpoints {
   static String missionStatus(int id) => '/missions/$id/status';
   static String missionDevis(int id) => '/missions/$id/devis';
   static String missionDevisSuggest(int id) => '/missions/$id/devis/suggest';
+  static String missionDevisVoiceQuote(int id) =>
+      '/missions/$id/devis/voice-quote';
+  static String missionMessages(int id) => '/missions/$id/messages';
+  static String missionMessageRead(int missionId, int messageId) =>
+      '/missions/$missionId/messages/$messageId/read';
+  static String missionStream(int id) => '/missions/$id/stream';
   static String missionJalons(int id) => '/missions/$id/jalons';
   static String missionReferentValidate(int id) =>
       '/missions/$id/referent-validate';
@@ -110,10 +116,14 @@ class ApiEndpoints {
   static const String communicationsActive = '/communications/active';
 
   // Livraisons & Courses
+  static const String deliveriesEstimate = '/deliveries/estimate';
+  static const String ordersEstimateDelivery = '/orders/estimate-delivery';
   static const String deliveriesAvailable = '/deliveries/available';
   static String acceptDelivery(int orderId) => '/deliveries/$orderId/accept';
   static String orderVerifyPickup(int orderId) =>
       '/orders/$orderId/verify-pickup';
   static String orderVerifyDelivery(int orderId) =>
       '/orders/$orderId/verify-delivery';
+  static String orderLocation(int orderId) => '/orders/$orderId/location';
+  static String orderTracking(int orderId) => '/orders/$orderId/tracking';
 }

@@ -20,6 +20,7 @@ export const tabRoutes: Record<AdminTab, string> = {
     audit_logs: '/admin/audit-logs',
     observability: '/admin/observability',
     vitrine: '/admin/vitrine',
+    cartography: '/admin/cartographie',
 };
 
 export const tabMeta: Record<AdminTab, { description: string; label: string; section: string }> = {
@@ -27,6 +28,11 @@ export const tabMeta: Record<AdminTab, { description: string; label: string; sec
         label: "Vue d'ensemble",
         section: 'PILOTAGE',
         description: 'Lecture rapide de la santé opérationnelle, financière et terrain de ProsArtisan.',
+    },
+    cartography: {
+        label: 'Cartographie & Territoires',
+        section: 'PILOTAGE',
+        description: "Vue territoriale interactive de la Côte d'Ivoire : répartition des 4 acteurs, suivi des missions, taux de réalisation et litiges par district et commune.",
     },
     promo_codes: {
         label: 'Codes Promo',
@@ -128,6 +134,7 @@ export const searchPlaceholders: Record<AdminTab, string> = {
     audit_logs: 'Rechercher une action, un admin, une entité ou une IP...',
     observability: 'Filtrer les signaux de santé...',
     vitrine: 'Rechercher un slide, article, vidéo ou formation...',
+    cartography: 'Rechercher un artisan, client, fournisseur ou mission dans la zone...',
 };
 
 export const quickDockTabs: AdminTab[] = ['dashboard', 'missions', 'users', 'settings'];

@@ -8,17 +8,20 @@ class Jalon extends Model
 {
     protected $fillable = [
         'mission_id', 'ordre', 'description', 'montant', 'statut',
-        'otp_code', 'otp_expires_at', 'photos_json', 'valide_at', 'paye_at',
+        'otp_code', 'otp_expires_at', 'photos_json', 'conformity_score',
+        'vision_analysis_json', 'valide_at', 'paye_at',
     ];
 
     protected function casts(): array
     {
         return [
-            'montant'        => 'integer',
-            'photos_json'    => 'array',
-            'otp_expires_at' => 'datetime',
-            'valide_at'      => 'datetime',
-            'paye_at'        => 'datetime',
+            'montant'              => 'integer',
+            'photos_json'          => 'array',
+            'conformity_score'     => 'integer',
+            'vision_analysis_json' => 'array',
+            'otp_expires_at'       => 'datetime',
+            'valide_at'            => 'datetime',
+            'paye_at'              => 'datetime',
         ];
     }
 

@@ -1,5 +1,6 @@
 // Onglet « Santé & Observabilité » du backoffice (Chantier C7 / P2-12).
 
+import { FraudAlertsSection } from './FraudAlertsSection';
 import {
     DataTable,
     dateTimeShort,
@@ -158,9 +159,13 @@ export function ObservabilityPanel({
                 </DataTable>
             </Surface>
 
+            {/* 3. CENTRE DE DÉTECTION DES FRAUDES & COLLUSIONS (LOT 3) */}
+            <FraudAlertsSection fraudData={fraud as any} canManage={canManage} />
+
+            {/* 4. MISSIONS BLOQUÉES SEUIL RÉFÉRENT & HISTORIQUE GPS */}
             <div className="grid gap-6 xl:grid-cols-2">
                 <Surface className="rounded-[32px] p-5 lg:p-6">
-                    <SectionTitle description="Tentatives de validation J-Code hors de la zone GPS autorisée." title="Fraude GPS J-Code" />
+                    <SectionTitle description="Tentatives de validation J-Code hors de la zone GPS autorisée." title="Journal des Scans GPS Quincaillerie" />
                     <div className="mt-5 space-y-3">
                         {fraud.recent.length === 0 ? (
                             <EmptyState description="Aucune tentative récente." title="Aucun signal" />

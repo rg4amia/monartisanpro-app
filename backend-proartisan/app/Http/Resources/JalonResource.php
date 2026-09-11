@@ -19,6 +19,8 @@ class JalonResource extends JsonResource
             'otp_code'        => null, // Jamais exposer le code OTP
             'otp_expires_at'  => $this->otp_expires_at?->toIso8601String(),
             'photos_json'     => $this->photos_json ?? [],
+            'conformity_score'=> $this->conformity_score,
+            'vision_analysis' => $this->vision_analysis_json,
             'valide_at'       => $this->valide_at?->toIso8601String(),
             'paye_at'         => $this->paye_at?->toIso8601String(),
         ];

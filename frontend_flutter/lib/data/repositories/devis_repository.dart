@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+
 import '../../core/cache/cache_store.dart';
 import '../../core/network/api_client.dart';
 import '../../core/network/api_endpoints.dart';
@@ -129,6 +131,27 @@ class DevisRepository {
     final res = await NetworkExecutor.run(
       () => _client.get(ApiEndpoints.missionDevisSuggest(missionId)),
     );
+    return (res.data as Map<String, dynamic>)['data'] as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> parseVoiceQuote(
+    int missionId,
+    String audioFilePath,
+  ) async {
+    final formData = FormData.fromMap({
+      'audio': await MultipartFile.fromFile(
+        audioFilePath,
+        filename: audioFilePath.split(RegExp(r'[/\\]')).last,
+      ),
+    });
+
+    final res = await NetworkExecutor.run(
+      () => _client.postMultipart(
+        ApiEndpoints.missionDevisVoiceQuote(missionId),
+        formData,
+      ),
+    );
+
     return (res.data as Map<String, dynamic>)['data'] as Map<String, dynamic>;
   }
 

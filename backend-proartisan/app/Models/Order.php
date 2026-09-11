@@ -75,6 +75,16 @@ class Order extends Model
         return $this->hasMany(Transaction::class);
     }
 
+    public function trackings()
+    {
+        return $this->hasMany(DeliveryTracking::class);
+    }
+
+    public function latestTracking()
+    {
+        return $this->hasOne(DeliveryTracking::class)->latestOfMany();
+    }
+
     // Helpers d'état
     public function isPaid(): bool
     {

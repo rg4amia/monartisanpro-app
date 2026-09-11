@@ -12,7 +12,14 @@ use Illuminate\Support\Facades\Validator;
 
 class OrderController extends Controller
 {
-    public function __construct(private OrderService $orderService) {}
+    private \App\Services\DeliveryPricingService $pricingService;
+
+    public function __construct(
+        private OrderService $orderService,
+        ?\App\Services\DeliveryPricingService $pricingService = null
+    ) {
+        $this->pricingService = $pricingService ?? app(\App\Services\DeliveryPricingService::class);
+    }
 
     /**
      * Passer commande.
@@ -355,4 +362,93 @@ class OrderController extends Controller
             ], 400);
         }
     }
+
+    /**
+     * Estimer le coût de livraison dynamique et le surge pricing.
+     * POST /api/v1/deliveries/estimate ou POST /api/v1/orders/estimate-delivery
+     */
+    public function estimateDelivery(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'supplier_id' => 'nullable|exists:users,id',
+            'client_latitude' => 'nullable|numeric|between:-90,90',
+            'client_longitude' => 'nullable|numeric|between:-180,180',
+            'from_latitude' => 'nullable|numeric|between:-90,90',
+            'from_longitude' => 'nullable|numeric|between:-180,180',
+            'to_latitude' => 'nullable|numeric|between:-90,90',
+            'to_longitude' => 'nullable|numeric|between:-180,180',
+            'vehicle_class' => 'nullable|string|in:moto,voiture,cargo',
+            'surge_multiplier' => 'nullable|numeric|min:1.0|max:3.0',
+            'items' => 'nullable|array',
+            'items.*.supplier_product_id' => 'nullable|exists:supplier_products,id',
+            'items.*.name' => 'nullable|string',
+            'items.*.quantity' => 'nullable|integer|min:1',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Données d\'estimation invalides.',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        // Déterminer le point d'origine (from)
+        $from = null;
+        if ($request->filled('from_latitude') && $request->filled('from_longitude')) {
+            $from = [
+                'lat' => (float) $request->from_latitude,
+                'lng' => (float) $request->from_longitude,
+            ];
+        } elseif ($request->filled('supplier_id')) {
+            $supplier = User::find($request->supplier_id);
+            $from = $supplier?->fournisseurAgree?->getPositionCoords() ?? $supplier?->getPositionCoords();
+        }
+
+        // Déterminer le point de destination (to)
+        $to = null;
+        if ($request->filled('to_latitude') && $request->filled('to_longitude')) {
+            $to = [
+                'lat' => (float) $request->to_latitude,
+                'lng' => (float) $request->to_longitude,
+            ];
+        } elseif ($request->filled('client_latitude') && $request->filled('client_longitude')) {
+            $to = [
+                'lat' => (float) $request->client_latitude,
+                'lng' => (float) $request->client_longitude,
+            ];
+        } else {
+            $client = $request->user();
+            $to = $client?->getPositionCoords();
+        }
+
+        // Normaliser les articles pour la recommandation intelligente de véhicule
+        $rawItems = $request->input('items', []);
+        $formattedItems = [];
+        foreach ($rawItems as $item) {
+            $name = $item['name'] ?? null;
+            if (!$name && !empty($item['supplier_product_id'])) {
+                $prod = \App\Models\SupplierProduct::find($item['supplier_product_id']);
+                $name = $prod?->name ?? '';
+            }
+            $formattedItems[] = [
+                'name' => $name ?? '',
+                'quantity' => (int) ($item['quantity'] ?? 1),
+            ];
+        }
+
+        $estimate = $this->pricingService->estimateFare([
+            'from' => $from,
+            'to' => $to,
+            'vehicle_class' => $request->input('vehicle_class'),
+            'surge_multiplier' => $request->filled('surge_multiplier') ? (float) $request->surge_multiplier : null,
+            'items' => $formattedItems,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'data' => $estimate,
+        ]);
+    }
 }
+

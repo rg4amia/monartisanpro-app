@@ -32,6 +32,8 @@ export function TabIcon({ className = 'h-5 w-5', tab }: { className?: string; ta
             return <ArchiveIcon className={className} />;
         case 'observability':
             return <AlertIcon className={className} />;
+        case 'cartography':
+            return <MapPinIcon className={className} />;
         default:
             return <DashboardIcon className={className} />;
     }
@@ -263,3 +265,13 @@ export function CloseIcon({ className }: { className?: string }) {
         </svg>
     );
 }
+
+export function MapPinIcon({ className }: { className?: string }) {
+    return (
+        <svg className={className} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+            <path d="M12 21s-7-5.5-7-11.5a7 7 0 1 1 14 0c0 6-7 11.5-7 11.5Z" strokeLinecap="round" strokeLinejoin="round" />
+            <circle cx="12" cy="9.5" r="2.5" />
+        </svg>
+    );
+}
+

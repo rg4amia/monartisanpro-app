@@ -216,6 +216,10 @@ export interface ObservabilitySnapshot {
         gps_attempts_7d: number;
         gps_attempts_total: number;
         unread_alerts: number;
+        open_alerts_count?: number;
+        critical_alerts_count?: number;
+        payment_holds_count?: number;
+        alerts_list?: any[];
         recent: Array<{
             id: number;
             user: string | null;
@@ -483,3 +487,41 @@ export interface AiUserQuotaRow {
     requests_30d: number;
     cost_30d: number | string;
 }
+
+export interface GeneratedDocumentItem {
+    id: number;
+    reference: string;
+    document_type: string;
+    title: string;
+    user_id?: number | null;
+    mission_id?: number | null;
+    transaction_id?: number | null;
+    supplier_cashout_id?: number | null;
+    litige_id?: number | null;
+    montant: number;
+    file_path?: string | null;
+    mime_type: string;
+    file_size?: number | null;
+    metadata?: Record<string, any> | null;
+    created_at: string;
+    user?: {
+        id: number;
+        name: string;
+        phone: string;
+        role: string;
+    } | null;
+    mission?: {
+        id: number;
+        status: string;
+        montant_total: number;
+    } | null;
+}
+
+export interface DocumentStats {
+    total_documents: number;
+    total_montant_certifie: number;
+    recus_jalons_mo: number;
+    recus_quincaillerie: number;
+    rapports_et_litiges: number;
+}
+

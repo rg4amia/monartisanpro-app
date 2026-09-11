@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_endpoints.dart';
 import '../../../core/theme/app_colors.dart';
 import '../controllers/order_controller.dart';
 
@@ -28,6 +29,12 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
   String? _appliedPromoCode;
   bool _isCheckingPromo = false;
 
+  int? _serverDeliveryCost;
+  String? _serverRecommendedVehicle;
+  double? _serverDistanceKm;
+  double? _serverDurationMin;
+  bool _isEstimatingFare = false;
+
   /// Flag réactif pour éviter toute double soumission après succès.
   final _orderSubmitted = false.obs;
 
@@ -37,12 +44,66 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
     final args = Get.arguments as Map<String, dynamic>? ?? {};
     supplierId = args['supplier_id'] ?? 0;
     items = List<Map<String, dynamic>>.from(args['items'] ?? []);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchDeliveryEstimate();
+    });
   }
 
   @override
   void dispose() {
     _promoController.dispose();
     super.dispose();
+  }
+
+  Future<void> _fetchDeliveryEstimate() async {
+    if (deliveryMode != 'delivery') return;
+    setState(() => _isEstimatingFare = true);
+    try {
+      final client = ApiClient();
+      final res = await client.post(
+        ApiEndpoints.deliveriesEstimate,
+        data: {
+          'supplier_id': effectiveSupplierId,
+          'vehicle_class': vehicleClass,
+          'surge_multiplier': surgeMultiplier,
+          'items': items,
+        },
+      );
+
+      if (res.statusCode == 200 && res.data is Map) {
+        final resMap = res.data as Map<String, dynamic>;
+        if (resMap['success'] == true && resMap['data'] is Map) {
+          final data = resMap['data'] as Map<String, dynamic>;
+          if (mounted) {
+            setState(() {
+              _serverDeliveryCost = (data['delivery_cost'] as num?)?.toInt();
+              if (_serverRecommendedVehicle == null &&
+                  data['recommended_vehicle_class'] != null) {
+                final rec = data['recommended_vehicle_class'].toString();
+                if (['moto', 'voiture', 'cargo'].contains(rec)) {
+                  vehicleClass = rec;
+                }
+              }
+            _serverRecommendedVehicle =
+                data['recommended_vehicle_class']?.toString();
+            _serverDistanceKm = (data['distance_km'] as num?)?.toDouble();
+            _serverDurationMin = (data['duration_min'] as num?)?.toDouble();
+            if (data['surge_multiplier'] != null && surgeMultiplier == 1.0) {
+              surgeMultiplier =
+                  (data['surge_multiplier'] as num).toDouble().clamp(1.0, 3.0);
+            }
+          });
+        }
+      }
+    }
+  } catch (_) {
+      // Repli fluide sur l'estimation locale
+    } finally {
+      if (mounted) {
+        setState(() => _isEstimatingFare = false);
+      }
+    }
   }
 
   int get effectiveSupplierId {
@@ -62,6 +123,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
 
   int get deliveryCost {
     if (deliveryMode != 'delivery') return 0;
+    if (_serverDeliveryCost != null) return _serverDeliveryCost!;
     int base = 1250;
     int addon = 0;
     if (vehicleClass == 'voiture') {
@@ -384,6 +446,9 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
                     selected: {deliveryMode},
                     onSelectionChanged: (set) {
                       setState(() => deliveryMode = set.first);
+                      if (deliveryMode == 'delivery') {
+                        _fetchDeliveryEstimate();
+                      }
                     },
                     style: SegmentedButton.styleFrom(
                       selectedBackgroundColor:
@@ -398,13 +463,25 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
 
                   if (deliveryMode == 'delivery') ...[
                     // Type de véhicule
-                    const Text(
-                      'Type de véhicule requis',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
-                      ),
+                    Row(
+                      children: [
+                        const Text(
+                          'Type de véhicule requis',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        if (_isEstimatingFare) ...[
+                          const SizedBox(width: 8),
+                          const SizedBox(
+                            width: 12,
+                            height: 12,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ],
+                      ],
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
@@ -430,24 +507,87 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
                       items: const [
                         DropdownMenuItem(
                           value: 'moto',
-                          child: Text('Moto (Standard)'),
+                          child: Text('Moto (Standard < 20 kg)'),
                         ),
                         DropdownMenuItem(
                           value: 'voiture',
-                          child: Text('Voiture (+1 500 FCFA)'),
+                          child: Text('Voiture (Moyen 20-100 kg)'),
                         ),
                         DropdownMenuItem(
                           value: 'cargo',
-                          child: Text('Cargo (+3 000 FCFA)'),
+                          child: Text('Cargo (Lourd / Ciment > 100 kg)'),
                         ),
                       ],
-                      onChanged: (val) => setState(() => vehicleClass = val!),
+                      onChanged: (val) {
+                        setState(() => vehicleClass = val!);
+                        _fetchDeliveryEstimate();
+                      },
                     ),
+
+                    if (_serverRecommendedVehicle != null) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: AppColors.primary.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.auto_awesome,
+                              size: 16,
+                              color: AppColors.primary,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Recommandé d\'après vos matériaux : ${_serverRecommendedVehicle!.toUpperCase()}',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+
+                    if (_serverDistanceKm != null) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.route,
+                            size: 14,
+                            color: AppColors.textSecondary,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Trajet calculé : ${_serverDistanceKm!.toStringAsFixed(1)} km · ${_serverDurationMin?.round() ?? 15} min',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+
                     const SizedBox(height: 16),
 
                     // Surge Pricing
                     const Text(
-                      'Majoration de course (Surge)',
+                      'Majoration de course (Surge Pricing)',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
@@ -463,12 +603,18 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
                       inactiveColor: const Color(0xFFE2E8F0),
                       label: '${surgeMultiplier.toStringAsFixed(1)}x',
                       onChanged: (val) => setState(() => surgeMultiplier = val),
+                      onChangeEnd: (val) => _fetchDeliveryEstimate(),
                     ),
                     Text(
-                      'Multiplicateur actuel : ${surgeMultiplier.toStringAsFixed(1)}x',
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
+                      'Multiplicateur appliqué : ${surgeMultiplier.toStringAsFixed(1)}x${surgeMultiplier > 1.0 ? ' (Heure de pointe / Affluence)' : ''}',
+                      style: TextStyle(
+                        color: surgeMultiplier > 1.0
+                            ? const Color(0xFFC55E50)
+                            : AppColors.textSecondary,
                         fontSize: 12,
+                        fontWeight: surgeMultiplier > 1.0
+                            ? FontWeight.w600
+                            : FontWeight.normal,
                       ),
                     ),
                   ],
