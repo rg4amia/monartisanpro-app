@@ -4,11 +4,11 @@ import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 import AiDashboardPanel from './ai-dashboard-panel';
-import { AiQuotasPanel } from './panels/AiQuotasPanel';
+import LlmAdminPanel from './llm-admin-panel';
 import { useAdminAnalytics } from './hooks/useAdminAnalytics';
 import { useRowSelection } from './hooks/useRowSelection';
 import { useServerTable } from './hooks/useServerTable';
-import LlmAdminPanel from './llm-admin-panel';
+import { AiQuotasPanel } from './panels/AiQuotasPanel';
 import { AuditLogsPanel } from './panels/AuditLogsPanel';
 import { CartographyPanel } from './panels/CartographyPanel';
 import { CommunicationsPanel } from './panels/CommunicationsPanel';
@@ -180,6 +180,7 @@ interface AdminPageProps {
     vitrineFormations?: any[];
     vitrineRecrutements?: any[];
     vitrinePopups?: any[];
+    vitrineSettings?: any[];
     contactMessages?: any[];
     territorySummary?: TerritorySummary;
     districtsHeatmap?: Record<string, DistrictHeatmapItem>;
@@ -1291,6 +1292,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         vitrineVideos,
         vitrineRecrutements,
         contactMessages,
+        territorySummary?.zone?.name,
     ]);
 
     const summaryCards = [
