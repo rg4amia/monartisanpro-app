@@ -71,25 +71,6 @@ class MissionModel {
 
   String get rawStatus => statusGemini ?? status;
 
-  String get statusLabel {
-    switch (status) {
-      case 'pending_artisan_acceptance':
-        return 'En attente acceptation artisan';
-      case 'en_attente':
-        return 'Devis en attente';
-      case 'financee':
-        return 'Financee';
-      case 'en_cours':
-        return 'En cours';
-      case 'terminee':
-        return 'Terminee';
-      case 'litige':
-        return 'Litige en cours';
-      default:
-        return status;
-    }
-  }
-
   String get urgencyLabel {
     switch (urgency) {
       case 'faible':
@@ -367,6 +348,7 @@ class MissionModel {
     switch (rawStatus) {
       case 'draft':
       case 'pending_funding':
+      case 'pending_artisan_acceptance':
       case 'sent':
       case 'quote_provided':
       case 'quote_rejected':
@@ -380,14 +362,19 @@ class MissionModel {
       case 'pending_approval':
       case 'materials_picked_up':
       case 'work_done':
-      case 'shipping':
+      case 'searching_driver':
+      case 'prepared':
       case 'driver_assigned':
+      case 'driver_picked_up':
+      case 'shipping':
         return 'en_cours';
       case 'completed':
       case 'delivered':
         return 'terminee';
       case 'disputed':
         return 'litige';
+      case 'cancelled':
+        return 'annulee';
       default:
         return rawStatus.isEmpty ? 'en_attente' : rawStatus;
     }

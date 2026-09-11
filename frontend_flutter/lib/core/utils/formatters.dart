@@ -30,6 +30,7 @@ class Formatters {
       'en_cours': 'En cours',
       'terminee': 'Terminée',
       'litige': 'Litige',
+      'annulee': 'Annulée',
       'sent': 'En attente',
       'quote_provided': 'Devis reçu',
       'funded': 'Financée',
@@ -37,6 +38,11 @@ class Formatters {
       'work_done': 'Travaux terminés',
       'completed': 'Terminée',
       'disputed': 'Litige',
+      'cancelled': 'Annulée',
+      'pending_artisan_acceptance': 'En attente',
+      'searching_driver': 'Recherche livreur',
+      'prepared': 'Prête pour livraison',
+      'driver_picked_up': 'En cours',
     };
     return labels[status] ?? status;
   }

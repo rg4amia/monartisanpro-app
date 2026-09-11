@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend_flutter/core/network/api_endpoints.dart';
+import 'package:frontend_flutter/core/utils/formatters.dart';
 import 'package:frontend_flutter/data/models/jcode_model.dart';
 import 'package:frontend_flutter/data/models/mission_model.dart';
 import 'package:frontend_flutter/data/models/user_model.dart';
@@ -504,6 +505,62 @@ void main() {
         createdAt: '2026-03-01T12:00:00Z',
       );
       expect(mission.rawStatus, 'driver_assigned');
+    });
+  });
+
+  group('Traduction française des statuts (aucun terme anglais brut affiché)',
+      () {
+    test('normalizeStatus traduit tous les états du FSM mission', () {
+      expect(
+        MissionModel.normalizeStatus('pending_artisan_acceptance'),
+        'en_attente',
+      );
+      expect(MissionModel.normalizeStatus('draft'), 'en_attente');
+      expect(MissionModel.normalizeStatus('pending_funding'), 'en_attente');
+      expect(MissionModel.normalizeStatus('funded_locked'), 'financee');
+      expect(MissionModel.normalizeStatus('in_progress'), 'en_cours');
+      expect(MissionModel.normalizeStatus('pending_approval'), 'en_cours');
+      expect(MissionModel.normalizeStatus('completed'), 'terminee');
+      expect(MissionModel.normalizeStatus('disputed'), 'litige');
+      expect(MissionModel.normalizeStatus('cancelled'), 'annulee');
+    });
+
+    test('normalizeStatus traduit les statuts de livraison', () {
+      expect(MissionModel.normalizeStatus('searching_driver'), 'en_cours');
+      expect(MissionModel.normalizeStatus('prepared'), 'en_cours');
+      expect(MissionModel.normalizeStatus('driver_assigned'), 'en_cours');
+      expect(MissionModel.normalizeStatus('driver_picked_up'), 'en_cours');
+      expect(MissionModel.normalizeStatus('shipping'), 'en_cours');
+      expect(MissionModel.normalizeStatus('delivered'), 'terminee');
+    });
+
+    test(
+        'Formatters.missionStatus ne renvoie jamais un statut technique brut',
+        () {
+      const statutsTechniquesConnus = [
+        'en_attente',
+        'financee',
+        'en_cours',
+        'terminee',
+        'litige',
+        'annulee',
+        'pending_artisan_acceptance',
+        'cancelled',
+        'searching_driver',
+        'prepared',
+        'driver_picked_up',
+        'disputed',
+        'completed',
+      ];
+
+      for (final statut in statutsTechniquesConnus) {
+        final label = Formatters.missionStatus(statut);
+        expect(
+          label,
+          isNot(equals(statut)),
+          reason: 'Le statut "$statut" est affiché sans traduction française.',
+        );
+      }
     });
   });
 }
