@@ -177,7 +177,10 @@ class BottomActions extends StatelessWidget {
           label: 'Signaler un litige',
           icon: Icons.warning_amber_outlined,
           color: AppColors.danger,
-          onTap: () => Get.toNamed(Routes.litige, arguments: mission),
+          onTap: () => Get.toNamed(
+            Routes.litige,
+            arguments: {'missionId': mission.id},
+          ),
         ),
       );
     }
@@ -230,7 +233,10 @@ class BottomActions extends StatelessWidget {
         icon: Icons.warning_amber_outlined,
         color: AppColors.danger,
         filled: false,
-        onTap: () => Get.toNamed(Routes.litige, arguments: mission),
+        onTap: () => Get.toNamed(
+          Routes.litige,
+          arguments: {'missionId': mission.id},
+        ),
       );
 }
 

@@ -463,6 +463,144 @@ class LitigeComplianceTest extends TestCase
         @unlink($fakePdfPath);
     }
 
+    /**
+     * Parcours complet du module litige exclusivement via les routes HTTP réelles :
+     * ouverture -> dépôt des preuves des deux parties -> bascule automatique en
+     * arbitrage -> décision "gel" (visite référent, jamais couverte par les autres
+     * tests) -> décision finale après visite terrain. Vérifie à chaque étape l'état
+     * de la mission, le gel/dégel des fonds, les notifications et les soldes.
+     */
+    public function test_full_dispute_lifecycle_via_api_open_evidence_gel_then_final_resolution(): void
+    {
+        Storage::fake('public');
+
+        /** @var User $admin */
+        $admin = User::factory()->create(['role' => 'admin', 'kyc_status' => 'actif']);
+        /** @var User $referent */
+        $referent = User::factory()->create(['role' => 'referent', 'kyc_status' => 'actif']);
+
+        [$client, $artisan, $mission] = $this->makeMission(walletMateriaux: 65000, walletMo: 35000);
+        $client->update(['score_prosartisan' => 50]);
+
+        // 1. Le client ouvre le litige via l'API.
+        $openResponse = $this->actingAs($client)
+            ->postJson('/api/v1/litiges', [
+                'mission_id' => $mission->id,
+                'motif' => 'Travail non conforme',
+                'description' => 'Plusieurs finitions sont non conformes au devis initial et le chantier presente des fuites.',
+            ]);
+
+        $openResponse->assertCreated()
+            ->assertJsonPath('data.statut', 'ouvert')
+            ->assertJsonPath('data.workflowStep', 'preuves');
+
+        $litigeId = $openResponse->json('data.id');
+
+        $mission->refresh();
+        $this->assertSame('disputed', (string) $mission->status);
+        $this->assertTrue($mission->funds_frozen);
+
+        // 2. Le client dépose ses 2 preuves géolocalisées (seuil minimum côté client).
+        $this->actingAs($client)->post(
+            "/api/v1/litiges/{$litigeId}/preuves",
+            [
+                'photos' => [
+                    ['photo' => UploadedFile::fake()->image('client-1.jpg', 100, 100), 'latitude' => 5.348, 'longitude' => -4.027, 'description' => 'Fuite visible'],
+                    ['photo' => UploadedFile::fake()->image('client-2.jpg', 200, 200), 'latitude' => 5.349, 'longitude' => -4.028, 'description' => 'Finition non conforme'],
+                ],
+            ],
+            ['Accept' => 'application/json']
+        )->assertOk()->assertJsonPath('data.workflowStep', 'preuves');
+
+        // 3. L'artisan dépose sa preuve -> bascule automatique en arbitrage.
+        $evidenceResponse = $this->actingAs($artisan)->post(
+            "/api/v1/litiges/{$litigeId}/preuves",
+            [
+                'photos' => [
+                    ['photo' => UploadedFile::fake()->image('artisan-1.jpg', 300, 300), 'latitude' => 5.35, 'longitude' => -4.03, 'description' => 'Photo de fin de chantier'],
+                ],
+            ],
+            ['Accept' => 'application/json']
+        );
+
+        $evidenceResponse->assertOk()
+            ->assertJsonPath('data.workflowStep', 'arbitrage')
+            ->assertJsonPath('data.statut', 'en_cours');
+
+        // 4. Cas ambigu : l'admin gèle le dossier et déclenche la visite terrain du référent.
+        $gelResponse = $this->actingAs($admin)
+            ->putJson("/api/v1/litiges/{$litigeId}/arbitrage", [
+                'decision' => 'gel',
+                'notes' => 'Cas ambigu, visite terrain necessaire avant decision finale.',
+            ]);
+
+        $gelResponse->assertOk()
+            ->assertJsonPath('data.decision', 'gel')
+            ->assertJsonPath('data.statut', 'en_cours')
+            ->assertJsonPath('data.workflowStep', 'visite_referent');
+
+        $mission->refresh();
+        $this->assertSame('disputed', (string) $mission->status, 'La mission doit rester gelée pendant la visite référent.');
+        $this->assertTrue($mission->funds_frozen);
+
+        $this->assertDatabaseHas('notifications', [
+            'user_id' => $referent->id,
+            'type' => 'litige',
+            'title' => 'Visite référent requise',
+        ]);
+
+        // 5. Après la visite terrain (simulée), l'admin rend la décision finale en faveur de l'artisan.
+        $finalResponse = $this->actingAs($admin)
+            ->putJson("/api/v1/litiges/{$litigeId}/arbitrage", [
+                'decision' => 'artisan',
+                'notes' => 'Visite terrain confirmant la conformite des travaux.',
+            ]);
+
+        $finalResponse->assertOk()
+            ->assertJsonPath('data.decision', 'artisan')
+            ->assertJsonPath('data.statut', 'resolu')
+            ->assertJsonPath('data.workflowStep', 'resolu');
+
+        $mission->refresh();
+        $artisan->refresh();
+        $client->refresh();
+
+        $this->assertSame('completed', (string) $mission->status);
+        $this->assertFalse((bool) $mission->funds_frozen);
+
+        // Le séquestre matériaux + MO est intégralement libéré vers l'artisan.
+        $this->assertSame(0, $artisan->wallet_materiaux);
+        $this->assertSame(0, $artisan->wallet_mo);
+
+        $this->assertDatabaseHas('transactions', [
+            'mission_id' => $mission->id,
+            'user_id' => $artisan->id,
+            'type' => 'credit',
+            'montant' => 65000,
+        ]);
+        // La libération de la main d'œuvre suit le même circuit qu'une libération
+        // de jalon classique (type 'liberation_jalon'), la part matériaux un crédit direct.
+        $this->assertDatabaseHas('transactions', [
+            'mission_id' => $mission->id,
+            'user_id' => $artisan->id,
+            'type' => 'liberation_jalon',
+            'montant' => 35000,
+        ]);
+
+        // Sanction : le client déclencheur perdant voit son score légèrement pénalisé.
+        $this->assertSame(49, $client->score_prosartisan);
+
+        // Reçu de décaissement généré et téléchargeable pour l'artisan gagnant.
+        $litige = Litige::findOrFail($litigeId);
+        $this->assertIsArray($litige->resolution_payload);
+        $this->assertNotNull($litige->resolution_payload['invoice_path']);
+        $this->assertFileExists($litige->resolution_payload['invoice_path']);
+
+        if (file_exists($litige->resolution_payload['invoice_path'])) {
+            @unlink($litige->resolution_payload['invoice_path']);
+        }
+    }
+
     private function makeMission(int $walletMateriaux = 0, int $walletMo = 0): array
     {
         $client = User::factory()->create([

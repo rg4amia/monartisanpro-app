@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_endpoints.dart';
 import '../../../core/storage/storage_service.dart';
+import '../../../data/models/mission_model.dart';
 
 class LitigeController extends GetxController {
   final ApiClient _client = ApiClient();
@@ -25,8 +27,20 @@ class LitigeController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    final args = Get.arguments as Map?;
-    missionId = (args?['missionId'] as int?) ?? 0;
+    // Selon l'écran appelant, l'argument reçu peut être un MissionModel complet
+    // (cartes de suivi de mission), un id brut, ou une Map {'missionId': ...}.
+    // Un simple `as Map?` plantait (grey screen release) dès qu'un MissionModel
+    // était passé directement — accepter les trois formes évite tout crash.
+    final arg = Get.arguments;
+    if (arg is MissionModel) {
+      missionId = arg.id;
+    } else if (arg is int) {
+      missionId = arg;
+    } else if (arg is Map) {
+      missionId = (arg['missionId'] as int?) ?? 0;
+    } else {
+      missionId = 0;
+    }
   }
 
   Future<void> submit() async {
@@ -34,6 +48,14 @@ class LitigeController extends GetxController {
       Get.snackbar(
         'Erreur',
         'Veuillez décrire le problème',
+        snackPosition: SnackPosition.TOP,
+      );
+      return;
+    }
+    if (missionId <= 0) {
+      Get.snackbar(
+        'Erreur',
+        'Mission introuvable, veuillez réessayer depuis le suivi de chantier.',
         snackPosition: SnackPosition.TOP,
       );
       return;
@@ -71,6 +93,18 @@ class LitigeController extends GetxController {
       Get.snackbar(
         'Litige signalé',
         'Le dossier est ouvert et les fonds sont geles jusqu a decision.',
+        snackPosition: SnackPosition.TOP,
+      );
+    } on DioException catch (e) {
+      final message =
+          (e.response?.data is Map ? e.response?.data['message'] : null)
+                  as String? ??
+              'Impossible d\'ouvrir le litige. Vérifiez votre connexion et réessayez.';
+      Get.snackbar('Erreur', message, snackPosition: SnackPosition.TOP);
+    } catch (_) {
+      Get.snackbar(
+        'Erreur',
+        'Une erreur inattendue est survenue. Veuillez réessayer.',
         snackPosition: SnackPosition.TOP,
       );
     } finally {

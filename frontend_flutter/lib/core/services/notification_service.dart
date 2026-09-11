@@ -94,7 +94,10 @@ class NotificationService extends GetxService {
       // 5. Redirection pour les litiges
       else if (type.contains('litige')) {
         if (litigeId != null) {
-          Get.toNamed(Routes.litigeDetail, arguments: litigeId);
+          Get.toNamed(
+            Routes.litigeDetail,
+            arguments: {'litigeId': litigeId},
+          );
         } else if (missionId != null) {
           Get.toNamed(Routes.missionTracking, arguments: missionId);
         }

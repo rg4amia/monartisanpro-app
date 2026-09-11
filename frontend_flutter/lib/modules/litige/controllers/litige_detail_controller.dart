@@ -20,7 +20,17 @@ class LitigeDetailController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    litigeId = (Get.arguments as Map<String, dynamic>)['litigeId'];
+    // Accepte un id brut (redirection depuis une notification push) ou une
+    // Map {'litigeId': ...} (navigation interne) — un `as Map` strict plantait
+    // (grey screen release) dès qu'un int était passé directement.
+    final arg = Get.arguments;
+    if (arg is int) {
+      litigeId = arg;
+    } else if (arg is Map) {
+      litigeId = (arg['litigeId'] as int?) ?? 0;
+    } else {
+      litigeId = 0;
+    }
     loadLitige();
   }
 
