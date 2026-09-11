@@ -4,11 +4,21 @@ import 'package:get/get.dart';
 
 import '../../../app/routes/app_routes.dart';
 import '../../../core/network/realtime_stream_service.dart';
+import '../../../core/storage/storage_service.dart';
 import '../../../data/models/devis_model.dart';
 import '../../../data/models/jalon_model.dart';
 import '../../../data/models/mission_model.dart';
 import '../../../data/repositories/devis_repository.dart';
 import '../../../data/repositories/mission_repository.dart';
+
+/// Onglets de statut affichés par écran de liste (missions_screen.dart),
+/// utilisés pour précharger silencieusement le cache de chaque onglet en
+/// arrière-plan afin que le basculement entre statuts soit instantané.
+const Map<String, List<String>> _statusTabsByRole = {
+  'artisan': ['en_attente', 'financee', 'en_cours', 'terminee', 'litige'],
+  'fournisseur': ['validee', 'en_attente', 'payee'],
+  'client': ['en_cours', 'terminee', 'litige'],
+};
 
 class MissionsController extends GetxController {
   final MissionRepository _repo = MissionRepository();
@@ -34,7 +44,25 @@ class MissionsController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    loadMissions();
+    loadMissions().then((_) => _prefetchOtherStatusTabs());
+  }
+
+  /// Précharge en arrière-plan le cache des autres onglets de statut (sans
+  /// jamais toucher `missions`/`isLoading`) pour que `applyFilter()` puisse
+  /// servir un basculement d'onglet quasi instantané au lieu de déclencher
+  /// systématiquement un nouvel appel réseau bloquant.
+  Future<void> _prefetchOtherStatusTabs() async {
+    final role = StorageService.getRole() ?? 'client';
+    final tabs = _statusTabsByRole[role] ?? const [];
+
+    for (final tab in tabs) {
+      try {
+        await _repo.getMissions(status: tab);
+      } catch (_) {
+        // Préchargement best-effort : une erreur ici ne doit jamais impacter
+        // l'écran actif, elle sera simplement retentée au prochain tap.
+      }
+    }
   }
 
   @override

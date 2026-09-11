@@ -2,6 +2,11 @@
 <html lang="fr">
 
 <head>
+  <!-- Préconnexion Google Fonts la plus tôt possible (DNS+TLS en parallèle du
+       reste du chargement) ; la police est chargée via <link> plus bas et non
+       plus via @import dans client.css, qui forçait un chargement en cascade. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <script src="config.js?v=6"></script>
   <script>
     // Jeton d'auth de la WebView : l'app Flutter le passe dans le fragment
@@ -28,10 +33,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ProsArtisan Mobile - Assistant Chantier</title>
-  <link rel="stylesheet" href="client.css?v=6">
-  <!-- Tailwind : utilitaires de mise en page rapides. TODO: inliner une build
-       statique pour supprimer cette dépendance CDN (échoue hors-ligne). -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+  <!-- Tailwind : build statique des utilitaires réellement utilisés, inlinée
+       en fin de client.css. Remplace l'ancien <script src="https://cdn.tailwindcss.com">
+       (~400 Ko de moteur JS retéléchargé et recompilé à chaque ouverture,
+       en plus d'échouer hors-ligne). -->
+  <link rel="stylesheet" href="client.css?v=7">
 </head>
 
 <body>

@@ -96,9 +96,9 @@ class LitigeController extends GetxController {
         snackPosition: SnackPosition.TOP,
       );
     } on DioException catch (e) {
+      final responseData = e.response?.data;
       final message =
-          (e.response?.data is Map ? e.response?.data['message'] : null)
-                  as String? ??
+          (responseData is Map ? responseData['message'] as String? : null) ??
               'Impossible d\'ouvrir le litige. Vérifiez votre connexion et réessayez.';
       Get.snackbar('Erreur', message, snackPosition: SnackPosition.TOP);
     } catch (_) {

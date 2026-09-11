@@ -34,7 +34,13 @@ Route::inertia('/privacy', 'cgu', ['defaultTab' => 'privacy']);
 Route::get('/assistant', function () {
     return response()->file(public_path('client.html'), [
         'Content-Type' => 'text/html; charset=UTF-8',
-        'Cache-Control' => 'no-store',
+        // 'no-cache' (et non 'no-store') autorise la WebView à conserver le
+        // corps de la réponse et à le revalider par une requête conditionnelle
+        // (If-Modified-Since / 304) plutôt que de retélécharger les ~10 Ko de
+        // HTML à chaque ouverture — le contenu ne dépend d'aucune donnée
+        // utilisateur (le jeton Sanctum voyage dans le fragment d'URL, jamais
+        // envoyé au serveur ni intégré au HTML).
+        'Cache-Control' => 'no-cache, must-revalidate',
     ]);
 })->name('assistant');
 
