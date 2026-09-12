@@ -82,7 +82,9 @@ class _DevisCreationScreenState extends State<DevisCreationScreen> {
             const CreationAppBar(),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
+                // Le bouton de soumission flotte en bas au centre : sans
+                // cette réserve, il recouvrait la fin du formulaire.
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 110),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

@@ -64,16 +64,27 @@ class _MissionTrackingScreenState extends State<MissionTrackingScreen> {
         backgroundColor: AppColors.surface,
         surfaceTintColor: AppColors.surface,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.chat_bubble_outline),
-            tooltip: 'Discussion de chantier',
-            onPressed: () {
-              final mId = _missionId ?? controller.currentMission.value?.id;
-              if (mId != null) {
-                Get.to(() => ChatScreen(missionId: mId));
-              }
-            },
-          ),
+          Obx(() {
+            final unread =
+                controller.currentMission.value?.unreadMessagesCount ?? 0;
+            return IconButton(
+              icon: unread > 0
+                  ? Badge.count(
+                      count: unread,
+                      child: const Icon(Icons.chat_bubble_outline),
+                    )
+                  : const Icon(Icons.chat_bubble_outline),
+              tooltip: unread > 0
+                  ? '$unread message${unread > 1 ? 's' : ''} non lu${unread > 1 ? 's' : ''}'
+                  : 'Discussion de chantier',
+              onPressed: () {
+                final mId = _missionId ?? controller.currentMission.value?.id;
+                if (mId != null) {
+                  Get.to(() => ChatScreen(missionId: mId));
+                }
+              },
+            );
+          }),
           Obx(() {
             final mission = controller.currentMission.value;
             const revealed = {'financee', 'en_cours', 'terminee', 'litige'};
@@ -91,18 +102,28 @@ class _MissionTrackingScreenState extends State<MissionTrackingScreen> {
           }),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          final mId = _missionId ?? controller.currentMission.value?.id;
-          if (mId != null) {
-            Get.to(() => ChatScreen(missionId: mId));
-          }
-        },
-        backgroundColor: const Color(0xFF4F46E5),
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.chat),
-        label: const Text('Discussion'),
-      ),
+      floatingActionButton: Obx(() {
+        final mission = controller.currentMission.value;
+        final mId = _missionId ?? mission?.id;
+        final unread = mission?.unreadMessagesCount ?? 0;
+
+        return FloatingActionButton.extended(
+          onPressed: () {
+            if (mId != null) {
+              Get.to(() => ChatScreen(missionId: mId));
+            }
+          },
+          backgroundColor: const Color(0xFF4F46E5),
+          foregroundColor: Colors.white,
+          icon: unread > 0
+              ? Badge.count(count: unread, child: const Icon(Icons.chat))
+              : const Icon(Icons.chat),
+          // Le numéro de chantier est rappelé dans la bulle : en arrivant
+          // depuis une notification ou une liste, on sait immédiatement de
+          // quelle mission on parle sans avoir à remonter l'écran.
+          label: Text(mId != null ? 'Discussion #$mId' : 'Discussion'),
+        );
+      }),
       body: Obx(() {
         final mission = controller.currentMission.value;
         if (controller.isLoading.value || mission == null) {

@@ -65,6 +65,15 @@ class MissionController extends Controller
         }
 
         $missions = $query->with(['client', 'artisan', 'jalons', 'requestedSector', 'requestedTrade', 'interventionType'])
+            // Compteur agrégé en une seule requête (jamais N+1) : permet au
+            // mobile d'afficher directement le nombre de messages non lus par
+            // mission, sans avoir à ouvrir chaque discussion pour le savoir.
+            ->withCount(['messages as unread_messages_count' => fn ($q) => $q
+                ->where('sender_id', '!=', $user->id)
+                ->whereNull('read_at')])
+            // Agrège les drapeaux devis lus par MissionResource, qui sinon
+            // déclenchait trois requêtes `exists` par mission sérialisée.
+            ->withDevisFlags()
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 

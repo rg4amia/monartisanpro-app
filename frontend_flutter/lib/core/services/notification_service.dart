@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 
 import '../../app/routes/app_routes.dart';
+import '../../modules/chat/views/chat_screen.dart';
 import '../../modules/main_tab/controllers/main_tab_controller.dart';
 import '../storage/storage_service.dart';
 
@@ -59,8 +60,17 @@ class NotificationService extends GetxService {
 
       final role = StorageService.getRole() ?? 'client';
 
+      // 0. Message de chantier : on ouvre directement la discussion concernée.
+      // Sans ce cas, la notification n'ouvrait rien et l'utilisateur devait
+      // parcourir toutes ses missions pour retrouver celle dont il venait de
+      // recevoir un message.
+      if (type.contains('chat') || type.contains('message')) {
+        if (missionId != null) {
+          Get.to(() => ChatScreen(missionId: missionId));
+        }
+      }
       // 1. Redirection pour les devis/propositions
-      if (type.contains('devis') || type.contains('quote')) {
+      else if (type.contains('devis') || type.contains('quote')) {
         if (devisId != null) {
           if (role == 'client') {
             Get.toNamed(Routes.devisReview, arguments: devisId);

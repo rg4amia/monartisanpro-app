@@ -97,10 +97,16 @@ class _KycCniCaptureScreenState extends State<KycCniCaptureScreen> {
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: _Dt.ink),
-            onPressed: () => Get.back(),
-          ),
+          // Cet écran est atteint soit par empilement (réglages, missions) —
+          // le retour a alors un sens —, soit juste après l'inscription via
+          // `offAllNamed`, qui vide la pile : la flèche ne faisait alors
+          // rien du tout. On ne l'affiche que lorsqu'elle peut agir.
+          leading: Navigator.canPop(context)
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back, color: _Dt.ink),
+                  onPressed: () => Get.back(),
+                )
+              : null,
           title: const Text(
             'Vérification d\'identité',
             style: TextStyle(

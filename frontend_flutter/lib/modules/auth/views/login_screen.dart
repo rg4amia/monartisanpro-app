@@ -1353,6 +1353,21 @@ class _LoginScreenState extends State<LoginScreen>
               onPressed: () => Get.back(),
               child: const Text('Annuler'),
             ),
+            // À l'étape OTP, les champs d'identité sont désactivés : sans ce
+            // retour, une saisie erronée obligeait à annuler tout le
+            // formulaire et à tout ressaisir.
+            if (_c.isResetOtpSent.value)
+              TextButton(
+                onPressed: _c.isResetting.value
+                    ? null
+                    : () {
+                        _c.isResetOtpSent.value = false;
+                        _c.errorMsg.value = null;
+                        _c.resetOtp.value = '';
+                        otpCtrl.clear();
+                      },
+                child: const Text('Précédent'),
+              ),
             ElevatedButton(
               onPressed: _c.isResetting.value
                   ? null

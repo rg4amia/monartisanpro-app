@@ -1015,6 +1015,19 @@ class _MenuList extends StatelessWidget {
               onPressed: () => Get.back(),
               child: const Text('Annuler'),
             ),
+            // À l'étape OTP, le champ numéro est désactivé : sans ce retour,
+            // un numéro mal saisi obligeait à annuler tout le formulaire.
+            if (controller.isChangePhoneOtpSent.value)
+              TextButton(
+                onPressed: controller.isChangingPhone.value
+                    ? null
+                    : () {
+                        controller.isChangePhoneOtpSent.value = false;
+                        controller.changePhoneError.value = null;
+                        otpCtrl.clear();
+                      },
+                child: const Text('Précédent'),
+              ),
             ElevatedButton(
               onPressed: controller.isChangingPhone.value
                   ? null

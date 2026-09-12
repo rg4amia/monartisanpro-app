@@ -48,6 +48,10 @@ class MissionCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                if (mission.unreadMessagesCount > 0) ...[
+                  _unreadMessagesBadge(),
+                  const SizedBox(width: 6),
+                ],
                 _statusBadge(),
               ],
             ),
@@ -162,6 +166,34 @@ class MissionCard extends StatelessWidget {
       width: 8,
       height: 8,
       decoration: BoxDecoration(shape: BoxShape.circle, color: color),
+    );
+  }
+
+  /// Pastille « n messages non lus » affichée directement sur la carte, pour
+  /// repérer la mission concernée sans ouvrir chaque discussion.
+  Widget _unreadMessagesBadge() {
+    final count = mission.unreadMessagesCount;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: const Color(0xFF4F46E5),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.chat_bubble, size: 10, color: Colors.white),
+          const SizedBox(width: 4),
+          Text(
+            count > 99 ? '99+' : '$count',
+            style: const TextStyle(
+              fontSize: 11,
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

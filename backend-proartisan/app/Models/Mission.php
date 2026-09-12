@@ -10,6 +10,7 @@ use App\States\Mission\InProgressState;
 use App\States\Mission\MissionState;
 use App\States\Mission\PendingApprovalState;
 use App\States\Mission\PendingFundingState;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\ModelStates\HasStates;
@@ -151,6 +152,23 @@ class Mission extends Model
     public function hasPendingDevis(): bool
     {
         return $this->devis()->where('statut', 'soumis')->exists();
+    }
+
+    /**
+     * Agrège en une seule requête les trois drapeaux « devis » dont
+     * MissionResource a besoin. Sans ce scope, la sérialisation d'une liste
+     * déclenchait trois requêtes `exists` par mission (soit 60 requêtes
+     * superflues pour une page de 20).
+     */
+    public function scopeWithDevisFlags(Builder $query): Builder
+    {
+        return $query->withCount([
+            'devis as pending_devis_count' => fn ($q) => $q->where('statut', 'soumis'),
+            'devis as accepted_devis_count' => fn ($q) => $q
+                ->where('statut', 'accepte')
+                ->where('is_avenant', false),
+            'devis as active_devis_count' => fn ($q) => $q->where('statut', '!=', 'refuse'),
+        ]);
     }
 
     public function messages()

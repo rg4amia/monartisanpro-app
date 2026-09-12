@@ -58,7 +58,15 @@ class MissionsScreen extends StatelessWidget {
                   onRefresh: controller.refresh,
                   child: ListView.separated(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.all(16),
+                    // Le bouton « Nouvelle mission » flotte au-dessus de la
+                    // liste : sans cette réserve en bas, il recouvrait la
+                    // dernière carte et masquait ses informations.
+                    padding: EdgeInsets.only(
+                      left: 16,
+                      right: 16,
+                      top: 16,
+                      bottom: role == 'client' ? 92 : 16,
+                    ),
                     itemCount: controller.missions.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 14),
                     itemBuilder: (_, index) => _MissionCard(

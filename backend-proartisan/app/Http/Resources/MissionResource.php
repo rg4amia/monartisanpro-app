@@ -23,6 +23,9 @@ class MissionResource extends JsonResource
             'artisanId' => $this->artisan_id,
             'description' => $this->description,
             'problem' => $this->description,
+            // Présent uniquement quand la requête a chargé le compteur
+            // (withCount) : évite toute requête supplémentaire par mission.
+            'unreadMessagesCount' => $this->whenCounted('unread_messages_count'),
             'photos' => $this->photos_json ?? [],
             'status' => (string) $this->status,
             'statusGemini' => $this->mapMissionStatusToGemini($this->status),
@@ -90,13 +93,31 @@ class MissionResource extends JsonResource
                     'delivery' => 0,
                 ],
             ],
-            'mention' => $this->hasPendingDevis() 
-                ? "En attente de validation du devis" 
-                : ($this->devisAccepte()->exists() ? "Devis accepté" : null),
-            'has_devis' => $this->devis()->where('statut', '!=', 'refuse')->exists(),
+            'mention' => $this->hasFlag('pending_devis_count', fn () => $this->hasPendingDevis())
+                ? 'En attente de validation du devis'
+                : ($this->hasFlag('accepted_devis_count', fn () => $this->devisAccepte()->exists())
+                    ? 'Devis accepté'
+                    : null),
+            'has_devis' => $this->hasFlag(
+                'active_devis_count',
+                fn () => $this->devis()->where('statut', '!=', 'refuse')->exists()
+            ),
             'createdAt' => $this->created_at?->toIso8601String(),
             'updatedAt' => $this->updated_at?->toIso8601String(),
         ];
+    }
+
+    /**
+     * Lit un drapeau « devis » depuis le compteur agrégé quand la requête l'a
+     * chargé (scopeWithDevisFlags, utilisé par les listes), sinon retombe sur
+     * la requête directe. Les listes évitent ainsi trois requêtes par mission,
+     * sans que les endpoints unitaires aient à changer.
+     */
+    private function hasFlag(string $countAttribute, callable $fallback): bool
+    {
+        $count = $this->resource->getAttribute($countAttribute);
+
+        return $count !== null ? $count > 0 : $fallback();
     }
 
     private function mapMissionStatusToGemini(mixed $status): string

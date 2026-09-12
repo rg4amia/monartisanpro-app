@@ -322,6 +322,45 @@ void main() {
       expect(mission.montantTotal, 100000);
     });
 
+    test('parse le compteur de messages non lus et survit au cache Hive', () {
+      final base = {
+        'id': 42,
+        'clientId': 10,
+        'artisanId': 5,
+        'status': 'en_cours',
+        'montantTotal': 100000,
+        'montantMateriaux': 60000,
+        'montantMo': 40000,
+        'ratioMateriaux': 0.6,
+        'createdAt': '2026-02-27T10:00:00Z',
+      };
+
+      // Forme camelCase renvoyée par l'API.
+      expect(
+        MissionModel.fromJson({...base, 'unreadMessagesCount': 3})
+            .unreadMessagesCount,
+        3,
+      );
+
+      // Forme snake_case, au cas où la ressource serait servie brute.
+      expect(
+        MissionModel.fromJson({...base, 'unread_messages_count': 7})
+            .unreadMessagesCount,
+        7,
+      );
+
+      // Absent (missions servies par un endpoint sans le compteur) : 0, et
+      // surtout pas une exception.
+      expect(MissionModel.fromJson(base).unreadMessagesCount, 0);
+
+      // Le compteur doit traverser la sérialisation du cache local, sinon le
+      // badge disparaîtrait au rechargement hors-ligne.
+      final cached = MissionModel.fromJson(
+        MissionModel.fromJson({...base, 'unreadMessagesCount': 5}).toJson(),
+      );
+      expect(cached.unreadMessagesCount, 5);
+    });
+
     test('should parse supplier & client coordinates from nested objects', () {
       final json = {
         'id': 1,

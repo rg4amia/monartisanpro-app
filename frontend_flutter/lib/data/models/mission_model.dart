@@ -28,6 +28,10 @@ class MissionModel {
   final int? interventionTypeId;
   final String? interventionTypeName;
 
+  /// Messages de la discussion de chantier reçus et non encore lus par
+  /// l'utilisateur courant (agrégé côté API, jamais recalculé localement).
+  final int unreadMessagesCount;
+
   const MissionModel({
     required this.id,
     required this.clientId,
@@ -57,6 +61,7 @@ class MissionModel {
     this.supplierLongitude,
     this.interventionTypeId,
     this.interventionTypeName,
+    this.unreadMessagesCount = 0,
   });
 
   bool get needsReferent => montantTotal > 2000000;
@@ -190,6 +195,9 @@ class MissionModel {
           : null,
       interventionTypeName: (json['interventionTypeName'] ??
           json['intervention_type_name']) as String?,
+      unreadMessagesCount: _parseInt(
+        json['unreadMessagesCount'] ?? json['unread_messages_count'],
+      ),
     );
   }
 
@@ -247,6 +255,7 @@ class MissionModel {
         'supplierLongitude': supplierLongitude,
         'interventionTypeId': interventionTypeId,
         'interventionTypeName': interventionTypeName,
+        'unreadMessagesCount': unreadMessagesCount,
       };
 
   MissionModel copyWith({
