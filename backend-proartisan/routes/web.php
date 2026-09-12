@@ -25,6 +25,13 @@ Route::get('/', function () {
     return redirect($frontUrl);
 })->name('home');
 
+// Consultation d'une pièce KYC stockée sur le disque privé. L'URL est signée
+// et expire : cf. KycDocument::fileUrl. Elle remplace les anciennes URL
+// publiques permanentes sous /storage/fileshare/kyc.
+Route::get('/kyc/documents/{document}/file', [\App\Http\Controllers\KycDocumentController::class, 'show'])
+    ->middleware('signed')
+    ->name('kyc.document.file');
+
 Route::inertia('/cgu', 'cgu', ['defaultTab' => 'cgu'])->name('cgu');
 Route::inertia('/politique-confidentialite', 'cgu', ['defaultTab' => 'privacy'])->name('privacy');
 Route::inertia('/privacy', 'cgu', ['defaultTab' => 'privacy']);

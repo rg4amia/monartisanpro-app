@@ -20,18 +20,19 @@ class KycService
             ->first();
 
         if ($existing) {
-            Storage::disk('public')->delete(str_replace('/storage/', '', $existing->file_url));
+            $this->deleteStoredFile($existing);
             $existing->delete();
         }
 
-        // Stocke le fichier
-        $path    = $file->store("fileshare/kyc", 'public');
-        $fileUrl = Storage::disk('public')->url($path);
+        // Disque privé : une CNI ou un selfie ne doit pas être servi par une
+        // URL publique permanente. La consultation passe par une URL signée à
+        // durée limitée (cf. KycDocument::fileUrl et la route kyc.document.file).
+        $path = $file->store('kyc', 'local');
 
         $doc = KycDocument::create([
             'user_id'  => $user->id,
             'type'     => $type,
-            'file_url' => $fileUrl,
+            'file_url' => $path,
             'statut'   => 'en_attente',
         ]);
 
@@ -51,6 +52,28 @@ class KycService
         }
 
         return $doc;
+    }
+
+    /**
+     * Supprime le fichier physique d'un document, sur le disque où il se trouve
+     * réellement : les pièces d'avant la migration vivent encore sur le disque
+     * public, les nouvelles sur le disque privé.
+     */
+    private function deleteStoredFile(KycDocument $document): void
+    {
+        $raw = $document->storagePath();
+
+        if ($raw === null) {
+            return;
+        }
+
+        if ($document->isLegacy()) {
+            Storage::disk('public')->delete(str_replace('/storage/', '', $raw));
+
+            return;
+        }
+
+        Storage::disk('local')->delete($raw);
     }
 
     /**
