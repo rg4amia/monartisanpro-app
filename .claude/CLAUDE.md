@@ -304,6 +304,14 @@ SELECT ST_X(position) AS lng, ST_Y(position) AS lat FROM users WHERE id = :id;
 16. **OTP** : compteur de tentatives porté par le code (`otps.attempts`, plafond 5) — un throttle par IP seul ne protège pas un code à 4 chiffres. Comparaison en temps constant, sélection du code actif par `id` décroissant. Envoi sur la route transactionnelle `type: otp`.
 17. **Pièces KYC** : disque **privé** et URL signée expirant en 15 minutes. Jamais le disque public : une URL permanente expose définitivement une pièce d'identité. Migration du parc : `php artisan kyc:migrate-to-private`.
 
+18. **Appels GPS bornés** : tout `Geolocator.getCurrentPosition` déclare un `timeLimit` (10 s pour les preuves géolocalisées, 5 s pour l'interface). Sans borne, un terminal qui ne fixe aucun point laisse le `Future` en attente : ni `catch` ni `finally` ne s'exécutent, et l'écran charge indéfiniment sans erreur. Une carte se cadre sur Abidjan dès sa création, avant le GPS qui ne fait qu'affiner. Garde : `test/core/geolocation_time_limit_test.dart`.
+
+19. **Statuts de mission** : filtrer sur les états FSM (`draft`, `pending_artisan_acceptance`, `pending_funding`, `funded_locked`, `in_progress`, `pending_approval`, `completed`, `disputed`, `cancelled`), jamais sur les libellés français historiques — convertis en base, ils ne correspondent à aucune ligne et retournent un ensemble vide **sans erreur**. Référence : `MissionController::index()`.
+
+20. **Forme JSON API ↔ mobile** : un tableau associatif PHP vide se sérialise en `[]` et non `{}` — caster en objet toute clé lue comme une `Map` côté mobile. Jamais de transtypage direct (`as String`, `as Map`) : lecteurs défensifs, un bloc indépendant par champ, et des tests de rendu sur charges utiles incomplètes.
+
+21. **Ni données de démonstration, ni note par défaut** : aucun contrôleur ne préremplit une vue de valeurs inventées — elles masquent les pannes. Section vide → mention explicite (`SectionEmptyNote`). Note jamais attribuée → `null` (« Non évalué »), jamais `COALESCE(AVG(note), 5.0)` ; les évalués passent avant les non-évalués.
+
 ---
 
 ## 🧠 Comment m'aider efficacement
