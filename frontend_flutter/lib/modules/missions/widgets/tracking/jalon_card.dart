@@ -6,6 +6,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../data/models/jalon_model.dart';
 import '../../../../data/models/mission_model.dart';
+import '../../../../shared/widgets/image_viewer.dart';
 import '../../controllers/missions_controller.dart';
 import '../../views/jalon_submit_screen.dart';
 import 'jalon_payment_dialog.dart';
@@ -356,7 +357,26 @@ class _JalonProofGallery extends StatelessWidget {
               final url = photos[index]['url'] as String? ?? '';
               final isVideo = isTrackingVideoUrl(url);
               return GestureDetector(
-                onTap: () => openTrackingMedia(context, url, isVideo),
+                // Les preuves vont souvent par lot : on ouvre la visionneuse
+                // sur toute la série d'images pour pouvoir les faire défiler,
+                // au lieu de refermer entre chaque. Les vidéos restent
+                // déléguées au lecteur externe.
+                onTap: () {
+                  if (isVideo) {
+                    openTrackingMedia(context, url, true);
+                    return;
+                  }
+                  final imageUrls = photos
+                      .map((p) => p['url'] as String? ?? '')
+                      .where((u) => u.isNotEmpty && !isTrackingVideoUrl(u))
+                      .toList();
+                  openImageViewer(
+                    context,
+                    urls: imageUrls,
+                    initialIndex: imageUrls.indexOf(url),
+                    title: 'Preuve de réalisation',
+                  );
+                },
                 child: Container(
                   width: 70,
                   height: 70,

@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../data/models/supplier_product_model.dart';
+import '../../../shared/widgets/image_viewer.dart';
 import '../controllers/jcode_controller.dart';
 
 class SupplierCatalogScreen extends StatefulWidget {
@@ -528,28 +529,55 @@ class _CatalogProductCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (hasImage) ...[
-            Container(
-              width: 80,
-              height: 80,
-              margin: const EdgeInsets.only(right: 16),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey[200]!),
+            // La vignette ne suffit pas pour vérifier une référence produit :
+            // un appui l'ouvre en plein écran, zoomable.
+            GestureDetector(
+              onTap: () => openImageViewer(
+                context,
+                urls: [product.imageUrl!],
+                title: product.name,
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.network(
-                  product.imageUrl!,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return const Center(
-                      child: Icon(
-                        Icons.broken_image_outlined,
-                        size: 30,
-                        color: Colors.grey,
+              child: Container(
+                width: 80,
+                height: 80,
+                margin: const EdgeInsets.only(right: 16),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey[200]!),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Image.network(
+                        product.imageUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Center(
+                            child: Icon(
+                              Icons.broken_image_outlined,
+                              size: 30,
+                              color: Colors.grey,
+                            ),
+                          );
+                        },
                       ),
-                    );
-                  },
+                      const Positioned(
+                        right: 3,
+                        bottom: 3,
+                        child: CircleAvatar(
+                          radius: 9,
+                          backgroundColor: Colors.black54,
+                          child: Icon(
+                            Icons.zoom_out_map,
+                            size: 11,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

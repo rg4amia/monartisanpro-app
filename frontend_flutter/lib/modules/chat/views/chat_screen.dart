@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 import '../../../data/models/chat_message_model.dart';
+import '../../../shared/widgets/image_viewer.dart';
 import '../controllers/chat_controller.dart';
 
 class ChatScreen extends StatelessWidget {
@@ -205,16 +206,46 @@ class _MessageBubble extends StatelessWidget {
                 ),
               )
             else if (message.isImage && message.mediaUrl != null)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: CachedNetworkImage(
-                  imageUrl: message.mediaUrl!,
-                  placeholder: (ctx, url) => const SizedBox(
-                    width: 140,
-                    height: 140,
-                    child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+              // Les photos de chantier échangées servent de preuve : elles
+              // doivent pouvoir être agrandies et zoomées, pas seulement vues
+              // en vignette dans la bulle.
+              GestureDetector(
+                onTap: () => openImageViewer(
+                  context,
+                  urls: [message.mediaUrl!],
+                  title: 'Photo de chantier',
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Stack(
+                    alignment: Alignment.bottomRight,
+                    children: [
+                      CachedNetworkImage(
+                        imageUrl: message.mediaUrl!,
+                        placeholder: (ctx, url) => const SizedBox(
+                          width: 140,
+                          height: 140,
+                          child: Center(
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                        errorWidget: (ctx, url, err) =>
+                            const Icon(Icons.broken_image),
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.all(6),
+                        child: CircleAvatar(
+                          radius: 13,
+                          backgroundColor: Colors.black54,
+                          child: Icon(
+                            Icons.zoom_out_map,
+                            size: 15,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  errorWidget: (ctx, url, err) => const Icon(Icons.broken_image),
                 ),
               )
             else if (message.isAudio)

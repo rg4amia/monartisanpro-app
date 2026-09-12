@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../core/storage/storage_service.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/image_viewer.dart';
 import '../controllers/artisan_cart_controller.dart';
 import '../controllers/order_controller.dart';
 import 'order_checkout_screen.dart';
@@ -254,36 +255,66 @@ class _ClientCatalogScreenState extends State<ClientCatalogScreen> {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Image du produit avec fallback icône
-                          Container(
-                            height: 72,
-                            width: 72,
-                            decoration: BoxDecoration(
-                              color: AppColors.primary.withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(12),
-                              border:
-                                  Border.all(color: const Color(0xFFE2E8F0)),
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: (product.imageUrl != null &&
-                                      product.imageUrl!.trim().isNotEmpty)
-                                  ? Image.network(
-                                      product.imageUrl!,
-                                      fit: BoxFit.cover,
-                                      errorBuilder:
-                                          (context, error, stackTrace) =>
-                                              const Icon(
+                          // Image du produit avec fallback icône. La vignette
+                          // de 72 px ne permet pas de juger un matériau :
+                          // un appui l'ouvre en plein écran, zoomable.
+                          GestureDetector(
+                            onTap: (product.imageUrl != null &&
+                                    product.imageUrl!.trim().isNotEmpty)
+                                ? () => openImageViewer(
+                                      context,
+                                      urls: [product.imageUrl!],
+                                      title: product.name,
+                                    )
+                                : null,
+                            child: Container(
+                              height: 72,
+                              width: 72,
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(12),
+                                border:
+                                    Border.all(color: const Color(0xFFE2E8F0)),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: (product.imageUrl != null &&
+                                        product.imageUrl!.trim().isNotEmpty)
+                                    ? Stack(
+                                        fit: StackFit.expand,
+                                        children: [
+                                          Image.network(
+                                            product.imageUrl!,
+                                            fit: BoxFit.cover,
+                                            errorBuilder:
+                                                (context, error, stackTrace) =>
+                                                    const Icon(
+                                              Icons.build_circle_outlined,
+                                              color: AppColors.primary,
+                                              size: 32,
+                                            ),
+                                          ),
+                                          const Positioned(
+                                            right: 3,
+                                            bottom: 3,
+                                            child: CircleAvatar(
+                                              radius: 9,
+                                              backgroundColor: Colors.black54,
+                                              child: Icon(
+                                                Icons.zoom_out_map,
+                                                size: 11,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      )
+                                    : const Icon(
                                         Icons.build_circle_outlined,
                                         color: AppColors.primary,
                                         size: 32,
                                       ),
-                                    )
-                                  : const Icon(
-                                      Icons.build_circle_outlined,
-                                      color: AppColors.primary,
-                                      size: 32,
-                                    ),
+                              ),
                             ),
                           ),
                           const SizedBox(width: 16),
