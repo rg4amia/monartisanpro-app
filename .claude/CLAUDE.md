@@ -299,6 +299,13 @@ SELECT ST_X(position) AS lng, ST_Y(position) AS lat FROM users WHERE id = :id;
 
 ---
 
+14. **Codes de validation logistique** : `pickup_code` et `reception_code` sont des **secrets** (4 chiffres tirés au hasard) et la seule preuve d'une remise physique. `verifyPickup`/`verifyDelivery` n'acceptent que les formes contenant ce secret — **jamais** une forme dérivable de l'identifiant de commande (`RET-42`), ni de constante de test. Les codes sont masqués par défaut sur le modèle `Order` (`$hidden`) et réexposés par acteur via `codesVisibleTo()` : fournisseur → code de retrait, client → le sien, **livreur → aucun**. Aucune notification au livreur ne transporte de code. Validation possible par la contrepartie, et idempotente : un rejeu sur une commande déjà dans l'état visé réussit sans second versement. Format hors-ligne : `RET <NoCommande> <code>`.
+15. **Authentification des passerelles et webhooks** : `/ussd`, `/sms/incoming` et les webhooks de paiement doivent authentifier l'appelant — signature HMAC-SHA256 sur le **corps brut** en priorité, sinon secret partagé (`USSD_GATEWAY_SECRET`) en en-tête ou paramètre d'URL. Une signature invalide ne se rabat jamais sur le secret partagé. *Fail closed* : aucun secret configuré → 503. Wave refuse le webhook si son secret est vide (HMAC à clé vide = calculable) ; Orange Money revérifie le statut auprès de l'opérateur et n'accepte pas `INITIATED`.
+16. **OTP** : compteur de tentatives porté par le code (`otps.attempts`, plafond 5) — un throttle par IP seul ne protège pas un code à 4 chiffres. Comparaison en temps constant, sélection du code actif par `id` décroissant. Envoi sur la route transactionnelle `type: otp`.
+17. **Pièces KYC** : disque **privé** et URL signée expirant en 15 minutes. Jamais le disque public : une URL permanente expose définitivement une pièce d'identité. Migration du parc : `php artisan kyc:migrate-to-private`.
+
+---
+
 ## 🧠 Comment m'aider efficacement
 
 - Génère du code **Laravel 11** complet : migrations, models (avec casts appropriés), controllers, services, form requests, routes
