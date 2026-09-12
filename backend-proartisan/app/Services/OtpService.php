@@ -10,6 +10,7 @@ class OtpService
 {
     private int $length;
     private int $ttlMinutes;
+    private int $maxAttempts;
     private SmsService $smsService;
     private WhatsAppService $whatsAppService;
 
@@ -17,6 +18,7 @@ class OtpService
     {
         $this->length          = config('prosartisan.otp.length', 4);
         $this->ttlMinutes      = config('prosartisan.otp.ttl', 5);
+        $this->maxAttempts     = config('prosartisan.otp.max_attempts', 5);
         $this->smsService      = $smsService;
         $this->whatsAppService = $whatsAppService;
     }
@@ -86,11 +88,16 @@ class OtpService
 
     /**
      * Vérifie l'OTP et l'invalide s'il est correct.
+     *
+     * La recherche porte sur le dernier OTP actif du numéro — et non sur le
+     * couple (numéro, code) — afin de pouvoir compter les échecs : un code
+     * erroné doit coûter une tentative. Passé [maxAttempts], le code est brûlé
+     * et l'utilisateur doit en redemander un, ce qui rend la force brute
+     * inopérante même distribuée sur de nombreuses IP.
      */
     public function verifyOtp(string $phone, string $code, ?string $action = null): bool
     {
         $query = Otp::where('phone', $phone)
-            ->where('code', $code)
             ->where('expires_at', '>', now())
             ->whereNull('used_at');
 
@@ -98,9 +105,32 @@ class OtpService
             $query->where('action', $action);
         }
 
-        $otpRecord = $query->latest()->first();
+        // Tri par `id` et non par `created_at` : deux OTP émis dans la même
+        // seconde rendraient l'ordre par date ambigu, et l'on sélectionnerait
+        // parfois le code précédent — le dernier code envoyé serait alors
+        // refusé. L'identifiant auto-incrémenté lève cette ambiguïté.
+        $otpRecord = $query->latest('id')->first();
 
         if (!$otpRecord) {
+            return false;
+        }
+
+        // hash_equals : comparaison à temps constant.
+        if (!hash_equals($otpRecord->code, $code)) {
+            $otpRecord->increment('attempts');
+
+            if ($otpRecord->attempts >= $this->maxAttempts) {
+                // Le code est brûlé : il ne pourra plus être validé, même
+                // avec la bonne valeur, avant un nouvel envoi.
+                $otpRecord->update(['used_at' => now()]);
+
+                Log::warning('[OTP] Code invalidé après trop de tentatives', [
+                    'phone'    => $phone,
+                    'action'   => $action,
+                    'attempts' => $otpRecord->attempts,
+                ]);
+            }
+
             return false;
         }
 

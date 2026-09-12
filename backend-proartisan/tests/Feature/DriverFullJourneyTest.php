@@ -239,6 +239,68 @@ class DriverFullJourneyTest extends TestCase
         $this->assertSame('driver_picked_up', $order->status);
     }
 
+    public function test_a_driver_cannot_self_validate_with_a_code_derived_from_the_order_id(): void
+    {
+        $order = $this->searchingOrder();
+
+        $this->actingAs($this->driver)
+            ->postJson("/api/v1/deliveries/{$order->id}/accept")
+            ->assertOk();
+
+        // Le numéro de commande n'est pas un secret : le livreur le connaît
+        // dès qu'il accepte la course. S'il suffisait à valider, le livreur
+        // pourrait se payer sans jamais rencontrer le fournisseur ni le client.
+        foreach (["RET-{$order->id}", "RETRAIT-{$order->id}", "LIVREUR-{$order->id}"] as $forged) {
+            $this->actingAs($this->driver)
+                ->postJson("/api/v1/orders/{$order->id}/pickup", ['pickup_code' => $forged])
+                ->assertStatus(400);
+        }
+
+        $this->assertSame('driver_assigned', $order->fresh()->status);
+
+        // Retrait légitime, puis même tentative sur la réception.
+        $this->actingAs($this->driver)
+            ->postJson("/api/v1/orders/{$order->id}/pickup", ['pickup_code' => 'RET-JOURNEY'])
+            ->assertOk();
+
+        foreach (["REC-{$order->id}", "RECEPTION-{$order->id}"] as $forged) {
+            $this->actingAs($this->driver)
+                ->postJson("/api/v1/orders/{$order->id}/deliver", ['reception_code' => $forged])
+                ->assertStatus(400);
+        }
+
+        $this->assertSame('driver_picked_up', $order->fresh()->status);
+        $this->assertDatabaseMissing('transactions', [
+            'wallet_dest' => 'driver_wallet_'.$this->driver->id,
+        ]);
+    }
+
+    public function test_the_universal_debug_codes_no_longer_validate_anything(): void
+    {
+        $order = $this->searchingOrder();
+
+        $this->actingAs($this->driver)
+            ->postJson("/api/v1/deliveries/{$order->id}/accept")
+            ->assertOk();
+
+        // « RET-5561 » et « REC-3012 » étaient acceptés sur toute commande.
+        $this->actingAs($this->driver)
+            ->postJson("/api/v1/orders/{$order->id}/pickup", ['pickup_code' => 'RET-5561'])
+            ->assertStatus(400);
+
+        $this->assertSame('driver_assigned', $order->fresh()->status);
+
+        $this->actingAs($this->driver)
+            ->postJson("/api/v1/orders/{$order->id}/pickup", ['pickup_code' => 'RET-JOURNEY'])
+            ->assertOk();
+
+        $this->actingAs($this->driver)
+            ->postJson("/api/v1/orders/{$order->id}/deliver", ['reception_code' => 'REC-3012'])
+            ->assertStatus(400);
+
+        $this->assertSame('driver_picked_up', $order->fresh()->status);
+    }
+
     public function test_a_client_cannot_take_a_delivery_job(): void
     {
         $order = $this->searchingOrder();

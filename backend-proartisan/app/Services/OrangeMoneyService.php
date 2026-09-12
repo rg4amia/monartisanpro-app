@@ -294,7 +294,10 @@ class OrangeMoneyService
             }
 
             // Mise à jour selon le statut vérifié de manière sécurisée
-            if ($status === 'SUCCESS' || $status === 'SUCCESSFUL' || $status === 'INITIATED') {
+            // `INITIATED` signifie que la session de paiement a été ouverte,
+            // pas que le client a payé : la confirmer créditerait un séquestre
+            // sans encaissement. Seuls les statuts terminaux positifs comptent.
+            if ($status === 'SUCCESS' || $status === 'SUCCESSFUL') {
                 $transaction->update([
                     'statut' => PaymentStatus::CONFIRME,
                     'orange_tx_reference' => $txReference,

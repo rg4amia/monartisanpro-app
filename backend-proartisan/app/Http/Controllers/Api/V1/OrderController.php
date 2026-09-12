@@ -121,9 +121,16 @@ class OrderController extends Controller
             ], 403);
         }
 
+        $order->load('items.product', 'client', 'supplier.fournisseurAgree', 'driver');
+
+        // Les codes sont masqués par défaut sur le modèle ; on ne réexpose que
+        // ceux dont cet acteur a besoin pour contrôler la remise.
         return response()->json([
             'success' => true,
-            'data' => $order->load('items.product', 'client', 'supplier.fournisseurAgree', 'driver'),
+            'data' => array_merge(
+                $order->toArray(),
+                $order->codesVisibleTo($user),
+            ),
         ]);
     }
 
@@ -218,9 +225,10 @@ class OrderController extends Controller
             ], 422);
         }
 
-        // Vérification des droits d'appel (fournisseur ou livreur assigné)
-        $user = $request->user();
-        if ($order->supplier_id !== $user->id && $order->driver_id !== $user->id && $order->client_id !== $user->id) {
+        // Une seule définition des acteurs habilités, portée par le modèle :
+        // le fournisseur qui remet, et selon le mode le livreur ou le client
+        // qui récupère. Le client n'a pas à valider un enlèvement livreur.
+        if (! $order->canValidatePickup($request->user())) {
             if ($request->header('X-Inertia')) {
                 return back()->withErrors(['message' => 'Non autorisé.']);
             }
@@ -271,9 +279,9 @@ class OrderController extends Controller
             ], 422);
         }
 
-        // Seul le livreur (driver) assigné ou le client peut appeler cet endpoint
-        $user = $request->user();
-        if ($order->driver_id !== $user->id && $order->client_id !== $user->id) {
+        // Le livreur assigné qui saisit le code du client, ou le client qui
+        // confirme lui-même la réception depuis son appareil.
+        if (! $order->canValidateDelivery($request->user())) {
             return response()->json([
                 'success' => false,
                 'message' => 'Non autorisé.',

@@ -195,7 +195,21 @@ class DeliveryTrackingServiceTest extends TestCase
         $this->assertEquals(5.3480, $payload['driver_latest_position']['latitude']);
         $this->assertArrayHasKey('routing', $payload);
         $this->assertEquals(4.0, $payload['routing']['distance_km']);
-        $this->assertEquals('LIV-PICK-1234', $payload['codes']['pickup_code']);
+
+        // Les codes dépendent désormais de qui consulte le suivi. Sans lecteur
+        // identifié, on n'en divulgue aucun : le suivi géographique n'a pas à
+        // transporter les secrets de validation.
+        $this->assertSame([], $payload['codes']);
+
+        // Le fournisseur, lui, doit voir le code de retrait pour contrôler le
+        // livreur qui se présente.
+        $supplierPayload = $this->orderService->getDeliveryTrackingData($order, $order->supplier);
+        $this->assertSame('LIV-PICK-1234', $supplierPayload['codes']['pickup_code']);
+        $this->assertArrayNotHasKey('reception_code', $supplierPayload['codes']);
+
+        // Le livreur n'en obtient aucun, même en étant assigné à la course.
+        $driverPayload = $this->orderService->getDeliveryTrackingData($order, $driver);
+        $this->assertSame([], $driverPayload['codes']);
     }
 
     public function test_driver_location_api_endpoint(): void

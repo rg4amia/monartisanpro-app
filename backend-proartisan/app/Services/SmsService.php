@@ -108,13 +108,17 @@ class SmsService
      * @param string $message Message content
      * @param string $senderId Sender ID (max 11 chars)
      * @param string|null $scheduleTime Optional schedule time (Y-m-d H:i)
+     * @param string $type Type SMSpro : 'plain' par défaut, 'otp' pour les
+     *                     codes de vérification (route transactionnelle
+     *                     prioritaire côté opérateur)
      * @return array
      */
     public function send(
         string|array $recipient,
         string $message,
         string $senderId = 'ProsArtisan',
-        ?string $scheduleTime = null
+        ?string $scheduleTime = null,
+        string $type = 'plain'
     ): array {
         // Normaliser le(s) numéro(s) au format international
         $recipient = $this->normalizeRecipients($recipient);
@@ -124,6 +128,7 @@ class SmsService
             Log::info('SMS (log mode)', [
                 'recipient' => $recipient,
                 'sender_id' => $senderId,
+                'type' => $type,
                 'message' => $message,
                 'schedule_time' => $scheduleTime,
             ]);
@@ -145,7 +150,7 @@ class SmsService
         $payload = [
             'recipient' => $recipientString,
             'sender_id' => $senderId,
-            'type' => 'plain',
+            'type' => $type,
             'message' => $message,
         ];
 
@@ -310,7 +315,26 @@ class SmsService
      */
     public function sendOtp(string $phone, string $code): array
     {
-        $message = "Votre code de vérification ProsArtisan est: {$code}. Valide pendant 10 minutes.";
-        return $this->send($phone, $message);
+        // La durée est lue dans la config : le message annonçait 10 minutes
+        // alors que le code expire au bout de 5.
+        $ttl = (int) config('prosartisan.otp.ttl', 5);
+
+        // L'avertissement est la seule parade au hameçonnage par téléphone,
+        // où un faux support réclame le code reçu.
+        $message = "Votre code de vérification ProsArtisan est: {$code}. "
+            ."Valide {$ttl} minutes. Ne le communiquez jamais : ProsArtisan ne vous le demandera pas.";
+
+        // `type: otp` — route transactionnelle dédiée de SMSpro. Les codes de
+        // vérification partaient jusqu'ici en `plain`, c'est-à-dire par la même
+        // voie que les campagnes marketing, plus filtrée et moins prioritaire.
+        // La fiabilité de livraison de l'OTP fait partie de la sécurité : c'est
+        // le mécanisme de connexion.
+        return $this->send(
+            $phone,
+            $message,
+            config('services.sms.sender_id', 'ProsArtisan'),
+            null,
+            'otp'
+        );
     }
 }

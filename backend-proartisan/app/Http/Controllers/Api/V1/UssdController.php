@@ -52,17 +52,23 @@ class UssdController extends Controller
         }
 
         $text = trim($text);
-        
-        // Raccourci Direct (ex: dial *555*RET-123# -> text = "RET-123")
-        if (!empty($text) && !str_contains($text, '*')) {
+
+        // Raccourci direct : *555*RET-42-4821# -> text = "RET-42-4821".
+        // L'identifiant de commande et le code secret sont deux valeurs
+        // distinctes. L'ancien format « RET-42 » déduisait le code de
+        // l'identifiant, ce qui revenait à n'exiger aucun secret.
+        if (! empty($text) && ! str_contains($text, '*')) {
             $cleaned = strtoupper($text);
-            if (str_starts_with($cleaned, 'RET-') 
-                || str_starts_with($cleaned, 'REC-')
-                || str_starts_with($cleaned, 'RETRAIT-')
-                || str_starts_with($cleaned, 'RECEPTION-')
-                || str_starts_with($cleaned, 'LIVREUR-')
-            ) {
-                return $this->processDirectCode($cleaned);
+
+            if ($parsed = $this->parseValidationInstruction($cleaned)) {
+                return $this->executeValidation($parsed);
+            }
+
+            if ($this->looksLikeValidationInstruction($cleaned)) {
+                return response(
+                    'END Format incomplet. Composez PREFIXE-NoCommande-Code (ex: RET-42-4821).',
+                    200
+                )->header('Content-Type', 'text/plain');
             }
         }
 
@@ -82,7 +88,7 @@ class UssdController extends Controller
         if ($choice === '1') {
             // Prise en charge / Retrait
             if ($step === 1) {
-                return response("CON Saisir ID_Commande*Code (ex: 42*RET-42) :", 200)
+                return response('CON Saisir NoCommande*Code (ex: 42*4821) :', 200)
                     ->header('Content-Type', 'text/plain');
             }
             if ($step === 2) {
@@ -98,7 +104,7 @@ class UssdController extends Controller
         } elseif ($choice === '2') {
             // Livraison
             if ($step === 1) {
-                return response("CON Saisir ID_Commande*Code (ex: 42*REC-42) :", 200)
+                return response('CON Saisir NoCommande*Code (ex: 42*7390) :', 200)
                     ->header('Content-Type', 'text/plain');
             }
             if ($step === 2) {
@@ -118,31 +124,53 @@ class UssdController extends Controller
     }
 
     /**
-     * Traitement direct d'un code de validation composé instantanément.
+     * Préfixes désignant une prise en charge chez le fournisseur.
      */
-    private function processDirectCode(string $code)
+    private const PICKUP_PREFIXES = ['RET', 'RETRAIT', 'LIVREUR'];
+
+    /**
+     * Découpe une instruction « PREFIXE NoCommande Code ».
+     *
+     * Les trois éléments sont exigés séparément : le numéro de commande n'est
+     * pas secret, seul le code l'est. Les confondre — ce que faisait l'ancien
+     * format « RET-42 » — revenait à valider une livraison sans preuve.
+     *
+     * @return array{type: string, order_id: string, code: string}|null
+     */
+    private function parseValidationInstruction(string $raw): ?array
     {
-        $numericPart = preg_replace('/[^0-9]/', '', $code);
-        if (empty($numericPart)) {
-            return response("END Erreur: Code invalide.", 200)
-                ->header('Content-Type', 'text/plain');
+        $pattern = '/^(RET|RETRAIT|LIVREUR|REC|RECEPTION)[\s-]+(\d+)[\s-]+([A-Z0-9-]+)$/i';
+
+        if (! preg_match($pattern, trim($raw), $matches)) {
+            return null;
         }
 
-        if (str_starts_with($code, 'RET-') 
-            || str_starts_with($code, 'RETRAIT-')
-            || str_starts_with($code, 'LIVREUR-')
-        ) {
-            return $this->executePickup($numericPart, $code);
-        }
+        $prefix = strtoupper($matches[1]);
 
-        if (str_starts_with($code, 'REC-') 
-            || str_starts_with($code, 'RECEPTION-')
-        ) {
-            return $this->executeDelivery($numericPart, $code);
-        }
+        return [
+            'type' => in_array($prefix, self::PICKUP_PREFIXES, true) ? 'pickup' : 'delivery',
+            'order_id' => $matches[2],
+            'code' => strtoupper($matches[3]),
+        ];
+    }
 
-        return response("END Erreur: Code non reconnu.", 200)
-            ->header('Content-Type', 'text/plain');
+    /**
+     * Reconnaît une instruction de validation mal formée, pour répondre par
+     * une aide au format plutôt que par un menu inattendu.
+     */
+    private function looksLikeValidationInstruction(string $raw): bool
+    {
+        return (bool) preg_match('/^(RET|RETRAIT|LIVREUR|REC|RECEPTION)\b/i', trim($raw));
+    }
+
+    /**
+     * @param  array{type: string, order_id: string, code: string}  $parsed
+     */
+    private function executeValidation(array $parsed)
+    {
+        return $parsed['type'] === 'pickup'
+            ? $this->executePickup($parsed['order_id'], $parsed['code'])
+            : $this->executeDelivery($parsed['order_id'], $parsed['code']);
     }
 
     /**
@@ -213,36 +241,30 @@ class UssdController extends Controller
         $cleanedMsg = strtoupper(trim($message));
         $reply = '';
 
-        if (preg_match('/^(RET|RETRAIT|LIVREUR|REC|RECEPTION)[ -]?(\d+)$/i', $cleanedMsg, $matches)) {
-            $prefix = strtoupper($matches[1]);
-            $orderId = $matches[2];
-            
-            if (in_array($prefix, ['RET', 'RETRAIT', 'LIVREUR'])) {
-                $code = "RET-{$orderId}";
-                $type = 'pickup';
-            } else {
-                $code = "REC-{$orderId}";
-                $type = 'delivery';
-            }
+        $parsed = $this->parseValidationInstruction($cleanedMsg);
+
+        if ($parsed !== null) {
+            $orderId = $parsed['order_id'];
 
             try {
                 $order = \App\Models\Order::find($orderId);
-                if (!$order) {
+                if (! $order) {
                     $reply = "Erreur ProsArtisan: La commande #{$orderId} n'existe pas.";
+                } elseif ($parsed['type'] === 'pickup') {
+                    app(\App\Services\OrderService::class)->verifyPickup($order, $parsed['code']);
+                    $reply = "ProsArtisan: Retrait de la commande #{$orderId} valide avec succes.";
                 } else {
-                    if ($type === 'pickup') {
-                        app(\App\Services\OrderService::class)->verifyPickup($order, $code);
-                        $reply = "ProsArtisan: Retrait de la commande #{$orderId} valide avec succes.";
-                    } else {
-                        app(\App\Services\OrderService::class)->verifyDelivery($order, $code);
-                        $reply = "ProsArtisan: Livraison de la commande #{$orderId} validee avec succes.";
-                    }
+                    app(\App\Services\OrderService::class)->verifyDelivery($order, $parsed['code']);
+                    $reply = "ProsArtisan: Livraison de la commande #{$orderId} validee avec succes.";
                 }
             } catch (\Exception $e) {
-                $reply = "Erreur ProsArtisan: " . $e->getMessage();
+                $reply = 'Erreur ProsArtisan: '.$e->getMessage();
             }
         } else {
-            $reply = "Format SMS incorrect. Utilisez : RET-ID (prise en charge) ou REC-ID (livraison). Exemple: RET-42";
+            // Le code secret figure sur le bon de commande du fournisseur, ou
+            // est communiqué par le client à la remise.
+            $reply = 'Format SMS incorrect. Utilisez : RET NoCommande Code (prise en charge) '
+                .'ou REC NoCommande Code (livraison). Exemple: RET 42 4821';
         }
 
         // Retourner la réponse par SMS au livreur

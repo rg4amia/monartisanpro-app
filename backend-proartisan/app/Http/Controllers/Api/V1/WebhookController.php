@@ -26,9 +26,11 @@ class WebhookController extends Controller
             $payload = $request->getContent();
             $signature = $request->header('X-Wave-Signature');
 
+            // On ne journalise ni le corps complet (données de paiement) ni la
+            // signature : les logs sont lus plus largement que la base.
             Log::info('Wave: Webhook reçu', [
-                'payload' => $payload,
-                'signature' => $signature,
+                'bytes' => strlen($payload),
+                'has_signature' => $signature !== null && $signature !== '',
             ]);
 
             // Valider la signature du webhook

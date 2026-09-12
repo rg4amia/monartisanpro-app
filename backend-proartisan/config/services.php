@@ -127,6 +127,27 @@ return [
     |                     exposé ici pour centraliser le secret / la CI)
     */
 
+    /*
+    |--------------------------------------------------------------------------
+    | Passerelles USSD / SMS entrant
+    |--------------------------------------------------------------------------
+    | `secret` authentifie l'opérateur qui appelle /api/v1/ussd et
+    | /api/v1/sms/incoming (en-tête `X-Gateway-Secret`). Ces endpoints valident
+    | des retraits et des livraisons, donc libèrent des fonds : sans secret
+    | configuré, ils restent fermés (503) plutôt que d'accepter n'importe qui.
+    | `ips` est une liste blanche facultative, séparée par des virgules.
+    */
+
+    'gateway' => [
+        'secret' => env('USSD_GATEWAY_SECRET', ''),
+        'ips' => env('USSD_GATEWAY_IPS', ''),
+        // Secret de signature SMSpro (page « Developer settings »). SMSpro
+        // signe chaque appel en HMAC-SHA256 du corps brut, dans l'en-tête
+        // `X-Webhook-Signature` préfixé de `sha256=`. Préférable au secret
+        // partagé : la signature couvre le contenu, pas seulement l'appelant.
+        'signing_secret' => env('SMSPRO_WEBHOOK_SECRET', ''),
+    ],
+
     'yandex' => [
         'distance_matrix_key' => env('YANDEX_DISTANCE_MATRIX_API_KEY'),
         'geolocation_key' => env('YANDEX_GEOLOCATION_API_KEY'),

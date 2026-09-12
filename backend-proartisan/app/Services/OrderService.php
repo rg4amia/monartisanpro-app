@@ -191,12 +191,20 @@ class OrderService
         $order->update(['status' => $nextStatus]);
 
         if ($nextStatus === 'prepared') {
-            // Retrait direct : Notifier le client de venir récupérer
+            // Retrait direct : le client vient lui-même chercher sa commande.
+            // Il reçoit le code, le fournisseur le contrôle au comptoir.
             app(\App\Services\NotificationService::class)->send(
                 $order->client,
                 'payment',
                 'Commande prête pour retrait',
-                "Votre commande #{$order->id} est prête. Code de retrait : {$order->pickup_code}."
+                "Votre commande #{$order->id} est prête. Code de retrait à présenter au comptoir : {$order->pickup_code}."
+            );
+
+            app(\App\Services\NotificationService::class)->send(
+                $order->supplier,
+                'payment',
+                'Commande à remettre au client',
+                "La commande #{$order->id} attend son retrait. Code à vérifier auprès du client : {$order->pickup_code}."
             );
         } else {
             // Livraison : Notifier les livreurs de la zone de couverture
@@ -256,12 +264,22 @@ class OrderService
 
         $supplierAddress = $supplierProfile ? $supplierProfile->nom_boutique : 'le fournisseur';
 
-        // Notification Livreur (reçoit la situation géographique pour récupérer)
+        // Notification Livreur : la localisation, mais pas le code. Le livreur
+        // doit le demander au comptoir — c'est ce qui atteste sa présence.
         app(\App\Services\NotificationService::class)->send(
             $driver,
             'payment',
             'Course acceptée',
-            "Rendez-vous chez {$supplierAddress} pour récupérer la marchandise. Code de prise en charge : {$order->pickup_code}."
+            "Rendez-vous chez {$supplierAddress} pour récupérer la marchandise. Demandez le code de prise en charge au fournisseur."
+        );
+
+        // Notification Fournisseur : il détient le code et contrôle qui se
+        // présente. Sans cela, il n'avait aucun moyen de vérifier le livreur.
+        app(\App\Services\NotificationService::class)->send(
+            $order->supplier,
+            'payment',
+            'Livreur en route',
+            "Un livreur vient récupérer la commande #{$order->id}. Code de prise en charge à lui communiquer après contrôle : {$order->pickup_code}."
         );
 
         // Notification Client
@@ -366,6 +384,46 @@ class OrderService
     }
 
     /**
+     * Compare un code saisi au code attendu de la commande.
+     *
+     * Le secret est le suffixe numérique tiré au hasard à la création
+     * (« LIVREUR-4821 » → « 4821 »). On tolère les variantes de préfixe et la
+     * saisie du seul suffixe, parce qu'un livreur au comptoir ou sur un menu
+     * USSD ne recopie pas toujours le libellé exact — mais toutes ces formes
+     * exigent de connaître le secret. Aucune ne peut être devinée à partir de
+     * l'identifiant de commande.
+     *
+     * @param  list<string>  $prefixes  Préfixes acceptés pour ce type de code
+     */
+    private function codeMatches(string $inputCode, string $expectedCode, array $prefixes): bool
+    {
+        if ($expectedCode === '') {
+            return false;
+        }
+
+        $candidates = [$expectedCode];
+        $secret = preg_replace('/[^0-9]/', '', $expectedCode);
+
+        if ($secret !== '') {
+            $candidates[] = $secret;
+
+            foreach ($prefixes as $prefix) {
+                $candidates[] = "{$prefix}-{$secret}";
+            }
+        }
+
+        foreach ($candidates as $candidate) {
+            // hash_equals : le code est un secret court, on ne laisse pas le
+            // temps de réponse en révéler les premiers caractères.
+            if (hash_equals($candidate, $inputCode)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Validation du code de retrait (chez le fournisseur).
      * Libère immédiatement la part des matériaux au profit du fournisseur.
      */
@@ -374,18 +432,31 @@ class OrderService
         return DB::transaction(function () use ($order, $code, $photoUrl) {
             $inputCode = strtoupper(trim($code));
             $expectedCode = strtoupper(trim($order->pickup_code));
-            $orderId = (string) $order->id;
-            $numericSuffix = preg_replace('/[^0-9]/', '', $expectedCode);
 
-            $isValidCode = ($inputCode === $expectedCode)
-                || ($inputCode === "RET-{$orderId}")
-                || ($inputCode === "RETRAIT-{$orderId}")
-                || ($inputCode === "LIVREUR-{$orderId}")
-                || ($inputCode === "RET-5561")
-                || ($numericSuffix !== '' && ($inputCode === "RET-{$numericSuffix}" || $inputCode === "RETRAIT-{$numericSuffix}" || $inputCode === "LIVREUR-{$numericSuffix}" || $inputCode === $numericSuffix));
-
-            if (! $isValidCode) {
+            // Seules sont acceptées les formes qui contiennent réellement le
+            // secret tiré à la création de la commande (4 chiffres aléatoires,
+            // cf. la génération de `pickup_code`). Les variantes dérivées de
+            // l'identifiant de commande — « RET-42 » — ont été retirées : cet
+            // identifiant n'est pas secret, et les accepter permettait à un
+            // livreur de valider un retrait sans jamais s'être présenté chez le
+            // fournisseur, donc de déclencher une libération de fonds. Une
+            // constante universelle (« RET-5561 »), valable pour n'importe
+            // quelle commande, traînait également.
+            if (! $this->codeMatches($inputCode, $expectedCode, ['RET', 'RETRAIT', 'LIVREUR'])) {
                 throw new \Exception("Le code de retrait ou de prise en charge est incorrect.");
+            }
+
+            // Idempotence : la même validation peut arriver deux fois — le
+            // fournisseur confirme depuis son appareil pendant que celle du
+            // livreur, mise en file hors connexion, se rejoue plus tard. Une
+            // commande déjà dans l'état visé n'est pas une erreur, et ne doit
+            // surtout pas déclencher un second versement.
+            $alreadyDone = $order->delivery_mode === 'pickup'
+                ? $order->status === 'delivered'
+                : in_array($order->status, ['driver_picked_up', 'delivered'], true);
+
+            if ($alreadyDone) {
+                return $order;
             }
 
             $updateData = [];
@@ -437,7 +508,7 @@ class OrderService
                     $order->driver,
                     'payment',
                     'Colis récupéré',
-                    "Colis récupéré. Livrez à : {$clientAddress}. Code de réception à demander au client : {$order->reception_code}."
+                    "Colis récupéré. Livrez à : {$clientAddress}. Le client vous remettra son code de réception une fois le colis en main."
                 );
 
                 // Notification Client
@@ -466,17 +537,21 @@ class OrderService
 
             $inputCode = strtoupper(trim($code));
             $expectedCode = strtoupper(trim($order->reception_code));
-            $orderId = (string) $order->id;
-            $numericSuffix = preg_replace('/[^0-9]/', '', $expectedCode);
 
-            $isValidCode = ($inputCode === $expectedCode)
-                || ($inputCode === "REC-{$orderId}")
-                || ($inputCode === "RECEPTION-{$orderId}")
-                || ($inputCode === "REC-3012")
-                || ($numericSuffix !== '' && ($inputCode === "REC-{$numericSuffix}" || $inputCode === "RECEPTION-{$numericSuffix}" || $inputCode === $numericSuffix));
-
-            if (! $isValidCode) {
+            // Même resserrement qu'au retrait : le code de réception est remis
+            // au livreur par le client, en main propre. C'est sa seule preuve
+            // de présence. « REC-42 », dérivable de l'identifiant de commande,
+            // permettait au livreur de se payer sans avoir livré.
+            if (! $this->codeMatches($inputCode, $expectedCode, ['REC', 'RECEPTION'])) {
                 throw new \Exception("Le code de réception de livraison est incorrect.");
+            }
+
+            // Idempotence : le client peut confirmer la réception depuis son
+            // appareil au moment où celle du livreur, mise en file faute de
+            // réseau, se rejoue. Le second passage ne doit ni échouer, ni
+            // reverser la part livraison une seconde fois.
+            if ($order->status === 'delivered') {
+                return $order;
             }
 
             if ($order->status !== 'driver_picked_up' && $order->status !== 'shipping') {
@@ -744,11 +819,14 @@ class OrderService
             'created_at'    => now(),
         ]);
 
-        // Mettre à jour la position courante du profil livreur
+        // Mettre à jour la position courante du profil livreur.
+        // On passe par User::setPosition, qui utilise des requêtes préparées et
+        // gère le cas SQLite : l'ancienne interpolation directe des coordonnées
+        // dans du SQL brut n'était pas injectable (les paramètres sont typés
+        // `float`), mais elle restait fragile et contournait la convention du
+        // projet — les colonnes POINT s'écrivent avec des bindings.
         try {
-            $driver->update([
-                'position' => DB::raw("ST_SRID(POINT({$lng}, {$lat}), 4326)"),
-            ]);
+            $driver->setPosition($lat, $lng);
         } catch (\Throwable $e) {
             // Ignorer si la colonne spatiale a des spécificités en environnement de test
         }
@@ -793,7 +871,7 @@ class OrderService
     /**
      * Récupère le package complet de suivi 360° de la livraison pour mobile et backoffice.
      */
-    public function getDeliveryTrackingData(Order $order): array
+    public function getDeliveryTrackingData(Order $order, ?User $viewer = null): array
     {
         $order->loadMissing(['supplier.fournisseurAgree', 'client', 'driver', 'latestTracking']);
 
@@ -855,12 +933,10 @@ class OrderService
                 'battery_level' => $latest->battery_level,
                 'recorded_at'   => $latest->created_at?->toIso8601String(),
             ] : null,
-            'codes'             => [
-                'pickup_code'    => $order->pickup_code,
-                'reception_code' => $order->reception_code,
-            ],
-            'pickup_code'       => $order->pickup_code,
-            'reception_code'    => $order->reception_code,
+            // Uniquement les codes que cet acteur doit connaître : le livreur
+            // n'en reçoit aucun, il doit les demander au fournisseur puis au
+            // client. Auparavant les deux étaient renvoyés à tout le monde.
+            'codes'             => $order->codesVisibleTo($viewer),
             'pickup_photo_url'  => $order->pickup_photo_url,
             'delivery_photo_url'=> $order->delivery_photo_url,
             'delivery_cost'     => $order->delivery_cost,

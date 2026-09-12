@@ -130,6 +130,8 @@ class AppServiceProvider extends ServiceProvider
             RateLimiter::for('auth', fn () => Limit::none());
             RateLimiter::for('webhook', fn () => Limit::none());
             RateLimiter::for('ai', fn () => Limit::none());
+            RateLimiter::for('gateway', fn () => Limit::none());
+            RateLimiter::for('public', fn () => Limit::none());
 
             return;
         }
@@ -156,6 +158,19 @@ class AppServiceProvider extends ServiceProvider
                 Limit::perMinute(10)->by($key),
                 Limit::perDay($request->user()?->id ? 150 : 40)->by($key),
             ];
+        });
+
+        // Passerelles USSD / SMS entrant. Le trafic légitime vient d'un petit
+        // nombre d'IP opérateur et reste modeste ; un pic signale un abus.
+        RateLimiter::for('gateway', function (Request $request) {
+            return Limit::perMinute(30)->by($request->ip());
+        });
+
+        // Endpoints publics non authentifiés (vitrine, taxonomie, vérification
+        // de code promo). Sans plafond, ils sont scrapables et — pour les codes
+        // promo — énumérables par force brute.
+        RateLimiter::for('public', function (Request $request) {
+            return Limit::perMinute(60)->by($request->ip());
         });
     }
 }

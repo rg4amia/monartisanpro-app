@@ -15,6 +15,7 @@ class Otp extends Model
         'user_id',
         'code',
         'action',
+        'attempts',
         'expires_at',
         'used_at',
     ];
@@ -24,6 +25,7 @@ class Otp extends Model
         return [
             'expires_at' => 'datetime',
             'used_at'    => 'datetime',
+            'attempts'   => 'integer',
         ];
     }
 

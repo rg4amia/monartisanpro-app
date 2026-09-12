@@ -87,7 +87,11 @@ class WhatsAppService
      */
     public function sendOtp(string $phone, string $code): array
     {
-        $message = "Votre code de vérification ProsArtisan est: {$code}. Valide pendant 10 minutes.";
+        $ttl = (int) config('prosartisan.otp.ttl', 5);
+
+        $message = "Votre code de vérification ProsArtisan est: {$code}. "
+            ."Valide {$ttl} minutes. Ne le communiquez jamais : ProsArtisan ne vous le demandera pas.";
+
         return $this->send($phone, $message);
     }
 }

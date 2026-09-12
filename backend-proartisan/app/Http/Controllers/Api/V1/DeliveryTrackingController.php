@@ -80,7 +80,7 @@ class DeliveryTrackingController extends Controller
             return response()->json(['error' => 'Non autorisé à consulter ce suivi.'], 403);
         }
 
-        $trackingData = $this->orderService->getDeliveryTrackingData($order);
+        $trackingData = $this->orderService->getDeliveryTrackingData($order, $user);
 
         return response()->json([
             'success'  => true,
@@ -96,6 +96,16 @@ class DeliveryTrackingController extends Controller
      */
     public function verifyPickup(Request $request, Order $order): JsonResponse
     {
+        // Le contrôle d'acteur manquait : n'importe quel compte authentifié
+        // connaissant le code pouvait valider un enlèvement, donc déclencher
+        // le versement au fournisseur.
+        if (! $order->canValidatePickup($request->user())) {
+            return response()->json([
+                'success' => false,
+                'error'   => 'Non autorisé à valider cet enlèvement.',
+            ], 403);
+        }
+
         $code = $request->input('pickup_code') ?? $request->input('code');
         if (! $code) {
             return response()->json([
@@ -136,6 +146,13 @@ class DeliveryTrackingController extends Controller
      */
     public function verifyDelivery(Request $request, Order $order): JsonResponse
     {
+        if (! $order->canValidateDelivery($request->user())) {
+            return response()->json([
+                'success' => false,
+                'error'   => 'Non autorisé à valider cette livraison.',
+            ], 403);
+        }
+
         $code = $request->input('reception_code') ?? $request->input('code');
         if (! $code) {
             return response()->json([

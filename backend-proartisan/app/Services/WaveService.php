@@ -173,12 +173,26 @@ class WaveService
     /**
      * Valider la signature du webhook Wave
      *
-     * @param string $payload Corps de la requête brut
-     * @param string $signature Signature provenant du header X-Wave-Signature
-     * @return bool
+     * Un HMAC calculé avec une clé vide est reproductible par n'importe qui :
+     * si `WAVE_WEBHOOK_SECRET` n'est pas renseigné, la signature ne prouve
+     * plus rien et les confirmations de paiement deviennent forgeables. On
+     * refuse donc le webhook plutôt que de valider avec une clé vide.
+     *
+     * @param  string  $payload  Corps de la requête brut
+     * @param  string|null  $signature  Signature provenant du header X-Wave-Signature
      */
-    public function validateWebhookSignature(string $payload, string $signature): bool
+    public function validateWebhookSignature(string $payload, ?string $signature): bool
     {
+        if ($this->webhookSecret === '') {
+            Log::critical('Wave: WAVE_WEBHOOK_SECRET non configuré — webhook refusé.');
+
+            return false;
+        }
+
+        if ($signature === null || $signature === '') {
+            return false;
+        }
+
         $expectedSignature = hash_hmac('sha256', $payload, $this->webhookSecret);
 
         return hash_equals($expectedSignature, $signature);

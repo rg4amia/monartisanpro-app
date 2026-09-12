@@ -50,6 +50,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin.only' => \App\Http\Middleware\AdminOnly::class,
             'account.active' => \App\Http\Middleware\AccountActive::class,
             'supplier.only' => \App\Http\Middleware\SupplierOnly::class,
+            'gateway.verified' => \App\Http\Middleware\VerifyGatewayRequest::class,
+            'smspro.signed' => \App\Http\Middleware\VerifySmsproWebhook::class,
         ]);
 
         $middleware->validateCsrfTokens(except: [

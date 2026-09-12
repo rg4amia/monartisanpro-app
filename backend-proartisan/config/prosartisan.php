@@ -18,6 +18,12 @@ return [
     'otp' => [
         'length' => 4,
         'ttl' => 5, // minutes
+        // Tentatives de vérification autorisées par code. Au-delà, le code est
+        // brûlé et il faut en redemander un : c'est ce qui rend la force brute
+        // inopérante sur un code court, indépendamment de l'IP de l'attaquant.
+        // Porter 'length' à 6 renforce encore la marge, au prix d'un
+        // changement d'UX côté mobile (champ de saisie).
+        'max_attempts' => 5,
     ],
 
     'score_prosartisan' => [

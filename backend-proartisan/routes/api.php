@@ -63,22 +63,32 @@ Route::prefix('v1')->group(function () {
         Route::post('/reset-phone-confirm', [AuthController::class, 'confirmResetPhoneLost']);
     });
 
-    Route::get('/settings/app-access', [SettingController::class, 'getAppAccess']);
-    Route::post('/promo-codes/verify', [PromoCodeController::class, 'verify']);
+    // Endpoints publics non authentifiés : plafonnés par IP (`throttle:public`)
+    // pour limiter le scraping et, pour la vérification de code promo,
+    // l'énumération par force brute.
+    Route::middleware('throttle:public')->group(function () {
+        Route::get('/settings/app-access', [SettingController::class, 'getAppAccess']);
+        Route::post('/promo-codes/verify', [PromoCodeController::class, 'verify']);
 
-    // ── Secteurs & Métiers (Taxonomie publique) ─────────────────────────────
-    Route::get('/sectors', [SectorController::class, 'index']);
-    Route::get('/sectors/{sector}/trades', [SectorController::class, 'trades']);
-    Route::get('/intervention-types', [InterventionTypeController::class, 'index']);
+        // ── Secteurs & Métiers (Taxonomie publique) ─────────────────────────
+        Route::get('/sectors', [SectorController::class, 'index']);
+        Route::get('/sectors/{sector}/trades', [SectorController::class, 'trades']);
+        Route::get('/intervention-types', [InterventionTypeController::class, 'index']);
+    });
 
     // ── Webhooks (sans authentification pour les callbacks externes) ─────────
     Route::prefix('webhooks')->middleware('throttle:webhook')->group(function () {
         Route::post('/wave', [WebhookController::class, 'wave']);
         Route::post('/orange-money', [WebhookController::class, 'orangeMoney']);
+
+        // Accusés de livraison SMSpro. Signature HMAC obligatoire : SMSpro la
+        // fournit toujours, aucun repli n'est acceptable ici.
+        Route::post('/sms-dlr', [\App\Http\Controllers\Api\V1\SmsWebhookController::class, 'deliveryReceipt'])
+            ->middleware('smspro.signed');
     });
 
     // ── Vitrine publique (Front Office — sans authentification) ──────────────
-    Route::prefix('vitrine')->group(function () {
+    Route::prefix('vitrine')->middleware('throttle:public')->group(function () {
         Route::get('/slides', [VitrineController::class, 'slides']);
         Route::get('/artisan-du-mois', [VitrineController::class, 'artisanDuMois']);
         Route::get('/artisans-stars', [VitrineController::class, 'artisansStars']);
@@ -95,8 +105,13 @@ Route::prefix('v1')->group(function () {
     });
 
     // ── Validation Hors-Ligne USSD & SMS ─────────────────────────────────────
-    Route::post('/ussd', [UssdController::class, 'handle']);
-    Route::post('/sms/incoming', [UssdController::class, 'incomingSms']);
+    // Ces endpoints libèrent des fonds : la passerelle appelante doit
+    // s'authentifier (`X-Gateway-Secret`, cf. VerifyGatewayRequest). Le rôle
+    // livreur du numéro est vérifié ensuite, dans le contrôleur.
+    Route::middleware(['gateway.verified', 'throttle:gateway'])->group(function () {
+        Route::post('/ussd', [UssdController::class, 'handle']);
+        Route::post('/sms/incoming', [UssdController::class, 'incomingSms']);
+    });
 
     // ─────────────────────────────────────────────────────────────────────────
     // ROUTES PROTÉGÉES (Sanctum token)

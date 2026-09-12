@@ -108,6 +108,66 @@ test('it respects action parameter if provided', function () {
     expect($this->otpService->verifyOtp($phone, $code, 'login'))->toBeTrue();
 });
 
+// ── Verrouillage après trop de tentatives ────────────────────────────────────
+// L'OTP est le mécanisme de connexion. Un code à 4 chiffres n'offre que 10 000
+// combinaisons : sans compteur porté par le code lui-même, le seul rempart
+// était le throttle par IP, que contourne un parc de proxys.
+
+test('un code errone consomme une tentative', function () {
+    $phone = '2250707123456';
+    $this->otpService->sendOtp($phone);
+
+    $this->otpService->verifyOtp($phone, '0000');
+
+    expect(Otp::latest()->first()->attempts)->toBe(1);
+});
+
+test('le code est brule apres cinq tentatives erronees', function () {
+    $phone = '2250707123456';
+    $code  = $this->otpService->sendOtp($phone);
+
+    // 5 essais infructueux — on évite volontairement le bon code.
+    $wrong = $code === '0000' ? '1111' : '0000';
+    for ($i = 0; $i < 5; $i++) {
+        expect($this->otpService->verifyOtp($phone, $wrong))->toBeFalse();
+    }
+
+    $otp = Otp::latest()->first();
+    expect($otp->attempts)->toBe(5);
+    expect($otp->used_at)->not->toBeNull();
+
+    // Le cœur du correctif : même le bon code ne passe plus. L'attaquant doit
+    // provoquer un nouvel envoi, ce qui le ramène à zéro à chaque fois.
+    expect($this->otpService->verifyOtp($phone, $code))->toBeFalse();
+});
+
+test('le bon code reste accepte tant que le plafond n est pas atteint', function () {
+    $phone = '2250707123456';
+    $code  = $this->otpService->sendOtp($phone);
+
+    $wrong = $code === '0000' ? '1111' : '0000';
+    for ($i = 0; $i < 4; $i++) {
+        expect($this->otpService->verifyOtp($phone, $wrong))->toBeFalse();
+    }
+
+    // Quatre erreurs ne doivent pas pénaliser un utilisateur légitime.
+    expect($this->otpService->verifyOtp($phone, $code))->toBeTrue();
+});
+
+test('un nouvel envoi repart avec un compteur neuf', function () {
+    $phone = '2250707123456';
+    $this->otpService->sendOtp($phone);
+
+    $this->otpService->verifyOtp($phone, '0000');
+    $this->otpService->verifyOtp($phone, '0000');
+
+    $second = $this->otpService->sendOtp($phone);
+
+    $otp = Otp::latest('id')->first();
+    expect($otp->attempts)->toBe(0);
+    expect($this->otpService->verifyOtp($phone, $second))->toBeTrue();
+});
+
 test('it can send OTP via WhatsApp channel', function () {
     $phone = '2250707123456';
 
