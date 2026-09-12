@@ -263,11 +263,15 @@ class EvaluationController extends Controller
             }
         }
 
-        // 3. Livreur si livraison associée
-        $driverId = null;
-        $order = Order::where('status', 'delivered')->whereHas('items', function ($q) use ($mission) {
-            // Check if any order is related or assigned
-        })->first();
+        // Pas de livreur ici : rien ne relie une commande à une mission en
+        // base (`orders` n'a pas de `mission_id`). Le livreur s'évalue depuis
+        // la commande, via GET /orders/{order}/evaluations-status.
+        //
+        // Le code retiré à cet endroit cherchait un livreur avec un
+        // `whereHas('items', ...)` dont la fermeture était vide : la contrainte
+        // ne filtrait rien, la requête ramenait donc n'importe quelle commande
+        // livrée de la base, et son résultat n'était de toute façon jamais
+        // utilisé.
 
         return response()->json([
             'success' => true,
