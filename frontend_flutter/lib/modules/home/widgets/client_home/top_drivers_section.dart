@@ -9,10 +9,21 @@ class TopDriversSection extends StatelessWidget {
 
   final HomeController controller;
 
+  /// Lecture sûre d'un champ texte du payload.
+  ///
+  /// Ces cartes sont alimentées par du JSON : transtyper directement en
+  /// `String` fait lever « type 'Null' is not a subtype of type 'String' »
+  /// dès qu'une clé manque, et Flutter remplace alors toute la section par
+  /// une zone grise. C'est ce qui arrivait avec `vehicle`, que le backend ne
+  /// produisait pas.
+  static String _text(Map<String, dynamic> source, String key) =>
+      source[key]?.toString().trim() ?? '';
+
   @override
   Widget build(BuildContext context) {
     return Column(
       children: controller.topDrivers.map((driver) {
+        final vehicle = _text(driver, 'vehicle');
         return Container(
           margin: const EdgeInsets.only(bottom: 10),
           padding: const EdgeInsets.all(16),
@@ -41,22 +52,25 @@ class TopDriversSection extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      driver['name'] as String,
+                      _text(driver, 'name'),
                       style: const TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 14.5,
                         color: AppColors.textPrimary,
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      driver['vehicle'] as String,
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
+                    // Ligne omise plutôt que vide quand le véhicule est inconnu.
+                    if (vehicle.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        vehicle,
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                    ),
+                    ],
                     const SizedBox(height: 4),
                     Row(
                       children: [

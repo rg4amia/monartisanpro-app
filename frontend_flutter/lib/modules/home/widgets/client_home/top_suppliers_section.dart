@@ -46,7 +46,10 @@ class TopSuppliersSection extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        supplier['name'] as String,
+                        // Jamais de transtypage direct sur du JSON : une clé
+                        // absente remplacerait toute la section par une zone
+                        // grise, comme c'est arrivé aux meilleurs livreurs.
+                        supplier['name']?.toString() ?? 'Quincaillerie',
                         style: const TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 14.5,

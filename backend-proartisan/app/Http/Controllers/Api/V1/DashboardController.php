@@ -29,6 +29,18 @@ class DashboardController extends Controller
         'completed',
     ];
 
+    /**
+     * Libellés des classes de véhicule (`orders.vehicle_class`).
+     *
+     * L'écran client attend une clé `vehicle` pour chaque livreur ; elle
+     * n'était pas produite, et le mobile la transtypait sans filet.
+     */
+    private const VEHICLE_LABELS = [
+        'moto' => 'Moto',
+        'voiture' => 'Voiture',
+        'cargo' => 'Cargo',
+    ];
+
     /** Missions en cours de vie, du brouillon à la validation du dernier jalon. */
     private const ACTIVE_MISSION_STATES = [
         'draft',
@@ -123,6 +135,9 @@ class DashboardController extends Controller
             ->select('users.name', 'users.id')
             ->selectRaw('COALESCE(AVG(evaluations.note), 5.0) as rating')
             ->selectRaw('(SELECT COUNT(*) FROM orders WHERE orders.driver_id = users.id AND orders.status = "delivered") as trips')
+            // Le véhicule n'est pas porté par le compte livreur mais par
+            // chaque commande : on retient sa classe la plus fréquente.
+            ->selectRaw('(SELECT o.vehicle_class FROM orders o WHERE o.driver_id = users.id AND o.status = "delivered" GROUP BY o.vehicle_class ORDER BY COUNT(*) DESC LIMIT 1) as vehicle_class')
             ->groupBy('users.id', 'users.name')
             ->orderByDesc('rating')
             ->take(3)
@@ -131,6 +146,7 @@ class DashboardController extends Controller
                 'name' => $item->name ?? 'Livreur #' . $item->id,
                 'rating' => round((float) $item->rating, 1),
                 'trips' => (int) $item->trips,
+                'vehicle' => self::VEHICLE_LABELS[$item->vehicle_class] ?? 'Moto',
             ])
             ->toArray();
 

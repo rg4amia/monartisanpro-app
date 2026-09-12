@@ -143,6 +143,34 @@ class DashboardStatsShapeTest extends TestCase
         $response->assertJsonPath('data.total_earnings', 60000);
     }
 
+    /**
+     * L'écran client affiche le véhicule sous le nom de chaque livreur, mais
+     * la clé `vehicle` n'était jamais produite : le mobile la transtypait en
+     * `String` et toute la section « Livreurs les mieux notés » devenait une
+     * zone grise. Le défaut restait invisible tant que le classement était
+     * vide — ce que garantissait le bogue de statuts.
+     *
+     * Le véhicule n'existe pas sur le compte livreur : il est porté par
+     * chaque commande, d'où la classe la plus fréquente.
+     */
+    public function test_each_top_driver_carries_a_vehicle_label(): void
+    {
+        User::factory()->create(['role' => 'livreur', 'kyc_status' => 'actif']);
+
+        $response = $this->actingAs($this->client())->getJson('/api/v1/dashboard');
+
+        $response->assertOk();
+
+        $drivers = $response->json('data.top_drivers');
+        $this->assertNotEmpty($drivers, 'Le livreur créé doit apparaître au classement.');
+
+        foreach ($drivers as $row) {
+            $this->assertArrayHasKey('vehicle', $row);
+            $this->assertNotNull($row['vehicle']);
+            $this->assertContains($row['vehicle'], ['Moto', 'Voiture', 'Cargo']);
+        }
+    }
+
     public function test_the_other_dashboard_collections_stay_readable(): void
     {
         // Ces clés suivaient `expenses_by_category` dans le parcours mobile :
