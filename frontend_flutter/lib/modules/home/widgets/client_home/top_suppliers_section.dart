@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../../../app/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../controllers/home_controller.dart';
+import 'section_empty_note.dart';
 
 /// Liste des fournisseurs les mieux notés (données de `HomeController`), chaque
 /// carte menant au réseau de quincailleries agréées.
@@ -14,6 +15,14 @@ class TopSuppliersSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (controller.topSuppliers.isEmpty) {
+      return const SectionEmptyNote(
+        icon: Icons.storefront_outlined,
+        message: 'Aucune quincaillerie notée pour l\'instant. Le classement '
+            'se construit à partir des commandes livrées et évaluées.',
+      );
+    }
+
     return Column(
       children: controller.topSuppliers.map((supplier) {
         return GestureDetector(

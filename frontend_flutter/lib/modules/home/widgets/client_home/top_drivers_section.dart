@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../controllers/home_controller.dart';
+import 'section_empty_note.dart';
 
 /// Liste des livreurs les mieux notés (données de `HomeController`).
 class TopDriversSection extends StatelessWidget {
@@ -21,6 +22,14 @@ class TopDriversSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (controller.topDrivers.isEmpty) {
+      return const SectionEmptyNote(
+        icon: Icons.local_shipping_outlined,
+        message: 'Aucun livreur noté pour l\'instant. Le classement se '
+            'construit à partir des livraisons évaluées.',
+      );
+    }
+
     return Column(
       children: controller.topDrivers.map((driver) {
         final vehicle = _text(driver, 'vehicle');

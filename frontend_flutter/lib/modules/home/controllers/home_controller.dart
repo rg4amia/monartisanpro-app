@@ -134,56 +134,11 @@ class HomeController extends GetxController {
     role.value = StorageService.getRole();
     userName.value = StorageService.getName() ?? '';
 
-    // Initialisation des données statistiques pour le tableau de bord client
-    expensesByCategory.value = {
-      'Maçonnerie': 320000,
-      'Électricité': 145000,
-      'Plomberie': 88000,
-      'Peinture': 54000,
-    };
-
-    topSuppliers.value = [
-      {
-        'name': 'Dépôt Sodemi Marcory',
-        'rating': 4.9,
-        'deliveries': 142,
-        'location': 'Marcory, Zone 4',
-      },
-      {
-        'name': 'Quincaillerie Angré Nouveau Horizon',
-        'rating': 4.8,
-        'deliveries': 98,
-        'location': 'Angré, 8ème Tranche',
-      },
-      {
-        'name': 'Sanitaire & Co Cocody',
-        'rating': 4.7,
-        'deliveries': 76,
-        'location': 'Cocody, Mermoz',
-      },
-    ];
-
-    topDrivers.value = [
-      {
-        'name': 'Konan Koffi Jerome',
-        'rating': 4.95,
-        'trips': 214,
-        'vehicle': 'Moto (Sécurisée)',
-      },
-      {
-        'name': 'Bakayoko Issouf',
-        'rating': 4.82,
-        'trips': 180,
-        'vehicle': 'Tricycle (Gros volumes)',
-      },
-      {
-        'name': 'Yao Kouakou F.',
-        'rating': 4.78,
-        'trips': 145,
-        'vehicle': 'Camionnette (Sécurisée)',
-      },
-    ];
-
+    // Aucune donnée de démonstration ici : ces trois collections sont
+    // renseignées par `GET /dashboard`. Les préremplir affichait au client des
+    // dépenses et des classements inventés, indiscernables des siens, et
+    // masquait toute panne de chargement — le tableau de bord paraissait
+    // fonctionner alors qu'il ne montrait rien de réel.
     _loadData();
   }
 
@@ -261,17 +216,21 @@ class HomeController extends GetxController {
       // `expenses_by_category` arrivait en `[]` (et non `{}`) pour un client
       // sans mission, ce qui faisait perdre au passage le classement des
       // fournisseurs, celui des livreurs et le rafraîchissement du score.
-      final expenses = _asMap(dashboardData['expenses_by_category']);
-      if (expenses != null && expenses.isNotEmpty) {
+      // La clé présente fait autorité, même vide : le client qui n'a encore
+      // aucune dépense doit voir un tableau de bord vide, pas un reliquat.
+      if (dashboardData.containsKey('expenses_by_category')) {
+        final expenses = _asMap(dashboardData['expenses_by_category']) ?? {};
         expensesByCategory.value =
             expenses.map((key, value) => MapEntry(key, _asInt(value)));
       }
 
-      final suppliers = _asMapList(dashboardData['top_suppliers']);
-      if (suppliers.isNotEmpty) topSuppliers.value = suppliers;
+      if (dashboardData.containsKey('top_suppliers')) {
+        topSuppliers.value = _asMapList(dashboardData['top_suppliers']);
+      }
 
-      final drivers = _asMapList(dashboardData['top_drivers']);
-      if (drivers.isNotEmpty) topDrivers.value = drivers;
+      if (dashboardData.containsKey('top_drivers')) {
+        topDrivers.value = _asMapList(dashboardData['top_drivers']);
+      }
 
       // If it's supplier stats
       final s = _asMap(dashboardData['stats']);

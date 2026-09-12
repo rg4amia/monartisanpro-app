@@ -63,6 +63,33 @@ void main() {
     });
   });
 
+  group('etats vides', () {
+    // Ces sections étaient préremplies de livreurs, de quincailleries et de
+    // dépenses inventés, que le client ne pouvait pas distinguer des siens et
+    // qui masquaient toute panne de chargement. Les retirer impose de dire
+    // explicitement qu'il n'y a rien à montrer, sans quoi il ne resterait
+    // qu'un cadre muet — lu comme une panne.
+    testWidgets('les livreurs annoncent l absence de classement',
+        (tester) async {
+      final controller = HomeController()..topDrivers.value = [];
+
+      await pump(tester, TopDriversSection(controller: controller));
+
+      expect(tester.takeException(), isNull);
+      expect(find.textContaining('Aucun livreur noté'), findsOneWidget);
+    });
+
+    testWidgets('les fournisseurs annoncent l absence de classement',
+        (tester) async {
+      final controller = HomeController()..topSuppliers.value = [];
+
+      await pump(tester, TopSuppliersSection(controller: controller));
+
+      expect(tester.takeException(), isNull);
+      expect(find.textContaining('Aucune quincaillerie notée'), findsOneWidget);
+    });
+  });
+
   group('TopSuppliersSection', () {
     testWidgets('survit a un nom absent', (tester) async {
       final controller = HomeController()

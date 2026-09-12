@@ -7,6 +7,7 @@ import '../../controllers/home_controller.dart';
 import 'client_mobile_money_card.dart';
 import 'dashboard_mini_card.dart';
 import 'expense_progress.dart';
+import 'section_empty_note.dart';
 import 'section_header.dart';
 import 'top_artisans_section.dart';
 import 'top_drivers_section.dart';
@@ -63,32 +64,41 @@ class ClientDashboardView extends StatelessWidget {
         const SizedBox(height: 24),
         const SectionHeader(title: 'Dépenses par catégorie'),
         const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: AppColors.border),
+        if (controller.expensesByCategory.isEmpty)
+          const SectionEmptyNote(
+            icon: Icons.pie_chart_outline_rounded,
+            message: 'Aucune dépense enregistrée pour le moment. Vos montants '
+                'apparaîtront ici dès votre premier devis financé.',
+          )
+        else
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Column(
+              children: () {
+                // Total calculé une seule fois : il était recalculé à chaque
+                // ligne, et une somme nulle donnait des pourcentages faux.
+                final total = controller.expensesByCategory.values
+                    .fold<int>(0, (sum, value) => sum + value);
+
+                return controller.expensesByCategory.entries.map((e) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 14),
+                    child: ExpenseProgress(
+                      category: e.key,
+                      amount: e.value,
+                      percentage: total > 0 ? e.value / total : 0.0,
+                      color: _categoryColor(e.key),
+                    ),
+                  );
+                }).toList();
+              }(),
+            ),
           ),
-          child: Column(
-            children: controller.expensesByCategory.entries.map((e) {
-              final total = controller.expensesByCategory.values.isEmpty
-                  ? 0
-                  : controller.expensesByCategory.values
-                      .reduce((a, b) => a + b);
-              final pct = total > 0 ? e.value / total : 0.0;
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 14),
-                child: ExpenseProgress(
-                  category: e.key,
-                  amount: e.value,
-                  percentage: pct,
-                  color: _categoryColor(e.key),
-                ),
-              );
-            }).toList(),
-          ),
-        ),
         const SizedBox(height: 24),
         const SectionHeader(title: 'Artisans les mieux notés'),
         const SizedBox(height: 12),
