@@ -9,8 +9,15 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
 
+    <!-- Le trafic en clair est interdit par défaut : en release, l'application
+         ne parle qu'à https://<API_HOST> (NetworkDiscoveryService force la
+         production dès que `dart.vm.product` est vrai). L'autoriser servirait
+         seulement à laisser passer images, WebViews et redirections en HTTP,
+         interceptables sur un réseau WiFi hostile. Le manifeste `debug`
+         réactive le clair pour le développement local (localhost, 10.0.2.2,
+         serveur sur le LAN). -->
     <application
-        android:label="ProsArtisan" android:name="${applicationName}" android:icon="@mipmap/launcher_icon" android:usesCleartextTraffic="true">
+        android:label="ProsArtisan" android:name="${applicationName}" android:icon="@mipmap/launcher_icon" android:usesCleartextTraffic="false">
         <!-- Yandex Maps API Key — injectée par build.gradle.kts (manifestPlaceholders)
              depuis android/local.properties (yandex.mapkit.apiKey) ou l'env YANDEX_MAPKIT_API_KEY -->
         <meta-data android:name="com.yandex.maps.api_key" android:value="${YANDEX_MAPKIT_API_KEY}"/>
