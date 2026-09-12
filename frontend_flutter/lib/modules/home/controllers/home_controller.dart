@@ -242,45 +242,43 @@ class HomeController extends GetxController {
 
     try {
       final rawResponse = await _userRepo.getDashboardStats();
-      final dashboardData =
-          (rawResponse['data'] as Map<String, dynamic>?) ?? {};
+      final dashboardData = _asMap(rawResponse['data']) ?? const {};
 
-      acceptedDevisCount.value = dashboardData['accepted_devis_count'] ??
-          dashboardData['completed_deliveries'] ??
-          0;
-      refusedDevisCount.value = dashboardData['refused_devis_count'] ??
-          dashboardData['pending_deliveries'] ??
-          0;
-      disputesCount.value = dashboardData['disputes_count'] ?? 0;
+      // `??` conserve l'enchaînement des alias par rôle ; `_asInt` absorbe un
+      // compteur renvoyé en chaîne de caractères.
+      acceptedDevisCount.value = _asInt(
+        dashboardData['accepted_devis_count'] ??
+            dashboardData['completed_deliveries'],
+      );
+      refusedDevisCount.value = _asInt(
+        dashboardData['refused_devis_count'] ??
+            dashboardData['pending_deliveries'],
+      );
+      disputesCount.value = _asInt(dashboardData['disputes_count']);
 
-      if (dashboardData.containsKey('expenses_by_category')) {
-        final expenses = Map<String, dynamic>.from(
-          dashboardData['expenses_by_category'] as Map,
-        );
+      // Chaque bloc est indépendant et transtypé défensivement : un champ à la
+      // forme inattendue ne doit pas interrompre la lecture des suivants.
+      // `expenses_by_category` arrivait en `[]` (et non `{}`) pour un client
+      // sans mission, ce qui faisait perdre au passage le classement des
+      // fournisseurs, celui des livreurs et le rafraîchissement du score.
+      final expenses = _asMap(dashboardData['expenses_by_category']);
+      if (expenses != null && expenses.isNotEmpty) {
         expensesByCategory.value =
-            expenses.map((key, value) => MapEntry(key, (value as num).toInt()));
+            expenses.map((key, value) => MapEntry(key, _asInt(value)));
       }
 
-      if (dashboardData.containsKey('top_suppliers')) {
-        topSuppliers.value = List<Map<String, dynamic>>.from(
-          (dashboardData['top_suppliers'] as List)
-              .map((x) => Map<String, dynamic>.from(x as Map)),
-        );
-      }
+      final suppliers = _asMapList(dashboardData['top_suppliers']);
+      if (suppliers.isNotEmpty) topSuppliers.value = suppliers;
 
-      if (dashboardData.containsKey('top_drivers')) {
-        topDrivers.value = List<Map<String, dynamic>>.from(
-          (dashboardData['top_drivers'] as List)
-              .map((x) => Map<String, dynamic>.from(x as Map)),
-        );
-      }
+      final drivers = _asMapList(dashboardData['top_drivers']);
+      if (drivers.isNotEmpty) topDrivers.value = drivers;
 
       // If it's supplier stats
-      if (dashboardData.containsKey('stats')) {
-        final s = dashboardData['stats'] as Map<String, dynamic>;
-        acceptedDevisCount.value = s['total_orders'] ?? 0;
-        refusedDevisCount.value = s['pending_orders'] ?? 0;
-        disputesCount.value = s['catalog_count'] ?? 0;
+      final s = _asMap(dashboardData['stats']);
+      if (s != null) {
+        acceptedDevisCount.value = _asInt(s['total_orders']);
+        refusedDevisCount.value = _asInt(s['pending_orders']);
+        disputesCount.value = _asInt(s['catalog_count']);
       }
 
       // If it returns score_prosartisan from backend, update it
@@ -854,6 +852,18 @@ class HomeController extends GetxController {
   /// Cast défensif d'une valeur JSON dynamique en `Map` typée (ou `null`).
   static Map<String, dynamic>? _asMap(dynamic value) =>
       value is Map ? Map<String, dynamic>.from(value) : null;
+
+  /// Cast défensif d'une valeur JSON dynamique en liste d'objets typés.
+  ///
+  /// Renvoie une liste vide plutôt que de lever : les entrées qui ne sont pas
+  /// des objets sont ignorées, une seule ligne malformée ne devant pas priver
+  /// l'écran de tout le classement.
+  static List<Map<String, dynamic>> _asMapList(dynamic value) => value is List
+      ? value
+          .map(_asMap)
+          .whereType<Map<String, dynamic>>()
+          .toList(growable: false)
+      : const [];
 
   double _normalizeCriterion(dynamic value) {
     double parsed;

@@ -13,6 +13,32 @@ use App\Models\SupplierProduct;
 
 class DashboardController extends Controller
 {
+    /**
+     * Missions dont le séquestre est engagé — base des montants cumulés.
+     *
+     * La migration FSM de juillet a converti les statuts français en états
+     * anglais (`financee` → `funded_locked`, `en_cours` → `in_progress`,
+     * `terminee` → `completed`). Les filtres de ce contrôleur étaient restés
+     * en français : depuis, tous les cumuls du tableau de bord renvoyaient
+     * zéro. Correspondance alignée sur `MissionController::index()`.
+     */
+    private const ENGAGED_MISSION_STATES = [
+        'funded_locked',
+        'in_progress',
+        'pending_approval',
+        'completed',
+    ];
+
+    /** Missions en cours de vie, du brouillon à la validation du dernier jalon. */
+    private const ACTIVE_MISSION_STATES = [
+        'draft',
+        'pending_artisan_acceptance',
+        'pending_funding',
+        'funded_locked',
+        'in_progress',
+        'pending_approval',
+    ];
+
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -59,16 +85,16 @@ class DashboardController extends Controller
 
         // Total spent (missions completed or funded)
         $totalSpent = Mission::where('client_id', $user->id)
-            ->whereIn('status', ['financee', 'en_cours', 'terminee'])
+            ->whereIn('status', self::ENGAGED_MISSION_STATES)
             ->sum('montant_total');
 
         $activeMissionsCount = Mission::where('client_id', $user->id)
-            ->whereIn('status', ['en_attente', 'financee', 'en_cours'])
+            ->whereIn('status', self::ACTIVE_MISSION_STATES)
             ->count();
 
         // Expenses by category (sum of total spent grouped by gemini_category)
         $expenses = Mission::where('client_id', $user->id)
-            ->whereIn('status', ['financee', 'en_cours', 'terminee'])
+            ->whereIn('status', self::ENGAGED_MISSION_STATES)
             ->selectRaw('COALESCE(gemini_category, "Travaux généraux") as category, SUM(montant_total) as total')
             ->groupBy('category')
             ->pluck('total', 'category')
@@ -114,7 +140,10 @@ class DashboardController extends Controller
             'disputes_count' => $disputesCount,
             'total_spent' => (int) $totalSpent,
             'active_missions_count' => $activeMissionsCount,
-            'expenses_by_category' => $expenses,
+            // Casté en objet : un tableau associatif PHP vide se sérialise en
+            // `[]` (tableau JSON) et non `{}`, ce qui faisait échouer le
+            // transtypage côté mobile pour tout client sans mission.
+            'expenses_by_category' => (object) $expenses,
             'top_suppliers' => $topSuppliers,
             'top_drivers' => $topDrivers,
         ];
@@ -135,11 +164,11 @@ class DashboardController extends Controller
             ->count();
 
         $totalEarnings = Mission::where('artisan_id', $user->id)
-            ->where('status', 'terminee')
+            ->where('status', 'completed')
             ->sum('montant_mo');
 
         $activeMissionsCount = Mission::where('artisan_id', $user->id)
-            ->whereIn('status', ['en_attente', 'financee', 'en_cours'])
+            ->whereIn('status', self::ACTIVE_MISSION_STATES)
             ->count();
 
         $calculatedScore = app(\App\Services\ScoreService::class)->recalculateFromLedger($user);
