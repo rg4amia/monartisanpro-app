@@ -340,7 +340,12 @@ class AdminService
                 'supplier.fournisseurAgree:id,user_id,nom_boutique,statut',
                 'driver:id,name,phone,role',
                 'items.product:id,name,price,unit',
-                'transactions',
+                // `Order::transactions()` est un hasMany qui cible une colonne
+                // `transactions.order_id` inexistante : ce chargement levait une
+                // QueryException a chaque appel. AdminPanelData l'interceptait
+                // et renvoyait une liste vide, si bien que le panneau des
+                // commandes du backoffice restait silencieusement vide. La
+                // relation n'est consommee nulle part cote interface.
             ])
             ->when($status, fn ($q) => $q->where('status', $status))
             ->when($mode, fn ($q) => $q->where('delivery_mode', $mode))
@@ -355,7 +360,17 @@ class AdminService
                 });
             })
             ->orderByDesc('created_at')
-            ->paginate($perPage, ['*'], $pageName);
+            ->paginate($perPage, ['*'], $pageName)
+            // Les codes de retrait et de réception sont masqués par défaut sur
+            // le modèle : ce sont des secrets de contrôle, et tout endpoint
+            // renvoyant une commande les exposait, y compris au livreur. Le
+            // backoffice est le seul contexte où ils doivent rester visibles —
+            // la traçabilité complète des livraisons et l'arbitrage des litiges
+            // en dépendent. L'accès est déjà restreint aux administrateurs.
+            ->through(fn (Order $order) => $order->makeVisible([
+                'pickup_code',
+                'reception_code',
+            ]));
     }
 
     public function resolveLitige(User $admin, Litige $litige, array $payload): Litige

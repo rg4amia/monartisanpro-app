@@ -6,6 +6,7 @@ use App\Models\Notification;
 use App\Models\Order;
 use App\Models\SupplierProduct;
 use App\Models\User;
+use App\Services\AdminService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -153,6 +154,23 @@ class OrderCodeVisibilityTest extends TestCase
         $clientView = $this->actingAs($this->client)
             ->getJson("/api/v1/orders/{$order->id}/tracking")->json('data.codes');
         $this->assertSame(['reception_code' => 'RECEPTION-7390'], $clientView);
+    }
+
+    // ── Backoffice ───────────────────────────────────────────────────────────
+
+    public function test_the_backoffice_still_sees_both_codes(): void
+    {
+        $this->order();
+
+        // Le masquage par defaut ne doit pas priver l'administration de la
+        // tracabilite des livraisons ni de l'arbitrage des litiges : quatre
+        // panneaux affichent ces codes.
+        $orders = app(AdminService::class)->listOrders(null, null, null, 10);
+
+        $payload = $orders->items()[0]->toArray();
+
+        $this->assertSame('LIVREUR-4821', $payload['pickup_code']);
+        $this->assertSame('RECEPTION-7390', $payload['reception_code']);
     }
 
     // ── Notifications ────────────────────────────────────────────────────────
