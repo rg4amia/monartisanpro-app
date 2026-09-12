@@ -96,6 +96,9 @@ class ReferentValidationController extends GetxController {
     return Geolocator.getCurrentPosition(
       locationSettings: const LocationSettings(
         accuracy: LocationAccuracy.high,
+        // Borne obligatoire : la validation physique d'une mission au-delà du
+        // seuil Référent ne doit pas rester suspendue sans message.
+        timeLimit: Duration(seconds: 10),
       ),
     );
   }

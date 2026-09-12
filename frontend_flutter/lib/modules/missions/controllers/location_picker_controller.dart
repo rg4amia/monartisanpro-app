@@ -64,6 +64,9 @@ class LocationPickerController extends GetxController {
       final position = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
+          // Sans borne, le sélecteur reste sur son indicateur de chargement au
+          // lieu de retomber sur Abidjan comme le prévoit le `catch`.
+          timeLimit: Duration(seconds: 5),
         ),
       );
 

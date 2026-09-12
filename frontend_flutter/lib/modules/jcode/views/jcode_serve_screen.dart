@@ -86,6 +86,10 @@ class _JcodeServeScreenState extends State<JcodeServeScreen> {
       final pos = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
+          // Borne obligatoire : sans elle, un fournisseur dont le terminal ne
+          // fixe pas de point reste bloqué sur « Localisation… » sans jamais
+          // pouvoir servir le J-Code ni voir d'erreur.
+          timeLimit: Duration(seconds: 10),
         ),
       );
 

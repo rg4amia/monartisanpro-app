@@ -103,6 +103,12 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
 
     if (mounted) setState(() => _mapReady = true);
 
+    // Cadrer Abidjan tout de suite, avant même d'interroger le GPS : sans ce
+    // premier positionnement la caméra reste sur celle par défaut du SDK, au
+    // large du golfe de Guinée, et l'utilisateur voit une étendue vide qu'il
+    // interprète comme un chargement sans fin. Le GPS affinera ensuite.
+    _moveCamera(_kAbidjanLat, _kAbidjanLng, 12.0, animated: false);
+
     _centerOnUser(animated: false);
     _plotArtisans();
 
@@ -144,8 +150,14 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
   Future<void> _centerOnUser({bool animated = true}) async {
     try {
       final pos = await Geolocator.getCurrentPosition(
-        locationSettings:
-            const LocationSettings(accuracy: LocationAccuracy.high),
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          // Sans limite de temps, un terminal qui ne parvient pas à fixer un
+          // point (intérieur de bâtiment, ciel bouché) laisse ce Future en
+          // attente indéfiniment : la caméra n'est jamais positionnée et le
+          // marqueur utilisateur jamais posé.
+          timeLimit: Duration(seconds: 5),
+        ),
       );
       if (!mounted || _mapWindow == null) return;
       _moveCamera(
@@ -519,6 +531,56 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
                       child: Center(child: CircularProgressIndicator()),
                     )
                   : const SizedBox.shrink();
+            }),
+          ),
+
+          // ── Échec de la recherche d'artisans ──
+          // La carte reste visible et manipulable : seul le calque des
+          // artisans a échoué, et l'utilisateur doit pouvoir réessayer.
+          Positioned(
+            left: 12,
+            right: 12,
+            bottom: _selectedArtisan != null ? 296 : 24,
+            child: Obx(() {
+              final c = Get.find<HomeController>();
+              if (c.mapErrorMsg.value.isEmpty) return const SizedBox.shrink();
+
+              return Material(
+                color: const Color(0xFFB3261E),
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.error_outline_rounded,
+                        size: 18,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          c.mapErrorMsg.value,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            height: 1.3,
+                          ),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () =>
+                            c.searchByCategory(c.selectedCategory.value),
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                        ),
+                        child: const Text('Réessayer'),
+                      ),
+                    ],
+                  ),
+                ),
+              );
             }),
           ),
 

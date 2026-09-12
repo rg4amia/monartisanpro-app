@@ -33,6 +33,11 @@ class HomeController extends GetxController {
   final isLoading = false.obs;
   final hasError = false.obs;
   final isMapLoading = false.obs;
+
+  /// Message affiché par-dessus la carte quand la recherche d'artisans échoue.
+  /// Sans lui, un échec réseau se traduisait par une carte vide et silencieuse,
+  /// indiscernable d'un chargement qui n'aboutit pas.
+  final mapErrorMsg = ''.obs;
   final role = Rx<String?>(null);
   final userName = ''.obs;
   final paymentPhone = ''.obs;
@@ -386,6 +391,7 @@ class HomeController extends GetxController {
   Future<void> searchByCategory(String? category) async {
     selectedCategory.value = category;
     isMapLoading.value = true;
+    mapErrorMsg.value = '';
     try {
       await _getLocation();
       if (_lat == null) return;
@@ -397,7 +403,10 @@ class HomeController extends GetxController {
       );
       nearbyArtisansCount.value = artisans.length;
     } catch (_) {
-      // garder l'état précédent
+      // On garde les artisans déjà affichés, mais on le dit : une carte vide
+      // sans explication est lue comme un chargement qui n'aboutit pas.
+      mapErrorMsg.value =
+          'Impossible de charger les artisans. Vérifiez votre connexion.';
     } finally {
       isMapLoading.value = false;
     }
@@ -411,6 +420,7 @@ class HomeController extends GetxController {
     }
 
     isMapLoading.value = true;
+    mapErrorMsg.value = '';
     try {
       await _getLocation();
       if (_lat == null) return;
@@ -433,7 +443,8 @@ class HomeController extends GetxController {
       artisans.value = filtered;
       nearbyArtisansCount.value = filtered.length;
     } catch (_) {
-      // garder l'état précédent
+      mapErrorMsg.value =
+          'Impossible de charger les artisans. Vérifiez votre connexion.';
     } finally {
       isMapLoading.value = false;
     }
@@ -446,7 +457,11 @@ class HomeController extends GetxController {
     try {
       final perm = await Geolocator.checkPermission();
       if (perm == LocationPermission.denied) {
-        await Geolocator.requestPermission();
+        // La boîte de dialogue système peut être fermée sans réponse (retour
+        // arrière) : le Future reste alors en attente. Non borné, il gèlerait
+        // `isMapLoading` à vrai et la carte tournerait sans fin.
+        await Geolocator.requestPermission()
+            .timeout(const Duration(seconds: 30));
       }
       final pos = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
