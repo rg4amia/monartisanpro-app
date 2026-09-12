@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback, useTransition } from 'react';
 import { Link } from '@inertiajs/react';
+import React, { useState, useCallback, useTransition } from 'react';
 import { cn } from '@/lib/utils';
 import {
     money,
@@ -18,8 +18,8 @@ import type {
     CommuneListItem,
     TerritoryEntityItem,
 } from '../shared/types';
-import { IvoryCoastMapSvg } from './IvoryCoastMapSvg';
 import type { CityGeoData } from './ivoryCoastGeoData';
+import { IvoryCoastMapSvg } from './IvoryCoastMapSvg';
 
 export interface CartographyPanelProps {
     territorySummary?: TerritorySummary;
@@ -78,17 +78,25 @@ export function CartographyPanel({
     const [searchQuery, setSearchQuery] = useState<string>(initialFilters?.search ?? '');
     const [summary, setSummary] = useState<TerritorySummary>(initialSummary ?? defaultSummary);
     const [entities, setEntities] = useState(initialEntities ?? defaultEntities);
-    const [currentPage, setCurrentPage] = useState<number>(initialEntities?.current_page ?? 1);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [, startTransition] = useTransition();
 
-    useEffect(() => {
-        if (initialSummary) setSummary(initialSummary);
-    }, [initialSummary]);
+    // Resynchronisation quand Inertia renvoie de nouvelles props (rechargement
+    // partiel) : l'état local est aussi alimenté par le fetch interne, il faut
+    // donc que les props fraîches reprennent la main. On ajuste l'état pendant
+    // le rendu plutôt que dans un effet — motif recommandé par React, qui évite
+    // le rendu en cascade d'un setState déclenché après coup.
+    const [syncedSummary, setSyncedSummary] = useState(initialSummary);
+    if (initialSummary && initialSummary !== syncedSummary) {
+        setSyncedSummary(initialSummary);
+        setSummary(initialSummary);
+    }
 
-    useEffect(() => {
-        if (initialEntities) setEntities(initialEntities);
-    }, [initialEntities]);
+    const [syncedEntities, setSyncedEntities] = useState(initialEntities);
+    if (initialEntities && initialEntities !== syncedEntities) {
+        setSyncedEntities(initialEntities);
+        setEntities(initialEntities);
+    }
 
     // Récupération asynchrone des statistiques et entités selon les filtres
     const fetchTerritoryStats = useCallback(
@@ -136,14 +144,12 @@ export function CartographyPanel({
         if (selectedDistrict === slug && !selectedCommune) {
             setSelectedDistrict(null);
             setSelectedCommune(null);
-            setCurrentPage(1);
             fetchTerritoryStats({ district: null, commune: null, entityType, search: searchQuery, page: 1 });
             return;
         }
 
         setSelectedDistrict(slug);
         setSelectedCommune(null);
-        setCurrentPage(1);
 
         if (slug === 'abidjan') {
             setViewMode('abidjan');
@@ -156,13 +162,11 @@ export function CartographyPanel({
     const handleSelectCommune = (slug: string) => {
         if (selectedCommune === slug) {
             setSelectedCommune(null);
-            setCurrentPage(1);
             fetchTerritoryStats({ district: selectedDistrict, commune: null, entityType, search: searchQuery, page: 1 });
             return;
         }
 
         setSelectedCommune(slug);
-        setCurrentPage(1);
         fetchTerritoryStats({ district: selectedDistrict, commune: slug, entityType, search: searchQuery, page: 1 });
     };
 
@@ -171,27 +175,23 @@ export function CartographyPanel({
         setSelectedDistrict(city.districtSlug);
         setSelectedCommune(null);
         setSearchQuery(city.name);
-        setCurrentPage(1);
         fetchTerritoryStats({ district: city.districtSlug, commune: null, entityType, search: city.name, page: 1 });
     };
 
     // Changement d'onglet d'entité
     const handleEntityTypeChange = (type: string) => {
         setEntityType(type);
-        setCurrentPage(1);
         fetchTerritoryStats({ district: selectedDistrict, commune: selectedCommune, entityType: type, search: searchQuery, page: 1 });
     };
 
     // Recherche textuelle
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        setCurrentPage(1);
         fetchTerritoryStats({ district: selectedDistrict, commune: selectedCommune, entityType, search: searchQuery, page: 1 });
     };
 
     // Pagination
     const handlePageChange = (newPage: number) => {
-        setCurrentPage(newPage);
         fetchTerritoryStats({ district: selectedDistrict, commune: selectedCommune, entityType, search: searchQuery, page: newPage });
     };
 
@@ -202,7 +202,6 @@ export function CartographyPanel({
         setViewMode('national');
         setEntityType('all');
         setSearchQuery('');
-        setCurrentPage(1);
         fetchTerritoryStats({ district: null, commune: null, entityType: 'all', search: '', page: 1 });
     };
 
@@ -311,46 +310,51 @@ export function CartographyPanel({
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-4">
                     {/* Clients */}
                     <MetricCard
-                        title="Clients Inscrits"
                         value={getActorCount(summary?.actors?.clients).toString()}
                         description={`${(summary?.actors?.clients as any)?.with_active_missions ?? 0} avec mission active`}
                         tone="blue"
-                    />
+                    >
+                        Clients Inscrits
+                    </MetricCard>
 
                     {/* Artisans */}
                     <MetricCard
-                        title="Artisans du Réseau"
                         value={getActorCount(summary?.actors?.artisans).toString()}
                         description={`${(summary?.actors?.artisans as any)?.kyc_actif ?? summary?.actors?.artisans_kyc_actif ?? 0} KYC validés (${(summary?.actors?.artisans as any)?.kyc_actif_percent ?? 0}%)`}
                         tone="amber"
-                    />
+                    >
+                        Artisans du Réseau
+                    </MetricCard>
 
                     {/* Fournisseurs (Quincailleries) */}
                     <MetricCard
-                        title="Quincailleries Agréées"
                         value={getActorCount(summary?.actors?.fournisseurs).toString()}
                         description={`${(summary?.actors?.fournisseurs as any)?.agreed ?? getActorCount(summary?.actors?.fournisseurs)} boutiques certifiées J-Code`}
                         tone="green"
-                    />
+                    >
+                        Quincailleries Agréées
+                    </MetricCard>
 
                     {/* Livreurs */}
                     <MetricCard
-                        title="Livreurs Partenaires"
                         value={getActorCount(summary?.actors?.livreurs).toString()}
                         description={`${(summary?.actors?.livreurs as any)?.active_courses ?? 0} courses en transit`}
                         tone="slate"
-                    />
+                    >
+                        Livreurs Partenaires
+                    </MetricCard>
                 </div>
 
                 {/* 3. KPI Performance Opérationnelle : Réalisation, Litiges & Volume Financier */}
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-4">
                     {/* Missions */}
                     <MetricCard
-                        title="Missions Totales"
                         value={(summary?.missions?.total ?? 0).toString()}
                         description={`${summary?.missions?.en_cours ?? 0} en cours • ${summary?.missions?.terminee ?? summary?.missions?.completed ?? 0} terminées`}
                         tone="amber"
-                    />
+                    >
+                        Missions Totales
+                    </MetricCard>
 
                     {/* Taux de Réalisation */}
                     <div className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-card-bg)] p-4 shadow-sm flex flex-col justify-between">
@@ -420,11 +424,12 @@ export function CartographyPanel({
 
                     {/* Volume Financier Séquestre */}
                     <MetricCard
-                        title="Volume Financier"
                         value={money(summary?.missions?.financial_volume_fcfa ?? summary?.missions?.total_volume_fcfa ?? 0)}
                         description={`Note artisan moyenne : ${summary?.reputation?.average_artisan_rating ?? summary?.reputation?.avg_rating ?? 0}/5 (${summary?.reputation?.total_reviews ?? 0} avis)`}
                         tone="green"
-                    />
+                    >
+                        Volume Financier
+                    </MetricCard>
                 </div>
 
                 {/* 4. Carte Interactive SVG de Côte d'Ivoire & Grand Abidjan */}
@@ -444,10 +449,10 @@ export function CartographyPanel({
                 <Surface className="p-4 sm:p-6 space-y-4">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-[var(--admin-border)] pb-4">
                         <div>
-                            <SectionTitle>Tableau Récapitulatif Territorial</SectionTitle>
-                            <p className="text-xs text-[var(--admin-muted)] mt-0.5">
-                                {safeEntities.total ?? 0} enregistrement{(safeEntities.total ?? 0) > 1 ? 's' : ''} répertorié{(safeEntities.total ?? 0) > 1 ? 's' : ''} dans la zone sélectionnée ({zoneName})
-                            </p>
+                            <SectionTitle
+                                description={`${safeEntities.total ?? 0} enregistrement${(safeEntities.total ?? 0) > 1 ? 's' : ''} répertorié${(safeEntities.total ?? 0) > 1 ? 's' : ''} dans la zone sélectionnée (${zoneName})`}
+                                title="Tableau Récapitulatif Territorial"
+                            />
                         </div>
 
                         {/* Onglets Filtres d'Entité */}
@@ -575,7 +580,7 @@ export function CartographyPanel({
 
                                             {/* Date & Contact */}
                                             <td className="px-3 py-3 text-[11px] text-[var(--admin-muted)]">
-                                                <div>{shortDate(item.created_at)}</div>
+                                                <div>{item.created_at ? shortDate(item.created_at) : '—'}</div>
                                                 {item.contact && <div className="font-mono text-[#241b16]">{item.contact}</div>}
                                             </td>
 

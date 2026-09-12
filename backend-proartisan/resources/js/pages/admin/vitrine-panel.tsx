@@ -1,5 +1,5 @@
 import { useForm, router } from '@inertiajs/react';
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 
 function sanitizeUploadedFile(file: File | null): File | null {

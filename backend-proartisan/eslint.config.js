@@ -77,6 +77,11 @@ export default [
             'tailwind.config.js',
             'vite.config.ts',
             'resources/js/components/ui/*',
+            // Générés par Laravel Wayfinder à chaque build et ignorés par git
+            // (.gitignore) : les linter n'a aucun intérêt, leurs corrections
+            // seraient écrasées à la régénération suivante.
+            'resources/js/actions/**',
+            'resources/js/routes/**',
         ],
     },
     prettier, // Turn off all rules that might conflict with Prettier

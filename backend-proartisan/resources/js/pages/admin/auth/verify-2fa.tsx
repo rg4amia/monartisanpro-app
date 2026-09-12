@@ -30,6 +30,10 @@ export default function Verify2faPage({ isConfigured, secret, qrCodeUrl, errors,
             return;
         }
 
+        // Lecture volontairement différée après l'hydratation : le serveur rend
+        // toujours le thème clair, et initialiser l'état directement depuis
+        // localStorage provoquerait une divergence d'hydratation côté client.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setThemeMode(localStorage.getItem('prosartisan_admin_theme') === 'dark' ? 'dark' : 'light');
     }, []);
 

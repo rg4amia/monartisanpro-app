@@ -4,11 +4,12 @@ import {
     IVORY_COAST_DISTRICTS,
     IVORY_COAST_CITIES,
     ABIDJAN_COMMUNES_GEODATA,
-    getChoroplethColor,
-    type CityGeoData,
-    type DistrictGeoData,
-    type AbidjanCommuneGeoData,
+    getChoroplethColor
+    
+    
+    
 } from './ivoryCoastGeoData';
+import type {CityGeoData, DistrictGeoData, AbidjanCommuneGeoData} from './ivoryCoastGeoData';
 
 interface IvoryCoastMapSvgProps {
     viewMode: 'national' | 'abidjan';
@@ -517,7 +518,7 @@ export function IvoryCoastMapSvg({
                                         key={district.slug}
                                         className="cursor-pointer transition-all duration-200 group"
                                         onClick={() => onSelectDistrict(district.slug)}
-                                        onMouseEnter={(e) => {
+                                        onMouseEnter={() => {
                                             setHoveredEntity({
                                                 title: district.name,
                                                 subtitle: `District autonome & ${district.regions.join(', ')}`,

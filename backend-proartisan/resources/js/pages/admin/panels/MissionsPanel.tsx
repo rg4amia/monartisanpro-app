@@ -19,8 +19,8 @@ import {
     shortDate,
     Surface,
 } from '../shared';
-import { DeliveriesTrackingSection } from './DeliveriesTrackingSection';
 import type { AdminMission, AdminOrder, DeliveryStats, MetricItem, MissionStats, Paginated } from '../shared';
+import { DeliveriesTrackingSection } from './DeliveriesTrackingSection';
 
 type MissionSubTab = 'chantiers' | 'livraisons';
 

@@ -1,17 +1,18 @@
 // Onglet « Santé & Observabilité » du backoffice (Chantier C7 / P2-12).
 
-import { FraudAlertsSection } from './FraudAlertsSection';
 import {
     DataTable,
     dateTimeShort,
     EmptyState,
     MetricCard,
+    missionStatusLabels,
     money,
     numberFormat,
     SectionTitle,
     Surface,
 } from '../shared';
 import type { ObservabilitySnapshot } from '../shared';
+import { FraudAlertsSection } from './FraudAlertsSection';
 
 interface ObservabilityPanelProps {
     snapshot: ObservabilitySnapshot;
@@ -196,7 +197,8 @@ export function ObservabilityPanel({
                                         <span className="text-xs font-semibold text-[#b77918]">{money(mission.montant_total)}</span>
                                     </div>
                                     <p className="text-xs text-[var(--admin-muted)]">
-                                        {mission.client ?? '—'} → {mission.artisan ?? '—'} • {mission.status} • {mission.created_at ? dateTimeShort(mission.created_at) : '—'}
+                                        {mission.client ?? '—'} → {mission.artisan ?? '—'} • {missionStatusLabels[mission.status] ?? mission.status} •{' '}
+                                        {mission.created_at ? dateTimeShort(mission.created_at) : '—'}
                                     </p>
                                 </div>
                             ))

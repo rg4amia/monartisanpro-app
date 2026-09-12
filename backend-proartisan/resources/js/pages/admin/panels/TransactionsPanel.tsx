@@ -2,12 +2,10 @@
 // Chantier C2 : découpe de console.tsx. Chantier C4 (P1-6) : journal financier paginé + filtres serveur.
 // Extension : Trésorerie Entrées/Sorties, Cash-Out Quincailleries & Séquestre Bloqué sur Litiges.
 
-import { useState, type FormEvent, type ReactNode } from 'react';
+import { useState   } from 'react';
+import type {FormEvent, ReactNode} from 'react';
 
 import { cn } from '@/lib/utils';
-import { CashoutQuincaillerieSection } from './CashoutQuincaillerieSection';
-import { DocumentsReportsSection } from './DocumentsReportsSection';
-
 import {
     DataTable,
     EmptyState,
@@ -24,6 +22,9 @@ import {
     transactionTypeLabels,
 } from '../shared';
 import type { AdminTransaction, DocumentStats, GeneratedDocumentItem, Paginated, TransactionStats } from '../shared';
+import { CashoutQuincaillerieSection } from './CashoutQuincaillerieSection';
+import { DocumentsReportsSection } from './DocumentsReportsSection';
+
 
 interface TransactionsPanelProps {
     // Agrégats renvoyés par AdminService::getFinancialKpis() — structure dynamique.

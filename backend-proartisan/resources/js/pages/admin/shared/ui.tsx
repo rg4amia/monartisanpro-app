@@ -22,7 +22,9 @@ export function MetricCard({
     children: ReactNode;
     description: string;
     tone: Tone;
-    trend: string;
+    // Optionnel : certaines cartes (cartographie, documents) n'ont pas de
+    // donnée de tendance à afficher — la ligne est alors simplement omise.
+    trend?: string;
     value: string;
 }) {
     return (
@@ -33,7 +35,7 @@ export function MetricCard({
             <p className="mt-5 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--admin-muted)]">{children}</p>
             <p className="mt-1.5 text-4xl font-semibold tracking-tight text-[var(--admin-text)]">{value}</p>
             <p className="mt-2 text-sm text-[var(--admin-text-soft)]">{description}</p>
-            <p className="mt-3 text-xs font-medium text-[var(--admin-muted)]">{trend}</p>
+            {trend ? <p className="mt-3 text-xs font-medium text-[var(--admin-muted)]">{trend}</p> : null}
         </Surface>
     );
 }

@@ -154,7 +154,23 @@ export const kycStatusLabels: Record<string, string> = {
     rejete: 'Rejeté',
 };
 
+// Les missions sont stockées en base avec le nom technique de l'état du FSM
+// (app/States/Mission/*State.php) : ce sont ces clés-là qui arrivent au
+// backoffice. Les clés françaises historiques sont conservées pour les
+// anciennes lignes créées avant la migration vers la machine à états.
 export const missionStatusLabels: Record<string, string> = {
+    // États techniques du FSM (valeurs réellement stockées aujourd'hui)
+    draft: 'Brouillon',
+    pending_artisan_acceptance: "En attente d'acceptation artisan",
+    pending_funding: 'En attente de financement',
+    funded_locked: 'Financée (séquestre bloqué)',
+    in_progress: 'En cours',
+    pending_approval: 'En attente de validation client',
+    completed: 'Terminée',
+    disputed: 'En litige',
+    cancelled: 'Annulée',
+
+    // Statuts français historiques
     annulee: 'Annulée',
     en_attente: 'En attente',
     en_cours: 'En cours',

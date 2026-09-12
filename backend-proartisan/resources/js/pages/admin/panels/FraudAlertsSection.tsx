@@ -1,8 +1,8 @@
 // Section Anti-Fraude & Détection de Collusion (Lot 3)
 // Gestion proactive des risques chantiers, collusion artisan-client, validation express et alertes géospatiales.
 
-import { useState } from 'react';
 import { router } from '@inertiajs/react';
+import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import {
     DataTable,

@@ -1,12 +1,10 @@
-import { useState } from 'react';
 import { router } from '@inertiajs/react';
+import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import {
-    DataTable,
     EmptyState,
     MetricCard,
     money,
-    SectionTitle,
     shortDate,
     Surface,
 } from '../shared';
@@ -117,30 +115,22 @@ export function DocumentsReportsSection({
 
             {/* 2. KPI CARDS */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <MetricCard value={stats.total_documents.toString()} description="Reçus de libération et rapports archivés" tone="slate">
+                    Total Pièces Émises
+                </MetricCard>
+                <MetricCard value={money(stats.total_montant_certifie)} description="Fonds libérés des séquestres et versés" tone="green">
+                    Volume Certifié Décaissé
+                </MetricCard>
                 <MetricCard
-                    title="Total Pièces Émises"
-                    value={stats.total_documents.toString()}
-                    description="Reçus de libération et rapports archivés"
-                    tone="slate"
-                />
-                <MetricCard
-                    title="Volume Certifié Décaissé"
-                    value={money(stats.total_montant_certifie)}
-                    description="Fonds libérés des séquestres et versés"
-                    tone="green"
-                />
-                <MetricCard
-                    title="Reçus Jalons & Quincailleries"
                     value={(stats.recus_jalons_mo + stats.recus_quincaillerie).toString()}
                     description={`${stats.recus_jalons_mo} jalons MO • ${stats.recus_quincaillerie} matériaux/cashouts`}
                     tone="amber"
-                />
-                <MetricCard
-                    title="Rapports & Arbitrages"
-                    value={stats.rapports_et_litiges.toString()}
-                    description="Rapports de solvabilité et factures litige"
-                    tone="blue"
-                />
+                >
+                    Reçus Jalons &amp; Quincailleries
+                </MetricCard>
+                <MetricCard value={stats.rapports_et_litiges.toString()} description="Rapports de solvabilité et factures litige" tone="blue">
+                    Rapports &amp; Arbitrages
+                </MetricCard>
             </div>
 
             {/* 3. FILTRES & RECHERCHE */}

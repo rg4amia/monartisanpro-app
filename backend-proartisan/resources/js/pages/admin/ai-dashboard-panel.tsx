@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import axios from 'axios';
 import { router } from '@inertiajs/react';
+import axios from 'axios';
+import React, { useState } from 'react';
 
 interface Stats {
     total_cost: number;

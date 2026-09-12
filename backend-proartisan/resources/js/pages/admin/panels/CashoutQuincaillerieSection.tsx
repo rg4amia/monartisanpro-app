@@ -2,8 +2,8 @@
 // Permet de piloter la commission quincaillerie sur les retraits cash,
 // de visualiser les flux Entrées/Sorties réels et les fonds bloqués sur litiges.
 
-import { useState } from 'react';
 import { router } from '@inertiajs/react';
+import { useState } from 'react';
 import {
     DataTable,
     EmptyState,

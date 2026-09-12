@@ -40,6 +40,18 @@ export function AccountStatusBadge({ status }: { status?: string | null }) {
 
 export function MissionStatusBadge({ status }: { status: string }) {
     const toneMap: Record<string, Tone> = {
+        // États techniques du FSM (valeurs réellement stockées en base)
+        draft: 'slate',
+        pending_artisan_acceptance: 'amber',
+        pending_funding: 'amber',
+        funded_locked: 'blue',
+        in_progress: 'green',
+        pending_approval: 'amber',
+        completed: 'slate',
+        disputed: 'rose',
+        cancelled: 'slate',
+
+        // Statuts français historiques
         annulee: 'slate',
         en_attente: 'amber',
         en_cours: 'green',
