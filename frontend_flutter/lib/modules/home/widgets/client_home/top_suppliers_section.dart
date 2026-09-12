@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../../../app/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../controllers/home_controller.dart';
+import 'rating_label.dart';
 import 'section_empty_note.dart';
 
 /// Liste des fournisseurs les mieux notés (données de `HomeController`), chaque
@@ -68,19 +69,8 @@ class TopSuppliersSection extends StatelessWidget {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          const Icon(
-                            Icons.star_rounded,
-                            color: Colors.amber,
-                            size: 16,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${supplier['rating']}',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 13,
-                              color: AppColors.textPrimary,
-                            ),
+                          RatingLabel(
+                            rating: RatingLabel.parse(supplier['rating']),
                           ),
                           const SizedBox(width: 8),
                           Text(

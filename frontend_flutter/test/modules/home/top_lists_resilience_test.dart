@@ -63,6 +63,54 @@ void main() {
     });
   });
 
+  group('note absente', () {
+    // L'API renvoyait 5,0 par défaut à qui n'avait jamais été évalué : le
+    // classement décernait la note maximale à des comptes n'ayant servi
+    // personne. Elle vaut désormais `null`, et l'écran doit le dire au lieu
+    // d'afficher une étoile.
+    testWidgets('un livreur jamais evalue n affiche pas d etoile',
+        (tester) async {
+      final controller = HomeController()
+        ..topDrivers.value = [
+          {'name': 'Konan Livreur', 'rating': null, 'trips': 0},
+        ];
+
+      await pump(tester, TopDriversSection(controller: controller));
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Non évalué'), findsOneWidget);
+      expect(find.byIcon(Icons.star_rounded), findsNothing);
+    });
+
+    testWidgets('une moyenne entiere s affiche avec une decimale',
+        (tester) async {
+      // Le backend sérialise une moyenne ronde en `3` et non `3.0`.
+      final controller = HomeController()
+        ..topDrivers.value = [
+          {'name': 'Konan Livreur', 'rating': 3, 'trips': 4},
+        ];
+
+      await pump(tester, TopDriversSection(controller: controller));
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('3.0'), findsOneWidget);
+      expect(find.byIcon(Icons.star_rounded), findsOneWidget);
+    });
+
+    testWidgets('un fournisseur jamais evalue n affiche pas d etoile',
+        (tester) async {
+      final controller = HomeController()
+        ..topSuppliers.value = [
+          {'name': 'Quincaillerie Chez Aboul', 'rating': null, 'deliveries': 0},
+        ];
+
+      await pump(tester, TopSuppliersSection(controller: controller));
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Non évalué'), findsOneWidget);
+    });
+  });
+
   group('etats vides', () {
     // Ces sections étaient préremplies de livreurs, de quincailleries et de
     // dépenses inventés, que le client ne pouvait pas distinguer des siens et

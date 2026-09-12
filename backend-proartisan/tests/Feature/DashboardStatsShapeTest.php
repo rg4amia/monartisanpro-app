@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Evaluation;
 use App\Models\Mission;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -169,6 +170,73 @@ class DashboardStatsShapeTest extends TestCase
             $this->assertNotNull($row['vehicle']);
             $this->assertContains($row['vehicle'], ['Moto', 'Voiture', 'Cargo']);
         }
+    }
+
+    /**
+     * Une note jamais donnée ne doit pas être inventée.
+     *
+     * Les classements appliquaient `COALESCE(AVG(note), 5.0)` : un livreur
+     * n'ayant jamais servi personne s'affichait à 5/5. Un palmarès « les mieux
+     * notés » où chacun démarre au maximum ne classe rien et attribue une
+     * réputation que nul n'a méritée. L'absence se dit désormais par `null`.
+     */
+    public function test_an_unrated_driver_has_no_rating_rather_than_a_perfect_one(): void
+    {
+        User::factory()->create(['role' => 'livreur', 'kyc_status' => 'actif']);
+
+        $response = $this->actingAs($this->client())->getJson('/api/v1/dashboard');
+
+        $response->assertOk();
+
+        $driver = $response->json('data.top_drivers.0');
+
+        $this->assertNull($driver['rating']);
+        $this->assertSame(0, $driver['ratings_count']);
+    }
+
+    public function test_a_rated_driver_keeps_its_average(): void
+    {
+        $client = $this->client();
+        $driver = User::factory()->create(['role' => 'livreur', 'kyc_status' => 'actif']);
+
+        foreach ([4, 5] as $note) {
+            Evaluation::create([
+                'evaluateur_id' => $client->id,
+                'evalue_id' => $driver->id,
+                'note' => $note,
+            ]);
+        }
+
+        $response = $this->actingAs($client)->getJson('/api/v1/dashboard');
+
+        $response->assertOk();
+        $response->assertJsonPath('data.top_drivers.0.rating', 4.5);
+        $response->assertJsonPath('data.top_drivers.0.ratings_count', 2);
+    }
+
+    public function test_rated_actors_rank_before_unrated_ones(): void
+    {
+        $client = $this->client();
+
+        User::factory()->create(['role' => 'livreur', 'kyc_status' => 'actif', 'name' => 'Jamais evalue']);
+        $rated = User::factory()->create(['role' => 'livreur', 'kyc_status' => 'actif', 'name' => 'Deja evalue']);
+
+        // Une note de 3/5 vaut mieux qu'aucune note : classer un compte vierge
+        // au-dessus reviendrait à récompenser l'absence d'historique.
+        Evaluation::create([
+            'evaluateur_id' => $client->id,
+            'evalue_id' => $rated->id,
+            'note' => 3,
+        ]);
+
+        $response = $this->actingAs($client)->getJson('/api/v1/dashboard');
+
+        $response->assertOk();
+        $response->assertJsonPath('data.top_drivers.0.name', 'Deja evalue');
+        // Une moyenne ronde se sérialise en `3` et non `3.0` : le lecteur
+        // mobile doit donc accepter aussi bien un entier qu'un décimal.
+        $response->assertJsonPath('data.top_drivers.0.rating', 3);
+        $response->assertJsonPath('data.top_drivers.1.rating', null);
     }
 
     public function test_the_other_dashboard_collections_stay_readable(): void

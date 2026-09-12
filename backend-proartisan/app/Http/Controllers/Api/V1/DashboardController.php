@@ -81,6 +81,22 @@ class DashboardController extends Controller
         ]);
     }
 
+    /**
+     * Note moyenne d'un acteur, ou `null` s'il n'a jamais été évalué.
+     *
+     * Ces classements appliquaient auparavant `COALESCE(AVG(note), 5.0)` :
+     * un compte sans la moindre évaluation héritait donc de la note maximale.
+     * Un palmarès « les mieux notés » où chacun démarre à 5/5 ne classe rien
+     * et attribue une réputation que personne n'a méritée. L'absence de note
+     * doit se dire, pas se combler.
+     */
+    private function averageRating(object $row): ?float
+    {
+        return (int) $row->ratings_count > 0
+            ? round((float) $row->rating, 1)
+            : null;
+    }
+
     private function getClientStats($user): array
     {
         $acceptedDevisCount = Devis::where('statut', 'accepte')
@@ -116,15 +132,20 @@ class DashboardController extends Controller
         $topSuppliers = \App\Models\FournisseurAgree::join('users', 'fournisseurs_agrees.user_id', '=', 'users.id')
             ->leftJoin('evaluations', 'evaluations.evalue_id', '=', 'users.id')
             ->select('fournisseurs_agrees.nom_boutique as name')
-            ->selectRaw('COALESCE(AVG(evaluations.note), 5.0) as rating')
+            ->selectRaw('AVG(evaluations.note) as rating')
+            ->selectRaw('COUNT(evaluations.id) as ratings_count')
             ->selectRaw('(SELECT COUNT(*) FROM orders WHERE orders.supplier_id = users.id AND orders.status = "delivered") as deliveries')
             ->groupBy('fournisseurs_agrees.id', 'fournisseurs_agrees.nom_boutique', 'users.id')
+            // Les évalués d'abord : sans cela, les comptes sans la moindre
+            // évaluation se mélangeaient aux mieux notés.
+            ->orderByRaw('COUNT(evaluations.id) = 0')
             ->orderByDesc('rating')
             ->take(3)
             ->get()
             ->map(fn($item) => [
                 'name' => $item->name,
-                'rating' => round((float) $item->rating, 1),
+                'rating' => $this->averageRating($item),
+                'ratings_count' => (int) $item->ratings_count,
                 'deliveries' => (int) $item->deliveries,
             ])
             ->toArray();
@@ -133,18 +154,21 @@ class DashboardController extends Controller
         $topDrivers = \App\Models\User::where('role', 'livreur')
             ->leftJoin('evaluations', 'evaluations.evalue_id', '=', 'users.id')
             ->select('users.name', 'users.id')
-            ->selectRaw('COALESCE(AVG(evaluations.note), 5.0) as rating')
+            ->selectRaw('AVG(evaluations.note) as rating')
+            ->selectRaw('COUNT(evaluations.id) as ratings_count')
             ->selectRaw('(SELECT COUNT(*) FROM orders WHERE orders.driver_id = users.id AND orders.status = "delivered") as trips')
             // Le véhicule n'est pas porté par le compte livreur mais par
             // chaque commande : on retient sa classe la plus fréquente.
             ->selectRaw('(SELECT o.vehicle_class FROM orders o WHERE o.driver_id = users.id AND o.status = "delivered" GROUP BY o.vehicle_class ORDER BY COUNT(*) DESC LIMIT 1) as vehicle_class')
             ->groupBy('users.id', 'users.name')
+            ->orderByRaw('COUNT(evaluations.id) = 0')
             ->orderByDesc('rating')
             ->take(3)
             ->get()
             ->map(fn($item) => [
                 'name' => $item->name ?? 'Livreur #' . $item->id,
-                'rating' => round((float) $item->rating, 1),
+                'rating' => $this->averageRating($item),
+                'ratings_count' => (int) $item->ratings_count,
                 'trips' => (int) $item->trips,
                 'vehicle' => self::VEHICLE_LABELS[$item->vehicle_class] ?? 'Moto',
             ])
