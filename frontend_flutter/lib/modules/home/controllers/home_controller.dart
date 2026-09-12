@@ -712,14 +712,21 @@ class HomeController extends GetxController {
             .map((m) => m.id == mission.id ? updatedMission : m)
             .toList();
 
+        // Hors réseau, la validation est conservée et rejouée plus tard : le
+        // code a bien été obtenu au comptoir, la preuve n'est pas perdue.
+        final queued = res['queued'] == true;
+
         Get.snackbar(
-          'Colis enlevé avec succès',
-          'Le colis est en route vers le client.',
+          queued ? 'Enregistré hors connexion' : 'Colis enlevé avec succès',
+          queued
+              ? (res['message'] as String? ?? 'Transmission dès le retour du réseau.')
+              : 'Le colis est en route vers le client.',
           snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: AppColors.success,
+          backgroundColor: queued ? AppColors.warning : AppColors.success,
           colorText: Colors.white,
+          duration: Duration(seconds: queued ? 6 : 3),
         );
-        await _loadDriverMissions();
+        if (!queued) await _loadDriverMissions();
         return true;
       }
 
@@ -753,6 +760,23 @@ class HomeController extends GetxController {
     try {
       final res = await _orderRepo.verifyDelivery(mission.id, code.trim());
       if (res['success'] == true) {
+        if (res['queued'] == true) {
+          // Validation conservée pour rejeu : les fonds ne sont pas encore
+          // libérés, on ne crédite donc surtout pas le portefeuille. La course
+          // reste affichée tant que le backend ne l'a pas confirmée.
+          Get.snackbar(
+            'Enregistré hors connexion',
+            res['message'] as String? ??
+                'La livraison sera confirmée dès le retour du réseau.',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: AppColors.warning,
+            colorText: Colors.white,
+            duration: const Duration(seconds: 6),
+          );
+
+          return true;
+        }
+
         final deliveryFee = mission.montantMo > 0 ? mission.montantMo : 1500;
         walletMo.value += deliveryFee;
         StorageService.saveDriverWalletBalance(walletMo.value);

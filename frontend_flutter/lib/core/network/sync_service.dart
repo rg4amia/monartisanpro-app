@@ -52,6 +52,16 @@ class SyncService extends GetxService {
   Box<Map>? _queueBox;
 
   final RxBool isOffline = false.obs;
+
+  /// Nombre de requêtes en attente de rejeu.
+  final RxInt pendingCount = 0.obs;
+
+  /// Requêtes abandonnées faute d'avoir pu être rejouées dans le délai.
+  ///
+  /// L'abandon était jusqu'ici silencieux (un simple `debugPrint`). Pour une
+  /// validation de livraison, cela signifie un livreur non payé sans que
+  /// personne ne le sache : la perte doit être visible.
+  final RxList<QueuedRequest> abandoned = <QueuedRequest>[].obs;
   late StreamSubscription<List<ConnectivityResult>> _connectivitySubscription;
 
   /// On rejoue les requêtes via le client applicatif : il porte le baseUrl
@@ -112,6 +122,7 @@ class SyncService extends GetxService {
     );
 
     await _queueBox!.put(request.id, request.toJson());
+    pendingCount.value = _queueBox!.length;
   }
 
   /// Force une tentative de synchronisation (ex: après un login réussi).
@@ -135,6 +146,8 @@ class SyncService extends GetxService {
         // mutation obsolète (statut déjà changé, jalon déjà soumis…).
         if (DateTime.now().difference(request.timestamp) > _maxRequestAge) {
           await _queueBox!.delete(key);
+          abandoned.add(request);
+          pendingCount.value = _queueBox!.length;
           debugPrint(
             '[SyncService] Requête expirée abandonnée: ${request.url}',
           );
@@ -186,6 +199,9 @@ class SyncService extends GetxService {
       }
     } finally {
       _syncing = false;
+      if (_queueBox != null) {
+        pendingCount.value = _queueBox!.length;
+      }
     }
   }
 

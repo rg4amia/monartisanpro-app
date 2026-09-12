@@ -43,8 +43,10 @@ import '../../modules/onboarding/bindings/onboarding_binding.dart';
 import '../../modules/onboarding/views/onboarding_screen.dart';
 import '../../modules/onboarding/views/splash_screen.dart';
 import '../../modules/orders/views/client_catalog_screen.dart';
+import '../../modules/orders/views/client_orders_screen.dart';
 import '../../modules/orders/views/client_suppliers_list_screen.dart';
 import '../../modules/orders/views/order_checkout_screen.dart';
+import '../../modules/orders/views/supplier_orders_screen.dart';
 import '../../modules/rating/bindings/rating_binding.dart';
 import '../../modules/rating/views/rating_screen.dart';
 import '../../modules/score/bindings/score_binding.dart';
@@ -276,6 +278,14 @@ class AppPages {
     GetPage(
       name: Routes.clientCatalog,
       page: () => const ClientCatalogScreen(),
+    ),
+    GetPage(
+      name: Routes.clientOrders,
+      page: () => const ClientOrdersScreen(),
+    ),
+    GetPage(
+      name: Routes.supplierOrders,
+      page: () => const SupplierOrdersScreen(),
     ),
     GetPage(
       name: Routes.wallet,

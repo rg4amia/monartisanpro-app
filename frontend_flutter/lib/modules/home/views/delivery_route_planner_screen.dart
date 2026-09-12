@@ -544,7 +544,9 @@ class _DeliveryRoutePlannerScreenState
               textCapitalization: TextCapitalization.characters,
               decoration: InputDecoration(
                 labelText: 'Code de retrait fournisseur',
-                hintText: 'Communiqué par la quincaillerie',
+                // Le livreur ne reçoit plus ce code : il doit le demander, et
+                // c'est cette demande qui atteste de sa présence en boutique.
+                hintText: 'À demander au fournisseur après chargement',
                 border:
                     OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 prefixIcon: const Icon(Icons.qr_code_scanner_rounded),
@@ -621,7 +623,7 @@ class _DeliveryRoutePlannerScreenState
               textCapitalization: TextCapitalization.characters,
               decoration: InputDecoration(
                 labelText: 'Code de réception client (OTP)',
-                hintText: 'Code affiché sur l\'app du client',
+                hintText: 'À demander au client une fois le colis remis',
                 border:
                     OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 prefixIcon: const Icon(Icons.pin_outlined),

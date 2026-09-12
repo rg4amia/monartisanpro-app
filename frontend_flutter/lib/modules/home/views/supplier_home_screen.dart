@@ -91,6 +91,23 @@ class SupplierHomeScreen extends StatelessWidget {
                           missionCount: controller.activeMissions.length,
                         ),
                         const SizedBox(height: 12),
+                        // Les commandes e-commerce n'apparaissaient nulle part
+                        // dans l'application : le fournisseur ne pouvait ni les
+                        // préparer, ni contrôler le code au comptoir.
+                        ElevatedButton.icon(
+                          onPressed: () => Get.toNamed(Routes.supplierOrders),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.success,
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size.fromHeight(48),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          icon: const Icon(Icons.receipt_long_outlined),
+                          label: const Text('Mes commandes'),
+                        ),
+                        const SizedBox(height: 12),
                         OutlinedButton.icon(
                           onPressed: () => Get.toNamed(Routes.supplierCatalog),
                           icon: const Icon(Icons.inventory_2_outlined),

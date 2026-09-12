@@ -142,6 +142,22 @@ class _ExplorationView extends StatelessWidget {
         const SectionHeader(title: 'Matériaux & Quincailleries'),
         const SizedBox(height: 12),
         const SupplierBanner(),
+        const SizedBox(height: 12),
+        // Suivi des commandes matériaux : c'est ici que le client retrouve le
+        // code à présenter au comptoir ou à remettre au livreur.
+        OutlinedButton.icon(
+          onPressed: () => Get.toNamed(Routes.clientOrders),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppColors.client,
+            minimumSize: const Size.fromHeight(48),
+            side: const BorderSide(color: AppColors.client),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+          icon: const Icon(Icons.receipt_long_outlined),
+          label: const Text('Suivre mes commandes'),
+        ),
         const SizedBox(height: 24),
         SectionHeader(
           title: 'Artisans à proximité',
