@@ -78,6 +78,29 @@ void main() {
     expect(res.label, 'cached');
   });
 
+  test(
+      'networkFirst : interroge le reseau meme avec un cache frais '
+      '(tirer-pour-rafraichir doit voir une communication tout juste publiee)',
+      () async {
+    final store = newStore('nf');
+    await store.init();
+    await store.writeOne('k', _Item(9, 'cached'));
+
+    var fetched = false;
+    final res = await store.readOne(
+      key: 'k',
+      ttl: const Duration(minutes: 10),
+      policy: CachePolicy.networkFirst,
+      fetch: () async {
+        fetched = true;
+        return _Item(1, 'network');
+      },
+    );
+
+    expect(fetched, isTrue);
+    expect(res.label, 'network');
+  });
+
   test('fallback : réseau KO + cache périmé → renvoie le cache périmé',
       () async {
     final store = newStore('fb');

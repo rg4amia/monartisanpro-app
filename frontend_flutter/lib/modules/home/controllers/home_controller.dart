@@ -149,13 +149,13 @@ class HomeController extends GetxController {
 
   /// Nombre max de tentatives de chargement avant d'afficher l'erreur.
   static const int _maxRetries = 3;
-  Future<void> _loadData() async {
+  Future<void> _loadData({bool forceRefresh = false}) async {
     isLoading.value = true;
     hasError.value = false;
 
     for (var attempt = 1; attempt <= _maxRetries; attempt++) {
       try {
-        await _loadDataCore();
+        await _loadDataCore(forceRefresh: forceRefresh);
         hasError.value = false;
         isLoading.value = false;
         return;
@@ -174,7 +174,12 @@ class HomeController extends GetxController {
   }
 
   /// Logique principale de chargement — extraite pour le retry.
-  Future<void> _loadDataCore() async {
+  ///
+  /// [forceRefresh] court-circuite le cache Hive des communications : sans
+  /// lui, le geste de tirer-pour-rafraîchir retombait sur `cacheFirst` et
+  /// pouvait laisser une communication tout juste publiée invisible jusqu'à
+  /// dix minutes, le temps que le TTL local expire de lui-même.
+  Future<void> _loadDataCore({bool forceRefresh = false}) async {
     await _getLocation();
 
     // Load user profile payment settings
@@ -333,7 +338,9 @@ class HomeController extends GetxController {
 
     // Load active communications (announcements, tips, voice & video)
     try {
-      final commsMap = await _communicationRepo.getActiveCommunications();
+      final commsMap = await _communicationRepo.getActiveCommunications(
+        forceRefresh: forceRefresh,
+      );
       announcements.value = commsMap['annonces'] ?? [];
       tips.value = commsMap['le_saviez_vous'] ?? [];
       voiceBroadcasts.value = commsMap['audio'] ?? [];
@@ -416,8 +423,11 @@ class HomeController extends GetxController {
     }
   }
 
+  /// Tirer-pour-rafraîchir : geste explicite de l'utilisateur, il doit
+  /// interroger le serveur plutôt que resservir un cache jusqu'à dix minutes
+  /// périmé (annonces, messages vocaux, vidéos).
   @override
-  Future<void> refresh() => _loadData();
+  Future<void> refresh() => _loadData(forceRefresh: true);
 
   Future<void> _getLocation() async {
     try {
