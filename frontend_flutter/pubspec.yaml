@@ -38,6 +38,11 @@ dependencies:
   image_picker: ^1.1.2
   cached_network_image: ^3.4.1
   flutter_svg: ^2.0.17
+  # Lecture des communications vocales diffusées par l'administration.
+  # La vidéo n'a pas de lecteur embarqué : elle est hébergée à l'extérieur
+  # (YouTube et consorts), que `video_player` ne sait pas lire, et l'ouvrir
+  # dans l'application dédiée laisse jouer ses réglages d'économie de données.
+  just_audio: ^0.9.42
 
   # ── QR Code ──────────────────────────────────────────────────────────────────
   qr_flutter: ^4.1.0

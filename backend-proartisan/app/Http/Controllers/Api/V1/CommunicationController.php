@@ -45,6 +45,7 @@ class CommunicationController extends Controller
         $communication = $this->communicationService->store(
             $request->validated(),
             $request->user(),
+            $request->file('media_file'),
         );
 
         return response()->json([
@@ -74,6 +75,7 @@ class CommunicationController extends Controller
             $updated = $this->communicationService->update(
                 $communication,
                 $request->validated(),
+                $request->file('media_file'),
             );
 
             return response()->json([

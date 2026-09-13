@@ -173,6 +173,8 @@ interface AdminPageProps {
         updated_at: string;
         auteur?: { id: number; name: string; phone: string } | null;
     }>;
+    /** Plafond de televersement audio reellement applicable (borne par PHP). */
+    audioUploadLimit?: string;
     vitrineSlides?: any[];
     vitrineArtisanDuMois?: any[];
     vitrineArticles?: any[];
@@ -258,6 +260,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         financialKpis = {} as any,
         promoCodes = [] as PromoCodeItem[],
         communications = [],
+        audioUploadLimit,
         adminNotifications = [] as AdminNotificationItem[],
         allNotifications = { data: [] } as any,
         sectors = [],
@@ -663,6 +666,10 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         titre: '',
         contenu: '',
         cibles: [] as string[],
+        // Contenu vocal : fichier televerse. Contenu video : lien externe.
+        media_file: null as File | null,
+        media_external_url: '',
+        media_duration: '',
     });
 
     const filteredCommunications = useMemo(() => {
@@ -878,6 +885,9 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
             titre: '',
             contenu: '',
             cibles: [],
+            media_file: null,
+            media_external_url: '',
+            media_duration: '',
         });
         setCommModalOpen(true);
     };
@@ -890,6 +900,11 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
             titre: comm.titre,
             contenu: comm.contenu,
             cibles: comm.cibles_json,
+            // Le fichier deja televerse n'est pas renvoye : le laisser vide
+            // conserve l'existant, en choisir un nouveau le remplace.
+            media_file: null,
+            media_external_url: comm.media_external_url ?? '',
+            media_duration: comm.media_duration ? String(comm.media_duration) : '',
         });
         setCommModalOpen(true);
     };
@@ -897,21 +912,25 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
     const handleCommSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
         event.preventDefault();
         if (commForm.processing) return;
+        const onSuccess = (): void => {
+            setCommModalOpen(false);
+            commForm.reset();
+        };
+
         if (editingComm) {
-            commForm.put(`/admin/communications/${editingComm.id}`, {
+            // Inertia ne sait pas transporter un fichier en PUT : on poste en
+            // usurpant la methode, ce qui fonctionne avec ou sans fichier.
+            commForm.transform((data) => ({ ...data, _method: 'put' }));
+            commForm.post(`/admin/communications/${editingComm.id}`, {
                 preserveScroll: true,
-                onSuccess: () => {
-                    setCommModalOpen(false);
-                    commForm.reset();
-                },
+                forceFormData: true,
+                onSuccess,
             });
         } else {
             commForm.post('/admin/communications', {
                 preserveScroll: true,
-                onSuccess: () => {
-                    setCommModalOpen(false);
-                    commForm.reset();
-                },
+                forceFormData: true,
+                onSuccess,
             });
         }
     };
@@ -1782,6 +1801,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                 {commModalOpen && (
                     <CommunicationFormModal
                         form={commForm}
+                        audioUploadLimit={audioUploadLimit}
                         editing={editingComm}
                         adminName={auth?.user?.name ?? ''}
                         onSubmit={handleCommSubmit}

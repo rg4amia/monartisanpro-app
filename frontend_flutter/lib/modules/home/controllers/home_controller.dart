@@ -30,6 +30,11 @@ class HomeController extends GetxController {
   final activeMissions = <MissionModel>[].obs;
   final announcements = <CommunicationModel>[].obs;
   final tips = <CommunicationModel>[].obs;
+
+  /// Messages vocaux et vidéos diffusés par l'administration au rôle courant.
+  /// Le filtrage par cible est fait côté serveur.
+  final voiceBroadcasts = <CommunicationModel>[].obs;
+  final videoBroadcasts = <CommunicationModel>[].obs;
   final isLoading = false.obs;
   final hasError = false.obs;
   final isMapLoading = false.obs;
@@ -326,15 +331,19 @@ class HomeController extends GetxController {
       activeMissionsCount.value = missions.length;
     }
 
-    // Load active communications (announcements & tips)
+    // Load active communications (announcements, tips, voice & video)
     try {
       final commsMap = await _communicationRepo.getActiveCommunications();
       announcements.value = commsMap['annonces'] ?? [];
       tips.value = commsMap['le_saviez_vous'] ?? [];
+      voiceBroadcasts.value = commsMap['audio'] ?? [];
+      videoBroadcasts.value = commsMap['video'] ?? [];
     } catch (e) {
       debugPrint('[HomeController] Error fetching active communications: $e');
       announcements.clear();
       tips.clear();
+      voiceBroadcasts.clear();
+      videoBroadcasts.clear();
     }
   }
 

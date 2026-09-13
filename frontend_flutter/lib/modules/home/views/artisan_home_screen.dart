@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/broadcast_media_section.dart';
 import '../../../shared/widgets/communication_banner.dart';
 import '../../../shared/widgets/loading_shimmer.dart';
 import '../controllers/home_controller.dart';
@@ -55,6 +56,10 @@ class ArtisanHomeScreen extends StatelessWidget {
                         announcements: controller.announcements,
                       ),
                       LeSaviezVousCarousel(tips: controller.tips),
+                      BroadcastMediaSection(
+                        voice: controller.voiceBroadcasts,
+                        video: controller.videoBroadcasts,
+                      ),
                       ProsArtisanScoreCard(controller: controller),
                       StatGrid(controller: controller),
                       const SizedBox(height: 24),

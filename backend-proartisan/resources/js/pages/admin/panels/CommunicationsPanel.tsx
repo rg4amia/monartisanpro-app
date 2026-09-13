@@ -24,7 +24,8 @@ interface CommunicationsPanelProps {
 function handleCommAction(action: string, comm: Communication) {
     if (action === 'edit') return;
     if (action === 'publish') {
-        if (window.confirm('Publier cette communication ?')) {
+        const isRepublish = comm.statut === 'cloture';
+        if (window.confirm(isRepublish ? 'Rediffuser cette communication ?' : 'Publier cette communication ?')) {
             router.post(`/admin/communications/${comm.id}/publish`, {}, { preserveScroll: true });
         }
     } else if (action === 'cloturer') {
@@ -225,10 +226,14 @@ export function CommunicationsPanel({
                                         }}
                                     >
                                         <option value="" disabled>Actions...</option>
-                                        {comm.statut === 'brouillon' && <option value="edit">Modifier</option>}
+                                        {/* Une publication clôturée reste modifiable et rediffusable :
+                                            corriger une coquille ne doit pas imposer de tout ressaisir.
+                                            Une publication en cours reste figée. */}
+                                        {comm.statut !== 'publie' && <option value="edit">Modifier</option>}
                                         {comm.statut === 'brouillon' && <option value="publish">Publier</option>}
+                                        {comm.statut === 'cloture' && <option value="publish">Republier</option>}
                                         {comm.statut === 'publie' && <option value="cloturer">Désactiver</option>}
-                                        {comm.statut === 'brouillon' && <option value="delete">Supprimer</option>}
+                                        {comm.statut !== 'publie' && <option value="delete">Supprimer</option>}
                                     </select>
                                 </div>
                             </div>
@@ -315,10 +320,14 @@ export function CommunicationsPanel({
                                                     }}
                                                 >
                                                     <option value="" disabled>Actions...</option>
-                                                    {comm.statut === 'brouillon' && <option value="edit">Modifier</option>}
+                                                    {/* Une publication clôturée reste modifiable et rediffusable :
+                                                        corriger une coquille ne doit pas imposer de tout ressaisir.
+                                                        Une publication en cours reste figée. */}
+                                                    {comm.statut !== 'publie' && <option value="edit">Modifier</option>}
                                                     {comm.statut === 'brouillon' && <option value="publish">Publier</option>}
+                                                    {comm.statut === 'cloture' && <option value="publish">Republier</option>}
                                                     {comm.statut === 'publie' && <option value="cloturer">Désactiver</option>}
-                                                    {comm.statut === 'brouillon' && <option value="delete">Supprimer</option>}
+                                                    {comm.statut !== 'publie' && <option value="delete">Supprimer</option>}
                                                 </select>
                                             </div>
                                         </td>

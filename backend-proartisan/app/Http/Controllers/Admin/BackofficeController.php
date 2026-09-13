@@ -170,7 +170,7 @@ class BackofficeController extends Controller
 
     public function storeCommunication(StoreCommunicationRequest $request, CommunicationService $service): RedirectResponse
     {
-        $service->store($request->validated(), $request->user());
+        $service->store($request->validated(), $request->user(), $request->file('media_file'));
 
         return back()->with('success', 'Communication créée en brouillon.');
     }
@@ -178,7 +178,7 @@ class BackofficeController extends Controller
     public function updateCommunication(StoreCommunicationRequest $request, Communication $communication, CommunicationService $service): RedirectResponse
     {
         try {
-            $service->update($communication, $request->validated());
+            $service->update($communication, $request->validated(), $request->file('media_file'));
 
             return back()->with('success', 'Communication modifiée.');
         } catch (\LogicException $e) {

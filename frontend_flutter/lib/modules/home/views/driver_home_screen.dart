@@ -7,6 +7,7 @@ import '../../../app/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../data/models/mission_model.dart';
+import '../../../shared/widgets/broadcast_media_section.dart';
 import '../../../shared/widgets/communication_banner.dart';
 import '../../notifications/controllers/notifications_controller.dart';
 import '../controllers/home_controller.dart';
@@ -145,6 +146,10 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
                           announcements: controller.announcements,
                         ),
                         LeSaviezVousCarousel(tips: controller.tips),
+                        BroadcastMediaSection(
+                          voice: controller.voiceBroadcasts,
+                          video: controller.videoBroadcasts,
+                        ),
                       ],
                     ),
                   ),

@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../app/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/broadcast_media_section.dart';
 import '../../../shared/widgets/communication_banner.dart';
 import '../controllers/home_controller.dart';
 import '../widgets/client_home/artisans_list.dart';
@@ -118,6 +119,10 @@ class _ExplorationView extends StatelessWidget {
         const MissionSearchCard(),
         CommunicationBanner(announcements: controller.announcements),
         LeSaviezVousCarousel(tips: controller.tips),
+        BroadcastMediaSection(
+          voice: controller.voiceBroadcasts,
+          video: controller.videoBroadcasts,
+        ),
         if (controller.isNightModeActive) ...[
           const SizedBox(height: 16),
           const NightModeBanner(),

@@ -44,6 +44,10 @@ class CommunicationRepository {
     return {
       'annonces': _parseList(data['annonces']),
       'le_saviez_vous': _parseList(data['le_saviez_vous']),
+      // Absentes d'un backend antérieur ou d'un cache Hive écrit avant la
+      // mise à jour : `_parseList` renvoie alors une liste vide.
+      'audio': _parseList(data['audio']),
+      'video': _parseList(data['video']),
     };
   }
 

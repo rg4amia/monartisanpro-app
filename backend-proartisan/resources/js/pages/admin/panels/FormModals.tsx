@@ -29,12 +29,15 @@ export function CommunicationFormModal({
     form,
     editing,
     adminName,
+    audioUploadLimit,
     onSubmit,
     onClose,
 }: {
     form: InertiaForm;
     editing: unknown;
     adminName: string;
+    /** Plafond reellement applicable, borne par la configuration PHP du serveur. */
+    audioUploadLimit?: string;
     onSubmit: (event: FormEvent<HTMLFormElement>) => void;
     onClose: () => void;
 }) {
@@ -59,8 +62,66 @@ export function CommunicationFormModal({
                         >
                             <option value="annonce">Communication interne</option>
                             <option value="le_saviez_vous">Le saviez-vous ?</option>
+                            <option value="audio">Message vocal</option>
+                            <option value="video">Vidéo</option>
                         </select>
                     </label>
+
+                    {form.data.type === 'audio' && (
+                        <label className="block space-y-1">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">
+                                Fichier audio {editing ? '(laisser vide pour conserver l’actuel)' : ''}
+                            </span>
+                            <input
+                                type="file"
+                                accept="audio/mpeg,audio/mp4,audio/aac,audio/ogg,audio/wav,.mp3,.m4a,.aac,.ogg,.wav"
+                                onChange={(e) => form.setData('media_file', e.target.files?.[0] ?? null)}
+                                className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none"
+                            />
+                            <span className="block text-[11px] text-[var(--admin-muted)]">
+                                MP3, M4A, AAC, OGG ou WAV — {audioUploadLimit ?? '10 Mo'} maximum. Les destinataires voient le poids avant d’écouter.
+                            </span>
+                            {form.errors.media_file && (
+                                <span className="block text-[11px] text-red-500">{form.errors.media_file}</span>
+                            )}
+                        </label>
+                    )}
+
+                    {form.data.type === 'video' && (
+                        <label className="block space-y-1">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Lien de la vidéo</span>
+                            <input
+                                type="url"
+                                value={form.data.media_external_url}
+                                onChange={(e) => form.setData('media_external_url', e.target.value)}
+                                placeholder="https://www.youtube.com/watch?v=..."
+                                className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none"
+                            />
+                            <span className="block text-[11px] text-[var(--admin-muted)]">
+                                Le lien doit être en HTTPS : l’application refuse le trafic non chiffré et la vidéo ne se chargerait pas.
+                            </span>
+                            {form.errors.media_external_url && (
+                                <span className="block text-[11px] text-red-500">{form.errors.media_external_url}</span>
+                            )}
+                        </label>
+                    )}
+
+                    {(form.data.type === 'audio' || form.data.type === 'video') && (
+                        <label className="block space-y-1">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Durée en secondes (facultatif)</span>
+                            <input
+                                type="number"
+                                min={1}
+                                value={form.data.media_duration}
+                                onChange={(e) => form.setData('media_duration', e.target.value)}
+                                placeholder="90"
+                                className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none"
+                            />
+                            <span className="block text-[11px] text-[var(--admin-muted)]">
+                                Annoncée avant lecture, pour que l’utilisateur sache ce qu’il engage.
+                            </span>
+                        </label>
+                    )}
 
                     <label className="block space-y-1">
                         <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Intitulé / Titre</span>

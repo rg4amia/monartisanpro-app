@@ -2,6 +2,7 @@
 
 namespace App\Services\Admin;
 
+use App\Http\Requests\Admin\StoreCommunicationRequest;
 use App\Models\AdminActivityLog;
 use App\Models\Communication;
 use App\Models\ContactMessage;
@@ -21,6 +22,7 @@ use App\Models\Vitrine\VitrineSetting;
 use App\Models\Vitrine\VitrineSlide;
 use App\Models\Vitrine\VitrineVideo;
 use App\Services\AdminService;
+use App\Services\UploadLimitService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -280,6 +282,12 @@ class AdminPanelData
                     ->limit(100)
                     ->get()
                 : [],
+
+            // Plafond réellement applicable, borné par la configuration PHP de
+            // l'hébergeur. L'annoncer évite à l'administrateur de préparer un
+            // fichier que le serveur coupera avant même d'atteindre Laravel.
+            'audioUploadLimit' => app(UploadLimitService::class)
+                ->humanLimit(StoreCommunicationRequest::AUDIO_MAX_KB),
         ];
     }
 
