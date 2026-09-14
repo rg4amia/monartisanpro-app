@@ -1,3 +1,4 @@
+import java.io.FileInputStream
 import java.util.Properties
 
 plugins {
@@ -19,6 +20,18 @@ val yandexMapKitApiKey: String = run {
         f.inputStream().use { props.load(it) }
     }
     props.getProperty("yandex.mapkit.apiKey", "")
+}
+
+// Signing release : keystore d'upload dédié (jamais commité, voir .gitignore).
+//   android/key.properties → storePassword / keyPassword / keyAlias / storeFile
+// Absent (poste dev sans keystore, CI non configurée) → repli sur le keystore
+// debug pour ne pas casser `flutter build apk --release` : l'APK obtenu est
+// alors signé debug et NE DOIT PAS être distribué.
+val keystorePropertiesFile = rootProject.file("key.properties")
+val keystoreProperties = Properties()
+val hasReleaseKeystore = keystorePropertiesFile.exists()
+if (hasReleaseKeystore) {
+    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
 android {
@@ -49,11 +62,28 @@ android {
         manifestPlaceholders["YANDEX_MAPKIT_API_KEY"] = yandexMapKitApiKey
     }
 
+    signingConfigs {
+        if (hasReleaseKeystore) {
+            create("release") {
+                storeFile = file(keystoreProperties["storeFile"] as String)
+                storePassword = keystoreProperties["storePassword"] as String
+                keyAlias = keystoreProperties["keyAlias"] as String
+                keyPassword = keystoreProperties["keyPassword"] as String
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // Keystore d'upload dédié si android/key.properties existe, sinon
+            // repli debug (build de test local uniquement, jamais à distribuer :
+            // l'empreinte de certificat ne correspondra à aucune clé API
+            // restreinte ni à aucun compte Play Console).
+            signingConfig = if (hasReleaseKeystore) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
 
             // Rétrécissement : supprime le code et les ressources inutilisés
             // (~30-40 % de moins sur le .dex + assets). Règles dans proguard-rules.pro.

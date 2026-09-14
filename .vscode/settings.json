@@ -10,6 +10,22 @@
     "**/frontend_flutter/build",
     "**/build"
   ],
+  // frontend_flutter/android est un projet Gradle Android imbriqué dans le
+  // projet Flutter : sans cette exclusion, l'extension Java (Red Hat) et
+  // l'extension Gradle l'importent et le re-synchronisent en tâche de fond
+  // via leur propre démon Gradle (sous le JBR d'Android Studio), qui entre
+  // en concurrence avec `flutter build apk` / `gradlew` lancés en CLI sur le
+  // même dossier `build/` — verrous de fichiers Windows intermittents
+  // (« Unable to delete directory », tâche et sous-dossier différents à
+  // chaque essai) qui font échouer le build release au hasard.
+  "java.import.exclusions": [
+    "**/node_modules/**",
+    "**/.metadata/**",
+    "**/archetype-resources/**",
+    "**/META-INF/maven/**",
+    "**/frontend_flutter/**"
+  ],
+  "gradle.autoDetect": "off",
   "files.exclude": {
     "**/frontend_flutter/build": true,
     "**/build": true,
