@@ -466,6 +466,11 @@ class BackofficeController extends Controller
         return $this->page('admin/whatsapp', $this->panelData->whatsapp($request));
     }
 
+    public function faq(): Response
+    {
+        return $this->page('admin/faq', $this->panelData->faq());
+    }
+
     public function auditLogs(Request $request): Response
     {
         return $this->page('admin/audit-logs', $this->panelData->auditLogs($request));

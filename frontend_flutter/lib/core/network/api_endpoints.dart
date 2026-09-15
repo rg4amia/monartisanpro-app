@@ -117,6 +117,10 @@ class ApiEndpoints {
   // Communications
   static const String communicationsActive = '/communications/active';
 
+  // Aide & support
+  static const String faqs = '/faqs';
+  static const String publicSettings = '/vitrine/settings';
+
   // Livraisons & Courses
   static const String deliveriesEstimate = '/deliveries/estimate';
   static const String ordersEstimateDelivery = '/orders/estimate-delivery';

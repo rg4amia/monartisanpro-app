@@ -19,7 +19,8 @@ export type AdminTab =
     | 'observability'
     | 'cartography'
     | 'vitrine'
-    | 'whatsapp';
+    | 'whatsapp'
+    | 'faq';
 
 export type ThemeMode = 'light' | 'dark';
 

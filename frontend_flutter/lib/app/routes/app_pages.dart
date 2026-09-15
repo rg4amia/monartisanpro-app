@@ -56,6 +56,8 @@ import '../../modules/settings/bindings/settings_binding.dart';
 import '../../modules/settings/views/legal_terms_screen.dart';
 import '../../modules/settings/views/settings_screen.dart';
 import '../../modules/settings/views/update_profile_screen.dart';
+import '../../modules/support/bindings/support_binding.dart';
+import '../../modules/support/views/support_screen.dart';
 import '../../modules/wallet/bindings/wallet_binding.dart';
 import '../../modules/wallet/views/wallet_screen.dart';
 import 'app_routes.dart';
@@ -187,6 +189,13 @@ class AppPages {
       name: Routes.notifications,
       page: () => const NotificationsScreen(),
       binding: NotificationsBinding(),
+    ),
+
+    // Aide & support
+    GetPage(
+      name: Routes.support,
+      page: () => const SupportScreen(),
+      binding: SupportBinding(),
     ),
 
     // Settings

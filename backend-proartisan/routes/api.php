@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\V1\DeliveryController;
 use App\Http\Controllers\Api\V1\DeliveryTrackingController;
 use App\Http\Controllers\Api\V1\DevisController;
 use App\Http\Controllers\Api\V1\EvaluationController;
+use App\Http\Controllers\Api\V1\FaqController;
 use App\Http\Controllers\Api\V1\InterventionTypeController;
 use App\Http\Controllers\Api\V1\JalonController;
 use App\Http\Controllers\Api\V1\JCodeController;
@@ -74,6 +75,9 @@ Route::prefix('v1')->group(function () {
         Route::get('/sectors', [SectorController::class, 'index']);
         Route::get('/sectors/{sector}/trades', [SectorController::class, 'trades']);
         Route::get('/intervention-types', [InterventionTypeController::class, 'index']);
+
+        // FAQ « Aide et support » — même écran pour les 4 espaces mobile.
+        Route::get('/faqs', [FaqController::class, 'index']);
     });
 
     // ── Webhooks (sans authentification pour les callbacks externes) ─────────

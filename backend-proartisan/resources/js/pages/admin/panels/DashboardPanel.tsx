@@ -11,6 +11,7 @@ import {
     EmptyState,
     MetricCard,
     money,
+    numberFormat,
     RoleBadge,
     SectionTitle,
     shortDate,
@@ -20,7 +21,7 @@ import {
     toneIconClasses,
     VolumeBarChart,
 } from '../shared';
-import type { AdminUser, ChartPoint, KycUser, Tone } from '../shared';
+import type { AdminUser, ChartPoint, FaqStats, KycUser, Tone, WhatsappClickStats } from '../shared';
 
 interface SummaryCard {
     description: string;
@@ -48,6 +49,8 @@ interface DashboardPanelProps {
     escrowAmount: number;
     releasedAmount: number;
     topArtisans: AdminUser[];
+    whatsappClickStats: WhatsappClickStats;
+    faqStats: FaqStats;
 }
 
 export function DashboardPanel({
@@ -60,6 +63,8 @@ export function DashboardPanel({
     escrowAmount,
     releasedAmount,
     topArtisans,
+    whatsappClickStats,
+    faqStats,
 }: DashboardPanelProps) {
     return (
         <section className="mt-5 space-y-5">
@@ -176,6 +181,34 @@ export function DashboardPanel({
                             ))
                         )}
                     </div>
+                </Surface>
+            </div>
+
+            <div className="grid gap-5 xl:grid-cols-2">
+                <Surface className="rounded-[32px] p-5 lg:p-6">
+                    <div className="flex items-center justify-between gap-3">
+                        <SectionTitle description="Boutons click-to-chat du site vitrine, 7 derniers jours." title="Clics WhatsApp" />
+                        <Link href={tabRoutes.whatsapp} className="text-sm font-medium text-[#8a6b3d] transition hover:text-[#6f531f]">
+                            Gérer
+                        </Link>
+                    </div>
+                    <p className="mt-5 text-4xl font-semibold text-[var(--admin-text)]">{numberFormat.format(whatsappClickStats.last_7_days)}</p>
+                    <p className="mt-2 text-sm text-[var(--admin-text-soft)]">
+                        {numberFormat.format(whatsappClickStats.today)} aujourd'hui · {numberFormat.format(whatsappClickStats.total)} au total
+                    </p>
+                </Surface>
+
+                <Surface className="rounded-[32px] p-5 lg:p-6">
+                    <div className="flex items-center justify-between gap-3">
+                        <SectionTitle description="Questions publiées dans l'app mobile, tous espaces confondus." title="FAQ Aide & Support" />
+                        <Link href={tabRoutes.faq} className="text-sm font-medium text-[#8a6b3d] transition hover:text-[#6f531f]">
+                            Gérer
+                        </Link>
+                    </div>
+                    <p className="mt-5 text-4xl font-semibold text-[var(--admin-text)]">{numberFormat.format(faqStats.actives)}</p>
+                    <p className="mt-2 text-sm text-[var(--admin-text-soft)]">
+                        {faqStats.roles_covered}/4 espaces couverts · {numberFormat.format(faqStats.total)} question(s) au total
+                    </p>
                 </Surface>
             </div>
 

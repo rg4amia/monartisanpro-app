@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\AuthenticatedSessionController;
 use App\Http\Controllers\Admin\BackofficeController;
 use App\Http\Controllers\Admin\ImpersonationController;
 use App\Http\Controllers\Admin\LlmAdminController;
+use App\Http\Controllers\Admin\FaqAdminController;
 use App\Http\Controllers\Admin\VitrineAdminController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use Illuminate\Support\Facades\Route;
@@ -167,6 +168,14 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // Vitrine CMS (Gestion du Front Office)
         Route::get('/vitrine', [BackofficeController::class, 'vitrine'])->middleware('can:admin.vitrine.manage')->name('vitrine');
         Route::get('/whatsapp', [BackofficeController::class, 'whatsapp'])->middleware('can:admin.whatsapp.manage')->name('whatsapp');
+
+        // FAQ « Aide et support » (app mobile — client/artisan/livreur/fournisseur)
+        Route::get('/faq', [BackofficeController::class, 'faq'])->middleware('can:admin.faq.manage')->name('faq');
+        Route::prefix('faq')->name('faq.')->middleware('can:admin.faq.manage')->group(function () {
+            Route::post('/', [FaqAdminController::class, 'store'])->name('store');
+            Route::match(['post', 'put'], '/{faq}', [FaqAdminController::class, 'update'])->name('update');
+            Route::delete('/{faq}', [FaqAdminController::class, 'destroy'])->name('destroy');
+        });
 
         Route::prefix('vitrine')->name('vitrine.')->middleware('can:admin.vitrine.manage')->group(function () {
             Route::post('/slides', [VitrineAdminController::class, 'storeSlide'])->name('slides.store');

@@ -30,6 +30,7 @@ export const tabCapability: Record<AdminTab, string | null> = {
     promo_codes: 'admin.promo.manage',
     vitrine: 'admin.vitrine.manage',
     whatsapp: 'admin.whatsapp.manage',
+    faq: 'admin.faq.manage',
     llm_admin: 'admin.llm.manage',
     ai_dashboard: 'admin.ai.manage',
     cartography: 'admin.territory.view',

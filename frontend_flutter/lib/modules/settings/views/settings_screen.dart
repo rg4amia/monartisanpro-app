@@ -567,25 +567,7 @@ class _MenuList extends StatelessWidget {
             iconColor: const Color(0xFFD97706),
             title: 'Aide et support',
             subtitle: 'FAQs et support client d\'assistance',
-            onTap: () {
-              Get.dialog(
-                AlertDialog(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  title: const Text('Aide et support'),
-                  content: const Text(
-                    'Besoin d\'assistance pour un jalon ou un paiement ? Contactez notre support disponible 7j/7 depuis notre centre d\'appel.',
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Get.back(),
-                      child: const Text('Fermer'),
-                    ),
-                  ],
-                ),
-              );
-            },
+            onTap: () => Get.toNamed(Routes.support),
           ),
           const SizedBox(height: 12),
 

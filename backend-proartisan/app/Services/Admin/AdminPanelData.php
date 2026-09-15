@@ -11,6 +11,7 @@ use App\Models\Permission;
 use App\Models\PromoCode;
 use App\Models\Sector;
 use App\Models\Setting;
+use App\Models\Faq;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\WhatsappClickLog;
@@ -79,6 +80,8 @@ class AdminPanelData
             'users' => $this->adminService->listUsers(null, null, null, 100)->items(),
             'evaluationsList' => $this->adminService->listEvaluations(100)->items(),
             'artisansScores' => $this->adminService->listArtisansScores(),
+            'whatsappClickStats' => $this->whatsappClickStats(),
+            'faqStats' => $this->faqStats(),
         ];
     }
 
@@ -315,11 +318,7 @@ class AdminPanelData
                     ->paginate(25)
                     ->withQueryString()
                 : null,
-            'whatsappClickStats' => [
-                'total' => $hasTable ? WhatsappClickLog::count() : 0,
-                'today' => $hasTable ? WhatsappClickLog::whereDate('created_at', now()->toDateString())->count() : 0,
-                'last_7_days' => $hasTable ? WhatsappClickLog::where('created_at', '>=', now()->subDays(7))->count() : 0,
-            ],
+            'whatsappClickStats' => $this->whatsappClickStats(),
             'whatsappSettings' => [
                 'whatsapp_widget_enabled' => VitrineSetting::get('whatsapp_widget_enabled', '1'),
                 'whatsapp_widget_phone' => VitrineSetting::get('whatsapp_widget_phone', ''),
@@ -328,6 +327,51 @@ class AdminPanelData
                     "Bonjour ProsArtisan, je souhaite être mis en relation avec un artisan.",
                 ),
             ],
+        ];
+    }
+
+    /**
+     * Onglet « FAQ » — questions/réponses d'aide et support de l'app mobile,
+     * ventilées par rôle (client, artisan, livreur, fournisseur).
+     */
+    public function faq(): array
+    {
+        return [
+            'faqs' => Schema::hasTable('faqs') ? Faq::ordered()->get() : [],
+        ];
+    }
+
+    /**
+     * Compteurs légers du bouton WhatsApp, réutilisés par l'onglet dédié et
+     * par le tableau de bord (KPI « Clics WhatsApp »).
+     */
+    private function whatsappClickStats(): array
+    {
+        $hasTable = Schema::hasTable('whatsapp_click_logs');
+
+        return [
+            'total' => $hasTable ? WhatsappClickLog::count() : 0,
+            'today' => $hasTable ? WhatsappClickLog::whereDate('created_at', now()->toDateString())->count() : 0,
+            'last_7_days' => $hasTable ? WhatsappClickLog::where('created_at', '>=', now()->subDays(7))->count() : 0,
+        ];
+    }
+
+    /**
+     * Compteurs légers de la FAQ, réutilisés par l'onglet dédié et par le
+     * tableau de bord (KPI « FAQ Aide & Support »).
+     */
+    private function faqStats(): array
+    {
+        if (!Schema::hasTable('faqs')) {
+            return ['total' => 0, 'actives' => 0, 'roles_covered' => 0];
+        }
+
+        $actives = Faq::actif()->get(['roles']);
+
+        return [
+            'total' => Faq::count(),
+            'actives' => $actives->count(),
+            'roles_covered' => $actives->flatMap(fn (Faq $faq) => $faq->roles ?? [])->unique()->count(),
         ];
     }
 

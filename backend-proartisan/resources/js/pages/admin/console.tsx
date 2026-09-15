@@ -15,6 +15,7 @@ import { CommunicationsPanel } from './panels/CommunicationsPanel';
 import { DashboardPanel } from './panels/DashboardPanel';
 import { ArtisanLedgerModal, MissionDetailModal, OrderDetailModal, TransactionDetailModal } from './panels/DetailModals';
 import { EvaluationsPanel } from './panels/EvaluationsPanel';
+import { FaqPanel } from './panels/FaqPanel';
 import { AiQuotaFormModal, CommunicationFormModal, PromoCodeFormModal, StatusFormModal, UserFormModal } from './panels/FormModals';
 import { KycPanel } from './panels/KycPanel';
 import { LitigesPanel } from './panels/LitigesPanel';
@@ -71,6 +72,8 @@ import type {
     WhatsappClickLogItem,
     WhatsappClickStats,
     WhatsappSettings,
+    FaqItem,
+    FaqStats,
 } from './shared';
 import {
     AdminShell,
@@ -191,6 +194,8 @@ interface AdminPageProps {
     whatsappClicksPage?: Paginated<WhatsappClickLogItem> | null;
     whatsappClickStats?: WhatsappClickStats;
     whatsappSettings?: WhatsappSettings;
+    faqs?: FaqItem[];
+    faqStats?: FaqStats;
     territorySummary?: TerritorySummary;
     districtsHeatmap?: Record<string, DistrictHeatmapItem>;
     communesHeatmap?: Record<string, CommuneHeatmapItem>;
@@ -309,6 +314,8 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         whatsappClicksPage = undefined,
         whatsappClickStats = { total: 0, today: 0, last_7_days: 0 },
         whatsappSettings = { whatsapp_widget_enabled: '1', whatsapp_widget_phone: '', whatsapp_widget_message: '' },
+        faqs = [],
+        faqStats = { total: 0, actives: 0, roles_covered: 0 },
         observability = undefined,
         territorySummary = undefined,
         districtsHeatmap = {},
@@ -331,6 +338,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
     const canImpersonate = can(permissions, 'admin.users.impersonate');
     const canManageAi = can(permissions, 'admin.ai.manage');
     const canManageWhatsapp = can(permissions, 'admin.whatsapp.manage');
+    const canManageFaq = can(permissions, 'admin.faq.manage');
 
     const [missionSubTab, setMissionSubTab] = useState<'chantiers' | 'livraisons'>('chantiers');
     const [selectedOrderForDetails, setSelectedOrderForDetails] = useState<AdminOrder | null>(null);
@@ -1165,6 +1173,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                 { count: navBadges.promo_codes_actifs ?? (promoCodes ?? []).filter(p => p.is_active).length, id: 'promo_codes', label: 'Codes Promo' },
                 { count: navBadges.contact_messages_nouveaux ?? (contactMessages ?? []).filter(c => c.statut === 'nouveau').length, id: 'vitrine', label: tabMeta.vitrine.label },
                 { count: whatsappClickStats.today, id: 'whatsapp', label: tabMeta.whatsapp.label },
+                { count: faqs.length, id: 'faq', label: tabMeta.faq.label },
             ],
         },
     ] as NavigationGroup[])
@@ -1282,6 +1291,15 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                     { label: '7 derniers jours', tone: 'blue' as const, value: numberFormat.format(whatsappClickStats.last_7_days) },
                     { label: 'Bouton', tone: 'slate' as const, value: whatsappSettings.whatsapp_widget_enabled === '1' ? 'Actif' : 'Désactivé' },
                 ];
+            case 'faq': {
+                const rolesCovered = new Set(faqs.flatMap((f) => f.roles));
+                return [
+                    { label: 'Questions publiées', tone: 'amber' as const, value: numberFormat.format(faqs.filter((f) => f.actif).length) },
+                    { label: 'Masquées', tone: 'slate' as const, value: numberFormat.format(faqs.filter((f) => !f.actif).length) },
+                    { label: 'Espaces couverts', tone: 'blue' as const, value: `${rolesCovered.size} / 4` },
+                    { label: 'Total', tone: 'green' as const, value: numberFormat.format(faqs.length) },
+                ];
+            }
             case 'audit_logs': {
                 const logs = auditLogs?.data ?? [];
                 const failures = logs.filter((l) => l.action.includes('failed') || l.action.includes('denied')).length;
@@ -1341,6 +1359,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         territorySummary?.zone?.name,
         whatsappClickStats,
         whatsappSettings,
+        faqs,
     ]);
 
     const summaryCards = [
@@ -1505,6 +1524,8 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                     escrowAmount={analytics.escrowAmount}
                                     releasedAmount={analytics.releasedAmount}
                                     topArtisans={analytics.topArtisans}
+                                    whatsappClickStats={whatsappClickStats}
+                                    faqStats={faqStats}
                                 />
                             ) : null}
 
@@ -1840,6 +1861,10 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                     renderPagination={(links) => renderPagination(links as any[], ['whatsappClicksPage'])}
                                     canManage={canManageWhatsapp}
                                 />
+                            ) : null}
+
+                            {activeTab === 'faq' ? (
+                                <FaqPanel faqs={faqs} canManage={canManageFaq} />
                             ) : null}
                 {commModalOpen && (
                     <CommunicationFormModal

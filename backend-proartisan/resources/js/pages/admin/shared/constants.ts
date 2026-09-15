@@ -21,6 +21,7 @@ export const tabRoutes: Record<AdminTab, string> = {
     observability: '/admin/observability',
     vitrine: '/admin/vitrine',
     whatsapp: '/admin/whatsapp',
+    faq: '/admin/faq',
     cartography: '/admin/cartographie',
 };
 
@@ -110,6 +111,11 @@ export const tabMeta: Record<AdminTab, { description: string; label: string; sec
         section: 'COMMUNICATION',
         description: 'Configuration du bouton WhatsApp "click-to-chat" du front office et suivi des clics enregistrés.',
     },
+    faq: {
+        label: 'FAQ Aide & Support',
+        section: 'COMMUNICATION',
+        description: "Questions/réponses affichées dans l'écran Aide et support de l'application mobile, par espace (client, artisan, livreur, fournisseur).",
+    },
     audit_logs: {
         label: "Journal d'audit",
         section: 'PLATEFORME',
@@ -141,6 +147,7 @@ export const searchPlaceholders: Record<AdminTab, string> = {
     observability: 'Filtrer les signaux de santé...',
     vitrine: 'Rechercher un slide, article, vidéo ou formation...',
     whatsapp: "Rechercher un clic par page d'origine...",
+    faq: 'Rechercher une question, une réponse ou une catégorie...',
     cartography: 'Rechercher un artisan, client, fournisseur ou mission dans la zone...',
 };
 

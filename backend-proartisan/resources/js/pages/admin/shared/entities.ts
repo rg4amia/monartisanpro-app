@@ -463,6 +463,26 @@ export interface WhatsappSettings {
     whatsapp_widget_message: string;
 }
 
+export type FaqRole = 'client' | 'artisan' | 'livreur' | 'fournisseur';
+
+export interface FaqStats {
+    total: number;
+    actives: number;
+    roles_covered: number;
+}
+
+export interface FaqItem {
+    id: number;
+    question: string;
+    reponse: string;
+    categorie: string | null;
+    roles: FaqRole[];
+    ordre: number;
+    actif: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
 export interface EvaluationStats {
     evaluations_total: number;
     note_moyenne: number;
