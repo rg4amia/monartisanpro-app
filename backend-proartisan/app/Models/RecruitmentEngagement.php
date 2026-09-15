@@ -11,7 +11,7 @@ class RecruitmentEngagement extends Model
     protected $fillable = [
         'offer_id', 'application_id', 'artisan_id', 'recruiter_id',
         'daily_rate', 'total_days', 'montant_total', 'commission_rate',
-        'status', 'accepted_at',
+        'status', 'accepted_at', 'prepaid_transaction_id', 'prepaid_amount',
     ];
 
     protected function casts(): array
@@ -22,6 +22,7 @@ class RecruitmentEngagement extends Model
             'montant_total' => 'integer',
             'commission_rate' => 'decimal:4',
             'accepted_at' => 'datetime',
+            'prepaid_amount' => 'integer',
         ];
     }
 
@@ -48,5 +49,10 @@ class RecruitmentEngagement extends Model
     public function workdays(): HasMany
     {
         return $this->hasMany(RecruitmentWorkday::class, 'engagement_id')->orderBy('day_number');
+    }
+
+    public function prepaidTransaction(): BelongsTo
+    {
+        return $this->belongsTo(Transaction::class, 'prepaid_transaction_id');
     }
 }

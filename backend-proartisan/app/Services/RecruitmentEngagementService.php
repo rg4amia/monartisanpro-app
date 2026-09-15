@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\WalletType;
 use App\Models\RecruitmentApplication;
 use App\Models\RecruitmentEngagement;
+use App\Models\RecruitmentOffer;
 use App\Models\RecruitmentWorkday;
 use App\Models\Setting;
 use App\Models\Transaction;
@@ -63,7 +64,7 @@ class RecruitmentEngagementService
             ]);
         }
 
-        $totalDays ??= $this->daysBetween($offer->date_debut, $offer->deadline_at);
+        $totalDays ??= $offer->inclusiveDurationDays();
 
         if (! $totalDays || $totalDays <= 0) {
             throw ValidationException::withMessages([
@@ -85,6 +86,16 @@ class RecruitmentEngagementService
                 'commission_rate' => $commissionRate,
                 'status' => 'pending_artisan_acceptance',
             ]);
+
+            // Réutilise le séquestre d'accès aux candidatures déjà payé sur
+            // l'offre (non encore consommé par un autre engagement en cours).
+            if ($offer->applicants_escrow_transaction_id && ! $offer->applicants_escrow_reserved) {
+                $engagement->update([
+                    'prepaid_transaction_id' => $offer->applicants_escrow_transaction_id,
+                    'prepaid_amount' => (int) ($offer->applicantsEscrowTransaction?->montant ?? 0),
+                ]);
+                $offer->update(['applicants_escrow_reserved' => true]);
+            }
 
             $application->update(['status' => 'confirmed']);
 
@@ -112,29 +123,81 @@ class RecruitmentEngagementService
             ]);
         }
 
-        DB::transaction(function () use ($engagement) {
+        $activatedImmediately = false;
+        $surplus = 0;
+
+        DB::transaction(function () use ($engagement, &$activatedImmediately, &$surplus) {
+            $prepaid = $engagement->prepaid_amount;
+            $coveredDays = $prepaid > 0 ? min(intdiv($prepaid, $engagement->daily_rate), $engagement->total_days) : 0;
+
             for ($day = 1; $day <= $engagement->total_days; $day++) {
                 RecruitmentWorkday::create([
                     'engagement_id' => $engagement->id,
                     'day_number' => $day,
                     'montant' => $engagement->daily_rate,
-                    'status' => 'awaiting_payment',
+                    'status' => $day <= $coveredDays ? 'pending' : 'awaiting_payment',
                 ]);
             }
 
+            $activatedImmediately = $coveredDays >= $engagement->total_days && $prepaid >= $engagement->montant_total;
+
             $engagement->update([
-                'status' => 'pending_payment',
+                'status' => $activatedImmediately ? 'active' : 'pending_payment',
                 'accepted_at' => now(),
             ]);
+
+            if ($activatedImmediately) {
+                $surplus = $prepaid - $engagement->montant_total;
+            }
         });
 
-        $this->notifications->send(
-            $engagement->recruiter,
-            'recruitment',
-            'Engagement accepté',
-            "{$engagement->artisan->name} a accepté votre proposition. Payez le séquestre pour démarrer la mission.",
-            ['recruitment_engagement_id' => $engagement->id],
-        );
+        if ($activatedImmediately && $surplus > 0) {
+            $this->wallet->credit(
+                $engagement->recruiter,
+                WalletType::WALLET_MO,
+                $surplus,
+                "Recrutement #{$engagement->id} — trop-perçu du séquestre d'accès aux candidatures",
+                [
+                    'recruitment_engagement_id' => $engagement->id,
+                    'recruitment_offer_id' => $engagement->offer_id,
+                    'type' => 'recruitment_offer_escrow_surplus',
+                ],
+            );
+
+            $this->notifications->send(
+                $engagement->recruiter,
+                'payment',
+                'Trop-perçu remboursé',
+                "Le trop-perçu de {$surplus} FCFA sur le séquestre d'accès aux candidatures a été crédité sur votre portefeuille.",
+                ['recruitment_engagement_id' => $engagement->id],
+            );
+        }
+
+        if ($activatedImmediately) {
+            $this->notifications->send(
+                $engagement->recruiter,
+                'recruitment',
+                'Engagement accepté',
+                "{$engagement->artisan->name} a accepté votre proposition. Le séquestre déjà payé couvre l'intégralité de la mission : elle démarre immédiatement.",
+                ['recruitment_engagement_id' => $engagement->id],
+            );
+
+            $this->notifications->send(
+                $engagement->artisan,
+                'payment',
+                'Séquestre payé',
+                "Le séquestre de votre mission « {$engagement->offer->title} » est déjà réglé. Vous pouvez commencer à travailler.",
+                ['recruitment_engagement_id' => $engagement->id],
+            );
+        } else {
+            $this->notifications->send(
+                $engagement->recruiter,
+                'recruitment',
+                'Engagement accepté',
+                "{$engagement->artisan->name} a accepté votre proposition. Payez le séquestre pour démarrer la mission.",
+                ['recruitment_engagement_id' => $engagement->id],
+            );
+        }
 
         return $engagement->fresh();
     }
@@ -149,7 +212,15 @@ class RecruitmentEngagementService
             ]);
         }
 
-        $engagement->update(['status' => 'cancelled']);
+        DB::transaction(function () use ($engagement) {
+            $engagement->update(['status' => 'cancelled']);
+
+            // Libère le séquestre d'accès aux candidatures pour qu'il puisse
+            // être réutilisé avec un autre candidat de la même offre.
+            if ($engagement->prepaid_transaction_id) {
+                $engagement->offer->update(['applicants_escrow_reserved' => false]);
+            }
+        });
 
         $this->notifications->send(
             $engagement->recruiter,
@@ -340,6 +411,75 @@ class RecruitmentEngagementService
         return $engagement->fresh();
     }
 
+    /**
+     * Calcule le montant du séquestre d'accès aux candidatures d'une offre
+     * (taux journalier saisi par le recruteur × durée) sans initier de
+     * paiement — utilisé pour construire la transaction Wave/Orange Money.
+     */
+    public function applicantsUnlockAmount(RecruitmentOffer $offer, int $dailyRate, ?int $totalDays = null): array
+    {
+        if ($dailyRate <= 0) {
+            throw ValidationException::withMessages([
+                'daily_rate' => ['Le taux journalier doit être positif.'],
+            ]);
+        }
+
+        $totalDays ??= $offer->inclusiveDurationDays();
+
+        if (! $totalDays || $totalDays <= 0) {
+            throw ValidationException::withMessages([
+                'total_days' => ["Impossible de déterminer le nombre de jours : précisez-le ou renseignez la période de l'offre."],
+            ]);
+        }
+
+        return ['amount' => $dailyRate * $totalDays, 'total_days' => $totalDays];
+    }
+
+    public function assertRecruiterOwnsOffer(User $recruiter, RecruitmentOffer $offer): void
+    {
+        if ($offer->creator_id !== $recruiter->id && $recruiter->role !== 'admin') {
+            throw ValidationException::withMessages([
+                'offer' => ['Cette offre ne vous appartient pas.'],
+            ]);
+        }
+    }
+
+    /**
+     * Active le séquestre d'accès aux candidatures après confirmation du
+     * paiement Wave/Orange Money : la liste des postulants devient
+     * consultable par le recruteur.
+     */
+    public function activateApplicantsUnlock(User $recruiter, RecruitmentOffer $offer, Transaction $transaction): RecruitmentOffer
+    {
+        $this->assertRecruiterOwnsOffer($recruiter, $offer);
+
+        if ($transaction->type !== 'recruitment_offer_escrow'
+            || (int) ($transaction->metadata['recruitment_offer_id'] ?? 0) !== $offer->id) {
+            throw ValidationException::withMessages([
+                'transaction' => ['Cette transaction ne correspond pas à cette offre.'],
+            ]);
+        }
+
+        if (! $transaction->statut->isSuccessful()) {
+            throw ValidationException::withMessages([
+                'transaction' => ['Le paiement du séquestre doit être confirmé avant activation.'],
+            ]);
+        }
+
+        if ($offer->applicantsUnlocked()) {
+            throw ValidationException::withMessages([
+                'transaction' => ['Les candidatures de cette offre sont déjà consultables.'],
+            ]);
+        }
+
+        $offer->update([
+            'applicants_escrow_transaction_id' => $transaction->id,
+            'applicants_unlocked_at' => now(),
+        ]);
+
+        return $offer->fresh();
+    }
+
     private function assertArtisanOwnsEngagement(User $artisan, RecruitmentEngagement $engagement): void
     {
         if ($engagement->artisan_id !== $artisan->id) {
@@ -347,16 +487,5 @@ class RecruitmentEngagementService
                 'engagement' => ['Cet engagement ne vous appartient pas.'],
             ]);
         }
-    }
-
-    private function daysBetween(?string $start, ?string $end): ?int
-    {
-        if (! $start || ! $end) {
-            return null;
-        }
-
-        $days = (strtotime($end) - strtotime($start)) / 86400;
-
-        return $days >= 0 ? ((int) $days) + 1 : null;
     }
 }

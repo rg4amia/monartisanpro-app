@@ -369,25 +369,32 @@ export function RecruitmentPanel({
                                         </td>
                                         {canManage && (
                                             <td className="py-3 px-4 text-xs whitespace-nowrap">
-                                                {offer.status === 'pending_review' ? (
-                                                    <div className="flex gap-2">
-                                                        <button
-                                                            onClick={() => handleApprove(offer)}
-                                                            className="rounded-lg px-3 py-1.5 font-semibold bg-green-100 text-green-700 hover:bg-green-200"
-                                                        >
-                                                            Approuver
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleReject(offer)}
-                                                            disabled={rejectingId === offer.id}
-                                                            className="rounded-lg px-3 py-1.5 font-semibold bg-red-100 text-red-700 hover:bg-red-200 disabled:opacity-50"
-                                                        >
-                                                            Rejeter
-                                                        </button>
-                                                    </div>
-                                                ) : (
-                                                    <span className="text-[var(--admin-muted)]">—</span>
-                                                )}
+                                                <div className="flex flex-wrap gap-2">
+                                                    <button
+                                                        onClick={() => setApplicantsOffer(offer)}
+                                                        disabled={(offer.applications_count ?? 0) === 0}
+                                                        className="rounded-lg px-3 py-1.5 font-semibold bg-[#f3e6cf] text-[#8a6b3d] hover:bg-[#ecd9b3] disabled:opacity-40 disabled:cursor-default"
+                                                    >
+                                                        Voir candidats
+                                                    </button>
+                                                    {offer.status === 'pending_review' && (
+                                                        <>
+                                                            <button
+                                                                onClick={() => handleApprove(offer)}
+                                                                className="rounded-lg px-3 py-1.5 font-semibold bg-green-100 text-green-700 hover:bg-green-200"
+                                                            >
+                                                                Approuver
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleReject(offer)}
+                                                                disabled={rejectingId === offer.id}
+                                                                className="rounded-lg px-3 py-1.5 font-semibold bg-red-100 text-red-700 hover:bg-red-200 disabled:opacity-50"
+                                                            >
+                                                                Rejeter
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                </div>
                                             </td>
                                         )}
                                     </tr>

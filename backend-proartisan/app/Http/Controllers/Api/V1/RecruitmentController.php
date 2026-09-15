@@ -86,19 +86,47 @@ class RecruitmentController extends Controller
 
     /**
      * Candidatures reçues sur une offre appartenant à l'utilisateur connecté.
+     * Le numéro de l'artisan n'est jamais exposé (contact via « Demander un
+     * rappel ») et la liste reste verrouillée tant que le recruteur n'a pas
+     * payé le séquestre d'accès aux candidatures (protection anti-contournement).
      */
     public function applications(Request $request, RecruitmentOffer $offer): JsonResponse
     {
-        if ($offer->creator_id !== $request->user()->id && $request->user()->role !== 'admin') {
+        $user = $request->user();
+
+        if ($offer->creator_id !== $user->id && $user->role !== 'admin') {
             return response()->json(['success' => false, 'message' => 'Cette offre ne vous appartient pas.'], 403);
         }
 
+        if ($user->role !== 'admin' && ! $offer->applicantsUnlocked()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Payez le séquestre d\'accès aux candidatures pour consulter les postulants.',
+                'escrow_required' => true,
+            ], 402);
+        }
+
         $applications = $offer->applications()
-            ->with(['artisan:id,name,phone,score_prosartisan', 'engagement'])
+            ->with(['artisan:id,name,score_prosartisan', 'engagement'])
             ->orderByDesc('matching_score')
             ->get();
 
         return response()->json(['success' => true, 'data' => $applications]);
+    }
+
+    /**
+     * Demande à l'artisan de rappeler le recruteur — seule façon de
+     * l'échanger avec lui, son numéro n'étant jamais transmis directement.
+     */
+    public function requestCallback(Request $request, RecruitmentApplication $application): JsonResponse
+    {
+        try {
+            $this->recruitment->requestCallback($request->user(), $application);
+        } catch (ValidationException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage(), 'errors' => $e->errors()], 422);
+        }
+
+        return response()->json(['success' => true, 'message' => 'Demande de rappel envoyée à l\'artisan.']);
     }
 
     /**

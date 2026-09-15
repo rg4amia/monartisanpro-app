@@ -163,6 +163,36 @@ class RecruitmentService
         return $application;
     }
 
+    /**
+     * Le recruteur, dont le séquestre d'accès aux candidatures est déjà payé,
+     * demande à l'artisan de le rappeler — le numéro de l'artisan n'est
+     * jamais transmis au recruteur, seul le sien l'est à l'artisan.
+     */
+    public function requestCallback(User $client, RecruitmentApplication $application): void
+    {
+        $offer = $application->offer;
+
+        if ($offer->creator_id !== $client->id && $client->role !== 'admin') {
+            throw ValidationException::withMessages([
+                'application' => ["Cette candidature n'appartient pas à l'une de vos offres."],
+            ]);
+        }
+
+        if (! $offer->applicantsUnlocked()) {
+            throw ValidationException::withMessages([
+                'offer' => ['Payez le séquestre pour consulter et contacter les candidatures de cette offre.'],
+            ]);
+        }
+
+        $this->notifications->send(
+            $application->artisan,
+            'recruitment',
+            'Demande de rappel',
+            "{$client->name} recrute pour « {$offer->title} » et souhaite que vous le rappeliez au {$client->phone}.",
+            ['recruitment_offer_id' => $offer->id, 'recruitment_application_id' => $application->id],
+        );
+    }
+
     public function approve(RecruitmentOffer $offer): RecruitmentOffer
     {
         $offer->update(['status' => 'active']);

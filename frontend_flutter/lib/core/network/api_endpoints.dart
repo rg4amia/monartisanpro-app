@@ -76,6 +76,12 @@ class ApiEndpoints {
       '/recruitment-engagements/$id/activate';
   static String recruitmentWorkdayValidate(int engagementId, int workdayId) =>
       '/recruitment-engagements/$engagementId/workdays/$workdayId/validate';
+  static String recruitmentOfferUnlockApplicants(int offerId) =>
+      '/recruitment-offers/$offerId/unlock-applicants';
+  static String recruitmentOfferActivateApplicantsUnlock(int offerId) =>
+      '/recruitment-offers/$offerId/activate-applicants-unlock';
+  static String recruitmentRequestCallback(int applicationId) =>
+      '/recruitment-applications/$applicationId/request-callback';
 
   // Missions
   static const String missions = '/missions';

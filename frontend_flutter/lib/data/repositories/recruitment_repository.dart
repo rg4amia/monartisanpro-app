@@ -232,4 +232,48 @@ class RecruitmentRepository {
       ),
     );
   }
+
+  /// Initie le paiement du séquestre d'accès aux candidatures d'une offre —
+  /// verrou anti-contournement payé avant toute consultation des postulants.
+  Future<Map<String, dynamic>> unlockApplicants(
+    int offerId, {
+    required int dailyRate,
+    int? totalDays,
+    required String provider,
+    required String phone,
+  }) async {
+    final res = await NetworkExecutor.run(
+      () => _client.post(
+        ApiEndpoints.recruitmentOfferUnlockApplicants(offerId),
+        data: {
+          'daily_rate': dailyRate,
+          if (totalDays != null) 'total_days': totalDays,
+          'provider': provider,
+          'phone': phone,
+        },
+      ),
+    );
+    return _asObject(res.data);
+  }
+
+  Future<void> activateApplicantsUnlock(
+    int offerId,
+    int transactionId,
+  ) async {
+    await NetworkExecutor.run(
+      () => _client.post(
+        ApiEndpoints.recruitmentOfferActivateApplicantsUnlock(offerId),
+        data: {'transaction_id': transactionId},
+      ),
+    );
+  }
+
+  /// Demande à l'artisan de rappeler le recruteur — seul canal de contact,
+  /// son numéro n'étant jamais transmis directement.
+  Future<void> requestCallback(int applicationId) async {
+    await NetworkExecutor.run(
+      () =>
+          _client.post(ApiEndpoints.recruitmentRequestCallback(applicationId)),
+    );
+  }
 }

@@ -2,11 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Enums\PaymentStatus;
 use App\Models\Permission;
 use App\Models\RecruitmentApplication;
 use App\Models\RecruitmentOffer;
 use App\Models\Sector;
 use App\Models\Trade;
+use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -37,6 +39,27 @@ class RecruitmentTest extends TestCase
         $sector = Sector::create(['name' => 'BTP']);
 
         return Trade::create(['sector_id' => $sector->id, 'name' => 'Maçonnerie']);
+    }
+
+    /**
+     * Paie et active le séquestre d'accès aux candidatures pour une offre,
+     * préalable désormais obligatoire à toute consultation des postulants.
+     */
+    private function unlockApplicants(User $client, RecruitmentOffer $offer, int $dailyRate = 10000, ?int $totalDays = 5): void
+    {
+        $response = $this->actingAs($client)->postJson("/api/v1/recruitment-offers/{$offer->id}/unlock-applicants", [
+            'daily_rate' => $dailyRate,
+            'total_days' => $totalDays,
+            'provider' => 'wave',
+            'phone' => '+2250700000000',
+        ]);
+
+        $transactionId = $response->json('data.transaction_id');
+        Transaction::findOrFail($transactionId)->update(['statut' => PaymentStatus::CONFIRME]);
+
+        $this->actingAs($client)->postJson("/api/v1/recruitment-offers/{$offer->id}/activate-applicants-unlock", [
+            'transaction_id' => $transactionId,
+        ])->assertOk();
     }
 
     private function offerPayload(Trade $trade): array
@@ -277,12 +300,81 @@ class RecruitmentTest extends TestCase
         $this->actingAs($artisan)->postJson("/api/v1/recruitment-offers/{$offer->id}/apply")
             ->assertCreated();
 
+        // Tant que le séquestre d'accès n'est pas payé, la liste reste verrouillée.
         $this->actingAs($client)->getJson("/api/v1/recruitment-offers/{$offer->id}/applications")
+            ->assertStatus(402);
+
+        $this->unlockApplicants($client, $offer);
+
+        $response = $this->actingAs($client)->getJson("/api/v1/recruitment-offers/{$offer->id}/applications")
             ->assertOk()
             ->assertJsonCount(1, 'data');
 
+        // Le numéro de l'artisan n'est jamais transmis au recruteur.
+        $response->assertJsonMissingPath('data.0.artisan.phone');
+
         $this->actingAs($otherClient)->getJson("/api/v1/recruitment-offers/{$offer->id}/applications")
             ->assertStatus(403);
+    }
+
+    public function test_admin_can_view_applications_without_paying_the_escrow(): void
+    {
+        $trade = $this->trade();
+        $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
+        $admin = User::factory()->create(['role' => 'admin', 'kyc_status' => 'actif']);
+        $artisan = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif']);
+
+        $offer = RecruitmentOffer::create([
+            'creator_id' => $client->id,
+            'creator_type' => 'client',
+            'trade_id' => $trade->id,
+            'title' => 'Offre active',
+            'description' => 'x',
+            'mission_type' => 'journalier',
+            'commune' => 'Yopougon',
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($artisan)->postJson("/api/v1/recruitment-offers/{$offer->id}/apply");
+
+        $this->actingAs($admin)->getJson("/api/v1/recruitment-offers/{$offer->id}/applications")
+            ->assertOk()
+            ->assertJsonCount(1, 'data');
+    }
+
+    public function test_recruiter_can_request_a_callback_only_after_unlocking_applicants(): void
+    {
+        $trade = $this->trade();
+        $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
+        $artisan = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif']);
+
+        $offer = RecruitmentOffer::create([
+            'creator_id' => $client->id,
+            'creator_type' => 'client',
+            'trade_id' => $trade->id,
+            'title' => 'Offre active',
+            'description' => 'x',
+            'mission_type' => 'journalier',
+            'commune' => 'Yopougon',
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($artisan)->postJson("/api/v1/recruitment-offers/{$offer->id}/apply");
+        $application = RecruitmentApplication::first();
+
+        $this->actingAs($client)->postJson("/api/v1/recruitment-applications/{$application->id}/request-callback")
+            ->assertStatus(422);
+
+        $this->unlockApplicants($client, $offer);
+
+        $this->actingAs($client)->postJson("/api/v1/recruitment-applications/{$application->id}/request-callback")
+            ->assertOk();
+
+        $this->assertDatabaseHas('notifications', [
+            'user_id' => $artisan->id,
+            'type' => 'recruitment',
+            'title' => 'Demande de rappel',
+        ]);
     }
 
     public function test_offer_owner_can_update_application_status(): void

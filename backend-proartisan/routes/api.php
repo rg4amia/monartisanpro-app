@@ -214,11 +214,14 @@ Route::prefix('v1')->group(function () {
         Route::post('/recruitment-offers', [RecruitmentController::class, 'store']);
         Route::post('/recruitment-offers/{offer}/apply', [RecruitmentController::class, 'apply'])->middleware('kyc.verified');
         Route::get('/recruitment-applications/mine', [RecruitmentController::class, 'myApplications']);
+        Route::post('/recruitment-applications/{application}/request-callback', [RecruitmentController::class, 'requestCallback']);
 
         // ── Engagements de recrutement (séquestre journalier) ────────────────────
         Route::get('/recruitment-engagements/mine', [RecruitmentEngagementController::class, 'mine']);
         Route::get('/recruitment-engagements/{engagement}', [RecruitmentEngagementController::class, 'show']);
         Route::post('/recruitment-applications/{application}/engage', [RecruitmentEngagementController::class, 'store']);
+        Route::post('/recruitment-offers/{offer}/unlock-applicants', [RecruitmentEngagementController::class, 'initiateApplicantsUnlockPayment']);
+        Route::post('/recruitment-offers/{offer}/activate-applicants-unlock', [RecruitmentEngagementController::class, 'activateApplicantsUnlock']);
         Route::post('/recruitment-engagements/{engagement}/accept', [RecruitmentEngagementController::class, 'accept'])->middleware('kyc.verified');
         Route::post('/recruitment-engagements/{engagement}/decline', [RecruitmentEngagementController::class, 'decline']);
         Route::post('/recruitment-engagements/{engagement}/extend', [RecruitmentEngagementController::class, 'extend']);

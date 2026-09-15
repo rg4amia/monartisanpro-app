@@ -10,6 +10,7 @@ use App\Models\Sector;
 use App\Models\Trade;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Services\RecruitmentEngagementService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -23,6 +24,28 @@ class RecruitmentEngagementTest extends TestCase
         $sector = Sector::create(['name' => 'BTP']);
 
         return Trade::create(['sector_id' => $sector->id, 'name' => 'Maçonnerie']);
+    }
+
+    /**
+     * Paie et active le séquestre d'accès aux candidatures d'une offre,
+     * préalable à la consultation des postulants et réutilisable comme
+     * acompte sur le premier engagement créé depuis cette offre.
+     */
+    private function unlockApplicants(User $client, RecruitmentOffer $offer, int $dailyRate, ?int $totalDays = null): void
+    {
+        $response = $this->actingAs($client)->postJson("/api/v1/recruitment-offers/{$offer->id}/unlock-applicants", [
+            'daily_rate' => $dailyRate,
+            'total_days' => $totalDays,
+            'provider' => 'wave',
+            'phone' => '+2250700000000',
+        ]);
+
+        $transactionId = $response->json('data.transaction_id');
+        Transaction::findOrFail($transactionId)->update(['statut' => PaymentStatus::CONFIRME]);
+
+        $this->actingAs($client)->postJson("/api/v1/recruitment-offers/{$offer->id}/activate-applicants-unlock", [
+            'transaction_id' => $transactionId,
+        ])->assertOk();
     }
 
     /** @return array{offer: RecruitmentOffer, application: RecruitmentApplication, client: User, artisan: User, admin: User} */
@@ -264,6 +287,117 @@ class RecruitmentEngagementTest extends TestCase
         $this->actingAs($otherClient)->postJson(
             "/api/v1/recruitment-engagements/{$engagement->id}/workdays/{$workday->id}/validate",
         )->assertStatus(422);
+    }
+
+    public function test_engagement_reuses_prepaid_offer_escrow_fully_and_credits_surplus(): void
+    {
+        ['offer' => $offer, 'application' => $application, 'client' => $client, 'artisan' => $artisan] = $this->setupConfirmableApplication();
+
+        // Le client sur-estime le taux journalier (12000) pour débloquer les
+        // candidatures ; l'engagement réel négocié à 10000/jour est donc
+        // intégralement couvert par ce séquestre, avec un trop-perçu.
+        $this->unlockApplicants($client, $offer, 12000);
+
+        $clientBalanceBefore = $client->fresh()->wallet_mo;
+
+        $this->actingAs($client)->postJson("/api/v1/recruitment-applications/{$application->id}/engage", [
+            'daily_rate' => 10000,
+        ])->assertCreated();
+
+        $engagement = RecruitmentEngagement::first();
+        $this->assertSame(36000, $engagement->prepaid_amount);
+        $this->assertTrue($offer->fresh()->applicants_escrow_reserved);
+
+        $this->actingAs($artisan)->postJson("/api/v1/recruitment-engagements/{$engagement->id}/accept")
+            ->assertOk();
+
+        $engagement->refresh();
+        $this->assertSame('active', $engagement->status);
+        $this->assertTrue($engagement->workdays->every(fn ($w) => $w->status === 'pending'));
+
+        // Trop-perçu (36000 payé - 30000 dû) crédité sur le portefeuille du client.
+        $this->assertSame($clientBalanceBefore + 6000, $client->fresh()->wallet_mo);
+
+        $this->assertDatabaseHas('notifications', [
+            'user_id' => $artisan->id,
+            'type' => 'payment',
+            'title' => 'Séquestre payé',
+        ]);
+        $this->assertDatabaseHas('notifications', [
+            'user_id' => $client->id,
+            'type' => 'payment',
+            'title' => 'Trop-perçu remboursé',
+        ]);
+    }
+
+    public function test_engagement_partially_covers_from_prepaid_offer_escrow_and_requires_topup(): void
+    {
+        ['offer' => $offer, 'application' => $application, 'client' => $client, 'artisan' => $artisan] = $this->setupConfirmableApplication();
+
+        // Séquestre d'accès payé pour un seul jour à 10000 FCFA, mais
+        // l'engagement réel porte sur 3 jours au même taux.
+        $this->unlockApplicants($client, $offer, 10000, 1);
+
+        $this->actingAs($client)->postJson("/api/v1/recruitment-applications/{$application->id}/engage", [
+            'daily_rate' => 10000,
+        ])->assertCreated();
+
+        $engagement = RecruitmentEngagement::first();
+        $this->assertSame(10000, $engagement->prepaid_amount);
+
+        $this->actingAs($artisan)->postJson("/api/v1/recruitment-engagements/{$engagement->id}/accept")
+            ->assertOk();
+
+        $engagement->refresh();
+        $this->assertSame('pending_payment', $engagement->status);
+        $this->assertCount(1, $engagement->workdays()->where('status', 'pending')->get());
+        $this->assertCount(2, $engagement->workdays()->where('status', 'awaiting_payment')->get());
+        $this->assertSame(20000, $this->app->make(RecruitmentEngagementService::class)->unpaidAmount($engagement));
+    }
+
+    public function test_declining_engagement_releases_prepaid_offer_escrow_for_reuse(): void
+    {
+        $trade = $this->trade();
+        $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
+        $firstArtisan = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif']);
+        $secondArtisan = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif']);
+
+        $offer = RecruitmentOffer::create([
+            'creator_id' => $client->id,
+            'creator_type' => 'client',
+            'trade_id' => $trade->id,
+            'title' => 'Renfort maçons',
+            'description' => 'x',
+            'mission_type' => 'journalier',
+            'commune' => 'Cocody',
+            'date_debut' => now()->addDay()->toDateString(),
+            'deadline_at' => now()->addDays(3)->toDateString(),
+            'status' => 'active',
+        ]);
+
+        $firstApplication = RecruitmentApplication::create([
+            'offer_id' => $offer->id, 'artisan_id' => $firstArtisan->id, 'status' => 'submitted', 'applied_at' => now(),
+        ]);
+        $secondApplication = RecruitmentApplication::create([
+            'offer_id' => $offer->id, 'artisan_id' => $secondArtisan->id, 'status' => 'submitted', 'applied_at' => now(),
+        ]);
+
+        $this->unlockApplicants($client, $offer, 10000);
+
+        $this->actingAs($client)->postJson("/api/v1/recruitment-applications/{$firstApplication->id}/engage", ['daily_rate' => 10000]);
+        $firstEngagement = RecruitmentEngagement::where('application_id', $firstApplication->id)->firstOrFail();
+        $this->assertTrue($offer->fresh()->applicants_escrow_reserved);
+
+        $this->actingAs($firstArtisan)->postJson("/api/v1/recruitment-engagements/{$firstEngagement->id}/decline")
+            ->assertOk();
+
+        $this->assertFalse($offer->fresh()->applicants_escrow_reserved);
+
+        // Le même séquestre pré-payé peut être réutilisé pour un second candidat.
+        $this->actingAs($client)->postJson("/api/v1/recruitment-applications/{$secondApplication->id}/engage", ['daily_rate' => 10000]);
+        $secondEngagement = RecruitmentEngagement::where('application_id', $secondApplication->id)->firstOrFail();
+
+        $this->assertSame(30000, $secondEngagement->prepaid_amount);
     }
 
     public function test_artisan_can_decline_engagement(): void

@@ -58,10 +58,21 @@ class RecruitmentApplicantsScreen
       body: RefreshIndicator(
         onRefresh: controller.load,
         child: Obx(() {
-          if (controller.isLoading.value && controller.applications.isEmpty) {
+          if (controller.isLoading.value &&
+              controller.applicantsUnlocked.value == null) {
             return ListView(
               padding: const EdgeInsets.all(16),
               children: [LoadingShimmer.list(count: 4)],
+            );
+          }
+
+          if (controller.applicantsUnlocked.value == false) {
+            return ListView(
+              padding: const EdgeInsets.all(24),
+              children: const [
+                SizedBox(height: 40),
+                _EscrowPaywall(),
+              ],
             );
           }
 
@@ -153,10 +164,10 @@ class _ApplicantCard extends GetView<RecruitmentApplicantsController> {
                           color: AppColors.textPrimary,
                         ),
                       ),
-                      Text(
-                        artisan?.phone ?? '—',
-                        style: const TextStyle(
-                          fontSize: 12,
+                      const Text(
+                        'Numéro masqué — contact via demande de rappel',
+                        style: TextStyle(
+                          fontSize: 11,
                           color: AppColors.textMuted,
                         ),
                       ),
@@ -205,40 +216,28 @@ class _ApplicantCard extends GetView<RecruitmentApplicantsController> {
             ),
             const SizedBox(height: 14),
             if (artisan != null)
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => controller.call(artisan),
-                      icon: const Icon(Icons.call_outlined, size: 16),
-                      label: const Text('Appeler'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.primary,
-                        side: const BorderSide(color: AppColors.primary),
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed:
+                      controller.requestingCallbackId.value == application.id
+                          ? null
+                          : () => controller.requestCallback(application),
+                  icon: const Icon(Icons.phone_callback_outlined, size: 16),
+                  label: Text(
+                    controller.requestingCallbackId.value == application.id
+                        ? 'Envoi en cours…'
+                        : 'Demander un rappel',
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                    side: const BorderSide(color: AppColors.primary),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => controller.whatsapp(artisan),
-                      icon: const Icon(Icons.chat_bubble_outline, size: 16),
-                      label: const Text('WhatsApp'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF25D366),
-                        side: const BorderSide(color: Color(0xFF25D366)),
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             const SizedBox(height: 10),
             Wrap(
@@ -384,6 +383,171 @@ class _ApplicantCard extends GetView<RecruitmentApplicantsController> {
               }
             },
             child: const Text('Confirmer'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EscrowPaywall extends GetView<RecruitmentApplicantsController> {
+  const _EscrowPaywall();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: AppColors.cardShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.lock_outline, color: AppColors.primary),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Candidatures verrouillées',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            'Payez le séquestre pour consulter et contacter les postulants '
+            'de cette offre. Ce montant sera automatiquement déduit du '
+            "paiement de l'engagement une fois un candidat retenu.",
+            style: TextStyle(
+              fontSize: 12.5,
+              color: AppColors.textSecondary,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Obx(
+            () => SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: controller.isUnlocking.value
+                    ? null
+                    : () => _showUnlockDialog(context),
+                icon: controller.isUnlocking.value
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.lock_open_outlined, size: 18),
+                label: Text(
+                  controller.isUnlocking.value
+                      ? 'Paiement en cours…'
+                      : 'Payer le séquestre',
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showUnlockDialog(BuildContext context) {
+    final offer = controller.offer;
+    final rateCtrl = TextEditingController(
+      text: (offer.dailyRateMax ?? offer.dailyRateMin)?.toString() ?? '',
+    );
+    final daysCtrl = TextEditingController();
+    final hasOfferDates = offer.dateDebut != null && offer.deadlineAt != null;
+
+    Get.dialog(
+      AlertDialog(
+        title: const Text('Payer le séquestre'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              hasOfferDates
+                  ? "Le nombre de jours est calculé à partir de la période de l'offre."
+                  : 'Précisez le nombre de jours estimé.',
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: rateCtrl,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Taux journalier estimé (FCFA)',
+              ),
+            ),
+            if (!hasOfferDates) ...[
+              const SizedBox(height: 10),
+              TextField(
+                controller: daysCtrl,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Nombre de jours estimé',
+                ),
+              ),
+            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('Annuler'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final rate = int.tryParse(rateCtrl.text.trim());
+              if (rate == null || rate <= 0) {
+                Get.snackbar(
+                  'Taux invalide',
+                  'Saisissez un taux journalier valide.',
+                );
+                return;
+              }
+
+              int? days;
+              if (!hasOfferDates) {
+                days = int.tryParse(daysCtrl.text.trim());
+                if (days == null || days <= 0) {
+                  Get.snackbar(
+                    'Durée invalide',
+                    'Saisissez un nombre de jours valide.',
+                  );
+                  return;
+                }
+              }
+
+              Get.back();
+              Get.find<RecruitmentApplicantsController>()
+                  .unlockApplicants(rate, days);
+            },
+            child: const Text('Payer'),
           ),
         ],
       ),
