@@ -19,7 +19,7 @@ class RecruitmentService
 
     /**
      * @param  array{trade_id:int, title:string, description:string, mission_type:string,
-     *     commune:string, sous_quartier?:?string, lat?:?float, lng?:?float,
+     *     commune:string, sous_quartier?:?string, lat?:?float, lng?:?float, date_debut?:?string,
      *     daily_rate_min?:?int, daily_rate_max?:?int, openings_count?:int, deadline_at?:?string}  $data
      */
     public function createOffer(User $creator, array $data): RecruitmentOffer
@@ -36,6 +36,13 @@ class RecruitmentService
             ]);
         }
 
+        if (! empty($data['date_debut']) && ! empty($data['deadline_at'])
+            && strtotime($data['date_debut']) > strtotime($data['deadline_at'])) {
+            throw ValidationException::withMessages([
+                'deadline_at' => ['La date de fin doit être postérieure ou égale à la date de début.'],
+            ]);
+        }
+
         $status = $creator->role === 'admin' || $creator->kyc_status === 'actif'
             ? 'active'
             : 'pending_review';
@@ -49,6 +56,7 @@ class RecruitmentService
             'mission_type' => $data['mission_type'],
             'commune' => $data['commune'],
             'sous_quartier' => $data['sous_quartier'] ?? null,
+            'date_debut' => $data['date_debut'] ?? null,
             'daily_rate_min' => $data['daily_rate_min'] ?? null,
             'daily_rate_max' => $data['daily_rate_max'] ?? null,
             'openings_count' => $data['openings_count'] ?? 1,

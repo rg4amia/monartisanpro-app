@@ -212,7 +212,7 @@ export function RecruitmentPanel({
                                     <th className="py-3 px-4 text-left text-xs font-bold uppercase tracking-wider text-[var(--admin-muted)]">Recruteur</th>
                                     <th className="py-3 px-4 text-left text-xs font-bold uppercase tracking-wider text-[var(--admin-muted)]">Commune</th>
                                     <th className="py-3 px-4 text-left text-xs font-bold uppercase tracking-wider text-[var(--admin-muted)]">Candidatures</th>
-                                    <th className="py-3 px-4 text-left text-xs font-bold uppercase tracking-wider text-[var(--admin-muted)]">Date limite</th>
+                                    <th className="py-3 px-4 text-left text-xs font-bold uppercase tracking-wider text-[var(--admin-muted)]">Période</th>
                                     <th className="py-3 px-4 text-left text-xs font-bold uppercase tracking-wider text-[var(--admin-muted)]">Statut</th>
                                     {canManage && (
                                         <th className="py-3 px-4 text-left text-xs font-bold uppercase tracking-wider text-[var(--admin-muted)]">Actions</th>
@@ -235,7 +235,11 @@ export function RecruitmentPanel({
                                             {offer.sous_quartier ? ` — ${offer.sous_quartier}` : ''}
                                         </td>
                                         <td className="py-3 px-4 text-xs text-[var(--admin-text-soft)]">{numberFormat.format(offer.applications_count ?? 0)}</td>
-                                        <td className="py-3 px-4 text-xs text-[var(--admin-text-soft)] whitespace-nowrap">{formatDate(offer.deadline_at)}</td>
+                                        <td className="py-3 px-4 text-xs text-[var(--admin-text-soft)] whitespace-nowrap">
+                                            {offer.date_debut || offer.deadline_at
+                                                ? `${formatDate(offer.date_debut)} → ${formatDate(offer.deadline_at)}`
+                                                : '—'}
+                                        </td>
                                         <td className="py-3 px-4 text-xs">
                                             <span className={`rounded-full px-2.5 py-1 font-semibold ${statusTone[offer.status] ?? 'bg-slate-100 text-slate-600'}`}>
                                                 {statusLabels[offer.status] ?? offer.status}

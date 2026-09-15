@@ -98,6 +98,7 @@ class RecruitmentPublishController extends GetxController {
     required String missionType,
     required String commune,
     String? sousQuartier,
+    String? dateDebut,
     int? dailyRateMin,
     int? dailyRateMax,
     int openingsCount = 1,
@@ -106,6 +107,16 @@ class RecruitmentPublishController extends GetxController {
     final trade = selectedTrade.value;
     if (trade == null) {
       Get.snackbar('Métier requis', 'Sélectionnez un métier pour cette offre.');
+      return false;
+    }
+
+    if (dateDebut != null &&
+        deadlineAt != null &&
+        dateDebut.compareTo(deadlineAt) > 0) {
+      Get.snackbar(
+        'Dates invalides',
+        'La date de fin doit être postérieure ou égale à la date de début.',
+      );
       return false;
     }
 
@@ -118,6 +129,7 @@ class RecruitmentPublishController extends GetxController {
         missionType: missionType,
         commune: commune,
         sousQuartier: sousQuartier,
+        dateDebut: dateDebut,
         dailyRateMin: dailyRateMin,
         dailyRateMax: dailyRateMax,
         openingsCount: openingsCount,

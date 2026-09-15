@@ -53,6 +53,7 @@ class RecruitmentController extends Controller
             'sous_quartier' => 'nullable|string|max:150',
             'lat' => 'nullable|numeric|between:-90,90',
             'lng' => 'nullable|numeric|between:-180,180',
+            'date_debut' => 'nullable|date|after_or_equal:today',
             'daily_rate_min' => 'nullable|integer|min:0',
             'daily_rate_max' => 'nullable|integer|min:0|gte:daily_rate_min',
             'openings_count' => 'nullable|integer|min:1|max:100',

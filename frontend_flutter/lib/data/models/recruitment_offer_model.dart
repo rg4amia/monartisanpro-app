@@ -5,6 +5,7 @@ class RecruitmentOfferModel {
   final String missionType;
   final String commune;
   final String? sousQuartier;
+  final String? dateDebut;
   final int? dailyRateMin;
   final int? dailyRateMax;
   final int openingsCount;
@@ -22,6 +23,7 @@ class RecruitmentOfferModel {
     required this.missionType,
     required this.commune,
     this.sousQuartier,
+    this.dateDebut,
     this.dailyRateMin,
     this.dailyRateMax,
     this.openingsCount = 1,
@@ -51,13 +53,16 @@ class RecruitmentOfferModel {
       missionType: json['mission_type'] as String? ?? 'journalier',
       commune: json['commune'] as String? ?? '',
       sousQuartier: json['sous_quartier'] as String?,
+      dateDebut: json['date_debut'] as String?,
       dailyRateMin: _asInt(json['daily_rate_min']),
       dailyRateMax: _asInt(json['daily_rate_max']),
       openingsCount: _asInt(json['openings_count']) ?? 1,
       deadlineAt: json['deadline_at'] as String?,
       status: json['status'] as String? ?? 'pending_review',
-      tradeName: trade is Map<String, dynamic> ? trade['name'] as String? : null,
-      creatorName: creator is Map<String, dynamic> ? creator['name'] as String? : null,
+      tradeName:
+          trade is Map<String, dynamic> ? trade['name'] as String? : null,
+      creatorName:
+          creator is Map<String, dynamic> ? creator['name'] as String? : null,
       creatorType: json['creator_type'] as String? ?? 'admin',
       applicationsCount: _asInt(json['applications_count']) ?? 0,
     );

@@ -506,6 +506,7 @@ export interface RecruitmentOfferItem {
     mission_type: 'tacheron_brigade' | 'journalier' | 'longue_duree' | 'urgence';
     commune: string;
     sous_quartier: string | null;
+    date_debut: string | null;
     daily_rate_min: number | null;
     daily_rate_max: number | null;
     openings_count: number;

@@ -4,6 +4,8 @@ import 'package:get/get.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/models/recruitment_offer_model.dart';
 import '../../../shared/widgets/loading_shimmer.dart';
+import '../../services/models/sector_model.dart';
+import '../../services/utils/service_icon_helper.dart';
 import '../controllers/recruitment_publish_controller.dart';
 
 const _missionTypes = [
@@ -21,6 +23,15 @@ const _statusLabels = {
   'expired': 'Expirée',
   'cancelled': 'Rejetée',
 };
+
+String _isoDate(DateTime date) =>
+    '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+
+String _displayDate(String isoDate) {
+  final parts = isoDate.split('-');
+  if (parts.length != 3) return isoDate;
+  return '${parts[2]}/${parts[1]}/${parts[0]}';
+}
 
 class RecruitmentPublishScreen extends GetView<RecruitmentPublishController> {
   const RecruitmentPublishScreen({super.key});
@@ -77,6 +88,8 @@ class _PublishForm extends GetView<RecruitmentPublishController> {
     final rateMaxCtrl = TextEditingController();
     final openingsCtrl = TextEditingController(text: '1');
     final missionType = 'journalier'.obs;
+    final dateDebut = Rx<DateTime?>(null);
+    final dateFin = Rx<DateTime?>(null);
 
     Future<void> submit() async {
       if (titleCtrl.text.trim().isEmpty ||
@@ -97,6 +110,8 @@ class _PublishForm extends GetView<RecruitmentPublishController> {
         sousQuartier: sousQuartierCtrl.text.trim().isEmpty
             ? null
             : sousQuartierCtrl.text.trim(),
+        dateDebut: dateDebut.value == null ? null : _isoDate(dateDebut.value!),
+        deadlineAt: dateFin.value == null ? null : _isoDate(dateFin.value!),
         dailyRateMin: int.tryParse(rateMinCtrl.text.trim()),
         dailyRateMax: int.tryParse(rateMaxCtrl.text.trim()),
         openingsCount: int.tryParse(openingsCtrl.text.trim()) ?? 1,
@@ -114,6 +129,9 @@ class _PublishForm extends GetView<RecruitmentPublishController> {
         rateMinCtrl.clear();
         rateMaxCtrl.clear();
         openingsCtrl.text = '1';
+        missionType.value = 'journalier';
+        dateDebut.value = null;
+        dateFin.value = null;
         controller.selectedSector.value = null;
         controller.selectedTrade.value = null;
       }
@@ -124,136 +142,232 @@ class _PublishForm extends GetView<RecruitmentPublishController> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _Field(
-            label: 'Titre de l\'offre',
-            controller: titleCtrl,
-            hint: 'Ex : Renfort maçons — chantier Cocody',
-          ),
-          const SizedBox(height: 14),
-          _Field(
-            label: 'Description',
-            controller: descriptionCtrl,
-            hint: 'Détaillez le besoin, la durée, l\'outillage...',
-            maxLines: 4,
-          ),
-          const SizedBox(height: 14),
-          const Text(
-            'Secteur & métier',
-            style: TextStyle(
-              fontSize: 12.5,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Obx(() {
-            if (controller.sectors.isEmpty) {
-              return const Text(
-                'Chargement des secteurs...',
-                style: TextStyle(fontSize: 12, color: AppColors.textMuted),
-              );
-            }
-            return Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: controller.sectors
-                  .map(
-                    (s) => _Chip(
-                      label: s.name,
-                      selected: controller.selectedSector.value?.id == s.id,
-                      onTap: () => controller.selectSector(s),
-                    ),
-                  )
-                  .toList(),
-            );
-          }),
-          const SizedBox(height: 10),
-          Obx(() {
-            if (controller.selectedSector.value == null) {
-              return const SizedBox.shrink();
-            }
-            if (controller.isLoadingTrades.value) {
-              return const Text(
-                'Chargement des métiers...',
-                style: TextStyle(fontSize: 12, color: AppColors.textMuted),
-              );
-            }
-            return Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: controller.trades
-                  .map(
-                    (t) => _Chip(
-                      label: t.name,
-                      selected: controller.selectedTrade.value?.id == t.id,
-                      onTap: () => controller.selectTrade(t),
-                    ),
-                  )
-                  .toList(),
-            );
-          }),
-          const SizedBox(height: 14),
-          const Text(
-            'Type de mission',
-            style: TextStyle(
-              fontSize: 12.5,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Obx(
-            () => Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _missionTypes
-                  .map(
-                    (m) => _Chip(
-                      label: m['label']!,
-                      selected: missionType.value == m['value'],
-                      onTap: () => missionType.value = m['value']!,
-                    ),
-                  )
-                  .toList(),
-            ),
-          ),
-          const SizedBox(height: 14),
-          _Field(
-            label: 'Commune',
-            controller: communeCtrl,
-            hint: 'Ex : Cocody',
-          ),
-          const SizedBox(height: 14),
-          _Field(
-            label: 'Quartier (optionnel)',
-            controller: sousQuartierCtrl,
-            hint: 'Ex : Angré 8e Tranche',
-          ),
-          const SizedBox(height: 14),
-          Row(
+          _SectionCard(
+            icon: Icons.description_outlined,
+            title: "Informations de l'offre",
             children: [
-              Expanded(
-                child: _Field(
-                  label: 'Rémunération min (FCFA/j)',
-                  controller: rateMinCtrl,
-                  keyboardType: TextInputType.number,
-                ),
+              _Field(
+                label: "Titre de l'offre",
+                controller: titleCtrl,
+                hint: 'Ex : Renfort maçons — chantier Cocody',
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _Field(
-                  label: 'Rémunération max (FCFA/j)',
-                  controller: rateMaxCtrl,
-                  keyboardType: TextInputType.number,
+              const SizedBox(height: 14),
+              _Field(
+                label: 'Description',
+                controller: descriptionCtrl,
+                hint: "Détaillez le besoin, la durée, l'outillage...",
+                maxLines: 4,
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          _SectionCard(
+            icon: Icons.category_outlined,
+            title: 'Secteur & métier',
+            subtitle:
+                "Choisissez d'abord le secteur, puis le métier recherché.",
+            children: [
+              Obx(() {
+                if (controller.sectors.isEmpty) {
+                  return const Text(
+                    'Chargement des secteurs...',
+                    style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+                  );
+                }
+
+                final selectedSector = controller.selectedSector.value;
+
+                if (selectedSector != null) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _SelectedSectorBanner(
+                        sector: selectedSector,
+                        onChange: () {
+                          controller.selectedSector.value = null;
+                          controller.selectedTrade.value = null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Métier',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textMuted,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Obx(() {
+                        if (controller.isLoadingTrades.value) {
+                          return const Text(
+                            'Chargement des métiers...',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textMuted,
+                            ),
+                          );
+                        }
+                        if (controller.trades.isEmpty) {
+                          return const Text(
+                            'Aucun métier disponible pour ce secteur.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textMuted,
+                            ),
+                          );
+                        }
+                        return Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: controller.trades
+                              .map(
+                                (t) => _Chip(
+                                  label: t.name,
+                                  selected:
+                                      controller.selectedTrade.value?.id ==
+                                          t.id,
+                                  onTap: () => controller.selectTrade(t),
+                                ),
+                              )
+                              .toList(),
+                        );
+                      }),
+                    ],
+                  );
+                }
+
+                return GridView.count(
+                  crossAxisCount: 3,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  mainAxisSpacing: 10,
+                  crossAxisSpacing: 10,
+                  childAspectRatio: 0.82,
+                  children: controller.sectors
+                      .map(
+                        (s) => _SectorGridTile(
+                          sector: s,
+                          onTap: () => controller.selectSector(s),
+                        ),
+                      )
+                      .toList(),
+                );
+              }),
+            ],
+          ),
+          const SizedBox(height: 14),
+          _SectionCard(
+            icon: Icons.work_outline_rounded,
+            title: 'Type de mission',
+            children: [
+              Obx(
+                () => Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _missionTypes
+                      .map(
+                        (m) => _Chip(
+                          label: m['label']!,
+                          selected: missionType.value == m['value'],
+                          onTap: () => missionType.value = m['value']!,
+                        ),
+                      )
+                      .toList(),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 14),
-          _Field(
-            label: 'Nombre de profils recherchés',
-            controller: openingsCtrl,
-            keyboardType: TextInputType.number,
+          _SectionCard(
+            icon: Icons.location_on_outlined,
+            title: 'Localisation',
+            children: [
+              _Field(
+                label: 'Commune',
+                controller: communeCtrl,
+                hint: 'Ex : Cocody',
+              ),
+              const SizedBox(height: 14),
+              _Field(
+                label: 'Quartier (optionnel)',
+                controller: sousQuartierCtrl,
+                hint: 'Ex : Angré 8e Tranche',
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          _SectionCard(
+            icon: Icons.event_outlined,
+            title: 'Période de la mission',
+            subtitle:
+                "L'offre sera automatiquement retirée du front office à la date de fin.",
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Obx(
+                      () => _DateField(
+                        label: 'Date de début',
+                        value: dateDebut.value,
+                        firstDate: DateTime.now(),
+                        onPicked: (picked) {
+                          dateDebut.value = picked;
+                          if (dateFin.value != null &&
+                              dateFin.value!.isBefore(picked)) {
+                            dateFin.value = null;
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Obx(
+                      () => _DateField(
+                        label: 'Date de fin',
+                        value: dateFin.value,
+                        firstDate: dateDebut.value ?? DateTime.now(),
+                        onPicked: (picked) => dateFin.value = picked,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          _SectionCard(
+            icon: Icons.groups_outlined,
+            title: 'Rémunération & effectif',
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: _Field(
+                      label: 'Rémunération min (FCFA/j)',
+                      controller: rateMinCtrl,
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _Field(
+                      label: 'Rémunération max (FCFA/j)',
+                      controller: rateMaxCtrl,
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              _Field(
+                label: 'Nombre de profils recherchés',
+                controller: openingsCtrl,
+                keyboardType: TextInputType.number,
+              ),
+            ],
           ),
           const SizedBox(height: 20),
           Obx(
@@ -279,7 +393,7 @@ class _PublishForm extends GetView<RecruitmentPublishController> {
                         ),
                       )
                     : const Text(
-                        'Publier l\'offre',
+                        "Publier l'offre",
                         style: TextStyle(fontWeight: FontWeight.w700),
                       ),
               ),
@@ -287,6 +401,269 @@ class _PublishForm extends GetView<RecruitmentPublishController> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Regroupe visuellement une section du formulaire (titre + icône + carte).
+class _SectionCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final List<Widget> children;
+
+  const _SectionCard({
+    required this.icon,
+    required this.title,
+    this.subtitle,
+    required this.children,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: AppColors.cardShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, size: 18, color: AppColors.primary),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (subtitle != null) ...[
+            const SizedBox(height: 4),
+            Padding(
+              padding: const EdgeInsets.only(left: 42),
+              child: Text(
+                subtitle!,
+                style: const TextStyle(
+                  fontSize: 11.5,
+                  color: AppColors.textMuted,
+                ),
+              ),
+            ),
+          ],
+          const SizedBox(height: 14),
+          ...children,
+        ],
+      ),
+    );
+  }
+}
+
+/// Carte secteur illustrée (icône + couleur dédiée) — bien plus visible
+/// qu'une simple puce de texte pour un choix structurant du formulaire.
+class _SectorGridTile extends StatelessWidget {
+  final SectorModel sector;
+  final VoidCallback onTap;
+
+  const _SectorGridTile({required this.sector, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = ServiceIconHelper.getSectorColor(sector.name, sector.color);
+    final icon = ServiceIconHelper.getSectorIcon(sector.name, sector.icon);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: color.withValues(alpha: 0.25)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                child: Icon(icon, color: Colors.white, size: 20),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                sector.name,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Bandeau de rappel du secteur choisi, avec possibilité de le changer.
+class _SelectedSectorBanner extends StatelessWidget {
+  final SectorModel sector;
+  final VoidCallback onChange;
+
+  const _SelectedSectorBanner({required this.sector, required this.onChange});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = ServiceIconHelper.getSectorColor(sector.name, sector.color);
+    final icon = ServiceIconHelper.getSectorIcon(sector.name, sector.icon);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            child: Icon(icon, color: Colors.white, size: 16),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              sector.name,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: onChange,
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: const Text(
+              'Changer',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DateField extends StatelessWidget {
+  final String label;
+  final DateTime? value;
+  final DateTime firstDate;
+  final ValueChanged<DateTime> onPicked;
+
+  const _DateField({
+    required this.label,
+    required this.value,
+    required this.firstDate,
+    required this.onPicked,
+  });
+
+  Future<void> _pick(BuildContext context) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: value ?? firstDate,
+      firstDate: firstDate,
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+    if (picked != null) onPicked(picked);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textSecondary,
+          ),
+        ),
+        const SizedBox(height: 6),
+        InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => _pick(context),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppColors.textMuted.withValues(alpha: 0.25),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.calendar_today_outlined,
+                  size: 15,
+                  color:
+                      value == null ? AppColors.textMuted : AppColors.primary,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    value == null
+                        ? 'jj/mm/aaaa'
+                        : _displayDate(_isoDate(value!)),
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight:
+                          value == null ? FontWeight.w500 : FontWeight.w700,
+                      color: value == null
+                          ? AppColors.textMuted
+                          : AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -327,7 +704,7 @@ class _Field extends StatelessWidget {
           decoration: InputDecoration(
             hintText: hint,
             filled: true,
-            fillColor: Colors.white,
+            fillColor: AppColors.background,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 14,
               vertical: 12,
@@ -361,7 +738,7 @@ class _Chip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary : Colors.white,
+          color: selected ? AppColors.primary : AppColors.background,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: selected
@@ -435,6 +812,8 @@ class _MyOfferTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hasPeriod = offer.dateDebut != null || offer.deadlineAt != null;
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -464,6 +843,17 @@ class _MyOfferTile extends StatelessWidget {
                     color: AppColors.textMuted,
                   ),
                 ),
+                if (hasPeriod) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    '${offer.dateDebut != null ? _displayDate(offer.dateDebut!.substring(0, 10)) : '—'} → '
+                    '${offer.deadlineAt != null ? _displayDate(offer.deadlineAt!.substring(0, 10)) : '—'}',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

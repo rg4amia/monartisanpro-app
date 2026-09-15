@@ -71,7 +71,7 @@ subprocess.run("flutter pub get", shell=True)
 
 # 3. Compilation officielle via Flutter Tool (regénère proprement le Kernel AOT pour toutes les architectures)
 print("\n[3/5] Compilation Flutter APK Release (Split-per-ABI + Universal)...")
-flutter_build_cmd = "flutter build apk --release --split-per-abi --no-tree-shake-icons"
+flutter_build_cmd = "flutter build apk --release --split-per-abi --no-tree-shake-icons --dart-define-from-file=env.json"
 result = subprocess.run(flutter_build_cmd, shell=True)
 
 # 4. Copie des APKs générés vers la racine du projet

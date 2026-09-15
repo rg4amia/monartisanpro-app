@@ -11,13 +11,14 @@ class RecruitmentOffer extends Model
 {
     protected $fillable = [
         'creator_id', 'creator_type', 'trade_id', 'title', 'description',
-        'mission_type', 'commune', 'sous_quartier', 'daily_rate_min', 'daily_rate_max',
+        'mission_type', 'commune', 'sous_quartier', 'date_debut', 'daily_rate_min', 'daily_rate_max',
         'openings_count', 'deadline_at', 'status', 'metadata',
     ];
 
     protected function casts(): array
     {
         return [
+            'date_debut' => 'date',
             'daily_rate_min' => 'integer',
             'daily_rate_max' => 'integer',
             'openings_count' => 'integer',

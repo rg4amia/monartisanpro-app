@@ -85,6 +85,36 @@ class RecruitmentTest extends TestCase
         $this->assertSame('active', RecruitmentOffer::first()->status);
     }
 
+    public function test_offer_stores_date_debut_and_deadline(): void
+    {
+        $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
+        $trade = $this->trade();
+
+        $payload = $this->offerPayload($trade);
+        $payload['date_debut'] = now()->addDays(2)->toDateString();
+        $payload['deadline_at'] = now()->addDays(10)->toDateString();
+
+        $this->actingAs($client)->postJson('/api/v1/recruitment-offers', $payload)
+            ->assertCreated();
+
+        $offer = RecruitmentOffer::first();
+        $this->assertNotNull($offer->date_debut);
+        $this->assertNotNull($offer->deadline_at);
+    }
+
+    public function test_offer_rejects_end_date_before_start_date(): void
+    {
+        $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
+        $trade = $this->trade();
+
+        $payload = $this->offerPayload($trade);
+        $payload['date_debut'] = now()->addDays(10)->toDateString();
+        $payload['deadline_at'] = now()->addDays(2)->toDateString();
+
+        $this->actingAs($client)->postJson('/api/v1/recruitment-offers', $payload)
+            ->assertStatus(422);
+    }
+
     public function test_posting_can_be_disabled_per_space(): void
     {
         DB::table('recruitment_settings')->where('key', 'client_posting_enabled')->update(['value' => '0']);

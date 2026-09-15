@@ -8,9 +8,10 @@ class RecruitmentRepository {
   final ApiClient _client = ApiClient();
 
   List<Map<String, dynamic>> _asMapList(dynamic data) {
-    final list = data is Map<String, dynamic> && data['data'] is Map<String, dynamic>
-        ? (data['data'] as Map<String, dynamic>)['data']
-        : null;
+    final list =
+        data is Map<String, dynamic> && data['data'] is Map<String, dynamic>
+            ? (data['data'] as Map<String, dynamic>)['data']
+            : null;
     if (list is! List) return const [];
     return list.whereType<Map<String, dynamic>>().toList();
   }
@@ -57,6 +58,7 @@ class RecruitmentRepository {
     required String missionType,
     required String commune,
     String? sousQuartier,
+    String? dateDebut,
     int? dailyRateMin,
     int? dailyRateMax,
     int openingsCount = 1,
@@ -73,6 +75,7 @@ class RecruitmentRepository {
           'commune': commune,
           if (sousQuartier != null && sousQuartier.isNotEmpty)
             'sous_quartier': sousQuartier,
+          if (dateDebut != null) 'date_debut': dateDebut,
           if (dailyRateMin != null) 'daily_rate_min': dailyRateMin,
           if (dailyRateMax != null) 'daily_rate_max': dailyRateMax,
           'openings_count': openingsCount,
@@ -81,9 +84,10 @@ class RecruitmentRepository {
       ),
     );
     final data = res.data;
-    final offerJson = data is Map<String, dynamic> && data['data'] is Map<String, dynamic>
-        ? data['data'] as Map<String, dynamic>
-        : <String, dynamic>{};
+    final offerJson =
+        data is Map<String, dynamic> && data['data'] is Map<String, dynamic>
+            ? data['data'] as Map<String, dynamic>
+            : <String, dynamic>{};
     return RecruitmentOfferModel.fromJson(offerJson);
   }
 
