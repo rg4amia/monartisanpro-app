@@ -16,7 +16,7 @@
       gtag('config', 'G-JZ32VTRQSP');
     </script>
 
-    <title inertia>{{ config('app.name', 'Laravel') }}</title>
+    <title inertia>ProsArtisan Backoffice</title>
 
     <link rel="icon" type="image/png" href="/favicon.png?v=4">
     <link rel="icon" href="/favicon.ico?v=4" sizes="any">
