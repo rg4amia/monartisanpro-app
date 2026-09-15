@@ -560,6 +560,43 @@ class _MenuList extends StatelessWidget {
           ),
           const SizedBox(height: 12),
 
+          // Recrutement BTP & Métiers — artisan (postuler) / client & fournisseur (recruter)
+          Obx(() {
+            final role = controller.userRole.value;
+            if (role == 'artisan') {
+              return Column(
+                children: [
+                  _MenuItem(
+                    icon: Icons.work_outline_rounded,
+                    iconBg: const Color(0xFFEFF6FF),
+                    iconColor: const Color(0xFF2563EB),
+                    title: 'Offres de recrutement',
+                    subtitle:
+                        'Postulez aux offres de chantier près de chez vous',
+                    onTap: () => Get.toNamed(Routes.recruitmentOffers),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+              );
+            }
+            if (role == 'client' || role == 'fournisseur') {
+              return Column(
+                children: [
+                  _MenuItem(
+                    icon: Icons.groups_outlined,
+                    iconBg: const Color(0xFFEFF6FF),
+                    iconColor: const Color(0xFF2563EB),
+                    title: 'Recruter de la main-d\'œuvre',
+                    subtitle: 'Publiez une offre et recevez des candidatures',
+                    onTap: () => Get.toNamed(Routes.recruitmentPublish),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+              );
+            }
+            return const SizedBox.shrink();
+          }),
+
           // Aide et support
           _MenuItem(
             icon: Icons.help_outline_outlined,

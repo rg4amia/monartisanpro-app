@@ -471,6 +471,11 @@ class BackofficeController extends Controller
         return $this->page('admin/faq', $this->panelData->faq());
     }
 
+    public function recruitment(Request $request): Response
+    {
+        return $this->page('admin/recruitment', $this->panelData->recruitment($request));
+    }
+
     public function auditLogs(Request $request): Response
     {
         return $this->page('admin/audit-logs', $this->panelData->auditLogs($request));

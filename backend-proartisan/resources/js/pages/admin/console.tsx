@@ -24,6 +24,7 @@ import { NotificationsPanel } from './panels/NotificationsPanel';
 import { ObservabilityPanel } from './panels/ObservabilityPanel';
 import { PersonalDataModal } from './panels/PersonalDataModal';
 import { PromoCodesPanel } from './panels/PromoCodesPanel';
+import { RecruitmentPanel } from './panels/RecruitmentPanel';
 import { SettingsPanel } from './panels/SettingsPanel';
 import { TransactionsPanel } from './panels/TransactionsPanel';
 import { UsersPanel } from './panels/UsersPanel';
@@ -74,6 +75,9 @@ import type {
     WhatsappSettings,
     FaqItem,
     FaqStats,
+    RecruitmentOfferItem,
+    RecruitmentStats,
+    RecruitmentSettings,
 } from './shared';
 import {
     AdminShell,
@@ -196,6 +200,9 @@ interface AdminPageProps {
     whatsappSettings?: WhatsappSettings;
     faqs?: FaqItem[];
     faqStats?: FaqStats;
+    recruitmentOffersPage?: Paginated<RecruitmentOfferItem> | null;
+    recruitmentStats?: RecruitmentStats;
+    recruitmentSettings?: RecruitmentSettings;
     territorySummary?: TerritorySummary;
     districtsHeatmap?: Record<string, DistrictHeatmapItem>;
     communesHeatmap?: Record<string, CommuneHeatmapItem>;
@@ -316,6 +323,9 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         whatsappSettings = { whatsapp_widget_enabled: '1', whatsapp_widget_phone: '', whatsapp_widget_message: '' },
         faqs = [],
         faqStats = { total: 0, actives: 0, roles_covered: 0 },
+        recruitmentOffersPage = undefined,
+        recruitmentStats = { total: 0, pending_review: 0, active: 0, filled: 0 },
+        recruitmentSettings = { client_posting_enabled: '1', fournisseur_posting_enabled: '1' },
         observability = undefined,
         territorySummary = undefined,
         districtsHeatmap = {},
@@ -339,6 +349,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
     const canManageAi = can(permissions, 'admin.ai.manage');
     const canManageWhatsapp = can(permissions, 'admin.whatsapp.manage');
     const canManageFaq = can(permissions, 'admin.faq.manage');
+    const canManageRecruitment = can(permissions, 'admin.recruitment.manage');
 
     const [missionSubTab, setMissionSubTab] = useState<'chantiers' | 'livraisons'>('chantiers');
     const [selectedOrderForDetails, setSelectedOrderForDetails] = useState<AdminOrder | null>(null);
@@ -544,6 +555,14 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         only: ['whatsappClicksPage'],
         initial: { search_whatsapp: '' },
         storageKey: 'whatsapp_clicks',
+    });
+
+    // Offres de recrutement (onglet « Recrutement ») — liste paginée + recherche par titre.
+    const recruitmentTable = useServerTable({
+        path: '/admin/recruitment',
+        only: ['recruitmentOffersPage'],
+        initial: { search_recruitment: '' },
+        storageKey: 'recruitment_offers',
     });
 
     // Quotas IA par utilisateur (onglet « Suivi & Coûts IA »).
@@ -1148,6 +1167,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                 { id: 'cartography', label: tabMeta.cartography.label },
                 { count: kycPending, id: 'kyc', label: tabMeta.kyc.label },
                 { count: missionsInProgress, id: 'missions', label: tabMeta.missions.label },
+                { count: recruitmentStats.pending_review, id: 'recruitment', label: tabMeta.recruitment.label },
                 { count: openDisputes, id: 'litiges', label: tabMeta.litiges.label },
                 { count: unreadNotifsCount, id: 'notifications', label: 'Notifications' },
                 { id: 'llm_admin', label: 'Administration LLM' },
@@ -1300,6 +1320,13 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                     { label: 'Total', tone: 'green' as const, value: numberFormat.format(faqs.length) },
                 ];
             }
+            case 'recruitment':
+                return [
+                    { label: 'Total des offres', tone: 'slate' as const, value: numberFormat.format(recruitmentStats.total) },
+                    { label: 'À modérer', tone: 'amber' as const, value: numberFormat.format(recruitmentStats.pending_review) },
+                    { label: 'Actives', tone: 'green' as const, value: numberFormat.format(recruitmentStats.active) },
+                    { label: 'Pourvues', tone: 'blue' as const, value: numberFormat.format(recruitmentStats.filled) },
+                ];
             case 'audit_logs': {
                 const logs = auditLogs?.data ?? [];
                 const failures = logs.filter((l) => l.action.includes('failed') || l.action.includes('denied')).length;
@@ -1360,6 +1387,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         whatsappClickStats,
         whatsappSettings,
         faqs,
+        recruitmentStats,
     ]);
 
     const summaryCards = [
@@ -1865,6 +1893,20 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
 
                             {activeTab === 'faq' ? (
                                 <FaqPanel faqs={faqs} canManage={canManageFaq} />
+                            ) : null}
+
+                            {activeTab === 'recruitment' ? (
+                                <RecruitmentPanel
+                                    recruitmentOffersPage={recruitmentOffersPage}
+                                    recruitmentStats={recruitmentStats}
+                                    recruitmentSettings={recruitmentSettings}
+                                    search={recruitmentTable.filters.search_recruitment}
+                                    onSearchChange={(v) => recruitmentTable.set('search_recruitment', v)}
+                                    onSubmit={recruitmentTable.apply}
+                                    onReset={recruitmentTable.reset}
+                                    renderPagination={(links) => renderPagination(links as any[], ['recruitmentOffersPage'])}
+                                    canManage={canManageRecruitment}
+                                />
                             ) : null}
                 {commModalOpen && (
                     <CommunicationFormModal

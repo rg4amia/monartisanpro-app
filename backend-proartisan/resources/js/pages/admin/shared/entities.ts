@@ -483,6 +483,52 @@ export interface FaqItem {
     updated_at: string;
 }
 
+export interface RecruitmentOfferTrade {
+    id: number;
+    name: string;
+}
+
+export interface RecruitmentOfferCreator {
+    id: number;
+    name: string;
+    role: string;
+}
+
+export type RecruitmentOfferStatus = 'draft' | 'pending_review' | 'active' | 'filled' | 'expired' | 'cancelled';
+
+export interface RecruitmentOfferItem {
+    id: number;
+    creator_id: number;
+    creator_type: 'admin' | 'client' | 'fournisseur';
+    trade_id: number;
+    title: string;
+    description: string;
+    mission_type: 'tacheron_brigade' | 'journalier' | 'longue_duree' | 'urgence';
+    commune: string;
+    sous_quartier: string | null;
+    daily_rate_min: number | null;
+    daily_rate_max: number | null;
+    openings_count: number;
+    deadline_at: string | null;
+    status: RecruitmentOfferStatus;
+    created_at: string;
+    trade?: RecruitmentOfferTrade | null;
+    creator?: RecruitmentOfferCreator | null;
+    applications_count?: number;
+}
+
+export interface RecruitmentStats {
+    total: number;
+    pending_review: number;
+    active: number;
+    filled: number;
+}
+
+export interface RecruitmentSettings {
+    client_posting_enabled?: string;
+    fournisseur_posting_enabled?: string;
+}
+
 export interface EvaluationStats {
     evaluations_total: number;
     note_moyenne: number;

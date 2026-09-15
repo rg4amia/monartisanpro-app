@@ -49,6 +49,10 @@ import '../../modules/orders/views/order_checkout_screen.dart';
 import '../../modules/orders/views/supplier_orders_screen.dart';
 import '../../modules/rating/bindings/rating_binding.dart';
 import '../../modules/rating/views/rating_screen.dart';
+import '../../modules/recruitment/bindings/recruitment_browse_binding.dart';
+import '../../modules/recruitment/bindings/recruitment_publish_binding.dart';
+import '../../modules/recruitment/views/recruitment_browse_screen.dart';
+import '../../modules/recruitment/views/recruitment_publish_screen.dart';
 import '../../modules/score/bindings/score_binding.dart';
 import '../../modules/score/views/score_screen.dart';
 import '../../modules/services/views/services_screen.dart';
@@ -196,6 +200,18 @@ class AppPages {
       name: Routes.support,
       page: () => const SupportScreen(),
       binding: SupportBinding(),
+    ),
+
+    // Recrutement BTP & Métiers
+    GetPage(
+      name: Routes.recruitmentOffers,
+      page: () => const RecruitmentBrowseScreen(),
+      binding: RecruitmentBrowseBinding(),
+    ),
+    GetPage(
+      name: Routes.recruitmentPublish,
+      page: () => const RecruitmentPublishScreen(),
+      binding: RecruitmentPublishBinding(),
     ),
 
     // Settings

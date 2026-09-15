@@ -1,0 +1,58 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class RecruitmentOffer extends Model
+{
+    protected $fillable = [
+        'creator_id', 'creator_type', 'trade_id', 'title', 'description',
+        'mission_type', 'commune', 'sous_quartier', 'daily_rate_min', 'daily_rate_max',
+        'openings_count', 'deadline_at', 'status', 'metadata',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'daily_rate_min' => 'integer',
+            'daily_rate_max' => 'integer',
+            'openings_count' => 'integer',
+            'deadline_at' => 'datetime',
+            'metadata' => 'array',
+        ];
+    }
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'creator_id');
+    }
+
+    public function trade(): BelongsTo
+    {
+        return $this->belongsTo(Trade::class);
+    }
+
+    public function applications(): HasMany
+    {
+        return $this->hasMany(RecruitmentApplication::class, 'offer_id');
+    }
+
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where('status', 'active');
+    }
+
+    public function scopePendingReview(Builder $query): Builder
+    {
+        return $query->where('status', 'pending_review');
+    }
+
+    public function isActive(): bool
+    {
+        return $this->status === 'active';
+    }
+}

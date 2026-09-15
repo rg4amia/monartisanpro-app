@@ -45,6 +45,7 @@ class BackofficePagesTest extends TestCase
             '/admin/vitrine' => 'admin/vitrine',
             '/admin/whatsapp' => 'admin/whatsapp',
             '/admin/faq' => 'admin/faq',
+            '/admin/recruitment' => 'admin/recruitment',
         ];
 
         foreach ($pages as $url => $component) {

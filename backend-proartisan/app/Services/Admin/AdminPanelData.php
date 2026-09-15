@@ -12,6 +12,7 @@ use App\Models\PromoCode;
 use App\Models\Sector;
 use App\Models\Setting;
 use App\Models\Faq;
+use App\Models\RecruitmentOffer;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\WhatsappClickLog;
@@ -338,6 +339,46 @@ class AdminPanelData
     {
         return [
             'faqs' => Schema::hasTable('faqs') ? Faq::ordered()->get() : [],
+        ];
+    }
+
+    /**
+     * Onglet « Recrutement » — modération des offres publiées par les admins,
+     * clients et fournisseurs, et réglages de publication par espace.
+     */
+    public function recruitment(Request $request): array
+    {
+        $hasTable = Schema::hasTable('recruitment_offers');
+
+        return [
+            'recruitmentOffersPage' => $hasTable
+                ? RecruitmentOffer::query()
+                    ->with(['trade', 'creator:id,name,role'])
+                    ->when($request->query('status_recruitment'), fn ($q, $status) => $q->where('status', $status))
+                    ->when($request->query('search_recruitment'), fn ($q, $search) => $q->where('title', 'like', "%{$search}%"))
+                    ->withCount('applications')
+                    ->orderByDesc('created_at')
+                    ->paginate(25)
+                    ->withQueryString()
+                : null,
+            'recruitmentStats' => $this->recruitmentStats(),
+            'recruitmentSettings' => $hasTable && Schema::hasTable('recruitment_settings')
+                ? DB::table('recruitment_settings')->pluck('value', 'key')
+                : collect(),
+        ];
+    }
+
+    private function recruitmentStats(): array
+    {
+        if (! Schema::hasTable('recruitment_offers')) {
+            return ['total' => 0, 'pending_review' => 0, 'active' => 0, 'filled' => 0];
+        }
+
+        return [
+            'total' => RecruitmentOffer::count(),
+            'pending_review' => RecruitmentOffer::where('status', 'pending_review')->count(),
+            'active' => RecruitmentOffer::where('status', 'active')->count(),
+            'filled' => RecruitmentOffer::where('status', 'filled')->count(),
         ];
     }
 

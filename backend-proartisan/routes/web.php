@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\BackofficeController;
 use App\Http\Controllers\Admin\ImpersonationController;
 use App\Http\Controllers\Admin\LlmAdminController;
 use App\Http\Controllers\Admin\FaqAdminController;
+use App\Http\Controllers\Admin\RecruitmentAdminController;
 use App\Http\Controllers\Admin\VitrineAdminController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use Illuminate\Support\Facades\Route;
@@ -175,6 +176,14 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/', [FaqAdminController::class, 'store'])->name('store');
             Route::match(['post', 'put'], '/{faq}', [FaqAdminController::class, 'update'])->name('update');
             Route::delete('/{faq}', [FaqAdminController::class, 'destroy'])->name('destroy');
+        });
+
+        // Module Recrutement (offres publiées par admin/client/fournisseur)
+        Route::get('/recruitment', [BackofficeController::class, 'recruitment'])->middleware('can:admin.recruitment.manage')->name('recruitment');
+        Route::prefix('recruitment')->name('recruitment.')->middleware('can:admin.recruitment.manage')->group(function () {
+            Route::post('/{offer}/approve', [RecruitmentAdminController::class, 'approve'])->name('approve');
+            Route::post('/{offer}/reject', [RecruitmentAdminController::class, 'reject'])->name('reject');
+            Route::post('/settings', [RecruitmentAdminController::class, 'updateSettings'])->name('settings');
         });
 
         Route::prefix('vitrine')->name('vitrine.')->middleware('can:admin.vitrine.manage')->group(function () {

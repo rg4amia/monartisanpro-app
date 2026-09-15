@@ -47,6 +47,17 @@ class ApiEndpoints {
   // Types d'intervention
   static const String interventionTypes = '/intervention-types';
 
+  // Recrutement BTP & Métiers
+  static const String recruitmentOffers = '/recruitment-offers';
+  static String recruitmentOffer(int id) => '/recruitment-offers/$id';
+  static const String myRecruitmentOffers = '/recruitment-offers/mine';
+  static String recruitmentOfferApplications(int id) =>
+      '/recruitment-offers/$id/applications';
+  static String recruitmentOfferApply(int id) =>
+      '/recruitment-offers/$id/apply';
+  static const String myRecruitmentApplications =
+      '/recruitment-applications/mine';
+
   // Missions
   static const String missions = '/missions';
   static String mission(int id) => '/missions/$id';

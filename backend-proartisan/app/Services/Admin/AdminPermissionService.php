@@ -86,6 +86,9 @@ class AdminPermissionService
             'marketing' => [
                 'admin.promo.manage' => 'Gérer les codes promotionnels',
             ],
+            'recrutement' => [
+                'admin.recruitment.manage' => "Modérer les offres de recrutement et piloter la publication client/fournisseur",
+            ],
             'intelligence' => [
                 'admin.ai.manage' => 'Piloter les paramètres et coûts IA',
                 'admin.llm.manage' => "Administrer l'ingestion sémantique et le pipeline RAG",

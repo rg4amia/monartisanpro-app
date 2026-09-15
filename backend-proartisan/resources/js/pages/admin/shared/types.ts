@@ -20,7 +20,8 @@ export type AdminTab =
     | 'cartography'
     | 'vitrine'
     | 'whatsapp'
-    | 'faq';
+    | 'faq'
+    | 'recruitment';
 
 export type ThemeMode = 'light' | 'dark';
 

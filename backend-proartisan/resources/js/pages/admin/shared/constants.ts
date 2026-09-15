@@ -22,6 +22,7 @@ export const tabRoutes: Record<AdminTab, string> = {
     vitrine: '/admin/vitrine',
     whatsapp: '/admin/whatsapp',
     faq: '/admin/faq',
+    recruitment: '/admin/recruitment',
     cartography: '/admin/cartographie',
 };
 
@@ -116,6 +117,11 @@ export const tabMeta: Record<AdminTab, { description: string; label: string; sec
         section: 'COMMUNICATION',
         description: "Questions/réponses affichées dans l'écran Aide et support de l'application mobile, par espace (client, artisan, livreur, fournisseur).",
     },
+    recruitment: {
+        label: 'Recrutement',
+        section: 'OPÉRATIONS',
+        description: 'Modération des offres de recrutement BTP publiées par ProsArtisan, les clients et les fournisseurs, et réglages de publication par espace.',
+    },
     audit_logs: {
         label: "Journal d'audit",
         section: 'PLATEFORME',
@@ -148,6 +154,7 @@ export const searchPlaceholders: Record<AdminTab, string> = {
     vitrine: 'Rechercher un slide, article, vidéo ou formation...',
     whatsapp: "Rechercher un clic par page d'origine...",
     faq: 'Rechercher une question, une réponse ou une catégorie...',
+    recruitment: 'Rechercher une offre par titre...',
     cartography: 'Rechercher un artisan, client, fournisseur ou mission dans la zone...',
 };
 

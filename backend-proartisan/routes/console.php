@@ -4,6 +4,7 @@ use App\Console\Commands\AdminHealthCheckCommand;
 use App\Console\Commands\AutoReleaseJalonsCommand;
 use App\Console\Commands\DecayScoreCommand;
 use App\Console\Commands\DriverWatchdogCommand;
+use App\Console\Commands\ExpireRecruitmentOffersCommand;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -42,3 +43,10 @@ Schedule::command(AdminHealthCheckCommand::class)
     ->withoutOverlapping()
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/admin-health-check.log'));
+
+// Module Recrutement — clôture automatique des offres expirées
+Schedule::command(ExpireRecruitmentOffersCommand::class)
+    ->everyMinute()
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/recruitment-expire.log'));

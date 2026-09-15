@@ -35,6 +35,8 @@ abstract class Routes {
   static const settings = '/settings';
   static const updateProfile = '/update-profile';
   static const support = '/support';
+  static const recruitmentOffers = '/recruitment-offers';
+  static const recruitmentPublish = '/recruitment-publish';
 
   // Map
   static const artisanMap = '/artisan-map';

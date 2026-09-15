@@ -26,6 +26,7 @@ use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\ParrainageController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\PromoCodeController;
+use App\Http\Controllers\Api\V1\RecruitmentController;
 use App\Http\Controllers\Api\V1\ReferentController;
 use App\Http\Controllers\Api\V1\SectorController;
 use App\Http\Controllers\Api\V1\SettingController;
@@ -195,6 +196,19 @@ Route::prefix('v1')->group(function () {
         Route::post('/missions/{mission}/accept-request', [MissionController::class, 'acceptRequest']);
         Route::post('/missions/{mission}/reject-request', [MissionController::class, 'rejectRequest']);
         Route::post('/missions/{mission}/referent-validate', [ReferentController::class, 'validateMission'])->middleware(['can:mission.referent-validate', 'kyc.verified']);
+
+        // ── Recrutement BTP & Métiers (admin/client/fournisseur → artisan) ──────
+        // La lecture reste ouverte à tout compte connecté ; publier une offre ou
+        // postuler exige le KYC actif (le statut « pending_review » côté service
+        // couvre le cas d'un recruteur non vérifié — kyc.verified bloque en amont
+        // uniquement l'artisan candidat, dont la candidature doit être fiable).
+        Route::get('/recruitment-offers', [RecruitmentController::class, 'index']);
+        Route::get('/recruitment-offers/mine', [RecruitmentController::class, 'mine']);
+        Route::get('/recruitment-offers/{offer}', [RecruitmentController::class, 'show']);
+        Route::get('/recruitment-offers/{offer}/applications', [RecruitmentController::class, 'applications']);
+        Route::post('/recruitment-offers', [RecruitmentController::class, 'store']);
+        Route::post('/recruitment-offers/{offer}/apply', [RecruitmentController::class, 'apply'])->middleware('kyc.verified');
+        Route::get('/recruitment-applications/mine', [RecruitmentController::class, 'myApplications']);
 
         // ── Messagerie de Chantier In-App ──────────────────────────────────────
         Route::get('/missions/{mission}/messages', [\App\Http\Controllers\Api\V1\MissionChatController::class, 'index']);
