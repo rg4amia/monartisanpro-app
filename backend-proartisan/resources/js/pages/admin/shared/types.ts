@@ -18,7 +18,8 @@ export type AdminTab =
     | 'audit_logs'
     | 'observability'
     | 'cartography'
-    | 'vitrine';
+    | 'vitrine'
+    | 'whatsapp';
 
 export type ThemeMode = 'light' | 'dark';
 

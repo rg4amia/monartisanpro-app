@@ -80,6 +80,7 @@ class AdminPermissionService
                 'admin.communications.manage' => 'Gérer les communications et annonces',
                 'admin.notifications.view' => 'Consulter le centre de notifications',
                 'admin.vitrine.manage' => 'Administrer le CMS de la vitrine et les contacts',
+                'admin.whatsapp.manage' => 'Configurer le bouton WhatsApp du site et consulter les clics enregistrés',
             ],
             'marketing' => [
                 'admin.promo.manage' => 'Gérer les codes promotionnels',

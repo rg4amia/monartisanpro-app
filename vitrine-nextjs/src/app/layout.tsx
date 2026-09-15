@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PopupModal from "@/components/PopupModal";
 import CookieConsent from "@/components/CookieConsent";
+import WhatsAppButton from "@/components/WhatsAppButton";
 
 export const metadata: Metadata = {
   title: "ProsArtisan — Plateforme Artisanale de Confiance en Côte d'Ivoire",
@@ -54,6 +55,7 @@ export default function RootLayout({
         <Footer />
         <PopupModal />
         <CookieConsent />
+        <WhatsAppButton />
       </body>
     </html>
   );

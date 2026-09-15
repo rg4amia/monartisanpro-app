@@ -352,6 +352,18 @@ export const api = {
     async getSettings(): Promise<Record<string, string>> {
         return fetchFromApi<Record<string, string>>('/settings', MOCK_SETTINGS);
     },
+    async logWhatsappClick(page: string): Promise<void> {
+        try {
+            await fetch(`${getApiBaseUrl()}/whatsapp-click`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ page, source: 'floating_button' }),
+                keepalive: true,
+            });
+        } catch (e) {
+            console.warn('Erreur journalisation clic WhatsApp:', e);
+        }
+    },
     async getArtisansStars(): Promise<Artisan[]> {
         const data = await fetchFromApi<{ data: Artisan[] } | Artisan[]>('/artisans-stars', MOCK_ARTISANS);
         if (Array.isArray(data)) return data;

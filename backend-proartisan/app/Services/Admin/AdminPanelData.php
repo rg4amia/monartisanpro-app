@@ -13,6 +13,7 @@ use App\Models\Sector;
 use App\Models\Setting;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Models\WhatsappClickLog;
 use App\Models\Vitrine\VitrineArticle;
 use App\Models\Vitrine\VitrineArtisanDuMois;
 use App\Models\Vitrine\VitrineFormation;
@@ -295,6 +296,38 @@ class AdminPanelData
     {
         return [
             'promoCodes' => $this->promoCodesList(),
+        ];
+    }
+
+    /**
+     * Onglet « WhatsApp » — réglages du bouton click-to-chat du front office
+     * + journal paginé des clics enregistrés (aucune donnée personnelle).
+     */
+    public function whatsapp(Request $request): array
+    {
+        $hasTable = Schema::hasTable('whatsapp_click_logs');
+
+        return [
+            'whatsappClicksPage' => $hasTable
+                ? WhatsappClickLog::query()
+                    ->when($request->query('search_whatsapp'), fn ($q, $search) => $q->where('page', 'like', "%{$search}%"))
+                    ->orderByDesc('created_at')
+                    ->paginate(25)
+                    ->withQueryString()
+                : null,
+            'whatsappClickStats' => [
+                'total' => $hasTable ? WhatsappClickLog::count() : 0,
+                'today' => $hasTable ? WhatsappClickLog::whereDate('created_at', now()->toDateString())->count() : 0,
+                'last_7_days' => $hasTable ? WhatsappClickLog::where('created_at', '>=', now()->subDays(7))->count() : 0,
+            ],
+            'whatsappSettings' => [
+                'whatsapp_widget_enabled' => VitrineSetting::get('whatsapp_widget_enabled', '1'),
+                'whatsapp_widget_phone' => VitrineSetting::get('whatsapp_widget_phone', ''),
+                'whatsapp_widget_message' => VitrineSetting::get(
+                    'whatsapp_widget_message',
+                    "Bonjour ProsArtisan, je souhaite être mis en relation avec un artisan.",
+                ),
+            ],
         ];
     }
 

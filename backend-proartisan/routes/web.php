@@ -166,6 +166,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         // Vitrine CMS (Gestion du Front Office)
         Route::get('/vitrine', [BackofficeController::class, 'vitrine'])->middleware('can:admin.vitrine.manage')->name('vitrine');
+        Route::get('/whatsapp', [BackofficeController::class, 'whatsapp'])->middleware('can:admin.whatsapp.manage')->name('whatsapp');
 
         Route::prefix('vitrine')->name('vitrine.')->middleware('can:admin.vitrine.manage')->group(function () {
             Route::post('/slides', [VitrineAdminController::class, 'storeSlide'])->name('slides.store');

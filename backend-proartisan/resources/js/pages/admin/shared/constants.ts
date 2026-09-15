@@ -20,6 +20,7 @@ export const tabRoutes: Record<AdminTab, string> = {
     audit_logs: '/admin/audit-logs',
     observability: '/admin/observability',
     vitrine: '/admin/vitrine',
+    whatsapp: '/admin/whatsapp',
     cartography: '/admin/cartographie',
 };
 
@@ -104,6 +105,11 @@ export const tabMeta: Record<AdminTab, { description: string; label: string; sec
         section: 'COMMUNICATION',
         description: 'Administration et gestion du contenu éditorial de la vitrine ProsArtisan et des demandes de contact.',
     },
+    whatsapp: {
+        label: 'WhatsApp',
+        section: 'COMMUNICATION',
+        description: 'Configuration du bouton WhatsApp "click-to-chat" du front office et suivi des clics enregistrés.',
+    },
     audit_logs: {
         label: "Journal d'audit",
         section: 'PLATEFORME',
@@ -134,6 +140,7 @@ export const searchPlaceholders: Record<AdminTab, string> = {
     audit_logs: 'Rechercher une action, un admin, une entité ou une IP...',
     observability: 'Filtrer les signaux de santé...',
     vitrine: 'Rechercher un slide, article, vidéo ou formation...',
+    whatsapp: "Rechercher un clic par page d'origine...",
     cartography: 'Rechercher un artisan, client, fournisseur ou mission dans la zone...',
 };
 

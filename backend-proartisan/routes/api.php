@@ -102,6 +102,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/popup', [VitrineController::class, 'popup']);
         Route::get('/settings', [VitrineController::class, 'settings']);
         Route::post('/contact', [VitrineController::class, 'contact']);
+        Route::post('/whatsapp-click', [VitrineController::class, 'logWhatsappClick']);
     });
 
     // ── Validation Hors-Ligne USSD & SMS ─────────────────────────────────────

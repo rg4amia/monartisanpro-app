@@ -593,6 +593,11 @@ class VitrineAdminController extends Controller
                 'lien_youtube' => 'nullable|string|max:255',
                 'lien_tiktok' => 'nullable|string|max:255',
 
+                // Bouton WhatsApp "click-to-chat" (flottant, front office)
+                'whatsapp_widget_enabled' => 'nullable|in:0,1',
+                'whatsapp_widget_phone' => 'nullable|string|max:20',
+                'whatsapp_widget_message' => 'nullable|string|max:500',
+
                 // Footer - Identité & Textes
                 'footer_description' => 'nullable|string|max:1000',
                 'footer_badge_text' => 'nullable|string|max:100',

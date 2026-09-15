@@ -26,6 +26,7 @@ import { PromoCodesPanel } from './panels/PromoCodesPanel';
 import { SettingsPanel } from './panels/SettingsPanel';
 import { TransactionsPanel } from './panels/TransactionsPanel';
 import { UsersPanel } from './panels/UsersPanel';
+import { WhatsAppPanel } from './panels/WhatsAppPanel';
 import RolesPermissionsPanel from './roles-permissions-panel';
 import type {
     AdminEvaluation,
@@ -67,6 +68,9 @@ import type {
     ThemeMode,
     TransactionStats,
     UserStats,
+    WhatsappClickLogItem,
+    WhatsappClickStats,
+    WhatsappSettings,
 } from './shared';
 import {
     AdminShell,
@@ -184,6 +188,9 @@ interface AdminPageProps {
     vitrinePopups?: any[];
     vitrineSettings?: any[];
     contactMessages?: any[];
+    whatsappClicksPage?: Paginated<WhatsappClickLogItem> | null;
+    whatsappClickStats?: WhatsappClickStats;
+    whatsappSettings?: WhatsappSettings;
     territorySummary?: TerritorySummary;
     districtsHeatmap?: Record<string, DistrictHeatmapItem>;
     communesHeatmap?: Record<string, CommuneHeatmapItem>;
@@ -299,6 +306,9 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         vitrinePopups = [],
         vitrineSettings = [],
         contactMessages = [],
+        whatsappClicksPage = undefined,
+        whatsappClickStats = { total: 0, today: 0, last_7_days: 0 },
+        whatsappSettings = { whatsapp_widget_enabled: '1', whatsapp_widget_phone: '', whatsapp_widget_message: '' },
         observability = undefined,
         territorySummary = undefined,
         districtsHeatmap = {},
@@ -320,6 +330,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
     const canManageObservability = can(permissions, 'admin.observability.manage');
     const canImpersonate = can(permissions, 'admin.users.impersonate');
     const canManageAi = can(permissions, 'admin.ai.manage');
+    const canManageWhatsapp = can(permissions, 'admin.whatsapp.manage');
 
     const [missionSubTab, setMissionSubTab] = useState<'chantiers' | 'livraisons'>('chantiers');
     const [selectedOrderForDetails, setSelectedOrderForDetails] = useState<AdminOrder | null>(null);
@@ -517,6 +528,14 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         only: ['kycUsersPage', 'kycStats'],
         initial: { search_kyc: '' },
         storageKey: 'kyc',
+    });
+
+    // Clics WhatsApp (onglet « WhatsApp ») — journal paginé + recherche par page.
+    const whatsappTable = useServerTable({
+        path: '/admin/whatsapp',
+        only: ['whatsappClicksPage'],
+        initial: { search_whatsapp: '' },
+        storageKey: 'whatsapp_clicks',
     });
 
     // Quotas IA par utilisateur (onglet « Suivi & Coûts IA »).
@@ -1145,6 +1164,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                 { count: navBadges.communications_publiees ?? (communications ?? []).filter(c => c.statut === 'publie').length, id: 'communications', label: tabMeta.communications.label },
                 { count: navBadges.promo_codes_actifs ?? (promoCodes ?? []).filter(p => p.is_active).length, id: 'promo_codes', label: 'Codes Promo' },
                 { count: navBadges.contact_messages_nouveaux ?? (contactMessages ?? []).filter(c => c.statut === 'nouveau').length, id: 'vitrine', label: tabMeta.vitrine.label },
+                { count: whatsappClickStats.today, id: 'whatsapp', label: tabMeta.whatsapp.label },
             ],
         },
     ] as NavigationGroup[])
@@ -1255,6 +1275,13 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                     { label: 'Vidéos & Recrut.', tone: 'slate' as const, value: `${(vitrineVideos ?? []).length} / ${(vitrineRecrutements ?? []).length}` },
                 ];
             }
+            case 'whatsapp':
+                return [
+                    { label: 'Total des clics', tone: 'amber' as const, value: numberFormat.format(whatsappClickStats.total) },
+                    { label: "Aujourd'hui", tone: 'green' as const, value: numberFormat.format(whatsappClickStats.today) },
+                    { label: '7 derniers jours', tone: 'blue' as const, value: numberFormat.format(whatsappClickStats.last_7_days) },
+                    { label: 'Bouton', tone: 'slate' as const, value: whatsappSettings.whatsapp_widget_enabled === '1' ? 'Actif' : 'Désactivé' },
+                ];
             case 'audit_logs': {
                 const logs = auditLogs?.data ?? [];
                 const failures = logs.filter((l) => l.action.includes('failed') || l.action.includes('denied')).length;
@@ -1312,6 +1339,8 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         vitrineRecrutements,
         contactMessages,
         territorySummary?.zone?.name,
+        whatsappClickStats,
+        whatsappSettings,
     ]);
 
     const summaryCards = [
@@ -1797,6 +1826,20 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                         users={users}
                                     />
                                 </section>
+                            ) : null}
+
+                            {activeTab === 'whatsapp' ? (
+                                <WhatsAppPanel
+                                    whatsappClicksPage={whatsappClicksPage}
+                                    whatsappClickStats={whatsappClickStats}
+                                    whatsappSettings={whatsappSettings}
+                                    search={whatsappTable.filters.search_whatsapp}
+                                    onSearchChange={(v) => whatsappTable.set('search_whatsapp', v)}
+                                    onSubmit={whatsappTable.apply}
+                                    onReset={whatsappTable.reset}
+                                    renderPagination={(links) => renderPagination(links as any[], ['whatsappClicksPage'])}
+                                    canManage={canManageWhatsapp}
+                                />
                             ) : null}
                 {commModalOpen && (
                     <CommunicationFormModal

@@ -443,6 +443,26 @@ export interface LitigeStats {
     missions_disputed: number;
 }
 
+export interface WhatsappClickLogItem {
+    id: number;
+    page: string | null;
+    source: string;
+    referrer: string | null;
+    created_at: string;
+}
+
+export interface WhatsappClickStats {
+    total: number;
+    today: number;
+    last_7_days: number;
+}
+
+export interface WhatsappSettings {
+    whatsapp_widget_enabled: string;
+    whatsapp_widget_phone: string;
+    whatsapp_widget_message: string;
+}
+
 export interface EvaluationStats {
     evaluations_total: number;
     note_moyenne: number;

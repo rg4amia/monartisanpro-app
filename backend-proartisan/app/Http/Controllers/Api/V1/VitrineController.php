@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\WhatsappClickLog;
 use App\Models\Vitrine\VitrineArticle;
 use App\Models\Vitrine\VitrineArtisanDuMois;
 use App\Models\Vitrine\VitrineFormation;
@@ -242,6 +243,27 @@ class VitrineController extends Controller
             'success' => true,
             'data' => VitrineSetting::allAsArray(),
         ]);
+    }
+
+    /**
+     * Journalise un clic sur le bouton WhatsApp du front office (aucune donnée
+     * personnelle : uniquement la page d'origine, la source du bouton et le
+     * referrer HTTP, pour alimenter le suivi des interactions au backoffice).
+     */
+    public function logWhatsappClick(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'page' => 'nullable|string|max:255',
+            'source' => 'nullable|string|max:50',
+        ]);
+
+        WhatsappClickLog::create([
+            'page' => $validated['page'] ?? null,
+            'source' => $validated['source'] ?? 'floating_button',
+            'referrer' => $request->header('referer'),
+        ]);
+
+        return response()->json(['success' => true]);
     }
 
     /**
