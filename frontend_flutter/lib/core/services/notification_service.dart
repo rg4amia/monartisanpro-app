@@ -112,6 +112,22 @@ class NotificationService extends GetxService {
           Get.toNamed(Routes.missionTracking, arguments: missionId);
         }
       }
+      // 6. Redirection pour le recrutement (offres, candidatures, engagements)
+      else if (type.contains('recruitment')) {
+        final engagementIdStr = data['recruitmentEngagementId'] ??
+            data['recruitment_engagement_id'];
+        final engagementId = engagementIdStr != null
+            ? int.tryParse(engagementIdStr.toString())
+            : null;
+
+        if (engagementId != null) {
+          Get.toNamed(Routes.recruitmentEngagement, arguments: engagementId);
+        } else if (role == 'artisan') {
+          Get.toNamed(Routes.recruitmentOffers);
+        } else {
+          Get.toNamed(Routes.recruitmentPublish);
+        }
+      }
     } catch (e) {
       debugPrint('Erreur lors de la redirection de la notification: $e');
     }

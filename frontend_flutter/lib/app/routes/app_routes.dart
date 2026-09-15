@@ -37,6 +37,8 @@ abstract class Routes {
   static const support = '/support';
   static const recruitmentOffers = '/recruitment-offers';
   static const recruitmentPublish = '/recruitment-publish';
+  static const recruitmentApplicants = '/recruitment-applicants';
+  static const recruitmentEngagement = '/recruitment-engagement';
 
   // Map
   static const artisanMap = '/artisan-map';

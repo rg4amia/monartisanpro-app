@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../app/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/models/recruitment_offer_model.dart';
 import '../../../shared/widgets/loading_shimmer.dart';
@@ -814,65 +815,80 @@ class _MyOfferTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasPeriod = offer.dateDebut != null || offer.deadlineAt != null;
 
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        boxShadow: AppColors.cardShadow,
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  offer.title,
-                  style: const TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${offer.applicationsCount} candidature(s) reçue(s)',
-                  style: const TextStyle(
-                    fontSize: 11.5,
-                    color: AppColors.textMuted,
-                  ),
-                ),
-                if (hasPeriod) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    '${offer.dateDebut != null ? _displayDate(offer.dateDebut!.substring(0, 10)) : '—'} → '
-                    '${offer.deadlineAt != null ? _displayDate(offer.deadlineAt!.substring(0, 10)) : '—'}',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: AppColors.textMuted,
+        onTap: () =>
+            Get.toNamed(Routes.recruitmentApplicants, arguments: offer),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: AppColors.cardShadow,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      offer.title,
+                      style: const TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              _statusLabels[offer.status] ?? offer.status,
-              style: const TextStyle(
-                fontSize: 10.5,
-                fontWeight: FontWeight.w700,
-                color: AppColors.primary,
+                    const SizedBox(height: 4),
+                    Text(
+                      '${offer.applicationsCount} candidature(s) reçue(s)',
+                      style: const TextStyle(
+                        fontSize: 11.5,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                    if (hasPeriod) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        '${offer.dateDebut != null ? _displayDate(offer.dateDebut!.substring(0, 10)) : '—'} → '
+                        '${offer.deadlineAt != null ? _displayDate(offer.deadlineAt!.substring(0, 10)) : '—'}',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
-            ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  _statusLabels[offer.status] ?? offer.status,
+                  style: const TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 4),
+              const Icon(
+                Icons.chevron_right_rounded,
+                size: 18,
+                color: AppColors.textMuted,
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

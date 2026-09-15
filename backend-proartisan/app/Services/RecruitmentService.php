@@ -15,6 +15,8 @@ use Illuminate\Validation\ValidationException;
  */
 class RecruitmentService
 {
+    public function __construct(private NotificationService $notifications) {}
+
     private const CREATOR_TYPES = ['admin', 'client', 'fournisseur'];
 
     /**
@@ -100,18 +102,78 @@ class RecruitmentService
             ]);
         }
 
-        return RecruitmentApplication::create([
+        $application = RecruitmentApplication::create([
             'offer_id' => $offer->id,
             'artisan_id' => $artisan->id,
             'matching_score' => $this->matchingScore($artisan, $offer),
             'status' => 'submitted',
             'applied_at' => now(),
         ]);
+
+        $this->notifications->send(
+            $offer->creator,
+            'recruitment',
+            'Nouvelle candidature',
+            "{$artisan->name} a postulé à votre offre « {$offer->title} ».",
+            ['recruitment_offer_id' => $offer->id, 'recruitment_application_id' => $application->id],
+        );
+
+        return $application;
+    }
+
+    private const APPLICATION_STATUSES = ['shortlisted', 'contacted', 'rejected', 'confirmed'];
+
+    /**
+     * Le recruteur (créateur de l'offre) ou un admin fait évoluer le statut
+     * d'une candidature reçue.
+     */
+    public function updateApplicationStatus(User $actor, RecruitmentApplication $application, string $status): RecruitmentApplication
+    {
+        if (! in_array($status, self::APPLICATION_STATUSES, true)) {
+            throw ValidationException::withMessages([
+                'status' => ['Statut de candidature invalide.'],
+            ]);
+        }
+
+        $offer = $application->offer;
+
+        if ($offer->creator_id !== $actor->id && $actor->role !== 'admin') {
+            throw ValidationException::withMessages([
+                'application' => ["Cette candidature n'appartient pas à l'une de vos offres."],
+            ]);
+        }
+
+        $application->update(['status' => $status]);
+
+        $labels = [
+            'shortlisted' => 'présélectionnée',
+            'contacted' => 'marquée comme contactée',
+            'rejected' => 'déclinée',
+            'confirmed' => 'retenue',
+        ];
+
+        $this->notifications->send(
+            $application->artisan,
+            'recruitment',
+            'Candidature mise à jour',
+            "Votre candidature à « {$offer->title} » a été {$labels[$status]}.",
+            ['recruitment_offer_id' => $offer->id, 'recruitment_application_id' => $application->id],
+        );
+
+        return $application;
     }
 
     public function approve(RecruitmentOffer $offer): RecruitmentOffer
     {
         $offer->update(['status' => 'active']);
+
+        $this->notifications->send(
+            $offer->creator,
+            'recruitment',
+            'Offre publiée',
+            "Votre offre « {$offer->title} » a été validée et est maintenant visible par les artisans.",
+            ['recruitment_offer_id' => $offer->id],
+        );
 
         return $offer;
     }
@@ -122,6 +184,16 @@ class RecruitmentService
             'status' => 'cancelled',
             'metadata' => array_merge($offer->metadata ?? [], ['moderation_note' => $reason]),
         ]);
+
+        $this->notifications->send(
+            $offer->creator,
+            'recruitment',
+            'Offre rejetée',
+            $reason
+                ? "Votre offre « {$offer->title} » a été rejetée : {$reason}"
+                : "Votre offre « {$offer->title} » a été rejetée par l'équipe ProsArtisan.",
+            ['recruitment_offer_id' => $offer->id],
+        );
 
         return $offer;
     }

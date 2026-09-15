@@ -598,6 +598,12 @@ class _NotificationTile extends StatelessWidget {
           'iconColor': const Color(0xFFEF4444),
           'bgColor': const Color(0xFFFEE2E2),
         };
+      case 'recruitment':
+        return {
+          'icon': Icons.handshake_outlined,
+          'iconColor': const Color(0xFF0D9488),
+          'bgColor': const Color(0xFFCCFBF1),
+        };
       default:
         return {
           'icon': Icons.notifications_outlined,

@@ -94,11 +94,33 @@ class RecruitmentController extends Controller
         }
 
         $applications = $offer->applications()
-            ->with('artisan:id,name,phone,score_prosartisan')
+            ->with(['artisan:id,name,phone,score_prosartisan', 'engagement'])
             ->orderByDesc('matching_score')
             ->get();
 
         return response()->json(['success' => true, 'data' => $applications]);
+    }
+
+    /**
+     * Fait évoluer le statut d'une candidature (recruteur propriétaire ou admin).
+     */
+    public function updateApplicationStatus(Request $request, RecruitmentOffer $offer, RecruitmentApplication $application): JsonResponse
+    {
+        if ($application->offer_id !== $offer->id) {
+            return response()->json(['success' => false, 'message' => "Cette candidature n'appartient pas à cette offre."], 404);
+        }
+
+        $validated = $request->validate([
+            'status' => 'required|in:shortlisted,contacted,rejected,confirmed',
+        ]);
+
+        try {
+            $application = $this->recruitment->updateApplicationStatus($request->user(), $application, $validated['status']);
+        } catch (ValidationException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage(), 'errors' => $e->errors()], 422);
+        }
+
+        return response()->json(['success' => true, 'data' => $application]);
     }
 
     public function apply(Request $request, RecruitmentOffer $offer): JsonResponse

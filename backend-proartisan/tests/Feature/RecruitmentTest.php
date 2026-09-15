@@ -191,6 +191,134 @@ class RecruitmentTest extends TestCase
             ->assertStatus(422);
     }
 
+    public function test_applying_and_status_changes_notify_the_right_users(): void
+    {
+        $trade = $this->trade();
+        $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
+        $artisan = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif']);
+
+        $offer = RecruitmentOffer::create([
+            'creator_id' => $client->id,
+            'creator_type' => 'client',
+            'trade_id' => $trade->id,
+            'title' => 'Offre active',
+            'description' => 'x',
+            'mission_type' => 'journalier',
+            'commune' => 'Yopougon',
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($artisan)->postJson("/api/v1/recruitment-offers/{$offer->id}/apply");
+
+        $this->assertDatabaseHas('notifications', [
+            'user_id' => $client->id,
+            'type' => 'recruitment',
+            'title' => 'Nouvelle candidature',
+        ]);
+
+        $application = RecruitmentApplication::first();
+
+        $this->actingAs($client)->patchJson(
+            "/api/v1/recruitment-offers/{$offer->id}/applications/{$application->id}/status",
+            ['status' => 'shortlisted'],
+        );
+
+        $this->assertDatabaseHas('notifications', [
+            'user_id' => $artisan->id,
+            'type' => 'recruitment',
+            'title' => 'Candidature mise à jour',
+        ]);
+    }
+
+    public function test_offer_moderation_notifies_the_creator(): void
+    {
+        $trade = $this->trade();
+        $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'en_attente']);
+        $admin = User::factory()->create(['role' => 'admin', 'kyc_status' => 'actif']);
+
+        $offer = RecruitmentOffer::create([
+            'creator_id' => $client->id,
+            'creator_type' => 'client',
+            'trade_id' => $trade->id,
+            'title' => 'Offre en attente',
+            'description' => 'x',
+            'mission_type' => 'journalier',
+            'commune' => 'Yopougon',
+            'status' => 'pending_review',
+        ]);
+
+        $this->actingAs($admin)->post("/admin/recruitment/{$offer->id}/approve");
+
+        $this->assertDatabaseHas('notifications', [
+            'user_id' => $client->id,
+            'type' => 'recruitment',
+            'title' => 'Offre publiée',
+        ]);
+    }
+
+    public function test_offer_owner_can_view_applications_but_other_users_cannot(): void
+    {
+        $trade = $this->trade();
+        $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
+        $otherClient = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
+        $artisan = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif']);
+
+        $offer = RecruitmentOffer::create([
+            'creator_id' => $client->id,
+            'creator_type' => 'client',
+            'trade_id' => $trade->id,
+            'title' => 'Offre active',
+            'description' => 'x',
+            'mission_type' => 'journalier',
+            'commune' => 'Yopougon',
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($artisan)->postJson("/api/v1/recruitment-offers/{$offer->id}/apply")
+            ->assertCreated();
+
+        $this->actingAs($client)->getJson("/api/v1/recruitment-offers/{$offer->id}/applications")
+            ->assertOk()
+            ->assertJsonCount(1, 'data');
+
+        $this->actingAs($otherClient)->getJson("/api/v1/recruitment-offers/{$offer->id}/applications")
+            ->assertStatus(403);
+    }
+
+    public function test_offer_owner_can_update_application_status(): void
+    {
+        $trade = $this->trade();
+        $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
+        $otherClient = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
+        $artisan = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif']);
+
+        $offer = RecruitmentOffer::create([
+            'creator_id' => $client->id,
+            'creator_type' => 'client',
+            'trade_id' => $trade->id,
+            'title' => 'Offre active',
+            'description' => 'x',
+            'mission_type' => 'journalier',
+            'commune' => 'Yopougon',
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($artisan)->postJson("/api/v1/recruitment-offers/{$offer->id}/apply");
+        $application = RecruitmentApplication::first();
+
+        $this->actingAs($otherClient)->patchJson(
+            "/api/v1/recruitment-offers/{$offer->id}/applications/{$application->id}/status",
+            ['status' => 'contacted'],
+        )->assertStatus(422);
+
+        $this->actingAs($client)->patchJson(
+            "/api/v1/recruitment-offers/{$offer->id}/applications/{$application->id}/status",
+            ['status' => 'contacted'],
+        )->assertOk();
+
+        $this->assertSame('contacted', $application->fresh()->status);
+    }
+
     public function test_unverified_artisan_cannot_apply(): void
     {
         $trade = $this->trade();
@@ -233,6 +361,38 @@ class RecruitmentTest extends TestCase
             ->assertRedirect();
 
         $this->assertSame('active', $offer->fresh()->status);
+    }
+
+    public function test_admin_can_view_and_update_applications(): void
+    {
+        $trade = $this->trade();
+        $admin = User::factory()->create(['role' => 'admin', 'kyc_status' => 'actif']);
+        $artisan = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif']);
+
+        $offer = RecruitmentOffer::create([
+            'creator_id' => $admin->id,
+            'creator_type' => 'admin',
+            'trade_id' => $trade->id,
+            'title' => 'Offre active',
+            'description' => 'x',
+            'mission_type' => 'journalier',
+            'commune' => 'Yopougon',
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($artisan)->postJson("/api/v1/recruitment-offers/{$offer->id}/apply");
+        $application = RecruitmentApplication::first();
+
+        $this->actingAs($admin)->getJson("/admin/recruitment/{$offer->id}/applications")
+            ->assertOk()
+            ->assertJsonCount(1, 'data');
+
+        $this->actingAs($admin)->post(
+            "/admin/recruitment/{$offer->id}/applications/{$application->id}/status",
+            ['status' => 'confirmed'],
+        )->assertRedirect();
+
+        $this->assertSame('confirmed', $application->fresh()->status);
     }
 
     public function test_recruitment_admin_page_requires_capability(): void

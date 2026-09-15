@@ -4,10 +4,123 @@
 
 import { router, useForm } from '@inertiajs/react';
 import type { FormEvent, ReactNode } from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { DataTable, EmptyState, MetricCard, numberFormat, Surface, useConfirm } from '../shared';
 import type { Paginated, RecruitmentOfferItem, RecruitmentSettings, RecruitmentStats } from '../shared';
+
+interface RecruitmentApplicantRow {
+    id: number;
+    status: 'submitted' | 'shortlisted' | 'contacted' | 'rejected' | 'confirmed';
+    matching_score: number | string | null;
+    applied_at: string;
+    artisan: { id: number; name: string; phone: string; score_prosartisan: number } | null;
+}
+
+const applicationStatusLabels: Record<string, string> = {
+    submitted: 'Nouvelle',
+    shortlisted: 'Présélectionné',
+    contacted: 'Contacté',
+    rejected: 'Rejeté',
+    confirmed: 'Retenu',
+};
+
+const applicationStatusTone: Record<string, string> = {
+    submitted: 'bg-slate-100 text-slate-600',
+    shortlisted: 'bg-blue-100 text-blue-700',
+    contacted: 'bg-amber-100 text-amber-700',
+    rejected: 'bg-red-100 text-red-700',
+    confirmed: 'bg-green-100 text-green-700',
+};
+
+function ApplicantsModal({ offer, onClose }: { offer: RecruitmentOfferItem; onClose: () => void }) {
+    const [applications, setApplications] = useState<RecruitmentApplicantRow[] | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [updatingId, setUpdatingId] = useState<number | null>(null);
+
+    const load = () => {
+        setLoading(true);
+        fetch(`/admin/recruitment/${offer.id}/applications`, { headers: { Accept: 'application/json' } })
+            .then((res) => res.json())
+            .then((json) => setApplications(json.data ?? []))
+            .finally(() => setLoading(false));
+    };
+
+    useEffect(() => {
+        load();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [offer.id]);
+
+    const updateStatus = (application: RecruitmentApplicantRow, status: string) => {
+        setUpdatingId(application.id);
+        router.post(
+            `/admin/recruitment/${offer.id}/applications/${application.id}/status`,
+            { status },
+            { preserveScroll: true, onFinish: () => { setUpdatingId(null); load(); } },
+        );
+    };
+
+    return (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" role="presentation" onClick={onClose}>
+            <div
+                role="dialog"
+                aria-modal="true"
+                className="admin-panel admin-surface w-full max-w-[600px] max-h-[85vh] overflow-y-auto rounded-[28px] border p-6 shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="flex items-start justify-between gap-3 border-b border-[var(--admin-border)] pb-4">
+                    <div>
+                        <h2 className="text-lg font-bold text-[var(--admin-text)]">Candidatures reçues</h2>
+                        <p className="mt-1 text-xs text-[var(--admin-text-soft)]">{offer.title}</p>
+                    </div>
+                    <button onClick={onClose} className="admin-button admin-button--ghost">
+                        Fermer
+                    </button>
+                </div>
+
+                <div className="mt-4 space-y-3">
+                    {loading ? (
+                        <p className="text-sm text-[var(--admin-text-soft)]">Chargement...</p>
+                    ) : !applications || applications.length === 0 ? (
+                        <EmptyState title="Aucune candidature" description="Aucun artisan n'a encore postulé à cette offre." />
+                    ) : (
+                        applications.map((application) => (
+                            <div key={application.id} className="rounded-[20px] border border-[var(--admin-border)] bg-white/60 p-4">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="min-w-0">
+                                        <p className="truncate text-sm font-semibold text-[var(--admin-text)]">
+                                            {application.artisan?.name ?? 'Artisan supprimé'}
+                                        </p>
+                                        <p className="text-xs text-[var(--admin-muted)]">{application.artisan?.phone ?? '—'}</p>
+                                    </div>
+                                    <span className={`rounded-full px-2.5 py-1 text-xs font-semibold whitespace-nowrap ${applicationStatusTone[application.status] ?? 'bg-slate-100 text-slate-600'}`}>
+                                        {applicationStatusLabels[application.status] ?? application.status}
+                                    </span>
+                                </div>
+                                <div className="mt-2 flex flex-wrap gap-3 text-xs text-[var(--admin-text-soft)]">
+                                    <span>Score ProsArtisan : {application.artisan?.score_prosartisan ?? '—'}/1000</span>
+                                    <span>Matching : {application.matching_score !== null ? `${application.matching_score}/100` : '—'}</span>
+                                </div>
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                    {(['shortlisted', 'contacted', 'confirmed', 'rejected'] as const).map((status) => (
+                                        <button
+                                            key={status}
+                                            disabled={updatingId === application.id || application.status === status}
+                                            onClick={() => updateStatus(application, status)}
+                                            className="rounded-lg px-3 py-1.5 text-xs font-semibold border border-[var(--admin-border)] text-[var(--admin-text-soft)] hover:bg-white disabled:opacity-40"
+                                        >
+                                            {applicationStatusLabels[status]}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
 
 interface RecruitmentPanelProps {
     recruitmentOffersPage: Paginated<RecruitmentOfferItem> | null | undefined;
@@ -64,6 +177,7 @@ export function RecruitmentPanel({
     const rows = recruitmentOffersPage?.data ?? [];
     const { confirm, dialog } = useConfirm();
     const [rejectingId, setRejectingId] = useState<number | null>(null);
+    const [applicantsOffer, setApplicantsOffer] = useState<RecruitmentOfferItem | null>(null);
 
     const { data, setData, post, processing, recentlySuccessful } = useForm({
         client_posting_enabled: recruitmentSettings.client_posting_enabled ?? '1',
@@ -234,7 +348,15 @@ export function RecruitmentPanel({
                                             {offer.commune}
                                             {offer.sous_quartier ? ` — ${offer.sous_quartier}` : ''}
                                         </td>
-                                        <td className="py-3 px-4 text-xs text-[var(--admin-text-soft)]">{numberFormat.format(offer.applications_count ?? 0)}</td>
+                                        <td className="py-3 px-4 text-xs">
+                                            <button
+                                                onClick={() => setApplicantsOffer(offer)}
+                                                disabled={(offer.applications_count ?? 0) === 0}
+                                                className="font-semibold text-[#8a6b3d] underline decoration-dotted underline-offset-2 hover:text-[#6f531f] disabled:text-[var(--admin-text-soft)] disabled:no-underline disabled:cursor-default"
+                                            >
+                                                {numberFormat.format(offer.applications_count ?? 0)}
+                                            </button>
+                                        </td>
                                         <td className="py-3 px-4 text-xs text-[var(--admin-text-soft)] whitespace-nowrap">
                                             {offer.date_debut || offer.deadline_at
                                                 ? `${formatDate(offer.date_debut)} → ${formatDate(offer.deadline_at)}`
@@ -277,6 +399,8 @@ export function RecruitmentPanel({
 
                 {renderPagination(recruitmentOffersPage?.links)}
             </Surface>
+
+            {applicantsOffer && <ApplicantsModal offer={applicantsOffer} onClose={() => setApplicantsOffer(null)} />}
         </section>
     );
 }

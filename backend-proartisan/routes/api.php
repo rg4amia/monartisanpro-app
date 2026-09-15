@@ -20,17 +20,21 @@ use App\Http\Controllers\Api\V1\KycController;
 use App\Http\Controllers\Api\V1\LitigeController;
 use App\Http\Controllers\Api\V1\LitigeJuryController;
 use App\Http\Controllers\Api\V1\MicroCreditController;
+use App\Http\Controllers\Api\V1\MissionChatController;
 use App\Http\Controllers\Api\V1\MissionController;
+use App\Http\Controllers\Api\V1\MissionStreamController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\ParrainageController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\PromoCodeController;
 use App\Http\Controllers\Api\V1\RecruitmentController;
+use App\Http\Controllers\Api\V1\RecruitmentEngagementController;
 use App\Http\Controllers\Api\V1\ReferentController;
 use App\Http\Controllers\Api\V1\SectorController;
 use App\Http\Controllers\Api\V1\SettingController;
 use App\Http\Controllers\Api\V1\SmsController;
+use App\Http\Controllers\Api\V1\SmsWebhookController;
 use App\Http\Controllers\Api\V1\Supplier\SupplierDashboardController;
 use App\Http\Controllers\Api\V1\SupplierCatalogController;
 use App\Http\Controllers\Api\V1\TransactionController;
@@ -88,7 +92,7 @@ Route::prefix('v1')->group(function () {
 
         // Accusés de livraison SMSpro. Signature HMAC obligatoire : SMSpro la
         // fournit toujours, aucun repli n'est acceptable ici.
-        Route::post('/sms-dlr', [\App\Http\Controllers\Api\V1\SmsWebhookController::class, 'deliveryReceipt'])
+        Route::post('/sms-dlr', [SmsWebhookController::class, 'deliveryReceipt'])
             ->middleware('smspro.signed');
     });
 
@@ -206,18 +210,30 @@ Route::prefix('v1')->group(function () {
         Route::get('/recruitment-offers/mine', [RecruitmentController::class, 'mine']);
         Route::get('/recruitment-offers/{offer}', [RecruitmentController::class, 'show']);
         Route::get('/recruitment-offers/{offer}/applications', [RecruitmentController::class, 'applications']);
+        Route::patch('/recruitment-offers/{offer}/applications/{application}/status', [RecruitmentController::class, 'updateApplicationStatus']);
         Route::post('/recruitment-offers', [RecruitmentController::class, 'store']);
         Route::post('/recruitment-offers/{offer}/apply', [RecruitmentController::class, 'apply'])->middleware('kyc.verified');
         Route::get('/recruitment-applications/mine', [RecruitmentController::class, 'myApplications']);
 
+        // ── Engagements de recrutement (séquestre journalier) ────────────────────
+        Route::get('/recruitment-engagements/mine', [RecruitmentEngagementController::class, 'mine']);
+        Route::get('/recruitment-engagements/{engagement}', [RecruitmentEngagementController::class, 'show']);
+        Route::post('/recruitment-applications/{application}/engage', [RecruitmentEngagementController::class, 'store']);
+        Route::post('/recruitment-engagements/{engagement}/accept', [RecruitmentEngagementController::class, 'accept'])->middleware('kyc.verified');
+        Route::post('/recruitment-engagements/{engagement}/decline', [RecruitmentEngagementController::class, 'decline']);
+        Route::post('/recruitment-engagements/{engagement}/extend', [RecruitmentEngagementController::class, 'extend']);
+        Route::post('/recruitment-engagements/{engagement}/pay', [RecruitmentEngagementController::class, 'initiatePayment']);
+        Route::post('/recruitment-engagements/{engagement}/activate', [RecruitmentEngagementController::class, 'activate']);
+        Route::post('/recruitment-engagements/{engagement}/workdays/{workday}/validate', [RecruitmentEngagementController::class, 'validateWorkday']);
+
         // ── Messagerie de Chantier In-App ──────────────────────────────────────
-        Route::get('/missions/{mission}/messages', [\App\Http\Controllers\Api\V1\MissionChatController::class, 'index']);
-        Route::post('/missions/{mission}/messages', [\App\Http\Controllers\Api\V1\MissionChatController::class, 'store'])->middleware('throttle:60,1');
-        Route::post('/missions/{mission}/messages/{message}/read', [\App\Http\Controllers\Api\V1\MissionChatController::class, 'markAsRead']);
+        Route::get('/missions/{mission}/messages', [MissionChatController::class, 'index']);
+        Route::post('/missions/{mission}/messages', [MissionChatController::class, 'store'])->middleware('throttle:60,1');
+        Route::post('/missions/{mission}/messages/{message}/read', [MissionChatController::class, 'markAsRead']);
 
         // ── Flux Événements Temps Réel (SSE Hostinger) ────────────────────────
-        Route::get('/missions/{mission}/stream', [\App\Http\Controllers\Api\V1\MissionStreamController::class, 'stream']);
-        Route::get('/missions/{mission}/events', [\App\Http\Controllers\Api\V1\MissionStreamController::class, 'events']);
+        Route::get('/missions/{mission}/stream', [MissionStreamController::class, 'stream']);
+        Route::get('/missions/{mission}/events', [MissionStreamController::class, 'events']);
 
         // ── Devis ────────────────────────────────────────────────────────────
         Route::get('/missions/{mission}/devis', [DevisController::class, 'index']);

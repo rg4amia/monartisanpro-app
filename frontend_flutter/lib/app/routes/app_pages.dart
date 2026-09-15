@@ -49,9 +49,13 @@ import '../../modules/orders/views/order_checkout_screen.dart';
 import '../../modules/orders/views/supplier_orders_screen.dart';
 import '../../modules/rating/bindings/rating_binding.dart';
 import '../../modules/rating/views/rating_screen.dart';
+import '../../modules/recruitment/bindings/recruitment_applicants_binding.dart';
 import '../../modules/recruitment/bindings/recruitment_browse_binding.dart';
+import '../../modules/recruitment/bindings/recruitment_engagement_binding.dart';
 import '../../modules/recruitment/bindings/recruitment_publish_binding.dart';
+import '../../modules/recruitment/views/recruitment_applicants_screen.dart';
 import '../../modules/recruitment/views/recruitment_browse_screen.dart';
+import '../../modules/recruitment/views/recruitment_engagement_screen.dart';
 import '../../modules/recruitment/views/recruitment_publish_screen.dart';
 import '../../modules/score/bindings/score_binding.dart';
 import '../../modules/score/views/score_screen.dart';
@@ -212,6 +216,16 @@ class AppPages {
       name: Routes.recruitmentPublish,
       page: () => const RecruitmentPublishScreen(),
       binding: RecruitmentPublishBinding(),
+    ),
+    GetPage(
+      name: Routes.recruitmentApplicants,
+      page: () => const RecruitmentApplicantsScreen(),
+      binding: RecruitmentApplicantsBinding(),
+    ),
+    GetPage(
+      name: Routes.recruitmentEngagement,
+      page: () => const RecruitmentEngagementScreen(),
+      binding: RecruitmentEngagementBinding(),
     ),
 
     // Settings

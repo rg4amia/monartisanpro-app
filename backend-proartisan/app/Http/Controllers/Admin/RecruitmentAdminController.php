@@ -3,16 +3,52 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\RecruitmentApplication;
 use App\Models\RecruitmentOffer;
 use App\Services\RecruitmentService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class RecruitmentAdminController extends Controller
 {
     public function __construct(private RecruitmentService $recruitment) {}
+
+    /**
+     * Candidatures reçues sur une offre — consultées depuis la modale du
+     * tableau de bord recrutement.
+     */
+    public function applications(RecruitmentOffer $offer): JsonResponse
+    {
+        $applications = $offer->applications()
+            ->with('artisan:id,name,phone,score_prosartisan')
+            ->orderByDesc('matching_score')
+            ->get();
+
+        return response()->json(['success' => true, 'data' => $applications]);
+    }
+
+    public function updateApplicationStatus(Request $request, RecruitmentOffer $offer, RecruitmentApplication $application): RedirectResponse
+    {
+        if ($application->offer_id !== $offer->id) {
+            abort(404);
+        }
+
+        $validated = $request->validate([
+            'status' => 'required|in:shortlisted,contacted,rejected,confirmed',
+        ]);
+
+        try {
+            $this->recruitment->updateApplicationStatus($request->user(), $application, $validated['status']);
+        } catch (ValidationException $e) {
+            return back()->withErrors(['application' => $e->getMessage()]);
+        }
+
+        return back()->with('success', 'Statut de la candidature mis à jour.');
+    }
 
     public function approve(RecruitmentOffer $offer): RedirectResponse
     {

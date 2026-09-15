@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class RecruitmentApplication extends Model
 {
@@ -27,5 +28,10 @@ class RecruitmentApplication extends Model
     public function artisan(): BelongsTo
     {
         return $this->belongsTo(User::class, 'artisan_id');
+    }
+
+    public function engagement(): HasOne
+    {
+        return $this->hasOne(RecruitmentEngagement::class, 'application_id');
     }
 }

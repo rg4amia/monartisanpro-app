@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../app/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../data/models/recruitment_engagement_model.dart';
 import '../../../data/models/recruitment_offer_model.dart';
 import '../../../shared/widgets/loading_shimmer.dart';
 import '../controllers/recruitment_browse_controller.dart';
@@ -11,6 +13,14 @@ const _missionTypeLabels = {
   'journalier': 'Journalier',
   'longue_duree': 'Longue durée',
   'urgence': 'Urgence',
+};
+
+const _engagementStatusLabels = {
+  'pending_artisan_acceptance': "En attente d'acceptation",
+  'pending_payment': 'En attente de paiement',
+  'active': 'En cours',
+  'completed': 'Terminé',
+  'cancelled': 'Annulé',
 };
 
 String _formatFcfa(int value) {
@@ -28,63 +38,214 @@ class RecruitmentBrowseScreen extends GetView<RecruitmentBrowseController> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
-          onPressed: () => Get.back(),
-        ),
-        title: const Text(
-          'Offres de recrutement',
-          style: TextStyle(
-            color: Colors.black87,
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.black87),
+            onPressed: () => Get.back(),
+          ),
+          title: const Text(
+            'Recrutement',
+            style: TextStyle(
+              color: Colors.black87,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          bottom: const TabBar(
+            labelColor: AppColors.primary,
+            unselectedLabelColor: AppColors.textMuted,
+            indicatorColor: AppColors.primary,
+            tabs: [
+              Tab(text: 'Offres'),
+              Tab(text: 'Mes engagements'),
+            ],
           ),
         ),
+        body: const TabBarView(
+          children: [_OffersList(), _MyEngagementsList()],
+        ),
       ),
-      body: RefreshIndicator(
-        onRefresh: controller.load,
-        child: Obx(() {
-          if (controller.isLoading.value && controller.offers.isEmpty) {
-            return ListView(
-              padding: const EdgeInsets.all(16),
-              children: [LoadingShimmer.list(count: 5)],
-            );
-          }
+    );
+  }
+}
 
-          if (controller.offers.isEmpty) {
-            return ListView(
-              padding: const EdgeInsets.all(24),
-              children: const [
-                SizedBox(height: 60),
-                Icon(Icons.work_outline, size: 48, color: AppColors.textMuted),
-                SizedBox(height: 12),
-                Center(
-                  child: Text(
-                    "Aucune offre de recrutement disponible pour l'instant.",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textSecondary,
+class _OffersList extends GetView<RecruitmentBrowseController> {
+  const _OffersList();
+
+  @override
+  Widget build(BuildContext context) {
+    return RefreshIndicator(
+      onRefresh: controller.load,
+      child: Obx(() {
+        if (controller.isLoading.value && controller.offers.isEmpty) {
+          return ListView(
+            padding: const EdgeInsets.all(16),
+            children: [LoadingShimmer.list(count: 5)],
+          );
+        }
+
+        if (controller.offers.isEmpty) {
+          return ListView(
+            padding: const EdgeInsets.all(24),
+            children: const [
+              SizedBox(height: 60),
+              Icon(Icons.work_outline, size: 48, color: AppColors.textMuted),
+              SizedBox(height: 12),
+              Center(
+                child: Text(
+                  "Aucune offre de recrutement disponible pour l'instant.",
+                  textAlign: TextAlign.center,
+                  style:
+                      TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                ),
+              ),
+            ],
+          );
+        }
+
+        return ListView.separated(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+          itemCount: controller.offers.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          itemBuilder: (context, index) =>
+              _OfferCard(offer: controller.offers[index]),
+        );
+      }),
+    );
+  }
+}
+
+class _MyEngagementsList extends GetView<RecruitmentBrowseController> {
+  const _MyEngagementsList();
+
+  @override
+  Widget build(BuildContext context) {
+    return RefreshIndicator(
+      onRefresh: controller.load,
+      child: Obx(() {
+        if (controller.isLoading.value && controller.myEngagements.isEmpty) {
+          return ListView(
+            padding: const EdgeInsets.all(16),
+            children: [LoadingShimmer.list(count: 3)],
+          );
+        }
+
+        if (controller.myEngagements.isEmpty) {
+          return ListView(
+            padding: const EdgeInsets.all(24),
+            children: const [
+              SizedBox(height: 60),
+              Icon(
+                Icons.handshake_outlined,
+                size: 48,
+                color: AppColors.textMuted,
+              ),
+              SizedBox(height: 12),
+              Center(
+                child: Text(
+                  "Vous n'avez aucun engagement pour l'instant.",
+                  textAlign: TextAlign.center,
+                  style:
+                      TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                ),
+              ),
+            ],
+          );
+        }
+
+        return ListView.separated(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+          itemCount: controller.myEngagements.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 10),
+          itemBuilder: (context, index) =>
+              _EngagementTile(engagement: controller.myEngagements[index]),
+        );
+      }),
+    );
+  }
+}
+
+class _EngagementTile extends StatelessWidget {
+  final RecruitmentEngagementModel engagement;
+
+  const _EngagementTile({required this.engagement});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => Get.toNamed(
+          Routes.recruitmentEngagement,
+          arguments: engagement.id,
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: AppColors.cardShadow,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      engagement.offerTitle ?? 'Offre de recrutement',
+                      style: const TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${_formatFcfa(engagement.dailyRate)} / jour · ${engagement.totalDays} jour(s)',
+                      style: const TextStyle(
+                        fontSize: 11.5,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  _engagementStatusLabels[engagement.status] ??
+                      engagement.status,
+                  style: const TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
                   ),
                 ),
-              ],
-            );
-          }
-
-          return ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-            itemCount: controller.offers.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (context, index) =>
-                _OfferCard(offer: controller.offers[index]),
-          );
-        }),
+              ),
+              const SizedBox(width: 4),
+              const Icon(
+                Icons.chevron_right_rounded,
+                size: 18,
+                color: AppColors.textMuted,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

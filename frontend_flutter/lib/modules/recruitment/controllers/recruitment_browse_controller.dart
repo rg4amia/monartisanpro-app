@@ -4,15 +4,18 @@ import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 
 import '../../../data/models/recruitment_application_model.dart';
+import '../../../data/models/recruitment_engagement_model.dart';
 import '../../../data/models/recruitment_offer_model.dart';
 import '../../../data/repositories/recruitment_repository.dart';
 
-/// Espace artisan : parcourir les offres actives et postuler.
+/// Espace artisan : parcourir les offres actives, postuler et suivre les
+/// engagements (séquestre journalier) reçus des recruteurs.
 class RecruitmentBrowseController extends GetxController {
   final RecruitmentRepository _repo = RecruitmentRepository();
 
   final offers = <RecruitmentOfferModel>[].obs;
   final myApplications = <RecruitmentApplicationModel>[].obs;
+  final myEngagements = <RecruitmentEngagementModel>[].obs;
   final isLoading = false.obs;
   final applyingOfferId = Rx<int?>(null);
 
@@ -28,9 +31,11 @@ class RecruitmentBrowseController extends GetxController {
       final results = await Future.wait([
         _repo.listOffers(),
         _repo.myApplications(),
+        _repo.myEngagements(),
       ]);
       offers.value = results[0] as List<RecruitmentOfferModel>;
       myApplications.value = results[1] as List<RecruitmentApplicationModel>;
+      myEngagements.value = results[2] as List<RecruitmentEngagementModel>;
     } catch (_) {
       Get.snackbar(
         'Erreur',

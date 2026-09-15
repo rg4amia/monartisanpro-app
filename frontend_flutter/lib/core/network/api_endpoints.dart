@@ -55,8 +55,27 @@ class ApiEndpoints {
       '/recruitment-offers/$id/applications';
   static String recruitmentOfferApply(int id) =>
       '/recruitment-offers/$id/apply';
+  static String recruitmentApplicationStatus(int offerId, int applicationId) =>
+      '/recruitment-offers/$offerId/applications/$applicationId/status';
   static const String myRecruitmentApplications =
       '/recruitment-applications/mine';
+  static String recruitmentEngage(int applicationId) =>
+      '/recruitment-applications/$applicationId/engage';
+  static const String myRecruitmentEngagements =
+      '/recruitment-engagements/mine';
+  static String recruitmentEngagement(int id) => '/recruitment-engagements/$id';
+  static String recruitmentEngagementAccept(int id) =>
+      '/recruitment-engagements/$id/accept';
+  static String recruitmentEngagementDecline(int id) =>
+      '/recruitment-engagements/$id/decline';
+  static String recruitmentEngagementExtend(int id) =>
+      '/recruitment-engagements/$id/extend';
+  static String recruitmentEngagementPay(int id) =>
+      '/recruitment-engagements/$id/pay';
+  static String recruitmentEngagementActivate(int id) =>
+      '/recruitment-engagements/$id/activate';
+  static String recruitmentWorkdayValidate(int engagementId, int workdayId) =>
+      '/recruitment-engagements/$engagementId/workdays/$workdayId/validate';
 
   // Missions
   static const String missions = '/missions';

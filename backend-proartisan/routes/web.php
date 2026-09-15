@@ -3,14 +3,16 @@
 use App\Http\Controllers\Admin\AdminCashoutController;
 use App\Http\Controllers\Admin\AdminDocumentController;
 use App\Http\Controllers\Admin\AdminFraudController;
+use App\Http\Controllers\Admin\AdminTerritoryController;
 use App\Http\Controllers\Admin\AuthenticatedSessionController;
 use App\Http\Controllers\Admin\BackofficeController;
+use App\Http\Controllers\Admin\FaqAdminController;
 use App\Http\Controllers\Admin\ImpersonationController;
 use App\Http\Controllers\Admin\LlmAdminController;
-use App\Http\Controllers\Admin\FaqAdminController;
 use App\Http\Controllers\Admin\RecruitmentAdminController;
 use App\Http\Controllers\Admin\VitrineAdminController;
 use App\Http\Controllers\Api\V1\PaymentController;
+use App\Http\Controllers\KycDocumentController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -30,7 +32,7 @@ Route::get('/', function () {
 // Consultation d'une pièce KYC stockée sur le disque privé. L'URL est signée
 // et expire : cf. KycDocument::fileUrl. Elle remplace les anciennes URL
 // publiques permanentes sous /storage/fileshare/kyc.
-Route::get('/kyc/documents/{document}/file', [\App\Http\Controllers\KycDocumentController::class, 'show'])
+Route::get('/kyc/documents/{document}/file', [KycDocumentController::class, 'show'])
     ->middleware('signed')
     ->name('kyc.document.file');
 
@@ -83,7 +85,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // Missions & Cartographie
         Route::get('/missions', [BackofficeController::class, 'missions'])->middleware('can:admin.missions.view')->name('missions');
         Route::get('/cartographie', [BackofficeController::class, 'cartography'])->middleware('can:admin.territory.view')->name('cartography');
-        Route::get('/cartographie/stats', [\App\Http\Controllers\Admin\AdminTerritoryController::class, 'stats'])->middleware('can:admin.territory.view')->name('cartography.stats');
+        Route::get('/cartographie/stats', [AdminTerritoryController::class, 'stats'])->middleware('can:admin.territory.view')->name('cartography.stats');
 
         // Litiges
         Route::get('/litiges', [BackofficeController::class, 'litiges'])->middleware('can:admin.litiges.view')->name('litiges');
@@ -184,6 +186,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/{offer}/approve', [RecruitmentAdminController::class, 'approve'])->name('approve');
             Route::post('/{offer}/reject', [RecruitmentAdminController::class, 'reject'])->name('reject');
             Route::post('/settings', [RecruitmentAdminController::class, 'updateSettings'])->name('settings');
+            Route::get('/{offer}/applications', [RecruitmentAdminController::class, 'applications'])->name('applications');
+            Route::post('/{offer}/applications/{application}/status', [RecruitmentAdminController::class, 'updateApplicationStatus'])->name('applications.status');
         });
 
         Route::prefix('vitrine')->name('vitrine.')->middleware('can:admin.vitrine.manage')->group(function () {
