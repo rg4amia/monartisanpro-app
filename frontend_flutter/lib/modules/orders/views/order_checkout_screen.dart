@@ -85,19 +85,20 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
                   vehicleClass = rec;
                 }
               }
-            _serverRecommendedVehicle =
-                data['recommended_vehicle_class']?.toString();
-            _serverDistanceKm = (data['distance_km'] as num?)?.toDouble();
-            _serverDurationMin = (data['duration_min'] as num?)?.toDouble();
-            if (data['surge_multiplier'] != null && surgeMultiplier == 1.0) {
-              surgeMultiplier =
-                  (data['surge_multiplier'] as num).toDouble().clamp(1.0, 3.0);
-            }
-          });
+              _serverRecommendedVehicle =
+                  data['recommended_vehicle_class']?.toString();
+              _serverDistanceKm = (data['distance_km'] as num?)?.toDouble();
+              _serverDurationMin = (data['duration_min'] as num?)?.toDouble();
+              if (data['surge_multiplier'] != null && surgeMultiplier == 1.0) {
+                surgeMultiplier = (data['surge_multiplier'] as num)
+                    .toDouble()
+                    .clamp(1.0, 3.0);
+              }
+            });
+          }
         }
       }
-    }
-  } catch (_) {
+    } catch (_) {
       // Repli fluide sur l'estimation locale
     } finally {
       if (mounted) {
@@ -247,14 +248,27 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
     if (_orderSubmitted.value || controller.isSubmitting.value) return;
     _orderSubmitted.value = true;
 
-    final success = await controller.createOrder(
-      supplierId: effectiveSupplierId,
-      deliveryMode: deliveryMode,
-      items: items.isNotEmpty ? items : controller.getCartItemsPayload(),
-      vehicleClass: deliveryMode == 'delivery' ? vehicleClass : null,
-      surgeMultiplier: deliveryMode == 'delivery' ? surgeMultiplier : null,
-      promoCode: _appliedPromoCode,
+    final multiPackages = controller.getMultiCartPackagesPayload(
+      defaultDeliveryMode: deliveryMode,
+      defaultVehicleClass: vehicleClass,
     );
+
+    final bool isMulti = multiPackages.length > 1;
+
+    final success = isMulti
+        ? await controller.createMultiOrders(
+            packages: multiPackages,
+            promoCode: _appliedPromoCode,
+          )
+        : await controller.createOrder(
+            supplierId: effectiveSupplierId,
+            deliveryMode: deliveryMode,
+            items: items.isNotEmpty ? items : controller.getCartItemsPayload(),
+            vehicleClass: deliveryMode == 'delivery' ? vehicleClass : null,
+            surgeMultiplier:
+                deliveryMode == 'delivery' ? surgeMultiplier : null,
+            promoCode: _appliedPromoCode,
+          );
 
     if (success) {
       unawaited(

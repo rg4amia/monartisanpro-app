@@ -458,5 +458,161 @@ class OrderController extends Controller
             'data' => $estimate,
         ]);
     }
+
+    /**
+     * Estimer le coût de livraison groupé multi-fournisseurs.
+     * POST /api/v1/orders/multi-estimate
+     */
+    public function estimateMultiDelivery(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'client_latitude' => 'nullable|numeric|between:-90,90',
+            'client_longitude' => 'nullable|numeric|between:-180,180',
+            'packages' => 'required|array|min:1',
+            'packages.*.supplier_id' => 'required|exists:users,id',
+            'packages.*.vehicle_class' => 'nullable|string|in:moto,voiture,cargo',
+            'packages.*.delivery_mode' => 'nullable|string|in:delivery,pickup',
+            'packages.*.items' => 'nullable|array',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Données d\'estimation multi-fournisseurs invalides.',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $client = $request->user();
+        $to = null;
+        if ($request->filled('client_latitude') && $request->filled('client_longitude')) {
+            $to = [
+                'lat' => (float) $request->client_latitude,
+                'lng' => (float) $request->client_longitude,
+            ];
+        } else {
+            $to = $client?->getPositionCoords();
+        }
+
+        $results = [];
+        $totalDeliveryCost = 0;
+
+        foreach ($request->packages as $pkg) {
+            $supplier = User::find($pkg['supplier_id']);
+            $deliveryMode = $pkg['delivery_mode'] ?? 'delivery';
+            if ($deliveryMode === 'pickup') {
+                $results[] = [
+                    'supplier_id' => $supplier->id,
+                    'supplier_name' => $supplier->fournisseurAgree?->nom_boutique ?? $supplier->name,
+                    'delivery_mode' => 'pickup',
+                    'delivery_cost' => 0,
+                    'distance_km' => 0,
+                    'duration_minutes' => 0,
+                ];
+                continue;
+            }
+
+            $from = $supplier?->fournisseurAgree?->getPositionCoords() ?? $supplier?->getPositionCoords();
+            $estimate = $this->pricingService->estimateFare([
+                'from' => $from,
+                'to' => $to,
+                'vehicle_class' => $pkg['vehicle_class'] ?? 'moto',
+                'surge_multiplier' => 1.0,
+            ]);
+
+            $cost = (int) ($estimate['delivery_cost'] ?? 0);
+            $totalDeliveryCost += $cost;
+
+            $results[] = [
+                'supplier_id' => $supplier->id,
+                'supplier_name' => $supplier->fournisseurAgree?->nom_boutique ?? $supplier->name,
+                'delivery_mode' => 'delivery',
+                'delivery_cost' => $cost,
+                'distance_km' => $estimate['distance_km'] ?? 0,
+                'duration_minutes' => $estimate['duration_minutes'] ?? 0,
+                'vehicle_class' => $estimate['vehicle_class'] ?? 'moto',
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'packages' => $results,
+                'total_delivery_cost' => $totalDeliveryCost,
+            ],
+        ]);
+    }
+
+    /**
+     * Création et paiement d'un panier multi-fournisseurs.
+     * POST /api/v1/orders/multi-store
+     */
+    public function multiStore(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'packages' => 'required|array|min:1',
+            'packages.*.supplier_id' => 'required|exists:users,id',
+            'packages.*.delivery_mode' => 'required|in:delivery,pickup',
+            'packages.*.vehicle_class' => 'nullable|in:moto,voiture,cargo',
+            'packages.*.surge_multiplier' => 'nullable|numeric|min:1.0|max:3.0',
+            'packages.*.items' => 'required|array|min:1',
+            'packages.*.items.*.supplier_product_id' => 'required|exists:supplier_products,id',
+            'packages.*.items.*.quantity' => 'required|integer|min:1',
+            'promo_code' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Données du panier multi-fournisseurs invalides.',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $client = $request->user();
+        $lock = null;
+
+        try {
+            if (! app()->environment('testing')) {
+                $lockKey = 'create_order_lock_' . $client->id;
+                $lock = \Illuminate\Support\Facades\Cache::lock($lockKey, 10);
+
+                if (! $lock->get()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Une commande est déjà en cours de création. Veuillez patienter.',
+                    ], 429);
+                }
+            }
+
+            $result = $this->orderService->createMultiSupplierOrders(
+                $client,
+                $request->packages,
+                $request->input('promo_code')
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Commandes multi-fournisseurs créées et payées avec succès.',
+                'data' => $result,
+            ], 201);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Multi-order creation error: ' . $e->getMessage(), [
+                'client_id' => $client?->id,
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 400);
+        } finally {
+            if ($lock) {
+                try {
+                    $lock->release();
+                } catch (\Exception $e) {
+                }
+            }
+        }
+    }
 }
 

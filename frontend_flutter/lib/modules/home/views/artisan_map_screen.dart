@@ -218,7 +218,8 @@ class _ArtisanMapScreenState extends State<ArtisanMapScreen> {
       );
 
       // La liste a changé ou l'écran est démonté pendant le rendu async.
-      if (!mounted || generation != _plotGeneration ||
+      if (!mounted ||
+          generation != _plotGeneration ||
           _artisanCollection == null) {
         return;
       }

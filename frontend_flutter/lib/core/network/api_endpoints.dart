@@ -36,6 +36,8 @@ class ApiEndpoints {
   static const String supplierProducts = '/supplier-products';
   static String supplierProduct(int id) => '/supplier-products/$id';
   static const String orders = '/orders';
+  static const String ordersMultiEstimate = '/orders/multi-estimate';
+  static const String ordersMultiStore = '/orders/multi-store';
   static String order(int id) => '/orders/$id';
   static const String supplierOrders = '/supplier/orders';
   static String orderPrepared(int id) => '/orders/$id/prepared';
@@ -100,6 +102,7 @@ class ApiEndpoints {
   static String missionJalons(int id) => '/missions/$id/jalons';
   static String missionReferentValidate(int id) =>
       '/missions/$id/referent-validate';
+  static const String referentMissions = '/referent/missions';
 
   // Devis
   static String devis(int id) => '/devis/$id';

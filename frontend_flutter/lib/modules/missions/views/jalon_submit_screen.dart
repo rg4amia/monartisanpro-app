@@ -142,7 +142,7 @@ class _JalonSubmitScreenState extends State<JalonSubmitScreen> {
       if (isVideo) {
         file = await _picker.pickVideo(
           source: fromCamera ? ImageSource.camera : ImageSource.gallery,
-          maxDuration: const Duration(seconds: 60),
+          maxDuration: const Duration(seconds: 30),
         );
       } else {
         file = await _picker.pickImage(
@@ -155,6 +155,18 @@ class _JalonSubmitScreenState extends State<JalonSubmitScreen> {
       if (file == null) {
         setState(() => _isCapturing = false);
         return;
+      }
+
+      if (isVideo) {
+        final int fileSize = await file.length();
+        const int maxBytes = 25 * 1024 * 1024; // 25 Mo
+        if (fileSize > maxBytes) {
+          _showError(
+            'Vidéo trop volumineuse (${(fileSize / (1024 * 1024)).toStringAsFixed(1)} Mo). La taille maximale autorisée est de 25 Mo. Veuillez choisir une vidéo plus courte (≤ 30s).',
+          );
+          setState(() => _isCapturing = false);
+          return;
+        }
       }
 
       final filePath = file.path;

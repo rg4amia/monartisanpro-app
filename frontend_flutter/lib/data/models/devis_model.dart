@@ -221,10 +221,9 @@ class DevisModel {
         serverMontantMo: _parseNullableInt(
           json['montantMo'] ?? json['montant_mo'],
         ),
-        materialsRequired: (json['materialsRequired'] ??
-                json['materials_required'] ??
-                true) ==
-            true,
+        materialsRequired:
+            (json['materialsRequired'] ?? json['materials_required'] ?? true) ==
+                true,
         interventionTypeId: _parseNullableInt(
           json['interventionTypeId'] ?? json['intervention_type_id'],
         ),
@@ -247,7 +246,8 @@ class DevisModel {
           'montantMateriaux': serverMontantMateriaux,
         if (serverMontantMo != null) 'montantMo': serverMontantMo,
         'materialsRequired': materialsRequired,
-        if (interventionTypeId != null) 'interventionTypeId': interventionTypeId,
+        if (interventionTypeId != null)
+          'interventionTypeId': interventionTypeId,
         'isAvenant': isAvenant,
       };
 

@@ -286,8 +286,9 @@ class _OrderItemsSummary extends StatelessWidget {
 
     final summary = items.whereType<Map>().map((item) {
       final product = item['product'];
-      final name =
-          product is Map ? (product['name'] as String? ?? 'Article') : 'Article';
+      final name = product is Map
+          ? (product['name'] as String? ?? 'Article')
+          : 'Article';
       final qty = (item['quantity'] as num?)?.toInt() ?? 1;
 
       return '$name ×$qty';

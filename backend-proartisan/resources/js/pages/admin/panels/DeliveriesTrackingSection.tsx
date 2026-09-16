@@ -102,9 +102,14 @@ export function DeliveriesTrackingSection({
                             >
                                 <div className="flex items-start justify-between gap-2">
                                     <div>
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-2 flex-wrap">
                                             <span className="font-bold text-xs text-slate-900">Course #{order.id}</span>
                                             <DeliveryStatusBadge status={order.status} />
+                                            {order.order_group_id && (
+                                                <span className="inline-flex items-center gap-0.5 text-[9px] font-mono bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded border border-purple-200 font-bold" title="Commande issue d'un panier multi-fournisseurs">
+                                                    📦 {order.order_group_id}
+                                                </span>
+                                            )}
                                         </div>
                                         <div className="text-[10px] text-slate-400 mt-0.5 font-mono">
                                             {shortDate(order.created_at)}

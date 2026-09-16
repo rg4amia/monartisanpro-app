@@ -110,8 +110,22 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
 
   Future<void> _pickVideo() async {
     final picker = ImagePicker();
-    final video = await picker.pickVideo(source: ImageSource.gallery);
+    final video = await picker.pickVideo(
+      source: ImageSource.gallery,
+      maxDuration: const Duration(seconds: 30),
+    );
     if (video != null) {
+      final size = await video.length();
+      if (size > 25 * 1024 * 1024) {
+        Get.snackbar(
+          'Vidéo trop volumineuse',
+          'La vidéo (${(size / (1024 * 1024)).toStringAsFixed(1)} Mo) dépasse la limite autorisée de 25 Mo. Veuillez choisir une vidéo plus courte (≤ 30s).',
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: const Color(0xFFC55E50),
+          colorText: Colors.white,
+        );
+        return;
+      }
       _video.value = video;
     }
   }
@@ -916,7 +930,8 @@ class _QuickCategoryBottomSheet extends StatelessWidget {
                   onTap: () => onSelected(category),
                   borderRadius: BorderRadius.circular(14),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
                       color: color.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(14),
@@ -966,7 +981,8 @@ class _QuickCategoryBottomSheet extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                icon: const Icon(Icons.explore_outlined, color: _C.primary, size: 20),
+                icon: const Icon(Icons.explore_outlined,
+                    color: _C.primary, size: 20,),
                 label: const Text(
                   'Explorer tous les métiers & spécialités',
                   style: TextStyle(

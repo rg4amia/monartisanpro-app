@@ -154,8 +154,10 @@ class ServicesScreen extends StatelessWidget {
     SectorModel sector,
   ) async {
     unawaited(controller.loadTrades(sector));
-    final sectorColor = ServiceIconHelper.getSectorColor(sector.name, sector.color);
-    final sectorIcon = ServiceIconHelper.getSectorIcon(sector.name, sector.icon);
+    final sectorColor =
+        ServiceIconHelper.getSectorColor(sector.name, sector.color);
+    final sectorIcon =
+        ServiceIconHelper.getSectorIcon(sector.name, sector.icon);
 
     final selected = await showModalBottomSheet<Map<String, dynamic>?>(
       context: context,
@@ -249,15 +251,18 @@ class ServicesScreen extends StatelessWidget {
                 },
                 borderRadius: BorderRadius.circular(12),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
                     color: sectorColor.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: sectorColor.withValues(alpha: 0.3)),
+                    border:
+                        Border.all(color: sectorColor.withValues(alpha: 0.3)),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.check_circle_outline_rounded, color: sectorColor, size: 20),
+                      Icon(Icons.check_circle_outline_rounded,
+                          color: sectorColor, size: 20,),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
@@ -269,7 +274,8 @@ class ServicesScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-                      Icon(Icons.arrow_forward_ios_rounded, color: sectorColor, size: 14),
+                      Icon(Icons.arrow_forward_ios_rounded,
+                          color: sectorColor, size: 14,),
                     ],
                   ),
                 ),
@@ -306,11 +312,13 @@ class ServicesScreen extends StatelessWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.info_outline_rounded, color: Colors.grey.shade400, size: 36),
+                        Icon(Icons.info_outline_rounded,
+                            color: Colors.grey.shade400, size: 36,),
                         const SizedBox(height: 8),
                         const Text(
                           'Aucune spécialité distincte enregistrée',
-                          style: TextStyle(color: Color(0xFF64748B), fontSize: 13),
+                          style:
+                              TextStyle(color: Color(0xFF64748B), fontSize: 13),
                         ),
                       ],
                     ),
@@ -318,7 +326,8 @@ class ServicesScreen extends StatelessWidget {
                 }
 
                 return ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
                   itemCount: controller.trades.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 8),
                   itemBuilder: (context, index) {
@@ -439,7 +448,8 @@ class _TradeItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = ServiceIconHelper.getSectorColor(sector?.name ?? trade.name, sector?.color);
+    final color = ServiceIconHelper.getSectorColor(
+        sector?.name ?? trade.name, sector?.color,);
     final icon = ServiceIconHelper.getSectorIcon(trade.name, sector?.icon);
 
     return GestureDetector(

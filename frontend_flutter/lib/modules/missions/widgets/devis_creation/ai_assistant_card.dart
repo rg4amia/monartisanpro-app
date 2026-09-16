@@ -166,8 +166,8 @@ class AiAssistantCard extends StatelessWidget {
                             height: 16,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor:
-                                  AlwaysStoppedAnimation<Color>(Color(0xFF4F46E5)),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                  Color(0xFF4F46E5),),
                             ),
                           )
                         : const Icon(Icons.bolt, size: 18),

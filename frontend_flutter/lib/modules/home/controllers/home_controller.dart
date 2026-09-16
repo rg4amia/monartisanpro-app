@@ -710,7 +710,8 @@ class HomeController extends GetxController {
         Get.snackbar(
           queued ? 'Enregistré hors connexion' : 'Colis enlevé avec succès',
           queued
-              ? (res['message'] as String? ?? 'Transmission dès le retour du réseau.')
+              ? (res['message'] as String? ??
+                  'Transmission dès le retour du réseau.')
               : 'Le colis est en route vers le client.',
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: queued ? AppColors.warning : AppColors.success,

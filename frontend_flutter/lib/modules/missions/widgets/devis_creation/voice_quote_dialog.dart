@@ -267,7 +267,8 @@ class _VoiceQuoteDialogState extends State<VoiceQuoteDialog> {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: _isRecording ? Colors.red : const Color(0xFF374151),
+                      color:
+                          _isRecording ? Colors.red : const Color(0xFF374151),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -281,9 +282,8 @@ class _VoiceQuoteDialogState extends State<VoiceQuoteDialog> {
                       height: 80,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: _isRecording
-                            ? Colors.red
-                            : const Color(0xFF4F46E5),
+                        color:
+                            _isRecording ? Colors.red : const Color(0xFF4F46E5),
                         boxShadow: [
                           BoxShadow(
                             color: (_isRecording
@@ -309,7 +309,8 @@ class _VoiceQuoteDialogState extends State<VoiceQuoteDialog> {
                         : (_recordedFilePath != null
                             ? 'Réenregistrer'
                             : 'Parlez distinctement'),
-                    style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                    style:
+                        const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
                   ),
                 ],
               ),

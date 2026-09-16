@@ -6,7 +6,8 @@ import 'package:frontend_flutter/modules/orders/widgets/order_status_badge.dart'
 /// Dépôt simulé : on veut éprouver le tri et la gestion d'erreur du
 /// contrôleur, pas la couche réseau.
 class _FakeOrderRepository extends OrderRepository {
-  _FakeOrderRepository({this.supplierOrders = const [], this.shouldFail = false});
+  _FakeOrderRepository(
+      {this.supplierOrders = const [], this.shouldFail = false,});
 
   final List<Map<String, dynamic>> supplierOrders;
   final bool shouldFail;

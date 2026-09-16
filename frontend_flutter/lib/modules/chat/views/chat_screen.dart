@@ -115,7 +115,8 @@ class ChatScreen extends StatelessWidget {
                         const Text(
                           'Posez vos questions techniques sur le chantier ou échangez des précisions sur les travaux.',
                           textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
+                          style:
+                              TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
                         ),
                       ],
                     ),
@@ -125,7 +126,8 @@ class ChatScreen extends StatelessWidget {
 
               return ListView.builder(
                 controller: controller.scrollController,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 itemCount: controller.messages.length,
                 itemBuilder: (context, index) {
                   final message = controller.messages[index];
@@ -275,9 +277,8 @@ class _MessageBubble extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: isMe
-                      ? Colors.indigo.shade800
-                      : const Color(0xFFFEF3C7),
+                  color:
+                      isMe ? Colors.indigo.shade800 : const Color(0xFFFEF3C7),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Row(
@@ -363,7 +364,8 @@ class _ChatInputBar extends StatelessWidget {
                 controller: controller.textController,
                 decoration: InputDecoration(
                   hintText: 'Écrire un message...',
-                  hintStyle: TextStyle(fontSize: 14, color: Colors.grey.shade400),
+                  hintStyle:
+                      TextStyle(fontSize: 14, color: Colors.grey.shade400),
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   filled: true,
@@ -396,7 +398,8 @@ class _ChatInputBar extends StatelessWidget {
                         ),
                       )
                     : IconButton(
-                        icon: const Icon(Icons.send, size: 18, color: Colors.white),
+                        icon: const Icon(Icons.send,
+                            size: 18, color: Colors.white,),
                         onPressed: () => controller.sendTextMessage(),
                       ),
               );

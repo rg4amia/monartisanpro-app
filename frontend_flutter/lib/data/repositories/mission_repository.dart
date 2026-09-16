@@ -173,7 +173,8 @@ class MissionRepository {
       'urgency': urgency,
       if (sectorId != null) 'sector_id': sectorId,
       if (tradeId != null) 'trade_id': tradeId,
-      if (interventionTypeId != null) 'intervention_type_id': interventionTypeId,
+      if (interventionTypeId != null)
+        'intervention_type_id': interventionTypeId,
       if (lat != null) 'lat': lat,
       if (lng != null) 'lng': lng,
       if (location != null) 'location_address': location,
@@ -342,6 +343,30 @@ class MissionRepository {
     );
 
     return res.data as Map<String, dynamic>;
+  }
+
+  /// Récupère les missions nécessitant la validation d'un référent de zone
+  Future<List<MissionModel>> getReferentMissions({
+    double? latitude,
+    double? longitude,
+  }) async {
+    final params = <String, dynamic>{};
+    if (latitude != null && longitude != null) {
+      params['latitude'] = latitude;
+      params['longitude'] = longitude;
+    }
+
+    final res = await _client.get(
+      ApiEndpoints.referentMissions,
+      params: params,
+    );
+
+    final raw = res.data;
+    final List listData =
+        raw is Map && raw['data'] is List ? raw['data'] as List : [];
+    return listData
+        .map((e) => MissionModel.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   /// Récupère les jalons d'une mission

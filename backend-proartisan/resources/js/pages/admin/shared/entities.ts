@@ -156,6 +156,8 @@ export interface AdminOrder {
         phone: string;
         role: string;
     } | null;
+    order_group_id?: string | null;
+    is_parent_group?: boolean;
     items?: AdminOrderItem[];
     transactions?: any[];
 }

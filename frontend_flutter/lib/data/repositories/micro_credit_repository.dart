@@ -17,7 +17,8 @@ class MicroCreditRepository {
 
   static const Duration _eligibilityTtl = Duration(minutes: 2);
 
-  String get _eligibilityKey => 'eligibility_u${StorageService.getUserId() ?? 0}';
+  String get _eligibilityKey =>
+      'eligibility_u${StorageService.getUserId() ?? 0}';
 
   Future<MicroCreditEligibilityModel> getEligibility({
     bool forceRefresh = false,

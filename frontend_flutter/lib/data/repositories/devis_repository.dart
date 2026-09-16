@@ -78,7 +78,8 @@ class DevisRepository {
         'jalons_json': jalons.map((j) => j.toJson()).toList(),
         if (isAvenant) 'is_avenant': true,
         if (materialsRequired != null) 'materials_required': materialsRequired,
-        if (interventionTypeId != null) 'intervention_type_id': interventionTypeId,
+        if (interventionTypeId != null)
+          'intervention_type_id': interventionTypeId,
         if (paymentPhone != null) 'payment_phone': paymentPhone,
         if (preferredPaymentProvider != null)
           'preferred_payment_provider': preferredPaymentProvider,

@@ -45,6 +45,37 @@ class OrderRepository {
     return res.data;
   }
 
+  Future<Map<String, dynamic>> createMultiOrders({
+    required List<Map<String, dynamic>> packages,
+    String? promoCode,
+  }) async {
+    final res = await _client.post(
+      ApiEndpoints.ordersMultiStore,
+      data: {
+        'packages': packages,
+        if (promoCode != null && promoCode.isNotEmpty) 'promo_code': promoCode,
+      },
+    );
+    await _invalidateMyOrders();
+    return res.data;
+  }
+
+  Future<Map<String, dynamic>> estimateMultiDelivery({
+    required List<Map<String, dynamic>> packages,
+    double? clientLatitude,
+    double? clientLongitude,
+  }) async {
+    final res = await _client.post(
+      ApiEndpoints.ordersMultiEstimate,
+      data: {
+        'packages': packages,
+        if (clientLatitude != null) 'client_latitude': clientLatitude,
+        if (clientLongitude != null) 'client_longitude': clientLongitude,
+      },
+    );
+    return res.data;
+  }
+
   /// Missions livreur disponibles : donnée temps réel, jamais mise en cache
   /// (un créneau déjà pris ne doit pas rester affiché comme disponible).
   Future<List<Map<String, dynamic>>> getAvailableDeliveries() async {
@@ -76,9 +107,7 @@ class OrderRepository {
           );
           final data = (res.data as Map<String, dynamic>)['data'];
           if (data is! List) return const [];
-          return data
-              .map((e) => Map<String, dynamic>.from(e as Map))
-              .toList();
+          return data.map((e) => Map<String, dynamic>.from(e as Map)).toList();
         },
       );
     } catch (_) {
@@ -168,6 +197,26 @@ class OrderRepository {
     } catch (_) {
       // Ignorer l'erreur réseau ponctuelle de télémétrie pour ne pas interrompre le trajet
     }
+    return <String, dynamic>{};
+  }
+
+  /// Émission télémétrique par lot (Batching GPS) pour économiser la batterie et le forfait data
+  Future<Map<String, dynamic>> sendDriverBatchLocations(
+    int orderId,
+    List<Map<String, dynamic>> points,
+  ) async {
+    if (points.isEmpty) return <String, dynamic>{};
+    try {
+      final res = await _client.post(
+        ApiEndpoints.orderLocation(orderId),
+        data: {
+          'points': points,
+        },
+      );
+      if (res.data is Map<String, dynamic>) {
+        return res.data as Map<String, dynamic>;
+      }
+    } catch (_) {}
     return <String, dynamic>{};
   }
 

@@ -9,11 +9,13 @@ import '../../home/views/artisan_home_screen.dart';
 import '../../home/views/artisan_map_screen.dart';
 import '../../home/views/client_home_screen.dart';
 import '../../home/views/driver_home_screen.dart';
+import '../../home/views/referent_home_screen.dart';
 import '../../home/views/supplier_home_screen.dart';
 import '../../ia/views/ia_assistant_screen.dart';
 import '../../jcode/views/jcode_screen.dart';
 import '../../jcode/views/scanner_screen.dart';
 import '../../jcode/views/supplier_catalog_screen.dart';
+import '../../litige/views/litige_screen.dart';
 import '../../missions/views/missions_screen.dart';
 import '../../orders/views/client_suppliers_list_screen.dart';
 import '../../settings/views/settings_screen.dart';
@@ -43,6 +45,7 @@ class MainTabScreen extends StatelessWidget {
       final isArtisan = role == 'artisan';
       final isDriver =
           role == 'driver' || role == 'livreur' || role == 'LIVREUR';
+      final isReferent = role == 'referent';
 
       final tabs = isFournisseur
           ? _fournisseurTabs()
@@ -50,7 +53,9 @@ class MainTabScreen extends StatelessWidget {
               ? _artisanTabs()
               : isDriver
                   ? _driverTabs()
-                  : _clientTabs();
+                  : isReferent
+                      ? _referentTabs()
+                      : _clientTabs();
 
       final Color spaceThemeColor = isFournisseur
           ? AppColors.success
@@ -58,7 +63,9 @@ class MainTabScreen extends StatelessWidget {
               ? AppColors.accent
               : isDriver
                   ? AppColors.driver
-                  : AppColors.client;
+                  : isReferent
+                      ? AppColors.referent
+                      : AppColors.client;
 
       // Safe index bound protection if role switches dynamically
       final safeIndex = c.currentIndex.value >= tabs.screens.length
@@ -230,6 +237,44 @@ class MainTabScreen extends StatelessWidget {
             icon: Icons.account_balance_wallet_outlined,
             activeIcon: Icons.account_balance_wallet_rounded,
             label: 'Gains',
+          ),
+          _NavItem(
+            icon: Icons.person_outline_rounded,
+            activeIcon: Icons.person_rounded,
+            label: 'Profil',
+          ),
+        ],
+      );
+
+  // ── 5. ESPACE RÉFÉRENT DE ZONE ──────────────────────────────────────────────
+  _TabConfig _referentTabs() => _TabConfig(
+        screens: const [
+          ReferentHomeScreen(),
+          MissionsScreen(),
+          ArtisanMapScreen(),
+          LitigeScreen(),
+          SettingsScreen(),
+        ],
+        items: const [
+          _NavItem(
+            icon: Icons.shield_outlined,
+            activeIcon: Icons.shield_rounded,
+            label: 'Inspections',
+          ),
+          _NavItem(
+            icon: Icons.assignment_outlined,
+            activeIcon: Icons.assignment_rounded,
+            label: 'Missions',
+          ),
+          _NavItem(
+            icon: Icons.map_outlined,
+            activeIcon: Icons.map_rounded,
+            label: 'Carte Zone',
+          ),
+          _NavItem(
+            icon: Icons.gavel_outlined,
+            activeIcon: Icons.gavel_rounded,
+            label: 'Litiges',
           ),
           _NavItem(
             icon: Icons.person_outline_rounded,

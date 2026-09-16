@@ -185,4 +185,59 @@ class DeliveryTelemetryEndpointTest extends TestCase
         $this->assertSame(5.3470, (float) $response->json('data.driver_latest_position.latitude'));
         $this->assertSame(-3.9920, (float) $response->json('data.driver_latest_position.longitude'));
     }
+
+    public function test_driver_can_send_batched_location_telemetry(): void
+    {
+        $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
+        $supplier = User::factory()->create(['role' => 'fournisseur', 'kyc_status' => 'actif']);
+        $driver = User::factory()->create(['role' => 'livreur', 'kyc_status' => 'actif']);
+
+        $order = Order::create([
+            'client_id' => $client->id,
+            'supplier_id' => $supplier->id,
+            'driver_id' => $driver->id,
+            'delivery_mode' => 'delivery',
+            'status' => 'driver_picked_up',
+            'subtotal' => 10000,
+            'delivery_cost' => 2000,
+            'platform_fee' => 300,
+            'total_amount' => 12300,
+            'pickup_code' => 'LIVREUR-1111',
+            'reception_code' => 'RECEPTION-2222',
+        ]);
+
+        $response = $this->actingAs($driver)->postJson("/api/v1/orders/{$order->id}/location", [
+            'points' => [
+                [
+                    'latitude' => 5.3510,
+                    'longitude' => -4.0010,
+                    'speed_kmh' => 20.0,
+                    'heading' => 45.0,
+                    'battery_level' => 88,
+                ],
+                [
+                    'latitude' => 5.3520,
+                    'longitude' => -4.0020,
+                    'speed_kmh' => 25.0,
+                    'heading' => 50.0,
+                    'battery_level' => 87,
+                ],
+                [
+                    'latitude' => 5.3530,
+                    'longitude' => -4.0030,
+                    'speed_kmh' => 30.0,
+                    'heading' => 55.0,
+                    'battery_level' => 86,
+                ],
+            ]
+        ]);
+
+        $response->assertOk();
+        $response->assertJson([
+            'success' => true,
+            'order_id' => $order->id,
+        ]);
+
+        $this->assertDatabaseCount('delivery_trackings', 3);
+    }
 }

@@ -211,9 +211,14 @@ export function MissionsPanel({
                                         >
                                             <td>
                                                 <div className="space-y-2">
-                                                    <div className="flex items-center gap-2">
+                                                    <div className="flex items-center gap-2 flex-wrap">
                                                         <span className="text-sm font-semibold text-[var(--admin-text)]">#{mission.id}</span>
                                                         <MissionStatusBadge status={mission.status} />
+                                                        {(Number(mission.montant_total) >= 2000000 || (mission as any).referent_required) && (
+                                                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-800 border border-amber-300 shadow-sm" title="Mission supérieure à 2M FCFA nécessitant validation physique par le Référent de zone">
+                                                                🛡️ Référent Requis
+                                                            </span>
+                                                        )}
                                                     </div>
                                                     <p className="max-w-[280px] text-sm text-[var(--admin-text-soft)]">{mission.description}</p>
                                                 </div>

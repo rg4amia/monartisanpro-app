@@ -52,7 +52,8 @@ void main() {
       // masquerait l'erreur à l'utilisateur au moment où il peut la corriger.
       for (final status in [400, 401, 403, 404, 422, 500]) {
         expect(
-          isNetworkFailure(_of(DioExceptionType.badResponse, statusCode: status)),
+          isNetworkFailure(
+              _of(DioExceptionType.badResponse, statusCode: status),),
           isFalse,
           reason: 'HTTP $status est une réponse du serveur, pas une panne.',
         );

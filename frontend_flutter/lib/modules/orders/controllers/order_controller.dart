@@ -4,7 +4,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../core/theme/app_colors.dart';
 import '../../../data/models/supplier_model.dart';
 import '../../../data/models/supplier_product_model.dart';
 import '../../../data/repositories/order_repository.dart';
@@ -25,8 +24,9 @@ class OrderController extends GetxController {
   final supplierProducts = <SupplierProductModel>[].obs;
   final selectedSupplier = Rxn<SupplierModel>();
 
-  // Panier réactif : product_id -> quantity
+  // Panier réactif : product_id -> quantity et cache des produits
   final cart = <int, int>{}.obs;
+  final cartProducts = <int, SupplierProductModel>{}.obs;
 
   @override
   void onInit() {
@@ -62,67 +62,16 @@ class OrderController extends GetxController {
     }
   }
 
-  // Sélectionner un fournisseur (avec confirmation si panier non vide)
+  // Sélectionner un fournisseur sans contraindre ni écraser les articles d'autres quincailleries
   void selectSupplier(SupplierModel supplier, {Function()? onConfirmed}) {
-    if (selectedSupplier.value != null &&
-        selectedSupplier.value!.id != supplier.id &&
-        cart.isNotEmpty) {
-      Get.dialog(
-        AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text(
-            'Changer de quincaillerie ?',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          content: Text(
-            'Votre panier contient actuellement $cartCount article(s) chez "${selectedSupplier.value!.shopName}". Souhaitez-vous le vider pour commander chez "${supplier.shopName}" ?',
-            style:
-                const TextStyle(fontSize: 14, color: AppColors.textSecondary),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Get.back(),
-              child: const Text(
-                'Conserver mon panier',
-                style: TextStyle(color: AppColors.textSecondary),
-              ),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.danger,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              onPressed: () {
-                Get.back();
-                clearCart();
-                selectedSupplier.value = supplier;
-                loadSupplierProducts(supplier.id);
-                if (onConfirmed != null) onConfirmed();
-              },
-              child: const Text(
-                'Vider et Continuer',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-      return;
-    }
-
     selectedSupplier.value = supplier;
     loadSupplierProducts(supplier.id);
     if (onConfirmed != null) onConfirmed();
   }
 
-  // Gestion du panier
+  // Gestion du panier multi-fournisseurs
   void addToCart(SupplierProductModel product) {
+    cartProducts[product.id] = product;
     final qty = cart[product.id] ?? 0;
     if (qty < product.stockQuantity) {
       cart[product.id] = qty + 1;
@@ -137,11 +86,13 @@ class OrderController extends GetxController {
       cart[product.id] = qty - 1;
     } else {
       cart.remove(product.id);
+      cartProducts.remove(product.id);
     }
   }
 
   void clearCart() {
     cart.clear();
+    cartProducts.clear();
   }
 
   int getProductQuantity(int productId) {
@@ -153,7 +104,7 @@ class OrderController extends GetxController {
   int get subtotal {
     int total = 0;
     for (var entry in cart.entries) {
-      final product =
+      final product = cartProducts[entry.key] ??
           supplierProducts.firstWhereOrNull((p) => p.id == entry.key);
       if (product != null) {
         total += product.unitPrice * entry.value;
@@ -178,6 +129,83 @@ class OrderController extends GetxController {
       });
     }
     return payload;
+  }
+
+  List<Map<String, dynamic>> getMultiCartPackagesPayload({
+    String defaultDeliveryMode = 'delivery',
+    String defaultVehicleClass = 'moto',
+  }) {
+    final Map<int, List<Map<String, dynamic>>> bySupplier = {};
+    for (var entry in cart.entries) {
+      final product = cartProducts[entry.key] ??
+          supplierProducts.firstWhereOrNull((p) => p.id == entry.key);
+      if (product == null) continue;
+      final supId = product.supplierId;
+      bySupplier.putIfAbsent(supId, () => []);
+      bySupplier[supId]!.add({
+        'supplier_product_id': entry.key,
+        'quantity': entry.value,
+      });
+    }
+
+    return bySupplier.entries.map((e) {
+      return {
+        'supplier_id': e.key,
+        'delivery_mode': defaultDeliveryMode,
+        'vehicle_class': defaultVehicleClass,
+        'items': e.value,
+      };
+    }).toList();
+  }
+
+  Future<bool> createMultiOrders({
+    required List<Map<String, dynamic>> packages,
+    String? promoCode,
+  }) async {
+    if (isSubmitting.value) return false;
+    isSubmitting.value = true;
+    errorMsg.value = null;
+
+    try {
+      await _repo.createMultiOrders(
+        packages: packages,
+        promoCode: promoCode,
+      );
+      Get.snackbar(
+        'Succès',
+        'Commandes multi-fournisseurs créées et payées en compte séquestre !',
+        backgroundColor: const Color(0xFF24734F),
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+        duration: const Duration(seconds: 4),
+      );
+      clearCart();
+      return true;
+    } on DioException catch (e) {
+      errorMsg.value = _handleDioError(e);
+      Get.snackbar(
+        'Erreur',
+        errorMsg.value ??
+            'Impossible de créer les commandes multi-fournisseurs',
+        backgroundColor: const Color(0xFFC55E50),
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+        duration: const Duration(seconds: 4),
+      );
+      return false;
+    } catch (e) {
+      errorMsg.value = 'Erreur inattendue : $e';
+      Get.snackbar(
+        'Erreur',
+        errorMsg.value!,
+        backgroundColor: const Color(0xFFC55E50),
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+      );
+      return false;
+    } finally {
+      isSubmitting.value = false;
+    }
   }
 
   Future<bool> createOrder({

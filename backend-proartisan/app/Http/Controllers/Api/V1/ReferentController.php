@@ -20,6 +20,59 @@ class ReferentController extends Controller
     ) {}
 
     /**
+     * Liste des missions nécessitant la validation d'un référent de zone.
+     * GET /api/v1/referent/missions
+     */
+    public function index(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if ($user->role !== 'referent' && $user->role !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Seul un référent de zone peut accéder à cette liste.',
+            ], 403);
+        }
+
+        $query = Mission::query()
+            ->where(function ($q) {
+                $q->where('referent_required', true)
+                    ->orWhere('montant_total', '>', 2000000);
+            })
+            ->whereIn('status', [
+                'funded_locked',
+                'in_progress',
+                'pending_approval',
+                \App\States\Mission\FundedLockedState::class,
+                \App\States\Mission\InProgressState::class,
+                \App\States\Mission\PendingApprovalState::class,
+            ]);
+
+        $lat = $request->filled('latitude') ? (float) $request->latitude : null;
+        $lng = $request->filled('longitude') ? (float) $request->longitude : null;
+
+        if ($lat !== null && $lng !== null && config('database.default') !== 'sqlite') {
+            $query->selectRaw("missions.*, CASE WHEN client_latitude IS NOT NULL AND client_longitude IS NOT NULL THEN ST_Distance_Sphere(POINT(client_longitude, client_latitude), POINT(?, ?)) ELSE NULL END as distance_metres", [$lng, $lat])
+                ->orderByRaw("distance_metres IS NULL, distance_metres ASC");
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
+
+        $missions = $query->with(['client', 'artisan', 'jalons', 'interventionType'])
+            ->paginate($request->input('per_page', 20));
+
+        return response()->json([
+            'success' => true,
+            'data' => \App\Http\Resources\MissionResource::collection($missions->items()),
+            'meta' => [
+                'total' => $missions->total(),
+                'current_page' => $missions->currentPage(),
+                'last_page' => $missions->lastPage(),
+            ],
+        ]);
+    }
+
+    /**
      * Référent valide physiquement la mission sur site.
      * POST /api/v1/missions/{mission}/referent-validate
      */

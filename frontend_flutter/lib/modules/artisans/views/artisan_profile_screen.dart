@@ -473,8 +473,22 @@ void _showQuoteRequestModal(BuildContext context, ArtisanModel a) {
 
   Future<void> pickVideo() async {
     final picker = ImagePicker();
-    final vid = await picker.pickVideo(source: ImageSource.gallery);
+    final vid = await picker.pickVideo(
+      source: ImageSource.gallery,
+      maxDuration: const Duration(seconds: 30),
+    );
     if (vid != null) {
+      final size = await vid.length();
+      if (size > 25 * 1024 * 1024) {
+        Get.snackbar(
+          'Vidéo trop volumineuse',
+          'La vidéo (${(size / (1024 * 1024)).toStringAsFixed(1)} Mo) dépasse la limite autorisée de 25 Mo. Veuillez choisir une vidéo plus courte (≤ 30s).',
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: AppColors.danger,
+          colorText: Colors.white,
+        );
+        return;
+      }
       video.value = vid;
     }
   }
@@ -643,116 +657,122 @@ void _showQuoteRequestModal(BuildContext context, ArtisanModel a) {
               const SizedBox(height: 24),
 
               // Submit Button
-              Obx(() => ElevatedButton.icon(
-                onPressed: isSubmitting.value
-                    ? null
-                    : () async {
-                        final text = descCtrl.text.trim();
-                        if (text.length < 20) {
-                          Get.snackbar(
-                            'Description insuffisante',
-                            'Veuillez saisir au moins 20 caractères pour décrire vos travaux.',
-                            snackPosition: SnackPosition.TOP,
-                            backgroundColor: AppColors.warning,
-                            colorText: Colors.white,
-                          );
-                          return;
-                        }
-
-                        isSubmitting.value = true;
-
-                        try {
-                          final missionsController =
-                              Get.isRegistered<MissionsController>()
-                                  ? Get.find<MissionsController>()
-                                  : Get.put(MissionsController());
-
-                          // 1. Upload photos and videos first
-                          final List<String> uploadedUrls = [];
-                          for (final photo in photos) {
-                            final url =
-                                await missionsController.uploadFile(photo.path);
-                            uploadedUrls.add(url);
-                          }
-                          if (video.value != null) {
-                            final url = await missionsController
-                                .uploadFile(video.value!.path);
-                            uploadedUrls.add(url);
-                          }
-
-                          // 2. Create the mission request
-                          final mission = await missionsController.createMission(
-                            artisanId: a.id,
-                            description: text,
-                            category: a.trade ?? 'Travaux généraux',
-                            urgency: urgency.value,
-                            photos: uploadedUrls.isNotEmpty ? uploadedUrls : null,
-                          );
-
-                          if (mission != null) {
-                            if (context.mounted) {
-                              Navigator.of(context).pop(); // Close bottom sheet modal
-                            }
-                            unawaited(
-                              Get.toNamed(
-                                Routes.missionTracking,
-                                arguments: mission,
-                              ),
+              Obx(
+                () => ElevatedButton.icon(
+                  onPressed: isSubmitting.value
+                      ? null
+                      : () async {
+                          final text = descCtrl.text.trim();
+                          if (text.length < 20) {
+                            Get.snackbar(
+                              'Description insuffisante',
+                              'Veuillez saisir au moins 20 caractères pour décrire vos travaux.',
+                              snackPosition: SnackPosition.TOP,
+                              backgroundColor: AppColors.warning,
+                              colorText: Colors.white,
                             );
-                          }
-                        } catch (e) {
-                          String errorMsg =
-                              'Une erreur est survenue lors du téléversement ou de la création';
-                          if (e is DioException) {
-                            errorMsg = (e.response?.data
-                                    as Map<String, dynamic>?)?['message'] ??
-                                e.message ??
-                                errorMsg;
-                          } else if (e.toString().contains('Fichier rejeté')) {
-                            errorMsg = e.toString();
+                            return;
                           }
 
-                          Get.snackbar(
-                            'Erreur',
-                            errorMsg,
-                            snackPosition: SnackPosition.TOP,
-                            backgroundColor: Colors.red,
-                            colorText: Colors.white,
-                            duration: const Duration(seconds: 6),
-                          );
-                        } finally {
-                          isSubmitting.value = false;
-                        }
-                      },
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  backgroundColor: AppColors.client,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                          isSubmitting.value = true;
+
+                          try {
+                            final missionsController =
+                                Get.isRegistered<MissionsController>()
+                                    ? Get.find<MissionsController>()
+                                    : Get.put(MissionsController());
+
+                            // 1. Upload photos and videos first
+                            final List<String> uploadedUrls = [];
+                            for (final photo in photos) {
+                              final url = await missionsController
+                                  .uploadFile(photo.path);
+                              uploadedUrls.add(url);
+                            }
+                            if (video.value != null) {
+                              final url = await missionsController
+                                  .uploadFile(video.value!.path);
+                              uploadedUrls.add(url);
+                            }
+
+                            // 2. Create the mission request
+                            final mission =
+                                await missionsController.createMission(
+                              artisanId: a.id,
+                              description: text,
+                              category: a.trade ?? 'Travaux généraux',
+                              urgency: urgency.value,
+                              photos:
+                                  uploadedUrls.isNotEmpty ? uploadedUrls : null,
+                            );
+
+                            if (mission != null) {
+                              if (context.mounted) {
+                                Navigator.of(context)
+                                    .pop(); // Close bottom sheet modal
+                              }
+                              unawaited(
+                                Get.toNamed(
+                                  Routes.missionTracking,
+                                  arguments: mission,
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            String errorMsg =
+                                'Une erreur est survenue lors du téléversement ou de la création';
+                            if (e is DioException) {
+                              errorMsg = (e.response?.data
+                                      as Map<String, dynamic>?)?['message'] ??
+                                  e.message ??
+                                  errorMsg;
+                            } else if (e
+                                .toString()
+                                .contains('Fichier rejeté')) {
+                              errorMsg = e.toString();
+                            }
+
+                            Get.snackbar(
+                              'Erreur',
+                              errorMsg,
+                              snackPosition: SnackPosition.TOP,
+                              backgroundColor: Colors.red,
+                              colorText: Colors.white,
+                              duration: const Duration(seconds: 6),
+                            );
+                          } finally {
+                            isSubmitting.value = false;
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    backgroundColor: AppColors.client,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                ),
-                icon: isSubmitting.value
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Icon(Icons.send_outlined, color: Colors.white),
-                label: Text(
-                  isSubmitting.value
-                      ? 'ENVOI EN COURS...'
-                      : 'ENVOYER LA DEMANDE DE DEVIS',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                    color: Colors.white,
+                  icon: isSubmitting.value
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.send_outlined, color: Colors.white),
+                  label: Text(
+                    isSubmitting.value
+                        ? 'ENVOI EN COURS...'
+                        : 'ENVOYER LA DEMANDE DE DEVIS',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
-            ),
             ],
           ),
         ),

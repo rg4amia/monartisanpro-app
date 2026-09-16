@@ -969,7 +969,8 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
               textCapitalization: TextCapitalization.characters,
               decoration: InputDecoration(
                 hintText: 'Code de retrait fournisseur',
-                helperText: 'Communiqué par la quincaillerie lors de l\'enlèvement.',
+                helperText:
+                    'Communiqué par la quincaillerie lors de l\'enlèvement.',
                 border:
                     OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               ),
@@ -1016,7 +1017,8 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
               textCapitalization: TextCapitalization.characters,
               decoration: InputDecoration(
                 hintText: 'Code de réception client (OTP)',
-                helperText: 'Demandez le code OTP affiché sur l\'app du client.',
+                helperText:
+                    'Demandez le code OTP affiché sur l\'app du client.',
                 border:
                     OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               ),

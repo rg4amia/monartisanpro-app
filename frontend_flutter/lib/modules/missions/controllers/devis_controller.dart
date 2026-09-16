@@ -574,10 +574,9 @@ class DevisController extends GetxController {
         isAvenant: isAvenant,
         materialsRequired: materialLines.isNotEmpty,
         interventionTypeId: interventionTypeId,
-        paymentPhone:
-            needsPaymentPhone && paymentPhone.value.trim().isNotEmpty
-                ? paymentPhone.value.trim()
-                : null,
+        paymentPhone: needsPaymentPhone && paymentPhone.value.trim().isNotEmpty
+            ? paymentPhone.value.trim()
+            : null,
         preferredPaymentProvider:
             needsPaymentPhone && paymentPhone.value.trim().isNotEmpty
                 ? preferredProvider.value

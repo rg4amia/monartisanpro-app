@@ -102,7 +102,8 @@ class _VoiceBroadcastCardState extends State<VoiceBroadcastCard> {
       if (mounted) setState(() => _isPlaying = true);
     } catch (_) {
       if (mounted) {
-        setState(() => _error = 'Lecture impossible. Vérifiez votre connexion.');
+        setState(
+            () => _error = 'Lecture impossible. Vérifiez votre connexion.',);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -235,7 +236,8 @@ class _PlayButton extends StatelessWidget {
           child: isLoading
               ? Padding(
                   padding: const EdgeInsets.all(13),
-                  child: CircularProgressIndicator(strokeWidth: 2, color: color),
+                  child:
+                      CircularProgressIndicator(strokeWidth: 2, color: color),
                 )
               : Icon(
                   isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,

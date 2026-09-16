@@ -151,7 +151,8 @@ void main() {
       await tester.tap(find.text('Regarder la vidéo'));
       await tester.pumpAndSettle();
 
-      expect(opened.single.toString(), 'https://www.youtube.com/watch?v=abc123');
+      expect(
+          opened.single.toString(), 'https://www.youtube.com/watch?v=abc123',);
     });
 
     testWidgets('signale l echec plutot que de rester muet', (tester) async {

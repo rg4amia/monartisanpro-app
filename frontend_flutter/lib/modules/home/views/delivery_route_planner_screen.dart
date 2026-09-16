@@ -81,6 +81,7 @@ class _DeliveryRoutePlannerScreenState
   /// l'un pouvait effacer les objets tracés par l'autre pendant que celui-ci
   /// attendait encore la réponse OSRM, laissant la carte sans itinéraire.
   bool _isUpdatingRoute = false;
+  final List<Map<String, dynamic>> _telemetryBuffer = [];
 
   @override
   void initState() {
@@ -93,6 +94,7 @@ class _DeliveryRoutePlannerScreenState
 
   @override
   void dispose() {
+    _flushTelemetryBuffer();
     _stopTelemetryPublisher();
     super.dispose();
   }
@@ -102,9 +104,9 @@ class _DeliveryRoutePlannerScreenState
     if (_currentPhase == DeliveryPhase.completed) return;
 
     // Envoi initial immédiat
-    _emitDriverTelemetry();
+    _emitDriverTelemetry(forceFlush: true);
 
-    // Envoi périodique toutes les 15 secondes
+    // Échantillonnage toutes les 15s et envoi groupé
     _telemetryTimer = Timer.periodic(const Duration(seconds: 15), (_) {
       if (_currentPhase == DeliveryPhase.completed) {
         _stopTelemetryPublisher();
@@ -126,7 +128,14 @@ class _DeliveryRoutePlannerScreenState
     }
   }
 
-  Future<void> _emitDriverTelemetry() async {
+  Future<void> _flushTelemetryBuffer() async {
+    if (_telemetryBuffer.isEmpty) return;
+    final batch = List<Map<String, dynamic>>.from(_telemetryBuffer);
+    _telemetryBuffer.clear();
+    await _orderRepo.sendDriverBatchLocations(widget.mission.id, batch);
+  }
+
+  Future<void> _emitDriverTelemetry({bool forceFlush = false}) async {
     try {
       final pos = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
@@ -140,13 +149,18 @@ class _DeliveryRoutePlannerScreenState
       final speedKmh = pos.speed > 0 ? (pos.speed * 3.6) : 0.0;
       _lastSpeedKmh = speedKmh;
 
-      await _orderRepo.sendDriverLocation(
-        widget.mission.id,
-        latitude: pos.latitude,
-        longitude: pos.longitude,
-        speedKmh: speedKmh,
-        heading: pos.heading >= 0 ? pos.heading : null,
-      );
+      _telemetryBuffer.add({
+        'latitude': pos.latitude,
+        'longitude': pos.longitude,
+        'speed_kmh': speedKmh,
+        if (pos.heading >= 0) 'heading': pos.heading,
+        'recorded_at': DateTime.now().toIso8601String(),
+      });
+
+      // Si le buffer atteint 3 points ou si un flush forcé est demandé, envoyer le batch
+      if (forceFlush || _telemetryBuffer.length >= 3) {
+        await _flushTelemetryBuffer();
+      }
 
       if (!mounted) return;
       _homeController.driverGpsCoords.value =

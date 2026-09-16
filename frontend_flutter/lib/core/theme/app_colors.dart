@@ -20,6 +20,8 @@ class AppColors {
   static const Color gold = Color(0xFFD4A017);
   static const Color driver = Color(0xFFF1C40F); // livreur yellow
   static const Color driverSoft = Color(0xFFFEF9E7);
+  static const Color referent = Color(0xFF1E293B); // référent slate dark
+  static const Color referentSoft = Color(0xFFF1F5F9);
 
   // States
   static const Color danger = Color(0xFFE74C3C);

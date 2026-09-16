@@ -271,7 +271,8 @@ class _ClientCatalogScreenState extends State<ClientCatalogScreen> {
                               height: 72,
                               width: 72,
                               decoration: BoxDecoration(
-                                color: AppColors.primary.withValues(alpha: 0.08),
+                                color:
+                                    AppColors.primary.withValues(alpha: 0.08),
                                 borderRadius: BorderRadius.circular(12),
                                 border:
                                     Border.all(color: const Color(0xFFE2E8F0)),

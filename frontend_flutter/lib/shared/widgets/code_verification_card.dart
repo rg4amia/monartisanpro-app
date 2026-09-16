@@ -306,7 +306,8 @@ class _CodeVerificationCardState extends State<CodeVerificationCard> {
         const SizedBox(height: 8),
         Row(
           children: [
-            Icon(Icons.timer_outlined, size: 15, color: AppColors.textSecondary),
+            Icon(Icons.timer_outlined,
+                size: 15, color: AppColors.textSecondary,),
             const SizedBox(width: 4),
             Text(
               'Masqué dans ${_secondsLeft}s',

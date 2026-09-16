@@ -124,9 +124,8 @@ class _ClientOrderCard extends StatelessWidget {
   /// En retrait magasin, le client présente son code dès que la commande est
   /// prête. En livraison, il ne remet le sien qu'une fois le livreur en route
   /// avec le colis — avant, le code n'a aucune raison d'être à l'écran.
-  bool get _showCode => _isStorePickup
-      ? _status == 'prepared'
-      : _status == 'driver_picked_up';
+  bool get _showCode =>
+      _isStorePickup ? _status == 'prepared' : _status == 'driver_picked_up';
 
   @override
   Widget build(BuildContext context) {

@@ -31,23 +31,38 @@ class DeliveryTrackingController extends Controller
         }
 
         $validated = $request->validate([
-            'latitude'      => 'required|numeric|between:-90,90',
-            'longitude'     => 'required|numeric|between:-180,180',
-            'speed_kmh'     => 'nullable|numeric|min:0',
-            'heading'       => 'nullable|numeric|between:0,360',
-            'battery_level' => 'nullable|integer|between:0,100',
+            'latitude'        => 'required_without:points|numeric|between:-90,90',
+            'longitude'       => 'required_without:points|numeric|between:-180,180',
+            'speed_kmh'       => 'nullable|numeric|min:0',
+            'heading'         => 'nullable|numeric|between:0,360',
+            'battery_level'   => 'nullable|integer|between:0,100',
+            'points'          => 'nullable|array|min:1',
+            'points.*.latitude'      => 'required_with:points|numeric|between:-90,90',
+            'points.*.longitude'     => 'required_with:points|numeric|between:-180,180',
+            'points.*.speed_kmh'     => 'nullable|numeric|min:0',
+            'points.*.heading'       => 'nullable|numeric|between:0,360',
+            'points.*.battery_level' => 'nullable|integer|between:0,100',
+            'points.*.recorded_at'   => 'nullable|string',
         ]);
 
         try {
-            $tracking = $this->orderService->recordDriverLocation(
-                $order,
-                $user,
-                (float) $validated['latitude'],
-                (float) $validated['longitude'],
-                isset($validated['speed_kmh']) ? (float) $validated['speed_kmh'] : null,
-                isset($validated['heading']) ? (float) $validated['heading'] : null,
-                isset($validated['battery_level']) ? (int) $validated['battery_level'] : null
-            );
+            if (!empty($validated['points'])) {
+                $tracking = $this->orderService->recordDriverBatchLocations(
+                    $order,
+                    $user,
+                    $validated['points']
+                );
+            } else {
+                $tracking = $this->orderService->recordDriverLocation(
+                    $order,
+                    $user,
+                    (float) $validated['latitude'],
+                    (float) $validated['longitude'],
+                    isset($validated['speed_kmh']) ? (float) $validated['speed_kmh'] : null,
+                    isset($validated['heading']) ? (float) $validated['heading'] : null,
+                    isset($validated['battery_level']) ? (int) $validated['battery_level'] : null
+                );
+            }
 
             return response()->json([
                 'success'  => true,

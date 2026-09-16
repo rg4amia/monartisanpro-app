@@ -42,7 +42,8 @@ void main() {
 
     testWidgets('WorkflowCard rappelle la règle des jalons', (tester) async {
       await _pump(tester, const WorkflowCard());
-      expect(find.textContaining('total des jalons doit égaler'), findsOneWidget);
+      expect(
+          find.textContaining('total des jalons doit égaler'), findsOneWidget,);
     });
   });
 }

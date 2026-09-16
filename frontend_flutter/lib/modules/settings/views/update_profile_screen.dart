@@ -255,81 +255,81 @@ class _CategorySelectionCard extends StatelessWidget {
           : 'Aucune catégorie définie';
 
       return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: _C.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _C.subtle),
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: hasCategory
-                      ? const Color(0xFFEEF2FF)
-                      : const Color(0xFFF9FAFB),
-                  borderRadius: BorderRadius.circular(12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: _C.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: _C.subtle),
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: hasCategory
+                        ? const Color(0xFFEEF2FF)
+                        : const Color(0xFFF9FAFB),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.build_circle_outlined,
+                    color: hasCategory ? _C.primary : _C.muted,
+                    size: 22,
+                  ),
                 ),
-                child: Icon(
-                  Icons.build_circle_outlined,
-                  color: hasCategory ? _C.primary : _C.muted,
-                  size: 22,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      hasCategory
-                          ? 'Catégorie active'
-                          : 'Catégorie non configurée',
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: _C.ink,
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        hasCategory
+                            ? 'Catégorie active'
+                            : 'Catégorie non configurée',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: _C.ink,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      categoryText,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: _C.muted,
-                        height: 1.35,
+                      const SizedBox(height: 4),
+                      Text(
+                        categoryText,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: _C.muted,
+                          height: 1.35,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          OutlinedButton.icon(
-            onPressed: controller.selectCategoryAndSubcategory,
-            icon: const Icon(Icons.category_outlined, size: 18),
-            label: Text(
-              hasCategory ? 'Modifier ma catégorie' : 'Choisir ma catégorie',
+              ],
             ),
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 48),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
+              onPressed: controller.selectCategoryAndSubcategory,
+              icon: const Icon(Icons.category_outlined, size: 18),
+              label: Text(
+                hasCategory ? 'Modifier ma catégorie' : 'Choisir ma catégorie',
               ),
-              side: const BorderSide(color: _C.primary),
-              foregroundColor: _C.primary,
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 48),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                side: const BorderSide(color: _C.primary),
+                foregroundColor: _C.primary,
+              ),
             ),
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
     });
   }
 }
@@ -346,80 +346,83 @@ class _LocationCard extends StatelessWidget {
           controller.selectedLongitude.value != null;
 
       return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: _C.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _C.subtle),
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color:
-                      isSet ? const Color(0xFFEEF2FF) : const Color(0xFFF9FAFB),
-                  borderRadius: BorderRadius.circular(12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: _C.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: _C.subtle),
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: isSet
+                        ? const Color(0xFFEEF2FF)
+                        : const Color(0xFFF9FAFB),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.my_location,
+                    color: isSet ? _C.primary : _C.muted,
+                    size: 22,
+                  ),
                 ),
-                child: Icon(
-                  Icons.my_location,
-                  color: isSet ? _C.primary : _C.muted,
-                  size: 22,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      isSet ? 'Position configurée' : 'Emplacement non défini',
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: _C.ink,
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isSet
+                            ? 'Position configurée'
+                            : 'Emplacement non défini',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: _C.ink,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      controller.selectedAddress.value,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: _C.muted,
-                        height: 1.35,
+                      const SizedBox(height: 4),
+                      Text(
+                        controller.selectedAddress.value,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: _C.muted,
+                          height: 1.35,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          OutlinedButton.icon(
-            onPressed: controller.selectLocationOnMap,
-            icon: const Icon(Icons.map_outlined, size: 18),
-            label: Text(
-              isSet
-                  ? 'Modifier ma position'
-                  : 'Définir ma position sur la carte',
+              ],
             ),
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 48),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
+              onPressed: controller.selectLocationOnMap,
+              icon: const Icon(Icons.map_outlined, size: 18),
+              label: Text(
+                isSet
+                    ? 'Modifier ma position'
+                    : 'Définir ma position sur la carte',
               ),
-              side: const BorderSide(color: _C.primary),
-              foregroundColor: _C.primary,
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 48),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                side: const BorderSide(color: _C.primary),
+                foregroundColor: _C.primary,
+              ),
             ),
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
     });
   }
 }
@@ -496,65 +499,66 @@ class _NightModeCard extends StatelessWidget {
     return Obx(() {
       final loading = controller.isProfileLoading.value;
       return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: _C.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _C.subtle),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: _C.primaryLight,
-              borderRadius: BorderRadius.circular(12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: _C.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: _C.subtle),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: _C.primaryLight,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.nightlight_round,
+                color: _C.primary,
+                size: 22,
+              ),
             ),
-            child: const Icon(
-              Icons.nightlight_round,
-              color: _C.primary,
-              size: 22,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Interventions de nuit',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: _C.ink,
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Interventions de nuit',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: _C.ink,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  loading
-                      ? 'Chargement de votre disponibilité actuelle...'
-                      : 'Activez ce mode si vous acceptez les demandes entre 18h et 7h.',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: _C.muted,
-                    height: 1.35,
+                  const SizedBox(height: 4),
+                  Text(
+                    loading
+                        ? 'Chargement de votre disponibilité actuelle...'
+                        : 'Activez ce mode si vous acceptez les demandes entre 18h et 7h.',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: _C.muted,
+                      height: 1.35,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          Switch(
-            value: controller.nightInterventionsEnabled.value,
-            activeThumbColor: _C.primary,
-            onChanged: loading
-                ? null
-                : (value) => controller.nightInterventionsEnabled.value = value,
-          ),
-        ],
-      ),
-    );
+            Switch(
+              value: controller.nightInterventionsEnabled.value,
+              activeThumbColor: _C.primary,
+              onChanged: loading
+                  ? null
+                  : (value) =>
+                      controller.nightInterventionsEnabled.value = value,
+            ),
+          ],
+        ),
+      );
     });
   }
 }

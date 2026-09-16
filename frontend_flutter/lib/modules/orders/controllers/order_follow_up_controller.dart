@@ -61,7 +61,8 @@ class OrderFollowUpController extends GetxController {
     }
   }
 
-  Future<String?> revealCode(int orderId) => _repo.fetchVerificationCode(orderId);
+  Future<String?> revealCode(int orderId) =>
+      _repo.fetchVerificationCode(orderId);
 
   /// Confirmation par la contrepartie : le fournisseur atteste avoir remis la
   /// marchandise, le client avoir reçu son colis.
@@ -71,7 +72,8 @@ class OrderFollowUpController extends GetxController {
   /// d'attente ; celle-ci, faite depuis un appareil connecté, fait avancer la
   /// commande immédiatement. Le rejeu tardif du livreur sera alors sans effet,
   /// le backend étant idempotent.
-  Future<bool> confirmFromCounterparty(int orderId, {required bool isPickup}) async {
+  Future<bool> confirmFromCounterparty(int orderId,
+      {required bool isPickup,}) async {
     confirmingOrderId.value = orderId;
     errorMsg.value = null;
 

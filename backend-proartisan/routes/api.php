@@ -151,6 +151,8 @@ Route::prefix('v1')->group(function () {
         // ── Commandes Catalogue E-Commerce ───────────────────────────────────
         Route::apiResource('orders', OrderController::class)->only(['index', 'store', 'show']);
         Route::post('/orders/estimate-delivery', [OrderController::class, 'estimateDelivery']);
+        Route::post('/orders/multi-estimate', [OrderController::class, 'estimateMultiDelivery']);
+        Route::post('/orders/multi-store', [OrderController::class, 'multiStore']);
         Route::post('/orders/{order}/prepared', [OrderController::class, 'markPrepared']);
         Route::post('/orders/{order}/verify-pickup', [OrderController::class, 'verifyPickup']);
         Route::post('/orders/{order}/verify-delivery', [OrderController::class, 'verifyDelivery']);
@@ -199,6 +201,7 @@ Route::prefix('v1')->group(function () {
         Route::put('/missions/{mission}/status', [MissionController::class, 'updateStatus']);
         Route::post('/missions/{mission}/accept-request', [MissionController::class, 'acceptRequest']);
         Route::post('/missions/{mission}/reject-request', [MissionController::class, 'rejectRequest']);
+        Route::get('/referent/missions', [ReferentController::class, 'index'])->middleware('kyc.verified');
         Route::post('/missions/{mission}/referent-validate', [ReferentController::class, 'validateMission'])->middleware(['can:mission.referent-validate', 'kyc.verified']);
 
         // ── Recrutement BTP & Métiers (admin/client/fournisseur → artisan) ──────

@@ -117,7 +117,9 @@ class ServiceIconHelper {
     }
 
     // Vitrerie / Fenêtres
-    if (lower.contains('vitr') || lower.contains('fenêtre') || lower.contains('fenetre')) {
+    if (lower.contains('vitr') ||
+        lower.contains('fenêtre') ||
+        lower.contains('fenetre')) {
       return Icons.window_rounded;
     }
 

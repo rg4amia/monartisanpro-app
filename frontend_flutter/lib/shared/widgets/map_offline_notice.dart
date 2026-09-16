@@ -48,7 +48,8 @@ class MapOfflineNotice extends StatelessWidget {
               child: Text(
                 'Carte indisponible hors-ligne. Seules les zones déjà '
                 'consultées s\'affichent ; la recherche d\'adresse est désactivée.',
-                style: TextStyle(color: Colors.white, fontSize: 11.5, height: 1.3),
+                style:
+                    TextStyle(color: Colors.white, fontSize: 11.5, height: 1.3),
               ),
             ),
           ],

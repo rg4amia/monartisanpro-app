@@ -9,7 +9,8 @@ import '../../../../core/theme/app_colors.dart';
 /// l'utilisateur lirait comme une panne. Dire explicitement qu'il n'y a rien
 /// à montrer — et pourquoi — vaut mieux qu'un vide ou qu'un chiffre inventé.
 class SectionEmptyNote extends StatelessWidget {
-  const SectionEmptyNote({super.key, required this.icon, required this.message});
+  const SectionEmptyNote(
+      {super.key, required this.icon, required this.message,});
 
   final IconData icon;
   final String message;

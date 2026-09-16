@@ -28,6 +28,8 @@ class Order extends Model
         'delivered_at',
         'pickup_photo_url',
         'delivery_photo_url',
+        'order_group_id',
+        'is_parent_group',
         'waiting_time_minutes',
         'dispute_reason',
         'dispute_opened_at',
@@ -65,6 +67,7 @@ class Order extends Model
             'delivered_at'              => 'datetime',
             'driver_assigned_at'        => 'datetime',
             'dispute_opened_at'         => 'datetime',
+            'is_parent_group'           => 'boolean',
         ];
     }
 

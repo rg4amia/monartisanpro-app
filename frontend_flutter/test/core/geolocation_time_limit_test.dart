@@ -33,8 +33,8 @@ void main() {
       // Ancré sur `Geolocator.` : un habillage local nommé
       // `_getCurrentPosition` n'est pas l'appel au SDK, et c'est ce dernier
       // qui porte la borne.
-      for (final match
-          in RegExp(r'Geolocator\.getCurrentPosition\s*\(').allMatches(source)) {
+      for (final match in RegExp(r'Geolocator\.getCurrentPosition\s*\(')
+          .allMatches(source)) {
         final call = _balancedCall(source, match.end - 1);
 
         if (!call.contains('timeLimit')) {

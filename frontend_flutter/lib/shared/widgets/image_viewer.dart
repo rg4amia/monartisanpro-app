@@ -79,7 +79,8 @@ class _ImageViewerDialogState extends State<_ImageViewerDialog> {
                 child: CachedNetworkImage(
                   imageUrl: widget.urls[i],
                   fit: BoxFit.contain,
-                  placeholder: (context, url) => const CircularProgressIndicator(
+                  placeholder: (context, url) =>
+                      const CircularProgressIndicator(
                     valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                   ),
                   errorWidget: (context, url, error) => const Icon(
@@ -91,7 +92,6 @@ class _ImageViewerDialogState extends State<_ImageViewerDialog> {
               ),
             ),
           ),
-
           if (widget.title != null)
             Positioned(
               top: 20,
@@ -111,7 +111,6 @@ class _ImageViewerDialogState extends State<_ImageViewerDialog> {
                 ),
               ),
             ),
-
           Positioned(
             top: 20,
             right: 20,
@@ -125,7 +124,6 @@ class _ImageViewerDialogState extends State<_ImageViewerDialog> {
               ),
             ),
           ),
-
           if (hasMultiple)
             Positioned(
               bottom: 28,

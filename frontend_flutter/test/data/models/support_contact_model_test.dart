@@ -35,7 +35,9 @@ void main() {
       expect(contact.hasWhatsapp, isFalse);
     });
 
-    test('never throws and reports no channel on an empty/unreachable settings payload', () {
+    test(
+        'never throws and reports no channel on an empty/unreachable settings payload',
+        () {
       final contact = SupportContactModel.fromSettings(const {});
 
       expect(contact.hasWhatsapp, isFalse);

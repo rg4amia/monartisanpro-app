@@ -136,7 +136,8 @@ class JalonsSection extends StatelessWidget {
                       setState(() {});
                     }
                   },
-                  decoration: _fieldDecoration('Sélectionner une date').copyWith(
+                  decoration:
+                      _fieldDecoration('Sélectionner une date').copyWith(
                     suffixIcon: const Icon(Icons.calendar_today, size: 20),
                   ),
                 ),

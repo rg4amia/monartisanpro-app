@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { api } from '@/lib/api';
 
 interface Product {
@@ -54,31 +54,33 @@ export default function SupplierCatalog() {
     const [imageUrl, setImageUrl] = useState('');
     const [isActive, setIsActive] = useState(true);
 
-    const loadProducts = async () => {
+    const loadProducts = useCallback(async () => {
         try {
-            const list = await api.getSupplierProducts();
-            const normalized: Product[] = (list || []).map((p: any) => ({
-                id: p.id,
-                name: p.name || 'Article sans nom',
-                sku: p.sku || '',
-                description: p.description || '',
+            const list = await api.getSupplierProducts<Record<string, unknown>[]>();
+            const normalized: Product[] = (list || []).map((p: Record<string, unknown>) => ({
+                id: Number(p.id),
+                name: (p.name as string) || 'Article sans nom',
+                sku: (p.sku as string) || '',
+                description: (p.description as string) || '',
                 unit_price: Number(p.unit_price ?? p.unitPrice ?? 0),
                 stock_quantity: Number(p.stock_quantity ?? p.stockQuantity ?? 0),
-                image_url: formatImageUrl(p.image_url ?? p.imageUrl ?? ''),
+                image_url: formatImageUrl((p.image_url ?? p.imageUrl ?? '') as string),
                 is_active: p.is_active !== undefined ? Boolean(p.is_active) : (p.isActive !== undefined ? Boolean(p.isActive) : true),
             }));
             setProducts(normalized);
-        } catch (err: any) {
+            setError(null);
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : 'Impossible de charger le catalogue';
             console.error(err);
-            setError(err.message || 'Impossible de charger le catalogue');
+            setError(msg);
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
-        loadProducts();
-    }, []);
+        void loadProducts();
+    }, [loadProducts]);
 
     const filteredProducts = useMemo(() => {
         if (!searchQuery) return products;
@@ -121,8 +123,9 @@ export default function SupplierCatalog() {
         try {
             const url = await api.uploadSupplierImage(file);
             setImageUrl(url);
-        } catch (err: any) {
-            alert(err.message || "Erreur lors de l'upload de l'image.");
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : "Erreur lors de l'upload de l'image.";
+            alert(msg);
         } finally {
             setUploading(false);
         }
@@ -157,8 +160,9 @@ export default function SupplierCatalog() {
             }
             setIsModalOpen(false);
             await loadProducts();
-        } catch (err: any) {
-            alert(err.message || 'Une erreur est survenue lors de la sauvegarde.');
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : 'Une erreur est survenue lors de la sauvegarde.';
+            alert(msg);
         } finally {
             setFormLoading(false);
         }
@@ -173,8 +177,9 @@ export default function SupplierCatalog() {
                 is_active: !product.is_active,
             });
             await loadProducts();
-        } catch (err: any) {
-            alert(err.message || 'Une erreur est survenue');
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : 'Une erreur est survenue';
+            alert(msg);
         }
     };
 
@@ -183,8 +188,9 @@ export default function SupplierCatalog() {
             try {
                 await api.deleteSupplierProduct(product.id);
                 await loadProducts();
-            } catch (err: any) {
-                alert(err.message || 'Une erreur est survenue');
+            } catch (err: unknown) {
+                const msg = err instanceof Error ? err.message : 'Une erreur est survenue';
+                alert(msg);
             }
         }
     };
@@ -204,7 +210,7 @@ export default function SupplierCatalog() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight">Catalogue d'Articles</h1>
+                    <h1 className="text-2xl font-bold tracking-tight">Catalogue d&apos;Articles</h1>
                     <p className="text-slate-400 text-sm mt-1">
                         Gérez vos produits, mettez à jour vos stocks et ajustez vos prix.
                     </p>
@@ -216,6 +222,18 @@ export default function SupplierCatalog() {
                     + Ajouter un article
                 </button>
             </div>
+
+            {error && (
+                <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400 text-xs flex items-center justify-between">
+                    <span>⚠️ {error}</span>
+                    <button
+                        onClick={() => void loadProducts()}
+                        className="underline hover:text-white ml-3 font-semibold"
+                    >
+                        Réessayer
+                    </button>
+                </div>
+            )}
 
             {/* Filters */}
             <div className="flex items-center bg-slate-900 border border-slate-800 rounded-lg px-4 py-2 max-w-md shadow-md">
@@ -242,6 +260,7 @@ export default function SupplierCatalog() {
                             {/* Product Image */}
                             <div className="h-44 bg-slate-950 relative flex items-center justify-center border-b border-slate-800">
                                 {product.image_url ? (
+                                    /* eslint-disable-next-line @next/next/no-img-element */
                                     <img
                                         src={formatImageUrl(product.image_url)}
                                         alt={product.name}
@@ -279,8 +298,8 @@ export default function SupplierCatalog() {
                                     </div>
                                     <div className="flex items-center justify-between">
                                         <span className="text-xs text-slate-500">Stock</span>
-                                        <span className={`font-bold text-xs ${product.stock_quantity > 0 ? 'text-slate-200' : 'text-rose-400'}`}>
-                                            {product.stock_quantity > 0 ? `${product.stock_quantity} unités` : 'Rupture de stock'}
+                                        <span className={`font-bold text-xs ${product.stock_quantity > 5 ? 'text-slate-200' : product.stock_quantity > 0 ? 'text-amber-400 font-semibold' : 'text-rose-400'}`}>
+                                            {product.stock_quantity > 5 ? `${product.stock_quantity} unités` : product.stock_quantity > 0 ? `⚠️ Stock bas (${product.stock_quantity})` : '🚫 Rupture de stock'}
                                         </span>
                                     </div>
 
@@ -293,7 +312,7 @@ export default function SupplierCatalog() {
                                             Modifier
                                         </button>
                                         <button
-                                            onClick={() => toggleProductActive(product)}
+                                            onClick={() => void toggleProductActive(product)}
                                             className={`px-3 py-2 rounded-lg text-xs font-bold transition border ${
                                                 product.is_active
                                                     ? 'border-slate-800 hover:bg-yellow-950/20 hover:text-yellow-400'
@@ -304,7 +323,7 @@ export default function SupplierCatalog() {
                                             {product.is_active ? '⏸' : '▶'}
                                         </button>
                                         <button
-                                            onClick={() => archiveProduct(product)}
+                                            onClick={() => void archiveProduct(product)}
                                             className="px-3 py-2 rounded-lg text-xs font-bold hover:bg-rose-950/20 text-rose-400 hover:border-rose-900 border border-slate-800 transition"
                                             title="Archiver"
                                         >
@@ -337,7 +356,7 @@ export default function SupplierCatalog() {
                         {/* Header */}
                         <div className="p-6 border-b border-slate-800 flex justify-between items-center">
                             <h3 className="font-bold text-lg text-white">
-                                {editingProduct ? 'Modifier l\'article' : 'Ajouter un article'}
+                                {editingProduct ? "Modifier l'article" : "Ajouter un article"}
                             </h3>
                             <button
                                 onClick={() => setIsModalOpen(false)}
@@ -350,7 +369,7 @@ export default function SupplierCatalog() {
                         {/* Body Form */}
                         <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-4">
                             <div>
-                                <label className="block text-slate-300 text-xs font-bold mb-1.5 uppercase">Nom de l'article *</label>
+                                <label className="block text-slate-300 text-xs font-bold mb-1.5 uppercase">Nom de l&apos;article *</label>
                                 <input
                                     type="text"
                                     value={name}
@@ -455,6 +474,7 @@ export default function SupplierCatalog() {
 
                                 {imageUrl && (
                                     <div className="mt-3 flex items-center gap-3 p-2 bg-slate-950 rounded-lg border border-slate-800">
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
                                         <img
                                             src={imageUrl}
                                             alt="Aperçu"

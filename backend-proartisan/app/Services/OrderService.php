@@ -179,6 +179,189 @@ class OrderService
     }
 
     /**
+     * Crée un ensemble de sous-commandes pour un panier multi-fournisseurs avec paiement séquestre groupé.
+     *
+     * @param User $client
+     * @param array $packages Liste des colis par fournisseur: [
+     *   [
+     *     'supplier_id' => int,
+     *     'delivery_mode' => 'delivery'|'pickup',
+     *     'vehicle_class' => 'moto'|'voiture'|'cargo',
+     *     'surge_multiplier' => float,
+     *     'items' => [ ['supplier_product_id' => int, 'quantity' => int], ... ]
+     *   ], ...
+     * ]
+     * @param string|null $promoCode
+     * @return array
+     */
+    public function createMultiSupplierOrders(User $client, array $packages, ?string $promoCode = null): array
+    {
+        return DB::transaction(function () use ($client, $packages, $promoCode) {
+            $orderGroupId = 'GRP-' . strtoupper(Str::random(10));
+            $platformFeeRatio = \App\Models\Setting::getValueByKey('platform_fee_ratio', 0.03);
+
+            $createdOrders = [];
+            $totalSubtotal = 0;
+            $totalDeliveryCost = 0;
+            $totalPlatformFee = 0;
+            $grandTotal = 0;
+
+            foreach ($packages as $pkg) {
+                $supplier = User::where('role', 'fournisseur')->findOrFail($pkg['supplier_id']);
+                $deliveryMode = $pkg['delivery_mode'] ?? 'delivery';
+                $vehicleClass = $pkg['vehicle_class'] ?? 'moto';
+                $surgeMultiplier = (float) ($pkg['surge_multiplier'] ?? 1.0);
+
+                $pkgSubtotal = 0;
+                $itemsData = [];
+
+                foreach ($pkg['items'] as $item) {
+                    $product = SupplierProduct::where('supplier_id', $supplier->id)
+                        ->findOrFail($item['supplier_product_id']);
+
+                    if ($product->stock_quantity < $item['quantity']) {
+                        throw new \Exception("Stock insuffisant pour le produit : {$product->name} chez {$supplier->name}");
+                    }
+
+                    $itemSubtotal = $product->unit_price * $item['quantity'];
+                    $pkgSubtotal += $itemSubtotal;
+
+                    $itemsData[] = [
+                        'product' => $product,
+                        'quantity' => $item['quantity'],
+                        'unit_price' => $product->unit_price,
+                    ];
+                }
+
+                $pkgPlatformFee = (int) round($pkgSubtotal * $platformFeeRatio);
+                $pkgDeliveryCost = 0;
+                if ($deliveryMode === 'delivery') {
+                    $from = $supplier->fournisseurAgree?->getPositionCoords() ?? $supplier->getPositionCoords();
+                    $to = $client->getPositionCoords();
+                    $fare = $this->pricingService->estimateFare([
+                        'from' => $from,
+                        'to' => $to,
+                        'vehicle_class' => $vehicleClass,
+                        'surge_multiplier' => $surgeMultiplier,
+                    ]);
+                    $pkgDeliveryCost = (int) ($fare['delivery_cost'] ?? 0);
+                }
+
+                $pkgTotal = max(0, $pkgSubtotal + $pkgDeliveryCost + $pkgPlatformFee);
+
+                $codeSuffix = str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+                $pickupPrefix = $deliveryMode === 'delivery' ? 'LIVREUR' : 'RETRAIT';
+                $pickupCode = "{$pickupPrefix}-{$codeSuffix}";
+
+                $receptionSuffix = str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+                $receptionCode = "RECEPTION-{$receptionSuffix}";
+
+                $order = Order::create([
+                    'client_id' => $client->id,
+                    'supplier_id' => $supplier->id,
+                    'delivery_mode' => $deliveryMode,
+                    'status' => 'paid',
+                    'subtotal' => $pkgSubtotal,
+                    'delivery_cost' => $pkgDeliveryCost,
+                    'platform_fee' => $pkgPlatformFee,
+                    'total_amount' => $pkgTotal,
+                    'pickup_code' => $pickupCode,
+                    'reception_code' => $receptionCode,
+                    'vehicle_class' => $vehicleClass,
+                    'surge_multiplier' => $surgeMultiplier,
+                    'order_group_id' => $orderGroupId,
+                    'is_parent_group' => false,
+                ]);
+
+                foreach ($itemsData as $data) {
+                    OrderItem::create([
+                        'order_id' => $order->id,
+                        'supplier_product_id' => $data['product']->id,
+                        'quantity' => $data['quantity'],
+                        'unit_price' => $data['unit_price'],
+                    ]);
+
+                    $data['product']->decrement('stock_quantity', $data['quantity']);
+                }
+
+                $createdOrders[] = $order->load('items.product', 'supplier.fournisseurAgree');
+                $totalSubtotal += $pkgSubtotal;
+                $totalDeliveryCost += $pkgDeliveryCost;
+                $totalPlatformFee += $pkgPlatformFee;
+                $grandTotal += $pkgTotal;
+
+                // Notification individuelle au fournisseur
+                try {
+                    app(\App\Services\NotificationService::class)->send(
+                        $supplier,
+                        'payment',
+                        'Nouvelle commande reçue (Panier multi-fournisseurs)',
+                        "La commande #{$order->id} (Groupe {$orderGroupId}) d'un montant de " . number_format($order->subtotal, 0, ',', ' ') . " FCFA a été payée et est en attente de préparation."
+                    );
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning("Notification fournisseur non bloquante : " . $e->getMessage());
+                }
+            }
+
+            // Gestion éventuelle du code promo global
+            $discountAmount = 0;
+            if ($promoCode) {
+                $codeStr = strtoupper(trim($promoCode));
+                $appliedPromo = \App\Models\PromoCode::where('code', $codeStr)->first();
+                if ($appliedPromo) {
+                    try {
+                        $discountAmount = $appliedPromo->calculateDiscount($totalSubtotal);
+                        $appliedPromo->increment('used_count');
+                        $grandTotal = max(0, $grandTotal - $discountAmount);
+                    } catch (\Exception $e) {
+                        // ignore
+                    }
+                }
+            }
+
+            // Enregistrement de la transaction financière unique pour le groupe
+            Transaction::create([
+                'user_id' => $client->id,
+                'type' => 'acompte',
+                'montant' => $grandTotal,
+                'wallet_source' => 'client_mobile_money_' . $client->id,
+                'wallet_dest' => 'escrow_group_' . $orderGroupId,
+                'provider' => PaymentProvider::WAVE,
+                'statut' => PaymentStatus::CONFIRME,
+                'paid_at' => now(),
+                'metadata' => [
+                    'order_group_id' => $orderGroupId,
+                    'order_ids' => array_column($createdOrders, 'id'),
+                    'packages_count' => count($createdOrders),
+                    'description' => "Paiement groupé panier multi-fournisseurs {$orderGroupId}",
+                ],
+            ]);
+
+            // Notification Client
+            try {
+                app(\App\Services\NotificationService::class)->send(
+                    $client,
+                    'payment',
+                    'Paiement groupé confirmé',
+                    "Votre commande multi-fournisseurs ({$orderGroupId}) pour " . count($createdOrders) . " quincailleries d'un montant total de " . number_format($grandTotal, 0, ',', ' ') . " FCFA est sécurisée en compte séquestre."
+                );
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("Notification client non bloquante : " . $e->getMessage());
+            }
+
+            return [
+                'order_group_id' => $orderGroupId,
+                'orders' => $createdOrders,
+                'total_subtotal' => $totalSubtotal,
+                'total_delivery_cost' => $totalDeliveryCost,
+                'total_platform_fee' => $totalPlatformFee,
+                'total_amount' => $grandTotal,
+                'packages_count' => count($createdOrders),
+            ];
+        });
+    }
+
+    /**
      * Marque la commande comme préparée par le fournisseur.
      */
     public function markAsPrepared(Order $order): Order
@@ -790,6 +973,82 @@ class OrderService
                 \Illuminate\Support\Facades\Log::warning("Notification livreur échouée pour user {$driver->id}: " . $e->getMessage());
             }
         }
+    }
+
+    /**
+     * Enregistre un lot de points GPS télémétriques (batching économie réseau/batterie)
+     * et diffuse la dernière position connue.
+     *
+     * @param Order $order
+     * @param User $driver
+     * @param array $points [ ['latitude' => ..., 'longitude' => ..., 'speed_kmh' => ..., 'heading' => ..., 'battery_level' => ..., 'recorded_at' => ...], ... ]
+     */
+    public function recordDriverBatchLocations(Order $order, User $driver, array $points): \App\Models\DeliveryTracking
+    {
+        if ($order->driver_id !== $driver->id) {
+            throw new \Exception("Ce livreur n'est pas assigné à cette commande.");
+        }
+
+        if (empty($points)) {
+            throw new \Exception("Aucun point de télémétrie fourni.");
+        }
+
+        $records = [];
+        $now = now();
+        foreach ($points as $pt) {
+            $records[] = [
+                'order_id'      => $order->id,
+                'driver_id'     => $driver->id,
+                'latitude'      => (float) $pt['latitude'],
+                'longitude'     => (float) $pt['longitude'],
+                'speed_kmh'     => isset($pt['speed_kmh']) ? (float) $pt['speed_kmh'] : null,
+                'heading'       => isset($pt['heading']) ? (float) $pt['heading'] : null,
+                'battery_level' => isset($pt['battery_level']) ? (int) $pt['battery_level'] : null,
+                'created_at'    => !empty($pt['recorded_at']) ? \Carbon\Carbon::parse($pt['recorded_at']) : $now,
+            ];
+        }
+
+        \App\Models\DeliveryTracking::insert($records);
+
+        $lastPoint = end($points);
+        $lastLat = (float) $lastPoint['latitude'];
+        $lastLng = (float) $lastPoint['longitude'];
+        $lastSpeed = isset($lastPoint['speed_kmh']) ? (float) $lastPoint['speed_kmh'] : null;
+        $lastHeading = isset($lastPoint['heading']) ? (float) $lastPoint['heading'] : null;
+        $lastBattery = isset($lastPoint['battery_level']) ? (int) $lastPoint['battery_level'] : null;
+
+        try {
+            $driver->setPosition($lastLat, $lastLng);
+        } catch (\Throwable $e) {}
+
+        $latestTracking = \App\Models\DeliveryTracking::where('order_id', $order->id)
+            ->where('driver_id', $driver->id)
+            ->latest('id')
+            ->first();
+
+        // Diffusion temps réel SSE
+        $payload = [
+            'order_id'      => $order->id,
+            'driver_id'     => $driver->id,
+            'driver_name'   => $driver->name,
+            'latitude'      => $lastLat,
+            'longitude'     => $lastLng,
+            'speed_kmh'     => $lastSpeed,
+            'heading'       => $lastHeading,
+            'battery_level' => $lastBattery,
+            'recorded_at'   => $now->toIso8601String(),
+            'batch_size'    => count($points),
+        ];
+
+        $this->realtimeEventService->publish(
+            'order',
+            $order->id,
+            'driver_position_updated',
+            $payload,
+            'Livreur en mouvement (Batch)'
+        );
+
+        return $latestTracking ?? new \App\Models\DeliveryTracking($records[0]);
     }
 
     /**

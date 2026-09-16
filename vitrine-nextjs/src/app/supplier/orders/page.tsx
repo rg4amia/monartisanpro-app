@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { api } from '@/lib/api';
 
 interface OrderItem {
@@ -28,6 +28,8 @@ interface Order {
     total_amount: number;
     pickup_code: string;
     reception_code: string;
+    order_group_id?: string | null;
+    is_parent_group?: boolean;
     created_at: string;
     client?: {
         name: string;
@@ -53,21 +55,23 @@ export default function SupplierOrders() {
     const [pickupCodeInput, setPickupCodeInput] = useState('');
     const [actionLoading, setActionLoading] = useState(false);
 
-    const loadOrders = async () => {
+    const loadOrders = useCallback(async () => {
         try {
             const list = await api.getSupplierOrders<Order[]>();
-            setOrders(list);
-        } catch (err: any) {
+            setOrders(list || []);
+            setError(null);
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : 'Impossible de charger les commandes';
             console.error(err);
-            setError(err.message || 'Impossible de charger les commandes');
+            setError(msg);
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
-        loadOrders();
-    }, []);
+        void loadOrders();
+    }, [loadOrders]);
 
     const filteredOrders = useMemo(() => {
         return orders.filter((o) => {
@@ -90,9 +94,10 @@ export default function SupplierOrders() {
         try {
             await api.markOrderPrepared(orderId);
             setSelectedOrder(null);
-            loadOrders();
-        } catch (err: any) {
-            alert(err.message || "Erreur de mise à jour du statut.");
+            await loadOrders();
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : 'Erreur de mise à jour du statut.';
+            alert(msg);
         } finally {
             setActionLoading(false);
         }
@@ -101,16 +106,17 @@ export default function SupplierOrders() {
     const handleVerifyPickup = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!selectedOrder) return;
-        
+
         setActionLoading(true);
         try {
             await api.verifyOrderPickup(selectedOrder.id, pickupCodeInput);
             setIsPickupModalOpen(false);
             setSelectedOrder(null);
             setPickupCodeInput('');
-            loadOrders();
-        } catch (err: any) {
-            alert(err.message || "Code de retrait invalide.");
+            await loadOrders();
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : 'Code de retrait invalide.';
+            alert(msg);
         } finally {
             setActionLoading(false);
         }
@@ -162,6 +168,18 @@ export default function SupplierOrders() {
                     Suivez et préparez les commandes de matériaux reçues de vos clients.
                 </p>
             </div>
+
+            {error && (
+                <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400 text-xs flex items-center justify-between">
+                    <span>⚠️ {error}</span>
+                    <button
+                        onClick={() => void loadOrders()}
+                        className="underline hover:text-white ml-3 font-semibold"
+                    >
+                        Réessayer
+                    </button>
+                </div>
+            )}
 
             {/* Filters & Search */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -219,7 +237,14 @@ export default function SupplierOrders() {
                             <tbody className="divide-y divide-slate-850 text-sm">
                                 {filteredOrders.map((order) => (
                                     <tr key={order.id} className="hover:bg-slate-800/15 transition">
-                                        <td className="py-4 px-6 font-bold text-white">#{order.id}</td>
+                                        <td className="py-4 px-6 font-bold text-white">
+                                            <div>#{order.id}</div>
+                                            {order.order_group_id && (
+                                                <div className="inline-flex items-center gap-1 text-[9px] font-mono text-purple-400 bg-purple-950/60 px-1.5 py-0.5 rounded border border-purple-800/60 mt-0.5" title="Sous-commande du panier multi-fournisseurs">
+                                                    📦 {order.order_group_id}
+                                                </div>
+                                            )}
+                                        </td>
                                         <td className="py-4 px-6">
                                             <div className="font-semibold text-slate-200">{order.client?.name}</div>
                                             <div className="text-xs text-slate-500">{order.client?.phone}</div>
@@ -325,7 +350,7 @@ export default function SupplierOrders() {
                                 <div className="flex gap-2 w-full sm:w-auto">
                                     {selectedOrder.status === 'paid' && (
                                         <button
-                                            onClick={() => handleMarkPrepared(selectedOrder.id)}
+                                            onClick={() => void handleMarkPrepared(selectedOrder.id)}
                                             className="w-full sm:w-auto bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-5 py-2.5 rounded-lg text-xs transition active:scale-[0.98]"
                                             disabled={actionLoading}
                                         >

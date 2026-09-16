@@ -94,7 +94,8 @@ class SiteMapSupplier {
       name: (json['name'] ?? 'Fournisseur').toString(),
       lat: SiteMapClient._coord(coords, 'lat'),
       lng: SiteMapClient._coord(coords, 'lng'),
-      jcodeCount: MissionSiteMap._asInt(json['jcodeCount'] ?? json['jcode_count']),
+      jcodeCount:
+          MissionSiteMap._asInt(json['jcodeCount'] ?? json['jcode_count']),
       montant: MissionSiteMap._asInt(json['montant']),
     );
   }

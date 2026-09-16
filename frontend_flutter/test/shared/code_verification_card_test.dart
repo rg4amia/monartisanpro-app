@@ -28,7 +28,8 @@ Future<void> _pumpCard(
 }
 
 void main() {
-  testWidgets('le code est masque tant qu on ne le demande pas', (tester) async {
+  testWidgets('le code est masque tant qu on ne le demande pas',
+      (tester) async {
     var called = false;
 
     await _pumpCard(

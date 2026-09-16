@@ -41,9 +41,11 @@ npm run test:watch
 # Démarrage serveur seul
 php artisan serve --port=8000
 
-# Backoffice — filets de sécurité opérationnels
-php artisan admin:full-access [email]   # restaure l'accès total d'un/tous les admins
-php artisan admin:health-check [--force] # contrôle santé + alerte Telegram
+# Backoffice & Watchdog — filets de sécurité opérationnels
+php artisan admin:full-access [email]        # restaure l'accès total d'un/tous les admins
+php artisan admin:health-check [--force]      # contrôle santé + alerte Telegram
+php artisan prosartisan:driver-watchdog       # réassignation automatique des courses inactives (> 15 min)
+php artisan prosartisan:reconcile-treasury    # réconciliation et audit d'intégrité de trésorerie / ledger
 ```
 
 ### Architecture Backend
@@ -65,9 +67,11 @@ routes/api.php
 
 - `GeoService` — floutage GPS artisan (~50m), `ST_Distance_Sphere`, vérification J-Code
 - `DevisService` — fragmentation séquestre (ratio immuable à l'acceptation)
-- `JalonService` — cycle OTP → libération `wallet_mo`
+- `JalonService` — cycle OTP → libération `wallet_mo`, contrôle physique Référent (> 2M FCFA)
 - `JCodeService` — tokens `PA-XXXX`, QR + USSD, vérification GPS fournisseur
-- `WalletService` — gestion `wallet_materiaux` / `wallet_mo`
+- `OrderService` — e-commerce matériaux, split-cart multi-quincailleries (`order_group_id`), télémétrie livreur par lot, watchdog
+- `DeliveryPricingService` — calcul tarifaire dynamique (OSRM, surge pricing, classe véhicule)
+- `WalletService` — gestion `wallet_materiaux` / `wallet_mo` (Event Sourcing strict)
 - `ScoreService` — calcul du Score ProsArtisan (échelle **0–1000**, 4 piliers pondérés : Fiabilité 400 / Intégrité 300 / Qualité 200 / Réactivité 100 + ledger `score_ledger_entries`)
 - `MicroCreditService` — éligibilité (`score_prosartisan >= credit_threshold`) et calcul du plafond de crédit
 

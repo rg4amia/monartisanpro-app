@@ -56,11 +56,13 @@ class _VideoBroadcastCardState extends State<VideoBroadcastCard> {
       final opened = await launch(uri);
 
       if (mounted && !opened) {
-        setState(() => _error = 'Aucune application ne peut ouvrir cette vidéo.');
+        setState(
+            () => _error = 'Aucune application ne peut ouvrir cette vidéo.',);
       }
     } catch (_) {
       if (mounted) {
-        setState(() => _error = 'Ouverture impossible. Vérifiez votre connexion.');
+        setState(
+            () => _error = 'Ouverture impossible. Vérifiez votre connexion.',);
       }
     } finally {
       if (mounted) setState(() => _isOpening = false);
@@ -126,7 +128,6 @@ class _VideoBroadcastCardState extends State<VideoBroadcastCard> {
               ),
             ],
           ),
-
           if (comm.contenu.trim().isNotEmpty) ...[
             const SizedBox(height: 12),
             Text(
@@ -138,7 +139,6 @@ class _VideoBroadcastCardState extends State<VideoBroadcastCard> {
               ),
             ),
           ],
-
           const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
@@ -162,7 +162,6 @@ class _VideoBroadcastCardState extends State<VideoBroadcastCard> {
               ),
             ),
           ),
-
           if (_error != null) ...[
             const SizedBox(height: 10),
             Text(

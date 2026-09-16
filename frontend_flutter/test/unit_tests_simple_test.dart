@@ -573,8 +573,7 @@ void main() {
       expect(MissionModel.normalizeStatus('delivered'), 'terminee');
     });
 
-    test(
-        'Formatters.missionStatus ne renvoie jamais un statut technique brut',
+    test('Formatters.missionStatus ne renvoie jamais un statut technique brut',
         () {
       const statutsTechniquesConnus = [
         'en_attente',

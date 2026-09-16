@@ -97,9 +97,10 @@ class LitigeController extends GetxController {
       );
     } on DioException catch (e) {
       final responseData = e.response?.data;
-      final message =
-          (responseData is Map ? responseData['message'] as String? : null) ??
-              'Impossible d\'ouvrir le litige. Vérifiez votre connexion et réessayez.';
+      final message = (responseData is Map
+              ? responseData['message'] as String?
+              : null) ??
+          'Impossible d\'ouvrir le litige. Vérifiez votre connexion et réessayez.';
       Get.snackbar('Erreur', message, snackPosition: SnackPosition.TOP);
     } catch (_) {
       Get.snackbar(

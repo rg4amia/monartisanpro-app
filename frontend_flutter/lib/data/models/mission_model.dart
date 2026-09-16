@@ -191,7 +191,8 @@ class MissionModel {
       ),
       interventionTypeId: json['interventionTypeId'] != null ||
               json['intervention_type_id'] != null
-          ? _parseInt(json['interventionTypeId'] ?? json['intervention_type_id'])
+          ? _parseInt(
+              json['interventionTypeId'] ?? json['intervention_type_id'],)
           : null,
       interventionTypeName: (json['interventionTypeName'] ??
           json['intervention_type_name']) as String?,
@@ -212,7 +213,8 @@ class MissionModel {
     for (final key in mapKeys) {
       final value = json[key];
       if (value is Map<String, dynamic>) {
-        final raw = value[axis] ?? value[axis == 'lat' ? 'latitude' : 'longitude'];
+        final raw =
+            value[axis] ?? value[axis == 'lat' ? 'latitude' : 'longitude'];
         final parsed = double.tryParse(raw?.toString() ?? '');
         if (parsed != null) return parsed;
       }

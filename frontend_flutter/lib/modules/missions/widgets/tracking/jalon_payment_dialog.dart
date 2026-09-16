@@ -137,9 +137,7 @@ class _ProviderTile extends StatelessWidget {
         style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
       ),
       trailing: Icon(
-        isSelected
-            ? Icons.radio_button_checked
-            : Icons.radio_button_unchecked,
+        isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
         color: isSelected ? AppColors.primary : AppColors.textSecondary,
       ),
       onTap: onTap,

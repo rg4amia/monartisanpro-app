@@ -105,7 +105,8 @@ class _MissionSiteMapScreenState extends State<MissionSiteMapScreen> {
     _plotMarkers(_data!);
   }
 
-  void _moveCamera(double lat, double lng, double zoom, {bool animated = true}) {
+  void _moveCamera(double lat, double lng, double zoom,
+      {bool animated = true,}) {
     _mapWindow?.map.move(
       mk.CameraPosition(
         mk.Point(latitude: lat, longitude: lng),
@@ -232,7 +233,8 @@ class _MissionSiteMapScreenState extends State<MissionSiteMapScreen> {
     tp.paint(canvas, Offset(size / 2 - tp.width / 2, 15 - tp.height / 2));
 
     // Pointe / pin
-    _paintIcon(canvas, Icons.location_on, 44, color, Offset(size / 2, size / 2 + 22));
+    _paintIcon(
+        canvas, Icons.location_on, 44, color, Offset(size / 2, size / 2 + 22),);
     _paintIcon(canvas, icon, 18, Colors.white, Offset(size / 2, size / 2 + 12));
 
     final img =
@@ -460,8 +462,7 @@ class _LegendCard extends StatelessWidget {
                 color: AppColors.success,
                 icon: Icons.storefront_rounded,
                 title: s.name,
-                subtitle:
-                    '${s.jcodeCount} J-Code${s.jcodeCount > 1 ? 's' : ''}'
+                subtitle: '${s.jcodeCount} J-Code${s.jcodeCount > 1 ? 's' : ''}'
                     '${s.montant > 0 ? ' • ${Formatters.fcfa(s.montant)}' : ''}',
               ),
             ),
