@@ -5,6 +5,7 @@ import '../../../app/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/models/artisan_model.dart';
 import '../../../shared/widgets/score_prosartisan.dart';
+import '../../home/widgets/client_home/rating_label.dart';
 import '../controllers/artisan_selection_controller.dart';
 import '../widgets/artisan_selection_map.dart';
 
@@ -508,16 +509,7 @@ class _ArtisanCard extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 12),
-                          Icon(Icons.star, size: 14, color: _C.warning),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${artisan.rating}',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: _C.ink,
-                            ),
-                          ),
+                          RatingLabel(rating: artisan.rating),
                         ],
                       ),
                     ],

@@ -37,6 +37,17 @@ class TestHelpers {
 
     // Initialize GetStorage for tests
     await GetStorage.init();
+
+    // Mock the OneSignal MethodChannel: AuthController/MainTabController
+    // appellent `OneSignal.login(...)` en fire-and-forget (unawaited). Sans
+    // handler enregistré, l'appel lève une MissingPluginException de façon
+    // asynchrone, non rattrapée par le test qui ne l'attend pas — flutter_test
+    // la signale quand même comme une erreur de zone non gérée.
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      const MethodChannel('OneSignal'),
+      (MethodCall methodCall) async => null,
+    );
   }
 
   static Dio createTestDio() {

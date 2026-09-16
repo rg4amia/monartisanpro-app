@@ -5,6 +5,7 @@ import {
     DeliveryStatusBadge,
     money,
     shortDate,
+    useConfirm,
 } from '../shared';
 import type { AdminOrder } from '../shared';
 
@@ -21,6 +22,7 @@ export function DeliveriesTrackingSection({
     const [trackingData, setTrackingData] = useState<any>(null);
     const [isLoadingTracking, setIsLoadingTracking] = useState(false);
     const [reassigningId, setReassigningId] = useState<number | null>(null);
+    const { confirm: askConfirm, dialog: confirmDialog } = useConfirm();
 
     // Active deliveries in transit or assigned
     const activeDeliveries = orders.filter((o) =>
@@ -47,10 +49,14 @@ export function DeliveriesTrackingSection({
         }
     };
 
-    const handleReassign = (orderId: number) => {
-        if (!confirm('Êtes-vous sûr de vouloir réaffecter cette course à un nouveau livreur ? Le livreur actuel sera notifié et sanctionné pour retard.')) {
-            return;
-        }
+    const handleReassign = async (orderId: number) => {
+        const confirmed = await askConfirm({
+            title: 'Réaffecter la course',
+            message: 'Réaffecter cette course à un nouveau livreur ? Le livreur actuel sera notifié et sanctionné pour retard.',
+            confirmLabel: 'Réaffecter',
+            tone: 'danger',
+        });
+        if (!confirmed) return;
 
         setReassigningId(orderId);
         router.post(`/api/v1/orders/${orderId}/reassign`, {
@@ -375,6 +381,7 @@ export function DeliveriesTrackingSection({
                     </div>
                 </div>
             )}
+            {confirmDialog}
         </div>
     );
 }

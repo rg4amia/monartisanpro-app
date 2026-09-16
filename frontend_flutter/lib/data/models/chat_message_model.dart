@@ -35,27 +35,45 @@ class ChatMessageModel {
   bool get isRead => readAt != null;
 
   factory ChatMessageModel.fromJson(Map<String, dynamic> json) {
-    final sender = json['sender'] as Map<String, dynamic>?;
+    final sender =
+        json['sender'] is Map<String, dynamic> ? json['sender'] as Map<String, dynamic> : null;
 
     return ChatMessageModel(
-      id: json['id'] as int? ?? 0,
-      missionId: json['mission_id'] as int? ?? 0,
-      senderId: json['sender_id'] as int? ?? 0,
-      senderName: sender?['name'] as String?,
-      senderRole: sender?['role'] as String?,
-      type: json['type'] as String? ?? 'text',
-      content: json['content'] as String?,
-      mediaUrl: json['media_url'] as String?,
-      mediaMetadata: json['media_metadata'] as Map<String, dynamic>?,
-      isRedacted: json['is_redacted'] as bool? ?? false,
-      flaggedForReview: json['flagged_for_review'] as bool? ?? false,
-      readAt: json['read_at'] != null
-          ? DateTime.tryParse(json['read_at'] as String)
-          : null,
-      createdAt: json['created_at'] != null
-          ? DateTime.tryParse(json['created_at'] as String) ?? DateTime.now()
-          : DateTime.now(),
+      id: _asInt(json['id']) ?? 0,
+      missionId: _asInt(json['mission_id']) ?? 0,
+      senderId: _asInt(json['sender_id']) ?? 0,
+      senderName: _asString(sender?['name']),
+      senderRole: _asString(sender?['role']),
+      type: _asString(json['type']) ?? 'text',
+      content: _asString(json['content']),
+      mediaUrl: _asString(json['media_url']),
+      mediaMetadata:
+          json['media_metadata'] is Map<String, dynamic> ? json['media_metadata'] as Map<String, dynamic> : null,
+      isRedacted: json['is_redacted'] == true,
+      flaggedForReview: json['flagged_for_review'] == true,
+      readAt: _asDateTime(json['read_at']),
+      createdAt: _asDateTime(json['created_at']) ?? DateTime.now(),
     );
+  }
+
+  /// Conversion défensive vers `int?` : tolère un identifiant reçu en chaîne
+  /// (fréquent avec les BIGINT sérialisés côté Laravel) sans jamais lever.
+  static int? _asInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    return int.tryParse(value.toString());
+  }
+
+  static String? _asString(dynamic value) {
+    if (value == null) return null;
+    if (value is String) return value;
+    return value.toString();
+  }
+
+  static DateTime? _asDateTime(dynamic value) {
+    if (value == null) return null;
+    return DateTime.tryParse(value.toString());
   }
 
   Map<String, dynamic> toJson() {

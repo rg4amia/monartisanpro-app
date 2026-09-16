@@ -72,9 +72,18 @@ export default function SupplierLogin() {
 
         try {
             const credentials = await api.supplierVerifyOtp(phone, otp);
-            
+
+            // Ce numéro n'a encore aucun compte finalisé (nom + rôle) : la vitrine
+            // ne propose pas de formulaire d'inscription — seule l'application
+            // mobile ou le backoffice peuvent créer/finaliser un compte fournisseur.
+            if (!credentials.hasCompletedProfile || !credentials.token || !credentials.user) {
+                setError("Ce numéro n'est pas encore enregistré comme fournisseur. Téléchargez l'application ProsArtisan pour finaliser votre inscription, ou contactez notre support.");
+                setLoading(false);
+                return;
+            }
+
             // Vérifier le rôle de l'utilisateur
-            const user = credentials.user;
+            const user = credentials.user as { role?: string };
             if (user.role !== 'fournisseur') {
                 setError("Accès refusé. Cet espace est réservé exclusivement aux fournisseurs agréés.");
                 setLoading(false);

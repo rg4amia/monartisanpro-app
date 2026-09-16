@@ -72,6 +72,7 @@ export default function RolesPermissionsPanel({
 }: RolesPermissionsPanelProps) {
     const [selectedRole, setSelectedRole] = useState<string>('client');
     const [toggling, setToggling] = useState<string | null>(null);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const [selectedAdminId, setSelectedAdminId] = useState<number | null>(admins[0]?.id ?? null);
     const [savingAdmin, setSavingAdmin] = useState(false);
@@ -94,13 +95,14 @@ export default function RolesPermissionsPanel({
 
     const handleTogglePermission = (permissionName: string, hasPermission: boolean) => {
         if (selectedRole === 'admin') {
-            alert("Le rôle Administrateur possède toutes les permissions par défaut et ne peut être modifié.");
+            setErrorMessage("Le rôle Administrateur possède toutes les permissions par défaut et ne peut être modifié.");
             return;
         }
 
         const action = hasPermission ? 'revoke' : 'assign';
         const url = `/api/v1/admin/roles-permissions/${action}`;
 
+        setErrorMessage(null);
         setToggling(permissionName);
 
         router.post(url, {
@@ -113,13 +115,14 @@ export default function RolesPermissionsPanel({
                 setToggling(null);
             },
             onError: () => {
-                alert("Une erreur est survenue lors de la mise à jour des droits.");
+                setErrorMessage("Une erreur est survenue lors de la mise à jour des droits.");
             }
         });
     };
 
     const submitAdminCapabilities = (capabilities: string[]) => {
         if (!selectedAdmin || adminIsProtected) return;
+        setErrorMessage(null);
         setSavingAdmin(true);
         router.post(`/admin/admins/${selectedAdmin.id}/permissions`, { capabilities }, {
             // Sans cela, Inertia remonte le composant après le POST et `selectedAdminId`
@@ -127,7 +130,7 @@ export default function RolesPermissionsPanel({
             preserveState: true,
             preserveScroll: true,
             onFinish: () => setSavingAdmin(false),
-            onError: () => alert('Une erreur est survenue lors de la mise à jour des droits admin.'),
+            onError: () => setErrorMessage('Une erreur est survenue lors de la mise à jour des droits admin.'),
         });
     };
 
@@ -167,6 +170,22 @@ export default function RolesPermissionsPanel({
 
     return (
         <div className="space-y-8">
+            {errorMessage ? (
+                <div
+                    role="alert"
+                    className="flex items-start justify-between gap-4 rounded-2xl border border-red-300 bg-red-50 p-4 text-sm text-red-800"
+                >
+                    <span>{errorMessage}</span>
+                    <button
+                        type="button"
+                        onClick={() => setErrorMessage(null)}
+                        className="shrink-0 text-xs font-semibold text-red-700 hover:underline"
+                    >
+                        Fermer
+                    </button>
+                </div>
+            ) : null}
+
             {/* ── Droits fins des administrateurs (Chantier C6 / P2-10) ── */}
             <div className="rounded-[28px] border border-[var(--admin-border)] bg-white/60 p-6">
                 <div className="border-b border-[var(--admin-border)] pb-4 mb-6">

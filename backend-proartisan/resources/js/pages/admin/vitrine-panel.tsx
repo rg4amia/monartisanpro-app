@@ -1,6 +1,7 @@
 import { useForm, router } from '@inertiajs/react';
 import React, { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { useConfirm } from './shared';
 
 function sanitizeUploadedFile(file: File | null): File | null {
     if (!file) return null;
@@ -152,6 +153,7 @@ export default function VitrinePanel({
 // SUB-PANEL 1: SLIDES HERO
 // =============================================================================
 function SlidesSubPanel({ slides }: { slides: any[] }) {
+    const { confirm: askConfirm, dialog: confirmDialog } = useConfirm();
     const [isOpen, setIsOpen] = useState(false);
     const [editingSlide, setEditingSlide] = useState<any>(null);
 
@@ -205,10 +207,15 @@ function SlidesSubPanel({ slides }: { slides: any[] }) {
         });
     };
 
-    const handleDelete = (id: number) => {
-        if (window.confirm('Supprimer définitivement ce slide ?')) {
-            router.delete(`/admin/vitrine/slides/${id}`, { preserveScroll: true });
-        }
+    const handleDelete = async (id: number) => {
+        const ok = await askConfirm({
+            title: 'Supprimer le slide',
+            message: 'Supprimer définitivement ce slide ?',
+            confirmLabel: 'Supprimer',
+            tone: 'danger',
+        });
+        if (!ok) return;
+        router.delete(`/admin/vitrine/slides/${id}`, { preserveScroll: true });
     };
 
     return (
@@ -392,6 +399,7 @@ function SlidesSubPanel({ slides }: { slides: any[] }) {
                     </div>
                 </div>
             )}
+            {confirmDialog}
         </div>
     );
 }
@@ -400,6 +408,7 @@ function SlidesSubPanel({ slides }: { slides: any[] }) {
 // SUB-PANEL 2: ARTISAN DU MOIS
 // =============================================================================
 function ArtisanDuMoisSubPanel({ admList, artisans }: { admList: any[]; artisans: any[] }) {
+    const { confirm: askConfirm, dialog: confirmDialog } = useConfirm();
     const [isOpen, setIsOpen] = useState(false);
 
     const { data, setData, post, reset, errors, processing } = useForm({
@@ -431,10 +440,15 @@ function ArtisanDuMoisSubPanel({ admList, artisans }: { admList: any[]; artisans
         });
     };
 
-    const handleDelete = (id: number) => {
-        if (window.confirm('Supprimer cette mise en avant d\'artisan ?')) {
-            router.delete(`/admin/vitrine/artisan-du-mois/${id}`, { preserveScroll: true });
-        }
+    const handleDelete = async (id: number) => {
+        const ok = await askConfirm({
+            title: "Retirer la mise en avant",
+            message: "Supprimer cette mise en avant d'artisan ?",
+            confirmLabel: 'Supprimer',
+            tone: 'danger',
+        });
+        if (!ok) return;
+        router.delete(`/admin/vitrine/artisan-du-mois/${id}`, { preserveScroll: true });
     };
 
     return (
@@ -608,6 +622,7 @@ function ArtisanDuMoisSubPanel({ admList, artisans }: { admList: any[]; artisans
                     </div>
                 </div>
             )}
+            {confirmDialog}
         </div>
     );
 }
@@ -616,6 +631,7 @@ function ArtisanDuMoisSubPanel({ admList, artisans }: { admList: any[]; artisans
 // SUB-PANEL 3: ARTICLES & ACTUALITÉS
 // =============================================================================
 function ArticlesSubPanel({ articles }: { articles: any[] }) {
+    const { confirm: askConfirm, dialog: confirmDialog } = useConfirm();
     const [isOpen, setIsOpen] = useState(false);
     const [editingArticle, setEditingArticle] = useState<any>(null);
 
@@ -665,10 +681,15 @@ function ArticlesSubPanel({ articles }: { articles: any[] }) {
         });
     };
 
-    const handleDelete = (id: number) => {
-        if (window.confirm('Supprimer cet article ?')) {
-            router.delete(`/admin/vitrine/articles/${id}`, { preserveScroll: true });
-        }
+    const handleDelete = async (id: number) => {
+        const ok = await askConfirm({
+            title: "Supprimer l'article",
+            message: 'Supprimer cet article ?',
+            confirmLabel: 'Supprimer',
+            tone: 'danger',
+        });
+        if (!ok) return;
+        router.delete(`/admin/vitrine/articles/${id}`, { preserveScroll: true });
     };
 
     return (
@@ -842,6 +863,7 @@ function ArticlesSubPanel({ articles }: { articles: any[] }) {
                     </div>
                 </div>
             )}
+            {confirmDialog}
         </div>
     );
 }
@@ -850,6 +872,7 @@ function ArticlesSubPanel({ articles }: { articles: any[] }) {
 // SUB-PANEL 4: CAPSULES VIDÉO
 // =============================================================================
 function VideosSubPanel({ videos }: { videos: any[] }) {
+    const { confirm: askConfirm, dialog: confirmDialog } = useConfirm();
     const [isOpen, setIsOpen] = useState(false);
     const [editingVideo, setEditingVideo] = useState<any>(null);
 
@@ -903,10 +926,15 @@ function VideosSubPanel({ videos }: { videos: any[] }) {
         });
     };
 
-    const handleDelete = (id: number) => {
-        if (window.confirm('Supprimer cette vidéo ?')) {
-            router.delete(`/admin/vitrine/videos/${id}`, { preserveScroll: true });
-        }
+    const handleDelete = async (id: number) => {
+        const ok = await askConfirm({
+            title: 'Supprimer la vidéo',
+            message: 'Supprimer cette vidéo ?',
+            confirmLabel: 'Supprimer',
+            tone: 'danger',
+        });
+        if (!ok) return;
+        router.delete(`/admin/vitrine/videos/${id}`, { preserveScroll: true });
     };
 
     return (
@@ -1093,6 +1121,7 @@ function VideosSubPanel({ videos }: { videos: any[] }) {
                     </div>
                 </div>
             )}
+            {confirmDialog}
         </div>
     );
 }
@@ -1101,6 +1130,7 @@ function VideosSubPanel({ videos }: { videos: any[] }) {
 // SUB-PANEL 5: SESSIONS FORMATION
 // =============================================================================
 function FormationsSubPanel({ formations, money }: { formations: any[]; money: (v: number) => string }) {
+    const { confirm: askConfirm, dialog: confirmDialog } = useConfirm();
     const [isOpen, setIsOpen] = useState(false);
     const [editingFormation, setEditingFormation] = useState<any>(null);
 
@@ -1162,10 +1192,15 @@ function FormationsSubPanel({ formations, money }: { formations: any[]; money: (
         });
     };
 
-    const handleDelete = (id: number) => {
-        if (window.confirm('Supprimer cette formation ?')) {
-            router.delete(`/admin/vitrine/formations/${id}`, { preserveScroll: true });
-        }
+    const handleDelete = async (id: number) => {
+        const ok = await askConfirm({
+            title: 'Supprimer la formation',
+            message: 'Supprimer cette formation ?',
+            confirmLabel: 'Supprimer',
+            tone: 'danger',
+        });
+        if (!ok) return;
+        router.delete(`/admin/vitrine/formations/${id}`, { preserveScroll: true });
     };
 
     return (
@@ -1390,6 +1425,7 @@ function FormationsSubPanel({ formations, money }: { formations: any[]; money: (
                     </div>
                 </div>
             )}
+            {confirmDialog}
         </div>
     );
 }
@@ -1398,6 +1434,7 @@ function FormationsSubPanel({ formations, money }: { formations: any[]; money: (
 // SUB-PANEL 6: RECRUTEMENTS
 // =============================================================================
 function RecrutementsSubPanel({ recrutements }: { recrutements: any[] }) {
+    const { confirm: askConfirm, dialog: confirmDialog } = useConfirm();
     const [isOpen, setIsOpen] = useState(false);
     const [editingRecrutement, setEditingRecrutement] = useState<any>(null);
     const [currentTime] = useState<number>(() => Date.now());
@@ -1452,10 +1489,15 @@ function RecrutementsSubPanel({ recrutements }: { recrutements: any[] }) {
         });
     };
 
-    const handleDelete = (id: number) => {
-        if (window.confirm('Supprimer cette offre d\'emploi ?')) {
-            router.delete(`/admin/vitrine/recrutements/${id}`, { preserveScroll: true });
-        }
+    const handleDelete = async (id: number) => {
+        const ok = await askConfirm({
+            title: "Supprimer l'offre d'emploi",
+            message: "Supprimer cette offre d'emploi ?",
+            confirmLabel: 'Supprimer',
+            tone: 'danger',
+        });
+        if (!ok) return;
+        router.delete(`/admin/vitrine/recrutements/${id}`, { preserveScroll: true });
     };
 
     return (
@@ -1669,6 +1711,7 @@ function RecrutementsSubPanel({ recrutements }: { recrutements: any[] }) {
                     </div>
                 </div>
             )}
+            {confirmDialog}
         </div>
     );
 }
@@ -1677,6 +1720,7 @@ function RecrutementsSubPanel({ recrutements }: { recrutements: any[] }) {
 // SUB-PANEL 7: POPUPS PROMOTIONNELS
 // =============================================================================
 function PopupsSubPanel({ popups }: { popups: any[] }) {
+    const { confirm: askConfirm, dialog: confirmDialog } = useConfirm();
     const [isOpen, setIsOpen] = useState(false);
     const [editingPopup, setEditingPopup] = useState<any>(null);
 
@@ -1732,10 +1776,15 @@ function PopupsSubPanel({ popups }: { popups: any[] }) {
         });
     };
 
-    const handleDelete = (id: number) => {
-        if (window.confirm('Supprimer ce popup ?')) {
-            router.delete(`/admin/vitrine/popups/${id}`, { preserveScroll: true });
-        }
+    const handleDelete = async (id: number) => {
+        const ok = await askConfirm({
+            title: 'Supprimer le popup',
+            message: 'Supprimer ce popup ?',
+            confirmLabel: 'Supprimer',
+            tone: 'danger',
+        });
+        if (!ok) return;
+        router.delete(`/admin/vitrine/popups/${id}`, { preserveScroll: true });
     };
 
     return (
@@ -1938,6 +1987,7 @@ function PopupsSubPanel({ popups }: { popups: any[] }) {
                     </div>
                 </div>
             )}
+            {confirmDialog}
         </div>
     );
 }
@@ -2544,6 +2594,7 @@ function SettingsSubPanel({ settings }: { settings: any[] }) {
 // SUB-PANEL 9: DEMANDES DE CONTACT & GESTION DES REQUÊTES
 // =============================================================================
 function ContactsSubPanel({ messages = [] }: { messages: any[] }) {
+    const { confirm: askConfirm, dialog: confirmDialog } = useConfirm();
     const [selectedMessage, setSelectedMessage] = useState<any | null>(null);
     const [statusFilter, setStatusFilter] = useState<'all' | 'nouveau' | 'en_cours' | 'traite' | 'archive'>('all');
     const [searchQuery, setSearchQuery] = useState('');
@@ -2590,17 +2641,22 @@ function ContactsSubPanel({ messages = [] }: { messages: any[] }) {
         }, { preserveScroll: true });
     };
 
-    const handleDelete = (id: number) => {
-        if (window.confirm('Supprimer définitivement cette demande de contact ?')) {
-            router.delete(`/admin/vitrine/contacts/${id}`, {
-                preserveScroll: true,
-                onSuccess: () => {
-                    if (selectedMessage?.id === id) {
-                        setSelectedMessage(null);
-                    }
+    const handleDelete = async (id: number) => {
+        const ok = await askConfirm({
+            title: 'Supprimer la demande de contact',
+            message: 'Supprimer définitivement cette demande de contact ?',
+            confirmLabel: 'Supprimer',
+            tone: 'danger',
+        });
+        if (!ok) return;
+        router.delete(`/admin/vitrine/contacts/${id}`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                if (selectedMessage?.id === id) {
+                    setSelectedMessage(null);
                 }
-            });
-        }
+            }
+        });
     };
 
     // KPIs
@@ -3071,6 +3127,7 @@ function ContactsSubPanel({ messages = [] }: { messages: any[] }) {
                     </div>
                 </div>
             )}
+            {confirmDialog}
         </div>
     );
 }

@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../../../app/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../controllers/home_controller.dart';
+import 'rating_label.dart';
 
 /// Top 3 des artisans à proximité triés par note ; état d'attente si la
 /// recherche n'a encore rien retourné.
@@ -15,7 +16,9 @@ class TopArtisansSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final sortedArtisans = controller.artisans.toList()
-      ..sort((a, b) => b.rating.compareTo(a.rating));
+      // Un artisan jamais évalué (rating == null) est classé après les
+      // artisans notés, jamais en tête comme le ferait une note par défaut.
+      ..sort((a, b) => (b.rating ?? -1).compareTo(a.rating ?? -1));
     final topList = sortedArtisans.take(3).toList();
 
     if (topList.isEmpty) {
@@ -82,20 +85,7 @@ class TopArtisansSection extends StatelessWidget {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    const Icon(
-                      Icons.star_rounded,
-                      color: Colors.amber,
-                      size: 16,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      artisan.rating.toStringAsFixed(1),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
+                    RatingLabel(rating: artisan.rating),
                     const SizedBox(width: 8),
                     Text(
                       '•  ${artisan.completedMissions} missions',

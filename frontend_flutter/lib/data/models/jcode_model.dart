@@ -65,8 +65,8 @@ class JcodeModel {
         json['fournisseurId'] ?? json['fournisseur_id'] ?? fournisseur?['id'],
       ),
       code: (json['code'] ?? json['tokenCode'] ?? '').toString(),
-      qrUrl: (json['qrUrl'] ?? json['qr_url']) as String?,
-      ussdCode: (json['ussdCode'] ?? json['ussd_code']) as String?,
+      qrUrl: _asString(json['qrUrl'] ?? json['qr_url']),
+      ussdCode: _asString(json['ussdCode'] ?? json['ussd_code']),
       montant: _parseInt(json['montant'] ?? json['tokenAmount']),
       montantConsomme:
           _parseInt(json['montantConsomme'] ?? json['montant_consomme']),
@@ -78,8 +78,7 @@ class JcodeModel {
               json['expires_at'] ??
               DateTime.now().toIso8601String())
           .toString(),
-      paymentStatus:
-          (json['paymentStatus'] ?? json['paiement_status']) as String?,
+      paymentStatus: _asString(json['paymentStatus'] ?? json['paiement_status']),
       supplier:
           fournisseur == null ? null : SupplierModel.fromJson(fournisseur),
       items: itemsRaw is List
@@ -130,5 +129,14 @@ class JcodeModel {
     if (value is double) return value;
     if (value is int) return value.toDouble();
     return double.tryParse(value.toString());
+  }
+
+  /// Conversion défensive vers `String?` : évite un `as String` direct qui
+  /// casserait toute la désérialisation du J-Code si l'API renvoie un type
+  /// inattendu pour ce champ.
+  static String? _asString(dynamic value) {
+    if (value == null) return null;
+    if (value is String) return value;
+    return value.toString();
   }
 }

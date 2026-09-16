@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Cookie, Check, X, Settings2, ExternalLink } from 'lucide-react';
 
-const STORAGE_KEY = 'prosartisan_cookie_consent_v1';
+export const COOKIE_CONSENT_STORAGE_KEY = 'prosartisan_cookie_consent_v1';
+const STORAGE_KEY = COOKIE_CONSENT_STORAGE_KEY;
 
 export interface CookiePreferences {
     essential: boolean;
@@ -74,6 +75,9 @@ export default function CookieConsent() {
         } catch (e) {
             console.error('Erreur sauvegarde cookies consent:', e);
         }
+        // Notifie les scripts tiers (Google Analytics...) du choix effectué,
+        // pour qu'ils ne se chargent/déchargent qu'en fonction du consentement réel.
+        window.dispatchEvent(new CustomEvent<CookiePreferences>('prosartisan-cookie-consent', { detail: prefs }));
         setIsVisible(false);
         setShowCustomize(false);
     };

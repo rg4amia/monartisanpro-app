@@ -409,11 +409,11 @@ export const api = {
         const res = await fetchAuthApi<{ success: boolean }>('/auth/send-otp', 'POST', { phone: formatted, role: 'fournisseur' });
         return res.success;
     },
-    async supplierVerifyOtp<U = Record<string, unknown>>(phone: string, otp: string): Promise<{ token: string; user: U }> {
+    async supplierVerifyOtp<U = Record<string, unknown>>(phone: string, otp: string): Promise<{ token?: string; user?: U; hasCompletedProfile: boolean }> {
         const clean = phone.replace(/\s+/g, '');
         const formatted = clean.startsWith('+') ? clean : (clean.startsWith('225') ? `+${clean}` : `+225${clean}`);
-        const res = await fetchAuthApi<{ success: boolean; token: string; user: U }>('/auth/verify-otp', 'POST', { phone: formatted, otp: otp.trim(), otpCode: otp.trim() });
-        return { token: res.token, user: res.user };
+        const res = await fetchAuthApi<{ success: boolean; token?: string; user?: U; has_completed_profile: boolean }>('/auth/verify-otp', 'POST', { phone: formatted, otp: otp.trim(), otpCode: otp.trim() });
+        return { token: res.token, user: res.user, hasCompletedProfile: res.has_completed_profile };
     },
     async getSupplierDashboard<T = Record<string, unknown>>(): Promise<T> {
         const res = await fetchAuthApi<{ success: boolean; data: T }>('/supplier/dashboard');

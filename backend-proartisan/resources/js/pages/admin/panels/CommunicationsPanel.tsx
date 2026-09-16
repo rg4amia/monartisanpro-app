@@ -4,9 +4,11 @@ import { router } from '@inertiajs/react';
 
 import { cn } from '@/lib/utils';
 
-import { BellIcon, CheckCircleIcon, DataTable, EmptyState, PlusIcon, SearchIcon, SectionTitle, Surface } from '../shared';
+import { BellIcon, CheckCircleIcon, DataTable, EmptyState, PlusIcon, SearchIcon, SectionTitle, Surface, useConfirm, type ConfirmOptions } from '../shared';
 
 type Communication = any;
+
+type AskConfirm = (options: ConfirmOptions) => Promise<boolean | string>;
 
 interface CommunicationsPanelProps {
     communications: Communication[];
@@ -21,21 +23,32 @@ interface CommunicationsPanelProps {
     onEdit: (comm: Communication) => void;
 }
 
-function handleCommAction(action: string, comm: Communication) {
+async function handleCommAction(action: string, comm: Communication, askConfirm: AskConfirm) {
     if (action === 'edit') return;
     if (action === 'publish') {
         const isRepublish = comm.statut === 'cloture';
-        if (window.confirm(isRepublish ? 'Rediffuser cette communication ?' : 'Publier cette communication ?')) {
-            router.post(`/admin/communications/${comm.id}/publish`, {}, { preserveScroll: true });
-        }
+        const ok = await askConfirm({
+            title: isRepublish ? 'Rediffuser la communication' : 'Publier la communication',
+            message: isRepublish ? 'Rediffuser cette communication ?' : 'Publier cette communication ?',
+            confirmLabel: isRepublish ? 'Rediffuser' : 'Publier',
+        });
+        if (ok) router.post(`/admin/communications/${comm.id}/publish`, {}, { preserveScroll: true });
     } else if (action === 'cloturer') {
-        if (window.confirm('Clôturer (désactiver) cette publication ?')) {
-            router.post(`/admin/communications/${comm.id}/cloturer`, {}, { preserveScroll: true });
-        }
+        const ok = await askConfirm({
+            title: 'Désactiver la publication',
+            message: 'Clôturer (désactiver) cette publication ?',
+            confirmLabel: 'Désactiver',
+            tone: 'danger',
+        });
+        if (ok) router.post(`/admin/communications/${comm.id}/cloturer`, {}, { preserveScroll: true });
     } else if (action === 'delete') {
-        if (window.confirm('Supprimer définitivement cette communication ?')) {
-            router.delete(`/admin/communications/${comm.id}`, { preserveScroll: true });
-        }
+        const ok = await askConfirm({
+            title: 'Supprimer la communication',
+            message: 'Supprimer définitivement cette communication ?',
+            confirmLabel: 'Supprimer',
+            tone: 'danger',
+        });
+        if (ok) router.delete(`/admin/communications/${comm.id}`, { preserveScroll: true });
     }
 }
 
@@ -52,6 +65,7 @@ export function CommunicationsPanel({
     onEdit,
 }: CommunicationsPanelProps) {
     const list = communications ?? [];
+    const { confirm: askConfirm, dialog: confirmDialog } = useConfirm();
 
     return (
         <section className="mt-5 space-y-6">
@@ -221,7 +235,7 @@ export function CommunicationsPanel({
                                         onChange={(e) => {
                                             const action = e.target.value;
                                             if (action === 'edit') onEdit(comm);
-                                            else handleCommAction(action, comm);
+                                            else void handleCommAction(action, comm, askConfirm);
                                             e.target.value = '';
                                         }}
                                     >
@@ -315,7 +329,7 @@ export function CommunicationsPanel({
                                                     onChange={(e) => {
                                                         const action = e.target.value;
                                                         if (action === 'edit') onEdit(comm);
-                                                        else handleCommAction(action, comm);
+                                                        else void handleCommAction(action, comm, askConfirm);
                                                         e.target.value = '';
                                                     }}
                                                 >
@@ -338,6 +352,7 @@ export function CommunicationsPanel({
                     </DataTable>
                 </div>
             </Surface>
+            {confirmDialog}
         </section>
     );
 }

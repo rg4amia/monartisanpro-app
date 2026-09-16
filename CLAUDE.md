@@ -4,10 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**ProsArtisan** — marketplace artisanal pour la Côte d'Ivoire. Deux sous-projets :
+**ProsArtisan** — marketplace artisanal pour la Côte d'Ivoire. Trois sous-projets :
 
-- `backend-proartisan/` — Laravel 12 API (PHP 8.2+, MySQL 5.7.39)
+- `backend-proartisan/` — Laravel 12 API + backoffice Inertia (PHP 8.2+, MySQL 5.7.39)
 - `frontend_flutter/` — Flutter 3.x mobile app (Android-first)
+- `vitrine-nextjs/` — site vitrine public (Next.js 16, React 19, export statique)
 
 Déploiement production : Hostinger shared hosting via GitHub Actions (`.github/workflows/backend-ci.yml`).
 
@@ -159,6 +160,8 @@ lib/
 
 **Base URL API** : `http://localhost:8000/api/v1` (dev) → variable d'env pour prod.
 
+**Tests de contrôleurs GetX asynchrones** : tout contrôleur combinant un appel réseau (Dio) et/ou `Get.snackbar` doit être testé via le harnais partagé `test/helpers/getx_snackbar_harness.dart` (`runControllerAction(tester, action)`), jamais par un `await` direct sous `testWidgets` — voir Règle d'Or 62 du PRD pour le détail des deux pièges (blocage `FakeAsync`/Dio, `Timer` de snackbar fuyant vers un test ultérieur) qu'il neutralise.
+
 ---
 
 ## Backoffice admin (Inertia 2 + React 19 + TS)
@@ -167,8 +170,31 @@ lib/
 
 - **Permissions front** : la prop partagée `auth.permissions` (`['*']` = accès total) pilote l'affichage des onglets et des actions ; le backend reste seul juge (`can:` middleware).
 - **Listes** : chargées page par page via `useServerTable` (rechargement partiel Inertia `only`), filtres persistés en `localStorage`.
-- **Confirmations destructives** : toujours via `useConfirm()` (modale accessible : `role="dialog"`, focus, Échap), jamais `window.confirm`/`prompt`.
-- **Tests** : Vitest + Testing Library, fichiers `*.test.tsx` co-localisés (exclus du glob Inertia dans `app.tsx`/`ssr.tsx`).
+- **Confirmations destructives** : toujours via `useConfirm()` (modale accessible : `role="dialog"`, focus, Échap), jamais `window.confirm`/`prompt` — aucune exception résiduelle (`DeliveriesTrackingSection` migré).
+- **Tests** : Vitest + Testing Library, fichiers `*.test.tsx` co-localisés (exclus du glob Inertia dans `app.tsx`/`ssr.tsx`) — **couverture complète** de `panels/` : tout composant appelant `router.post/put/delete` ou `useForm` depuis `@inertiajs/react` doit y être mocké (voir les fichiers `*.test.tsx` existants pour le patron), et toute modale de confirmation testée via `screen.findByRole('dialog')` plutôt qu'un mock de `window.confirm`.
+
+---
+
+## Vitrine (`vitrine-nextjs/`)
+
+### Commandes essentielles Vitrine
+
+```bash
+cd vitrine-nextjs
+
+npm run dev       # serveur de développement Next.js
+npm run build     # export statique (output: "export")
+npm test          # tests unitaires (Vitest + Testing Library)
+npm run test:watch
+```
+
+### Architecture Vitrine
+
+App Router (`src/app/`), composants partagés dans `src/components/`, accès API dans `src/lib/api.ts` (repli automatique sur un contenu par défaut si l'API backend est injoignable — concerne uniquement le contenu marketing statique, jamais des données financières ou personnelles réelles, cf. Règle d'Or 53 du PRD).
+
+- **Consentement cookies (RGPD, Règle d'Or 20)** : `CookieConsent.tsx` (bandeau + modale de personnalisation, persistance `localStorage`) ; `GoogleAnalytics.tsx` ne charge `gtag.js` que si le consentement analytique est explicitement accordé et réagit en direct à l'événement `prosartisan-cookie-consent`.
+- **Espace Fournisseur** : authentification par OTP (`api.supplierSendOtp`/`supplierVerifyOtp`, normalisation automatique des numéros locaux vers `+225`), session via `localStorage` (`supplier_token`), redirection automatique vers `/supplier/login` sur 401.
+- **Tests** : Vitest + Testing Library (config `vitest.config.ts`, setup `src/test/setup.ts`), fichiers `*.test.ts(x)` co-localisés.
 
 ---
 

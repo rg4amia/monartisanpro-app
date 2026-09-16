@@ -8,7 +8,10 @@ class ArtisanModel {
   final String? sector;
   final int experienceYears;
   final int scoreProsArtisan;
-  final double rating;
+
+  /// `null` quand l'artisan n'a jamais été évalué — ne jamais afficher une
+  /// note par défaut (Règle d'or 29 : « Non évalué », jamais 0 ni 5).
+  final double? rating;
   final int completedMissions;
   final String? distance;
   final double? distanceMetres;
@@ -32,7 +35,7 @@ class ArtisanModel {
     required this.isGoldenMarker,
     this.nightInterventionAvailable = false,
     required this.experienceYears,
-    required this.rating,
+    this.rating,
     required this.completedMissions,
     this.name,
     this.photo,
@@ -75,7 +78,7 @@ class ArtisanModel {
         json['experienceYears'] ?? json['experience_years'],
       ),
       scoreProsArtisan: scoreProsArtisan,
-      rating: _parseDouble(json['rating']) ?? 0.0,
+      rating: _parseDouble(json['rating']),
       completedMissions: _parseInt(
         json['completedMissions'] ?? json['completed_missions'],
       ),

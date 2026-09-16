@@ -53,11 +53,11 @@ class PaymentInitiationModel {
         waveLaunchUrl: json['wave_launch_url']?.toString() ??
             json['waveLaunchUrl']?.toString(),
         orderId: json['order_id']?.toString() ?? json['orderId']?.toString(),
-        virementInstructions: json['virement_instructions'] != null
+        virementInstructions: json['virement_instructions'] is Map<String, dynamic>
             ? VirementInstructionsModel.fromJson(
                 json['virement_instructions'] as Map<String, dynamic>,
               )
-            : json['virementInstructions'] != null
+            : json['virementInstructions'] is Map<String, dynamic>
                 ? VirementInstructionsModel.fromJson(
                     json['virementInstructions'] as Map<String, dynamic>,
                   )

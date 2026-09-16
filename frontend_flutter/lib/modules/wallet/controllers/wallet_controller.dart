@@ -29,9 +29,11 @@ class WalletController extends GetxController {
       walletMateriaux.value = balance.walletMateriaux;
       walletMo.value = balance.walletMo;
 
-      // Fetch or fallback to driver balance
+      // Un livreur sans champ `wallet_escrow_livreur` dans la réponse API
+      // n'a aucun séquestre en cours — jamais de valeur inventée affichée
+      // à sa place (Règle d'or 29).
       walletEscrowLivreur.value =
-          balanceData['wallet_escrow_livreur'] as int? ?? 2700;
+          balanceData['wallet_escrow_livreur'] as int? ?? 0;
 
       final transactionsResponse =
           await _apiClient.get(ApiEndpoints.transactions);

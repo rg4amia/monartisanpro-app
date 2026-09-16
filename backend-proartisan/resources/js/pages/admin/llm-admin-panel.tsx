@@ -1,6 +1,8 @@
 import axios from 'axios';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { useConfirm } from './shared';
+
 // Mock institutional docs for quick demo ingestion
 const MOCK_INSTITUTIONAL_DOCS = [
   {
@@ -33,6 +35,8 @@ interface LogItem {
 }
 
 export default function LlmAdminPanel() {
+  const { confirm: askConfirm, dialog: confirmDialog } = useConfirm();
+
   // Data lists
   const [stagingItems, setStagingItems] = useState<any[]>([]);
   const [productionItems, setProductionItems] = useState<any[]>([]);
@@ -167,7 +171,6 @@ export default function LlmAdminPanel() {
       } catch (err: any) {
         setUploadProgress(null);
         addLog('system', `Erreur téléversement : ${err.message}`);
-        alert("Une erreur s'est produite lors de l'importation.");
       }
     };
     reader.readAsDataURL(file);
@@ -325,7 +328,7 @@ export default function LlmAdminPanel() {
       addLog('system', `Fiche ${selectedStagingItem.id} sauvegardée localement.`);
       fetchData();
     } catch (err: any) {
-      alert("Erreur lors de la sauvegarde : " + err.message);
+      addLog('system', "Erreur lors de la sauvegarde : " + err.message);
     }
   };
 
@@ -338,15 +341,21 @@ export default function LlmAdminPanel() {
       setSelectedStagingItem(null);
       fetchData();
     } catch (err: any) {
-      alert("Erreur lors de l'approbation : " + err.message);
+      addLog('system', "Erreur lors de l'approbation : " + err.message);
     }
   };
 
   // Reject Staging Item
   const rejectStagingItem = async () => {
     if (!selectedStagingItem) return;
-    const reason = prompt("Veuillez saisir le motif du rejet :");
-    if (reason === null) return;
+    const reason = await askConfirm({
+      title: 'Rejeter la fiche',
+      promptLabel: 'Motif du rejet',
+      promptMinLength: 1,
+      confirmLabel: 'Rejeter',
+      tone: 'danger',
+    });
+    if (reason === false) return;
     try {
       await axios.post(`/admin/api/llm/staging/${selectedStagingItem.id}/reject`, {
         reviewer_notes: reason
@@ -355,34 +364,46 @@ export default function LlmAdminPanel() {
       setSelectedStagingItem(null);
       fetchData();
     } catch (err: any) {
-      alert("Erreur lors du rejet : " + err.message);
+      addLog('system', "Erreur lors du rejet : " + err.message);
     }
   };
 
   // Delete Staging Item
   const deleteStagingItem = async () => {
     if (!selectedStagingItem) return;
-    if (!confirm("Voulez-vous vraiment supprimer cette fiche de staging ? Cette action est irréversible.")) return;
+    const ok = await askConfirm({
+      title: 'Supprimer la fiche de staging',
+      message: 'Voulez-vous vraiment supprimer cette fiche de staging ? Cette action est irréversible.',
+      confirmLabel: 'Supprimer',
+      tone: 'danger',
+    });
+    if (!ok) return;
     try {
       await axios.delete(`/admin/api/llm/staging/${selectedStagingItem.id}`);
       addLog('system', `Fiche ${selectedStagingItem.id} SUPPRIMÉE de la base de Staging.`);
       setSelectedStagingItem(null);
       fetchData();
     } catch (err: any) {
-      alert("Erreur lors de la suppression : " + err.message);
+      addLog('system', "Erreur lors de la suppression : " + err.message);
     }
   };
 
   // Clear Ingestion History
   const clearIngestionHistory = async () => {
-    if (!confirm("Voulez-vous vraiment vider tout l'historique d'ingestion ainsi que les fichiers téléversés ?")) return;
+    const ok = await askConfirm({
+      title: "Réinitialiser l'historique d'ingestion",
+      message: "Voulez-vous vraiment vider tout l'historique d'ingestion ainsi que les fichiers téléversés ?",
+      confirmLabel: 'Réinitialiser',
+      tone: 'danger',
+    });
+    if (!ok) return;
     try {
       await axios.delete('/admin/api/llm/imports');
       addLog('system', "Historique des ingestions et fichiers d'importation réinitialisés.");
       setCustomDocs([]);
       fetchData();
     } catch (err: any) {
-      alert("Erreur lors de la réinitialisation : " + err.message);
+      addLog('system', "Erreur lors de la réinitialisation : " + err.message);
     }
   };
 
@@ -902,6 +923,7 @@ export default function LlmAdminPanel() {
         </div>
       </div>
 
+      {confirmDialog}
     </div>
   );
 }

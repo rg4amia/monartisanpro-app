@@ -11,6 +11,7 @@ import {
     money,
     SectionTitle,
     Surface,
+    useConfirm,
 } from '../shared';
 
 interface CashoutItem {
@@ -41,6 +42,7 @@ export function CashoutQuincaillerieSection({
     settingsList = [],
     suppliers = [],
 }: CashoutQuincaillerieSectionProps) {
+    const { confirm: askConfirm, dialog: confirmDialog } = useConfirm();
     const solde = financialKpis?.solde_general ?? {};
     const cashoutKpis = financialKpis?.cashout_kpis ?? {};
     const cashoutsBySupplier = financialKpis?.cashouts_by_supplier ?? [];
@@ -68,6 +70,8 @@ export function CashoutQuincaillerieSection({
     const [newMode, setNewMode] = useState('especes_guichet');
     const [newNotes, setNewNotes] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [rateError, setRateError] = useState<string | null>(null);
+    const [newCashoutError, setNewCashoutError] = useState<string | null>(null);
 
     const handleUpdateRate = (e: React.FormEvent) => {
         e.preventDefault();
@@ -75,10 +79,11 @@ export function CashoutQuincaillerieSection({
 
         const numericRate = parseFloat(rateInput);
         if (isNaN(numericRate) || numericRate < 0 || numericRate > 100) {
-            alert('Veuillez renseigner un pourcentage valide (ex: 2.5)');
+            setRateError('Veuillez renseigner un pourcentage valide (ex: 2.5)');
             return;
         }
 
+        setRateError(null);
         setIsUpdatingRate(true);
         router.put(
             `/admin/settings/${cashoutSetting.id}`,
@@ -93,10 +98,11 @@ export function CashoutQuincaillerieSection({
     const handleCreateCashout = (e: React.FormEvent) => {
         e.preventDefault();
         if (!newSupplierId || !newBeneficiary || !newPhone || !newAmount) {
-            alert('Veuillez remplir tous les champs obligatoires.');
+            setNewCashoutError('Veuillez remplir tous les champs obligatoires.');
             return;
         }
 
+        setNewCashoutError(null);
         setIsSubmitting(true);
         router.post(
             '/admin/cashouts',
@@ -226,6 +232,9 @@ export function CashoutQuincaillerieSection({
                                 {isUpdatingRate ? 'Mise à jour...' : 'Appliquer'}
                             </button>
                         </div>
+                        {rateError ? (
+                            <p role="alert" className="text-xs font-semibold text-red-600">{rateError}</p>
+                        ) : null}
                         <p className="text-xs text-[var(--admin-muted)] leading-relaxed">
                             Ce pourcentage est automatiquement prélevé sur le montant brut du retrait pour rétribuer la quincaillerie partenaire tenant lieu de guichet relais.
                         </p>
@@ -370,9 +379,15 @@ export function CashoutQuincaillerieSection({
                                                     </button>
                                                     <button
                                                         type="button"
-                                                        onClick={() => {
-                                                            const reason = prompt('Motif du rejet :');
-                                                            if (reason) {
+                                                        onClick={async () => {
+                                                            const reason = await askConfirm({
+                                                                title: 'Rejeter la demande de cash-out',
+                                                                promptLabel: 'Motif du rejet',
+                                                                promptMinLength: 1,
+                                                                confirmLabel: 'Rejeter',
+                                                                tone: 'danger',
+                                                            });
+                                                            if (reason && typeof reason === 'string') {
                                                                 router.post(`/admin/cashouts/${item.id}/reject`, { reason }, { preserveScroll: true });
                                                             }
                                                         }}
@@ -510,6 +525,10 @@ export function CashoutQuincaillerieSection({
                                 />
                             </div>
 
+                            {newCashoutError ? (
+                                <p role="alert" className="text-xs font-semibold text-red-600">{newCashoutError}</p>
+                            ) : null}
+
                             <div className="flex justify-end gap-3 pt-3 border-t border-[var(--admin-border)]">
                                 <button
                                     type="button"
@@ -530,6 +549,7 @@ export function CashoutQuincaillerieSection({
                     </div>
                 </div>
             )}
+            {confirmDialog}
         </div>
     );
 }

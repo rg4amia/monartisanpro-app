@@ -134,20 +134,22 @@ class MissionModel {
               DateTime.now().toIso8601String())
           .toString(),
       updatedAt: (json['updated_at'] ?? json['updatedAt'])?.toString(),
-      clientName: (json['client_name'] ??
-          json['clientName'] ??
-          client?['name'] ??
-          json['clientNom']) as String?,
-      artisanName: (json['artisan_name'] ??
-          json['artisanName'] ??
-          artisan?['name']) as String?,
-      description: (json['description'] ?? json['problem']) as String?,
-      category: (json['category'] ??
-          json['geminiCategory'] ??
-          json['artisanCategory']) as String?,
-      urgency: (json['urgency'] ?? json['geminiUrgency']) as String?,
+      clientName: _asString(
+        json['client_name'] ??
+            json['clientName'] ??
+            client?['name'] ??
+            json['clientNom'],
+      ),
+      artisanName: _asString(
+        json['artisan_name'] ?? json['artisanName'] ?? artisan?['name'],
+      ),
+      description: _asString(json['description'] ?? json['problem']),
+      category: _asString(
+        json['category'] ?? json['geminiCategory'] ?? json['artisanCategory'],
+      ),
+      urgency: _asString(json['urgency'] ?? json['geminiUrgency']),
       location: _parseLocation(json),
-      paymentStatus: (json['paymentStatus'] as String?) ??
+      paymentStatus: _asString(json['paymentStatus']) ??
           _derivePaymentStatus((json['status'] ?? '').toString()),
       paymentType:
           (json['payment_type'] ?? json['paymentType'] ?? 'total').toString(),
@@ -156,11 +158,11 @@ class MissionModel {
               ? null
               : (json['statusGemini'] ?? json['status']).toString(),
       hasDevis: json['has_devis'] == true || json['hasDevis'] == true,
-      photos: (json['photos'] as List<dynamic>?)
-              ?.map((e) => e.toString())
-              .toList() ??
+      photos: (json['photos'] is List
+              ? (json['photos'] as List).map((e) => e.toString()).toList()
+              : null) ??
           [],
-      clientPhone: (client?['phone'] ?? json['clientPhone'])?.toString(),
+      clientPhone: _asString(client?['phone'] ?? json['clientPhone']),
       clientLatitude: json['clientCoordinates'] is Map<String, dynamic>
           ? double.tryParse(
               (json['clientCoordinates'] as Map<String, dynamic>)['lat']
@@ -348,6 +350,15 @@ class MissionModel {
     if (value is double) return value.clamp(0.0, 1.0);
     if (value is int) return value.toDouble().clamp(0.0, 1.0);
     return (double.tryParse(value.toString()) ?? 0.0).clamp(0.0, 1.0);
+  }
+
+  /// Conversion défensive vers `String?` : jamais de `as String` direct sur
+  /// une valeur JSON, qui casserait toute la désérialisation de la mission
+  /// si l'API renvoie un type inattendu (nombre, booléen...) pour ce champ.
+  static String? _asString(dynamic value) {
+    if (value == null) return null;
+    if (value is String) return value;
+    return value.toString();
   }
 
   static double _computeRatio(int materiaux, int total) {

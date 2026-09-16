@@ -803,9 +803,14 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         }
     };
 
-    const handleToggleUserStatus = (user: AdminUser): void => {
+    const handleToggleUserStatus = async (user: AdminUser): Promise<void> => {
         if (auth?.user?.phone === user.phone || auth?.user?.email === user.email) {
-            window.alert('Vous ne pouvez pas modifier votre propre statut.');
+            await askConfirm({
+                title: 'Action impossible',
+                message: 'Vous ne pouvez pas modifier votre propre statut.',
+                confirmLabel: 'Compris',
+                cancelLabel: 'Fermer',
+            });
             return;
         }
 
@@ -820,14 +825,18 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
             });
             setStatusModalOpen(true);
         } else {
-            if (window.confirm(`Voulez-vous réactiver le compte de ${user.name} ?`)) {
-                router.post(`/admin/users/${user.id}/toggle-status`, {
-                    account_status: 'actif',
-                    account_status_reason: '',
-                }, {
-                    preserveScroll: true,
-                });
-            }
+            const ok = await askConfirm({
+                title: 'Réactiver le compte',
+                message: `Voulez-vous réactiver le compte de ${user.name} ?`,
+                confirmLabel: 'Réactiver',
+            });
+            if (!ok) return;
+            router.post(`/admin/users/${user.id}/toggle-status`, {
+                account_status: 'actif',
+                account_status_reason: '',
+            }, {
+                preserveScroll: true,
+            });
         }
     };
 
@@ -1067,12 +1076,17 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         }
     };
 
-    const handleDeletePromo = (promo: PromoCodeItem): void => {
-        if (window.confirm(`Supprimer définitivement le code promo "${promo.code}" ?`)) {
-            router.delete(`/admin/promo-codes/${promo.id}`, {
-                preserveScroll: true,
-            });
-        }
+    const handleDeletePromo = async (promo: PromoCodeItem): Promise<void> => {
+        const ok = await askConfirm({
+            title: 'Supprimer le code promo',
+            message: `Supprimer définitivement le code promo "${promo.code}" ?`,
+            tone: 'danger',
+            confirmLabel: 'Supprimer',
+        });
+        if (!ok) return;
+        router.delete(`/admin/promo-codes/${promo.id}`, {
+            preserveScroll: true,
+        });
     };
 
     // ── Quota IA par utilisateur ──────────────────────────────────────────────
@@ -1466,21 +1480,31 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         submitAction(`/admin/fournisseurs/${fournisseur.id}/review`, { decision });
     };
 
-    const handleCnmciDecision = (userId: number, decision: 'valide' | 'rejete'): void => {
-        if (window.confirm(`Confirmer la décision : ${decision === 'valide' ? 'Valider' : 'Rejeter'} cette affiliation CNMCI ?`)) {
-            submitAction(`/admin/kyc/${userId}/cnmci-review`, { decision });
-        }
+    const handleCnmciDecision = async (userId: number, decision: 'valide' | 'rejete'): Promise<void> => {
+        const ok = await askConfirm({
+            title: 'Affiliation CNMCI',
+            message: `Confirmer la décision : ${decision === 'valide' ? 'Valider' : 'Rejeter'} cette affiliation CNMCI ?`,
+            confirmLabel: decision === 'valide' ? 'Valider' : 'Rejeter',
+            tone: decision === 'rejete' ? 'danger' : 'primary',
+        });
+        if (!ok) return;
+        submitAction(`/admin/kyc/${userId}/cnmci-review`, { decision });
     };
 
-    const handleToggleScoreFreeze = (artisan: ArtisanScoreItem): void => {
+    const handleToggleScoreFreeze = async (artisan: ArtisanScoreItem): Promise<void> => {
         const action = artisan.score_frozen ? 'dégeler' : 'geler';
-        if (window.confirm(`Voulez-vous vraiment ${action} le score de l'artisan ${artisan.name} ?`)) {
-            setActionLoading(true);
-            router.post(`/admin/users/${artisan.id}/toggle-score-freeze`, {}, {
-                preserveScroll: true,
-                onFinish: () => setActionLoading(false),
-            });
-        }
+        const ok = await askConfirm({
+            title: 'Score ProsArtisan',
+            message: `Voulez-vous vraiment ${action} le score de l'artisan ${artisan.name} ?`,
+            confirmLabel: action === 'geler' ? 'Geler' : 'Dégeler',
+            tone: action === 'geler' ? 'danger' : 'primary',
+        });
+        if (!ok) return;
+        setActionLoading(true);
+        router.post(`/admin/users/${artisan.id}/toggle-score-freeze`, {}, {
+            preserveScroll: true,
+            onFinish: () => setActionLoading(false),
+        });
     };
 
     const renderPagination = (links: any[], only: string[] = ['allNotifications']) => {
