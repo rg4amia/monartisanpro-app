@@ -297,7 +297,7 @@ export function CartographyPanel({
                                 <button
                                     type="button"
                                     onClick={handleResetFilters}
-                                    className="h-9 rounded-xl border border-[var(--admin-border)] bg-white/60 px-3 text-xs font-semibold text-[var(--admin-text-soft)] hover:bg-white hover:text-[var(--admin-text)] transition"
+                                    className="h-9 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 text-xs font-semibold text-[var(--admin-text-soft)] hover:bg-[var(--admin-panel-strong)] hover:text-[var(--admin-text)] transition"
                                 >
                                     Réinitialiser
                                 </button>
@@ -474,7 +474,7 @@ export function CartographyPanel({
                                         'rounded-xl px-3 py-1.5 text-xs font-semibold transition',
                                         entityType === tab.id
                                             ? 'bg-[#241b16] text-white shadow-sm'
-                                            : 'text-[var(--admin-text-soft)] hover:text-[var(--admin-text)] hover:bg-white/40'
+                                            : 'text-[var(--admin-text-soft)] hover:text-[var(--admin-text)] hover:bg-[var(--admin-panel)]'
                                     )}
                                 >
                                     {tab.label}
@@ -615,7 +615,7 @@ export function CartographyPanel({
                                     type="button"
                                     disabled={safeEntities.current_page <= 1 || isLoading}
                                     onClick={() => handlePageChange(safeEntities.current_page - 1)}
-                                    className="rounded-xl border border-[var(--admin-border)] px-3 py-1.5 text-xs font-semibold disabled:opacity-40 hover:bg-white/60 transition"
+                                    className="rounded-xl border border-[var(--admin-border)] px-3 py-1.5 text-xs font-semibold disabled:opacity-40 hover:bg-[var(--admin-panel-strong)] transition"
                                 >
                                     &larr; Précédent
                                 </button>
@@ -623,7 +623,7 @@ export function CartographyPanel({
                                     type="button"
                                     disabled={safeEntities.current_page >= safeEntities.last_page || isLoading}
                                     onClick={() => handlePageChange(safeEntities.current_page + 1)}
-                                    className="rounded-xl border border-[var(--admin-border)] px-3 py-1.5 text-xs font-semibold disabled:opacity-40 hover:bg-white/60 transition"
+                                    className="rounded-xl border border-[var(--admin-border)] px-3 py-1.5 text-xs font-semibold disabled:opacity-40 hover:bg-[var(--admin-panel-strong)] transition"
                                 >
                                     Suivant &rarr;
                                 </button>

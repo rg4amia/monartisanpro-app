@@ -88,7 +88,7 @@ export function ObservabilityPanel({
                                 type="button"
                                 disabled={actionLoading || queue.failed === 0}
                                 onClick={onFlushJobs}
-                                className="rounded-xl border border-[var(--admin-border)] bg-white/60 px-3 py-2 text-xs font-bold text-[var(--admin-text-soft)] transition hover:bg-white/80 disabled:opacity-50"
+                                className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs font-bold text-[var(--admin-text-soft)] transition hover:bg-[var(--admin-panel-strong)] disabled:opacity-50"
                             >
                                 Purger
                             </button>
@@ -172,7 +172,7 @@ export function ObservabilityPanel({
                             <EmptyState description="Aucune tentative récente." title="Aucun signal" />
                         ) : (
                             fraud.recent.map((entry) => (
-                                <div key={entry.id} className="rounded-2xl border border-[var(--admin-border)] bg-white/60 p-4">
+                                <div key={entry.id} className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] p-4">
                                     <p className="text-sm font-semibold text-[var(--admin-text)]">{entry.user ?? 'Utilisateur inconnu'}</p>
                                     <p className="text-xs text-[var(--admin-muted)]">
                                         {entry.phone ?? '—'}{entry.mission_id ? ` • Mission #${entry.mission_id}` : ''} • {entry.created_at ? dateTimeShort(entry.created_at) : '—'}
@@ -191,7 +191,7 @@ export function ObservabilityPanel({
                             <EmptyState description="Aucune mission en attente de validation Référent." title="Rien à valider" />
                         ) : (
                             referent.recent.map((mission) => (
-                                <div key={mission.id} className="rounded-2xl border border-[var(--admin-border)] bg-white/60 p-4">
+                                <div key={mission.id} className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] p-4">
                                     <div className="flex items-center justify-between gap-3">
                                         <p className="text-sm font-semibold text-[var(--admin-text)]">Mission #{mission.id}</p>
                                         <span className="text-xs font-semibold text-[#b77918]">{money(mission.montant_total)}</span>

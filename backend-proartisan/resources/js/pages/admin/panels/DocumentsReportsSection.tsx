@@ -104,7 +104,7 @@ export function DocumentsReportsSection({
                             'inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-2xl border transition shadow-sm',
                             isSyncing
                                 ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
-                                : 'bg-white hover:bg-slate-50 text-[var(--admin-text)] border-[var(--admin-border)]'
+                                : 'bg-[var(--admin-panel-strong)] hover:bg-slate-50 text-[var(--admin-text)] border-[var(--admin-border)]'
                         )}
                     >
                         <span className={cn('transition-transform', isSyncing && 'animate-spin')}>🔄</span>
@@ -134,7 +134,7 @@ export function DocumentsReportsSection({
             </div>
 
             {/* 3. FILTRES & RECHERCHE */}
-            <Surface className="rounded-[28px] p-4 lg:p-5 border border-[var(--admin-border)] bg-white/70 space-y-4">
+            <Surface className="rounded-[28px] p-4 lg:p-5 border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] space-y-4">
                 <div className="flex flex-col md:flex-row gap-3 items-center justify-between">
                     {/* Recherche */}
                     <div className="w-full md:w-80 relative">
@@ -144,7 +144,7 @@ export function DocumentsReportsSection({
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder="Rechercher réf, artisan, client, tél, mission..."
-                            className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-[var(--admin-border)] bg-white focus:outline-none focus:ring-2 focus:ring-[#ebb95e]"
+                            className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] text-[var(--admin-text)] focus:outline-none focus:ring-2 focus:ring-[#ebb95e]"
                         />
                         {search && (
                             <button
@@ -163,7 +163,7 @@ export function DocumentsReportsSection({
                         <select
                             value={typeFilter}
                             onChange={(e) => setTypeFilter(e.target.value)}
-                            className="text-xs rounded-xl border border-[var(--admin-border)] bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#ebb95e]"
+                            className="text-xs rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] text-[var(--admin-text)] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#ebb95e]"
                         >
                             <option value="all">Tous les documents ({documents.length})</option>
                             <option value="recu_liberation_jalon">Reçus Libération Jalon (Artisans)</option>
@@ -290,7 +290,7 @@ export function DocumentsReportsSection({
             {/* 5. MODAL DE DÉTAIL / APERÇU DU DOCUMENT */}
             {selectedDoc && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
-                    <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-[var(--admin-border)] overflow-hidden">
+                    <div className="relative w-full max-w-lg bg-[var(--admin-panel-strong)] rounded-3xl shadow-2xl border border-[var(--admin-border)] overflow-hidden">
                         {/* Header Modal */}
                         <div className="flex items-center justify-between p-5 border-b border-[var(--admin-border)] bg-gradient-to-r from-slate-50 to-[#fdfaf5]">
                             <div className="flex items-center gap-3">

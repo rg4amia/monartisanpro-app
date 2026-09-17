@@ -63,7 +63,7 @@ export function ArtisanLedgerModal({
                         <EmptyState description="Aucun événement enregistré dans le Ledger pour cet artisan." title="Historique vide" />
                     ) : (
                         entries.map((entry) => (
-                            <div key={entry.id} className="rounded-2xl border border-[var(--admin-border)] bg-white/60 p-4 flex items-start justify-between gap-4">
+                            <div key={entry.id} className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] p-4 flex items-start justify-between gap-4">
                                 <div className="min-w-0">
                                     <div className="flex items-center gap-2">
                                         <span className={cn(
@@ -128,16 +128,16 @@ export function MissionDetailModal({
 
                 <div className="mt-6 space-y-6">
                     <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
-                        <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-white/40">
+                        <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)]">
                             <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Description</p>
                             <p className="mt-1 text-sm text-[var(--admin-text)] font-medium">{mission.description}</p>
                         </div>
-                        <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-white/40">
+                        <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)]">
                             <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Client</p>
                             <p className="mt-1 text-sm text-[var(--admin-text)] font-bold">{mission.client?.name ?? 'Non renseigné'}</p>
                             <p className="text-xs text-[var(--admin-muted)]">{mission.client?.phone}</p>
                         </div>
-                        <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-white/40">
+                        <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)]">
                             <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Artisan</p>
                             <p className="mt-1 text-sm text-[var(--admin-text)] font-bold">{mission.artisan?.name ?? 'Non affecté'}</p>
                             <p className="text-xs text-[var(--admin-muted)]">{mission.artisan?.phone}</p>
@@ -145,19 +145,19 @@ export function MissionDetailModal({
                     </div>
 
                     <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
-                        <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-white/40">
+                        <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)]">
                             <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Analyse Gemini IA</p>
                             <p className="mt-1 text-sm text-[var(--admin-text)] font-semibold">{mission.gemini_category ?? 'Non classée'}</p>
                             <p className="text-xs text-[var(--admin-text-soft)]">Urgence : {mission.gemini_urgency ?? 'N/A'}</p>
                         </div>
-                        <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-white/40">
+                        <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)]">
                             <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Financement total</p>
                             <p className="mt-1 text-base font-bold text-[#8a6b3d]">{mission.montant_total ? money(mission.montant_total) : 'Non défini'}</p>
                             {mission.montant_materiaux && (
                                 <p className="text-xs text-[var(--admin-text-soft)]">Matériaux : {money(mission.montant_materiaux)}</p>
                             )}
                         </div>
-                        <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-white/40">
+                        <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)]">
                             <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Main d'œuvre & Ratio</p>
                             <p className="mt-1 text-sm font-semibold text-[var(--admin-text)]">
                                 {mission.montant_mo ? money(mission.montant_mo) : 'Non défini'}
@@ -171,7 +171,7 @@ export function MissionDetailModal({
                     <div className="space-y-2.5">
                         <h3 className="text-sm font-bold text-[var(--admin-text)] uppercase tracking-wider">Historique des Jalons</h3>
                         {mission.jalons && mission.jalons.length > 0 ? (
-                            <div className="overflow-x-auto rounded-2xl border border-[var(--admin-border)] bg-white/30">
+                            <div className="overflow-x-auto rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)]">
                                 <table className="min-w-full divide-y divide-[var(--admin-border)] text-xs text-left">
                                     <thead className="bg-[#fcf8f2] text-[var(--admin-muted)] font-semibold uppercase">
                                         <tr>
@@ -228,7 +228,7 @@ export function MissionDetailModal({
                     <div className="space-y-2.5">
                         <h3 className="text-sm font-bold text-[var(--admin-text)] uppercase tracking-wider">Historique des J-Codes (Matériaux)</h3>
                         {mission.jcodes && mission.jcodes.length > 0 ? (
-                            <div className="overflow-x-auto rounded-2xl border border-[var(--admin-border)] bg-white/30">
+                            <div className="overflow-x-auto rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)]">
                                 <table className="min-w-full divide-y divide-[var(--admin-border)] text-xs text-left">
                                     <thead className="bg-[#fcf8f2] text-[var(--admin-muted)] font-semibold uppercase">
                                         <tr>
@@ -266,7 +266,7 @@ export function MissionDetailModal({
                     <div className="space-y-2.5">
                         <h3 className="text-sm font-bold text-[var(--admin-text)] uppercase tracking-wider">Transactions liées</h3>
                         {mission.transactions && mission.transactions.length > 0 ? (
-                            <div className="overflow-x-auto rounded-2xl border border-[var(--admin-border)] bg-white/30">
+                            <div className="overflow-x-auto rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)]">
                                 <table className="min-w-full divide-y divide-[var(--admin-border)] text-xs text-left">
                                     <thead className="bg-[#fcf8f2] text-[var(--admin-muted)] font-semibold uppercase">
                                         <tr>
@@ -309,7 +309,7 @@ export function MissionDetailModal({
                                     <div
                                         key={ord.id}
                                         onClick={() => onSelectOrder(ord)}
-                                        className="rounded-2xl border border-[var(--admin-border)] bg-white/60 p-3 hover:border-[#8a6b3d] cursor-pointer transition flex items-center justify-between"
+                                        className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] p-3 hover:border-[#8a6b3d] cursor-pointer transition flex items-center justify-between"
                                     >
                                         <div>
                                             <div className="flex items-center gap-2">
@@ -400,7 +400,7 @@ export function OrderDetailModal({ order, onClose }: { order: AdminOrder; onClos
                             type="button"
                             onClick={loadTelemetryManually}
                             disabled={loadingTelemetry}
-                            className="rounded-xl border border-[var(--admin-border)] bg-white/70 px-3 py-1.5 text-xs font-semibold text-[var(--admin-text)] hover:bg-[#8a6b3d] hover:text-white transition shadow-sm"
+                            className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-1.5 text-xs font-semibold text-[var(--admin-text)] hover:bg-[#8a6b3d] hover:text-white transition shadow-sm"
                             title="Actualiser la télémétrie et le tracé OSRM"
                         >
                             {loadingTelemetry ? 'Actualisation...' : '🛰️ Actualiser OSRM'}
@@ -441,25 +441,25 @@ export function OrderDetailModal({ order, onClose }: { order: AdminOrder; onClos
                         </div>
 
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-                            <div className="rounded-xl border border-blue-200 bg-white/80 p-2.5">
+                            <div className="rounded-xl border border-blue-200 bg-[var(--admin-panel-strong)] p-2.5">
                                 <p className="text-[10px] uppercase font-bold text-[var(--admin-muted)]">Distance Routière</p>
                                 <p className="mt-1 text-base font-bold text-blue-900">
                                     {liveTelemetry.routing?.distance_km ?? '--'} km
                                 </p>
                             </div>
-                            <div className="rounded-xl border border-blue-200 bg-white/80 p-2.5">
+                            <div className="rounded-xl border border-blue-200 bg-[var(--admin-panel-strong)] p-2.5">
                                 <p className="text-[10px] uppercase font-bold text-[var(--admin-muted)]">Temps Estimé (ETA)</p>
                                 <p className="mt-1 text-base font-bold text-blue-900">
                                     {liveTelemetry.routing?.duration_minutes ?? '--'} min
                                 </p>
                             </div>
-                            <div className="rounded-xl border border-blue-200 bg-white/80 p-2.5">
+                            <div className="rounded-xl border border-blue-200 bg-[var(--admin-panel-strong)] p-2.5">
                                 <p className="text-[10px] uppercase font-bold text-[var(--admin-muted)]">Vitesse Coursier</p>
                                 <p className="mt-1 text-base font-bold text-blue-900">
                                     {liveTelemetry.driver_latest_position?.speed_kmh != null ? `${liveTelemetry.driver_latest_position.speed_kmh} km/h` : 'À l\'arrêt'}
                                 </p>
                             </div>
-                            <div className="rounded-xl border border-blue-200 bg-white/80 p-2.5">
+                            <div className="rounded-xl border border-blue-200 bg-[var(--admin-panel-strong)] p-2.5">
                                 <p className="text-[10px] uppercase font-bold text-[var(--admin-muted)]">Batterie Mobile</p>
                                 <p className="mt-1 text-base font-bold text-blue-900">
                                     {liveTelemetry.driver_latest_position?.battery_level != null ? `${liveTelemetry.driver_latest_position.battery_level}%` : 'N/A'}
@@ -477,7 +477,7 @@ export function OrderDetailModal({ order, onClose }: { order: AdminOrder; onClos
 
                 <div className="mt-6 space-y-6">
                     <div className="grid gap-4 sm:grid-cols-3">
-                        <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-white/50">
+                        <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)]">
                             <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--admin-muted)] flex items-center gap-1">
                                 <span>🛵 Livreur (Coursier)</span>
                             </p>
@@ -499,7 +499,7 @@ export function OrderDetailModal({ order, onClose }: { order: AdminOrder; onClos
                             )}
                         </div>
 
-                        <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-white/50">
+                        <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)]">
                             <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--admin-muted)] flex items-center gap-1">
                                 <span>👷 Destinataire sur chantier</span>
                             </p>
@@ -523,7 +523,7 @@ export function OrderDetailModal({ order, onClose }: { order: AdminOrder; onClos
                             </div>
                         </div>
 
-                        <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-white/50">
+                        <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)]">
                             <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--admin-muted)] flex items-center gap-1">
                                 <span>🏪 Quincaillerie de collecte</span>
                             </p>
@@ -544,7 +544,7 @@ export function OrderDetailModal({ order, onClose }: { order: AdminOrder; onClos
                     </div>
 
                     <div className="grid gap-4 sm:grid-cols-2">
-                        <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-white/40 flex items-center justify-between">
+                        <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] flex items-center justify-between">
                             <div>
                                 <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--admin-muted)]">Code Retrait Quincaillerie</p>
                                 <p className="mt-1 font-mono text-base font-bold text-[#8a6b3d]">{order.pickup_code || 'N/A'}</p>
@@ -552,7 +552,7 @@ export function OrderDetailModal({ order, onClose }: { order: AdminOrder; onClos
                             <span className="text-xs text-[var(--admin-muted)]">Scanné/saisi lors de la collecte</span>
                         </div>
 
-                        <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-white/40 flex items-center justify-between">
+                        <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] flex items-center justify-between">
                             <div>
                                 <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--admin-muted)]">Code Réception Chantier</p>
                                 <p className="mt-1 font-mono text-base font-bold text-green-700">{order.reception_code || 'N/A'}</p>
@@ -564,7 +564,7 @@ export function OrderDetailModal({ order, onClose }: { order: AdminOrder; onClos
                     <div className="space-y-2.5">
                         <h3 className="text-sm font-bold text-[var(--admin-text)] uppercase tracking-wider">Articles & Matériaux Commandés</h3>
                         {order.items && order.items.length > 0 ? (
-                            <div className="overflow-x-auto rounded-2xl border border-[var(--admin-border)] bg-white/30">
+                            <div className="overflow-x-auto rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)]">
                                 <table className="min-w-full divide-y divide-[var(--admin-border)] text-xs text-left">
                                     <thead className="bg-[#fcf8f2] text-[var(--admin-muted)] font-semibold uppercase">
                                         <tr>
@@ -621,13 +621,13 @@ export function OrderDetailModal({ order, onClose }: { order: AdminOrder; onClos
                             <h3 className="text-sm font-bold text-[var(--admin-text)] uppercase tracking-wider">Preuves Photographiques</h3>
                             <div className="grid gap-4 sm:grid-cols-2">
                                 {order.pickup_photo_url && (
-                                    <div className="p-3 rounded-2xl border border-[var(--admin-border)] bg-white/40">
+                                    <div className="p-3 rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)]">
                                         <p className="text-xs font-semibold text-[var(--admin-text)] mb-2">📸 Ramassage Quincaillerie</p>
                                         <img src={order.pickup_photo_url} alt="Photo ramassage" className="w-full h-40 object-cover rounded-xl border" />
                                     </div>
                                 )}
                                 {order.delivery_photo_url && (
-                                    <div className="p-3 rounded-2xl border border-[var(--admin-border)] bg-white/40">
+                                    <div className="p-3 rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)]">
                                         <p className="text-xs font-semibold text-[var(--admin-text)] mb-2">📸 Livraison sur Chantier</p>
                                         <img src={order.delivery_photo_url} alt="Photo livraison" className="w-full h-40 object-cover rounded-xl border" />
                                     </div>

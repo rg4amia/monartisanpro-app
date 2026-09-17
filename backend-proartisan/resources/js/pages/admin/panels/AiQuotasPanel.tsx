@@ -59,7 +59,7 @@ export function AiQuotasPanel({
                 title="Quotas & consommation IA par utilisateur"
             />
 
-            <form onSubmit={onSubmit} className="mt-4 grid items-end gap-3 rounded-2xl border border-[var(--admin-border)] bg-white/40 p-4 md:grid-cols-4">
+            <form onSubmit={onSubmit} className="mt-4 grid items-end gap-3 rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-4 md:grid-cols-4">
                 <div className="md:col-span-2">
                     <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-[var(--admin-muted)]">Rechercher</label>
                     <input
@@ -67,12 +67,12 @@ export function AiQuotasPanel({
                         placeholder="Nom ou téléphone..."
                         value={search}
                         onChange={(e) => onSearchChange(e.target.value)}
-                        className="w-full rounded-xl border border-[var(--admin-border)] bg-white px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
+                        className="w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
                     />
                 </div>
                 <div>
                     <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-[var(--admin-muted)]">Rôle</label>
-                    <select value={roleFilter} onChange={(e) => onRoleFilterChange(e.target.value)} className="w-full rounded-xl border border-[var(--admin-border)] bg-white px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none">
+                    <select value={roleFilter} onChange={(e) => onRoleFilterChange(e.target.value)} className="w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none">
                         <option value="">Tous</option>
                         <option value="client">Client</option>
                         <option value="artisan">Artisan</option>
@@ -81,7 +81,7 @@ export function AiQuotasPanel({
                 </div>
                 <div className="flex gap-2 md:col-span-4">
                     <button type="submit" className="rounded-xl bg-[#ebb95e] px-4 py-2 text-xs font-bold text-[#241b16] transition hover:bg-[#dca850]">Filtrer</button>
-                    <button type="button" onClick={onReset} className="rounded-xl border border-[var(--admin-border)] bg-white/60 px-3 py-2 text-xs font-bold text-[var(--admin-text-soft)] transition hover:bg-white/80">Réinitialiser</button>
+                    <button type="button" onClick={onReset} className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs font-bold text-[var(--admin-text-soft)] transition hover:bg-[var(--admin-panel-strong)]">Réinitialiser</button>
                     {aiUserQuotasPage ? (
                         <span className="ml-auto self-center text-[11px] text-[var(--admin-muted)]">
                             {numberFormat.format(aiUserQuotasPage.total)} utilisateur(s) • page {aiUserQuotasPage.current_page}/{aiUserQuotasPage.last_page}
@@ -133,7 +133,7 @@ export function AiQuotasPanel({
                                             <button
                                                 type="button"
                                                 onClick={() => onEditQuota(row)}
-                                                className="rounded-lg border border-[var(--admin-border)] bg-white/60 px-2.5 py-1 text-xs font-bold text-[var(--admin-text-soft)] transition hover:bg-white/90"
+                                                className="rounded-lg border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-2.5 py-1 text-xs font-bold text-[var(--admin-text-soft)] transition hover:bg-[var(--admin-panel-strong)]"
                                             >
                                                 Gérer
                                             </button>

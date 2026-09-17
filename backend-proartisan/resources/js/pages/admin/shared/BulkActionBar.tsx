@@ -19,7 +19,7 @@ const toneClass: Record<NonNullable<BulkAction['tone']>, string> = {
     primary: 'bg-[#ebb95e] text-[#241b16] hover:bg-[#dca850]',
     danger: 'bg-rose-600 text-white hover:bg-rose-700',
     success: 'bg-emerald-600 text-white hover:bg-emerald-700',
-    neutral: 'border border-[var(--admin-border)] bg-white/70 text-[var(--admin-text-soft)] hover:bg-white',
+    neutral: 'border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] text-[var(--admin-text-soft)] hover:bg-[var(--admin-panel-strong)]',
 };
 
 export function BulkActionBar({ count, onClear, actions, children }: BulkActionBarProps) {

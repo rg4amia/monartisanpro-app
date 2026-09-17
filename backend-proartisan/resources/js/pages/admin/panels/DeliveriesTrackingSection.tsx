@@ -90,7 +90,7 @@ export function DeliveriesTrackingSection({
 
             {/* GRILLE DES COURSES EN MOUVEMENT */}
             {activeDeliveries.length === 0 ? (
-                <div className="p-6 rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 text-center text-xs text-slate-500">
+                <div className="p-6 rounded-2xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-panel)] text-center text-xs text-[var(--admin-text-soft)]">
                     🛵 Aucune course de matériaux active en transit pour le moment.
                 </div>
             ) : (

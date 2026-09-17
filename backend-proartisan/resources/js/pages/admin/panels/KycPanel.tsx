@@ -136,10 +136,10 @@ export function KycPanel({
                             placeholder="Nom, téléphone, e-mail ou ID..."
                             value={search}
                             onChange={(e) => onSearchChange(e.target.value)}
-                            className="w-full max-w-xs rounded-xl border border-[var(--admin-border)] bg-white px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
+                            className="w-full max-w-xs rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
                         />
                         <button type="submit" className="rounded-xl bg-[#ebb95e] px-4 py-2 text-xs font-bold text-[#241b16] transition hover:bg-[#dca850]">Filtrer</button>
-                        <button type="button" onClick={onReset} className="rounded-xl border border-[var(--admin-border)] bg-white/60 px-3 py-2 text-xs font-bold text-[var(--admin-text-soft)] transition hover:bg-white/80">Réinitialiser</button>
+                        <button type="button" onClick={onReset} className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs font-bold text-[var(--admin-text-soft)] transition hover:bg-[var(--admin-panel-strong)]">Réinitialiser</button>
                         {kycUsersPage ? (
                             <span className="ml-auto self-center text-[11px] text-[var(--admin-muted)]">
                                 {numberFormat.format(kycUsersPage.total)} dossier(s) • page {kycUsersPage.current_page}/{kycUsersPage.last_page}
@@ -256,7 +256,7 @@ export function KycPanel({
                                 <EmptyState description="Aucune boutique en attente." title="File fournisseur vide" />
                             ) : (
                                 pendingFournisseursList.map((fournisseur) => (
-                                    <div key={fournisseur.id} className="rounded-[24px] border border-[var(--admin-border)] bg-white/60 p-4">
+                                    <div key={fournisseur.id} className="rounded-[24px] border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] p-4">
                                         <p className="text-sm font-semibold text-[var(--admin-text)]">{fournisseur.nom_boutique}</p>
                                         <p className="mt-1 text-sm text-[var(--admin-text-soft)]">{fournisseur.user?.name ?? 'Contact inconnu'}</p>
                                         <p className="text-xs text-[var(--admin-muted)]">
@@ -299,7 +299,7 @@ export function KycPanel({
                                 <EmptyState description="Aucune affiliation CNMCI en attente." title="File CNMCI vide" />
                             ) : (
                                 cnmciUsers.map((artisan) => (
-                                    <div key={artisan.id} className="rounded-[24px] border border-[var(--admin-border)] bg-white/60 p-4">
+                                    <div key={artisan.id} className="rounded-[24px] border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] p-4">
                                         <p className="text-sm font-semibold text-[var(--admin-text)]">{artisan.name}</p>
                                         <p className="mt-0.5 text-xs text-[var(--admin-muted)]">{artisan.phone}</p>
 

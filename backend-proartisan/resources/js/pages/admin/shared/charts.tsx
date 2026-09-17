@@ -21,7 +21,7 @@ export function DualLineChart({ series }: { series: DualSeries[] }) {
     const toY = (value: number): number => paddingTop + graphHeight - (value / maxValue) * graphHeight;
 
     return (
-        <div className="mt-5 rounded-[28px] border border-[var(--admin-border)] bg-white/60 p-4">
+        <div className="mt-5 rounded-[28px] border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] p-4">
             <svg viewBox={`0 0 ${width} ${height}`} className="h-64 w-full overflow-visible">
                 <defs>
                     {series.map((entry, seriesIndex) => (
@@ -43,7 +43,7 @@ export function DualLineChart({ series }: { series: DualSeries[] }) {
                             y1={y}
                             x2={width - paddingX}
                             y2={y}
-                            stroke="rgba(194, 170, 136, 0.35)"
+                            stroke="var(--admin-border)"
                             strokeDasharray="4 7"
                         />
                     );
@@ -93,7 +93,7 @@ export function DualLineChart({ series }: { series: DualSeries[] }) {
                     const x = paddingX + index * xStep;
 
                     return (
-                        <text key={point.label} x={x} y={height - 12} textAnchor="middle" fontSize="11" fill="rgba(110, 91, 66, 0.72)">
+                        <text key={point.label} x={x} y={height - 12} textAnchor="middle" fontSize="11" fill="var(--admin-muted)">
                             {point.label}
                         </text>
                     );
@@ -121,12 +121,12 @@ export function VolumeBarChart({ bars, color }: { bars: ChartPoint[]; color: str
     const maxValue = Math.max(...bars.map((bar) => bar.value), 1);
 
     return (
-        <div className="mt-5 rounded-[28px] border border-[var(--admin-border)] bg-white/60 p-4">
+        <div className="mt-5 rounded-[28px] border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] p-4">
             <div className="mb-2 flex items-center justify-end gap-1">
                 <span className="text-[11px] text-[var(--admin-muted)]">max</span>
                 <span className="text-[11px] font-semibold text-[var(--admin-text)]">{maxValue}</span>
             </div>
-            <div className="flex h-52 items-end gap-1.5 overflow-hidden rounded-[20px] bg-[rgba(255,255,255,0.55)] p-3">
+            <div className="flex h-52 items-end gap-1.5 overflow-hidden rounded-[20px] bg-[var(--admin-panel)] p-3">
                 {bars.map((bar) => {
                     const heightPercent = Math.max((bar.value / maxValue) * 100, bar.value > 0 ? 8 : 3);
 

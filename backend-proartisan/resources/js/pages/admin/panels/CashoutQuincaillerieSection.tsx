@@ -420,7 +420,7 @@ export function CashoutQuincaillerieSection({
             {/* MODAL NOUVELLE OPÉRATION DE CASHOUT */}
             {showNewModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-                    <div className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl border border-[var(--admin-border)]">
+                    <div className="w-full max-w-lg rounded-3xl bg-[var(--admin-panel-strong)] p-6 shadow-2xl border border-[var(--admin-border)]">
                         <h3 className="text-lg font-bold text-[var(--admin-text)]">Enregistrer un Retrait Cash</h3>
                         <p className="text-xs text-[var(--admin-muted)] mt-1">
                             Opération de remise d'espèces au guichet d'une quincaillerie partenaire.
@@ -435,7 +435,7 @@ export function CashoutQuincaillerieSection({
                                     value={newSupplierId}
                                     onChange={(e) => setNewSupplierId(e.target.value)}
                                     required
-                                    className="admin-input w-full rounded-xl px-3 py-2 text-sm bg-white border border-[var(--admin-border)]"
+                                    className="admin-input w-full rounded-xl px-3 py-2 text-sm border border-[var(--admin-border)]"
                                 >
                                     <option value="">Sélectionner une quincaillerie...</option>
                                     {cashoutsBySupplier.map((s: any) => (
@@ -503,7 +503,7 @@ export function CashoutQuincaillerieSection({
                                     <select
                                         value={newMode}
                                         onChange={(e) => setNewMode(e.target.value)}
-                                        className="admin-input w-full rounded-xl px-3 py-2 text-sm bg-white border border-[var(--admin-border)]"
+                                        className="admin-input w-full rounded-xl px-3 py-2 text-sm bg-[var(--admin-panel-strong)] border border-[var(--admin-border)]"
                                     >
                                         <option value="especes_guichet">Espèces au guichet</option>
                                         <option value="wave">Wave</option>

@@ -60,7 +60,7 @@ export function NotificationsPanel({
                         'rounded-xl px-4 py-2 text-sm font-semibold transition',
                         notifTab === 'alerts'
                             ? 'bg-[#ebb95e] text-[#241b16]'
-                            : 'text-[var(--admin-text-soft)] hover:bg-white/40',
+                            : 'text-[var(--admin-text-soft)] hover:bg-[var(--admin-panel)]',
                     )}
                 >
                     Mes Alertes Admin ({liveNotificationsCount})
@@ -72,7 +72,7 @@ export function NotificationsPanel({
                         'rounded-xl px-4 py-2 text-sm font-semibold transition',
                         notifTab === 'history'
                             ? 'bg-[#ebb95e] text-[#241b16]'
-                            : 'text-[var(--admin-text-soft)] hover:bg-white/40',
+                            : 'text-[var(--admin-text-soft)] hover:bg-[var(--admin-panel)]',
                     )}
                 >
                     Historique Global & Audit
@@ -99,21 +99,21 @@ export function NotificationsPanel({
                         <button
                             type="button"
                             onClick={() => onNotifFilterChange('all')}
-                            className={cn('rounded-xl px-3 py-1.5 text-xs font-semibold transition', notifFilter === 'all' ? 'bg-[#ebb95e] text-[#241b16]' : 'text-[var(--admin-text-soft)] hover:bg-white/40')}
+                            className={cn('rounded-xl px-3 py-1.5 text-xs font-semibold transition', notifFilter === 'all' ? 'bg-[#ebb95e] text-[#241b16]' : 'text-[var(--admin-text-soft)] hover:bg-[var(--admin-panel-strong)]')}
                         >
                             Toutes ({liveNotificationsCount})
                         </button>
                         <button
                             type="button"
                             onClick={() => onNotifFilterChange('unread')}
-                            className={cn('rounded-xl px-3 py-1.5 text-xs font-semibold transition', notifFilter === 'unread' ? 'bg-[#ebb95e] text-[#241b16]' : 'text-[var(--admin-text-soft)] hover:bg-white/40')}
+                            className={cn('rounded-xl px-3 py-1.5 text-xs font-semibold transition', notifFilter === 'unread' ? 'bg-[#ebb95e] text-[#241b16]' : 'text-[var(--admin-text-soft)] hover:bg-[var(--admin-panel-strong)]')}
                         >
                             Non lues ({unreadNotifsCount})
                         </button>
                         <button
                             type="button"
                             onClick={() => onNotifFilterChange('alerts')}
-                            className={cn('rounded-xl px-3 py-1.5 text-xs font-semibold transition', notifFilter === 'alerts' ? 'bg-[#ebb95e] text-[#241b16]' : 'text-[var(--admin-text-soft)] hover:bg-white/40')}
+                            className={cn('rounded-xl px-3 py-1.5 text-xs font-semibold transition', notifFilter === 'alerts' ? 'bg-[#ebb95e] text-[#241b16]' : 'text-[var(--admin-text-soft)] hover:bg-[var(--admin-panel-strong)]')}
                         >
                             Alertes critiques
                         </button>
@@ -122,7 +122,7 @@ export function NotificationsPanel({
                     <div className="mt-4 space-y-3">
                         {filteredNotifs.length > 0 ? (
                             filteredNotifs.map((n) => (
-                                <div key={n.id} className={cn('flex items-start justify-between gap-4 p-4 rounded-2xl border transition', !n.read_at ? 'bg-amber-500/10 border-amber-500/30' : 'bg-white/40 border-[var(--admin-border)]')}>
+                                <div key={n.id} className={cn('flex items-start justify-between gap-4 p-4 rounded-2xl border transition', !n.read_at ? 'bg-amber-500/10 border-amber-500/30' : 'bg-[var(--admin-panel)] border-[var(--admin-border)]')}>
                                     <div className="flex gap-3">
                                         <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#f8e4bc] text-[#b77918]">
                                             <BellIcon className="h-5 w-5" />
@@ -162,7 +162,7 @@ export function NotificationsPanel({
                     </div>
 
                     {/* FILTRES */}
-                    <form onSubmit={onFilterSubmit} className="mt-5 grid gap-4 md:grid-cols-4 items-end bg-white/40 p-4 rounded-2xl border border-[var(--admin-border)]">
+                    <form onSubmit={onFilterSubmit} className="mt-5 grid gap-4 md:grid-cols-4 items-end bg-[var(--admin-panel)] p-4 rounded-2xl border border-[var(--admin-border)]">
                         <div>
                             <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--admin-muted)] mb-1.5">Rechercher</label>
                             <input
@@ -170,7 +170,7 @@ export function NotificationsPanel({
                                 placeholder="Message, nom, téléphone..."
                                 value={searchNotif}
                                 onChange={(e) => onSearchNotifChange(e.target.value)}
-                                className="w-full rounded-xl border border-[var(--admin-border)] bg-white px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
+                                className="w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
                             />
                         </div>
                         <div>
@@ -178,7 +178,7 @@ export function NotificationsPanel({
                             <select
                                 value={roleNotif}
                                 onChange={(e) => onRoleNotifChange(e.target.value)}
-                                className="w-full rounded-xl border border-[var(--admin-border)] bg-white px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
+                                className="w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
                             >
                                 <option value="">Tous les rôles</option>
                                 <option value="client">Client</option>
@@ -194,7 +194,7 @@ export function NotificationsPanel({
                             <select
                                 value={typeNotif}
                                 onChange={(e) => onTypeNotifChange(e.target.value)}
-                                className="w-full rounded-xl border border-[var(--admin-border)] bg-white px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
+                                className="w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
                             >
                                 <option value="">Tous les types</option>
                                 <option value="otp">OTP (SMS de validation)</option>
@@ -215,7 +215,7 @@ export function NotificationsPanel({
                             <button
                                 type="button"
                                 onClick={onFilterReset}
-                                className="bg-white/60 hover:bg-white/80 border border-[var(--admin-border)] text-[var(--admin-text-soft)] font-bold rounded-xl text-xs px-3 py-2 transition"
+                                className="bg-[var(--admin-panel-strong)] hover:bg-[var(--admin-panel-strong)] border border-[var(--admin-border)] text-[var(--admin-text-soft)] font-bold rounded-xl text-xs px-3 py-2 transition"
                             >
                                 Réinitialiser
                             </button>

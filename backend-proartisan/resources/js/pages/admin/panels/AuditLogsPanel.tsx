@@ -91,7 +91,7 @@ export function AuditLogsPanel({
 
                 <form
                     onSubmit={onSubmit}
-                    className="mt-5 grid items-end gap-4 rounded-2xl border border-[var(--admin-border)] bg-white/40 p-4 md:grid-cols-5"
+                    className="mt-5 grid items-end gap-4 rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-4 md:grid-cols-5"
                 >
                     <div>
                         <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-[var(--admin-muted)]">Rechercher</label>
@@ -100,7 +100,7 @@ export function AuditLogsPanel({
                             placeholder="Admin, action, entité, IP..."
                             value={search}
                             onChange={(e) => onSearchChange(e.target.value)}
-                            className="w-full rounded-xl border border-[var(--admin-border)] bg-white px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
+                            className="w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
                         />
                     </div>
                     <div>
@@ -108,7 +108,7 @@ export function AuditLogsPanel({
                         <select
                             value={actionFilter}
                             onChange={(e) => onActionFilterChange(e.target.value)}
-                            className="w-full rounded-xl border border-[var(--admin-border)] bg-white px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
+                            className="w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
                         >
                             <option value="">Toutes les actions</option>
                             {auditActions.map((action) => (
@@ -121,7 +121,7 @@ export function AuditLogsPanel({
                         <select
                             value={adminFilter}
                             onChange={(e) => onAdminFilterChange(e.target.value)}
-                            className="w-full rounded-xl border border-[var(--admin-border)] bg-white px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
+                            className="w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
                         >
                             <option value="">Tous les admins</option>
                             {auditAdmins.map((admin) => (
@@ -137,7 +137,7 @@ export function AuditLogsPanel({
                             type="date"
                             value={dateFrom}
                             onChange={(e) => onDateFromChange(e.target.value)}
-                            className="w-full rounded-xl border border-[var(--admin-border)] bg-white px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
+                            className="w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
                         />
                     </div>
                     <div>
@@ -146,7 +146,7 @@ export function AuditLogsPanel({
                             type="date"
                             value={dateTo}
                             onChange={(e) => onDateToChange(e.target.value)}
-                            className="w-full rounded-xl border border-[var(--admin-border)] bg-white px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
+                            className="w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
                         />
                     </div>
                     <div className="flex gap-2 md:col-span-5">
@@ -159,7 +159,7 @@ export function AuditLogsPanel({
                         <button
                             type="button"
                             onClick={onReset}
-                            className="rounded-xl border border-[var(--admin-border)] bg-white/60 px-3 py-2 text-xs font-bold text-[var(--admin-text-soft)] transition hover:bg-white/80"
+                            className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs font-bold text-[var(--admin-text-soft)] transition hover:bg-[var(--admin-panel-strong)]"
                         >
                             Réinitialiser
                         </button>

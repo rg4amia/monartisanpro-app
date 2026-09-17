@@ -1537,7 +1537,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                             "px-3 py-1.5 rounded-xl text-xs font-semibold border transition",
                             link.active
                                 ? "bg-[#ebb95e] border-[#ebb95e] text-[#241b16]"
-                                : "border-[var(--admin-border)] text-[var(--admin-text-soft)] hover:bg-white/40",
+                                : "border-[var(--admin-border)] text-[var(--admin-text-soft)] hover:bg-[var(--admin-panel)]",
                             !link.url && "opacity-50 cursor-not-allowed"
                         )}
                         only={only}

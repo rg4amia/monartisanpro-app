@@ -51,7 +51,7 @@ function RolesCheckboxes({
             {ROLES.map((r) => (
                 <label
                     key={r.value}
-                    className="flex items-center gap-1.5 rounded-full border border-[var(--admin-border)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--admin-text)] cursor-pointer has-[:checked]:border-[#ebb95e] has-[:checked]:bg-[#ebb95e]/15"
+                    className="flex items-center gap-1.5 rounded-full border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-1.5 text-xs font-semibold text-[var(--admin-text)] cursor-pointer has-[:checked]:border-[#ebb95e] has-[:checked]:bg-[#ebb95e]/15"
                 >
                     <input
                         type="checkbox"
@@ -88,7 +88,7 @@ function FaqRow({ faq, canManage, onDelete }: { faq: FaqItem; canManage: boolean
 
     if (isEditing) {
         return (
-            <form onSubmit={handleSubmit} className="rounded-2xl border border-[var(--admin-border)] bg-white/60 p-4 space-y-3">
+            <form onSubmit={handleSubmit} className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] p-4 space-y-3">
                 {Object.keys(errors).length > 0 && (
                     <div className="p-2.5 bg-red-100 border border-red-300 text-red-700 rounded-xl text-xs space-y-1">
                         {Object.values(errors).map((err, i) => (
@@ -101,14 +101,14 @@ function FaqRow({ faq, canManage, onDelete }: { faq: FaqItem; canManage: boolean
                     value={data.question}
                     onChange={(e) => setData('question', e.target.value)}
                     placeholder="Question"
-                    className="w-full rounded-xl border border-[var(--admin-border)] bg-white px-3 py-2 text-sm font-semibold text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
+                    className="w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-sm font-semibold text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
                 />
                 <textarea
                     rows={3}
                     value={data.reponse}
                     onChange={(e) => setData('reponse', e.target.value)}
                     placeholder="Réponse"
-                    className="w-full rounded-xl border border-[var(--admin-border)] bg-white px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
+                    className="w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
                 />
                 <div className="grid gap-3 sm:grid-cols-2">
                     <input
@@ -116,7 +116,7 @@ function FaqRow({ faq, canManage, onDelete }: { faq: FaqItem; canManage: boolean
                         value={data.categorie}
                         onChange={(e) => setData('categorie', e.target.value)}
                         placeholder="Catégorie (ex: Paiement, J-Code...)"
-                        className="w-full rounded-xl border border-[var(--admin-border)] bg-white px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
+                        className="w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
                     />
                     <input
                         type="number"
@@ -124,7 +124,7 @@ function FaqRow({ faq, canManage, onDelete }: { faq: FaqItem; canManage: boolean
                         value={data.ordre}
                         onChange={(e) => setData('ordre', e.target.value)}
                         placeholder="Ordre d'affichage"
-                        className="w-full rounded-xl border border-[var(--admin-border)] bg-white px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
+                        className="w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
                     />
                 </div>
                 <RolesCheckboxes value={data.roles} onChange={(roles) => setData('roles', roles)} />
@@ -140,7 +140,7 @@ function FaqRow({ faq, canManage, onDelete }: { faq: FaqItem; canManage: boolean
                                 reset();
                                 setIsEditing(false);
                             }}
-                            className="rounded-lg px-3 py-1.5 text-xs font-semibold border border-[var(--admin-border)] text-[var(--admin-text-soft)] hover:bg-white/40"
+                            className="rounded-lg px-3 py-1.5 text-xs font-semibold border border-[var(--admin-border)] text-[var(--admin-text-soft)] hover:bg-[var(--admin-panel)]"
                         >
                             Annuler
                         </button>
@@ -158,7 +158,7 @@ function FaqRow({ faq, canManage, onDelete }: { faq: FaqItem; canManage: boolean
     }
 
     return (
-        <div className="rounded-2xl border border-[var(--admin-border)] bg-white/60 p-4">
+        <div className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] p-4">
             <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
@@ -277,14 +277,14 @@ export function FaqPanel({ faqs, canManage }: FaqPanelProps) {
                             value={createForm.data.question}
                             onChange={(e) => createForm.setData('question', e.target.value)}
                             placeholder="Question"
-                            className="w-full rounded-xl border border-[var(--admin-border)] bg-white px-3 py-2 text-sm font-semibold text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
+                            className="w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-sm font-semibold text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
                         />
                         <textarea
                             rows={3}
                             value={createForm.data.reponse}
                             onChange={(e) => createForm.setData('reponse', e.target.value)}
                             placeholder="Réponse"
-                            className="w-full rounded-xl border border-[var(--admin-border)] bg-white px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
+                            className="w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
                         />
                         <div className="grid gap-3 sm:grid-cols-2">
                             <input
@@ -292,7 +292,7 @@ export function FaqPanel({ faqs, canManage }: FaqPanelProps) {
                                 value={createForm.data.categorie}
                                 onChange={(e) => createForm.setData('categorie', e.target.value)}
                                 placeholder="Catégorie (ex: Paiement, J-Code...)"
-                                className="w-full rounded-xl border border-[var(--admin-border)] bg-white px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
+                                className="w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
                             />
                             <input
                                 type="number"
@@ -300,7 +300,7 @@ export function FaqPanel({ faqs, canManage }: FaqPanelProps) {
                                 value={createForm.data.ordre}
                                 onChange={(e) => createForm.setData('ordre', e.target.value)}
                                 placeholder="Ordre d'affichage"
-                                className="w-full rounded-xl border border-[var(--admin-border)] bg-white px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
+                                className="w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
                             />
                         </div>
                         <RolesCheckboxes value={createForm.data.roles} onChange={(roles) => createForm.setData('roles', roles)} />

@@ -145,7 +145,7 @@ export function FraudAlertsSection({ fraudData, canManage = true }: FraudAlertsS
                         <select
                             value={filterType}
                             onChange={(e) => setFilterType(e.target.value)}
-                            className="rounded-xl border border-[var(--admin-border)] bg-white px-3 py-1.5 text-xs text-[var(--admin-text)]"
+                            className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-1.5 text-xs text-[var(--admin-text)]"
                         >
                             <option value="">Tous les types d'alerte</option>
                             {Object.entries(FRAUD_TYPE_LABELS).map(([k, v]) => (
@@ -158,7 +158,7 @@ export function FraudAlertsSection({ fraudData, canManage = true }: FraudAlertsS
                         <select
                             value={filterSeverity}
                             onChange={(e) => setFilterSeverity(e.target.value)}
-                            className="rounded-xl border border-[var(--admin-border)] bg-white px-3 py-1.5 text-xs text-[var(--admin-text)]"
+                            className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-1.5 text-xs text-[var(--admin-text)]"
                         >
                             <option value="">Toutes gravités</option>
                             <option value="critical">Critique</option>
@@ -262,7 +262,7 @@ export function FraudAlertsSection({ fraudData, canManage = true }: FraudAlertsS
                                             <button
                                                 type="button"
                                                 onClick={() => setSelectedAlert(item)}
-                                                className="rounded-xl border border-[var(--admin-border)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--admin-text)] hover:bg-[#f5ebd7] transition"
+                                                className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-1.5 text-xs font-semibold text-[var(--admin-text)] hover:bg-[#f5ebd7] transition"
                                             >
                                                 Instruire
                                             </button>
@@ -278,7 +278,7 @@ export function FraudAlertsSection({ fraudData, canManage = true }: FraudAlertsS
             {/* MODALE D'INSTRUCTION ET D'ARBITRAGE DE FRAUDE */}
             {selectedAlert && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-                    <div className="w-full max-w-2xl rounded-3xl border border-[var(--admin-border)] bg-white p-6 shadow-2xl">
+                    <div className="w-full max-w-2xl rounded-3xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] p-6 shadow-2xl">
                         <div className="flex items-center justify-between border-b border-[var(--admin-border)] pb-4">
                             <div>
                                 <h3 className="text-lg font-bold text-[var(--admin-text)]">

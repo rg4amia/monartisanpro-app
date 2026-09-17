@@ -85,7 +85,7 @@ export function TransactionsPanel({
                             'inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs font-bold transition',
                             subTab === 'treasury'
                                 ? 'bg-[#ebb95e] text-[#241b16] shadow-sm'
-                                : 'bg-white/60 text-[var(--admin-text-soft)] hover:bg-white hover:text-[var(--admin-text)]'
+                                : 'bg-[var(--admin-panel-strong)] text-[var(--admin-text-soft)] hover:bg-[var(--admin-panel-strong)] hover:text-[var(--admin-text)]'
                         )}
                     >
                         <span>🏛️</span>
@@ -98,7 +98,7 @@ export function TransactionsPanel({
                             'inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs font-bold transition',
                             subTab === 'commissions'
                                 ? 'bg-[#ebb95e] text-[#241b16] shadow-sm'
-                                : 'bg-white/60 text-[var(--admin-text-soft)] hover:bg-white hover:text-[var(--admin-text)]'
+                                : 'bg-[var(--admin-panel-strong)] text-[var(--admin-text-soft)] hover:bg-[var(--admin-panel-strong)] hover:text-[var(--admin-text)]'
                         )}
                     >
                         <span>📊</span>
@@ -111,7 +111,7 @@ export function TransactionsPanel({
                             'inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs font-bold transition',
                             subTab === 'journal'
                                 ? 'bg-[#ebb95e] text-[#241b16] shadow-sm'
-                                : 'bg-white/60 text-[var(--admin-text-soft)] hover:bg-white hover:text-[var(--admin-text)]'
+                                : 'bg-[var(--admin-panel-strong)] text-[var(--admin-text-soft)] hover:bg-[var(--admin-panel-strong)] hover:text-[var(--admin-text)]'
                         )}
                     >
                         <span>📑</span>
@@ -127,7 +127,7 @@ export function TransactionsPanel({
                             'inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs font-bold transition',
                             subTab === 'documents'
                                 ? 'bg-[#ebb95e] text-[#241b16] shadow-sm'
-                                : 'bg-white/60 text-[var(--admin-text-soft)] hover:bg-white hover:text-[var(--admin-text)]'
+                                : 'bg-[var(--admin-panel-strong)] text-[var(--admin-text-soft)] hover:bg-[var(--admin-panel-strong)] hover:text-[var(--admin-text)]'
                         )}
                     >
                         <span>📄</span>
@@ -338,7 +338,7 @@ export function TransactionsPanel({
                         </span>
                     </div>
 
-                    <form onSubmit={onSubmit} className="mt-4 grid items-end gap-3 rounded-2xl border border-[var(--admin-border)] bg-white/40 p-4 md:grid-cols-5">
+                    <form onSubmit={onSubmit} className="mt-4 grid items-end gap-3 rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-4 md:grid-cols-5">
                         <div className="md:col-span-2">
                             <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-[var(--admin-muted)]">Rechercher</label>
                             <input
@@ -346,12 +346,12 @@ export function TransactionsPanel({
                                 placeholder="ID, référence, wallet, bénéficiaire..."
                                 value={search}
                                 onChange={(e) => onSearchChange(e.target.value)}
-                                className="w-full rounded-xl border border-[var(--admin-border)] bg-white px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
+                                className="w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
                             />
                         </div>
                         <div>
                             <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-[var(--admin-muted)]">Statut</label>
-                            <select value={statusFilter} onChange={(e) => onStatusFilterChange(e.target.value)} className="w-full rounded-xl border border-[var(--admin-border)] bg-white px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none">
+                            <select value={statusFilter} onChange={(e) => onStatusFilterChange(e.target.value)} className="w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none">
                                 <option value="">Tous</option>
                                 <option value="confirme">Confirmée</option>
                                 <option value="en_attente">En attente</option>
@@ -360,7 +360,7 @@ export function TransactionsPanel({
                         </div>
                         <div>
                             <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-[var(--admin-muted)]">Type</label>
-                            <select value={typeFilter} onChange={(e) => onTypeFilterChange(e.target.value)} className="w-full rounded-xl border border-[var(--admin-border)] bg-white px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none">
+                            <select value={typeFilter} onChange={(e) => onTypeFilterChange(e.target.value)} className="w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none">
                                 <option value="">Tous</option>
                                 {Object.entries(transactionTypeLabels).map(([value, label]) => (
                                     <option key={value} value={value}>{label}</option>
@@ -369,7 +369,7 @@ export function TransactionsPanel({
                         </div>
                         <div>
                             <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-[var(--admin-muted)]">Provider</label>
-                            <select value={providerFilter} onChange={(e) => onProviderFilterChange(e.target.value)} className="w-full rounded-xl border border-[var(--admin-border)] bg-white px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none">
+                            <select value={providerFilter} onChange={(e) => onProviderFilterChange(e.target.value)} className="w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none">
                                 <option value="">Tous</option>
                                 {Object.entries(providerLabels).map(([value, label]) => (
                                     <option key={value} value={value}>{label}</option>
@@ -378,7 +378,7 @@ export function TransactionsPanel({
                         </div>
                         <div className="flex gap-2 md:col-span-5">
                             <button type="submit" className="rounded-xl bg-[#ebb95e] px-4 py-2 text-xs font-bold text-[#241b16] transition hover:bg-[#dca850]">Filtrer</button>
-                            <button type="button" onClick={onReset} className="rounded-xl border border-[var(--admin-border)] bg-white/60 px-3 py-2 text-xs font-bold text-[var(--admin-text-soft)] transition hover:bg-white/80">Réinitialiser</button>
+                            <button type="button" onClick={onReset} className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs font-bold text-[var(--admin-text-soft)] transition hover:bg-[var(--admin-panel-strong)]">Réinitialiser</button>
                             <ExportButton resource="transactions" params={exportParams} />
                             {transactionsPage ? (
                                 <span className="ml-auto self-center text-[11px] text-[var(--admin-muted)]">

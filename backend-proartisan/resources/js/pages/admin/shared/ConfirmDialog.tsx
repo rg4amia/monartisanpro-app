@@ -111,7 +111,7 @@ export function useConfirm() {
                         onChange={(event) => setText(event.target.value)}
                         placeholder={state.requireText}
                         aria-label={`Tapez ${state.requireText} pour confirmer`}
-                        className="mt-4 w-full rounded-xl border border-[var(--admin-border)] bg-white px-3 py-2 text-sm text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
+                        className="mt-4 w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-sm text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
                     />
                 ) : null}
 
@@ -124,7 +124,7 @@ export function useConfirm() {
                             onChange={(event) => setText(event.target.value)}
                             placeholder={state.promptPlaceholder}
                             rows={2}
-                            className="w-full rounded-xl border border-[var(--admin-border)] bg-white px-3 py-2 text-sm text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
+                            className="w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-sm text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
                         />
                     </label>
                 ) : null}

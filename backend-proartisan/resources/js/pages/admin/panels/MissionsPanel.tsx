@@ -98,7 +98,7 @@ export function MissionsPanel({
     return (
         <section className="mt-5 space-y-5">
             {/* Sélecteur de sous-vue : Chantiers Artisans vs Livraisons & Courses Livreurs */}
-            <div className="flex flex-wrap items-center justify-between gap-4 rounded-[28px] border border-[var(--admin-border)] bg-white/60 p-2 backdrop-blur-md">
+            <div className="flex flex-wrap items-center justify-between gap-4 rounded-[28px] border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] p-2 backdrop-blur-md">
                 <div className="flex flex-wrap items-center gap-2">
                     <button
                         type="button"
@@ -172,10 +172,10 @@ export function MissionsPanel({
                                 placeholder="ID, description, catégorie, client, artisan..."
                                 value={missionSearch}
                                 onChange={(e) => onMissionSearchChange(e.target.value)}
-                                className="w-full max-w-sm rounded-xl border border-[var(--admin-border)] bg-white px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
+                                className="w-full max-w-sm rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
                             />
                             <button type="submit" className="rounded-xl bg-[#ebb95e] px-4 py-2 text-xs font-bold text-[#241b16] transition hover:bg-[#dca850]">Filtrer</button>
-                            <button type="button" onClick={onResetFilters} className="rounded-xl border border-[var(--admin-border)] bg-white/60 px-3 py-2 text-xs font-bold text-[var(--admin-text-soft)] transition hover:bg-white/80">Réinitialiser</button>
+                            <button type="button" onClick={onResetFilters} className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs font-bold text-[var(--admin-text-soft)] transition hover:bg-[var(--admin-panel-strong)]">Réinitialiser</button>
                             <ExportButton resource="missions" params={exportParams} />
                             {missionsPage ? (
                                 <span className="ml-auto self-center text-[11px] text-[var(--admin-muted)]">
@@ -290,7 +290,7 @@ export function MissionsPanel({
                                     'rounded-full px-4 py-1.5 text-xs font-semibold transition border',
                                     deliveryStatusFilter === filterItem.id
                                         ? 'bg-[#8a6b3d] text-white border-[#8a6b3d] shadow-sm'
-                                        : 'bg-white/80 text-[var(--admin-text-soft)] border-[var(--admin-border)] hover:bg-black/5',
+                                        : 'bg-[var(--admin-panel-strong)] text-[var(--admin-text-soft)] border-[var(--admin-border)] hover:bg-black/5',
                                 )}
                             >
                                 {filterItem.label} ({filterItem.count})
@@ -310,10 +310,10 @@ export function MissionsPanel({
                                 placeholder="ID, code retrait/réception, client, livreur, fournisseur..."
                                 value={orderSearch}
                                 onChange={(e) => onOrderSearchChange(e.target.value)}
-                                className="w-full max-w-sm rounded-xl border border-[var(--admin-border)] bg-white px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
+                                className="w-full max-w-sm rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
                             />
                             <button type="submit" className="rounded-xl bg-[#8a6b3d] px-4 py-2 text-xs font-bold text-white transition hover:bg-[#75592f]">Filtrer</button>
-                            <button type="button" onClick={onResetFilters} className="rounded-xl border border-[var(--admin-border)] bg-white/60 px-3 py-2 text-xs font-bold text-[var(--admin-text-soft)] transition hover:bg-white/80">Réinitialiser</button>
+                            <button type="button" onClick={onResetFilters} className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs font-bold text-[var(--admin-text-soft)] transition hover:bg-[var(--admin-panel-strong)]">Réinitialiser</button>
                             {ordersPage ? (
                                 <span className="ml-auto self-center text-[11px] text-[var(--admin-muted)]">
                                     {numberFormat.format(ordersPage.total)} livraison(s) • page {ordersPage.current_page}/{ordersPage.last_page}
@@ -424,8 +424,8 @@ export function MissionsPanel({
                                                 <div className="space-y-1.5">
                                                     <DeliveryStatusBadge status={order.status} />
                                                     <div className="flex flex-wrap gap-1 text-[10px] font-mono text-[var(--admin-muted)]">
-                                                        {order.pickup_code ? <span className="bg-white/80 border px-1.5 py-0.5 rounded">R: {order.pickup_code}</span> : null}
-                                                        {order.reception_code ? <span className="bg-white/80 border px-1.5 py-0.5 rounded">C: {order.reception_code}</span> : null}
+                                                        {order.pickup_code ? <span className="bg-[var(--admin-panel-strong)] border px-1.5 py-0.5 rounded">R: {order.pickup_code}</span> : null}
+                                                        {order.reception_code ? <span className="bg-[var(--admin-panel-strong)] border px-1.5 py-0.5 rounded">C: {order.reception_code}</span> : null}
                                                     </div>
                                                 </div>
                                             </td>
@@ -436,7 +436,7 @@ export function MissionsPanel({
                                                         e.stopPropagation();
                                                         onSelectOrder(order);
                                                     }}
-                                                    className="rounded-xl border border-[var(--admin-border)] bg-white/80 px-3 py-1.5 text-xs font-bold text-[var(--admin-text)] hover:bg-[#8a6b3d] hover:text-white transition shadow-sm"
+                                                    className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-1.5 text-xs font-bold text-[var(--admin-text)] hover:bg-[#8a6b3d] hover:text-white transition shadow-sm"
                                                 >
                                                     Suivi 360°
                                                 </button>

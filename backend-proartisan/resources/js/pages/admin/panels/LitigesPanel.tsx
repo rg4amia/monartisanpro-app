@@ -86,12 +86,12 @@ export function LitigesPanel({
                             placeholder="ID litige/mission, description, client, artisan..."
                             value={search}
                             onChange={(e) => onSearchChange(e.target.value)}
-                            className="w-full rounded-xl border border-[var(--admin-border)] bg-white px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
+                            className="w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
                         />
                     </div>
                     <div>
                         <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-[var(--admin-muted)]">Statut</label>
-                        <select value={statusFilter} onChange={(e) => onStatusFilterChange(e.target.value)} className="w-full rounded-xl border border-[var(--admin-border)] bg-white px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none">
+                        <select value={statusFilter} onChange={(e) => onStatusFilterChange(e.target.value)} className="w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none">
                             <option value="">Tous</option>
                             <option value="ouvert">Ouvert</option>
                             <option value="en_cours">En cours</option>
@@ -100,7 +100,7 @@ export function LitigesPanel({
                     </div>
                     <div className="flex gap-2">
                         <button type="submit" className="rounded-xl bg-[#ebb95e] px-4 py-2 text-xs font-bold text-[#241b16] transition hover:bg-[#dca850]">Filtrer</button>
-                        <button type="button" onClick={onReset} className="rounded-xl border border-[var(--admin-border)] bg-white/60 px-3 py-2 text-xs font-bold text-[var(--admin-text-soft)] transition hover:bg-white/80">Réinitialiser</button>
+                        <button type="button" onClick={onReset} className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs font-bold text-[var(--admin-text-soft)] transition hover:bg-[var(--admin-panel-strong)]">Réinitialiser</button>
                         <ExportButton resource="litiges" params={exportParams} />
                     </div>
                     {litigesPage ? (

@@ -21,7 +21,7 @@ export function ExportButton({ resource, params = {}, label = 'Exporter CSV' }: 
     return (
         <a
             href={href}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--admin-border)] bg-white/70 px-3 py-2 text-xs font-bold text-[var(--admin-text-soft)] transition hover:bg-white"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs font-bold text-[var(--admin-text-soft)] transition hover:bg-[var(--admin-panel-strong)]"
         >
             <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />

@@ -29,7 +29,7 @@ interface EvaluationsPanelProps {
 }
 
 const searchInputClass =
-    'w-full rounded-xl border border-[var(--admin-border)] bg-white px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none';
+    'w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none';
 
 export function EvaluationsPanel({
     evalSubTab,
@@ -56,19 +56,19 @@ export function EvaluationsPanel({
     return (
         <section className="mt-5 space-y-5">
             <div className="grid gap-3 sm:grid-cols-4">
-                <div className="rounded-2xl border border-[var(--admin-border)] bg-white/50 p-3 text-xs">
+                <div className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-3 text-xs">
                     <p className="text-[var(--admin-muted)]">Évaluations</p>
                     <p className="text-lg font-bold text-[var(--admin-text)]">{numberFormat.format(evaluationStats.evaluations_total)}</p>
                 </div>
-                <div className="rounded-2xl border border-[var(--admin-border)] bg-white/50 p-3 text-xs">
+                <div className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-3 text-xs">
                     <p className="text-[var(--admin-muted)]">Note moyenne</p>
                     <p className="text-lg font-bold text-[var(--admin-text)]">{evaluationStats.note_moyenne} / 5</p>
                 </div>
-                <div className="rounded-2xl border border-[var(--admin-border)] bg-white/50 p-3 text-xs">
+                <div className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-3 text-xs">
                     <p className="text-[var(--admin-muted)]">Artisans suivis</p>
                     <p className="text-lg font-bold text-[var(--admin-text)]">{numberFormat.format(evaluationStats.artisans_suivis)}</p>
                 </div>
-                <div className="rounded-2xl border border-[var(--admin-border)] bg-white/50 p-3 text-xs">
+                <div className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-3 text-xs">
                     <p className="text-[var(--admin-muted)]">Scores gelés</p>
                     <p className="text-lg font-bold text-[var(--admin-text)]">{numberFormat.format(evaluationStats.scores_geles)}</p>
                 </div>
@@ -82,7 +82,7 @@ export function EvaluationsPanel({
                         'rounded-xl px-4 py-2 text-sm font-semibold transition',
                         evalSubTab === 'list'
                             ? 'bg-[#ebb95e] text-[#241b16]'
-                            : 'text-[var(--admin-text-soft)] hover:bg-white/40',
+                            : 'text-[var(--admin-text-soft)] hover:bg-[var(--admin-panel)]',
                     )}
                 >
                     Évaluations clients ({evaluationsPage?.total ?? 0})
@@ -94,7 +94,7 @@ export function EvaluationsPanel({
                         'rounded-xl px-4 py-2 text-sm font-semibold transition',
                         evalSubTab === 'artisans'
                             ? 'bg-[#ebb95e] text-[#241b16]'
-                            : 'text-[var(--admin-text-soft)] hover:bg-white/40',
+                            : 'text-[var(--admin-text-soft)] hover:bg-[var(--admin-panel)]',
                     )}
                 >
                     Scores ProsArtisan Artisans ({artisansScoresPage?.total ?? 0})
@@ -116,7 +116,7 @@ export function EvaluationsPanel({
                             className={cn(searchInputClass, 'max-w-sm')}
                         />
                         <button type="submit" className="rounded-xl bg-[#ebb95e] px-4 py-2 text-xs font-bold text-[#241b16] transition hover:bg-[#dca850]">Filtrer</button>
-                        <button type="button" onClick={onResetFilters} className="rounded-xl border border-[var(--admin-border)] bg-white/60 px-3 py-2 text-xs font-bold text-[var(--admin-text-soft)] transition hover:bg-white/80">Réinitialiser</button>
+                        <button type="button" onClick={onResetFilters} className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs font-bold text-[var(--admin-text-soft)] transition hover:bg-[var(--admin-panel-strong)]">Réinitialiser</button>
                         <ExportButton resource="evaluations" params={exportParams} />
                     </form>
                     <DataTable className="mt-5">
@@ -218,7 +218,7 @@ export function EvaluationsPanel({
                             className={cn(searchInputClass, 'max-w-sm')}
                         />
                         <button type="submit" className="rounded-xl bg-[#ebb95e] px-4 py-2 text-xs font-bold text-[#241b16] transition hover:bg-[#dca850]">Filtrer</button>
-                        <button type="button" onClick={onResetFilters} className="rounded-xl border border-[var(--admin-border)] bg-white/60 px-3 py-2 text-xs font-bold text-[var(--admin-text-soft)] transition hover:bg-white/80">Réinitialiser</button>
+                        <button type="button" onClick={onResetFilters} className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs font-bold text-[var(--admin-text-soft)] transition hover:bg-[var(--admin-panel-strong)]">Réinitialiser</button>
                     </form>
                     <DataTable className="mt-5">
                         <thead>

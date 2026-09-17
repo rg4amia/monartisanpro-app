@@ -109,7 +109,7 @@ export function WhatsAppPanel({
                                 value={data.whatsapp_widget_phone}
                                 onChange={(e) => setData('whatsapp_widget_phone', e.target.value)}
                                 disabled={!canManage}
-                                className="w-full rounded-xl border border-[var(--admin-border)] bg-white px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none disabled:opacity-60"
+                                className="w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none disabled:opacity-60"
                             />
                         </div>
                         <div>
@@ -120,7 +120,7 @@ export function WhatsAppPanel({
                                 value={data.whatsapp_widget_enabled}
                                 onChange={(e) => setData('whatsapp_widget_enabled', e.target.value)}
                                 disabled={!canManage}
-                                className="w-full rounded-xl border border-[var(--admin-border)] bg-white px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none disabled:opacity-60"
+                                className="w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none disabled:opacity-60"
                             >
                                 <option value="1">Actif — affiché sur le site</option>
                                 <option value="0">Désactivé — masqué du site</option>
@@ -137,7 +137,7 @@ export function WhatsAppPanel({
                             value={data.whatsapp_widget_message}
                             onChange={(e) => setData('whatsapp_widget_message', e.target.value)}
                             disabled={!canManage}
-                            className="w-full rounded-xl border border-[var(--admin-border)] bg-white px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none disabled:opacity-60"
+                            className="w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none disabled:opacity-60"
                         />
                     </div>
                 </form>
@@ -154,7 +154,7 @@ export function WhatsAppPanel({
                             placeholder="/, /contact, /artisans..."
                             value={search}
                             onChange={(e) => onSearchChange(e.target.value)}
-                            className="w-full rounded-xl border border-[var(--admin-border)] bg-white px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
+                            className="w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
                         />
                     </div>
                     <div className="flex gap-2">
@@ -167,7 +167,7 @@ export function WhatsAppPanel({
                         <button
                             type="button"
                             onClick={onReset}
-                            className="flex-1 rounded-xl px-4 py-2 text-xs font-semibold border border-[var(--admin-border)] text-[var(--admin-text-soft)] hover:bg-white/40"
+                            className="flex-1 rounded-xl px-4 py-2 text-xs font-semibold border border-[var(--admin-border)] text-[var(--admin-text-soft)] hover:bg-[var(--admin-panel)]"
                         >
                             Réinitialiser
                         </button>

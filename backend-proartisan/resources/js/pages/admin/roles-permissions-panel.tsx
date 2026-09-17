@@ -187,7 +187,7 @@ export default function RolesPermissionsPanel({
             ) : null}
 
             {/* ── Droits fins des administrateurs (Chantier C6 / P2-10) ── */}
-            <div className="rounded-[28px] border border-[var(--admin-border)] bg-white/60 p-6">
+            <div className="rounded-[28px] border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] p-6">
                 <div className="border-b border-[var(--admin-border)] pb-4 mb-6">
                     <h3 className="text-xl font-bold text-[var(--admin-text)]">Droits des administrateurs</h3>
                     <p className="text-xs text-[var(--admin-text-soft)] mt-1">
@@ -231,7 +231,7 @@ export default function RolesPermissionsPanel({
                                         </p>
                                     ) : null}
 
-                                    <label className="flex items-center justify-between gap-4 p-4 rounded-2xl border border-[var(--admin-border)] bg-white/50">
+                                    <label className="flex items-center justify-between gap-4 p-4 rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)]">
                                         <div className="min-w-0">
                                             <span className="font-semibold text-sm text-[var(--admin-text)]">Accès total</span>
                                             <p className="text-xs text-[var(--admin-text-soft)] mt-1">
@@ -260,7 +260,7 @@ export default function RolesPermissionsPanel({
                                                         className={`flex items-start justify-between gap-4 p-4 rounded-2xl border border-[var(--admin-border)] transition ${
                                                             adminLocked ? '' : 'cursor-pointer'
                                                         } ${
-                                                            !adminHasFullAccess && adminHas(name) ? 'bg-[#eef8f0]/40' : 'bg-white/40'
+                                                            !adminHasFullAccess && adminHas(name) ? 'bg-[#eef8f0]/40' : 'bg-[var(--admin-panel)]'
                                                         } ${adminHasFullAccess ? 'opacity-70' : ''}`}
                                                     >
                                                         <div className="min-w-0">
@@ -289,7 +289,7 @@ export default function RolesPermissionsPanel({
             {/* ── Droits métier par rôle ── */}
             <div className="grid gap-6 xl:grid-cols-4">
                 <div className="xl:col-span-1 space-y-2">
-                    <div className="rounded-[28px] border border-[var(--admin-border)] bg-white/60 p-4">
+                    <div className="rounded-[28px] border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] p-4">
                         <p className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)] mb-3 px-2">
                             Rôles du Système
                         </p>
@@ -313,7 +313,7 @@ export default function RolesPermissionsPanel({
                 </div>
 
                 <div className="xl:col-span-3 space-y-6">
-                    <div className="rounded-[28px] border border-[var(--admin-border)] bg-white/60 p-6">
+                    <div className="rounded-[28px] border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] p-6">
                         <div className="flex items-center justify-between border-b border-[var(--admin-border)] pb-4 mb-6">
                             <div>
                                 <h3 className="text-xl font-bold text-[var(--admin-text)]">
@@ -343,7 +343,7 @@ export default function RolesPermissionsPanel({
                                                 <div
                                                     key={perm.id}
                                                     className={`flex items-start justify-between gap-4 p-4 rounded-2xl border border-[var(--admin-border)] transition ${
-                                                        hasPermission ? 'bg-[#eef8f0]/40' : 'bg-white/40'
+                                                        hasPermission ? 'bg-[#eef8f0]/40' : 'bg-[var(--admin-panel)]'
                                                     }`}
                                                 >
                                                     <div className="min-w-0">

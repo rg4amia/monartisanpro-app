@@ -100,7 +100,7 @@ export function PersonalDataModal({
                         <EmptyState description="Impossible de charger les données personnelles." title="Erreur" />
                     ) : (
                         <div className="space-y-5">
-                            <section className="rounded-2xl border border-[var(--admin-border)] bg-white/50 p-4">
+                            <section className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-4">
                                 <h3 className="text-xs font-bold uppercase tracking-widest text-[#b77918] mb-2">Identité &amp; contact</h3>
                                 <DataRow label="Nom" value={report.user.name} />
                                 <DataRow label="E-mail" value={report.user.email} />
@@ -131,7 +131,7 @@ export function PersonalDataModal({
                                 />
                             </section>
 
-                            <section className="rounded-2xl border border-[var(--admin-border)] bg-white/50 p-4">
+                            <section className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-4">
                                 <h3 className="text-xs font-bold uppercase tracking-widest text-[#b77918] mb-2">Consentement</h3>
                                 <DataRow
                                     label="CGU &amp; confidentialité acceptées le"
@@ -141,7 +141,7 @@ export function PersonalDataModal({
                                 <DataRow label="Anonymisé le" value={report.user.anonymized_at ? shortDate(report.user.anonymized_at) : 'Non'} />
                             </section>
 
-                            <section className="rounded-2xl border border-[var(--admin-border)] bg-white/50 p-4">
+                            <section className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-4">
                                 <h3 className="text-xs font-bold uppercase tracking-widest text-[#b77918] mb-2">Pièces justificatives KYC</h3>
                                 {report.kyc_documents.length === 0 ? (
                                     <p className="text-xs text-[var(--admin-muted)] py-1">Aucune pièce transmise.</p>
@@ -172,7 +172,7 @@ export function PersonalDataModal({
                                 )}
                             </section>
 
-                            <section className="rounded-2xl border border-[var(--admin-border)] bg-white/50 p-4">
+                            <section className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-4">
                                 <h3 className="text-xs font-bold uppercase tracking-widest text-[#b77918] mb-2">Empreinte sur la plateforme</h3>
                                 <DataRow label="Pièces KYC" value={report.kyc_documents.length} />
                                 <DataRow label="Évaluations émises" value={report.evaluations_given} />
@@ -185,7 +185,7 @@ export function PersonalDataModal({
                             </section>
 
                             {report.activity_trace.length > 0 && (
-                                <section className="rounded-2xl border border-[var(--admin-border)] bg-white/50 p-4">
+                                <section className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-4">
                                     <h3 className="text-xs font-bold uppercase tracking-widest text-[#b77918] mb-2">Traçabilité récente</h3>
                                     <div className="space-y-1.5">
                                         {report.activity_trace.map((entry, index) => (

@@ -116,7 +116,7 @@ export default function VitrinePanel({
             </div>
 
             {/* Sub Tab Panel rendering */}
-            <div className="bg-white/50 border border-[var(--admin-border)] rounded-[32px] p-6 shadow-sm">
+            <div className="bg-[var(--admin-panel)] border border-[var(--admin-border)] rounded-[32px] p-6 shadow-sm">
                 {activeSubTab === 'contacts' && (
                     <ContactsSubPanel messages={contactMessages} />
                 )}
@@ -238,7 +238,7 @@ function SlidesSubPanel({ slides }: { slides: any[] }) {
                     </div>
                 ) : (
                     slides.map((slide) => (
-                        <div key={slide.id} className="border border-[var(--admin-border)] bg-white/40 rounded-2xl overflow-hidden shadow-sm flex flex-col">
+                        <div key={slide.id} className="border border-[var(--admin-border)] bg-[var(--admin-panel)] rounded-2xl overflow-hidden shadow-sm flex flex-col">
                             <div className="h-40 bg-stone-200 relative">
                                 <img src={slide.image_url} alt={slide.titre} className="w-full h-full object-cover" />
                                 <span className={cn(
@@ -277,7 +277,7 @@ function SlidesSubPanel({ slides }: { slides: any[] }) {
             {/* Modal */}
             {isOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-[32px] border border-[var(--admin-border)] p-6 w-full max-w-lg shadow-xl relative">
+                    <div className="bg-[var(--admin-panel-strong)] rounded-[32px] border border-[var(--admin-border)] p-6 w-full max-w-lg shadow-xl relative">
                         <h4 className="text-lg font-bold text-[var(--admin-text)] mb-4">
                             {editingSlide ? 'Modifier Slide' : 'Créer Slide'}
                         </h4>
@@ -473,7 +473,7 @@ function ArtisanDuMoisSubPanel({ admList, artisans }: { admList: any[]; artisans
                     admList.map((adm) => {
                         const dateFormatted = new Date(adm.mois).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
                         return (
-                            <div key={adm.id} className="border border-[var(--admin-border)] bg-white/40 rounded-2xl p-5 flex flex-col md:flex-row gap-5 items-start">
+                            <div key={adm.id} className="border border-[var(--admin-border)] bg-[var(--admin-panel)] rounded-2xl p-5 flex flex-col md:flex-row gap-5 items-start">
                                 <div className="h-28 w-28 shrink-0 bg-stone-100 rounded-2xl border overflow-hidden shadow-inner">
                                     <img 
                                         src={adm.photo_override_url || adm.user?.kyc_selfie_path || '/img/default-avatar.png'} 
@@ -512,7 +512,7 @@ function ArtisanDuMoisSubPanel({ admList, artisans }: { admList: any[]; artisans
             {/* Modal */}
             {isOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-[32px] border border-[var(--admin-border)] p-6 w-full max-w-lg shadow-xl relative">
+                    <div className="bg-[var(--admin-panel-strong)] rounded-[32px] border border-[var(--admin-border)] p-6 w-full max-w-lg shadow-xl relative">
                         <h4 className="text-lg font-bold text-[var(--admin-text)] mb-4">
                             Mettre en avant un Artisan
                         </h4>
@@ -712,7 +712,7 @@ function ArticlesSubPanel({ articles }: { articles: any[] }) {
                     </div>
                 ) : (
                     articles.map((art) => (
-                        <div key={art.id} className="border border-[var(--admin-border)] bg-white/40 rounded-2xl overflow-hidden shadow-sm flex flex-col justify-between">
+                        <div key={art.id} className="border border-[var(--admin-border)] bg-[var(--admin-panel)] rounded-2xl overflow-hidden shadow-sm flex flex-col justify-between">
                             <div>
                                 <div className="h-40 bg-stone-200 relative">
                                     <img src={art.image_url || '/img/default-news.png'} alt={art.titre} className="w-full h-full object-cover" />
@@ -756,7 +756,7 @@ function ArticlesSubPanel({ articles }: { articles: any[] }) {
             {/* Modal */}
             {isOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-[32px] border border-[var(--admin-border)] p-6 w-full max-w-2xl shadow-xl relative">
+                    <div className="bg-[var(--admin-panel-strong)] rounded-[32px] border border-[var(--admin-border)] p-6 w-full max-w-2xl shadow-xl relative">
                         <h4 className="text-lg font-bold text-[var(--admin-text)] mb-4">
                             {editingArticle ? 'Modifier l\'Article' : 'Rédiger un Article'}
                         </h4>
@@ -957,12 +957,12 @@ function VideosSubPanel({ videos }: { videos: any[] }) {
                     </div>
                 ) : (
                     videos.map((vid) => (
-                        <div key={vid.id} className="border border-[var(--admin-border)] bg-white/40 rounded-2xl overflow-hidden shadow-sm flex flex-col justify-between">
+                        <div key={vid.id} className="border border-[var(--admin-border)] bg-[var(--admin-panel)] rounded-2xl overflow-hidden shadow-sm flex flex-col justify-between">
                             <div>
                                 <div className="h-40 bg-stone-200 relative">
                                     <img src={vid.thumbnail_url || '/img/default-video.png'} alt={vid.titre} className="w-full h-full object-cover" />
                                     <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                                        <span className="h-12 w-12 rounded-full bg-white/90 flex items-center justify-center text-[#b77918] shadow-md font-bold text-xl">▶</span>
+                                        <span className="h-12 w-12 rounded-full bg-[var(--admin-panel-strong)] flex items-center justify-center text-[#b77918] shadow-md font-bold text-xl">▶</span>
                                     </div>
                                     <span className="absolute top-2 left-2 bg-stone-900/70 text-white px-2 py-0.5 rounded-full text-2xs uppercase">
                                         {vid.categorie}
@@ -996,7 +996,7 @@ function VideosSubPanel({ videos }: { videos: any[] }) {
             {/* Modal */}
             {isOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-[32px] border border-[var(--admin-border)] p-6 w-full max-w-lg shadow-xl relative">
+                    <div className="bg-[var(--admin-panel-strong)] rounded-[32px] border border-[var(--admin-border)] p-6 w-full max-w-lg shadow-xl relative">
                         <h4 className="text-lg font-bold text-[var(--admin-text)] mb-4">
                             {editingVideo ? 'Modifier la Vidéo' : 'Ajouter une Vidéo'}
                         </h4>
@@ -1223,7 +1223,7 @@ function FormationsSubPanel({ formations, money }: { formations: any[]; money: (
                     </div>
                 ) : (
                     formations.map((form) => (
-                        <div key={form.id} className="border border-[var(--admin-border)] bg-white/40 rounded-2xl overflow-hidden shadow-sm flex flex-col justify-between">
+                        <div key={form.id} className="border border-[var(--admin-border)] bg-[var(--admin-panel)] rounded-2xl overflow-hidden shadow-sm flex flex-col justify-between">
                             <div>
                                 <div className="h-40 bg-stone-200 relative">
                                     <img src={form.image_url || '/img/default-training.png'} alt={form.titre} className="w-full h-full object-cover" />
@@ -1268,7 +1268,7 @@ function FormationsSubPanel({ formations, money }: { formations: any[]; money: (
             {/* Modal */}
             {isOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-[32px] border border-[var(--admin-border)] p-6 w-full max-w-xl shadow-xl relative">
+                    <div className="bg-[var(--admin-panel-strong)] rounded-[32px] border border-[var(--admin-border)] p-6 w-full max-w-xl shadow-xl relative">
                         <h4 className="text-lg font-bold text-[var(--admin-text)] mb-4">
                             {editingFormation ? 'Modifier Session Formation' : 'Créer Session Formation'}
                         </h4>
@@ -1522,7 +1522,7 @@ function RecrutementsSubPanel({ recrutements }: { recrutements: any[] }) {
                     recrutements.map((job) => {
                         const isExpired = currentTime > 0 && Boolean(job.date_limite && new Date(job.date_limite + 'T23:59:59').getTime() < currentTime);
                         return (
-                            <div key={job.id} className="border border-[var(--admin-border)] bg-white/40 rounded-2xl p-5 flex flex-col md:flex-row justify-between items-start gap-4">
+                            <div key={job.id} className="border border-[var(--admin-border)] bg-[var(--admin-panel)] rounded-2xl p-5 flex flex-col md:flex-row justify-between items-start gap-4">
                                 <div className="space-y-2">
                                     <div className="flex items-center flex-wrap gap-2">
                                         <h4 className="text-lg font-bold text-[var(--admin-text)]">{job.titre}</h4>
@@ -1573,7 +1573,7 @@ function RecrutementsSubPanel({ recrutements }: { recrutements: any[] }) {
             {/* Modal */}
             {isOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-[32px] border border-[var(--admin-border)] p-6 w-full max-w-lg shadow-xl relative">
+                    <div className="bg-[var(--admin-panel-strong)] rounded-[32px] border border-[var(--admin-border)] p-6 w-full max-w-lg shadow-xl relative">
                         <h4 className="text-lg font-bold text-[var(--admin-text)] mb-4">
                             {editingRecrutement ? 'Modifier l\'offre' : 'Publier une offre d\'emploi'}
                         </h4>
@@ -1809,7 +1809,7 @@ function PopupsSubPanel({ popups }: { popups: any[] }) {
                     popups.map((pop) => {
                         const isNow = new Date() >= new Date(pop.date_debut) && new Date() <= new Date(pop.date_fin);
                         return (
-                            <div key={pop.id} className="border border-[var(--admin-border)] bg-white/40 rounded-2xl overflow-hidden shadow-sm flex flex-col justify-between">
+                            <div key={pop.id} className="border border-[var(--admin-border)] bg-[var(--admin-panel)] rounded-2xl overflow-hidden shadow-sm flex flex-col justify-between">
                                 <div>
                                     <div className="h-40 bg-stone-200 relative">
                                         <img src={pop.image_url || '/img/default-popup.png'} alt={pop.titre} className="w-full h-full object-cover" />
@@ -1852,7 +1852,7 @@ function PopupsSubPanel({ popups }: { popups: any[] }) {
             {/* Modal */}
             {isOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-[32px] border border-[var(--admin-border)] p-6 w-full max-w-lg shadow-xl relative">
+                    <div className="bg-[var(--admin-panel-strong)] rounded-[32px] border border-[var(--admin-border)] p-6 w-full max-w-lg shadow-xl relative">
                         <h4 className="text-lg font-bold text-[var(--admin-text)] mb-4">
                             {editingPopup ? 'Modifier Pop-up' : 'Créer Pop-up'}
                         </h4>
@@ -2143,7 +2143,7 @@ function SettingsSubPanel({ settings }: { settings: any[] }) {
             )}
 
             {/* 1. INDICATEURS CLÉS (HERO VITRINE) */}
-            <div className="space-y-4 bg-white/40 border border-[var(--admin-border)] p-6 rounded-[24px]">
+            <div className="space-y-4 bg-[var(--admin-panel)] border border-[var(--admin-border)] p-6 rounded-[24px]">
                 <div>
                     <h4 className="text-sm font-bold text-[#b77918] uppercase tracking-wider flex items-center gap-2">
                         <span>📊</span> Barre d'Indicateurs Clés (Hero Vitrine)
@@ -2155,7 +2155,7 @@ function SettingsSubPanel({ settings }: { settings: any[] }) {
                 
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     {/* Indicateur 1 */}
-                    <div className="p-4 bg-white/70 rounded-2xl border border-[var(--admin-border)] space-y-3 shadow-sm">
+                    <div className="p-4 bg-[var(--admin-panel-strong)] rounded-2xl border border-[var(--admin-border)] space-y-3 shadow-sm">
                         <div className="flex items-center justify-between">
                             <span className="text-[10px] font-bold text-[#8a5d16] uppercase tracking-wider">Indicateur 1 (Artisans)</span>
                             <span className="text-xs">👥</span>
@@ -2186,7 +2186,7 @@ function SettingsSubPanel({ settings }: { settings: any[] }) {
                     </div>
 
                     {/* Indicateur 2 */}
-                    <div className="p-4 bg-white/70 rounded-2xl border border-[var(--admin-border)] space-y-3 shadow-sm">
+                    <div className="p-4 bg-[var(--admin-panel-strong)] rounded-2xl border border-[var(--admin-border)] space-y-3 shadow-sm">
                         <div className="flex items-center justify-between">
                             <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">Indicateur 2 (Missions)</span>
                             <span className="text-xs">✅</span>
@@ -2217,7 +2217,7 @@ function SettingsSubPanel({ settings }: { settings: any[] }) {
                     </div>
 
                     {/* Indicateur 3 */}
-                    <div className="p-4 bg-white/70 rounded-2xl border border-[var(--admin-border)] space-y-3 shadow-sm">
+                    <div className="p-4 bg-[var(--admin-panel-strong)] rounded-2xl border border-[var(--admin-border)] space-y-3 shadow-sm">
                         <div className="flex items-center justify-between">
                             <span className="text-[10px] font-bold text-blue-700 uppercase tracking-wider">Indicateur 3 (Communes)</span>
                             <span className="text-xs">📍</span>
@@ -2245,7 +2245,7 @@ function SettingsSubPanel({ settings }: { settings: any[] }) {
                     </div>
 
                     {/* Indicateur 4 */}
-                    <div className="p-4 bg-white/70 rounded-2xl border border-[var(--admin-border)] space-y-3 shadow-sm">
+                    <div className="p-4 bg-[var(--admin-panel-strong)] rounded-2xl border border-[var(--admin-border)] space-y-3 shadow-sm">
                         <div className="flex items-center justify-between">
                             <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Indicateur 4 (Satisfaction)</span>
                             <span className="text-xs">⭐</span>
@@ -2275,7 +2275,7 @@ function SettingsSubPanel({ settings }: { settings: any[] }) {
             </div>
 
             {/* 2. FOOTER - IDENTITÉ & MARQUE */}
-            <div className="space-y-4 bg-white/40 border border-[var(--admin-border)] p-6 rounded-[24px]">
+            <div className="space-y-4 bg-[var(--admin-panel)] border border-[var(--admin-border)] p-6 rounded-[24px]">
                 <h4 className="text-sm font-bold text-[#b77918] uppercase tracking-wider flex items-center gap-2">
                     <span>🏢</span> Footer : Identité de Marque & Badge de Confiance
                 </h4>
@@ -2320,7 +2320,7 @@ function SettingsSubPanel({ settings }: { settings: any[] }) {
             </div>
 
             {/* 3. FOOTER - COORDONNÉES & CONTACT */}
-            <div className="space-y-4 bg-white/40 border border-[var(--admin-border)] p-6 rounded-[24px]">
+            <div className="space-y-4 bg-[var(--admin-panel)] border border-[var(--admin-border)] p-6 rounded-[24px]">
                 <h4 className="text-sm font-bold text-[#b77918] uppercase tracking-wider flex items-center gap-2">
                     <span>📞</span> Footer : Coordonnées de Contact & Localisation
                 </h4>
@@ -2359,7 +2359,7 @@ function SettingsSubPanel({ settings }: { settings: any[] }) {
             </div>
 
             {/* 4. RÉSEAUX SOCIAUX */}
-            <div className="space-y-4 bg-white/40 border border-[var(--admin-border)] p-6 rounded-[24px]">
+            <div className="space-y-4 bg-[var(--admin-panel)] border border-[var(--admin-border)] p-6 rounded-[24px]">
                 <h4 className="text-sm font-bold text-[#b77918] uppercase tracking-wider flex items-center gap-2">
                     <span>🌐</span> Réseaux Sociaux Officiels
                 </h4>
@@ -2428,7 +2428,7 @@ function SettingsSubPanel({ settings }: { settings: any[] }) {
             </div>
 
             {/* 5. SERVICES PERSONNALISABLES */}
-            <div className="space-y-4 bg-white/40 border border-[var(--admin-border)] p-6 rounded-[24px]">
+            <div className="space-y-4 bg-[var(--admin-panel)] border border-[var(--admin-border)] p-6 rounded-[24px]">
                 <div className="flex items-center justify-between">
                     <h4 className="text-sm font-bold text-[#b77918] uppercase tracking-wider flex items-center gap-2">
                         <span>🛠️</span> Footer : Liens de la Colonne Services
@@ -2516,7 +2516,7 @@ function SettingsSubPanel({ settings }: { settings: any[] }) {
             </div>
 
             {/* 6. FOOTER - BAS DE PAGE & LÉGAL */}
-            <div className="space-y-4 bg-white/40 border border-[var(--admin-border)] p-6 rounded-[24px]">
+            <div className="space-y-4 bg-[var(--admin-panel)] border border-[var(--admin-border)] p-6 rounded-[24px]">
                 <h4 className="text-sm font-bold text-[#b77918] uppercase tracking-wider flex items-center gap-2">
                     <span>⚖️</span> Footer : Bas de page, Copyright & Mentions Légales
                 </h4>
@@ -2561,7 +2561,7 @@ function SettingsSubPanel({ settings }: { settings: any[] }) {
             </div>
 
             {/* 7. MISSION GLOBALE */}
-            <div className="space-y-4 bg-white/40 border border-[var(--admin-border)] p-6 rounded-[24px]">
+            <div className="space-y-4 bg-[var(--admin-panel)] border border-[var(--admin-border)] p-6 rounded-[24px]">
                 <h4 className="text-sm font-bold text-[#b77918] uppercase tracking-wider flex items-center gap-2">
                     <span>📝</span> Présentation & Mission Globale de la Plateforme
                 </h4>
@@ -2755,7 +2755,7 @@ function ContactsSubPanel({ messages = [] }: { messages: any[] }) {
                             "p-4 rounded-2xl border text-left transition",
                             statusFilter === 'all'
                                 ? "bg-[#ebb95e]/15 border-[#ebb95e] shadow-sm"
-                                : "bg-white/60 border-[var(--admin-border)] hover:bg-white"
+                                : "bg-[var(--admin-panel-strong)] border-[var(--admin-border)] hover:bg-[var(--admin-panel-strong)]"
                         )}
                     >
                         <p className="text-2xs uppercase tracking-wider text-[var(--admin-text-soft)] font-bold">Total Requêtes</p>
@@ -2769,7 +2769,7 @@ function ContactsSubPanel({ messages = [] }: { messages: any[] }) {
                             "p-4 rounded-2xl border text-left transition",
                             statusFilter === 'nouveau'
                                 ? "bg-rose-100/60 border-rose-400 shadow-sm"
-                                : "bg-white/60 border-[var(--admin-border)] hover:bg-white"
+                                : "bg-[var(--admin-panel-strong)] border-[var(--admin-border)] hover:brightness-110"
                         )}
                     >
                         <p className="text-2xs uppercase tracking-wider text-rose-700 font-bold flex items-center justify-between">
@@ -2786,7 +2786,7 @@ function ContactsSubPanel({ messages = [] }: { messages: any[] }) {
                             "p-4 rounded-2xl border text-left transition",
                             statusFilter === 'en_cours'
                                 ? "bg-amber-100/60 border-amber-400 shadow-sm"
-                                : "bg-white/60 border-[var(--admin-border)] hover:bg-white"
+                                : "bg-[var(--admin-panel-strong)] border-[var(--admin-border)] hover:brightness-110"
                         )}
                     >
                         <p className="text-2xs uppercase tracking-wider text-amber-700 font-bold">En cours</p>
@@ -2800,7 +2800,7 @@ function ContactsSubPanel({ messages = [] }: { messages: any[] }) {
                             "p-4 rounded-2xl border text-left transition",
                             statusFilter === 'traite'
                                 ? "bg-emerald-100/60 border-emerald-400 shadow-sm"
-                                : "bg-white/60 border-[var(--admin-border)] hover:bg-white"
+                                : "bg-[var(--admin-panel-strong)] border-[var(--admin-border)] hover:brightness-110"
                         )}
                     >
                         <p className="text-2xs uppercase tracking-wider text-emerald-700 font-bold">Traités / Résolus</p>
@@ -2814,7 +2814,7 @@ function ContactsSubPanel({ messages = [] }: { messages: any[] }) {
                             "p-4 rounded-2xl border text-left transition",
                             statusFilter === 'archive'
                                 ? "bg-stone-200/60 border-stone-400 shadow-sm"
-                                : "bg-white/60 border-[var(--admin-border)] hover:bg-white"
+                                : "bg-[var(--admin-panel-strong)] border-[var(--admin-border)] hover:brightness-110"
                         )}
                     >
                         <p className="text-2xs uppercase tracking-wider text-stone-600 font-bold">Archivés</p>
@@ -2824,14 +2824,14 @@ function ContactsSubPanel({ messages = [] }: { messages: any[] }) {
             </div>
 
             {/* Filter / Search Bar */}
-            <div className="flex flex-wrap items-center justify-between gap-3 bg-white/70 p-3 rounded-2xl border border-[var(--admin-border)]">
+            <div className="flex flex-wrap items-center justify-between gap-3 bg-[var(--admin-panel-strong)] p-3 rounded-2xl border border-[var(--admin-border)]">
                 <div className="flex-1 min-w-[240px]">
                     <input
                         type="text"
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
                         placeholder="Rechercher par nom, email, téléphone, sujet ou mot-clé..."
-                        className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-xs bg-white focus:outline-none focus:border-[#ebb95e]"
+                        className="w-full rounded-xl border border-[var(--admin-border)] px-3 py-2 text-xs bg-[var(--admin-panel-strong)] focus:outline-none focus:border-[#ebb95e]"
                     />
                 </div>
                 <div className="flex items-center gap-2">
@@ -2839,7 +2839,7 @@ function ContactsSubPanel({ messages = [] }: { messages: any[] }) {
                     <select
                         value={statusFilter}
                         onChange={e => setStatusFilter(e.target.value as any)}
-                        className="rounded-xl border border-[var(--admin-border)] px-3 py-2 text-xs bg-white focus:outline-none"
+                        className="rounded-xl border border-[var(--admin-border)] px-3 py-2 text-xs bg-[var(--admin-panel-strong)] focus:outline-none"
                     >
                         <option value="all">Toutes les requêtes ({stats.total})</option>
                         <option value="nouveau">Nouveaux seulement ({stats.nouveau})</option>
@@ -2851,7 +2851,7 @@ function ContactsSubPanel({ messages = [] }: { messages: any[] }) {
             </div>
 
             {/* List / Table */}
-            <div className="border border-[var(--admin-border)] bg-white/40 rounded-2xl overflow-hidden shadow-sm">
+            <div className="border border-[var(--admin-border)] bg-[var(--admin-panel)] rounded-2xl overflow-hidden shadow-sm">
                 {filteredMessages.length === 0 ? (
                     <div className="py-12 text-center text-[var(--admin-text-soft)] space-y-2">
                         <p className="text-sm font-semibold">Aucune demande de contact ne correspond aux critères.</p>
@@ -2863,7 +2863,7 @@ function ContactsSubPanel({ messages = [] }: { messages: any[] }) {
                             <div
                                 key={msg.id}
                                 className={cn(
-                                    "p-4 transition hover:bg-white flex flex-col md:flex-row md:items-center justify-between gap-4",
+                                    "p-4 transition hover:bg-[var(--admin-panel-strong)] flex flex-col md:flex-row md:items-center justify-between gap-4",
                                     msg.statut === 'nouveau' && "bg-rose-50/40 font-medium"
                                 )}
                             >
@@ -2891,7 +2891,7 @@ function ContactsSubPanel({ messages = [] }: { messages: any[] }) {
                                         <h4 className="text-sm font-bold text-[var(--admin-text)] truncate">{msg.sujet}</h4>
                                     </div>
 
-                                    <p className="text-xs text-[var(--admin-text)] line-clamp-2 bg-white/50 p-2 rounded-xl border border-[var(--admin-border)]/50">
+                                    <p className="text-xs text-[var(--admin-text)] line-clamp-2 bg-[var(--admin-panel)] p-2 rounded-xl border border-[var(--admin-border)]/50">
                                         "{msg.message}"
                                     </p>
 
@@ -2960,7 +2960,7 @@ function ContactsSubPanel({ messages = [] }: { messages: any[] }) {
             {/* Modal de Suivi & Traitement de la Requête */}
             {selectedMessage && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
-                    <div className="bg-white rounded-[32px] border border-[var(--admin-border)] p-6 w-full max-w-2xl shadow-2xl relative my-8">
+                    <div className="bg-[var(--admin-panel-strong)] rounded-[32px] border border-[var(--admin-border)] p-6 w-full max-w-2xl shadow-2xl relative my-8">
                         <div className="flex justify-between items-start pb-4 border-b border-[var(--admin-border)]">
                             <div>
                                 <span className="text-2xs uppercase tracking-wider font-extrabold text-[#b77918]">
