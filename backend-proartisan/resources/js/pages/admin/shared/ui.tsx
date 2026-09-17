@@ -59,8 +59,8 @@ export function DataTable({ children, className = '' }: { children: ReactNode; c
 
 export function EmptyState({ description, title }: { description: string; title: string }) {
     return (
-        <div className="rounded-[24px] border border-dashed border-[var(--admin-border)] bg-white/45 px-5 py-8 text-center">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-[var(--admin-border)] bg-white/60 text-[var(--admin-muted)]">
+        <div className="rounded-[24px] border border-dashed border-[var(--admin-border)] bg-[var(--admin-panel)] px-5 py-8 text-center">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] text-[var(--admin-muted)]">
                 <InboxIcon className="h-5 w-5" />
             </div>
             <p className="text-base font-semibold text-[var(--admin-text)]">{title}</p>
@@ -88,7 +88,7 @@ export function InfoRow({ label, value }: { label: string; value: string }) {
 
 export function InfoPill({ label, value }: { label: string; value: string }) {
     return (
-        <div className="rounded-[22px] border border-[var(--admin-border)] bg-white/60 px-4 py-3">
+        <div className="rounded-[22px] border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-4 py-3">
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--admin-muted)]">{label}</p>
             <p className="mt-2 text-sm font-medium text-[var(--admin-text)]">{value}</p>
         </div>

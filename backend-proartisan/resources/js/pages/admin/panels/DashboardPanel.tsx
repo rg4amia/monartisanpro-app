@@ -122,7 +122,7 @@ export function DashboardPanel({
                             <EmptyState description="Aucun dossier urgent en attente de revue." title="File KYC vide" />
                         ) : (
                             urgentKyc.map((user) => (
-                                <div key={user.id} className="rounded-[24px] border border-[var(--admin-border)] bg-white/60 p-4">
+                                <div key={user.id} className="rounded-[24px] border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] p-4">
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="flex min-w-0 items-start gap-3">
                                             <AvatarBubble label={user.name} />
@@ -168,7 +168,7 @@ export function DashboardPanel({
                             <EmptyState description="Aucune activité récente détectée." title="Journal vide" />
                         ) : (
                             recentActivity.map((activity) => (
-                                <div key={activity.id} className="flex items-start gap-3 rounded-[24px] border border-[var(--admin-border)] bg-white/60 p-4">
+                                <div key={activity.id} className="flex items-start gap-3 rounded-[24px] border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] p-4">
                                     <div className={cn('mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl', toneIconClasses(activity.tone))}>
                                         <ActivityToneIcon tone={activity.tone} />
                                     </div>
@@ -232,7 +232,7 @@ export function DashboardPanel({
                             <EmptyState description="Aucun artisan scoré pour l’instant." title="Pas de classement" />
                         ) : (
                             topArtisans.map((artisan) => (
-                                <div key={artisan.id} className="flex items-center justify-between rounded-[22px] border border-[var(--admin-border)] bg-white/60 px-4 py-3">
+                                <div key={artisan.id} className="flex items-center justify-between rounded-[22px] border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-4 py-3">
                                     <div className="min-w-0">
                                         <p className="truncate text-sm font-semibold text-[var(--admin-text)]">{artisan.name}</p>
                                         <p className="text-xs text-[var(--admin-muted)]">{artisan.phone}</p>

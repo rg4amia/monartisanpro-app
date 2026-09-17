@@ -6,16 +6,15 @@ use App\Http\Requests\Admin\StoreCommunicationRequest;
 use App\Models\AdminActivityLog;
 use App\Models\Communication;
 use App\Models\ContactMessage;
+use App\Models\Faq;
 use App\Models\Notification;
 use App\Models\Permission;
 use App\Models\PromoCode;
+use App\Models\RecruitmentOffer;
 use App\Models\Sector;
 use App\Models\Setting;
-use App\Models\Faq;
-use App\Models\RecruitmentOffer;
 use App\Models\Transaction;
 use App\Models\User;
-use App\Models\WhatsappClickLog;
 use App\Models\Vitrine\VitrineArticle;
 use App\Models\Vitrine\VitrineArtisanDuMois;
 use App\Models\Vitrine\VitrineFormation;
@@ -24,7 +23,9 @@ use App\Models\Vitrine\VitrineRecrutement;
 use App\Models\Vitrine\VitrineSetting;
 use App\Models\Vitrine\VitrineSlide;
 use App\Models\Vitrine\VitrineVideo;
+use App\Models\WhatsappClickLog;
 use App\Services\AdminService;
+use App\Services\GeneratedDocumentService;
 use App\Services\UploadLimitService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
@@ -46,7 +47,7 @@ class AdminPanelData
         private AdminService $adminService,
         private AdminPermissionService $adminPermissions,
         private AdminObservabilityService $observability,
-        private \App\Services\GeneratedDocumentService $documentService,
+        private GeneratedDocumentService $documentService,
         private AdminTerritoryService $territoryService,
     ) {}
 
@@ -206,13 +207,29 @@ class AdminPanelData
     {
         $stats = $this->adminService->dashboard();
 
+        $usersPage = $this->adminService->listUsers(
+            $request->query('search_users') ?: null,
+            $request->query('role_users') ?: null,
+            $request->query('kyc_users') ?: null,
+            25,
+        )->withQueryString();
+
+        // Photo et pièces KYC : chargées uniquement pour la page courante (25
+        // comptes max), affichées dans la modale d'édition du backoffice.
+        $usersPage->getCollection()->load('kycDocuments');
+        $usersPage->getCollection()->transform(function (User $user) {
+            $user->append('photo_url');
+            $user->kyc_documents = $user->kycDocuments->map(fn ($doc) => [
+                'type' => $doc->type,
+                'statut' => $doc->statut,
+                'file_url' => $doc->file_url,
+            ]);
+
+            return $user;
+        });
+
         return [
-            'usersPage' => $this->adminService->listUsers(
-                $request->query('search_users') ?: null,
-                $request->query('role_users') ?: null,
-                $request->query('kyc_users') ?: null,
-                25,
-            )->withQueryString(),
+            'usersPage' => $usersPage,
             'userStats' => [
                 'total' => $stats['users_total'],
                 'artisans_actifs' => $stats['artisans_actifs'],
@@ -264,7 +281,7 @@ class AdminPanelData
             'financialKpis' => $this->adminService->getFinancialKpis(),
             'documentsPage' => $this->documentService->listDocuments([
                 'search' => $request->query('search_doc') ?: null,
-                'type'   => $request->query('type_doc') ?: null,
+                'type' => $request->query('type_doc') ?: null,
             ], 30)->withQueryString(),
             'documentStats' => $this->documentService->getStats(),
         ];
@@ -325,7 +342,7 @@ class AdminPanelData
                 'whatsapp_widget_phone' => VitrineSetting::get('whatsapp_widget_phone', ''),
                 'whatsapp_widget_message' => VitrineSetting::get(
                     'whatsapp_widget_message',
-                    "Bonjour ProsArtisan, je souhaite être mis en relation avec un artisan.",
+                    'Bonjour ProsArtisan, je souhaite être mis en relation avec un artisan.',
                 ),
             ],
         ];
@@ -403,7 +420,7 @@ class AdminPanelData
      */
     private function faqStats(): array
     {
-        if (!Schema::hasTable('faqs')) {
+        if (! Schema::hasTable('faqs')) {
             return ['total' => 0, 'actives' => 0, 'roles_covered' => 0];
         }
 

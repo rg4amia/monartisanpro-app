@@ -24,6 +24,8 @@ body {
     --admin-bg: #f2ecdf;
     --admin-panel: rgba(255, 250, 243, 0.76);
     --admin-panel-strong: rgba(255, 255, 255, 0.88);
+    --admin-card: rgba(255, 253, 249, 0.98);
+    --admin-card-header: #f8f2e6;
     --admin-border: rgba(218, 194, 160, 0.75);
     --admin-muted: #887563;
     --admin-text: #241b16;
@@ -70,6 +72,8 @@ body {
     --admin-bg: #171412;
     --admin-panel: rgba(34, 29, 24, 0.76);
     --admin-panel-strong: rgba(42, 36, 31, 0.88);
+    --admin-card: rgba(30, 25, 21, 0.98);
+    --admin-card-header: #241f1a;
     --admin-border: rgba(92, 77, 61, 0.82);
     --admin-muted: #b59f89;
     --admin-text: #f7f0e7;
@@ -107,7 +111,7 @@ body {
 }
 
 .admin-nav-link:hover {
-    background: rgba(255, 255, 255, 0.48);
+    background: var(--admin-panel-strong);
     color: var(--admin-text);
 }
 
@@ -136,7 +140,7 @@ body {
 }
 
 .admin-input {
-    background: rgba(248, 239, 225, 0.62);
+    background: var(--admin-panel);
     border: 1px solid var(--admin-border);
 }
 
@@ -177,16 +181,16 @@ body {
 
 .admin-button--ghost {
     border: 1px solid var(--admin-border);
-    background: rgba(255, 255, 255, 0.56);
+    background: var(--admin-panel-strong);
     color: var(--admin-text);
 }
 
 .admin-button--ghost:hover {
-    background: rgba(255, 255, 255, 0.78);
+    filter: brightness(1.06);
 }
 
 .admin-chip {
-    background: rgba(255, 255, 255, 0.58);
+    background: var(--admin-panel-strong);
     color: var(--admin-text-soft);
 }
 
@@ -196,7 +200,7 @@ body {
     overflow: hidden;
     border-radius: 1.6rem;
     border: 1px solid var(--admin-border);
-    background: rgba(255, 255, 255, 0.64);
+    background: var(--admin-panel);
 }
 
 .admin-table thead th {
@@ -207,17 +211,17 @@ body {
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--admin-muted);
-    background: rgba(255, 252, 247, 0.8);
+    background: var(--admin-panel-strong);
 }
 
 .admin-table tbody td {
     padding: 1.1rem;
     vertical-align: top;
-    border-top: 1px solid rgba(218, 194, 160, 0.42);
+    border-top: 1px solid var(--admin-border);
 }
 
 .admin-table tbody tr:hover td {
-    background: rgba(255, 255, 255, 0.52);
+    background: var(--admin-panel-strong);
 }
 
 @media (max-width: 1023px) {

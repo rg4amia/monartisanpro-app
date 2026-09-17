@@ -148,7 +148,7 @@ export function UsersPanel({
                         ) : null}
                     </div>
 
-                    <form onSubmit={onSubmit} className="mt-5 grid items-end gap-3 rounded-2xl border border-[var(--admin-border)] bg-white/40 p-4 md:grid-cols-4">
+                    <form onSubmit={onSubmit} className="mt-5 grid items-end gap-3 rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-4 md:grid-cols-4">
                         <div className="md:col-span-2">
                             <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-[var(--admin-muted)]">Rechercher</label>
                             <input
@@ -156,7 +156,7 @@ export function UsersPanel({
                                 placeholder="Nom, téléphone, e-mail ou ID..."
                                 value={search}
                                 onChange={(e) => onSearchChange(e.target.value)}
-                                className="w-full rounded-xl border border-[var(--admin-border)] bg-white px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
+                                className="w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
                             />
                         </div>
                         <div>
@@ -164,7 +164,7 @@ export function UsersPanel({
                             <select
                                 value={roleFilter}
                                 onChange={(e) => onRoleFilterChange(e.target.value)}
-                                className="w-full rounded-xl border border-[var(--admin-border)] bg-white px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
+                                className="w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
                             >
                                 <option value="">Tous les rôles</option>
                                 {Object.entries(roleLabels).map(([value, label]) => (
@@ -177,7 +177,7 @@ export function UsersPanel({
                             <select
                                 value={kycFilter}
                                 onChange={(e) => onKycFilterChange(e.target.value)}
-                                className="w-full rounded-xl border border-[var(--admin-border)] bg-white px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
+                                className="w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
                             >
                                 <option value="">Tous les statuts</option>
                                 <option value="actif">Actif</option>
@@ -192,7 +192,7 @@ export function UsersPanel({
                             <button
                                 type="button"
                                 onClick={onReset}
-                                className="rounded-xl border border-[var(--admin-border)] bg-white/60 px-3 py-2 text-xs font-bold text-[var(--admin-text-soft)] transition hover:bg-white/80"
+                                className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs font-bold text-[var(--admin-text-soft)] transition hover:brightness-110"
                             >
                                 Réinitialiser
                             </button>
@@ -380,7 +380,7 @@ export function UsersPanel({
                                 <EmptyState description="Aucune boutique en attente." title="Tout est à jour" />
                             ) : (
                                 pendingFournisseurs.map((fournisseur) => (
-                                    <div key={fournisseur.id} className="rounded-[24px] border border-[var(--admin-border)] bg-white/60 p-4">
+                                    <div key={fournisseur.id} className="rounded-[24px] border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] p-4">
                                         <p className="text-sm font-semibold text-[var(--admin-text)]">{fournisseur.nom_boutique}</p>
                                         <p className="mt-1 text-sm text-[var(--admin-text-soft)]">{fournisseur.user?.name ?? 'Contact inconnu'}</p>
                                         <p className="text-xs text-[var(--admin-muted)]">{fournisseur.user?.phone ?? 'Téléphone non renseigné'}</p>
@@ -414,7 +414,7 @@ export function UsersPanel({
                         <SectionTitle description="Comptes artisans les mieux scorés pour les futures affectations." title="Top artisans" />
                         <div className="mt-5 space-y-3">
                             {topArtisans.map((artisan) => (
-                                <div key={artisan.id} className="flex items-center justify-between rounded-[22px] border border-[var(--admin-border)] bg-white/60 px-4 py-3">
+                                <div key={artisan.id} className="flex items-center justify-between rounded-[22px] border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-4 py-3">
                                     <div className="min-w-0">
                                         <p className="truncate text-sm font-semibold text-[var(--admin-text)]">{artisan.name}</p>
                                         <p className="text-xs text-[var(--admin-muted)]">{artisan.phone}</p>

@@ -191,6 +191,8 @@ export interface AdminUser {
     device_fingerprint?: string | null;
     cgu_accepted_at?: string | null;
     anonymized_at?: string | null;
+    photo_url?: string | null;
+    kyc_documents?: Array<{ type: string; statut: string; file_url: string | null }>;
 }
 
 /** Instantané de santé opérationnelle (Chantier C7 / P2-12). */

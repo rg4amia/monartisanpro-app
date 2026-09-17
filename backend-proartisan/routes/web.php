@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\RecruitmentAdminController;
 use App\Http\Controllers\Admin\VitrineAdminController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\KycDocumentController;
+use App\Http\Controllers\UserPhotoController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -35,6 +36,11 @@ Route::get('/', function () {
 Route::get('/kyc/documents/{document}/file', [KycDocumentController::class, 'show'])
     ->middleware('signed')
     ->name('kyc.document.file');
+
+// Photo de profil : même principe que la route ci-dessus (User::photoUrl).
+Route::get('/users/{user}/photo', [UserPhotoController::class, 'show'])
+    ->middleware('signed')
+    ->name('users.photo.file');
 
 Route::inertia('/cgu', 'cgu', ['defaultTab' => 'cgu'])->name('cgu');
 Route::inertia('/politique-confidentialite', 'cgu', ['defaultTab' => 'privacy'])->name('privacy');

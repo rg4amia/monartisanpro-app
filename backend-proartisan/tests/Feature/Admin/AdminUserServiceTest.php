@@ -2,9 +2,12 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Models\KycDocument;
 use App\Models\User;
 use App\Services\Admin\AdminUserService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 /**
@@ -71,5 +74,59 @@ class AdminUserServiceTest extends TestCase
 
         $this->assertNotSame('secret123', $user->password);
         $this->assertTrue(password_verify('secret123', $user->password));
+    }
+
+    public function test_update_stores_a_new_photo_and_deletes_the_previous_one(): void
+    {
+        Storage::fake('local');
+        $user = User::factory()->create(['role' => 'client']);
+        $oldPath = UploadedFile::fake()->image('old.jpg')->store('avatars', 'local');
+        $user->update(['photo_path' => $oldPath]);
+
+        $this->service->update($user, $this->baseUpdateData($user, [
+            'photo' => UploadedFile::fake()->image('new.jpg'),
+        ]));
+
+        $user->refresh();
+        $this->assertNotNull($user->photo_path);
+        $this->assertNotSame($oldPath, $user->photo_path);
+        Storage::disk('local')->assertExists($user->photo_path);
+        Storage::disk('local')->assertMissing($oldPath);
+    }
+
+    public function test_update_uploads_kyc_documents_and_resets_status_to_pending(): void
+    {
+        Storage::fake('local');
+        $user = User::factory()->create(['role' => 'client']);
+        KycDocument::create([
+            'user_id' => $user->id,
+            'type' => 'cni',
+            'file_url' => 'kyc/old-cni.jpg',
+            'statut' => 'approuve',
+        ]);
+
+        $this->service->update($user, $this->baseUpdateData($user, [
+            'documents' => ['cni' => UploadedFile::fake()->image('cni.jpg'), 'selfie' => null],
+        ]));
+
+        $document = KycDocument::where('user_id', $user->id)->where('type', 'cni')->sole();
+        $this->assertSame('en_attente', $document->statut);
+        Storage::disk('local')->assertExists($document->getRawOriginal('file_url'));
+    }
+
+    /**
+     * @param  array<string, mixed>  $overrides
+     * @return array<string, mixed>
+     */
+    private function baseUpdateData(User $user, array $overrides = []): array
+    {
+        return array_merge([
+            'name' => $user->name,
+            'phone' => $user->phone,
+            'email' => $user->email,
+            'role' => $user->role,
+            'kyc_status' => $user->kyc_status,
+            'account_status' => 'actif',
+        ], $overrides);
     }
 }

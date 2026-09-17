@@ -3,8 +3,13 @@
 
 import type { FormEvent } from 'react';
 
-import { CloseIcon } from '../shared';
+import { CloseIcon, KycStatusBadge } from '../shared';
 import type { AdminUser, PromoCodeItem } from '../shared';
+
+const documentLabels: Record<'cni' | 'selfie', string> = {
+    cni: 'Carte Nationale d’Identité (CNI)',
+    selfie: 'Selfie de vérification',
+};
 
 // L'instance useForm d'Inertia n'expose pas de type nommé stable ; on garde `any` à cette frontière.
 type InertiaForm = any;
@@ -522,6 +527,89 @@ export function UserFormModal({
                             {form.errors.device_fingerprint && <p className="text-xs text-[#b24f43]">{form.errors.device_fingerprint}</p>}
                         </label>
                     </div>
+
+                    {editing ? (
+                        <div className="space-y-4 border-t border-[var(--admin-border)] pt-4">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">
+                                Photo et pièces d’identité
+                            </span>
+
+                            <div className="flex items-center gap-4 rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-3">
+                                {form.data.photo ? (
+                                    <img
+                                        src={URL.createObjectURL(form.data.photo)}
+                                        alt="Nouvelle photo"
+                                        className="h-14 w-14 shrink-0 rounded-full object-cover"
+                                    />
+                                ) : editing.photo_url ? (
+                                    <img
+                                        src={editing.photo_url}
+                                        alt={`Photo de ${editing.name}`}
+                                        className="h-14 w-14 shrink-0 rounded-full object-cover"
+                                    />
+                                ) : (
+                                    <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[var(--admin-panel-strong)] text-xs text-[var(--admin-muted)]">
+                                        Aucune
+                                    </span>
+                                )}
+                                <div className="min-w-0 flex-1">
+                                    <p className="text-xs font-semibold text-[var(--admin-text)]">Photo de profil</p>
+                                    <input
+                                        type="file"
+                                        accept="image/png,image/jpeg"
+                                        onChange={(e) => form.setData('photo', e.target.files?.[0] ?? null)}
+                                        className="mt-1.5 w-full text-xs text-[var(--admin-text-soft)] file:mr-3 file:rounded-full file:border-0 file:bg-[#ebb95e] file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-[#241b16]"
+                                    />
+                                    {form.errors.photo && <p className="mt-1 text-xs text-[#b24f43]">{form.errors.photo}</p>}
+                                </div>
+                            </div>
+
+                            {(['cni', 'selfie'] as const).map((type) => {
+                                const current = editing.kyc_documents?.find((doc) => doc.type === type) ?? null;
+                                const pendingFile = form.data.documents?.[type] ?? null;
+
+                                return (
+                                    <div key={type} className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-3">
+                                        <div className="flex flex-wrap items-center justify-between gap-2">
+                                            <p className="text-xs font-semibold text-[var(--admin-text)]">{documentLabels[type]}</p>
+                                            {current ? <KycStatusBadge status={current.statut} /> : (
+                                                <span className="text-[11px] text-[var(--admin-muted)]">Aucune pièce enregistrée</span>
+                                            )}
+                                        </div>
+                                        {current?.file_url && (
+                                            <a
+                                                href={current.file_url}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="mt-1 inline-block text-[11px] text-[#b77918] underline"
+                                            >
+                                                Consulter la pièce actuelle
+                                            </a>
+                                        )}
+                                        <input
+                                            type="file"
+                                            accept="image/png,image/jpeg"
+                                            onChange={(e) =>
+                                                form.setData('documents', {
+                                                    ...form.data.documents,
+                                                    [type]: e.target.files?.[0] ?? null,
+                                                })
+                                            }
+                                            className="mt-2 w-full text-xs text-[var(--admin-text-soft)] file:mr-3 file:rounded-full file:border-0 file:bg-[#ebb95e] file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-[#241b16]"
+                                        />
+                                        {pendingFile && (
+                                            <p className="mt-1 text-[11px] text-[var(--admin-muted)]">
+                                                Remplacera la pièce actuelle à l’enregistrement — repasse en « en attente ».
+                                            </p>
+                                        )}
+                                        {form.errors[`documents.${type}`] && (
+                                            <p className="mt-1 text-xs text-[#b24f43]">{form.errors[`documents.${type}`]}</p>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ) : null}
 
                     <div className="flex justify-end gap-3 pt-4 border-t border-[var(--admin-border)]">
                         <button type="button" onClick={onClose} className="admin-button admin-button--ghost">

@@ -2,21 +2,25 @@
 
 namespace App\Models;
 
+use App\Enums\WalletOperation;
+use App\Enums\WalletType;
+use App\Services\Admin\AdminPermissionService;
 use App\Traits\HasPermissions;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Enums\WalletType;
-use App\Enums\WalletOperation;
-use App\Models\WalletTransaction;
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, HasPermissions, SoftDeletes;
+    use HasApiTokens, HasFactory, HasPermissions, Notifiable, SoftDeletes;
 
     protected $fillable = [
         'email',
@@ -34,6 +38,7 @@ class User extends Authenticatable
         'fcm_token',
         'commune_id',
         'device_fingerprint',
+        'photo_path',
         'score_frozen',
         'google_2fa_secret',
         'cnmci_number',
@@ -46,19 +51,19 @@ class User extends Authenticatable
         'anonymized_by',
     ];
 
-    protected $hidden = ['password', 'remember_token', 'position', 'google_2fa_secret'];
+    protected $hidden = ['password', 'remember_token', 'position', 'google_2fa_secret', 'photo_path'];
 
     protected function casts(): array
     {
         return [
-            'password'         => 'hashed',
-            'blocked_at'       => 'datetime',
-            'cgu_accepted_at'  => 'datetime',
-            'anonymized_at'    => 'datetime',
+            'password' => 'hashed',
+            'blocked_at' => 'datetime',
+            'cgu_accepted_at' => 'datetime',
+            'anonymized_at' => 'datetime',
             'wallet_materiaux' => 'integer',
-            'wallet_mo'        => 'integer',
-            'score_prosartisan'=> 'integer',
-            'score_frozen'     => 'boolean',
+            'wallet_mo' => 'integer',
+            'score_prosartisan' => 'integer',
+            'score_frozen' => 'boolean',
         ];
     }
 
@@ -78,7 +83,7 @@ class User extends Authenticatable
                     'solde_avant' => 0,
                     'solde_apres' => $mat,
                     'description' => 'Solde initial (matériaux)',
-                    'cle_idempotence' => (string) \Illuminate\Support\Str::uuid(),
+                    'cle_idempotence' => (string) Str::uuid(),
                 ]);
             }
             $mo = isset($attrs['wallet_mo']) ? (int) $attrs['wallet_mo'] : 0;
@@ -91,7 +96,7 @@ class User extends Authenticatable
                     'solde_avant' => 0,
                     'solde_apres' => $mo,
                     'description' => 'Solde initial (main d\'œuvre)',
-                    'cle_idempotence' => (string) \Illuminate\Support\Str::uuid(),
+                    'cle_idempotence' => (string) Str::uuid(),
                 ]);
             }
         });
@@ -107,25 +112,25 @@ class User extends Authenticatable
 
                 if (config('database.default') === 'sqlite') {
                     DB::table('fournisseurs_agrees')->insert([
-                        'user_id'      => $user->id,
-                        'nom_boutique' => 'Quincaillerie de ' . ($user->name ?? $user->phone),
-                        'statut'       => 'en_attente',
-                        'position'     => "$lat,$lng",
-                        'created_at'   => now(),
-                        'updated_at'   => now(),
+                        'user_id' => $user->id,
+                        'nom_boutique' => 'Quincaillerie de '.($user->name ?? $user->phone),
+                        'statut' => 'en_attente',
+                        'position' => "$lat,$lng",
+                        'created_at' => now(),
+                        'updated_at' => now(),
                     ]);
                 } else {
                     DB::statement(
-                        "INSERT INTO fournisseurs_agrees (user_id, nom_boutique, statut, position, created_at, updated_at) 
-                         VALUES (?, ?, ?, POINT(?, ?), ?, ?)",
+                        'INSERT INTO fournisseurs_agrees (user_id, nom_boutique, statut, position, created_at, updated_at) 
+                         VALUES (?, ?, ?, POINT(?, ?), ?, ?)',
                         [
                             $user->id,
-                            'Quincaillerie de ' . ($user->name ?? $user->phone),
+                            'Quincaillerie de '.($user->name ?? $user->phone),
                             'en_attente',
                             $lng,
                             $lat,
                             now(),
-                            now()
+                            now(),
                         ]
                     );
                 }
@@ -177,6 +182,23 @@ class User extends Authenticatable
         return $this->hasMany(KycDocument::class);
     }
 
+    /**
+     * Photo de profil : stockée sur le disque privé, jamais exposée par une
+     * URL publique permanente. Même logique que KycDocument::fileUrl.
+     */
+    protected function photoUrl(): Attribute
+    {
+        return Attribute::make(
+            get: fn (): ?string => $this->photo_path === null
+                ? null
+                : URL::temporarySignedRoute(
+                    'users.photo.file',
+                    now()->addMinutes(15),
+                    ['user' => $this->getKey()],
+                ),
+        );
+    }
+
     public function missionsClient()
     {
         return $this->hasMany(Mission::class, 'client_id');
@@ -221,6 +243,7 @@ class User extends Authenticatable
                 $balance -= $tx->montant;
             }
         }
+
         return $balance;
     }
 
@@ -280,14 +303,14 @@ class User extends Authenticatable
     {
         if (config('database.default') === 'sqlite') {
             $this->forceFill([
-                'position' => $lat . ',' . $lng,
+                'position' => $lat.','.$lng,
             ])->save();
 
             return;
         }
 
         DB::statement(
-            "UPDATE users SET position = POINT(?, ?) WHERE id = ?",
+            'UPDATE users SET position = POINT(?, ?) WHERE id = ?',
             [$lng, $lat, $this->id]
         );
     }
@@ -331,13 +354,13 @@ class User extends Authenticatable
      */
     public function adminCapabilities(): array
     {
-        return app(\App\Services\Admin\AdminPermissionService::class)->capabilitiesFor($this);
+        return app(AdminPermissionService::class)->capabilitiesFor($this);
     }
 
     public function adminCan(string $capability): bool
     {
         return $this->role === 'admin'
-            && app(\App\Services\Admin\AdminPermissionService::class)->userCan($this, $capability);
+            && app(AdminPermissionService::class)->userCan($this, $capability);
     }
 
     public function isCnmciVerified(): bool
@@ -360,8 +383,8 @@ class User extends Authenticatable
         return $this->kycDocuments()->where('type', 'selfie')->latest()->value('file_url');
     }
 
-    public function fraudAlerts(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function fraudAlerts(): HasMany
     {
-        return $this->hasMany(\App\Models\FraudAlert::class, 'user_id');
+        return $this->hasMany(FraudAlert::class, 'user_id');
     }
 }

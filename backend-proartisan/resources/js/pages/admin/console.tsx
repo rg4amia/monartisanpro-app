@@ -730,7 +730,19 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         });
     }, [communications, deferredSearch, commTypeFilter, commStatusFilter]);
 
-    const userForm = useForm({
+    const userForm = useForm<{
+        name: string;
+        phone: string;
+        email: string;
+        role: string;
+        password: string;
+        kyc_status: string;
+        account_status: string;
+        score_frozen: boolean;
+        device_fingerprint: string;
+        photo: File | null;
+        documents: { cni: File | null; selfie: File | null };
+    }>({
         name: '',
         phone: '',
         email: '',
@@ -740,6 +752,8 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         account_status: 'actif',
         score_frozen: false,
         device_fingerprint: '',
+        photo: null,
+        documents: { cni: null, selfie: null },
     });
 
     const statusForm = useForm({
@@ -761,6 +775,8 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
             account_status: 'actif',
             score_frozen: false,
             device_fingerprint: '',
+            photo: null,
+            documents: { cni: null, selfie: null },
         });
         setUserModalOpen(true);
     };
@@ -778,6 +794,8 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
             account_status: (user.account_status ?? 'actif') as any,
             score_frozen: Boolean(user.score_frozen),
             device_fingerprint: user.device_fingerprint ?? '',
+            photo: null,
+            documents: { cni: null, selfie: null },
         });
         setUserModalOpen(true);
     };

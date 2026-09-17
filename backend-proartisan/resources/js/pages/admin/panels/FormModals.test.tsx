@@ -189,6 +189,8 @@ function UserHarness({
         account_status: 'actif',
         score_frozen: false,
         device_fingerprint: '',
+        photo: null as File | null,
+        documents: { cni: null as File | null, selfie: null as File | null },
     });
     (form as { errors: Record<string, string> }).errors = errors;
     return <UserFormModal form={form} editing={editing} onSubmit={onSubmit} onClose={onClose} />;
@@ -245,6 +247,36 @@ describe('UserFormModal', () => {
 
         fireEvent.click(screen.getByRole('button', { name: 'Annuler' }));
         expect(onClose).toHaveBeenCalledTimes(1);
+    });
+
+    it("n'affiche pas la section photo/pièces d'identité en création", () => {
+        render(<UserHarness onSubmit={vi.fn((e) => e.preventDefault())} onClose={vi.fn()} />);
+        expect(screen.queryByText('Photo et pièces d’identité')).not.toBeInTheDocument();
+    });
+
+    it('affiche la pièce KYC existante et permet de la remplacer en édition', () => {
+        render(
+            <UserHarness
+                editing={{
+                    id: 1,
+                    name: 'Awa Traoré',
+                    photo_url: null,
+                    kyc_documents: [{ type: 'cni', statut: 'approuve', file_url: 'https://example.test/cni.jpg' }],
+                } as AdminUser}
+                onSubmit={vi.fn((e) => e.preventDefault())}
+                onClose={vi.fn()}
+            />,
+        );
+
+        expect(screen.getByText('Photo et pièces d’identité')).toBeInTheDocument();
+        expect(screen.getByText('Consulter la pièce actuelle')).toHaveAttribute('href', 'https://example.test/cni.jpg');
+
+        const file = new File(['contenu'], 'nouvelle-cni.jpg', { type: 'image/jpeg' });
+        // Le 1er input file est la photo de profil, le 2e la pièce CNI.
+        const fileInputs = document.querySelectorAll('input[type="file"]');
+        fireEvent.change(fileInputs[1], { target: { files: [file] } });
+
+        expect(screen.getByText(/Remplacera la pièce actuelle/)).toBeInTheDocument();
     });
 });
 

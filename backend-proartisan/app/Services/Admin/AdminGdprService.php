@@ -10,6 +10,7 @@ use App\Models\Parrainage;
 use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Chantier C6 (P2-11) — conformité RGPD du backoffice.
@@ -50,6 +51,7 @@ class AdminGdprService
                 'cnmci_card_url' => $user->cnmci_card_url,
                 'device_fingerprint' => $user->device_fingerprint,
                 'commune' => $user->commune?->name,
+                'photo_url' => $user->photo_url,
             ],
             'position' => $user->getPositionCoords(),
             'kyc_documents' => $user->kycDocuments()
@@ -105,6 +107,11 @@ class AdminGdprService
             // Suppression des pièces justificatives KYC (lignes + références fichiers).
             $user->kycDocuments()->delete();
 
+            // Suppression de la photo de profil (disque privé).
+            if ($user->photo_path !== null) {
+                Storage::disk('local')->delete($user->photo_path);
+            }
+
             // Purge des notifications personnelles.
             Notification::where('user_id', $user->id)->delete();
 
@@ -116,6 +123,7 @@ class AdminGdprService
                 'phone' => $placeholderPhone,
                 'payment_phone' => null,
                 'device_fingerprint' => null,
+                'photo_path' => null,
                 'fcm_token' => null,
                 'cnmci_number' => null,
                 'cnmci_card_url' => null,

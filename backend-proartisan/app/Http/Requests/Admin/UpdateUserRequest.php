@@ -26,6 +26,9 @@ class UpdateUserRequest extends FormRequest
             'account_status' => ['required', 'string', 'in:actif,suspendu'],
             'score_frozen' => ['nullable', 'boolean'],
             'device_fingerprint' => ['nullable', 'string', 'max:255'],
+            'photo' => ['nullable', 'file', 'image', 'mimes:jpeg,jpg,png', 'max:5120'],
+            'documents.cni' => ['nullable', 'file', 'image', 'mimes:jpeg,jpg,png', 'max:5120'],
+            'documents.selfie' => ['nullable', 'file', 'image', 'mimes:jpeg,jpg,png', 'max:5120'],
         ];
     }
 
@@ -39,6 +42,15 @@ class UpdateUserRequest extends FormRequest
             'email.unique' => 'Cette adresse e-mail est déjà utilisée.',
             'role.required' => 'Le rôle est obligatoire.',
             'password.min' => 'Le mot de passe doit contenir au moins 6 caractères.',
+            'photo.image' => 'La photo doit être une image.',
+            'photo.mimes' => 'Formats acceptés pour la photo : JPEG, JPG, PNG.',
+            'photo.max' => 'La photo ne doit pas dépasser 5 Mo.',
+            'documents.cni.image' => 'La pièce CNI doit être une image.',
+            'documents.cni.mimes' => 'Formats acceptés pour la CNI : JPEG, JPG, PNG.',
+            'documents.cni.max' => 'La pièce CNI ne doit pas dépasser 5 Mo.',
+            'documents.selfie.image' => 'Le selfie doit être une image.',
+            'documents.selfie.mimes' => 'Formats acceptés pour le selfie : JPEG, JPG, PNG.',
+            'documents.selfie.max' => 'Le selfie ne doit pas dépasser 5 Mo.',
         ];
     }
 }

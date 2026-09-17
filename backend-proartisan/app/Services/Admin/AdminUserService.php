@@ -3,8 +3,11 @@
 namespace App\Services\Admin;
 
 use App\Models\User;
+use App\Services\KycService;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Logique métier de gestion des comptes depuis le backoffice.
@@ -14,7 +17,7 @@ use Illuminate\Support\Facades\Hash;
  */
 class AdminUserService
 {
-    public function __construct(private AdminActivityLogger $audit) {}
+    public function __construct(private AdminActivityLogger $audit, private KycService $kycDocuments) {}
 
     /**
      * @param  array<string, mixed>  $data  Données déjà validées par StoreUserRequest.
@@ -49,17 +52,54 @@ class AdminUserService
 
         $data['score_frozen'] = (bool) ($data['score_frozen'] ?? false);
 
+        // La photo et les pièces KYC ne sont pas des colonnes assignables en
+        // masse : elles suivent leur propre circuit de stockage (disque privé).
+        $photo = $data['photo'] ?? null;
+        $documents = $data['documents'] ?? [];
+        unset($data['photo'], $data['documents']);
+
         $before = $user->only(['name', 'email', 'phone', 'role', 'kyc_status', 'score_frozen']);
 
         $user->update($data);
+
+        if ($photo instanceof UploadedFile) {
+            $this->updatePhoto($user, $photo);
+        }
+
+        $updatedDocuments = [];
+        foreach (['cni', 'selfie'] as $type) {
+            if (($documents[$type] ?? null) instanceof UploadedFile) {
+                $this->kycDocuments->uploadDocument($user, $type, $documents[$type]);
+                $updatedDocuments[] = $type;
+            }
+        }
 
         $this->audit->log('user.updated', $user, [
             'before' => $before,
             'after' => $user->only(['name', 'email', 'phone', 'role', 'kyc_status', 'score_frozen']),
             'password_changed' => $passwordChanged,
+            'photo_updated' => $photo instanceof UploadedFile,
+            'documents_updated' => $updatedDocuments,
         ]);
 
         return $user;
+    }
+
+    /**
+     * Remplace la photo de profil : supprime l'ancien fichier une fois le
+     * nouveau enregistré, jamais avant (pas de fenêtre sans photo en cas
+     * d'échec d'écriture).
+     */
+    private function updatePhoto(User $user, UploadedFile $file): void
+    {
+        $previousPath = $user->photo_path;
+
+        $path = $file->store('avatars', 'local');
+        $user->update(['photo_path' => $path]);
+
+        if ($previousPath !== null) {
+            Storage::disk('local')->delete($previousPath);
+        }
     }
 
     public function delete(User $user): void

@@ -116,7 +116,7 @@ export function AdminShell({
 
                             <button
                                 type="button"
-                                className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--admin-border)] bg-white/50 text-[var(--admin-text)] lg:hidden hover:bg-white/80 transition"
+                                className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel)] text-[var(--admin-text)] lg:hidden hover:bg-[var(--admin-panel-strong)] transition"
                                 onClick={() => onMobileSidebarChange(false)}
                                 aria-label="Fermer le menu"
                             >
@@ -198,7 +198,7 @@ export function AdminShell({
 
                             <Link
                                 href={tabRoutes.settings}
-                                className="flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium text-[var(--admin-text-soft)] transition hover:bg-white/50"
+                                className="flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium text-[var(--admin-text-soft)] transition hover:bg-[var(--admin-panel-strong)]"
                             >
                                 <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#f5ecdf] text-[var(--admin-muted)]">
                                     <TabIcon tab="settings" />
@@ -222,7 +222,7 @@ export function AdminShell({
                                 <div className="flex min-w-0 flex-1 items-center gap-3">
                                     <button
                                         type="button"
-                                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[var(--admin-border)] bg-white/50 text-[var(--admin-text)] lg:hidden hover:bg-white/80 transition"
+                                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] text-[var(--admin-text)] lg:hidden hover:bg-[var(--admin-panel-strong)] transition"
                                         onClick={() => onMobileSidebarChange(true)}
                                         aria-label="Ouvrir le menu"
                                     >
@@ -264,7 +264,7 @@ export function AdminShell({
                                         <button
                                             type="button"
                                             className={cn(
-                                                'relative rounded-2xl border p-3 text-[var(--admin-muted)] transition hover:bg-white/55',
+                                                'relative rounded-2xl border p-3 text-[var(--admin-muted)] transition hover:bg-[var(--admin-panel-strong)]',
                                                 notificationsOpen ? 'border-[#ebb95e]/50 bg-white/70 text-[#241b16]' : 'border-transparent',
                                             )}
                                             title="Notifications et alertes système"
@@ -317,7 +317,7 @@ export function AdminShell({
                                                             onClick={() => onNotifFilterChange('all')}
                                                             className={cn(
                                                                 'rounded-xl px-2.5 py-1 transition',
-                                                                notifFilter === 'all' ? 'bg-white text-[var(--admin-text)] font-semibold shadow-xs' : 'text-[var(--admin-muted)] hover:text-[var(--admin-text)]',
+                                                                notifFilter === 'all' ? 'bg-[var(--admin-panel-strong)] text-[var(--admin-text)] font-semibold shadow-xs' : 'text-[var(--admin-muted)] hover:text-[var(--admin-text)]',
                                                             )}
                                                         >
                                                             Toutes ({liveNotifications.length})
@@ -327,7 +327,7 @@ export function AdminShell({
                                                             onClick={() => onNotifFilterChange('unread')}
                                                             className={cn(
                                                                 'rounded-xl px-2.5 py-1 transition',
-                                                                notifFilter === 'unread' ? 'bg-white text-[var(--admin-text)] font-semibold shadow-xs' : 'text-[var(--admin-muted)] hover:text-[var(--admin-text)]',
+                                                                notifFilter === 'unread' ? 'bg-[var(--admin-panel-strong)] text-[var(--admin-text)] font-semibold shadow-xs' : 'text-[var(--admin-muted)] hover:text-[var(--admin-text)]',
                                                             )}
                                                         >
                                                             Non lues ({unreadNotifsCount})
@@ -337,7 +337,7 @@ export function AdminShell({
                                                             onClick={() => onNotifFilterChange('alerts')}
                                                             className={cn(
                                                                 'rounded-xl px-2.5 py-1 transition',
-                                                                notifFilter === 'alerts' ? 'bg-white text-[var(--admin-text)] font-semibold shadow-xs' : 'text-[var(--admin-muted)] hover:text-[var(--admin-text)]',
+                                                                notifFilter === 'alerts' ? 'bg-[var(--admin-panel-strong)] text-[var(--admin-text)] font-semibold shadow-xs' : 'text-[var(--admin-muted)] hover:text-[var(--admin-text)]',
                                                             )}
                                                         >
                                                             Alertes critiques
@@ -452,7 +452,7 @@ export function AdminShell({
                                         )}
                                     </div>
 
-                                    <div className="hidden items-center gap-3 rounded-3xl bg-white/50 px-3 py-2 sm:flex">
+                                    <div className="hidden items-center gap-3 rounded-3xl bg-[var(--admin-panel)] px-3 py-2 sm:flex">
                                         <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#ebb95e] text-sm font-bold text-[#241b16]">
                                             {getInitials(adminName)}
                                         </div>
@@ -464,7 +464,7 @@ export function AdminShell({
 
                                     <button
                                         type="button"
-                                        className="rounded-2xl p-3 text-[var(--admin-muted)] transition hover:bg-white/55"
+                                        className="rounded-2xl p-3 text-[var(--admin-muted)] transition hover:bg-[var(--admin-panel-strong)]"
                                         onClick={() => router.post('/admin/logout')}
                                         title="Se déconnecter"
                                         aria-label="Se déconnecter"
@@ -516,7 +516,7 @@ export function AdminShell({
 
                                     <div className="grid gap-3 sm:grid-cols-2 xl:w-[480px]">
                                         {heroStats.map((stat) => (
-                                            <div key={stat.label} className="rounded-[24px] bg-white/60 p-4 shadow-[0_18px_36px_rgba(147,119,74,0.08)]">
+                                            <div key={stat.label} className="rounded-[24px] bg-[var(--admin-panel-strong)] p-4 shadow-[0_18px_36px_rgba(147,119,74,0.08)]">
                                                 <p className="text-xs uppercase tracking-[0.22em] text-[var(--admin-muted)]">{stat.label}</p>
                                                 <div className="mt-2 flex items-center gap-2">
                                                     <span className={cn('inline-flex h-8 w-8 items-center justify-center rounded-xl', toneIconClasses(stat.tone))}>
@@ -543,7 +543,7 @@ export function AdminShell({
                             ) : null}
 
                             {refreshing || actionLoading ? (
-                                <div className="mt-4 rounded-[24px] border border-[#e2d5c2] bg-white/70 px-4 py-3 text-sm text-[var(--admin-text-soft)]">
+                                <div className="mt-4 rounded-[24px] border border-[#e2d5c2] bg-[var(--admin-panel-strong)] px-4 py-3 text-sm text-[var(--admin-text-soft)]">
                                     Mise à jour du backoffice en cours...
                                 </div>
                             ) : null}
