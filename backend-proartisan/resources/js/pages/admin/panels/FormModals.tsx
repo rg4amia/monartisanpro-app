@@ -393,15 +393,16 @@ export function UserFormModal({
 }) {
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-            <div className="admin-panel admin-surface w-full max-w-[550px] rounded-[32px] border p-6 lg:p-8 shadow-2xl relative">
-                <div className="flex items-center justify-between border-b border-[var(--admin-border)] pb-4">
+            <div className="admin-panel admin-surface relative flex w-full max-w-[550px] max-h-[90vh] flex-col rounded-[32px] border shadow-2xl">
+                <div className="flex shrink-0 items-center justify-between border-b border-[var(--admin-border)] px-6 py-5 lg:px-8">
                     <h2 className="text-xl font-bold text-[var(--admin-text)]">
                         {editing ? 'Modifier l’utilisateur' : 'Créer un utilisateur'}
                     </h2>
                     <CloseButton onClose={onClose} />
                 </div>
 
-                <form onSubmit={onSubmit} className="mt-6 space-y-4">
+                <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col">
+                    <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5 lg:px-8">
                     <label className="block space-y-1">
                         <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Nom complet</span>
                         <input
@@ -610,8 +611,9 @@ export function UserFormModal({
                             })}
                         </div>
                     ) : null}
+                    </div>
 
-                    <div className="flex justify-end gap-3 pt-4 border-t border-[var(--admin-border)]">
+                    <div className="flex shrink-0 justify-end gap-3 border-t border-[var(--admin-border)] px-6 py-4 lg:px-8">
                         <button type="button" onClick={onClose} className="admin-button admin-button--ghost">
                             Annuler
                         </button>
