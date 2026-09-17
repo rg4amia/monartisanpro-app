@@ -215,9 +215,9 @@ class AdminPanelData
             25,
         )->withQueryString();
 
-        // Photo, pièces KYC et secteur fournisseur : chargés uniquement pour la
-        // page courante (25 comptes max), affichés dans la modale d'édition.
-        $usersPage->getCollection()->load(['kycDocuments', 'fournisseurAgree.sector']);
+        // Photo, pièces KYC et secteur/métier fournisseur : chargés uniquement
+        // pour la page courante (25 comptes max), affichés dans la modale d'édition.
+        $usersPage->getCollection()->load(['kycDocuments', 'fournisseurAgree.sector', 'fournisseurAgree.trade']);
         $usersPage->getCollection()->transform(function (User $user) {
             $user->append('photo_url');
             $user->kyc_documents = $user->kycDocuments->map(fn ($doc) => [
@@ -227,6 +227,8 @@ class AdminPanelData
             ]);
             $user->fournisseur_sector_id = $user->fournisseurAgree?->sector_id;
             $user->fournisseur_sector_name = $user->fournisseurAgree?->sector?->name;
+            $user->fournisseur_trade_id = $user->fournisseurAgree?->trade_id;
+            $user->fournisseur_trade_name = $user->fournisseurAgree?->trade?->name;
 
             return $user;
         });
@@ -244,7 +246,12 @@ class AdminPanelData
                 ->orderByDesc('score_prosartisan')
                 ->limit(5)
                 ->get(['id', 'name', 'phone', 'score_prosartisan', 'score_frozen']),
-            'sectors' => Schema::hasTable('sectors') ? Sector::select('id', 'name', 'icon')->orderBy('name')->get() : [],
+            'sectors' => Schema::hasTable('sectors')
+                ? Sector::with(['trades' => fn ($q) => $q->select('id', 'sector_id', 'name')->orderBy('name')])
+                    ->select('id', 'name', 'icon')
+                    ->orderBy('name')
+                    ->get()
+                : [],
         ];
     }
 

@@ -195,6 +195,8 @@ export interface AdminUser {
     kyc_documents?: Array<{ type: string; statut: string; file_url: string | null }>;
     fournisseur_sector_id?: number | null;
     fournisseur_sector_name?: string | null;
+    fournisseur_trade_id?: number | null;
+    fournisseur_trade_name?: string | null;
 }
 
 /** Instantané de santé opérationnelle (Chantier C7 / P2-12). */

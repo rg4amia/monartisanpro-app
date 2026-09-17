@@ -5,6 +5,7 @@ namespace Tests\Feature\Admin;
 use App\Models\FournisseurAgree;
 use App\Models\KycDocument;
 use App\Models\Sector;
+use App\Models\Trade;
 use App\Models\User;
 use App\Services\Admin\AdminUserService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -127,6 +128,37 @@ class AdminUserServiceTest extends TestCase
         ]));
 
         $this->assertSame($sector->id, $fournisseur->fournisseurAgree->fresh()->sector_id);
+    }
+
+    public function test_update_assigns_a_trade_matching_the_selected_sector(): void
+    {
+        $sector = Sector::create(['name' => 'Électricité']);
+        $trade = Trade::create(['sector_id' => $sector->id, 'name' => 'Électricien bâtiment']);
+        $fournisseur = User::factory()->create(['role' => 'fournisseur']);
+        FournisseurAgree::create(['user_id' => $fournisseur->id, 'nom_boutique' => 'Quincaillerie Test', 'statut' => 'agree']);
+
+        $this->service->update($fournisseur, $this->baseUpdateData($fournisseur, [
+            'fournisseur_sector_id' => $sector->id,
+            'fournisseur_trade_id' => $trade->id,
+        ]));
+
+        $this->assertSame($trade->id, $fournisseur->fournisseurAgree->fresh()->trade_id);
+    }
+
+    public function test_update_discards_a_trade_that_does_not_belong_to_the_selected_sector(): void
+    {
+        $sectorA = Sector::create(['name' => 'Électricité']);
+        $sectorB = Sector::create(['name' => 'Plomberie']);
+        $tradeFromSectorB = Trade::create(['sector_id' => $sectorB->id, 'name' => 'Plombier sanitaire']);
+        $fournisseur = User::factory()->create(['role' => 'fournisseur']);
+        FournisseurAgree::create(['user_id' => $fournisseur->id, 'nom_boutique' => 'Quincaillerie Test', 'statut' => 'agree']);
+
+        $this->service->update($fournisseur, $this->baseUpdateData($fournisseur, [
+            'fournisseur_sector_id' => $sectorA->id,
+            'fournisseur_trade_id' => $tradeFromSectorB->id,
+        ]));
+
+        $this->assertNull($fournisseur->fournisseurAgree->fresh()->trade_id);
     }
 
     public function test_update_ignores_fournisseur_sector_for_a_non_fournisseur_role(): void

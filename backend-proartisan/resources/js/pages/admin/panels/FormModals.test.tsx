@@ -9,7 +9,7 @@ import {
     StatusFormModal,
     UserFormModal,
 } from './FormModals';
-import type { AdminUser, PromoCodeItem } from '../shared';
+import type { AdminUser, PromoCodeItem, SectorItem } from '../shared';
 
 /**
  * Ces modales reçoivent l'instance `useForm` d'Inertia du parent plutôt que
@@ -170,11 +170,13 @@ describe('PromoCodeFormModal', () => {
 
 function UserHarness({
     editing = null,
+    sectors = [],
     onSubmit,
     onClose,
     errors = {},
 }: {
     editing?: AdminUser | null;
+    sectors?: SectorItem[];
     onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
     onClose: () => void;
     errors?: Record<string, string>;
@@ -191,9 +193,11 @@ function UserHarness({
         device_fingerprint: '',
         photo: null as File | null,
         documents: { cni: null as File | null, selfie: null as File | null },
+        fournisseur_sector_id: '' as number | '',
+        fournisseur_trade_id: '' as number | '',
     });
     (form as { errors: Record<string, string> }).errors = errors;
-    return <UserFormModal form={form} editing={editing} onSubmit={onSubmit} onClose={onClose} />;
+    return <UserFormModal form={form} editing={editing} sectors={sectors} onSubmit={onSubmit} onClose={onClose} />;
 }
 
 describe('UserFormModal', () => {
@@ -277,6 +281,30 @@ describe('UserFormModal', () => {
         fireEvent.change(fileInputs[1], { target: { files: [file] } });
 
         expect(screen.getByText(/Remplacera la pièce actuelle/)).toBeInTheDocument();
+    });
+
+    it('filtre la sous-catégorie (métier) selon le secteur choisi pour un fournisseur', () => {
+        const sectors: SectorItem[] = [
+            { id: 1, name: 'Électricité', icon: '⚡', trades: [{ id: 10, sector_id: 1, name: 'Électricien bâtiment' }] },
+            { id: 2, name: 'Plomberie', icon: '🔧', trades: [{ id: 20, sector_id: 2, name: 'Plombier sanitaire' }] },
+        ];
+
+        render(
+            <UserHarness
+                editing={{ id: 1, name: 'Quincaillerie Test', role: 'fournisseur' } as AdminUser}
+                sectors={sectors}
+                onSubmit={vi.fn((e) => e.preventDefault())}
+                onClose={vi.fn()}
+            />,
+        );
+
+        expect(screen.getByText('Sous-catégorie (métier lié)')).toBeInTheDocument();
+        expect(screen.getByText('Choisissez d’abord un secteur.')).toBeInTheDocument();
+
+        fireEvent.change(screen.getByLabelText('Secteur d’activité (fournisseur)'), { target: { value: '1' } });
+
+        expect(screen.getByText('Électricien bâtiment')).toBeInTheDocument();
+        expect(screen.queryByText('Plombier sanitaire')).not.toBeInTheDocument();
     });
 });
 

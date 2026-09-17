@@ -10,7 +10,7 @@ class FournisseurAgree extends Model
     protected $table = 'fournisseurs_agrees';
 
     protected $fillable = [
-        'user_id', 'nom_boutique', 'sector_id', 'position', 'statut', 'approuve_at',
+        'user_id', 'nom_boutique', 'sector_id', 'trade_id', 'position', 'statut', 'approuve_at',
     ];
 
     protected $hidden = ['position'];
@@ -37,6 +37,11 @@ class FournisseurAgree extends Model
     public function sector()
     {
         return $this->belongsTo(Sector::class);
+    }
+
+    public function trade()
+    {
+        return $this->belongsTo(Trade::class);
     }
 
     public function getCoordinatesAttribute(): ?array

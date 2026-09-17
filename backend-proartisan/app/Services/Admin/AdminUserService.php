@@ -2,6 +2,7 @@
 
 namespace App\Services\Admin;
 
+use App\Models\Trade;
 use App\Models\User;
 use App\Services\KycService;
 use Illuminate\Http\UploadedFile;
@@ -52,14 +53,15 @@ class AdminUserService
 
         $data['score_frozen'] = (bool) ($data['score_frozen'] ?? false);
 
-        // La photo, les pièces KYC et le secteur fournisseur ne sont pas des
-        // colonnes de `users` assignables en masse : la photo et les pièces
-        // suivent leur propre circuit de stockage (disque privé), le secteur
-        // vit sur le profil `fournisseurs_agrees` du compte.
+        // La photo, les pièces KYC et le secteur/métier fournisseur ne sont
+        // pas des colonnes de `users` assignables en masse : la photo et les
+        // pièces suivent leur propre circuit de stockage (disque privé), le
+        // secteur/métier vit sur le profil `fournisseurs_agrees` du compte.
         $photo = $data['photo'] ?? null;
         $documents = $data['documents'] ?? [];
         $fournisseurSectorId = array_key_exists('fournisseur_sector_id', $data) ? $data['fournisseur_sector_id'] : false;
-        unset($data['photo'], $data['documents'], $data['fournisseur_sector_id']);
+        $fournisseurTradeId = array_key_exists('fournisseur_trade_id', $data) ? $data['fournisseur_trade_id'] : false;
+        unset($data['photo'], $data['documents'], $data['fournisseur_sector_id'], $data['fournisseur_trade_id']);
 
         $before = $user->only(['name', 'email', 'phone', 'role', 'kyc_status', 'score_frozen']);
 
@@ -77,8 +79,8 @@ class AdminUserService
             }
         }
 
-        if ($fournisseurSectorId !== false && $user->role === 'fournisseur') {
-            $user->fournisseurAgree?->update(['sector_id' => $fournisseurSectorId]);
+        if (($fournisseurSectorId !== false || $fournisseurTradeId !== false) && $user->role === 'fournisseur') {
+            $this->updateFournisseurCategory($user, $fournisseurSectorId, $fournisseurTradeId);
         }
 
         $this->audit->log('user.updated', $user, [
@@ -88,9 +90,46 @@ class AdminUserService
             'photo_updated' => $photo instanceof UploadedFile,
             'documents_updated' => $updatedDocuments,
             'fournisseur_sector_id' => $fournisseurSectorId !== false ? $fournisseurSectorId : null,
+            'fournisseur_trade_id' => $fournisseurTradeId !== false ? $fournisseurTradeId : null,
         ]);
 
         return $user;
+    }
+
+    /**
+     * Met à jour le secteur d'activité et/ou la sous-catégorie (métier) d'un
+     * fournisseur. Un métier n'appartenant pas au secteur retenu (effectif
+     * après cette mise à jour) est ignoré plutôt qu'enregistré incohérent :
+     * l'admin ne peut choisir un métier que via la liste déjà filtrée par
+     * secteur côté formulaire, mais un appel direct pourrait tenter l'incohérence.
+     */
+    private function updateFournisseurCategory(User $user, int|false|null $sectorId, int|false|null $tradeId): void
+    {
+        $fournisseurAgree = $user->fournisseurAgree;
+        if (! $fournisseurAgree) {
+            return;
+        }
+
+        $effectiveSectorId = $sectorId !== false ? $sectorId : $fournisseurAgree->sector_id;
+
+        if ($tradeId !== false && $tradeId !== null) {
+            $tradeBelongsToSector = Trade::where('id', $tradeId)->where('sector_id', $effectiveSectorId)->exists();
+            if (! $tradeBelongsToSector) {
+                $tradeId = null;
+            }
+        }
+
+        $update = [];
+        if ($sectorId !== false) {
+            $update['sector_id'] = $sectorId;
+        }
+        if ($tradeId !== false) {
+            $update['trade_id'] = $tradeId;
+        }
+
+        if ($update !== []) {
+            $fournisseurAgree->update($update);
+        }
     }
 
     /**

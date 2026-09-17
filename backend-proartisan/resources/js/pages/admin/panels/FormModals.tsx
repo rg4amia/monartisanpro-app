@@ -475,26 +475,63 @@ export function UserFormModal({
                         </label>
                     </div>
 
-                    {form.data.role === 'fournisseur' && (
-                        <label className="block space-y-1">
-                            <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Secteur d’activité (fournisseur)</span>
-                            <select
-                                value={form.data.fournisseur_sector_id ?? ''}
-                                onChange={(e) => form.setData('fournisseur_sector_id', e.target.value ? Number(e.target.value) : '')}
-                                className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none bg-transparent"
-                            >
-                                <option value="">Non renseigné</option>
-                                {sectors.map((sector) => (
-                                    <option key={sector.id} value={sector.id}>
-                                        {sector.icon ? `${sector.icon} ` : ''}{sector.name}
-                                    </option>
-                                ))}
-                            </select>
-                            {form.errors.fournisseur_sector_id && (
-                                <p className="text-xs text-[#b24f43]">{form.errors.fournisseur_sector_id}</p>
-                            )}
-                        </label>
-                    )}
+                    {form.data.role === 'fournisseur' && (() => {
+                        const selectedSector = sectors.find((sector) => sector.id === Number(form.data.fournisseur_sector_id));
+                        const trades = selectedSector?.trades ?? [];
+
+                        return (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <label className="block space-y-1">
+                                    <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Secteur d’activité (fournisseur)</span>
+                                    <select
+                                        value={form.data.fournisseur_sector_id ?? ''}
+                                        onChange={(e) => {
+                                            const value = e.target.value ? Number(e.target.value) : '';
+                                            form.setData('fournisseur_sector_id', value);
+                                            // Un métier n'a de sens que rattaché à son secteur : on
+                                            // efface le choix précédent s'il ne correspond plus.
+                                            form.setData('fournisseur_trade_id', '');
+                                        }}
+                                        className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none bg-transparent"
+                                    >
+                                        <option value="">Non renseigné</option>
+                                        {sectors.map((sector) => (
+                                            <option key={sector.id} value={sector.id}>
+                                                {sector.icon ? `${sector.icon} ` : ''}{sector.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {form.errors.fournisseur_sector_id && (
+                                        <p className="text-xs text-[#b24f43]">{form.errors.fournisseur_sector_id}</p>
+                                    )}
+                                </label>
+
+                                <label className="block space-y-1">
+                                    <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Sous-catégorie (métier lié)</span>
+                                    <select
+                                        value={form.data.fournisseur_trade_id ?? ''}
+                                        onChange={(e) => form.setData('fournisseur_trade_id', e.target.value ? Number(e.target.value) : '')}
+                                        disabled={!selectedSector || trades.length === 0}
+                                        className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none bg-transparent disabled:opacity-50"
+                                    >
+                                        <option value="">Non renseigné</option>
+                                        {trades.map((trade) => (
+                                            <option key={trade.id} value={trade.id}>{trade.name}</option>
+                                        ))}
+                                    </select>
+                                    {!selectedSector && (
+                                        <p className="text-[11px] text-[var(--admin-muted)]">Choisissez d’abord un secteur.</p>
+                                    )}
+                                    {selectedSector && trades.length === 0 && (
+                                        <p className="text-[11px] text-[var(--admin-muted)]">Aucune sous-catégorie pour ce secteur.</p>
+                                    )}
+                                    {form.errors.fournisseur_trade_id && (
+                                        <p className="text-xs text-[#b24f43]">{form.errors.fournisseur_trade_id}</p>
+                                    )}
+                                </label>
+                            </div>
+                        );
+                    })()}
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <label className="block space-y-1">

@@ -743,6 +743,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         photo: File | null;
         documents: { cni: File | null; selfie: File | null };
         fournisseur_sector_id: number | '';
+        fournisseur_trade_id: number | '';
     }>({
         name: '',
         phone: '',
@@ -756,6 +757,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         photo: null,
         documents: { cni: null, selfie: null },
         fournisseur_sector_id: '',
+        fournisseur_trade_id: '',
     });
 
     const statusForm = useForm({
@@ -780,6 +782,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
             photo: null,
             documents: { cni: null, selfie: null },
             fournisseur_sector_id: '',
+            fournisseur_trade_id: '',
         });
         setUserModalOpen(true);
     };
@@ -800,6 +803,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
             photo: null,
             documents: { cni: null, selfie: null },
             fournisseur_sector_id: user.fournisseur_sector_id ?? '',
+            fournisseur_trade_id: user.fournisseur_trade_id ?? '',
         });
         setUserModalOpen(true);
     };
