@@ -102,14 +102,14 @@ export function DeliveriesTrackingSection({
                             <div
                                 key={order.id}
                                 className={cn(
-                                    'p-4 rounded-2xl border bg-white shadow-sm transition hover:shadow-md space-y-3 relative overflow-hidden',
-                                    isSearching ? 'border-amber-200 bg-amber-50/30' : 'border-slate-200'
+                                    'p-4 rounded-2xl border bg-[var(--admin-panel-strong)] shadow-sm transition hover:shadow-md space-y-3 relative overflow-hidden',
+                                    isSearching ? 'border-amber-200 bg-amber-50/30' : 'border-[var(--admin-border)]'
                                 )}
                             >
                                 <div className="flex items-start justify-between gap-2">
                                     <div>
                                         <div className="flex items-center gap-2 flex-wrap">
-                                            <span className="font-bold text-xs text-slate-900">Course #{order.id}</span>
+                                            <span className="font-bold text-xs text-[var(--admin-text)]">Course #{order.id}</span>
                                             <DeliveryStatusBadge status={order.status} />
                                             {order.order_group_id && (
                                                 <span className="inline-flex items-center gap-0.5 text-[9px] font-mono bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded border border-purple-200 font-bold" title="Commande issue d'un panier multi-fournisseurs">
@@ -117,7 +117,7 @@ export function DeliveriesTrackingSection({
                                                 </span>
                                             )}
                                         </div>
-                                        <div className="text-[10px] text-slate-400 mt-0.5 font-mono">
+                                        <div className="text-[10px] text-[var(--admin-muted)] mt-0.5 font-mono">
                                             {shortDate(order.created_at)}
                                         </div>
                                     </div>
@@ -127,23 +127,23 @@ export function DeliveriesTrackingSection({
                                 </div>
 
                                 {/* ACTEURS DE LA COURSE */}
-                                <div className="space-y-1 text-xs border-y border-slate-100 py-2">
+                                <div className="space-y-1 text-xs border-y border-[var(--admin-border)] py-2">
                                     <div className="flex items-center justify-between text-[11px]">
-                                        <span className="text-slate-500">🏬 Quincaillerie :</span>
-                                        <span className="font-semibold text-slate-800 truncate max-w-[140px]">
+                                        <span className="text-[var(--admin-muted)]">🏬 Quincaillerie :</span>
+                                        <span className="font-semibold text-[var(--admin-text)] truncate max-w-[140px]">
                                             {order.supplier?.name ?? 'Fournisseur'}
                                         </span>
                                     </div>
                                     <div className="flex items-center justify-between text-[11px]">
-                                        <span className="text-slate-500">👷 Chantier :</span>
-                                        <span className="font-semibold text-slate-800 truncate max-w-[140px]">
+                                        <span className="text-[var(--admin-muted)]">👷 Chantier :</span>
+                                        <span className="font-semibold text-[var(--admin-text)] truncate max-w-[140px]">
                                             {order.client?.name ?? 'Client'}
                                         </span>
                                     </div>
                                     <div className="flex items-center justify-between text-[11px]">
-                                        <span className="text-slate-500">🛵 Coursier :</span>
+                                        <span className="text-[var(--admin-muted)]">🛵 Coursier :</span>
                                         {order.driver ? (
-                                            <span className="font-bold text-emerald-800 flex items-center gap-1">
+                                            <span className="font-bold text-emerald-700 flex items-center gap-1">
                                                 <span>{order.driver.name}</span>
                                                 <a
                                                     href={`tel:${order.driver.phone}`}
@@ -162,9 +162,9 @@ export function DeliveriesTrackingSection({
                                 </div>
 
                                 {/* CODES & STATUT */}
-                                <div className="flex items-center justify-between text-[10px] font-mono text-slate-600">
-                                    <span>Code Retrait : <strong className="text-slate-900">{order.pickup_code}</strong></span>
-                                    <span>Code Réception : <strong className="text-slate-900">{order.reception_code}</strong></span>
+                                <div className="flex items-center justify-between text-[10px] font-mono text-[var(--admin-muted)]">
+                                    <span>Code Retrait : <strong className="text-[var(--admin-text)]">{order.pickup_code}</strong></span>
+                                    <span>Code Réception : <strong className="text-[var(--admin-text)]">{order.reception_code}</strong></span>
                                 </div>
 
                                 {/* ACTIONS RADAR */}
@@ -182,7 +182,7 @@ export function DeliveriesTrackingSection({
                                         <button
                                             type="button"
                                             onClick={() => onSelectOrder(order)}
-                                            className="py-1.5 px-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 font-bold text-[11px] transition"
+                                            className="py-1.5 px-2 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel)] hover:bg-[var(--admin-panel-strong)] text-[var(--admin-text)] font-bold text-[11px] transition"
                                             title="Consulter le dossier complet"
                                         >
                                             👁️
@@ -210,7 +210,7 @@ export function DeliveriesTrackingSection({
             {/* MODAL TÉLÉMÉTRIE DÉTAILLÉE & OSRM */}
             {selectedOrder && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-                    <div className="relative w-full max-w-xl bg-white rounded-3xl shadow-2xl border border-[var(--admin-border)] overflow-hidden">
+                    <div className="relative w-full max-w-xl bg-[var(--admin-panel-strong)] rounded-3xl shadow-2xl border border-[var(--admin-border)] overflow-hidden">
                         {/* Header */}
                         <div className="flex items-center justify-between p-5 border-b border-[var(--admin-border)] bg-gradient-to-r from-slate-900 to-slate-800 text-white">
                             <div>
@@ -236,7 +236,7 @@ export function DeliveriesTrackingSection({
                         {/* Contenu */}
                         <div className="p-5 space-y-4 text-xs max-h-[75vh] overflow-y-auto">
                             {isLoadingTracking ? (
-                                <div className="py-12 text-center text-slate-500 animate-pulse">
+                                <div className="py-12 text-center text-[var(--admin-muted)] animate-pulse">
                                     🛰️ Interrogation des satellites et du moteur OSRM...
                                 </div>
                             ) : (
@@ -260,20 +260,20 @@ export function DeliveriesTrackingSection({
                                             <div className="grid grid-cols-2 gap-3 text-xs pt-1 border-t border-blue-200/60">
                                                 <div>
                                                     <span className="text-[10px] text-blue-600 uppercase font-bold block">Durée Estimée</span>
-                                                    <span className="font-bold text-slate-800">
+                                                    <span className="font-bold text-[var(--admin-text)]">
                                                         ~ {trackingData.route.duration_min} minutes
                                                     </span>
                                                 </div>
                                                 <div>
                                                     <span className="text-[10px] text-blue-600 uppercase font-bold block">Points de Trajet</span>
-                                                    <span className="font-bold text-slate-800 font-mono">
+                                                    <span className="font-bold text-[var(--admin-text)] font-mono">
                                                         {trackingData.route.geometry?.length ?? 0} waypoints
                                                     </span>
                                                 </div>
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="p-3 rounded-xl bg-slate-50 border text-slate-500 text-center">
+                                        <div className="p-3 rounded-xl bg-[var(--admin-panel)] border border-[var(--admin-border)] text-[var(--admin-muted)] text-center">
                                             Coordonnées GPS boutique/chantier en cours d'acquisition pour le tracé.
                                         </div>
                                     )}
@@ -289,28 +289,28 @@ export function DeliveriesTrackingSection({
                                                     En mouvement
                                                 </span>
                                             ) : (
-                                                <span className="text-[10px] text-slate-400 italic">Non émise</span>
+                                                <span className="text-[10px] text-[var(--admin-muted)] italic">Non émise</span>
                                             )}
                                         </div>
                                         {trackingData?.driver?.position ? (
                                             <div className="grid grid-cols-3 gap-2 text-xs pt-1 font-mono">
                                                 <div>
-                                                    <span className="text-[10px] text-slate-500 block">Latitude</span>
-                                                    <span className="font-bold text-slate-800">{trackingData.driver.position.lat.toFixed(5)}</span>
+                                                    <span className="text-[10px] text-[var(--admin-muted)] block">Latitude</span>
+                                                    <span className="font-bold text-[var(--admin-text)]">{trackingData.driver.position.lat.toFixed(5)}</span>
                                                 </div>
                                                 <div>
-                                                    <span className="text-[10px] text-slate-500 block">Longitude</span>
-                                                    <span className="font-bold text-slate-800">{trackingData.driver.position.lng.toFixed(5)}</span>
+                                                    <span className="text-[10px] text-[var(--admin-muted)] block">Longitude</span>
+                                                    <span className="font-bold text-[var(--admin-text)]">{trackingData.driver.position.lng.toFixed(5)}</span>
                                                 </div>
                                                 <div>
-                                                    <span className="text-[10px] text-slate-500 block">Vitesse</span>
-                                                    <span className="font-bold text-slate-800">
+                                                    <span className="text-[10px] text-[var(--admin-muted)] block">Vitesse</span>
+                                                    <span className="font-bold text-[var(--admin-text)]">
                                                         {trackingData.driver.position.speed ? `${trackingData.driver.position.speed} km/h` : '—'}
                                                     </span>
                                                 </div>
                                             </div>
                                         ) : (
-                                            <p className="text-[11px] text-slate-500 italic">
+                                            <p className="text-[11px] text-[var(--admin-muted)] italic">
                                                 Le livreur n'a pas encore émis de coordonnées récentes via l'application mobile.
                                             </p>
                                         )}
@@ -318,12 +318,12 @@ export function DeliveriesTrackingSection({
 
                                     {/* Photos de double-validation */}
                                     <div className="space-y-2">
-                                        <span className="font-bold text-slate-800 text-xs block">
+                                        <span className="font-bold text-[var(--admin-text)] text-xs block">
                                             Preuves Photographiques Double-Validation (Règle 13)
                                         </span>
                                         <div className="grid grid-cols-2 gap-3">
-                                            <div className="p-3 rounded-2xl border bg-slate-50 text-center space-y-1">
-                                                <span className="text-[10px] font-bold text-slate-600 block uppercase">
+                                            <div className="p-3 rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] text-center space-y-1">
+                                                <span className="text-[10px] font-bold text-[var(--admin-muted)] block uppercase">
                                                     📸 Chargement Boutique
                                                 </span>
                                                 {selectedOrder.pickup_photo_url ? (
@@ -331,18 +331,18 @@ export function DeliveriesTrackingSection({
                                                         <img
                                                             src={selectedOrder.pickup_photo_url}
                                                             alt="Pickup"
-                                                            className="w-full h-28 object-cover rounded-xl border mt-1 hover:opacity-90"
+                                                            className="w-full h-28 object-cover rounded-xl border border-[var(--admin-border)] mt-1 hover:opacity-90"
                                                         />
                                                     </a>
                                                 ) : (
-                                                    <div className="h-28 flex items-center justify-center text-[10px] text-slate-400 italic bg-white rounded-xl border">
+                                                    <div className="h-28 flex items-center justify-center text-[10px] text-[var(--admin-muted)] italic bg-[var(--admin-panel-strong)] rounded-xl border border-[var(--admin-border)]">
                                                         En attente de chargement
                                                     </div>
                                                 )}
                                             </div>
 
-                                            <div className="p-3 rounded-2xl border bg-slate-50 text-center space-y-1">
-                                                <span className="text-[10px] font-bold text-slate-600 block uppercase">
+                                            <div className="p-3 rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] text-center space-y-1">
+                                                <span className="text-[10px] font-bold text-[var(--admin-muted)] block uppercase">
                                                     📸 Déchargement Chantier
                                                 </span>
                                                 {selectedOrder.delivery_photo_url ? (
@@ -350,11 +350,11 @@ export function DeliveriesTrackingSection({
                                                         <img
                                                             src={selectedOrder.delivery_photo_url}
                                                             alt="Delivery"
-                                                            className="w-full h-28 object-cover rounded-xl border mt-1 hover:opacity-90"
+                                                            className="w-full h-28 object-cover rounded-xl border border-[var(--admin-border)] mt-1 hover:opacity-90"
                                                         />
                                                     </a>
                                                 ) : (
-                                                    <div className="h-28 flex items-center justify-center text-[10px] text-slate-400 italic bg-white rounded-xl border">
+                                                    <div className="h-28 flex items-center justify-center text-[10px] text-[var(--admin-muted)] italic bg-[var(--admin-panel-strong)] rounded-xl border border-[var(--admin-border)]">
                                                         En attente de déchargement
                                                     </div>
                                                 )}
@@ -366,8 +366,8 @@ export function DeliveriesTrackingSection({
                         </div>
 
                         {/* Footer */}
-                        <div className="flex items-center justify-between p-4 border-t border-[var(--admin-border)] bg-slate-50">
-                            <span className="text-[11px] text-slate-500 font-mono">
+                        <div className="flex items-center justify-between p-4 border-t border-[var(--admin-border)] bg-[var(--admin-panel)]">
+                            <span className="text-[11px] text-[var(--admin-muted)] font-mono">
                                 Canal SSE : order.{selectedOrder.id}
                             </span>
                             <button
