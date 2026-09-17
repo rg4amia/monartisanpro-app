@@ -4,12 +4,15 @@ namespace App\Services\Admin;
 
 use App\Models\Commune;
 use App\Models\Evaluation;
+use App\Models\FournisseurAgree;
 use App\Models\Litige;
 use App\Models\Mission;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class AdminTerritoryService
 {
@@ -30,7 +33,7 @@ class AdminTerritoryService
         ],
         'yamoussoukro' => [
             'id' => 'yamoussoukro',
-            'name' => "District Autonome de Yamoussoukro",
+            'name' => 'District Autonome de Yamoussoukro',
             'short_name' => 'Yamoussoukro',
             'chef_lieu' => 'Yamoussoukro',
             'lat' => 6.8276,
@@ -218,7 +221,7 @@ class AdminTerritoryService
 
         $selectedZoneName = "Toute la Côte d'Ivoire (Vue Nationale)";
         if ($communeSlug && isset(self::ABIDJAN_COMMUNES[$communeSlug])) {
-            $selectedZoneName = "Commune de " . self::ABIDJAN_COMMUNES[$communeSlug]['name'] . " (Grand Abidjan)";
+            $selectedZoneName = 'Commune de '.self::ABIDJAN_COMMUNES[$communeSlug]['name'].' (Grand Abidjan)';
         } elseif ($districtSlug && isset(self::DISTRICTS[$districtSlug])) {
             $selectedZoneName = self::DISTRICTS[$districtSlug]['name'];
         }
@@ -261,6 +264,118 @@ class AdminTerritoryService
     }
 
     /**
+     * Ventilations complémentaires d'une zone : artisans par catégorie de
+     * métier, fournisseurs par secteur d'activité, et conformité CNMCI des
+     * artisans. Affichées dans le détail de zone de Cartographie & Territoires.
+     */
+    public function getTerritoryBreakdowns(?string $districtSlug = null, ?string $communeSlug = null): array
+    {
+        $communeModel = $communeSlug ? Commune::where('slug', $communeSlug)->first() : null;
+
+        return [
+            'artisan_categories' => $this->getArtisanCategoryBreakdown($districtSlug, $communeSlug, $communeModel),
+            'supplier_sectors' => $this->getSupplierSectorBreakdown($districtSlug, $communeSlug, $communeModel),
+            'cnmci' => $this->getCnmciBreakdown($districtSlug, $communeSlug, $communeModel),
+        ];
+    }
+
+    /**
+     * Répartition des artisans inscrits dans la zone par secteur de métier
+     * (`sectors`, via `artisan_profiles`). Les artisans sans profil ou sans
+     * secteur choisi sont regroupés sous « Non renseigné » plutôt qu'omis :
+     * une catégorie manquante est une donnée en soi, pas une absence à cacher.
+     */
+    private function getArtisanCategoryBreakdown(?string $districtSlug, ?string $communeSlug, ?Commune $communeModel): array
+    {
+        $query = User::query()->where('role', 'artisan');
+        $this->applyUserLocationScope($query, $districtSlug, $communeSlug, $communeModel);
+
+        $total = (clone $query)->count();
+
+        $rows = (clone $query)
+            ->leftJoin('artisan_profiles', 'artisan_profiles.user_id', '=', 'users.id')
+            ->leftJoin('sectors', 'sectors.id', '=', 'artisan_profiles.sector_id')
+            ->select('sectors.id as sector_id', 'sectors.name as sector_name', 'sectors.icon as sector_icon', DB::raw('COUNT(users.id) as total'))
+            ->groupBy('sectors.id', 'sectors.name', 'sectors.icon')
+            ->orderByDesc('total')
+            ->get();
+
+        return $this->formatBreakdown($rows, $total);
+    }
+
+    /**
+     * Répartition des fournisseurs (quincailleries) de la zone par secteur
+     * d'activité (`fournisseurs_agrees.sector_id`, assigné depuis la fiche
+     * utilisateur du backoffice). Même convention « Non renseigné » que
+     * ci-dessus pour les boutiques sans secteur encore assigné.
+     */
+    private function getSupplierSectorBreakdown(?string $districtSlug, ?string $communeSlug, ?Commune $communeModel): array
+    {
+        $userQuery = User::query()->where('role', 'fournisseur');
+        $this->applyUserLocationScope($userQuery, $districtSlug, $communeSlug, $communeModel);
+        $userIds = (clone $userQuery)->pluck('id');
+
+        if ($userIds->isEmpty()) {
+            return ['total' => 0, 'items' => []];
+        }
+
+        $rows = FournisseurAgree::query()
+            ->whereIn('user_id', $userIds)
+            ->leftJoin('sectors', 'sectors.id', '=', 'fournisseurs_agrees.sector_id')
+            ->select('sectors.id as sector_id', 'sectors.name as sector_name', 'sectors.icon as sector_icon', DB::raw('COUNT(fournisseurs_agrees.id) as total'))
+            ->groupBy('sectors.id', 'sectors.name', 'sectors.icon')
+            ->orderByDesc('total')
+            ->get();
+
+        return $this->formatBreakdown($rows, $userIds->count());
+    }
+
+    /**
+     * @param  Collection<int, object{sector_id: ?int, sector_name: ?string, sector_icon: ?string, total: int}>  $rows
+     */
+    private function formatBreakdown($rows, int $total): array
+    {
+        return [
+            'total' => $total,
+            'items' => $rows->map(fn ($row) => [
+                'sector_id' => $row->sector_id,
+                'label' => $row->sector_name ?? 'Non renseigné',
+                'icon' => $row->sector_icon,
+                'count' => (int) $row->total,
+                'percent' => $total > 0 ? round(($row->total / $total) * 100, 1) : 0.0,
+            ])->values()->all(),
+        ];
+    }
+
+    /**
+     * Conformité CNMCI des artisans de la zone : combien détiennent une carte
+     * validée, combien sont en attente / rejetés / n'ont jamais renseigné.
+     */
+    private function getCnmciBreakdown(?string $districtSlug, ?string $communeSlug, ?Commune $communeModel): array
+    {
+        $query = User::query()->where('role', 'artisan');
+        $this->applyUserLocationScope($query, $districtSlug, $communeSlug, $communeModel);
+
+        $counts = (clone $query)
+            ->select('cnmci_status', DB::raw('COUNT(*) as total'))
+            ->groupBy('cnmci_status')
+            ->pluck('total', 'cnmci_status')
+            ->toArray();
+
+        $total = (int) array_sum($counts);
+        $valide = (int) ($counts['valide'] ?? 0);
+
+        return [
+            'total_artisans' => $total,
+            'valide' => $valide,
+            'en_attente' => (int) ($counts['en_attente'] ?? 0),
+            'rejete' => (int) ($counts['rejete'] ?? 0),
+            'non_renseigne' => (int) ($counts['non_renseigne'] ?? 0),
+            'valide_percent' => $total > 0 ? round(($valide / $total) * 100, 1) : 0.0,
+        ];
+    }
+
+    /**
      * Ventilation pour coloration cartographique par District.
      */
     public function getDistrictsHeatmap(): array
@@ -280,6 +395,7 @@ class AdminTerritoryService
                     'dispute_rate' => $stats['missions']['dispute_rate'],
                 ];
             }
+
             return $breakdown;
         });
     }
@@ -306,6 +422,7 @@ class AdminTerritoryService
                     'realization_rate' => $stats['missions']['realization_rate'],
                 ];
             }
+
             return $breakdown;
         });
     }
@@ -340,8 +457,8 @@ class AdminTerritoryService
                     $q->where('description', 'like', "%{$search}%")
                         ->orWhere('category', 'like', "%{$search}%")
                         ->orWhere('location_address', 'like', "%{$search}%")
-                        ->orWhereHas('client', fn($cq) => $cq->where('name', 'like', "%{$search}%")->orWhere('phone', 'like', "%{$search}%"))
-                        ->orWhereHas('artisan', fn($aq) => $aq->where('name', 'like', "%{$search}%")->orWhere('phone', 'like', "%{$search}%"));
+                        ->orWhereHas('client', fn ($cq) => $cq->where('name', 'like', "%{$search}%")->orWhere('phone', 'like', "%{$search}%"))
+                        ->orWhereHas('artisan', fn ($aq) => $aq->where('name', 'like', "%{$search}%")->orWhere('phone', 'like', "%{$search}%"));
                 });
             }
 
@@ -349,8 +466,8 @@ class AdminTerritoryService
                 return [
                     'id' => $mission->id,
                     'type' => $mission->status === 'disputed' ? 'litige' : 'mission',
-                    'title' => "Mission #{$mission->id} — " . ($mission->category ?: 'Travaux'),
-                    'subtitle' => $mission->description ? \Illuminate\Support\Str::limit($mission->description, 60) : 'Chantier',
+                    'title' => "Mission #{$mission->id} — ".($mission->category ?: 'Travaux'),
+                    'subtitle' => $mission->description ? Str::limit($mission->description, 60) : 'Chantier',
                     'actor_name' => $mission->artisan?->name ?? 'Non assigné',
                     'client_name' => $mission->client?->name ?? 'Client',
                     'contact' => $mission->artisan?->phone ?? ($mission->client?->phone ?? '-'),
@@ -358,7 +475,7 @@ class AdminTerritoryService
                     'montant' => (int) $mission->montant_total,
                     'amount_fcfa' => (int) $mission->montant_total,
                     'location' => $mission->location_address ?: 'Côte d\'Ivoire',
-                    'action_url' => "/admin/missions?search_mission=" . $mission->id,
+                    'action_url' => '/admin/missions?search_mission='.$mission->id,
                     'created_at' => $mission->created_at?->toIso8601String(),
                 ];
             });
@@ -395,7 +512,7 @@ class AdminTerritoryService
                 'role' => $user->role,
                 'name' => $user->name,
                 'title' => $user->name,
-                'subtitle' => $user->role ? ucfirst($user->role) . ($user->phone ? ' • ' . $user->phone : '') : 'Utilisateur',
+                'subtitle' => $user->role ? ucfirst($user->role).($user->phone ? ' • '.$user->phone : '') : 'Utilisateur',
                 'phone' => $user->phone,
                 'contact' => $user->phone,
                 'status' => $user->kyc_status,
@@ -403,7 +520,7 @@ class AdminTerritoryService
                 'score_prosartisan' => (int) $user->score_prosartisan,
                 'commune' => $user->commune?->name ?? ($user->city ?? 'Abidjan'),
                 'location' => $user->commune?->name ?? ($user->city ?? 'Abidjan'),
-                'action_url' => "/admin/users?search_user=" . urlencode($user->phone ?: $user->name),
+                'action_url' => '/admin/users?search_user='.urlencode($user->phone ?: $user->name),
                 'created_at' => $user->created_at?->toIso8601String(),
             ];
         });
@@ -416,6 +533,7 @@ class AdminTerritoryService
     {
         if ($communeModel) {
             $query->where('commune_id', $communeModel->id);
+
             return;
         }
 
@@ -425,6 +543,7 @@ class AdminTerritoryService
                 $cq->where('slug', $communeSlug);
                 $this->orWhereVilleMatch($cq, 'name', $communeName);
             });
+
             return;
         }
 
@@ -475,9 +594,10 @@ class AdminTerritoryService
             $name = $communeModel->name;
             $query->where(function ($q) use ($name, $communeModel) {
                 $this->orWhereVilleMatch($q, 'client_address', $name);
-                $q->orWhereHas('client', fn($cq) => $cq->where('commune_id', $communeModel->id))
-                    ->orWhereHas('artisan', fn($aq) => $aq->where('commune_id', $communeModel->id));
+                $q->orWhereHas('client', fn ($cq) => $cq->where('commune_id', $communeModel->id))
+                    ->orWhereHas('artisan', fn ($aq) => $aq->where('commune_id', $communeModel->id));
             });
+
             return;
         }
 
@@ -485,9 +605,10 @@ class AdminTerritoryService
             $name = self::ABIDJAN_COMMUNES[$communeSlug]['name'];
             $query->where(function ($q) use ($name, $communeSlug) {
                 $this->orWhereVilleMatch($q, 'client_address', $name);
-                $q->orWhereHas('client', fn($cq) => $cq->whereHas('commune', fn($sub) => $sub->where('slug', $communeSlug)))
-                    ->orWhereHas('artisan', fn($aq) => $aq->whereHas('commune', fn($sub) => $sub->where('slug', $communeSlug)));
+                $q->orWhereHas('client', fn ($cq) => $cq->whereHas('commune', fn ($sub) => $sub->where('slug', $communeSlug)))
+                    ->orWhereHas('artisan', fn ($aq) => $aq->whereHas('commune', fn ($sub) => $sub->where('slug', $communeSlug)));
             });
+
             return;
         }
 

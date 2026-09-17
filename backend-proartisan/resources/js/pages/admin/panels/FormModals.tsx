@@ -4,7 +4,7 @@
 import type { FormEvent } from 'react';
 
 import { CloseIcon, KycStatusBadge } from '../shared';
-import type { AdminUser, PromoCodeItem } from '../shared';
+import type { AdminUser, PromoCodeItem, SectorItem } from '../shared';
 
 const documentLabels: Record<'cni' | 'selfie', string> = {
     cni: 'Carte Nationale d’Identité (CNI)',
@@ -383,11 +383,13 @@ export function PromoCodeFormModal({
 export function UserFormModal({
     form,
     editing,
+    sectors = [],
     onSubmit,
     onClose,
 }: {
     form: InertiaForm;
     editing: AdminUser | null;
+    sectors?: SectorItem[];
     onSubmit: (event: FormEvent<HTMLFormElement>) => void;
     onClose: () => void;
 }) {
@@ -472,6 +474,27 @@ export function UserFormModal({
                             {form.errors.password && <p className="text-xs text-[#b24f43]">{form.errors.password}</p>}
                         </label>
                     </div>
+
+                    {form.data.role === 'fournisseur' && (
+                        <label className="block space-y-1">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Secteur d’activité (fournisseur)</span>
+                            <select
+                                value={form.data.fournisseur_sector_id ?? ''}
+                                onChange={(e) => form.setData('fournisseur_sector_id', e.target.value ? Number(e.target.value) : '')}
+                                className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none bg-transparent"
+                            >
+                                <option value="">Non renseigné</option>
+                                {sectors.map((sector) => (
+                                    <option key={sector.id} value={sector.id}>
+                                        {sector.icon ? `${sector.icon} ` : ''}{sector.name}
+                                    </option>
+                                ))}
+                            </select>
+                            {form.errors.fournisseur_sector_id && (
+                                <p className="text-xs text-[#b24f43]">{form.errors.fournisseur_sector_id}</p>
+                            )}
+                        </label>
+                    )}
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <label className="block space-y-1">

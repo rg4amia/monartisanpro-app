@@ -2,10 +2,15 @@
 
 namespace Tests\Feature;
 
+use App\Models\ArtisanProfile;
 use App\Models\Commune;
+use App\Models\FournisseurAgree;
 use App\Models\Mission;
+use App\Models\Sector;
 use App\Models\User;
+use App\Services\Admin\AdminTerritoryService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class AdminTerritoryControllerTest extends TestCase
@@ -87,6 +92,52 @@ class AdminTerritoryControllerTest extends TestCase
             ->assertJsonPath('summary.missions.total_volume_fcfa', 150000);
     }
 
+    public function test_territory_breakdowns_cover_artisan_categories_supplier_sectors_and_cnmci(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $cocody = Commune::create(['name' => 'Cocody', 'slug' => 'cocody', 'city' => 'Abidjan', 'country_code' => 'CI']);
+
+        $electricite = Sector::create(['name' => 'Électricité']);
+        $plomberie = Sector::create(['name' => 'Plomberie']);
+
+        $artisanValide = User::factory()->create(['role' => 'artisan', 'commune_id' => $cocody->id, 'cnmci_status' => 'valide']);
+        ArtisanProfile::create(['user_id' => $artisanValide->id, 'sector_id' => $electricite->id]);
+
+        $artisanEnAttente = User::factory()->create(['role' => 'artisan', 'commune_id' => $cocody->id, 'cnmci_status' => 'en_attente']);
+        ArtisanProfile::create(['user_id' => $artisanEnAttente->id, 'sector_id' => $electricite->id]);
+
+        // Artisan sans profil du tout : doit être compté dans « Non renseigné ».
+        User::factory()->create(['role' => 'artisan', 'commune_id' => $cocody->id, 'cnmci_status' => 'non_renseigne']);
+
+        // Le hook d'auto-création de fournisseurs_agrees est désactivé pendant
+        // les tests (User::booted()) : on crée le profil explicitement ici.
+        $fournisseur = User::factory()->create(['role' => 'fournisseur', 'commune_id' => $cocody->id]);
+        FournisseurAgree::create(['user_id' => $fournisseur->id, 'nom_boutique' => 'Quincaillerie Plomberie', 'sector_id' => $plomberie->id, 'statut' => 'agree']);
+
+        // Fournisseur sans secteur assigné : doit être compté dans « Non renseigné ».
+        $fournisseurSansSecteur = User::factory()->create(['role' => 'fournisseur', 'commune_id' => $cocody->id]);
+        FournisseurAgree::create(['user_id' => $fournisseurSansSecteur->id, 'nom_boutique' => 'Quincaillerie Générale', 'statut' => 'agree']);
+
+        $response = $this->actingAs($admin)
+            ->getJson('/admin/cartographie/stats?commune=cocody');
+
+        $response->assertOk()
+            ->assertJsonPath('breakdowns.artisan_categories.total', 3)
+            ->assertJsonPath('breakdowns.cnmci.total_artisans', 3)
+            ->assertJsonPath('breakdowns.cnmci.valide', 1)
+            ->assertJsonPath('breakdowns.cnmci.en_attente', 1)
+            ->assertJsonPath('breakdowns.cnmci.non_renseigne', 1)
+            ->assertJsonPath('breakdowns.supplier_sectors.total', 2);
+
+        $categories = collect($response->json('breakdowns.artisan_categories.items'))->keyBy('label');
+        $this->assertSame(2, $categories['Électricité']['count']);
+        $this->assertSame(1, $categories['Non renseigné']['count']);
+
+        $sectors = collect($response->json('breakdowns.supplier_sectors.items'))->keyBy('label');
+        $this->assertSame(1, $sectors['Plomberie']['count']);
+        $this->assertSame(1, $sectors['Non renseigné']['count']);
+    }
+
     public function test_district_matching_ignores_substring_false_positives(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
@@ -134,16 +185,16 @@ class AdminTerritoryControllerTest extends TestCase
 
     public function test_districts_heatmap_is_cached_and_invalidated_on_mission_change(): void
     {
-        $service = app(\App\Services\Admin\AdminTerritoryService::class);
+        $service = app(AdminTerritoryService::class);
 
         $first = $service->getDistrictsHeatmap();
 
         // Un second appel sans changement sous-jacent doit servir le résultat mis en
         // cache sans ré-exécuter la batterie de requêtes par district (Règle d'Or 27).
-        \Illuminate\Support\Facades\DB::enableQueryLog();
+        DB::enableQueryLog();
         $second = $service->getDistrictsHeatmap();
-        $queriesOnCacheHit = count(\Illuminate\Support\Facades\DB::getQueryLog());
-        \Illuminate\Support\Facades\DB::disableQueryLog();
+        $queriesOnCacheHit = count(DB::getQueryLog());
+        DB::disableQueryLog();
 
         $this->assertSame($first, $second);
         $this->assertSame(0, $queriesOnCacheHit, 'Un appel avec cache chaud ne doit déclencher aucune requête SQL.');

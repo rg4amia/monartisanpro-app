@@ -6,7 +6,28 @@ vi.mock('./IvoryCoastMapSvg', () => ({
 }));
 
 import { CartographyPanel } from './CartographyPanel';
-import type { TerritoryEntityItem, TerritorySummary } from '../shared/types';
+import type { TerritoryBreakdowns, TerritoryEntityItem, TerritorySummary } from '../shared/types';
+
+function makeBreakdowns(overrides: Partial<TerritoryBreakdowns> = {}): TerritoryBreakdowns {
+    return {
+        artisan_categories: {
+            total: 10,
+            items: [
+                { sector_id: 1, label: 'Électricité', icon: '⚡', count: 6, percent: 60 },
+                { sector_id: null, label: 'Non renseigné', icon: null, count: 4, percent: 40 },
+            ],
+        },
+        supplier_sectors: {
+            total: 4,
+            items: [
+                { sector_id: 2, label: 'Plomberie', icon: '🔧', count: 3, percent: 75 },
+                { sector_id: null, label: 'Non renseigné', icon: null, count: 1, percent: 25 },
+            ],
+        },
+        cnmci: { total_artisans: 10, valide: 6, en_attente: 2, rejete: 1, non_renseigne: 1, valide_percent: 60 },
+        ...overrides,
+    };
+}
 
 function makeSummary(overrides: Partial<TerritorySummary> = {}): TerritorySummary {
     return {
@@ -50,6 +71,7 @@ function makeEntity(overrides: Partial<TerritoryEntityItem> = {}): TerritoryEnti
 function renderPanel(overrides: Partial<React.ComponentProps<typeof CartographyPanel>> = {}) {
     const props: React.ComponentProps<typeof CartographyPanel> = {
         territorySummary: makeSummary(),
+        territoryBreakdowns: makeBreakdowns(),
         districtsHeatmap: {},
         communesHeatmap: {},
         districtsList: [{ id: 'abidjan', slug: 'abidjan', name: 'Abidjan', short_name: 'ABJ', chef_lieu: 'Abidjan', lat: 5.3, lng: -4.0, villes: [] }],
@@ -149,6 +171,46 @@ describe('CartographyPanel', () => {
         await waitFor(() =>
             expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('page=2'), expect.anything()),
         );
+    });
+
+    it('affiche la répartition des artisans par catégorie et la part « Non renseigné »', () => {
+        renderPanel();
+
+        expect(screen.getByText('Artisans par catégorie')).toBeInTheDocument();
+        expect(screen.getByText(/⚡ Électricité/)).toBeInTheDocument();
+        expect(screen.getByText('6 • 60%')).toBeInTheDocument();
+        expect(screen.getByText('4 • 40%')).toBeInTheDocument();
+    });
+
+    it('affiche la répartition des fournisseurs par secteur d’activité', () => {
+        renderPanel();
+
+        expect(screen.getByText('Fournisseurs par secteur d’activité')).toBeInTheDocument();
+        expect(screen.getByText(/🔧 Plomberie/)).toBeInTheDocument();
+    });
+
+    it('affiche la conformité CNMCI des artisans de la zone', () => {
+        renderPanel();
+
+        expect(screen.getByText('Conformité carte CNMCI')).toBeInTheDocument();
+        expect(screen.getByText('6')).toBeInTheDocument();
+        expect(screen.getByText('60% avec carte valide')).toBeInTheDocument();
+        expect(screen.getByText('2 en attente')).toBeInTheDocument();
+        expect(screen.getByText('1 rejetée(s)')).toBeInTheDocument();
+        expect(screen.getByText('1 non renseignée(s)')).toBeInTheDocument();
+    });
+
+    it('affiche un message explicite quand aucune donnée de répartition n’existe', () => {
+        renderPanel({
+            territoryBreakdowns: {
+                artisan_categories: { total: 0, items: [] },
+                supplier_sectors: { total: 0, items: [] },
+                cnmci: { total_artisans: 0, valide: 0, en_attente: 0, rejete: 0, non_renseigne: 0, valide_percent: 0 },
+            },
+        });
+
+        expect(screen.getAllByText('Aucun artisan inscrit dans cette zone.').length).toBeGreaterThan(0);
+        expect(screen.getByText('Aucun fournisseur inscrit dans cette zone.')).toBeInTheDocument();
     });
 
     it('réinitialise tous les filtres', async () => {

@@ -172,6 +172,7 @@ class AdminPanelData
 
         return [
             'territorySummary' => $this->territoryService->getTerritorySummary($district, $commune),
+            'territoryBreakdowns' => $this->territoryService->getTerritoryBreakdowns($district, $commune),
             'districtsHeatmap' => $this->territoryService->getDistrictsHeatmap(),
             'communesHeatmap' => $this->territoryService->getCommunesHeatmap(),
             'districtsList' => $districtsList,
@@ -214,9 +215,9 @@ class AdminPanelData
             25,
         )->withQueryString();
 
-        // Photo et pièces KYC : chargées uniquement pour la page courante (25
-        // comptes max), affichées dans la modale d'édition du backoffice.
-        $usersPage->getCollection()->load('kycDocuments');
+        // Photo, pièces KYC et secteur fournisseur : chargés uniquement pour la
+        // page courante (25 comptes max), affichés dans la modale d'édition.
+        $usersPage->getCollection()->load(['kycDocuments', 'fournisseurAgree.sector']);
         $usersPage->getCollection()->transform(function (User $user) {
             $user->append('photo_url');
             $user->kyc_documents = $user->kycDocuments->map(fn ($doc) => [
@@ -224,6 +225,8 @@ class AdminPanelData
                 'statut' => $doc->statut,
                 'file_url' => $doc->file_url,
             ]);
+            $user->fournisseur_sector_id = $user->fournisseurAgree?->sector_id;
+            $user->fournisseur_sector_name = $user->fournisseurAgree?->sector?->name;
 
             return $user;
         });
@@ -241,6 +244,7 @@ class AdminPanelData
                 ->orderByDesc('score_prosartisan')
                 ->limit(5)
                 ->get(['id', 'name', 'phone', 'score_prosartisan', 'score_frozen']),
+            'sectors' => Schema::hasTable('sectors') ? Sector::select('id', 'name', 'icon')->orderBy('name')->get() : [],
         ];
     }
 

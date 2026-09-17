@@ -29,10 +29,12 @@ class AdminTerritoryController extends Controller
 
         $summary = $this->territoryService->getTerritorySummary($district, $commune);
         $entities = $this->territoryService->getTerritoryEntities($filters, (int) $request->query('per_page', 15));
+        $breakdowns = $this->territoryService->getTerritoryBreakdowns($district, $commune);
 
         return response()->json([
             'summary' => $summary,
             'entities' => $entities,
+            'breakdowns' => $breakdowns,
         ]);
     }
 }

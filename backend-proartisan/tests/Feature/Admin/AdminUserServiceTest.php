@@ -2,7 +2,9 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Models\FournisseurAgree;
 use App\Models\KycDocument;
+use App\Models\Sector;
 use App\Models\User;
 use App\Services\Admin\AdminUserService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -112,6 +114,32 @@ class AdminUserServiceTest extends TestCase
         $document = KycDocument::where('user_id', $user->id)->where('type', 'cni')->sole();
         $this->assertSame('en_attente', $document->statut);
         Storage::disk('local')->assertExists($document->getRawOriginal('file_url'));
+    }
+
+    public function test_update_assigns_a_sector_to_a_fournisseur(): void
+    {
+        $sector = Sector::create(['name' => 'Électricité']);
+        $fournisseur = User::factory()->create(['role' => 'fournisseur']);
+        FournisseurAgree::create(['user_id' => $fournisseur->id, 'nom_boutique' => 'Quincaillerie Test', 'statut' => 'agree']);
+
+        $this->service->update($fournisseur, $this->baseUpdateData($fournisseur, [
+            'fournisseur_sector_id' => $sector->id,
+        ]));
+
+        $this->assertSame($sector->id, $fournisseur->fournisseurAgree->fresh()->sector_id);
+    }
+
+    public function test_update_ignores_fournisseur_sector_for_a_non_fournisseur_role(): void
+    {
+        $client = User::factory()->create(['role' => 'client']);
+        $sector = Sector::create(['name' => 'Électricité']);
+
+        // Ne doit pas lever d'erreur : un client n'a pas de fournisseurAgree.
+        $this->service->update($client, $this->baseUpdateData($client, [
+            'fournisseur_sector_id' => $sector->id,
+        ]));
+
+        $this->assertNull($client->fournisseurAgree);
     }
 
     /**

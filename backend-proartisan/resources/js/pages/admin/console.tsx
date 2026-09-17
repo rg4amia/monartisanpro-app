@@ -742,6 +742,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         device_fingerprint: string;
         photo: File | null;
         documents: { cni: File | null; selfie: File | null };
+        fournisseur_sector_id: number | '';
     }>({
         name: '',
         phone: '',
@@ -754,6 +755,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         device_fingerprint: '',
         photo: null,
         documents: { cni: null, selfie: null },
+        fournisseur_sector_id: '',
     });
 
     const statusForm = useForm({
@@ -777,6 +779,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
             device_fingerprint: '',
             photo: null,
             documents: { cni: null, selfie: null },
+            fournisseur_sector_id: '',
         });
         setUserModalOpen(true);
     };
@@ -796,6 +799,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
             device_fingerprint: user.device_fingerprint ?? '',
             photo: null,
             documents: { cni: null, selfie: null },
+            fournisseur_sector_id: user.fournisseur_sector_id ?? '',
         });
         setUserModalOpen(true);
     };
@@ -1974,6 +1978,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                     <UserFormModal
                         form={userForm}
                         editing={editingUser}
+                        sectors={sectors}
                         onSubmit={handleUserFormSubmit}
                         onClose={() => setUserModalOpen(false)}
                     />

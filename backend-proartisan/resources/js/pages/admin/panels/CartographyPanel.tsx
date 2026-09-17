@@ -12,6 +12,8 @@ import {
 } from '../shared';
 import type {
     TerritorySummary,
+    TerritoryBreakdowns,
+    TerritoryBreakdownGroup,
     DistrictHeatmapItem,
     CommuneHeatmapItem,
     DistrictListItem,
@@ -23,6 +25,7 @@ import { IvoryCoastMapSvg } from './IvoryCoastMapSvg';
 
 export interface CartographyPanelProps {
     territorySummary?: TerritorySummary;
+    territoryBreakdowns?: TerritoryBreakdowns;
     districtsHeatmap?: Record<string, DistrictHeatmapItem>;
     communesHeatmap?: Record<string, CommuneHeatmapItem>;
     districtsList?: DistrictListItem[];
@@ -51,6 +54,42 @@ const defaultSummary: TerritorySummary = {
 
 const defaultEntities = { data: [], current_page: 1, last_page: 1, total: 0, per_page: 15 };
 
+const defaultBreakdowns: TerritoryBreakdowns = {
+    artisan_categories: { total: 0, items: [] },
+    supplier_sectors: { total: 0, items: [] },
+    cnmci: { total_artisans: 0, valide: 0, en_attente: 0, rejete: 0, non_renseigne: 0, valide_percent: 0 },
+};
+
+/** Liste « répartition par catégorie » (secteurs artisans/fournisseurs) avec barre de proportion. */
+function BreakdownList({ group, emptyLabel }: { group: TerritoryBreakdownGroup; emptyLabel: string }) {
+    if (group.total === 0 || group.items.length === 0) {
+        return <p className="text-xs text-[var(--admin-muted)]">{emptyLabel}</p>;
+    }
+
+    return (
+        <div className="space-y-2.5">
+            {group.items.map((item) => (
+                <div key={item.sector_id ?? 'non-renseigne'}>
+                    <div className="flex items-center justify-between gap-2 text-xs">
+                        <span className={cn('font-semibold', item.sector_id === null ? 'text-[var(--admin-muted)] italic' : 'text-[var(--admin-text)]')}>
+                            {item.icon ? `${item.icon} ` : ''}{item.label}
+                        </span>
+                        <span className="shrink-0 text-[var(--admin-muted)]">
+                            {item.count} • {item.percent}%
+                        </span>
+                    </div>
+                    <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-[var(--admin-panel)]">
+                        <div
+                            className={cn('h-full rounded-full transition-all duration-500', item.sector_id === null ? 'bg-[var(--admin-border)]' : 'bg-[#ebb95e]')}
+                            style={{ width: `${Math.max(item.percent, item.count > 0 ? 3 : 0)}%` }}
+                        />
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+}
+
 function getActorCount(actor: any): number {
     if (typeof actor === 'number') return actor;
     if (actor && typeof actor === 'object') {
@@ -62,6 +101,7 @@ function getActorCount(actor: any): number {
 
 export function CartographyPanel({
     territorySummary: initialSummary,
+    territoryBreakdowns: initialBreakdowns,
     districtsHeatmap = {},
     communesHeatmap = {},
     districtsList = [],
@@ -77,6 +117,7 @@ export function CartographyPanel({
     const [entityType, setEntityType] = useState<string>(initialFilters?.entity_type ?? 'all');
     const [searchQuery, setSearchQuery] = useState<string>(initialFilters?.search ?? '');
     const [summary, setSummary] = useState<TerritorySummary>(initialSummary ?? defaultSummary);
+    const [breakdowns, setBreakdowns] = useState<TerritoryBreakdowns>(initialBreakdowns ?? defaultBreakdowns);
     const [entities, setEntities] = useState(initialEntities ?? defaultEntities);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [, startTransition] = useTransition();
@@ -96,6 +137,12 @@ export function CartographyPanel({
     if (initialEntities && initialEntities !== syncedEntities) {
         setSyncedEntities(initialEntities);
         setEntities(initialEntities);
+    }
+
+    const [syncedBreakdowns, setSyncedBreakdowns] = useState(initialBreakdowns);
+    if (initialBreakdowns && initialBreakdowns !== syncedBreakdowns) {
+        setSyncedBreakdowns(initialBreakdowns);
+        setBreakdowns(initialBreakdowns);
     }
 
     // Récupération asynchrone des statistiques et entités selon les filtres
@@ -128,6 +175,7 @@ export function CartographyPanel({
                     startTransition(() => {
                         if (data.summary) setSummary(data.summary);
                         if (data.entities) setEntities(data.entities);
+                        if (data.breakdowns) setBreakdowns(data.breakdowns);
                     });
                 }
             } catch (err) {
@@ -259,7 +307,7 @@ export function CartographyPanel({
                                 <select
                                     value={selectedDistrict ?? ''}
                                     onChange={(e) => handleSelectDistrict(e.target.value || '')}
-                                    className="h-9 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-card-bg)] px-3 text-xs font-semibold text-[var(--admin-text)] focus:outline-none focus:ring-2 focus:ring-[#ebb95e]"
+                                    className="h-9 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 text-xs font-semibold text-[var(--admin-text)] focus:outline-none focus:ring-2 focus:ring-[#ebb95e]"
                                 >
                                     <option value="">Tous les Districts (National)</option>
                                     {districtsList.map((d) => {
@@ -278,7 +326,7 @@ export function CartographyPanel({
                                 <select
                                     value={selectedCommune ?? ''}
                                     onChange={(e) => handleSelectCommune(e.target.value || '')}
-                                    className="h-9 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-card-bg)] px-3 text-xs font-semibold text-[var(--admin-text)] focus:outline-none focus:ring-2 focus:ring-[#ebb95e]"
+                                    className="h-9 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 text-xs font-semibold text-[var(--admin-text)] focus:outline-none focus:ring-2 focus:ring-[#ebb95e]"
                                 >
                                     <option value="">Toutes les Communes</option>
                                     {filteredCommunesList.map((c) => {
@@ -345,6 +393,71 @@ export function CartographyPanel({
                     </MetricCard>
                 </div>
 
+                {/* 2bis. Répartition par catégorie & conformité de la zone sélectionnée */}
+                <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+                    <Surface className="p-4 sm:p-5">
+                        <SectionTitle
+                            description={`${breakdowns.artisan_categories.total} artisan(s) inscrit(s) dans cette zone`}
+                            title="Artisans par catégorie"
+                        />
+                        <div className="mt-4">
+                            <BreakdownList
+                                group={breakdowns.artisan_categories}
+                                emptyLabel="Aucun artisan inscrit dans cette zone."
+                            />
+                        </div>
+                    </Surface>
+
+                    <Surface className="p-4 sm:p-5">
+                        <SectionTitle
+                            description={`${breakdowns.supplier_sectors.total} fournisseur(s) inscrit(s) dans cette zone`}
+                            title="Fournisseurs par secteur d’activité"
+                        />
+                        <div className="mt-4">
+                            <BreakdownList
+                                group={breakdowns.supplier_sectors}
+                                emptyLabel="Aucun fournisseur inscrit dans cette zone."
+                            />
+                        </div>
+                    </Surface>
+
+                    <Surface className="p-4 sm:p-5">
+                        <SectionTitle
+                            description={`Sur ${breakdowns.cnmci.total_artisans} artisan(s) de la zone`}
+                            title="Conformité carte CNMCI"
+                        />
+                        {breakdowns.cnmci.total_artisans === 0 ? (
+                            <p className="mt-4 text-xs text-[var(--admin-muted)]">Aucun artisan inscrit dans cette zone.</p>
+                        ) : (
+                            <div className="mt-4 space-y-3">
+                                <div>
+                                    <div className="flex items-end justify-between">
+                                        <p className="text-2xl font-bold text-emerald-700">{breakdowns.cnmci.valide}</p>
+                                        <p className="text-xs font-semibold text-[var(--admin-muted)]">{breakdowns.cnmci.valide_percent}% avec carte valide</p>
+                                    </div>
+                                    <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-[var(--admin-panel)]">
+                                        <div
+                                            className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+                                            style={{ width: `${Math.min(breakdowns.cnmci.valide_percent, 100)}%` }}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="flex flex-wrap gap-1.5 text-[11px]">
+                                    <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 font-semibold text-amber-800">
+                                        {breakdowns.cnmci.en_attente} en attente
+                                    </span>
+                                    <span className="rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 font-semibold text-rose-700">
+                                        {breakdowns.cnmci.rejete} rejetée(s)
+                                    </span>
+                                    <span className="rounded-full border border-[var(--admin-border)] bg-[var(--admin-panel)] px-2 py-0.5 font-semibold text-[var(--admin-muted)]">
+                                        {breakdowns.cnmci.non_renseigne} non renseignée(s)
+                                    </span>
+                                </div>
+                            </div>
+                        )}
+                    </Surface>
+                </div>
+
                 {/* 3. KPI Performance Opérationnelle : Réalisation, Litiges & Volume Financier */}
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-4">
                     {/* Missions */}
@@ -357,7 +470,7 @@ export function CartographyPanel({
                     </MetricCard>
 
                     {/* Taux de Réalisation */}
-                    <div className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-card-bg)] p-4 shadow-sm flex flex-col justify-between">
+                    <div className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] p-4 shadow-sm flex flex-col justify-between">
                         <div>
                             <div className="flex items-center justify-between">
                                 <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">
@@ -385,7 +498,7 @@ export function CartographyPanel({
                     </div>
 
                     {/* Taux de Litiges */}
-                    <div className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-card-bg)] p-4 shadow-sm flex flex-col justify-between">
+                    <div className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] p-4 shadow-sm flex flex-col justify-between">
                         <div>
                             <div className="flex items-center justify-between">
                                 <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">
@@ -490,7 +603,7 @@ export function CartographyPanel({
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder="Rechercher par nom, téléphone, ID ou titre dans cette zone..."
-                            className="h-10 flex-1 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-card-bg)] px-3 text-xs text-[var(--admin-text)] placeholder:text-[var(--admin-muted)] focus:outline-none focus:ring-2 focus:ring-[#ebb95e]"
+                            className="h-10 flex-1 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 text-xs text-[var(--admin-text)] placeholder:text-[var(--admin-muted)] focus:outline-none focus:ring-2 focus:ring-[#ebb95e]"
                         />
                         <button
                             type="submit"
@@ -501,9 +614,9 @@ export function CartographyPanel({
                     </form>
 
                     {/* Table des Données */}
-                    <div className="overflow-x-auto rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-card-bg)]">
+                    <div className="overflow-x-auto rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)]">
                         <table className="min-w-full divide-y divide-[var(--admin-border)] text-left text-xs">
-                            <thead className="bg-[#faf6f0] text-[var(--admin-muted)] font-semibold uppercase tracking-wider">
+                            <thead className="bg-[var(--admin-panel-strong)] text-[var(--admin-muted)] font-semibold uppercase tracking-wider">
                                 <tr>
                                     <th scope="col" className="py-3 pl-4 pr-3">Type</th>
                                     <th scope="col" className="px-3 py-3">Intitulé / Nom</th>
@@ -522,7 +635,7 @@ export function CartographyPanel({
                                     </tr>
                                 ) : (
                                     safeEntitiesData.map((item) => (
-                                        <tr key={`${item.type}-${item.id}`} className="hover:bg-amber-50/40 transition">
+                                        <tr key={`${item.type}-${item.id}`} className="hover:bg-[var(--admin-panel-strong)] transition">
                                             {/* Type */}
                                             <td className="whitespace-nowrap py-3 pl-4 pr-3">
                                                 <span

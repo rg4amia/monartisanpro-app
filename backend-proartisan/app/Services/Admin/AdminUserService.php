@@ -52,11 +52,14 @@ class AdminUserService
 
         $data['score_frozen'] = (bool) ($data['score_frozen'] ?? false);
 
-        // La photo et les pièces KYC ne sont pas des colonnes assignables en
-        // masse : elles suivent leur propre circuit de stockage (disque privé).
+        // La photo, les pièces KYC et le secteur fournisseur ne sont pas des
+        // colonnes de `users` assignables en masse : la photo et les pièces
+        // suivent leur propre circuit de stockage (disque privé), le secteur
+        // vit sur le profil `fournisseurs_agrees` du compte.
         $photo = $data['photo'] ?? null;
         $documents = $data['documents'] ?? [];
-        unset($data['photo'], $data['documents']);
+        $fournisseurSectorId = array_key_exists('fournisseur_sector_id', $data) ? $data['fournisseur_sector_id'] : false;
+        unset($data['photo'], $data['documents'], $data['fournisseur_sector_id']);
 
         $before = $user->only(['name', 'email', 'phone', 'role', 'kyc_status', 'score_frozen']);
 
@@ -74,12 +77,17 @@ class AdminUserService
             }
         }
 
+        if ($fournisseurSectorId !== false && $user->role === 'fournisseur') {
+            $user->fournisseurAgree?->update(['sector_id' => $fournisseurSectorId]);
+        }
+
         $this->audit->log('user.updated', $user, [
             'before' => $before,
             'after' => $user->only(['name', 'email', 'phone', 'role', 'kyc_status', 'score_frozen']),
             'password_changed' => $passwordChanged,
             'photo_updated' => $photo instanceof UploadedFile,
             'documents_updated' => $updatedDocuments,
+            'fournisseur_sector_id' => $fournisseurSectorId !== false ? $fournisseurSectorId : null,
         ]);
 
         return $user;

@@ -132,6 +132,34 @@ export interface TerritorySummary {
     reputation?: TerritoryReputation;
 }
 
+export interface TerritoryBreakdownItem {
+    sector_id: number | null;
+    label: string;
+    icon?: string | null;
+    count: number;
+    percent: number;
+}
+
+export interface TerritoryBreakdownGroup {
+    total: number;
+    items: TerritoryBreakdownItem[];
+}
+
+export interface TerritoryCnmciBreakdown {
+    total_artisans: number;
+    valide: number;
+    en_attente: number;
+    rejete: number;
+    non_renseigne: number;
+    valide_percent: number;
+}
+
+export interface TerritoryBreakdowns {
+    artisan_categories: TerritoryBreakdownGroup;
+    supplier_sectors: TerritoryBreakdownGroup;
+    cnmci: TerritoryCnmciBreakdown;
+}
+
 export interface DistrictHeatmapItem {
     name: string;
     full_name: string;

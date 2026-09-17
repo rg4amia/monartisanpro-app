@@ -193,6 +193,8 @@ export interface AdminUser {
     anonymized_at?: string | null;
     photo_url?: string | null;
     kyc_documents?: Array<{ type: string; statut: string; file_url: string | null }>;
+    fournisseur_sector_id?: number | null;
+    fournisseur_sector_name?: string | null;
 }
 
 /** Instantané de santé opérationnelle (Chantier C7 / P2-12). */
@@ -379,6 +381,7 @@ export interface TradeItem {
 export interface SectorItem {
     id: number;
     name: string;
+    icon?: string | null;
     trades?: TradeItem[];
 }
 
