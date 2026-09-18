@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
@@ -800,6 +801,65 @@ class HomeController extends GetxController {
       Get.snackbar(
         'Validation impossible',
         'Le code de réception n\'a pas pu être vérifié. Vérifiez votre connexion et réessayez.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColors.danger,
+        colorText: Colors.white,
+      );
+      return false;
+    }
+  }
+
+  /// Signale un temps d'attente (retrait ou livraison) sur une course en
+  /// cours. Le backend est seul juge de l'autorisation (livreur assigné à la
+  /// commande, ou admin) : en cas de refus (403) ou de saisie invalide (422),
+  /// son message exact est restitué au livreur plutôt qu'un message générique.
+  Future<bool> handleDriverWaitingSurge(
+    MissionModel mission,
+    int waitingMinutes,
+  ) async {
+    try {
+      final res = await _orderRepo.applyWaitingSurge(
+        mission.id,
+        waitingMinutes,
+      );
+      if (res['success'] == true) {
+        Get.snackbar(
+          'Frais d\'attente appliqués',
+          res['message'] as String? ??
+              'Frais d\'attente majorés appliqués.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: AppColors.success,
+          colorText: Colors.white,
+        );
+        await _loadDriverMissions();
+        return true;
+      }
+
+      Get.snackbar(
+        'Échec du signalement',
+        res['message'] as String? ??
+            'Le temps d\'attente n\'a pas pu être signalé.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColors.danger,
+        colorText: Colors.white,
+      );
+      return false;
+    } on DioException catch (e) {
+      final data = e.response?.data;
+      final message = data is Map ? data['message']?.toString() : null;
+      Get.snackbar(
+        'Échec du signalement',
+        message ??
+            'Le temps d\'attente n\'a pas pu être signalé. Vérifiez votre connexion et réessayez.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColors.danger,
+        colorText: Colors.white,
+      );
+      return false;
+    } catch (_) {
+      Get.snackbar(
+        'Échec du signalement',
+        'Le temps d\'attente n\'a pas pu être signalé. Vérifiez votre connexion et réessayez.',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: AppColors.danger,
         colorText: Colors.white,

@@ -13,6 +13,7 @@ class LitigeDetailController extends GetxController {
 
   final isLoading = false.obs;
   final isUploadingEvidence = false.obs;
+  final isVoting = false.obs;
   final litige = Rx<Map<String, dynamic>?>(null);
 
   late int litigeId;
@@ -39,6 +40,15 @@ class LitigeDetailController extends GetxController {
     if (data == null) return false;
     return data['statut'] != 'resolu' && data['workflowStep'] == 'preuves';
   }
+
+  /// Non nul lorsque l'utilisateur connecte est un des 3 jures anonymes
+  /// assignes a ce litige. `verdict` reste null tant qu'il n'a pas vote.
+  Map<String, dynamic>? get myJuryReview =>
+      litige.value?['myJuryReview'] as Map<String, dynamic>?;
+
+  bool get isJuror => myJuryReview != null;
+
+  bool get hasVoted => myJuryReview?['verdict'] != null;
 
   Future<void> loadLitige() async {
     isLoading.value = true;
@@ -112,6 +122,46 @@ class LitigeDetailController extends GetxController {
       );
     } finally {
       isUploadingEvidence.value = false;
+    }
+  }
+
+  /// Vote du jure ('CONFORME' ou 'NON_CONFORME'). Le vote est definitif :
+  /// une fois accepte par le backend, le litige est recharge pour afficher
+  /// le verdict enregistre a la place des boutons.
+  Future<void> castJuryVote(String verdict) async {
+    if (isVoting.value || hasVoted) return;
+    isVoting.value = true;
+    try {
+      await _client.post(
+        ApiEndpoints.litigeJuryVote(litigeId),
+        data: {'verdict': verdict},
+      );
+      await loadLitige();
+
+      final compensation = myJuryReview?['compensation'];
+      final compensationText = compensation is num
+          ? ' Compensation retenue : ${compensation.toInt()} FCFA.'
+          : '';
+      Get.snackbar(
+        'Vote enregistre',
+        'Votre vote a bien ete pris en compte.$compensationText',
+        snackPosition: SnackPosition.TOP,
+      );
+    } on DioException catch (e) {
+      final responseData = e.response?.data;
+      final message = (responseData is Map
+              ? responseData['message'] as String?
+              : null) ??
+          'Impossible d\'enregistrer votre vote. Verifiez votre connexion et reessayez.';
+      Get.snackbar('Erreur', message, snackPosition: SnackPosition.TOP);
+    } catch (_) {
+      Get.snackbar(
+        'Erreur',
+        'Une erreur inattendue est survenue. Veuillez reessayer.',
+        snackPosition: SnackPosition.TOP,
+      );
+    } finally {
+      isVoting.value = false;
     }
   }
 }

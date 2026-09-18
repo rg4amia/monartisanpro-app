@@ -6,6 +6,7 @@ import '../../../core/utils/formatters.dart';
 import '../../../shared/widgets/code_verification_card.dart';
 import '../controllers/order_follow_up_controller.dart';
 import '../widgets/order_status_badge.dart';
+import 'order_tracking_screen.dart';
 
 /// Espace client : le suivi des commandes passées au catalogue.
 ///
@@ -127,6 +128,17 @@ class _ClientOrderCard extends StatelessWidget {
   bool get _showCode =>
       _isStorePickup ? _status == 'prepared' : _status == 'driver_picked_up';
 
+  /// Le suivi carte n'a de sens qu'en livraison, une fois un livreur assigné
+  /// à la course et jusqu'à la remise du colis.
+  bool get _canTrack =>
+      !_isStorePickup &&
+      const ['driver_assigned', 'driver_picked_up'].contains(_status);
+
+  /// Le litige n'est ouvrable côté client que sur une commande livrée — le
+  /// backend applique en plus une fenêtre temporelle après réception, dont le
+  /// message d'erreur exact est affiché si la demande est hors délai.
+  bool get _canDispute => _status == 'delivered';
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -247,6 +259,165 @@ class _ClientOrderCard extends StatelessWidget {
               ),
             ],
           ],
+          if (_canTrack) ...[
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () =>
+                    Get.to(() => OrderTrackingScreen(orderId: _id)),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.client,
+                  side: const BorderSide(color: AppColors.client),
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                icon: const Icon(Icons.map_outlined, size: 18),
+                label: const Text('Suivre ma livraison'),
+              ),
+            ),
+          ],
+          if (_canDispute) ...[
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: Obx(() {
+                final busy = controller.disputingOrderId.value == _id;
+
+                return OutlinedButton.icon(
+                  onPressed: busy ? null : () => _promptDispute(controller),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.danger,
+                    side: const BorderSide(color: AppColors.danger),
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  icon: busy
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.danger,
+                          ),
+                        )
+                      : const Icon(Icons.report_problem_outlined, size: 18),
+                  label: Text(
+                    busy ? 'Envoi…' : 'Signaler un problème',
+                  ),
+                );
+              }),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// Ouvre la boîte de dialogue de déclaration de litige et relaie le motif
+  /// saisi (5 caractères minimum, revalidé côté serveur) au contrôleur.
+  void _promptDispute(OrderFollowUpController controller) {
+    final reasonController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    Get.dialog(
+      AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.report_problem_outlined, color: AppColors.danger),
+            SizedBox(width: 8),
+            Text(
+              'Signaler un problème',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+            ),
+          ],
+        ),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Décrivez le problème rencontré avec cette commande '
+                '(matériaux manquants, colis endommagé...). Un litige bloque '
+                'temporairement les paiements le temps de l\'examen.',
+                style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+              ),
+              const SizedBox(height: 14),
+              TextFormField(
+                controller: reasonController,
+                maxLines: 4,
+                autofocus: true,
+                decoration: InputDecoration(
+                  labelText: 'Motif du litige',
+                  hintText: 'Décrivez précisément le problème rencontré',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                validator: (value) {
+                  final v = (value ?? '').trim();
+                  if (v.length < 5) {
+                    return 'Merci de préciser le motif (5 caractères minimum).';
+                  }
+                  return null;
+                },
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text(
+              'Annuler',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.danger,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            onPressed: () async {
+              if (!(formKey.currentState?.validate() ?? false)) return;
+              final reason = reasonController.text.trim();
+              Get.back();
+
+              final ok = await controller.disputeOrder(_id, reason);
+              if (ok) {
+                Get.snackbar(
+                  'Litige ouvert',
+                  'Votre signalement a été transmis. Notre équipe va '
+                      'l\'examiner.',
+                  backgroundColor: const Color(0xFF24734F),
+                  colorText: Colors.white,
+                  snackPosition: SnackPosition.TOP,
+                  duration: const Duration(seconds: 4),
+                );
+              } else {
+                Get.snackbar(
+                  'Litige impossible',
+                  controller.errorMsg.value ??
+                      'Le litige n\'a pas pu être ouvert.',
+                  backgroundColor: const Color(0xFFC55E50),
+                  colorText: Colors.white,
+                  snackPosition: SnackPosition.TOP,
+                  duration: const Duration(seconds: 5),
+                );
+              }
+            },
+            child: const Text('Envoyer', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
         ],
       ),
     );

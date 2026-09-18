@@ -101,8 +101,8 @@ class NotificationService extends GetxService {
           Get.toNamed(Routes.jcode);
         }
       }
-      // 5. Redirection pour les litiges
-      else if (type.contains('litige')) {
+      // 5. Redirection pour les litiges (y compris l'assignation comme juré)
+      else if (type.contains('litige') || type.contains('jury')) {
         if (litigeId != null) {
           Get.toNamed(
             Routes.litigeDetail,

@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/storage/storage_service.dart';
 import '../../../data/repositories/artisan_repository.dart';
@@ -18,6 +19,7 @@ class ScoreController extends GetxController {
   final reactivite = 0.0.obs;
   final isLoading = false.obs;
   final hasAccesMicrocredit = false.obs;
+  final isDownloadingReport = false.obs;
 
   @override
   void onInit() {
@@ -45,6 +47,32 @@ class ScoreController extends GetxController {
           score.value >= kMicroCreditScoreThreshold;
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  Future<void> downloadReport() async {
+    final userId = StorageService.getUserId();
+    if (userId == null || isDownloadingReport.value) return;
+
+    isDownloadingReport.value = true;
+    try {
+      final path = await _repo.downloadReport(userId);
+      Get.snackbar(
+        'Rapport téléchargé',
+        'Votre rapport de solvabilité a été enregistré sur l\'appareil.',
+      );
+      try {
+        await launchUrl(Uri.file(path));
+      } catch (_) {
+        // Aucune application pour ouvrir le PDF : il reste enregistré localement.
+      }
+    } catch (_) {
+      Get.snackbar(
+        'Erreur',
+        'Impossible de télécharger le rapport de solvabilité pour le moment.',
+      );
+    } finally {
+      isDownloadingReport.value = false;
     }
   }
 

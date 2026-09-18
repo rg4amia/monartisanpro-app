@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 
+import '../../../core/utils/error_handler.dart';
 import '../../../data/repositories/order_repository.dart';
 
 /// Suivi des commandes e-commerce, côté fournisseur comme côté client.
@@ -23,6 +24,9 @@ class OrderFollowUpController extends GetxController {
 
   /// Commande dont la confirmation de remise / réception est en cours.
   final confirmingOrderId = RxnInt();
+
+  /// Commande dont l'ouverture de litige est en cours.
+  final disputingOrderId = RxnInt();
 
   /// `true` pour l'espace fournisseur, `false` pour l'espace client.
   bool asSupplier = true;
@@ -106,6 +110,37 @@ class OrderFollowUpController extends GetxController {
       return false;
     } finally {
       confirmingOrderId.value = null;
+    }
+  }
+
+  /// Ouverture d'un litige par le client sur une commande livrée.
+  ///
+  /// Le backend est seul juge de l'éligibilité (statut `delivered`, fenêtre
+  /// temporelle paramétrable en backoffice après réception) : en cas de refus
+  /// son message exact est relayé tel quel dans [errorMsg] plutôt que d'être
+  /// remplacé par un message générique.
+  Future<bool> disputeOrder(int orderId, String reason) async {
+    disputingOrderId.value = orderId;
+    errorMsg.value = null;
+
+    try {
+      final res = await _repo.disputeOrder(orderId, reason);
+      if (res['success'] != true) {
+        errorMsg.value =
+            res['message'] as String? ?? 'Le litige n\'a pas pu être ouvert.';
+
+        return false;
+      }
+
+      await load(silent: true);
+
+      return true;
+    } catch (e) {
+      errorMsg.value = ErrorHandler.getErrorMessage(e);
+
+      return false;
+    } finally {
+      disputingOrderId.value = null;
     }
   }
 

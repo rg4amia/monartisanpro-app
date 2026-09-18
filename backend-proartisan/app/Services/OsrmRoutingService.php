@@ -8,9 +8,15 @@ use Illuminate\Support\Facades\Log;
 
 class OsrmRoutingService
 {
-    private const OSRM_BASE_URL = 'https://router.project-osrm.org';
     private const AVERAGE_CITY_SPEED_KMH = 25.0; // Vitesse moyenne en agglomération ivoirienne
     private const URBAN_WINDING_FACTOR = 1.3;   // Facteur de sinuosité urbaine
+
+    private string $baseUrl;
+
+    public function __construct()
+    {
+        $this->baseUrl = config('services.osrm.base_url', 'https://router.project-osrm.org');
+    }
 
     /**
      * Calcule l'itinéraire routier précis, la distance, l'ETA et la trace GeoJSON via OSRM.
@@ -21,7 +27,7 @@ class OsrmRoutingService
         try {
             $url = sprintf(
                 '%s/route/v1/%s/%f,%f;%f,%f?overview=full&geometries=geojson',
-                self::OSRM_BASE_URL,
+                $this->baseUrl,
                 $profile,
                 $fromLng,
                 $fromLat,

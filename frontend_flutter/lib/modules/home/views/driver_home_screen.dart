@@ -758,6 +758,22 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
     );
   }
 
+  /// La déclaration d'un temps d'attente n'a de sens que tant que la
+  /// livraison n'est pas terminée — au-delà, la commande quitte de toute
+  /// façon la liste des courses actives, mais on se protège explicitement de
+  /// tout statut terminal.
+  static const _waitingSurgeTerminalStatuses = {
+    'delivered',
+    'received',
+    'completed',
+    'terminee',
+    'cancelled',
+    'annulee',
+  };
+
+  bool _canReportWaitingSurge(String rawStatus) =>
+      !_waitingSurgeTerminalStatuses.contains(rawStatus);
+
   Widget _buildActiveDeliveryCard(MissionModel mission) {
     final rawStatus = mission.rawStatus;
     final deliveryFee = mission.montantMo > 0
@@ -886,6 +902,26 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
               ),
             ],
           ),
+          if (_canReportWaitingSurge(rawStatus)) ...[
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: () => _promptWaitingSurge(mission),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.warning,
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  minimumSize: const Size(0, 32),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                icon: const Icon(Icons.hourglass_bottom_rounded, size: 15),
+                label: const Text(
+                  'Signaler un temps d\'attente',
+                  style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -1038,6 +1074,113 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
             child: const Text('Valider'),
           ),
         ],
+      ),
+    );
+  }
+
+  void _promptWaitingSurge(MissionModel mission) {
+    final minutesController = TextEditingController();
+    bool isSubmitting = false;
+
+    Get.dialog(
+      StatefulBuilder(
+        builder: (context, setDialogState) {
+          Future<void> submit() async {
+            final minutes = int.tryParse(minutesController.text.trim());
+            if (minutes == null || minutes < 1) {
+              Get.snackbar(
+                'Valeur invalide',
+                'Indiquez un nombre de minutes valide (minimum 1).',
+                snackPosition: SnackPosition.BOTTOM,
+                backgroundColor: AppColors.danger,
+                colorText: Colors.white,
+              );
+              return;
+            }
+
+            setDialogState(() => isSubmitting = true);
+            final success = await controller.handleDriverWaitingSurge(
+              mission,
+              minutes,
+            );
+            if (success) {
+              Get.back();
+            } else {
+              setDialogState(() => isSubmitting = false);
+            }
+          }
+
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: const Text(
+              'Signaler un temps d\'attente',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Indiquez le temps d\'attente au retrait ou à la livraison. '
+                  'Des frais supplémentaires seront ajoutés à la commande.',
+                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [5, 10, 15, 30].map((minutes) {
+                    final selected = minutesController.text == '$minutes';
+                    return ChoiceChip(
+                      label: Text('$minutes min'),
+                      selected: selected,
+                      onSelected: isSubmitting
+                          ? null
+                          : (_) => setDialogState(
+                                () => minutesController.text = '$minutes',
+                              ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: minutesController,
+                  enabled: !isSubmitting,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    hintText: 'Minutes d\'attente',
+                    helperText: 'Minimum 1 minute.',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  onChanged: (_) => setDialogState(() {}),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: isSubmitting ? null : () => Get.back(),
+                child: const Text('Annuler'),
+              ),
+              ElevatedButton(
+                onPressed: isSubmitting ? null : submit,
+                child: isSubmitting
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text('Confirmer'),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

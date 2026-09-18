@@ -5,6 +5,8 @@ import '../../../../app/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../data/models/mission_model.dart';
 import '../../../main_tab/controllers/main_tab_controller.dart';
+import '../../../stock/bindings/stock_binding.dart';
+import '../../../stock/views/stock_screen.dart';
 import '../../controllers/home_controller.dart';
 import 'action_tile.dart';
 
@@ -133,6 +135,18 @@ class QuickActions extends StatelessWidget {
           subtitle:
               'Consulter tous les reversements Wave/Orange Money et jalons libérés',
           onTap: () => Get.toNamed(Routes.wallet),
+        ),
+        const SizedBox(height: 12),
+        ActionTile(
+          icon: Icons.inventory_2_rounded,
+          gradient: const LinearGradient(
+            colors: [Color(0xFF7C3AED), Color(0xFF4F46E5)],
+          ),
+          title: 'Mon stock matériaux',
+          subtitle:
+              'Gérer les matériaux et outils que vous possédez déjà (neuf/occasion)',
+          onTap: () =>
+              Get.to(() => const StockScreen(), binding: StockBinding()),
         ),
       ],
     );

@@ -33,6 +33,11 @@ class JcodeController extends GetxController {
   final isSavingProduct = false.obs;
   final isUploadingProductImage = false.obs;
   final isImportingDevis = false.obs;
+  final isUploadingPhotoMateriaux = false.obs;
+
+  /// Id du dernier J-Code dont la photo matériaux a été envoyée avec succès
+  /// dans cette session (le modèle J-Code n'expose pas ce champ côté API).
+  final photoMateriauxUploadedId = Rxn<int>();
 
   String? get role => StorageService.getRole();
   int get draftTotal => draftItems.fold(0, (sum, item) => sum + item.subtotal);
@@ -418,6 +423,38 @@ class JcodeController extends GetxController {
       rethrow;
     } finally {
       isScanning.value = false;
+    }
+  }
+
+  /// Upload de la photo géolocalisée des matériaux reçus sur chantier
+  /// (artisan) une fois le J-Code livré par le fournisseur. Le backend
+  /// notifie automatiquement le client à la réception.
+  Future<void> uploadPhotoMateriaux({
+    required JcodeModel jcode,
+    required String photoPath,
+    required double latitude,
+    required double longitude,
+  }) async {
+    isUploadingPhotoMateriaux.value = true;
+    try {
+      await _repo.uploadPhotoMateriaux(
+        identifier: jcode.id,
+        photoPath: photoPath,
+        latitude: latitude,
+        longitude: longitude,
+      );
+      photoMateriauxUploadedId.value = jcode.id;
+      Get.snackbar(
+        'Photo envoyée',
+        'La photo géolocalisée des matériaux a été transmise. Le client a été notifié.',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: const Color(0xFF27AE60),
+        colorText: Colors.white,
+      );
+    } catch (e) {
+      _showError('Impossible d\'envoyer la photo des matériaux', e);
+    } finally {
+      isUploadingPhotoMateriaux.value = false;
     }
   }
 

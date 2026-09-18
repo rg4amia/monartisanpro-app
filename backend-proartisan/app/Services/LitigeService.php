@@ -38,10 +38,14 @@ class LitigeService
             ->orderByDesc('created_at');
 
         if ($user->role !== 'admin') {
-            $query->whereHas('mission', function ($missionQuery) use ($user): void {
-                $missionQuery
-                    ->where('client_id', $user->id)
-                    ->orWhere('artisan_id', $user->id);
+            $query->where(function ($outer) use ($user): void {
+                $outer->whereHas('mission', function ($missionQuery) use ($user): void {
+                    $missionQuery
+                        ->where('client_id', $user->id)
+                        ->orWhere('artisan_id', $user->id);
+                })->orWhereHas('juryReviews', function ($juryQuery) use ($user): void {
+                    $juryQuery->where('jure_id', $user->id);
+                });
             });
         }
 

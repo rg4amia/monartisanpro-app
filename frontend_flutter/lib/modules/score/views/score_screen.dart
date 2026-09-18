@@ -75,6 +75,23 @@ class ScoreScreen extends GetView<ScoreController> {
                           ),
                         ),
                       ],
+                      const SizedBox(height: 16),
+                      OutlinedButton.icon(
+                        onPressed: controller.isDownloadingReport.value
+                            ? null
+                            : controller.downloadReport,
+                        icon: controller.isDownloadingReport.value
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Icon(Icons.picture_as_pdf_outlined),
+                        label: const Text(
+                          'Télécharger mon rapport de solvabilité',
+                        ),
+                      ),
                     ],
                   ),
                 ),

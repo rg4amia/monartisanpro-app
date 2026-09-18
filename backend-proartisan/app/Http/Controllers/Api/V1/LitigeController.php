@@ -53,7 +53,9 @@ class LitigeController extends Controller
         $user = $request->user();
         $mission = $litige->mission;
 
-        if ($user->role !== 'admin' && $mission->client_id !== $user->id && $mission->artisan_id !== $user->id) {
+        $isJuror = $litige->juryReviews()->where('jure_id', $user->id)->exists();
+
+        if ($user->role !== 'admin' && $mission->client_id !== $user->id && $mission->artisan_id !== $user->id && ! $isJuror) {
             return response()->json([
                 'success' => false,
                 'message' => 'Acces refuse.',

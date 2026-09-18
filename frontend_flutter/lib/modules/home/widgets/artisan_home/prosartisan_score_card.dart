@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../score/bindings/score_binding.dart';
+import '../../../score/views/score_screen.dart';
 import '../../controllers/home_controller.dart';
 
 /// Carte « Score ProsArtisan & Solvabilité » : score radial /1000, les 4 piliers
@@ -15,225 +18,231 @@ class ProsArtisanScoreCard extends StatelessWidget {
     final score = controller.fluidityScore.value;
     final isEligible = score >= 700;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 24),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: isEligible
-              ? AppColors.gold.withValues(alpha: 0.3)
-              : AppColors.border,
-          width: isEligible ? 1.5 : 1.0,
+    return InkWell(
+      borderRadius: BorderRadius.circular(24),
+      onTap: () => Get.to(() => const ScoreScreen(), binding: ScoreBinding()),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 24),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: isEligible
+                ? AppColors.gold.withValues(alpha: 0.3)
+                : AppColors.border,
+            width: isEligible ? 1.5 : 1.0,
+          ),
+          boxShadow: AppColors.cardShadow,
         ),
-        boxShadow: AppColors.cardShadow,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        gradient: AppColors.gradientGold,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.gold.withValues(alpha: 0.3),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.stars_rounded,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    const Expanded(
-                      child: Text(
-                        'Score ProsArtisan & Solvabilité',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textPrimary,
-                          letterSpacing: -0.2,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          gradient: AppColors.gradientGold,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.gold.withValues(alpha: 0.3),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        child: const Icon(
+                          Icons.stars_rounded,
+                          color: Colors.white,
+                          size: 20,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: isEligible
-                      ? AppColors.success.withValues(alpha: 0.12)
-                      : AppColors.textSecondary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isEligible
-                        ? AppColors.success.withValues(alpha: 0.25)
-                        : Colors.transparent,
+                      const SizedBox(width: 10),
+                      const Expanded(
+                        child: Text(
+                          'Score ProsArtisan & Solvabilité',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary,
+                            letterSpacing: -0.2,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      isEligible
-                          ? Icons.verified_rounded
-                          : Icons.lock_outline_rounded,
+                const SizedBox(width: 8),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: isEligible
+                        ? AppColors.success.withValues(alpha: 0.12)
+                        : AppColors.textSecondary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
                       color: isEligible
-                          ? AppColors.success
-                          : AppColors.textSecondary,
-                      size: 13,
+                          ? AppColors.success.withValues(alpha: 0.25)
+                          : Colors.transparent,
                     ),
-                    const SizedBox(width: 4),
-                    Text(
-                      isEligible
-                          ? 'Crédit Débloqué (<2h)'
-                          : 'Seuil Crédit : 700',
-                      style: TextStyle(
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        isEligible
+                            ? Icons.verified_rounded
+                            : Icons.lock_outline_rounded,
                         color: isEligible
                             ? AppColors.success
                             : AppColors.textSecondary,
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w700,
+                        size: 13,
                       ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                width: 90,
-                height: 90,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.background,
-                  border: Border.all(
-                    color: isEligible ? AppColors.gold : AppColors.border,
-                    width: 3,
-                  ),
-                  boxShadow: [
-                    if (isEligible)
-                      BoxShadow(
-                        color: AppColors.gold.withValues(alpha: 0.2),
-                        blurRadius: 10,
-                        spreadRadius: 2,
+                      const SizedBox(width: 4),
+                      Text(
+                        isEligible
+                            ? 'Crédit Débloqué (<2h)'
+                            : 'Seuil Crédit : 700',
+                        style: TextStyle(
+                          color: isEligible
+                              ? AppColors.success
+                              : AppColors.textSecondary,
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      '$score',
-                      style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w900,
-                        color:
-                            isEligible ? AppColors.gold : AppColors.textPrimary,
-                        letterSpacing: -1,
-                      ),
-                    ),
-                    const Text(
-                      '/ 1000',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 20),
-              Expanded(
-                child: Column(
-                  children: [
-                    _detailRow(
-                      'Fiabilité',
-                      '40%',
-                      controller.scoreFiabilite.value,
-                      AppColors.tradePlumbing,
-                    ),
-                    const SizedBox(height: 6),
-                    _detailRow(
-                      'Intégrité',
-                      '30%',
-                      controller.scoreIntegrite.value,
-                      AppColors.success,
-                    ),
-                    const SizedBox(height: 6),
-                    _detailRow(
-                      'Qualité',
-                      '20%',
-                      controller.scoreQualite.value,
-                      AppColors.gold,
-                    ),
-                    const SizedBox(height: 6),
-                    _detailRow(
-                      'Réactivité',
-                      '10%',
-                      controller.scoreReactivite.value,
-                      AppColors.tradeElectricity,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: AppColors.background,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.info_outline_rounded,
-                  color:
-                      isEligible ? AppColors.success : AppColors.textSecondary,
-                  size: 15,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    isEligible
-                        ? 'Accès garanti au micro-crédit d\'urgence pour approvisionnement en quincaillerie.'
-                        : 'Cumulez des avis 5 étoiles pour atteindre 700 et débloquer le crédit automatique.',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: AppColors.textSecondary,
-                      height: 1.3,
-                    ),
+                    ],
                   ),
                 ),
               ],
             ),
-          ),
-        ],
+            const SizedBox(height: 20),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  width: 90,
+                  height: 90,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.background,
+                    border: Border.all(
+                      color: isEligible ? AppColors.gold : AppColors.border,
+                      width: 3,
+                    ),
+                    boxShadow: [
+                      if (isEligible)
+                        BoxShadow(
+                          color: AppColors.gold.withValues(alpha: 0.2),
+                          blurRadius: 10,
+                          spreadRadius: 2,
+                        ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        '$score',
+                        style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w900,
+                          color: isEligible
+                              ? AppColors.gold
+                              : AppColors.textPrimary,
+                          letterSpacing: -1,
+                        ),
+                      ),
+                      const Text(
+                        '/ 1000',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    children: [
+                      _detailRow(
+                        'Fiabilité',
+                        '40%',
+                        controller.scoreFiabilite.value,
+                        AppColors.tradePlumbing,
+                      ),
+                      const SizedBox(height: 6),
+                      _detailRow(
+                        'Intégrité',
+                        '30%',
+                        controller.scoreIntegrite.value,
+                        AppColors.success,
+                      ),
+                      const SizedBox(height: 6),
+                      _detailRow(
+                        'Qualité',
+                        '20%',
+                        controller.scoreQualite.value,
+                        AppColors.gold,
+                      ),
+                      const SizedBox(height: 6),
+                      _detailRow(
+                        'Réactivité',
+                        '10%',
+                        controller.scoreReactivite.value,
+                        AppColors.tradeElectricity,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.background,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline_rounded,
+                    color: isEligible
+                        ? AppColors.success
+                        : AppColors.textSecondary,
+                    size: 15,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      isEligible
+                          ? 'Accès garanti au micro-crédit d\'urgence pour approvisionnement en quincaillerie.'
+                          : 'Cumulez des avis 5 étoiles pour atteindre 700 et débloquer le crédit automatique.',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppColors.textSecondary,
+                        height: 1.3,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

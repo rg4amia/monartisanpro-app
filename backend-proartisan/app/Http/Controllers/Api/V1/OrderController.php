@@ -344,6 +344,14 @@ class OrderController extends Controller
      */
     public function applyWaitingSurge(Request $request, Order $order): JsonResponse
     {
+        $user = $request->user();
+        if ($user->role !== 'admin' && $order->driver_id !== $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Seul le livreur assigné à cette commande peut déclarer un temps d\'attente.',
+            ], 403);
+        }
+
         $validator = Validator::make($request->all(), [
             'waiting_minutes' => 'required|integer|min:1',
         ]);

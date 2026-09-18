@@ -1,3 +1,8 @@
+import 'dart:io';
+
+import 'package:dio/dio.dart';
+import 'package:path_provider/path_provider.dart';
+
 import '../../core/cache/cache_store.dart';
 import '../../core/network/api_client.dart';
 import '../../core/network/api_endpoints.dart';
@@ -88,6 +93,22 @@ class ArtisanRepository {
       () => _client.get(ApiEndpoints.artisanScore(userId)),
     );
     return res.data as Map<String, dynamic>;
+  }
+
+  /// Télécharge le rapport PDF de solvabilité de l'artisan et l'enregistre
+  /// localement. Retourne le chemin du fichier sur l'appareil.
+  Future<String> downloadReport(int userId) async {
+    final res = await NetworkExecutor.run(
+      () => _client.dio.get<List<int>>(
+        ApiEndpoints.artisanReport(userId),
+        options: Options(responseType: ResponseType.bytes),
+      ),
+    );
+    final dir = await getApplicationDocumentsDirectory();
+    final path = '${dir.path}/rapport_solvabilite_$userId.pdf';
+    final file = File(path);
+    await file.writeAsBytes(res.data ?? const []);
+    return path;
   }
 
   /// Purge le cache artisans (à appeler à la déconnexion).

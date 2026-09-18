@@ -66,6 +66,11 @@ class Litige extends Model
         return $this->hasMany(LitigeEvidence::class)->orderByDesc('created_at');
     }
 
+    public function juryReviews(): HasMany
+    {
+        return $this->hasMany(JuryReview::class);
+    }
+
     public function isResolved(): bool
     {
         return $this->statut === 'resolu';

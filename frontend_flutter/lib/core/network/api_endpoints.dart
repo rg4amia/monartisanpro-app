@@ -29,6 +29,11 @@ class ApiEndpoints {
   static const String artisans = '/artisans';
   static String artisan(int id) => '/artisans/$id';
   static String artisanScore(int id) => '/artisans/$id/score';
+  static String artisanReport(int id) => '/artisans/$id/report';
+
+  // Stock artisan (matériaux personnels)
+  static const String artisanStock = '/artisan-stock';
+  static String artisanStockItem(int id) => '/artisan-stock/$id';
 
   // Fournisseurs & Commandes
   static const String fournisseurs = '/fournisseurs';
@@ -40,7 +45,11 @@ class ApiEndpoints {
   static const String ordersMultiStore = '/orders/multi-store';
   static String order(int id) => '/orders/$id';
   static const String supplierOrders = '/supplier/orders';
+  static const String supplierDashboard = '/supplier/dashboard';
+  static const String supplierLitiges = '/supplier/litiges';
   static String orderPrepared(int id) => '/orders/$id/prepared';
+  static String orderDispute(int id) => '/orders/$id/dispute';
+  static String orderWaitingSurge(int id) => '/orders/$id/waiting-surge';
 
   // Sectors
   static const String sectors = '/sectors';
@@ -129,6 +138,8 @@ class ApiEndpoints {
   static const String jcodesActive = '/jcodes/active';
   static String jcode(Object identifier) => '/jcodes/$identifier';
   static String scanJcode(Object identifier) => '/jcodes/$identifier/scan';
+  static String jcodePhotoMateriaux(Object identifier) =>
+      '/jcodes/$identifier/photo-materiaux';
 
   // Wallet & Transactions
   static const String transactions = '/transactions';
@@ -139,6 +150,7 @@ class ApiEndpoints {
   static String litige(int id) => '/litiges/$id';
   static String litigeEvidence(int id) => '/litiges/$id/preuves';
   static String litigeEvaluateSla(int id) => '/litiges/$id/evaluate-sla';
+  static String litigeJuryVote(int id) => '/litiges/$id/jury/vote';
 
   // Evaluations
   static const String evaluations = '/evaluations';

@@ -9,6 +9,8 @@ import '../../../shared/widgets/broadcast_media_section.dart';
 import '../../../shared/widgets/communication_banner.dart';
 import '../../../shared/widgets/loading_shimmer.dart';
 import '../../notifications/controllers/notifications_controller.dart';
+import '../../orders/views/supplier_dashboard_screen.dart';
+import '../../orders/views/supplier_litiges_screen.dart';
 import '../controllers/home_controller.dart';
 
 class SupplierHomeScreen extends StatelessWidget {
@@ -111,6 +113,34 @@ class SupplierHomeScreen extends StatelessWidget {
                           ),
                           icon: const Icon(Icons.receipt_long_outlined),
                           label: const Text('Mes commandes'),
+                        ),
+                        const SizedBox(height: 12),
+                        // Tableau de bord et litiges : deux endpoints déjà
+                        // exposés par le backend (/supplier/dashboard et
+                        // /supplier/litiges) mais jusqu'ici sans aucun écran
+                        // pour les consulter depuis l'app.
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () => Get.to(
+                                  () => const SupplierDashboardScreen(),
+                                ),
+                                icon: const Icon(Icons.dashboard_outlined),
+                                label: const Text('Tableau de bord'),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () => Get.to(
+                                  () => const SupplierLitigesScreen(),
+                                ),
+                                icon: const Icon(Icons.gpp_bad_outlined),
+                                label: const Text('Mes litiges'),
+                              ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 12),
                         OutlinedButton.icon(

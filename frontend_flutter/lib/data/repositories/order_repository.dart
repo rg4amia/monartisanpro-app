@@ -171,6 +171,24 @@ class OrderRepository {
       e.type == DioExceptionType.receiveTimeout ||
       e.type == DioExceptionType.connectionError;
 
+  /// Ouverture d'un litige par le client sur une commande livrée.
+  ///
+  /// Le backend reste seul juge de l'éligibilité (statut `delivered`, fenêtre
+  /// temporelle paramétrable après réception) : cette méthode se contente de
+  /// relayer la demande et de laisser remonter l'erreur du serveur telle
+  /// quelle en cas de refus, plutôt que de la deviner côté mobile.
+  Future<Map<String, dynamic>> disputeOrder(int orderId, String reason) async {
+    final res = await _client.post(
+      ApiEndpoints.orderDispute(orderId),
+      data: {'reason': reason},
+    );
+    await _invalidateMyOrders();
+
+    return res.data is Map<String, dynamic>
+        ? res.data as Map<String, dynamic>
+        : <String, dynamic>{};
+  }
+
   /// Émission télémétrique périodique GPS du livreur en course (Option 3 / Lot 4)
   Future<Map<String, dynamic>> sendDriverLocation(
     int orderId, {
@@ -251,6 +269,28 @@ class OrderRepository {
   /// client ; en livraison elle part sur le marché des livreurs.
   Future<Map<String, dynamic>> markPrepared(int orderId) async {
     final res = await _client.post(ApiEndpoints.orderPrepared(orderId));
+    await _invalidateMyOrders();
+
+    return res.data is Map<String, dynamic>
+        ? res.data as Map<String, dynamic>
+        : <String, dynamic>{};
+  }
+
+  /// Signale un temps d'attente du livreur (retrait ou livraison) : le
+  /// backend majore les frais de livraison de la commande (100 FCFA / 5 min)
+  /// et reste seul juge de l'autorisation (livreur assigné à la commande, ou
+  /// admin) et du calcul du montant. Cette méthode relaie simplement la
+  /// demande et laisse remonter l'erreur du serveur telle quelle en cas de
+  /// refus (ex. livreur non assigné, minutes invalides), pour affichage direct
+  /// à l'écran.
+  Future<Map<String, dynamic>> applyWaitingSurge(
+    int orderId,
+    int waitingMinutes,
+  ) async {
+    final res = await _client.post(
+      ApiEndpoints.orderWaitingSurge(orderId),
+      data: {'waiting_minutes': waitingMinutes},
+    );
     await _invalidateMyOrders();
 
     return res.data is Map<String, dynamic>

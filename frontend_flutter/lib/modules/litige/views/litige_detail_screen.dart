@@ -35,6 +35,15 @@ class LitigeDetailScreen extends GetView<LitigeDetailController> {
                 statut: (data['statut'] ?? '').toString(),
                 workflowStep: (data['workflowStep'] ?? '').toString(),
               ),
+              if (controller.isJuror) ...[
+                const SizedBox(height: 16),
+                _JurySection(
+                  litige: data,
+                  review: controller.myJuryReview!,
+                  isVoting: controller.isVoting.value,
+                  onVote: controller.castJuryVote,
+                ),
+              ],
               const SizedBox(height: 16),
               _InfoCard(
                 title: 'Etape en cours',
@@ -228,6 +237,184 @@ class _ProofTile extends StatelessWidget {
               style:
                   const TextStyle(fontSize: 12, color: AppColors.textSecondary),
             ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _JurySection extends StatelessWidget {
+  final Map<String, dynamic> litige;
+  final Map<String, dynamic> review;
+  final bool isVoting;
+  final ValueChanged<String> onVote;
+
+  const _JurySection({
+    required this.litige,
+    required this.review,
+    required this.isVoting,
+    required this.onVote,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final verdict = review['verdict']?.toString();
+    final compensation = review['compensation'];
+    final parties = litige['parties'] as Map<String, dynamic>? ?? const {};
+    final client = parties['client'] as Map<String, dynamic>?;
+    final artisan = parties['artisan'] as Map<String, dynamic>?;
+    final motif = (litige['motif'] ?? '').toString();
+    final description = (litige['description'] ?? '').toString();
+    final evidenceCounts =
+        litige['evidenceCounts'] as Map<String, dynamic>? ?? const {};
+    final proofs = (litige['preuves'] as List<dynamic>? ?? const []);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.primary, width: 1.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.balance_outlined, color: AppColors.primary),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Vous êtes juré sur ce dossier',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (motif.isNotEmpty) ...[
+            Text(
+              'Motif : $motif',
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 6),
+          ],
+          Text('Client : ${client?['name'] ?? 'Inconnu'}'),
+          Text('Artisan : ${artisan?['name'] ?? 'Inconnu'}'),
+          const SizedBox(height: 8),
+          if (description.isNotEmpty) Text(description),
+          const SizedBox(height: 8),
+          Text(
+            'Preuves — Client : ${evidenceCounts['client'] ?? 0}/${evidenceCounts['clientRequired'] ?? 2}  |  Artisan : ${evidenceCounts['artisan'] ?? 0}/${evidenceCounts['artisanRequired'] ?? 1}',
+            style:
+                const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+          ),
+          if (proofs.isEmpty) ...[
+            const SizedBox(height: 6),
+            const Text(
+              'Aucune preuve deposee pour le moment.',
+              style: TextStyle(
+                fontSize: 12,
+                fontStyle: FontStyle.italic,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+          const SizedBox(height: 16),
+          if (verdict == null) ...[
+            const Text(
+              'L\'artisan a-t-il rempli ses obligations ?',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed:
+                        isVoting ? null : () => onVote('CONFORME'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.success,
+                    ),
+                    child: isVoting
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text('CONFORME'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed:
+                        isVoting ? null : () => onVote('NON_CONFORME'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.danger,
+                    ),
+                    child: isVoting
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text('NON CONFORME'),
+                  ),
+                ),
+              ],
+            ),
+          ] else ...[
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: verdict == 'CONFORME'
+                    ? AppColors.success.withValues(alpha: 0.1)
+                    : AppColors.danger.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    verdict == 'CONFORME'
+                        ? Icons.check_circle
+                        : Icons.cancel,
+                    color: verdict == 'CONFORME'
+                        ? AppColors.success
+                        : AppColors.danger,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Vous avez voté : ${verdict == 'CONFORME' ? 'CONFORME' : 'NON CONFORME'}',
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (compensation is num) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Compensation retenue : ${compensation.toInt()} FCFA',
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
           ],
         ],
       ),

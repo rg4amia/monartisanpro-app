@@ -537,6 +537,15 @@ class _MenuList extends StatelessWidget {
             onTap: () => _showMyEvaluationsDialog(context),
           ),
           const SizedBox(height: 12),
+          _MenuItem(
+            icon: Icons.card_giftcard_outlined,
+            iconBg: const Color(0xFFECFDF5),
+            iconColor: const Color(0xFF059669),
+            title: 'Parrainage',
+            subtitle: 'Invitez vos proches et suivez vos parrainages',
+            onTap: () => Get.toNamed(Routes.parrainage),
+          ),
+          const SizedBox(height: 12),
 
           // Conditions d'utilisation
           _MenuItem(

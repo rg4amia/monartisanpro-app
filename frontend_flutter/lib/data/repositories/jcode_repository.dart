@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+
 import '../../core/network/api_client.dart';
 import '../../core/network/api_endpoints.dart';
 import '../models/jcode_item_model.dart';
@@ -60,6 +62,30 @@ class JcodeRepository {
         'lng': lng,
         if (servedItems != null) 'served_items': servedItems,
       },
+    );
+    return res.data as Map<String, dynamic>;
+  }
+
+  /// Artisan : upload de la photo géolocalisée des matériaux reçus sur
+  /// chantier, une fois le J-Code livré par le fournisseur. Notifie le
+  /// client côté backend.
+  Future<Map<String, dynamic>> uploadPhotoMateriaux({
+    required Object identifier,
+    required String photoPath,
+    required double latitude,
+    required double longitude,
+  }) async {
+    final formData = FormData.fromMap({
+      'photo': await MultipartFile.fromFile(
+        photoPath,
+        filename: photoPath.split('/').last,
+      ),
+      'latitude': latitude,
+      'longitude': longitude,
+    });
+    final res = await _client.postMultipart(
+      ApiEndpoints.jcodePhotoMateriaux(identifier),
+      formData,
     );
     return res.data as Map<String, dynamic>;
   }
