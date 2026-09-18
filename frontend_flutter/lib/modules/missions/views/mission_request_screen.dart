@@ -738,12 +738,15 @@ class _SelectServiceButton extends StatelessWidget {
           children: const [
             Icon(Icons.add_circle_outline, color: _C.primary, size: 24),
             SizedBox(width: 12),
-            Text(
-              'Sélectionner la catégorie de service',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: _C.primary,
+            Flexible(
+              child: Text(
+                'Sélectionner la catégorie de service',
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: _C.primary,
+                ),
               ),
             ),
           ],
@@ -810,14 +813,20 @@ class _SelectedServiceCard extends StatelessWidget {
               ],
             ),
           ),
-          TextButton(
-            onPressed: onChangeTap,
-            child: const Text(
-              'Modifier',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: _C.primary,
+          // `IntrinsicWidth` : un bouton Material placé comme frère direct
+          // d'un `Expanded` dans un `Row` fait planter le calcul de largeur
+          // intrinsèque de RenderFlex (« BoxConstraints forces an infinite
+          // width ») — bug Flutter connu dans ce contexte.
+          IntrinsicWidth(
+            child: TextButton(
+              onPressed: onChangeTap,
+              child: const Text(
+                'Modifier',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: _C.primary,
+                ),
               ),
             ),
           ),
@@ -981,8 +990,11 @@ class _QuickCategoryBottomSheet extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                icon: const Icon(Icons.explore_outlined,
-                    color: _C.primary, size: 20,),
+                icon: const Icon(
+                  Icons.explore_outlined,
+                  color: _C.primary,
+                  size: 20,
+                ),
                 label: const Text(
                   'Explorer tous les métiers & spécialités',
                   style: TextStyle(
@@ -1249,14 +1261,20 @@ class _LocationCard extends StatelessWidget {
               ],
             ),
           ),
-          TextButton(
-            onPressed: onChangeTap,
-            child: const Text(
-              'Modifier',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: _C.primary,
+          // `IntrinsicWidth` : un bouton Material placé comme frère direct
+          // d'un `Expanded` dans un `Row` fait planter le calcul de largeur
+          // intrinsèque de RenderFlex (« BoxConstraints forces an infinite
+          // width ») — bug Flutter connu dans ce contexte.
+          IntrinsicWidth(
+            child: TextButton(
+              onPressed: onChangeTap,
+              child: const Text(
+                'Modifier',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: _C.primary,
+                ),
               ),
             ),
           ),
