@@ -122,6 +122,17 @@ class ReferentController extends Controller
             ], 422);
         }
 
+        // La levée du blocage précède la libération des jalons : WalletService::
+        // releaseJalon() refuse de payer tant que referent_required est vrai sur
+        // une mission au-delà du seuil (garde-fou anti-contournement), ce flag
+        // doit donc déjà être retombé à false lorsque la boucle ci-dessous appelle
+        // releaseJalon().
+        $mission->update([
+            'referent_required' => false,
+            'referent_validated_at' => now(),
+            'referent_validated_by' => $user->id,
+        ]);
+
         // Libérer tous les jalons validés en attente de paiement
         $jalonsEnAttente = $mission->jalons()
             ->where('statut', 'valide')
@@ -131,12 +142,6 @@ class ReferentController extends Controller
         foreach ($jalonsEnAttente as $jalon) {
             $this->walletService->releaseJalon($jalon);
         }
-
-        $mission->update([
-            'referent_required' => false,
-            'referent_validated_at' => now(),
-            'referent_validated_by' => $user->id,
-        ]);
 
         $this->notificationService->send(
             $mission->artisan,

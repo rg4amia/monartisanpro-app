@@ -65,6 +65,44 @@ class WalletServiceComplianceTest extends TestCase
         ]);
     }
 
+    public function test_release_jalon_refuses_above_referent_threshold_while_required()
+    {
+        $artisan = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif', 'wallet_mo' => 0]);
+        $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
+
+        $mission = Mission::create([
+            'client_id' => $client->id,
+            'artisan_id' => $artisan->id,
+            'description' => 'Grand chantier',
+            'status' => 'in_progress',
+            'montant_total' => 2500000,
+            'montant_materiaux' => 1625000,
+            'montant_mo' => 875000,
+            'ratio_materiaux' => 0.65,
+            'referent_required' => true,
+        ]);
+
+        $jalon = Jalon::create([
+            'mission_id' => $mission->id,
+            'ordre' => 1,
+            'description' => 'Jalon 1',
+            'montant' => 500000,
+            'statut' => 'valide',
+        ]);
+
+        $walletService = app(WalletService::class);
+
+        try {
+            $walletService->releaseJalon($jalon);
+            $this->fail('releaseJalon aurait dû refuser une mission au-delà du seuil référent.');
+        } catch (\InvalidArgumentException $e) {
+            // Comportement attendu : la libération est refusée.
+        }
+
+        $this->assertEquals(0, $artisan->fresh()->wallet_mo);
+        $this->assertSame('valide', $jalon->fresh()->statut);
+    }
+
     public function test_ledger_is_absolute_authority_of_balance()
     {
         $user = User::factory()->create(); // Initial balance is 0

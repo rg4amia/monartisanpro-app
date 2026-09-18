@@ -190,6 +190,18 @@ class JalonService
             'otp_code'  => null,
         ]);
 
+        // RÈGLE CRITIQUE : le Force-Pass protège l'artisan d'un client inactif,
+        // il ne doit jamais devenir un moyen de contourner le seuil Référent.
+        // Au-delà du seuil, on bloque exactement comme validateOtp()/acceptProofs()
+        // au lieu de libérer directement.
+        $seuil = config('prosartisan.mission.referent_threshold', 2000000);
+        if ($jalon->mission->montant_total > $seuil) {
+            $jalon->mission->update(['referent_required' => true]);
+            Log::info("[Référent requis - Force-Pass] Mission #{$jalon->mission_id} > {$seuil} FCFA : libération automatique suspendue, validation physique requise.");
+
+            return;
+        }
+
         $this->walletService->releaseJalon($jalon);
 
         $this->notificationService->send(

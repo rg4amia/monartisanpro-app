@@ -344,6 +344,19 @@ class WalletService
             throw new \InvalidArgumentException('Les fonds de cette mission sont gelés suite à un litige.');
         }
 
+        // Garde-fou anti-contournement (Règle d'or 5) : au-delà du seuil, aucun
+        // chemin de libération — y compris le Force-Pass 72h — ne doit pouvoir
+        // payer l'artisan tant que le référent n'a pas levé le blocage. Les
+        // appelants légitimes (validateOtp, acceptProofs) ne touchent jamais
+        // cette méthode sans avoir d'abord vérifié ce même seuil ; ReferentController
+        // lève le flag avant d'appeler releaseJalon().
+        $seuil = config('prosartisan.mission.referent_threshold', 2000000);
+        if ($mission->montant_total > $seuil && $mission->referent_required) {
+            throw new \InvalidArgumentException(
+                'Cette mission dépasse le seuil référent : validation physique requise avant toute libération de fonds.'
+            );
+        }
+
         DB::transaction(function () use ($jalon, $mission, $artisan) {
             $provider = $this->resolveMissionProvider($mission, $artisan);
 

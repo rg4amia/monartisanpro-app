@@ -123,6 +123,74 @@ class ReferentComplianceTest extends TestCase
         $this->assertSame('paye', $jalon->fresh()->statut);
     }
 
+    public function test_force_release_suspends_payment_above_referent_threshold(): void
+    {
+        $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
+        $artisan = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif', 'wallet_mo' => 0]);
+
+        $mission = Mission::create([
+            'client_id' => $client->id,
+            'artisan_id' => $artisan->id,
+            'description' => 'Grand chantier Cocody',
+            'status' => 'in_progress',
+            'montant_total' => 2500000,
+            'montant_materiaux' => 1625000,
+            'montant_mo' => 875000,
+            'ratio_materiaux' => 0.65,
+            'referent_required' => false,
+        ]);
+
+        $jalon = Jalon::create([
+            'mission_id' => $mission->id,
+            'ordre' => 1,
+            'description' => 'Jalon soumis, client injoignable',
+            'montant' => 500000,
+            'statut' => 'soumis',
+        ]);
+
+        app(\App\Services\JalonService::class)->forceRelease($jalon);
+
+        // La libération automatique à 72h ne doit jamais court-circuiter le
+        // seuil référent : comme validateOtp()/acceptProofs(), le jalon passe
+        // à 'valide' (constaté) mais reste impayé tant que le référent n'a
+        // pas validé physiquement.
+        $this->assertSame('valide', $jalon->fresh()->statut);
+        $this->assertEquals(0, $artisan->fresh()->wallet_mo);
+        $this->assertTrue($mission->fresh()->referent_required);
+    }
+
+    public function test_force_release_pays_immediately_below_referent_threshold(): void
+    {
+        $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
+        $artisan = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif', 'wallet_mo' => 10000]);
+
+        $mission = Mission::create([
+            'client_id' => $client->id,
+            'artisan_id' => $artisan->id,
+            'description' => 'Petit chantier',
+            'status' => 'in_progress',
+            'montant_total' => 100000,
+            'montant_materiaux' => 65000,
+            'montant_mo' => 35000,
+            'ratio_materiaux' => 0.65,
+        ]);
+
+        $jalon = Jalon::create([
+            'mission_id' => $mission->id,
+            'ordre' => 1,
+            'description' => 'Jalon soumis, client injoignable',
+            'montant' => 10000,
+            'statut' => 'soumis',
+        ]);
+
+        app(\App\Services\JalonService::class)->forceRelease($jalon);
+
+        // La libération débite le wallet_mo réservé (10 000) vers le paiement réel.
+        $this->assertSame('paye', $jalon->fresh()->statut);
+        $this->assertEquals(0, $artisan->fresh()->wallet_mo);
+        $this->assertFalse($mission->fresh()->referent_required);
+    }
+
     public function test_referent_can_list_missions_requiring_validation(): void
     {
         /** @var User $referent */
