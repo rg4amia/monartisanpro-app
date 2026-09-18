@@ -14,7 +14,9 @@ class UserController extends Controller
 {
     public function update(Request $request, User $user): JsonResponse
     {
-        //$this->authorize('update', $user);
+        if ($request->user()->id !== $user->id && $request->user()->role !== 'admin') {
+            abort(403, 'Accès refusé.');
+        }
 
         $data = $request->validate([
             // Aligné sur la validation d'inscription (max:255) : `name` est
@@ -129,7 +131,9 @@ class UserController extends Controller
 
     public function setRole(Request $request, User $user): JsonResponse
     {
-        //$this->authorize('update', $user);
+        if ($request->user()->id !== $user->id && $request->user()->role !== 'admin') {
+            abort(403, 'Accès refusé.');
+        }
 
         $data = $request->validate([
             'role' => ['required', 'in:client,artisan,fournisseur'],
