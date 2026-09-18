@@ -316,7 +316,7 @@ class AdminService
                 'supplier:id,name,phone,role',
                 'supplier.fournisseurAgree:id,user_id,nom_boutique,statut',
                 'driver:id,name,phone,role',
-                'items.product:id,name,price,unit',
+                'items.product:id,name',
                 // `Order::transactions()` est un hasMany qui cible une colonne
                 // `transactions.order_id` inexistante : ce chargement levait une
                 // QueryException a chaque appel. AdminPanelData l'interceptait
