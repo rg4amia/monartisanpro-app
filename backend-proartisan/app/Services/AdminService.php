@@ -112,29 +112,6 @@ class AdminService
             ->get()
             ->keyBy('type');
 
-        if ($decision === 'approuve') {
-            // Si les documents manquent (cas fréquent pour les comptes de test/seed),
-            // on crée des documents fictifs pour débloquer l'approbation.
-            if (! $documents->has('cni')) {
-                $cni = KycDocument::create([
-                    'user_id'  => $user->id,
-                    'type'     => 'cni',
-                    'file_url' => 'https://placeholder.com/cni.png',
-                    'statut'   => 'en_attente',
-                ]);
-                $documents->put('cni', $cni);
-            }
-            if (! $documents->has('selfie')) {
-                $selfie = KycDocument::create([
-                    'user_id'  => $user->id,
-                    'type'     => 'selfie',
-                    'file_url' => 'https://placeholder.com/selfie.png',
-                    'statut'   => 'en_attente',
-                ]);
-                $documents->put('selfie', $selfie);
-            }
-        }
-
         DB::transaction(function () use ($admin, $user, $decision, $rejectionReason, $documents): void {
             $docStatus = $decision === 'approuve' ? 'approuve' : 'rejete';
 

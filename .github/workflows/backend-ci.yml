@@ -258,8 +258,12 @@ jobs:
 
             # 2. ROUTAGE DE LARAVEL SUR LE DOMAINE PRINCIPAL
             # Panel admin, API, assets Vite, + l'Assistant IA Chantier (page
-            # /assistant servie par Laravel + ses fichiers statiques client.*).
-            RewriteCond %{REQUEST_URI} ^/(api|admin|sanctum|storage|build|assistant|client\.(html|js|css)|config\.js|db\.js) [NC]
+            # /assistant servie par Laravel + ses fichiers statiques client.*),
+            # + les URL signées de consultation de fichiers privés (pièces KYC
+            # /kyc/documents/{id}/file, photo de profil /users/{id}/photo) :
+            # sans ce préfixe, la règle 3 (front statique) les intercepte et
+            # aucune pièce KYC réelle n'est jamais consultable en production.
+            RewriteCond %{REQUEST_URI} ^/(api|admin|sanctum|storage|build|assistant|kyc|users|client\.(html|js|css)|config\.js|db\.js) [NC]
             RewriteCond %{REQUEST_URI} !^/monartisanpro-app/backend-proartisan/public/
             RewriteRule ^(.*)$ monartisanpro-app/backend-proartisan/public/$1 [L]
 
