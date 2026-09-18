@@ -24,7 +24,7 @@ beforeEach(function () {
 });
 
 test('client can create order in pickup mode and pay it', function () {
-    $client = User::factory()->create(['role' => 'client', 'phone' => '+2250101010101']);
+    $client = User::factory()->create(['role' => 'client', 'phone' => '+2250101010101', 'kyc_status' => 'actif']);
     $supplier = User::factory()->create(['role' => 'fournisseur', 'phone' => '+2250202020202']);
 
     FournisseurAgree::create([
@@ -80,7 +80,7 @@ test('client can create order in pickup mode and pay it', function () {
 });
 
 test('client can create order in delivery mode with dynamic maps calculation', function () {
-    $client = User::factory()->create(['role' => 'client', 'phone' => '+2250101010101']);
+    $client = User::factory()->create(['role' => 'client', 'phone' => '+2250101010101', 'kyc_status' => 'actif']);
     $client->setPosition(5.35, -4.02);
 
     $supplier = User::factory()->create(['role' => 'fournisseur', 'phone' => '+2250202020202']);

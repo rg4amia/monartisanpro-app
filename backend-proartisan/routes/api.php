@@ -152,7 +152,7 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('orders', OrderController::class)->only(['index', 'store', 'show']);
         Route::post('/orders/estimate-delivery', [OrderController::class, 'estimateDelivery']);
         Route::post('/orders/multi-estimate', [OrderController::class, 'estimateMultiDelivery']);
-        Route::post('/orders/multi-store', [OrderController::class, 'multiStore']);
+        Route::post('/orders/multi-store', [OrderController::class, 'multiStore'])->middleware('kyc.verified');
         Route::post('/orders/{order}/prepared', [OrderController::class, 'markPrepared']);
         Route::post('/orders/{order}/verify-pickup', [OrderController::class, 'verifyPickup']);
         Route::post('/orders/{order}/verify-delivery', [OrderController::class, 'verifyDelivery']);
@@ -247,9 +247,9 @@ Route::prefix('v1')->group(function () {
         Route::get('/missions/{mission}/devis/suggest', [DevisController::class, 'suggest'])->middleware('kyc.verified');
         Route::post('/missions/{mission}/devis/voice-quote', [DevisController::class, 'parseVoiceQuote'])->middleware(['can:devis.create', 'kyc.verified', 'throttle:ai']);
         Route::get('/devis/{devis}', [DevisController::class, 'show']);
-        Route::put('/devis/{devis}', [DevisController::class, 'update'])->middleware('can:devis.update');
-        Route::post('/devis/{devis}/accept', [DevisController::class, 'accept'])->middleware('can:devis.accept');
-        Route::post('/devis/{devis}/refuse', [DevisController::class, 'refuse'])->middleware('can:devis.refuse');
+        Route::put('/devis/{devis}', [DevisController::class, 'update'])->middleware(['can:devis.update', 'kyc.verified']);
+        Route::post('/devis/{devis}/accept', [DevisController::class, 'accept'])->middleware(['can:devis.accept', 'kyc.verified']);
+        Route::post('/devis/{devis}/refuse', [DevisController::class, 'refuse'])->middleware(['can:devis.refuse', 'kyc.verified']);
 
         // ── Jalons ────────────────────────────────────────────────────────────
         Route::get('/missions/{mission}/jalons', [JalonController::class, 'index']);
@@ -264,12 +264,12 @@ Route::prefix('v1')->group(function () {
         Route::get('/jcodes/active', [JCodeController::class, 'active']);
         Route::get('/jcodes/{jcode}', [JCodeController::class, 'show']);
         Route::post('/jcodes/{jcode}/scan', [JCodeController::class, 'scan'])->middleware(['can:jcode.scan', 'kyc.verified']);
-        Route::post('/jcodes/{jcode}/photo-materiaux', [JCodeController::class, 'uploadPhotoMateriaux'])->middleware('can:jcode.upload-photo-materials');
+        Route::post('/jcodes/{jcode}/photo-materiaux', [JCodeController::class, 'uploadPhotoMateriaux'])->middleware(['can:jcode.upload-photo-materials', 'kyc.verified']);
 
         // ── Paiements (Wave & Orange Money) ───────────────────────────────────
         Route::prefix('payments')->group(function () {
-            Route::post('/initiate', [PaymentController::class, 'initiatePayment']);
-            Route::post('/jalons/{jalon}/pay', [PaymentController::class, 'initiateJalonPayment']);
+            Route::post('/initiate', [PaymentController::class, 'initiatePayment'])->middleware('kyc.verified');
+            Route::post('/jalons/{jalon}/pay', [PaymentController::class, 'initiateJalonPayment'])->middleware('kyc.verified');
             Route::get('/{transaction}/status', [PaymentController::class, 'checkStatus']);
             Route::get('/history', [PaymentController::class, 'history']);
         });
@@ -277,7 +277,7 @@ Route::prefix('v1')->group(function () {
         // ── Micro-crédit ───────────────────────────────────────────────────────
         Route::prefix('micro-credit')->group(function () {
             Route::get('/eligibility', [MicroCreditController::class, 'eligibility']);
-            Route::post('/apply', [MicroCreditController::class, 'apply']);
+            Route::post('/apply', [MicroCreditController::class, 'apply'])->middleware('kyc.verified');
         });
 
         // ── Wallet & Transactions ─────────────────────────────────────────────
@@ -304,7 +304,7 @@ Route::prefix('v1')->group(function () {
         // ── Commandes e-Commerce (Fournisseurs & Livraison) ─────────────────────
         Route::prefix('orders')->group(function () {
             Route::get('/', [OrderController::class, 'index']);
-            Route::post('/', [OrderController::class, 'store']);
+            Route::post('/', [OrderController::class, 'store'])->middleware('kyc.verified');
             Route::get('/{order}', [OrderController::class, 'show']);
             Route::post('/{order}/prepared', [OrderController::class, 'markPrepared']);
             Route::post('/{order}/verify-pickup', [OrderController::class, 'verifyPickup']);

@@ -301,6 +301,33 @@ class Sprint3ComplianceTest extends TestCase
         // 7. Driver/Livreur is blocked from accepting a delivery course
         $this->actingAs($driver)->postJson("/api/v1/deliveries/{$order->id}/accept")->assertStatus(403);
 
+        // 7bis. Sans KYC actif, aucune route de mouvement de fonds n'est accessible,
+        // quel que soit l'état des données métier sous-jacentes (le middleware
+        // kyc.verified intercepte avant même la validation de la requête).
+        $this->actingAs($client)->postJson('/api/v1/orders', [
+            'supplier_id' => $supplier->id,
+            'items' => [['supplier_product_id' => $product->id, 'quantity' => 1]],
+            'delivery_mode' => 'pickup',
+        ])->assertStatus(403);
+
+        $this->actingAs($artisan)->postJson('/api/v1/micro-credit/apply', [
+            'amount' => 50000,
+        ])->assertStatus(403);
+
+        $devis = \App\Models\Devis::create([
+            'mission_id' => $mission->id,
+            'artisan_id' => $artisan->id,
+            'lignes_json' => [],
+            'jalons_json' => [],
+            'statut' => 'soumis',
+        ]);
+
+        $this->actingAs($client)->postJson("/api/v1/devis/{$devis->id}/accept")->assertStatus(403);
+        $this->actingAs($client)->postJson("/api/v1/devis/{$devis->id}/refuse")->assertStatus(403);
+        $this->actingAs($client)->postJson('/api/v1/payments/initiate', [
+            'devis_id' => $devis->id,
+        ])->assertStatus(403);
+
         // 8. Test that notifications are created when document uploaded
         $file = \Illuminate\Http\UploadedFile::fake()->create('cni.jpg', 500);
         $this->actingAs($client)->postJson('/api/v1/kyc/upload-cni', [

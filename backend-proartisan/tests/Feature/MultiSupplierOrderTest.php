@@ -69,7 +69,7 @@ test('client can estimate multi-supplier delivery', function () {
 });
 
 test('client can checkout split-cart with multiple suppliers in single transaction', function () {
-    $client = User::factory()->create(['role' => 'client', 'phone' => '+2250101010101']);
+    $client = User::factory()->create(['role' => 'client', 'phone' => '+2250101010101', 'kyc_status' => 'actif']);
     $supplier1 = User::factory()->create(['role' => 'fournisseur', 'phone' => '+2250202020202']);
     $supplier2 = User::factory()->create(['role' => 'fournisseur', 'phone' => '+2250303030303']);
 
