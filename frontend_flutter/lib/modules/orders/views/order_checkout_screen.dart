@@ -926,36 +926,48 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
                           ),
                         ),
                         const SizedBox(width: 10),
-                        ElevatedButton(
-                          onPressed: _isCheckingPromo ? null : _applyPromo,
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 14,
+                        // `IntrinsicWidth` : un ElevatedButton placé comme
+                        // frère direct d'un `Expanded` dans un `Row` fait
+                        // planter le calcul de largeur intrinsèque de
+                        // RenderFlex (« BoxConstraints forces an infinite
+                        // width », RenderPhysicalShape du Material) — bug
+                        // connu de Flutter sur les boutons Material dans ce
+                        // contexte (voir aussi client_suppliers_list_screen).
+                        // En release (assertions désactivées) ce plantage
+                        // silencieux laissait toute la zone du champ + bouton
+                        // invisible sans jamais lever d'erreur visible.
+                        IntrinsicWidth(
+                          child: ElevatedButton(
+                            onPressed: _isCheckingPromo ? null : _applyPromo,
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 14,
+                              ),
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              elevation: 0,
                             ),
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            elevation: 0,
+                            child: _isCheckingPromo
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Text(
+                                    'APPLIQUER',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                    ),
+                                  ),
                           ),
-                          child: _isCheckingPromo
-                              ? const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : const Text(
-                                  'APPLIQUER',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 12,
-                                  ),
-                                ),
                         ),
                       ],
                     ),

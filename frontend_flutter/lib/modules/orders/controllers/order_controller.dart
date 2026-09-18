@@ -31,7 +31,16 @@ class OrderController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    loadApprovedSuppliers();
+    // `loadApprovedSuppliers` modifie `isLoading` (.obs) : si ce contrôleur
+    // est instancié via `Get.put()` pendant le montage d'un widget (cas
+    // courant, ex. `final controller = Get.put(OrderController());` en
+    // initialiseur de champ), onInit() s'exécute au même instant et la mise
+    // à jour réactive survient pendant une passe de build, faisant planter
+    // le Obx qui l'observe (« setState() or markNeedsBuild() called during
+    // build »). Reporté après la première frame, ce risque disparaît.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      loadApprovedSuppliers();
+    });
   }
 
   // Charger les fournisseurs agréés

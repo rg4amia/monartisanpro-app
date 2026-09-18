@@ -19,7 +19,15 @@ class _ClientSuppliersListScreenState extends State<ClientSuppliersListScreen> {
   @override
   void initState() {
     super.initState();
-    controller.loadApprovedSuppliers();
+    // `loadApprovedSuppliers` modifie `isLoading` (.obs) : appelé de façon
+    // synchrone ici, il survient pendant le montage de cet écran (encore en
+    // cours de construction) et fait planter le Obx qui l'observe
+    // (« setState() or markNeedsBuild() called during build »). Reporté
+    // après la première frame, la mise à jour réactive n'intervient plus
+    // pendant une passe de build.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      controller.loadApprovedSuppliers();
+    });
   }
 
   @override
@@ -216,13 +224,16 @@ class _ClientSuppliersListScreenState extends State<ClientSuppliersListScreen> {
                                         color: AppColors.textSecondary,
                                       ),
                                       const SizedBox(width: 4),
-                                      Text(
-                                        'Contact masqué (disponible après validation)',
-                                        style: TextStyle(
-                                          color: Colors.grey[500],
-                                          fontSize: 12,
-                                          fontStyle: FontStyle.italic,
-                                          fontWeight: FontWeight.w500,
+                                      Flexible(
+                                        child: Text(
+                                          'Contact masqué (disponible après validation)',
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            color: Colors.grey[500],
+                                            fontSize: 12,
+                                            fontStyle: FontStyle.italic,
+                                            fontWeight: FontWeight.w500,
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -313,22 +324,30 @@ class _ClientSuppliersListScreenState extends State<ClientSuppliersListScreen> {
                     ],
                   ),
                 ),
-                ElevatedButton(
-                  onPressed: () => Get.to(() => const ClientCatalogScreen()),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 10,
+                // `IntrinsicWidth` : un ElevatedButton placé comme frère direct
+                // d'un `Expanded` dans un `Row` fait planter le calcul de
+                // largeur intrinsèque de RenderFlex (« BoxConstraints forces
+                // an infinite width », RenderPhysicalShape du Material) — bug
+                // connu de Flutter sur les boutons Material dans ce contexte.
+                IntrinsicWidth(
+                  child: ElevatedButton(
+                    onPressed: () => Get.to(() => const ClientCatalogScreen()),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                    child: const Text(
+                      'Voir mon panier',
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                     ),
-                  ),
-                  child: const Text(
-                    'Voir mon panier',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                   ),
                 ),
               ],
