@@ -19,8 +19,8 @@
 </head>
 <body>
     <div class="header">
+        <img src="{{ public_path('prosartisan-logo.png') }}" alt="ProsArtisan" style="height: 44px; margin-bottom: 8px;">
         <h1>FACTURE DE DÉCAISSEMENT</h1>
-        <h2>ProsArtisan - Côte d'Ivoire</h2>
         <p>Générée le {{ $generated_at }}</p>
     </div>
 

@@ -159,8 +159,8 @@
     <table class="header-table">
         <tr>
             <td style="vertical-align: middle;">
-                <div class="logo-text">ProsArtisan<span style="color: #ebb95e;">.ci</span></div>
-                <div class="logo-sub">Module Trésorerie & Cash-Out Partenaires</div>
+                <img src="{{ public_path('prosartisan-logo.png') }}" alt="ProsArtisan" style="height: 34px;">
+                <div class="logo-sub" style="margin-top: 4px;">Module Trésorerie & Cash-Out Partenaires</div>
             </td>
             <td class="doc-title" style="vertical-align: middle;">
                 <h1>BORDEREAU DE CASHOUT QUINCAILLERIE</h1>

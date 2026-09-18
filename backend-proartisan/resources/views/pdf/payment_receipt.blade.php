@@ -174,8 +174,8 @@
     <table class="header-table">
         <tr>
             <td style="vertical-align: middle;">
-                <div class="logo-text">ProsArtisan<span style="color: #ebb95e;">.ci</span></div>
-                <div class="logo-sub">Plateforme Nationale de Confiance & Séquestre Garanti</div>
+                <img src="{{ public_path('prosartisan-logo.png') }}" alt="ProsArtisan" style="height: 34px;">
+                <div class="logo-sub" style="margin-top: 4px;">Plateforme Nationale de Confiance & Séquestre Garanti</div>
             </td>
             <td class="doc-title" style="vertical-align: middle;">
                 <h1>REÇU DE PAIEMENT & DÉCAISSEMENT</h1>
