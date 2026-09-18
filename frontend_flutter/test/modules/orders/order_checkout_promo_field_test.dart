@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:get/get.dart';
 import 'package:frontend_flutter/modules/orders/controllers/order_controller.dart';
 import 'package:frontend_flutter/modules/orders/views/order_checkout_screen.dart';
+import 'package:get/get.dart';
 
 /// N'appelle jamais le réseau : évite tout appel Dio réel pendant le test.
 class _TestOrderController extends OrderController {
   @override
-  void onInit() {
-    // Ne charge pas les fournisseurs approuvés (appel réseau réel sinon).
-  }
+  Future<void> loadApprovedSuppliers({String? search}) async {}
 }
 
 void main() {
@@ -31,10 +29,16 @@ void main() {
       });
 
       expect(find.text('Avez-vous un code promo ?'), findsOneWidget);
-      expect(find.text('APPLIQUER'), findsOneWidget,
-          reason: 'Le bouton APPLIQUER devrait être visible.');
-      expect(find.byType(TextField), findsWidgets,
-          reason: 'Le champ de saisie du code promo devrait être visible.');
+      expect(
+        find.text('APPLIQUER'),
+        findsOneWidget,
+        reason: 'Le bouton APPLIQUER devrait être visible.',
+      );
+      expect(
+        find.byType(TextField),
+        findsWidgets,
+        reason: 'Le champ de saisie du code promo devrait être visible.',
+      );
     },
   );
 }
