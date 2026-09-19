@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../app/routes/app_routes.dart';
 import '../../../core/storage/storage_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/image_viewer.dart';
 import '../controllers/artisan_cart_controller.dart';
 import '../controllers/order_controller.dart';
-import 'order_checkout_screen.dart';
 
 class ClientCatalogScreen extends StatefulWidget {
   const ClientCatalogScreen({super.key});
@@ -538,8 +538,8 @@ class _ClientCatalogScreenState extends State<ClientCatalogScreen> {
                           colorText: Colors.white,
                         );
                       } else {
-                        Get.to(
-                          () => const OrderCheckoutScreen(),
+                        Get.toNamed(
+                          Routes.orderCheckout,
                           arguments: {
                             'supplier_id': supplier?.id,
                             'items': controller.getCartItemsPayload(),
