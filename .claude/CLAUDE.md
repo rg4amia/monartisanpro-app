@@ -316,6 +316,15 @@ SELECT ST_X(position) AS lng, ST_Y(position) AS lat FROM users WHERE id = :id;
 
 23. **Langue française** : toute communication utilisateur (messages, notifications, interface) et toute documentation produit (PRD, prompts, règles) sont rédigées en français, sans exception.
 
+24. **Points de contrôle sécurité obligatoires pour toute nouvelle fonctionnalité** (détail dans `PRD.md` § 4) : un audit offensif (septembre 2026) a trouvé 10 failles, dont 5 critiques, presque toutes du même schéma — rôle de l'appelant vérifié, propriété de la ressource non vérifiée. Avant tout merge touchant une ressource utilisateur, un montant financier ou une route admin :
+    - Vérifier explicitement la propriété (`user_id`/`client_id`/`artisan_id`/`fournisseur_id === $request->user()->id`) sur **tout** contrôleur qui type-hinte un modèle Eloquent via route-model-binding — jamais seulement le rôle de l'appelant.
+    - Aucune route de simulation/mock/debug accessible sans `abort_unless(app()->environment(['local', 'testing']), 404)`.
+    - Toute route API mobile miroir d'une action du backoffice web porte la même capacité `can:admin.xxx` que son équivalent web.
+    - Tout champ numérique alimentant un calcul financier est plafonné, y compris cumulativement sur plusieurs appels successifs.
+    - Toute libération de fonds a une écriture `Transaction` correspondante débitant l'escrow, jamais un ajustement de colonne isolé.
+    - Une ressource désignée à un acteur précis n'est consommable que par cet acteur, vérifié en base — pas seulement par un acteur du bon rôle.
+    - Toute correction de ce type s'accompagne d'un test qui échoue avant correctif et passe après.
+
 ---
 
 ## 🧠 Comment m'aider efficacement
