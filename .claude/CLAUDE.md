@@ -312,6 +312,10 @@ SELECT ST_X(position) AS lng, ST_Y(position) AS lat FROM users WHERE id = :id;
 
 21. **Ni données de démonstration, ni note par défaut** : aucun contrôleur ne préremplit une vue de valeurs inventées — elles masquent les pannes. Section vide → mention explicite (`SectionEmptyNote`). Note jamais attribuée → `null` (« Non évalué »), jamais `COALESCE(AVG(note), 5.0)` ; les évalués passent avant les non-évalués.
 
+22. **Carnet d'adresses & géolocalisation** : le client gère plusieurs adresses de livraison (`addresses`) ; la première créée devient le défaut automatique, une nouvelle définition par défaut désactive l'ancienne, et supprimer l'adresse par défaut promeut la plus récente restante — jamais aucun défaut tant que le carnet n'est pas vide. Toute commande en livraison exige une adresse valide appartenant au client, dont le contenu est figé sur la commande à la création (indépendant d'une édition ultérieure du carnet). La demande de mission récupère la position GPS réelle dès l'ouverture de l'écran (appel borné, repli Abidjan) au lieu d'attendre une action manuelle.
+
+23. **Langue française** : toute communication utilisateur (messages, notifications, interface) et toute documentation produit (PRD, prompts, règles) sont rédigées en français, sans exception.
+
 ---
 
 ## 🧠 Comment m'aider efficacement

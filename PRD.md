@@ -89,6 +89,25 @@ Le système gère également un flux de livraison de matériaux en 3 étapes :
 
 ---
 
+### 📍 Carnet d'Adresses de Livraison & Géolocalisation
+#### Workflow — Adresses & Géolocalisation
+1. Le client gère un **carnet d'adresses multiple** (`GET/POST /api/v1/addresses`, `PUT/DELETE /api/v1/addresses/{id}`, `POST /api/v1/addresses/{id}/default`) : libellé (Domicile, Bureau…), nom et téléphone du destinataire, adresse texte, ville, région, position GPS optionnelle.
+2. La toute première adresse enregistrée devient automatiquement l'adresse par défaut ; définir une nouvelle adresse par défaut désactive l'ancienne, et supprimer l'adresse par défaut promeut automatiquement la plus récente restante — le carnet n'est jamais laissé sans défaut tant qu'il contient au moins une adresse.
+3. Au moment du checkout matériaux (`OrderCheckoutScreen`), le client sélectionne ou modifie son adresse de livraison via un écran dédié (`AddressListScreen` / `AddressFormScreen`), avec un bouton **« Utiliser ma position actuelle »** qui réutilise l'écran carte/recherche déjà éprouvé pour les missions (`LocationPickerController`, appel GPS borné).
+4. Une commande en mode `delivery` **exige** un `address_id` valide appartenant au client (HTTP 422 sinon) ; cette adresse sert au calcul du tarif de livraison réel (distance vers la destination) et son contenu (nom, téléphone, adresse, ville) est **figé sur la commande** au moment de sa création — une modification ultérieure du carnet ne réécrit jamais l'historique d'une commande déjà passée.
+5. La demande de mission (`MissionRequestScreen`) récupère désormais la position GPS réelle du client dès l'ouverture de l'écran (appel borné, repli Abidjan), au lieu d'attendre que l'utilisateur ouvre manuellement le sélecteur de carte — la coordonnée et le libellé d'adresse envoyés à la création de mission reflètent donc la position réelle par défaut.
+
+#### 🔍 Retours Observés — Adresses & Géolocalisation
+* **Points Forts :**
+  * Élimine la classe de bug la plus visible pour le client : une adresse de livraison figée en dur (ou une position (0,0) au large du golfe de Guinée) affichée comme si elle était réelle.
+  * Réutilisation du sélecteur GPS/carte déjà conforme à la Règle d'Or 50 (bornage `timeLimit`) plutôt qu'une nouvelle implémentation d'appel GPS.
+  * Snapshot immuable de l'adresse sur la commande : un litige ou un contrôle a posteriori se réfère toujours à l'adresse réellement utilisée, pas à sa version courante dans le carnet.
+* **Points Faibles / Risques :**
+  * Le carnet d'adresses ne couvre pour l'instant que le flux e-commerce matériaux (`orders`) ; les missions artisan continuent de transmettre une position ponctuelle (`lat`/`lng` + texte libre) sans carnet dédié.
+  * Pas encore de validation d'adresse par géocodage inverse strict (l'utilisateur peut saisir une ville incohérente avec la position GPS choisie).
+
+---
+
 ### 📦 Phase 3 : Achat des Matériaux & Anti-Fraude J-Code
 Note : Pour les prestations chantiers de l'Artisan.
 * L'artisan génère un **J-Code** unique (`PA-XXXX` + QR Code + code USSD).
@@ -131,6 +150,7 @@ Note : Pour les prestations chantiers de l'Artisan.
 | **Jalons & Libération** | • Validation progressive OTP. Contrôle physique > 2M FCFA. | • Risque de blocage client injoignable. |
 | **Score ProsArtisan** | • Échelle 0–1000, seuils configurables. Facteur clé d'accès au micro-crédit (≥ 700). | • Colonne `score_prosartisan` en BDD. |
 | **Backoffice admin** | • Permissions fines + super admin protégé. Journal d'audit immuable. Throttle login. Pagination serveur + cache KPI. Exports CSV tracés. RGPD (accès/portabilité/anonymisation). Observabilité + alerte Telegram. Usurpation de session encadrée. | • Espace web limité aux rôles `admin` (et `fournisseur`/`livreur` via API) : l'usurpation d'un `client`/`artisan` a une portée réduite. |
+| **Adresses & Géolocalisation** | • Carnet d'adresses multiple avec défaut automatique. Snapshot immuable sur commande. Réutilisation du sélecteur GPS borné pour les missions. | • Carnet non étendu au flux missions artisan (position ponctuelle seulement). Pas de géocodage inverse strict. |
 
 ---
 
@@ -259,6 +279,10 @@ Le backoffice (Laravel 12 + Inertia 2 + React 19 + TypeScript) a fait l'objet d'
 
 62. **Harnais de Test pour Contrôleurs GetX Asynchrones (Mobile) :** `testWidgets` exécute son corps dans une zone `FakeAsync` à horloge virtuelle qui n'avance que via `tester.pump(duration)` : un `await` direct sur un appel Dio, même entièrement simulé côté adaptateur HTTP, n'y trouve jamais l'occasion de se résoudre et bloque le test indéfiniment sans message exploitable. `Get.snackbar` requiert par ailleurs un `GetMaterialApp` monté (sans quoi `Get.key.currentState` est `null`) et, une fois affichée, programme son minuteur d'auto-fermeture (3 s) **pendant** l'exécution réelle ouverte par `tester.runAsync` : ce `Timer`, créé hors de la zone `FakeAsync`, ignore ensuite l'horloge virtuelle et continue de tourner en tâche de fond une fois revenu dans le test — s'il se déclenche pendant un test *ultérieur*, une fois l'app GetX de ce test-là démontée, il le fait planter avec un échec sans rapport apparent avec sa cause réelle. Le harnais partagé `test/helpers/getx_snackbar_harness.dart` (`runControllerAction`) neutralise ces deux pièges : il monte un `GetMaterialApp` (avec `onUnknownRoute` pour les contrôleurs enchaînant un `Get.toNamed`/`offNamed` après leur appel réseau), exécute l'action via `tester.runAsync`, puis annule explicitement toute snackbar affichée (`Get.closeAllSnackbars()`) plutôt que d'attendre son délai — seule alternative fiable au comportement hérité de GetX. Toute exception que l'action doit relancer (`rethrow`) doit être interceptée **à l'intérieur** de cette action, jamais autour de l'appel à `runControllerAction` : `tester.runAsync` ne laisse jamais une erreur de son callback remonter à son appelant, il la signale séparément via `FlutterError.reportError`.
 
+63. **Carnet d'Adresses de Livraison Multiple, Snapshot Immuable & Géolocalisation Systématique (Mobile & Backend) :** Le client dispose d'un carnet d'adresses de livraison (table `addresses`, `AddressService`, `GET/POST /api/v1/addresses`, `PUT/DELETE /api/v1/addresses/{id}`, `POST /api/v1/addresses/{id}/default`) — nom/téléphone du destinataire, adresse, ville, région, position GPS optionnelle, drapeau `is_default`. La première adresse créée devient automatiquement la valeur par défaut ; en définir une nouvelle désactive l'ancienne ; supprimer l'adresse par défaut promeut la plus récente restante — le carnet n'est **jamais** laissé sans défaut tant qu'il compte au moins une adresse. Toute commande en mode `delivery` (`POST /api/v1/orders`, `POST /api/v1/orders/multi-store`) **exige** un `address_id` appartenant au client (HTTP 422 sinon ; ownership vérifiée côté serveur, HTTP 403 sur une adresse d'un tiers) ; son contenu (nom, téléphone, adresse, ville) est **figé sur la commande** à la création (`orders.recipient_name` / `recipient_phone` / `delivery_address_line` / `delivery_city`) et sa position GPS sert au calcul du tarif de livraison réel — une modification ultérieure du carnet ne réécrit jamais l'historique d'une commande déjà passée. Côté mobile, l'écran de demande de mission (`MissionRequestScreen`) récupère la position GPS réelle du client dès l'ouverture de l'écran (appel borné, repli Abidjan — jamais `(0.0, 0.0)`, cf. Règle d'Or 50), au lieu d'attendre l'ouverture manuelle du sélecteur de carte.
+
+64. **Langue Française Obligatoire — Communication Utilisateur & Documentation Produit :** Toute communication adressée à un utilisateur — messages d'erreur et de validation (API comme mobile), notifications, SMS/OTP, libellés d'interface (mobile, backoffice, vitrine web) — est rédigée en français, sans exception. La documentation produit du projet (ce PRD, `CLAUDE.md`, et tout « point d'attention » qui y est consigné — Retours Observés, Règles d'Or, backlog) est elle aussi rédigée intégralement en français : toute règle ou observation nouvellement ajoutée doit suivre cette convention, y compris lorsqu'elle documente un composant ou une variable nommés en anglais dans le code.
+
 ---
 
 ## 5. Liste des Besoins Produits Prioritaires (Backlog)
@@ -269,6 +293,11 @@ Le backoffice (Laravel 12 + Inertia 2 + React 19 + TypeScript) a fait l'objet d'
 3. **Télémétrie Livreur par Lot (Batching GPS) :** [COMPLÉTÉ] Buffer local et envoi groupé des relevés de position toutes les 45–60 secondes.
 4. **Consommation Partielle du J-Code :** [COMPLÉTÉ] Permettre à l'artisan d'utiliser son J-Code chez plusieurs fournisseurs agréés si le premier n'a pas la totalité du stock disponible (débit partiel du séquestre matériel), avec interface mobile de sélection de quantité et traçabilité par item.
 5. **Mode Hors-Ligne pour les Livreurs :** [COMPLÉTÉ] Permettre au livreur de valider la récupération (prise en charge) ou la livraison via des requêtes USSD interactives ou instantanées (`*555*RET-123#`), ou par SMS crypté (ex: `RET-123`), dans les zones blanches à faible connectivité internet.
+
+### 📍 Adresses & Géolocalisation
+1. **Carnet d'Adresses de Livraison Multiple :** [COMPLÉTÉ] Table `addresses` par client (label, destinataire, téléphone, adresse, ville, région, GPS optionnel), adresse par défaut auto-gérée (première adresse, promotion à la suppression), CRUD complet (`AddressController`/`AddressService`) et ownership vérifiée serveur.
+2. **Snapshot d'Adresse Immuable sur Commande :** [COMPLÉTÉ] `address_id` obligatoire pour toute commande en mode `delivery` (`orders`, `orders/multi-store`) ; nom/téléphone/adresse/ville figés sur la commande à la création, indépendants d'une modification ultérieure du carnet ; position GPS de l'adresse utilisée pour le calcul du tarif de livraison réel.
+3. **Géolocalisation Proactive à la Demande de Mission :** [COMPLÉTÉ] `MissionRequestScreen` récupère la position GPS réelle du client dès l'ouverture de l'écran (appel borné, repli Abidjan) au lieu d'un texte et de coordonnées `(0.0, 0.0)` fictifs en attente d'une action manuelle de l'utilisateur.
 
 ### 🛡️ Anti-Fraude, Sécurité & Finance (Ledger)
 1. **Espace Référent de Zone :** [COMPLÉTÉ] Tableau de bord d'inspection, tri spatial des chantiers > 2M FCFA et validation in-situ avec barrière GPS < 100m.
