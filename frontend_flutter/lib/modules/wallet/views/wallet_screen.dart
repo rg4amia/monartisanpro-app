@@ -532,6 +532,10 @@ class _TransactionTile extends StatelessWidget {
         return 'Remboursement';
       case 'credit':
         return 'Micro-crédit octroyé';
+      case 'recruitment_escrow':
+        return 'Séquestre recrutement';
+      case 'recruitment_offer_escrow':
+        return 'Séquestre accès candidatures';
       default:
         return type.replaceAll('_', ' ').capitalizeFirst ?? type;
     }
