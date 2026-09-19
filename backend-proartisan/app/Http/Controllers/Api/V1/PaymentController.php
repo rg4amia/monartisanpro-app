@@ -4,16 +4,21 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Enums\PaymentProvider;
 use App\Enums\PaymentStatus;
+use App\Enums\WalletType;
 use App\Http\Controllers\Controller;
 use App\Models\Devis;
+use App\Models\Jalon;
 use App\Models\Mission;
 use App\Models\Transaction;
+use App\Services\DevisService;
 use App\Services\OrangeMoneyService;
+use App\Services\WalletService;
 use App\Services\WaveService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\View\View;
 
 class PaymentController extends Controller
 {
@@ -53,7 +58,7 @@ class PaymentController extends Controller
         if ($montant >= $seuil && in_array($request->provider, ['wave', 'orange_money'], true)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Les paiements Mobile Money sont limités à ' . number_format($seuil, 0, ',', ' ') . ' FCFA. Veuillez effectuer un virement bancaire.',
+                'message' => 'Les paiements Mobile Money sont limités à '.number_format($seuil, 0, ',', ' ').' FCFA. Veuillez effectuer un virement bancaire.',
             ], 422);
         }
 
@@ -72,7 +77,7 @@ class PaymentController extends Controller
             if (! in_array((string) $mission->status, ['draft', 'pending_artisan_acceptance', 'pending_funding'], true)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cette mission n\'est pas en attente de paiement (statut actuel: ' . (string) $mission->status . ')',
+                    'message' => 'Cette mission n\'est pas en attente de paiement (statut actuel: '.(string) $mission->status.')',
                 ], 400);
             }
 
@@ -166,8 +171,8 @@ class PaymentController extends Controller
                 'user_id' => $client->id,
                 'type' => 'acompte',
                 'montant' => $montant,
-                'wallet_source' => $provider === PaymentProvider::VIREMENT_BANCAIRE ? 'client_bank_' . $client->id : 'client_mobile_money_' . $client->id,
-                'wallet_dest' => 'escrow_mission_' . $mission->id,
+                'wallet_source' => $provider === PaymentProvider::VIREMENT_BANCAIRE ? 'client_bank_'.$client->id : 'client_mobile_money_'.$client->id,
+                'wallet_dest' => 'escrow_mission_'.$mission->id,
                 'provider' => $provider,
                 'statut' => PaymentStatus::EN_ATTENTE,
                 'client_phone' => $phone,
@@ -242,7 +247,7 @@ class PaymentController extends Controller
             }
 
             if ($provider === PaymentProvider::VIREMENT_BANCAIRE) {
-                $reference = 'REF-' . str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+                $reference = 'REF-'.str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
                 $transaction->update([
                     'reference_externe' => $reference,
@@ -284,7 +289,7 @@ class PaymentController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur lors de l\'initiation du paiement: ' . $e->getMessage(),
+                'message' => 'Erreur lors de l\'initiation du paiement: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -387,7 +392,7 @@ class PaymentController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => $transactions->map(fn($tx) => [
+                'data' => $transactions->map(fn ($tx) => [
                     'id' => $tx->id,
                     'type' => $tx->type,
                     'montant' => $tx->montant,
@@ -428,7 +433,7 @@ class PaymentController extends Controller
      * Initier le paiement pour un jalon individuel (Gestion Hybride).
      * POST /api/v1/payments/jalons/{jalon}/pay
      */
-    public function initiateJalonPayment(Request $request, \App\Models\Jalon $jalon): JsonResponse
+    public function initiateJalonPayment(Request $request, Jalon $jalon): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'provider' => 'required|in:wave,orange_money,virement_bancaire',
@@ -476,7 +481,7 @@ class PaymentController extends Controller
         if ($montant >= $seuil && in_array($request->provider, ['wave', 'orange_money'], true)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Les paiements Mobile Money sont limités à ' . number_format($seuil, 0, ',', ' ') . ' FCFA. Veuillez effectuer un virement bancaire.',
+                'message' => 'Les paiements Mobile Money sont limités à '.number_format($seuil, 0, ',', ' ').' FCFA. Veuillez effectuer un virement bancaire.',
             ], 422);
         }
 
@@ -553,8 +558,8 @@ class PaymentController extends Controller
                 'user_id' => $client->id,
                 'type' => 'acompte',
                 'montant' => $montant,
-                'wallet_source' => $provider === PaymentProvider::VIREMENT_BANCAIRE ? 'client_bank_' . $client->id : 'client_mobile_money_' . $client->id,
-                'wallet_dest' => 'escrow_mission_' . $mission->id,
+                'wallet_source' => $provider === PaymentProvider::VIREMENT_BANCAIRE ? 'client_bank_'.$client->id : 'client_mobile_money_'.$client->id,
+                'wallet_dest' => 'escrow_mission_'.$mission->id,
                 'provider' => $provider,
                 'statut' => PaymentStatus::EN_ATTENTE,
                 'client_phone' => $phone,
@@ -629,7 +634,7 @@ class PaymentController extends Controller
             }
 
             if ($provider === PaymentProvider::VIREMENT_BANCAIRE) {
-                $reference = 'REF-JL-' . $jalon->id . '-' . str_pad(random_int(0, 999), 3, '0', STR_PAD_LEFT);
+                $reference = 'REF-JL-'.$jalon->id.'-'.str_pad(random_int(0, 999), 3, '0', STR_PAD_LEFT);
 
                 $transaction->update([
                     'reference_externe' => $reference,
@@ -676,19 +681,19 @@ class PaymentController extends Controller
         if (($transaction->metadata['payment_type'] ?? '') === 'jalon') {
             $jalonId = $transaction->metadata['jalon_id'] ?? null;
             if ($jalonId) {
-                $jalon = \App\Models\Jalon::find($jalonId);
+                $jalon = Jalon::find($jalonId);
                 if ($jalon && ($jalon->statut === 'en_attente' || $jalon->statut === 'soumis')) {
-                    $walletService = app(\App\Services\WalletService::class);
+                    $walletService = app(WalletService::class);
                     $walletService->credit(
                         $jalon->mission->artisan,
-                        \App\Enums\WalletType::WALLET_MO,
+                        WalletType::WALLET_MO,
                         $jalon->montant,
                         "Financement jalon #{$jalon->ordre} - Mission #{$jalon->mission_id}",
                         [
                             'mission_id' => $jalon->mission_id,
                             'jalon_id' => $jalon->id,
                             'transaction_id' => $transaction->id,
-                            'type' => 'escrow_mo_jalon'
+                            'type' => 'escrow_mo_jalon',
                         ]
                     );
 
@@ -701,8 +706,10 @@ class PaymentController extends Controller
     /**
      * Affiche la page de simulation de paiement.
      */
-    public function showMockPay(Request $request): \Illuminate\View\View
+    public function showMockPay(Request $request): View
     {
+        abort_unless(app()->environment(['local', 'testing']), 404);
+
         $transactionId = $request->query('transaction_id');
         $transaction = Transaction::findOrFail($transactionId);
 
@@ -711,9 +718,18 @@ class PaymentController extends Controller
 
     /**
      * Valide ou échoue le paiement simulé avec application des protocoles de sécurité.
+     *
+     * Simulateur de développement uniquement : sans paiement réel à confirmer
+     * (Wave/Orange Money ne sont pas appelés), cette route ne doit exister
+     * qu'en local/testing — en production, un tiers non authentifié pourrait
+     * sinon confirmer n'importe quelle transaction en attente et déclencher
+     * une fragmentation de séquestre ou une libération de fonds sans qu'aucun
+     * FCFA n'ait réellement circulé.
      */
     public function validateMockPay(Request $request): \Illuminate\Contracts\View\View
     {
+        abort_unless(app()->environment(['local', 'testing']), 404);
+
         $transactionId = $request->input('transaction_id');
         $action = $request->input('action'); // 'confirm' or 'fail'
 
@@ -733,7 +749,7 @@ class PaymentController extends Controller
             if ($devisId) {
                 $devis = Devis::find($devisId);
                 if ($devis && $devis->statut === 'soumis') {
-                    $devisService = app(\App\Services\DevisService::class);
+                    $devisService = app(DevisService::class);
                     $devisService->accept($devis, $transaction);
                     Log::info("[Paiement validé] Devis #{$devis->id} accepté et séquestre fragmenté pour la mission #{$devis->mission_id}");
                 }

@@ -2,11 +2,20 @@
 
 namespace App\Services;
 
+use App\Models\ArtisanStock;
 use App\Models\Devis;
+use App\Models\InterventionType;
 use App\Models\Jalon;
 use App\Models\Mission;
+use App\Models\Setting;
 use App\Models\Transaction;
 use App\Models\User;
+use App\States\Mission\DisputedState;
+use App\States\Mission\DraftState;
+use App\States\Mission\FundedLockedState;
+use App\States\Mission\InProgressState;
+use App\States\Mission\PendingApprovalState;
+use App\States\Mission\PendingArtisanAcceptanceState;
 use Illuminate\Support\Facades\DB;
 
 class DevisService
@@ -32,8 +41,8 @@ class DevisService
                 ->where('is_avenant', false)
                 ->where('statut', 'accepte')
                 ->first();
-            if (!$initialDevis) {
-                throw new \InvalidArgumentException("Impossible de créer un avenant sans devis initial accepté.");
+            if (! $initialDevis) {
+                throw new \InvalidArgumentException('Impossible de créer un avenant sans devis initial accepté.');
             }
 
             // Seul l'artisan déjà assigné à la mission peut soumettre un avenant
@@ -43,14 +52,14 @@ class DevisService
 
             // Statuts de mission autorisés pour un avenant
             $allowedStates = [
-                \App\States\Mission\FundedLockedState::class,
-                \App\States\Mission\InProgressState::class,
-                \App\States\Mission\PendingApprovalState::class,
-                \App\States\Mission\DisputedState::class,
+                FundedLockedState::class,
+                InProgressState::class,
+                PendingApprovalState::class,
+                DisputedState::class,
             ];
             $currentStatusClass = get_class($mission->status);
-            if (!in_array($currentStatusClass, $allowedStates)) {
-                throw new \InvalidArgumentException("Impossible de créer un avenant pour une mission dans cet état.");
+            if (! in_array($currentStatusClass, $allowedStates)) {
+                throw new \InvalidArgumentException('Impossible de créer un avenant pour une mission dans cet état.');
             }
 
             // Un seul avenant en attente d'examen à la fois
@@ -62,6 +71,16 @@ class DevisService
                 throw new \InvalidArgumentException("Un avenant est déjà en cours d'examen pour cette mission.");
             }
         } else {
+            // RÈGLE INITIALE : quand la mission cible un artisan précis (flux
+            // de demande directe, statut pending_artisan_acceptance), seul cet
+            // artisan peut soumettre le devis initial — sans ce contrôle, un
+            // artisan tiers pouvait répondre à une mission qui ne lui était
+            // pas destinée et faire sortir la mission de cet état à sa place.
+            // `artisan_id` redevient null après un refus (mission rouverte).
+            if ($mission->artisan_id !== null && $mission->artisan_id !== $artisan->id) {
+                throw new \InvalidArgumentException('Cette mission est réservée à un autre artisan.');
+            }
+
             // RÈGLE INITIALE : Un artisan ne peut pas soumettre plusieurs devis tant que le précédent n'est pas refusé
             $existingArtisanDevis = Devis::where('mission_id', $mission->id)
                 ->where('artisan_id', $artisan->id)
@@ -102,7 +121,7 @@ class DevisService
                 ->where('type', 'mat')
                 ->where('source', 'catalog')
                 ->isNotEmpty();
-            if (!$hasCatalogMaterial) {
+            if (! $hasCatalogMaterial) {
                 throw new \InvalidArgumentException("Le devis doit contenir au moins un article d'un fournisseur agréé car l'acquisition de matériel est requise.");
             }
         } else {
@@ -110,13 +129,13 @@ class DevisService
             if (empty($interventionTypeId)) {
                 // Si materials_required n'a pas été fourni explicitement (vieux client mobile),
                 // on applique un type d'intervention par défaut.
-                if (!isset($data['materials_required'])) {
-                    $defaultType = \App\Models\InterventionType::first();
+                if (! isset($data['materials_required'])) {
+                    $defaultType = InterventionType::first();
                     if ($defaultType) {
                         $interventionTypeId = $defaultType->id;
                     }
                 }
-                
+
                 // Si après cela c'est toujours vide
                 if (empty($interventionTypeId)) {
                     throw new \InvalidArgumentException("Veuillez indiquer le type d'intervention pour ce devis sans matériel.");
@@ -124,16 +143,15 @@ class DevisService
             }
         }
 
-
         // 2. Validate Labor (Main d'œuvre - MO) obligation
         $requiresLabor = true;
-        if (!$materialsRequired && !empty($interventionTypeId)) {
-            $intType = \App\Models\InterventionType::find($interventionTypeId);
+        if (! $materialsRequired && ! empty($interventionTypeId)) {
+            $intType = InterventionType::find($interventionTypeId);
             if ($intType) {
                 $requiresLabor = (bool) $intType->requires_labor;
             }
         }
-        
+
         if ($requiresLabor) {
             $hasMo = collect($payload['lignes_json'])
                 ->where('type', 'mo')
@@ -141,7 +159,7 @@ class DevisService
             $moSum = collect($payload['lignes_json'])
                 ->where('type', 'mo')
                 ->sum('montant');
-            if (!$hasMo || $moSum <= 0) {
+            if (! $hasMo || $moSum <= 0) {
                 throw new \InvalidArgumentException("La main d'œuvre est obligatoire pour ce devis.");
             }
         }
@@ -150,25 +168,25 @@ class DevisService
         $isNightMode = now()->hour >= 18 || now()->hour < 6;
         foreach ($payload['lignes_json'] as $ligne) {
             if (($ligne['type'] ?? '') === 'mat') {
-                $isArtisanStock = ($ligne['source'] ?? '') === 'artisan_stock' || !empty($ligne['artisan_stock_id']);
+                $isArtisanStock = ($ligne['source'] ?? '') === 'artisan_stock' || ! empty($ligne['artisan_stock_id']);
                 if ($isArtisanStock) {
                     // Check if it's strictly night mode
-                    if (!$isNightMode) {
+                    if (! $isNightMode) {
                         throw new \InvalidArgumentException("L'utilisation du stock de matériel de l'artisan est strictement réservée au mode nuit (18h-06h).");
                     }
-                    
+
                     if (empty($ligne['artisan_stock_id'])) {
-                        throw new \InvalidArgumentException("Veuillez spécifier l'identifiant du stock de l'artisan pour l'article : " . ($ligne['description'] ?? ''));
+                        throw new \InvalidArgumentException("Veuillez spécifier l'identifiant du stock de l'artisan pour l'article : ".($ligne['description'] ?? ''));
                     }
-                    
-                    $stock = \App\Models\ArtisanStock::where('id', $ligne['artisan_stock_id'])
+
+                    $stock = ArtisanStock::where('id', $ligne['artisan_stock_id'])
                         ->where('artisan_id', $artisan->id)
                         ->first();
-                    
-                    if (!$stock) {
+
+                    if (! $stock) {
                         throw new \InvalidArgumentException("L'article spécifié n'existe pas dans votre stock.");
                     }
-                    
+
                     $requestedQty = (int) ($ligne['quantity'] ?? 1);
                     if ($stock->quantity < $requestedQty) {
                         throw new \InvalidArgumentException("Quantité insuffisante en stock pour : {$stock->description} (disponible: {$stock->quantity}, demandé: {$requestedQty}).");
@@ -177,21 +195,21 @@ class DevisService
             }
         }
 
-        if ($mission->status instanceof \App\States\Mission\PendingArtisanAcceptanceState) {
-            $mission->status->transitionTo(\App\States\Mission\DraftState::class);
+        if ($mission->status instanceof PendingArtisanAcceptanceState) {
+            $mission->status->transitionTo(DraftState::class);
             $mission->refresh();
         }
 
         $devis = Devis::create([
-            'mission_id'  => $mission->id,
-            'artisan_id'  => $artisan->id,
+            'mission_id' => $mission->id,
+            'artisan_id' => $artisan->id,
             'materials_required' => $materialsRequired,
             'intervention_type_id' => $interventionTypeId,
-            'commission_service_ratio' => \App\Models\Setting::getLaborCommissionForArtisan($artisan),
+            'commission_service_ratio' => Setting::getLaborCommissionForArtisan($artisan),
             'lignes_json' => $payload['lignes_json'],
             'jalons_json' => $payload['jalons_json'],
-            'statut'      => 'soumis',
-            'is_avenant'  => $isAvenant,
+            'statut' => 'soumis',
+            'is_avenant' => $isAvenant,
             'parent_devis_id' => $isAvenant ? $initialDevis->id : null,
         ]);
 
@@ -260,9 +278,9 @@ class DevisService
             }
 
             // 1. Calcul du ratio matériaux (TTC)
-            $montantTotal   = $devis->montant_total;
-            $montantMat     = $devis->montant_materiaux;
-            $ratioMat       = $montantTotal > 0 ? round($montantMat / $montantTotal, 4) : 0.6500;
+            $montantTotal = $devis->montant_total;
+            $montantMat = $devis->montant_materiaux;
+            $ratioMat = $montantTotal > 0 ? round($montantMat / $montantTotal, 4) : 0.6500;
 
             // 2. Mise à jour du devis
             $devis->update([
@@ -271,7 +289,7 @@ class DevisService
             ]);
 
             // 3. Association artisan ↔ mission (seulement pour devis initial)
-            if (!$devis->is_avenant) {
+            if (! $devis->is_avenant) {
                 $devis->mission->update(['artisan_id' => $devis->artisan_id]);
             }
 
@@ -282,11 +300,11 @@ class DevisService
                 foreach ($devis->jalons_json as $jalonData) {
                     $montantTtc = (int) round($jalonData['montant'] * (1 + $commissionService));
                     Jalon::create([
-                        'mission_id'  => $devis->mission_id,
-                        'ordre'       => $maxOrdre + $jalonData['ordre'],
+                        'mission_id' => $devis->mission_id,
+                        'ordre' => $maxOrdre + $jalonData['ordre'],
                         'description' => $jalonData['description'],
-                        'montant'     => $montantTtc,
-                        'statut'      => 'en_attente',
+                        'montant' => $montantTtc,
+                        'statut' => 'en_attente',
                     ]);
                 }
             } else {
@@ -294,11 +312,11 @@ class DevisService
                     foreach ($devis->jalons_json as $jalonData) {
                         $montantTtc = (int) round($jalonData['montant'] * (1 + $commissionService));
                         Jalon::create([
-                            'mission_id'  => $devis->mission_id,
-                            'ordre'       => $jalonData['ordre'],
+                            'mission_id' => $devis->mission_id,
+                            'ordre' => $jalonData['ordre'],
                             'description' => $jalonData['description'],
-                            'montant'     => $montantTtc,
-                            'statut'      => 'en_attente',
+                            'montant' => $montantTtc,
+                            'statut' => 'en_attente',
                         ]);
                     }
                 }
@@ -343,7 +361,7 @@ class DevisService
         $devis->update(['statut' => 'refuse']);
 
         $devis->loadMissing(['artisan', 'mission']);
-        
+
         if ($devis->mission) {
             $devis->mission->update(['artisan_id' => null]);
         }
@@ -396,7 +414,7 @@ class DevisService
 
         if (! empty($ligne['artisan_stock_id'])) {
             $normalized['artisan_stock_id'] = (int) $ligne['artisan_stock_id'];
-            $stock = \App\Models\ArtisanStock::where('id', $ligne['artisan_stock_id'])
+            $stock = ArtisanStock::where('id', $ligne['artisan_stock_id'])
                 ->where('artisan_id', $artisan->id)
                 ->first();
             if ($stock) {

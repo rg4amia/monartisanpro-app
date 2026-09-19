@@ -3,22 +3,28 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Models\Address;
 use App\Models\Order;
+use App\Models\SupplierProduct;
 use App\Models\User;
+use App\Services\DeliveryPricingService;
 use App\Services\OrderService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class OrderController extends Controller
 {
-    private \App\Services\DeliveryPricingService $pricingService;
+    private DeliveryPricingService $pricingService;
 
     public function __construct(
         private OrderService $orderService,
-        ?\App\Services\DeliveryPricingService $pricingService = null
+        ?DeliveryPricingService $pricingService = null
     ) {
-        $this->pricingService = $pricingService ?? app(\App\Services\DeliveryPricingService::class);
+        $this->pricingService = $pricingService ?? app(DeliveryPricingService::class);
     }
 
     /**
@@ -52,7 +58,7 @@ class OrderController extends Controller
 
         $address = null;
         if ($request->filled('address_id')) {
-            $address = \App\Models\Address::find($request->address_id);
+            $address = Address::find($request->address_id);
             if (! $address || $address->user_id !== $client->id) {
                 return response()->json([
                     'success' => false,
@@ -63,8 +69,8 @@ class OrderController extends Controller
 
         try {
             if (! app()->environment('testing')) {
-                $lockKey = 'create_order_lock_' . $client->id;
-                $lock = \Illuminate\Support\Facades\Cache::lock($lockKey, 5);
+                $lockKey = 'create_order_lock_'.$client->id;
+                $lock = Cache::lock($lockKey, 5);
 
                 if (! $lock->get()) {
                     return response()->json([
@@ -100,7 +106,7 @@ class OrderController extends Controller
                 'data' => $order->load('items.product'),
             ], 201);
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Order creation error: ' . $e->getMessage(), [
+            Log::error('Order creation error: '.$e->getMessage(), [
                 'client_id' => $client?->id,
                 'supplier_id' => $request->supplier_id,
             ]);
@@ -182,13 +188,14 @@ class OrderController extends Controller
      * Marquer la commande préparée par le fournisseur.
      * POST /api/v1/orders/{order}/prepared
      */
-    public function markPrepared(Order $order, Request $request): JsonResponse|\Illuminate\Http\RedirectResponse
+    public function markPrepared(Order $order, Request $request): JsonResponse|RedirectResponse
     {
         $user = $request->user();
         if ($order->supplier_id !== $user->id) {
             if ($request->header('X-Inertia')) {
                 return back()->withErrors(['message' => 'Seul le fournisseur peut préparer cette commande.']);
             }
+
             return response()->json([
                 'success' => false,
                 'message' => 'Seul le fournisseur peut préparer cette commande.',
@@ -211,6 +218,7 @@ class OrderController extends Controller
             if ($request->header('X-Inertia')) {
                 return back()->withErrors(['message' => $e->getMessage()]);
             }
+
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
@@ -222,7 +230,7 @@ class OrderController extends Controller
      * Validation du code de retrait (chez le fournisseur).
      * POST /api/v1/orders/{order}/verify-pickup
      */
-    public function verifyPickup(Request $request, Order $order): JsonResponse|\Illuminate\Http\RedirectResponse
+    public function verifyPickup(Request $request, Order $order): JsonResponse|RedirectResponse
     {
         $validator = Validator::make($request->all(), [
             'code' => 'required|string',
@@ -232,6 +240,7 @@ class OrderController extends Controller
             if ($request->header('X-Inertia')) {
                 return back()->withErrors(['code' => 'Le code de validation est requis.']);
             }
+
             return response()->json([
                 'success' => false,
                 'message' => 'Le code de validation est requis.',
@@ -245,6 +254,7 @@ class OrderController extends Controller
             if ($request->header('X-Inertia')) {
                 return back()->withErrors(['message' => 'Non autorisé.']);
             }
+
             return response()->json([
                 'success' => false,
                 'message' => 'Non autorisé.',
@@ -267,6 +277,7 @@ class OrderController extends Controller
             if ($request->header('X-Inertia')) {
                 return back()->withErrors(['message' => $e->getMessage()]);
             }
+
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
@@ -366,13 +377,17 @@ class OrderController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'waiting_minutes' => 'required|integer|min:1',
+            // Plafond de 2h par déclaration : au-delà, un livreur assigné
+            // pouvait s'auto-attribuer un gain arbitrairement élevé (aucune
+            // borne supérieure ne bridait auparavant ce champ), crédité tel
+            // quel sur son wallet_mo à la livraison.
+            'waiting_minutes' => 'required|integer|min:1|max:120',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Le nombre de minutes d\'attente est requis.',
+                'message' => 'Le nombre de minutes d\'attente est requis et limité à 120 minutes par déclaration.',
             ], 422);
         }
 
@@ -448,7 +463,7 @@ class OrderController extends Controller
                 'lng' => (float) $request->client_longitude,
             ];
         } elseif ($request->filled('address_id')) {
-            $address = \App\Models\Address::find($request->address_id);
+            $address = Address::find($request->address_id);
             $to = ($address && $address->user_id === $request->user()->id)
                 ? ($address->getPositionCoords() ?? $request->user()?->getPositionCoords())
                 : $request->user()?->getPositionCoords();
@@ -462,8 +477,8 @@ class OrderController extends Controller
         $formattedItems = [];
         foreach ($rawItems as $item) {
             $name = $item['name'] ?? null;
-            if (!$name && !empty($item['supplier_product_id'])) {
-                $prod = \App\Models\SupplierProduct::find($item['supplier_product_id']);
+            if (! $name && ! empty($item['supplier_product_id'])) {
+                $prod = SupplierProduct::find($item['supplier_product_id']);
                 $name = $prod?->name ?? '';
             }
             $formattedItems[] = [
@@ -536,6 +551,7 @@ class OrderController extends Controller
                     'distance_km' => 0,
                     'duration_minutes' => 0,
                 ];
+
                 continue;
             }
 
@@ -602,7 +618,7 @@ class OrderController extends Controller
 
         $address = null;
         if ($request->filled('address_id')) {
-            $address = \App\Models\Address::find($request->address_id);
+            $address = Address::find($request->address_id);
             if (! $address || $address->user_id !== $client->id) {
                 return response()->json([
                     'success' => false,
@@ -618,8 +634,8 @@ class OrderController extends Controller
 
         try {
             if (! app()->environment('testing')) {
-                $lockKey = 'create_order_lock_' . $client->id;
-                $lock = \Illuminate\Support\Facades\Cache::lock($lockKey, 10);
+                $lockKey = 'create_order_lock_'.$client->id;
+                $lock = Cache::lock($lockKey, 10);
 
                 if (! $lock->get()) {
                     return response()->json([
@@ -642,7 +658,7 @@ class OrderController extends Controller
                 'data' => $result,
             ], 201);
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Multi-order creation error: ' . $e->getMessage(), [
+            Log::error('Multi-order creation error: '.$e->getMessage(), [
                 'client_id' => $client?->id,
             ]);
 
@@ -660,4 +676,3 @@ class OrderController extends Controller
         }
     }
 }
-

@@ -33,6 +33,16 @@ Route::get('/', function () {
 // Consultation d'une pièce KYC stockée sur le disque privé. L'URL est signée
 // et expire : cf. KycDocument::fileUrl. Elle remplace les anciennes URL
 // publiques permanentes sous /storage/fileshare/kyc.
+//
+// Note d'audit sécurité : restreindre cette route à `admin.only` a été
+// envisagé (une signature valide ne prouve pas l'identité de l'appelant),
+// mais KycDocumentPrivacyTest::test_a_valid_signed_url_serves_the_file
+// documente explicitement un accès légitime du titulaire du dossier
+// lui-même, sans session admin — ajouter cette restriction casserait ce
+// parcours voulu. Le modèle de sécurité retenu ici est celui, standard,
+// d'une URL signée à courte durée de vie (15 min, cf. KycDocument::VIEW_URL_TTL_MINUTES) :
+// la signature EST l'autorisation, comme documenté par Laravel pour les
+// "temporary signed routes".
 Route::get('/kyc/documents/{document}/file', [KycDocumentController::class, 'show'])
     ->middleware('signed')
     ->name('kyc.document.file');

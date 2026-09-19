@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Services\JCodeService;
 use App\Services\NotificationService;
 use App\Services\PhotoService;
+use App\Services\RealtimeEventService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -30,7 +31,7 @@ class JCodeController extends Controller
      */
     public function store(GenerateJCodeRequest $request): JsonResponse
     {
-        $user    = $request->user();
+        $user = $request->user();
         $mission = Mission::findOrFail($request->mission_id);
         $fournisseur = User::findOrFail($request->fournisseur_id);
 
@@ -58,7 +59,7 @@ class JCodeController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => new JCodeResource($jcode),
+            'data' => new JCodeResource($jcode),
         ], 201);
     }
 
@@ -76,15 +77,23 @@ class JCodeController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => JCodeResource::collection($jcodes),
+            'data' => JCodeResource::collection($jcodes),
         ]);
     }
 
-    public function show(JCode $jcode): JsonResponse
+    public function show(JCode $jcode, Request $request): JsonResponse
     {
+        $user = $request->user();
+        if ($jcode->artisan_id !== $user->id && $jcode->fournisseur_id !== $user->id && $user->role !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Non autorisé.',
+            ], 403);
+        }
+
         return response()->json([
             'success' => true,
-            'data'    => new JCodeResource($jcode->load('artisan', 'fournisseur.fournisseurAgree', 'items.supplierProduct')),
+            'data' => new JCodeResource($jcode->load('artisan', 'fournisseur.fournisseurAgree', 'items.supplierProduct')),
         ]);
     }
 
@@ -100,6 +109,18 @@ class JCodeController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Seul un fournisseur agréé peut valider un J-Code.',
+            ], 403);
+        }
+
+        // Seul le fournisseur désigné à la génération du J-Code peut le
+        // scanner : sans ce contrôle, n'importe quel fournisseur agréé de la
+        // plateforme pouvait scanner un J-Code destiné à un concurrent (GPS
+        // vérifié sur SA propre boutique) et détourner à son profit le
+        // paiement J+1 programmé par PaySupplierJob.
+        if ($jcode->fournisseur_id !== $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ce J-Code n\'est pas destiné à votre boutique.',
             ], 403);
         }
 
@@ -119,7 +140,7 @@ class JCodeController extends Controller
         );
 
         try {
-            app(\App\Services\RealtimeEventService::class)->broadcast(
+            app(RealtimeEventService::class)->broadcast(
                 $jcode->mission_id,
                 'jcode_scanned',
                 [
@@ -130,20 +151,21 @@ class JCodeController extends Controller
                     'montant_restant' => (int) ($result['montant_restant'] ?? 0),
                 ]
             );
-        } catch (\Throwable $e) {}
+        } catch (\Throwable $e) {
+        }
 
         try {
             return response()->json([
-                'success'  => true,
-                'message'  => $result['fully_consumed']
+                'success' => true,
+                'message' => $result['fully_consumed']
                     ? 'J-Code validé. Paiement J+1 garanti.'
-                    : 'J-Code partiellement valide. Solde restant : ' . $result['montant_restant'] . ' FCFA.',
-                'data'     => $result,
+                    : 'J-Code partiellement valide. Solde restant : '.$result['montant_restant'].' FCFA.',
+                'data' => $result,
             ]);
         } catch (\Exception $e) {
             Log::error('JSON encoding failed in JCodeController::scan', [
                 'data' => $result,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
             throw $e;
         }
@@ -162,7 +184,7 @@ class JCodeController extends Controller
             if ($jcode->artisan_id !== $user->id) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Non autorisé'
+                    'message' => 'Non autorisé',
                 ], 403);
             }
 
@@ -170,7 +192,7 @@ class JCodeController extends Controller
             if ($jcode->statut !== 'utilise') {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Le J-Code doit être utilisé avant d\'uploader une photo'
+                    'message' => 'Le J-Code doit être utilisé avant d\'uploader une photo',
                 ], 400);
             }
 
@@ -178,7 +200,7 @@ class JCodeController extends Controller
             if ($jcode->photo_materiaux_url) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Une photo a déjà été uploadée pour ce J-Code'
+                    'message' => 'Une photo a déjà été uploadée pour ce J-Code',
                 ], 400);
             }
 
@@ -227,7 +249,7 @@ class JCodeController extends Controller
                     'latitude' => $uploaded['latitude'],
                     'longitude' => $uploaded['longitude'],
                     'taken_at' => $uploaded['taken_at'],
-                ]
+                ],
             ]);
 
         } catch (\Exception $e) {
@@ -239,7 +261,7 @@ class JCodeController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur lors de l\'upload de la photo: ' . $e->getMessage()
+                'message' => 'Erreur lors de l\'upload de la photo: '.$e->getMessage(),
             ], 500);
         }
     }

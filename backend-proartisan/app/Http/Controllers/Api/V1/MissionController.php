@@ -19,6 +19,7 @@ use App\States\Mission\PendingArtisanAcceptanceState;
 use App\States\Mission\PendingFundingState;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class MissionController extends Controller
 {
@@ -116,7 +117,7 @@ class MissionController extends Controller
                     ]);
                 }
             } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::warning('Impossible de synchroniser le téléphone de paiement: ' . $e->getMessage());
+                Log::warning('Impossible de synchroniser le téléphone de paiement: '.$e->getMessage());
             }
 
             $mission = $this->missionService->create($user, $request->validated());
@@ -126,14 +127,14 @@ class MissionController extends Controller
                 'data' => new MissionResource($mission->load('client', 'jalons', 'requestedSector', 'requestedTrade')),
             ], 201);
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('Erreur lors de la création de la mission: ' . $e->getMessage(), [
+            Log::error('Erreur lors de la création de la mission: '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
                 'payload' => $request->all(),
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur lors de la création: ' . $e->getMessage(),
+                'message' => 'Erreur lors de la création: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -280,6 +281,14 @@ class MissionController extends Controller
      */
     public function updateStatus(Request $request, Mission $mission): JsonResponse
     {
+        $user = $request->user();
+        if ($mission->client_id !== $user->id && $mission->artisan_id !== $user->id && $user->role !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Non autorisé.',
+            ], 403);
+        }
+
         if ($mission->hasPendingDevis()) {
             return response()->json([
                 'success' => false,

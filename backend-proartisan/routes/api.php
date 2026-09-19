@@ -1,9 +1,9 @@
 <?php
 
 use App\Http\Controllers\Admin\LlmAdminController;
+use App\Http\Controllers\Api\V1\AddressController;
 use App\Http\Controllers\Api\V1\AdminController;
 use App\Http\Controllers\Api\V1\AdminRolePermissionController;
-use App\Http\Controllers\Api\V1\AddressController;
 use App\Http\Controllers\Api\V1\ArtisanController;
 use App\Http\Controllers\Api\V1\ArtisanStockController;
 use App\Http\Controllers\Api\V1\AuthController;
@@ -354,38 +354,51 @@ Route::prefix('v1')->group(function () {
         });
 
         // ── Administration ─────────────────────────────────────────────────────
+        // Miroir mobile des routes du backoffice web (routes/web.php) : chaque
+        // action porte la même capacité fine `can:admin.xxx` que son équivalent
+        // web, faute de quoi un admin restreint dans le backoffice retrouvait
+        // un accès total via cette API (aucune capacité n'y était vérifiée,
+        // seul le rôle 'admin' l'était).
         Route::prefix('admin')->middleware('admin.only')->group(function () {
             Route::get('/dashboard', [AdminController::class, 'dashboard']);
 
             // Gestion des Rôles & Permissions
-            Route::get('/roles-permissions', [AdminRolePermissionController::class, 'index']);
-            Route::get('/permissions', [AdminRolePermissionController::class, 'listPermissions']);
-            Route::post('/roles-permissions/assign', [AdminRolePermissionController::class, 'assign']);
-            Route::post('/roles-permissions/revoke', [AdminRolePermissionController::class, 'revoke']);
+            Route::middleware('can:admin.roles.manage')->group(function () {
+                Route::get('/roles-permissions', [AdminRolePermissionController::class, 'index']);
+                Route::get('/permissions', [AdminRolePermissionController::class, 'listPermissions']);
+                Route::post('/roles-permissions/assign', [AdminRolePermissionController::class, 'assign']);
+                Route::post('/roles-permissions/revoke', [AdminRolePermissionController::class, 'revoke']);
+            });
 
-            Route::put('/settings/app-access', [SettingController::class, 'updateAppAccess']);
+            Route::put('/settings/app-access', [SettingController::class, 'updateAppAccess'])
+                ->middleware('can:admin.settings.manage');
 
-            Route::get('/kyc/pending', [AdminController::class, 'pendingKyc']);
-            Route::post('/kyc/{user}/review', [AdminController::class, 'reviewKyc']);
+            Route::get('/kyc/pending', [AdminController::class, 'pendingKyc'])->middleware('can:admin.kyc.view');
+            Route::post('/kyc/{user}/review', [AdminController::class, 'reviewKyc'])->middleware('can:admin.kyc.review');
 
-            Route::get('/missions', [AdminController::class, 'missions']);
-            Route::get('/litiges', [AdminController::class, 'litiges']);
-            Route::post('/litiges/{litige}/resolve', [AdminController::class, 'resolveLitige']);
+            Route::get('/missions', [AdminController::class, 'missions'])->middleware('can:admin.missions.view');
+            Route::get('/litiges', [AdminController::class, 'litiges'])->middleware('can:admin.litiges.view');
+            Route::post('/litiges/{litige}/resolve', [AdminController::class, 'resolveLitige'])
+                ->middleware('can:admin.litiges.arbitrate');
 
-            Route::get('/fournisseurs/pending', [AdminController::class, 'pendingFournisseurs']);
-            Route::post('/fournisseurs/{fournisseur}/review', [AdminController::class, 'reviewFournisseur']);
+            Route::middleware('can:admin.fournisseurs.review')->group(function () {
+                Route::get('/fournisseurs/pending', [AdminController::class, 'pendingFournisseurs']);
+                Route::post('/fournisseurs/{fournisseur}/review', [AdminController::class, 'reviewFournisseur']);
+            });
 
-            Route::get('/users', [AdminController::class, 'users']);
-            Route::get('/transactions', [AdminController::class, 'transactions']);
+            Route::get('/users', [AdminController::class, 'users'])->middleware('can:admin.users.view');
+            Route::get('/transactions', [AdminController::class, 'transactions'])->middleware('can:admin.transactions.view');
 
             // ── Communications (gestion admin) ────────────────────────────────
-            Route::get('/communications', [CommunicationController::class, 'index']);
-            Route::post('/communications', [CommunicationController::class, 'store']);
-            Route::get('/communications/{communication}', [CommunicationController::class, 'show']);
-            Route::put('/communications/{communication}', [CommunicationController::class, 'update']);
-            Route::post('/communications/{communication}/publish', [CommunicationController::class, 'publish']);
-            Route::post('/communications/{communication}/cloturer', [CommunicationController::class, 'cloturer']);
-            Route::delete('/communications/{communication}', [CommunicationController::class, 'destroy']);
+            Route::middleware('can:admin.communications.manage')->group(function () {
+                Route::get('/communications', [CommunicationController::class, 'index']);
+                Route::post('/communications', [CommunicationController::class, 'store']);
+                Route::get('/communications/{communication}', [CommunicationController::class, 'show']);
+                Route::put('/communications/{communication}', [CommunicationController::class, 'update']);
+                Route::post('/communications/{communication}/publish', [CommunicationController::class, 'publish']);
+                Route::post('/communications/{communication}/cloturer', [CommunicationController::class, 'cloturer']);
+                Route::delete('/communications/{communication}', [CommunicationController::class, 'destroy']);
+            });
         });
     });
 });

@@ -9,11 +9,14 @@ use App\Http\Requests\UploadJalonPhotosRequest;
 use App\Http\Resources\JalonResource;
 use App\Models\Jalon;
 use App\Models\Mission;
+use App\Models\Setting;
 use App\Services\JalonService;
 use App\Services\PhotoService;
+use App\Services\RealtimeEventService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class JalonController extends Controller
 {
@@ -22,13 +25,21 @@ class JalonController extends Controller
         private PhotoService $photoService
     ) {}
 
-    public function index(Mission $mission): JsonResponse
+    public function index(Mission $mission, Request $request): JsonResponse
     {
+        $user = $request->user();
+        if ($mission->client_id !== $user->id && $mission->artisan_id !== $user->id && $user->role !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Non autorisé.',
+            ], 403);
+        }
+
         $jalons = $mission->jalons()->orderBy('ordre')->get();
 
         return response()->json([
             'success' => true,
-            'data'    => JalonResource::collection($jalons),
+            'data' => JalonResource::collection($jalons),
         ]);
     }
 
@@ -37,6 +48,13 @@ class JalonController extends Controller
      */
     public function submit(SubmitJalonRequest $request, Jalon $jalon): JsonResponse
     {
+        if ($jalon->mission->artisan_id !== $request->user()->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Non autorisé. Seul l\'artisan de la mission peut soumettre ce jalon.',
+            ], 403);
+        }
+
         if ($jalon->statut !== 'en_attente') {
             return response()->json([
                 'success' => false,
@@ -47,7 +65,7 @@ class JalonController extends Controller
         $this->jalonService->submit($jalon, $request->validated()['photos'] ?? []);
 
         try {
-            app(\App\Services\RealtimeEventService::class)->broadcast(
+            app(RealtimeEventService::class)->broadcast(
                 $jalon->mission_id,
                 'jalon_updated',
                 [
@@ -57,12 +75,13 @@ class JalonController extends Controller
                     'action' => 'submitted',
                 ]
             );
-        } catch (\Throwable $e) {}
+        } catch (\Throwable $e) {
+        }
 
         return response()->json([
             'success' => true,
             'message' => 'Jalon soumis. Le client recevra un OTP de validation.',
-            'data'    => new JalonResource($jalon->fresh()),
+            'data' => new JalonResource($jalon->fresh()),
         ]);
     }
 
@@ -71,6 +90,13 @@ class JalonController extends Controller
      */
     public function requestOtp(Request $request, Jalon $jalon): JsonResponse
     {
+        if ($jalon->mission->artisan_id !== $request->user()->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Non autorisé. Seul l\'artisan de la mission peut demander cet OTP.',
+            ], 403);
+        }
+
         if ($jalon->statut !== 'soumis') {
             return response()->json([
                 'success' => false,
@@ -79,7 +105,7 @@ class JalonController extends Controller
         }
 
         $channel = $request->input('channel');
-        if ($channel && !in_array($channel, ['sms', 'whatsapp'])) {
+        if ($channel && ! in_array($channel, ['sms', 'whatsapp'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Le canal de communication doit être "sms" ou "whatsapp".',
@@ -88,7 +114,7 @@ class JalonController extends Controller
 
         $this->jalonService->requestOtp($jalon, $channel);
 
-        $globalChannel = \App\Models\Setting::getValueByKey('otp_delivery_channel', 'sms');
+        $globalChannel = Setting::getValueByKey('otp_delivery_channel', 'sms');
         $effectiveChannel = $channel ?: $globalChannel;
 
         $msg = 'Code OTP envoyé au client.';
@@ -113,6 +139,13 @@ class JalonController extends Controller
      */
     public function validateOtp(ValidateOtpRequest $request, Jalon $jalon): JsonResponse
     {
+        if ($jalon->mission->client_id !== $request->user()->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Non autorisé. Seul le client de la mission peut valider ce jalon.',
+            ], 403);
+        }
+
         if ($jalon->statut !== 'soumis') {
             return response()->json([
                 'success' => false,
@@ -132,7 +165,7 @@ class JalonController extends Controller
         $jalon->refresh();
 
         try {
-            app(\App\Services\RealtimeEventService::class)->broadcast(
+            app(RealtimeEventService::class)->broadcast(
                 $jalon->mission_id,
                 'jalon_updated',
                 [
@@ -142,7 +175,8 @@ class JalonController extends Controller
                     'action' => 'validated',
                 ]
             );
-        } catch (\Throwable $e) {}
+        } catch (\Throwable $e) {
+        }
 
         $message = $jalon->mission->referent_required
             ? 'Jalon validé. Un référent de zone doit confirmer avant le paiement (mission > 2 000 000 FCFA).'
@@ -151,7 +185,7 @@ class JalonController extends Controller
         return response()->json([
             'success' => true,
             'message' => $message,
-            'data'    => new JalonResource($jalon),
+            'data' => new JalonResource($jalon),
         ]);
     }
 
@@ -168,15 +202,15 @@ class JalonController extends Controller
             if ($jalon->mission->artisan_id !== $user->id) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Non autorisé'
+                    'message' => 'Non autorisé',
                 ], 403);
             }
 
             // Vérifier que le jalon n'est pas déjà validé
-            if (!in_array($jalon->statut, ['en_attente', 'soumis'])) {
+            if (! in_array($jalon->statut, ['en_attente', 'soumis'])) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Ce jalon ne peut plus recevoir de photos'
+                    'message' => 'Ce jalon ne peut plus recevoir de photos',
                 ], 400);
             }
 
@@ -209,7 +243,7 @@ class JalonController extends Controller
             if (empty($photosData)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Aucune photo n\'a pu être uploadée'
+                    'message' => 'Aucune photo n\'a pu être uploadée',
                 ], 500);
             }
 
@@ -218,7 +252,7 @@ class JalonController extends Controller
             $allPhotos = array_merge($existingPhotos, $photosData);
 
             $jalon->update([
-                'photos_json' => $allPhotos
+                'photos_json' => $allPhotos,
             ]);
 
             Log::info('Photos jalons uploadées', [
@@ -228,13 +262,13 @@ class JalonController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => count($photosData) . ' photo(s) uploadée(s) avec succès',
+                'message' => count($photosData).' photo(s) uploadée(s) avec succès',
                 'data' => [
                     'jalon_id' => $jalon->id,
                     'photos_uploaded' => count($photosData),
                     'total_photos' => count($allPhotos),
                     'photos' => $photosData,
-                ]
+                ],
             ]);
 
         } catch (\Exception $e) {
@@ -246,7 +280,7 @@ class JalonController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur lors de l\'upload des photos'
+                'message' => 'Erreur lors de l\'upload des photos',
             ], 500);
         }
     }
@@ -263,7 +297,7 @@ class JalonController extends Controller
         if ($jalon->mission->client_id !== $user->id) {
             return response()->json([
                 'success' => false,
-                'message' => 'Non autorisé. Seul le client de la mission peut accepter les preuves.'
+                'message' => 'Non autorisé. Seul le client de la mission peut accepter les preuves.',
             ], 403);
         }
 
@@ -271,13 +305,13 @@ class JalonController extends Controller
         if ($jalon->statut !== 'soumis') {
             return response()->json([
                 'success' => false,
-                'message' => 'Le jalon doit être au statut soumis pour pouvoir en accepter les preuves.'
+                'message' => 'Le jalon doit être au statut soumis pour pouvoir en accepter les preuves.',
             ], 422);
         }
 
         try {
             $this->jalonService->acceptProofs($jalon);
-            
+
             $jalon->refresh();
             $message = $jalon->mission->referent_required
                 ? 'Preuves acceptées. Un référent de zone doit confirmer physiquement avant le paiement (mission > 2 000 000 FCFA).'
@@ -286,18 +320,18 @@ class JalonController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => $message,
-                'data'    => new JalonResource($jalon),
+                'data' => new JalonResource($jalon),
             ]);
 
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 422);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur lors de l\'acceptation des preuves'
+                'message' => 'Erreur lors de l\'acceptation des preuves',
             ], 500);
         }
     }

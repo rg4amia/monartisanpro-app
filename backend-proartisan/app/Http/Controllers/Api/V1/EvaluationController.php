@@ -5,12 +5,14 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Evaluation\CreateEvaluationRequest;
 use App\Models\Evaluation;
+use App\Models\JCodeItem;
 use App\Models\Mission;
 use App\Models\Order;
 use App\Models\User;
 use App\Services\ScoreService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class EvaluationController extends Controller
 {
@@ -36,6 +38,13 @@ class EvaluationController extends Controller
         if ($missionId) {
             $mission = Mission::findOrFail($missionId);
 
+            if ($mission->client_id !== $user->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Seul le client ayant demandé cette mission peut évaluer.',
+                ], 403);
+            }
+
             if ((string) $mission->status !== 'completed' && (string) $mission->status !== 'terminee') {
                 return response()->json([
                     'success' => false,
@@ -50,7 +59,7 @@ class EvaluationController extends Controller
             } elseif ($evalue->isFournisseur()) {
                 $jcodeIds = $mission->jcodes()->pluck('id');
                 $hasServed = $mission->jcodes()->where('fournisseur_id', $evalue->id)->exists()
-                    || \App\Models\JCodeItem::whereIn('jcode_id', $jcodeIds)->where('served_by_supplier_id', $evalue->id)->exists();
+                    || JCodeItem::whereIn('jcode_id', $jcodeIds)->where('served_by_supplier_id', $evalue->id)->exists();
                 if ($hasServed) {
                     $isValidRecipient = true;
                 }
@@ -58,7 +67,7 @@ class EvaluationController extends Controller
                 $isValidRecipient = true;
             }
 
-            if (!$isValidRecipient) {
+            if (! $isValidRecipient) {
                 return response()->json([
                     'success' => false,
                     'message' => 'L\'utilisateur évalué n\'est pas associé à cette mission.',
@@ -101,7 +110,7 @@ class EvaluationController extends Controller
                 $isValidRecipient = true;
             }
 
-            if (!$isValidRecipient) {
+            if (! $isValidRecipient) {
                 return response()->json([
                     'success' => false,
                     'message' => 'L\'utilisateur évalué n\'est pas associé à cette commande.',
@@ -125,13 +134,13 @@ class EvaluationController extends Controller
         try {
             $evalData = [
                 'evaluateur_id' => $user->id,
-                'evalue_id'     => $evalue->id,
-                'note'          => (int) $request->note,
-                'commentaire'   => $request->commentaire,
-                'fiabilite'     => $request->fiabilite ? (int) $request->fiabilite : (int) $request->note,
-                'integrite'     => $request->integrite ? (int) $request->integrite : (int) $request->note,
-                'qualite'       => $request->qualite ? (int) $request->qualite : (int) $request->note,
-                'reactivite'    => $request->reactivite ? (int) $request->reactivite : (int) $request->note,
+                'evalue_id' => $evalue->id,
+                'note' => (int) $request->note,
+                'commentaire' => $request->commentaire,
+                'fiabilite' => $request->fiabilite ? (int) $request->fiabilite : (int) $request->note,
+                'integrite' => $request->integrite ? (int) $request->integrite : (int) $request->note,
+                'qualite' => $request->qualite ? (int) $request->qualite : (int) $request->note,
+                'reactivite' => $request->reactivite ? (int) $request->reactivite : (int) $request->note,
             ];
 
             if ($mission) {
@@ -152,21 +161,21 @@ class EvaluationController extends Controller
                     $newScore = $this->scoreService->recalculateLogistic($evalue);
                 }
             } catch (\Throwable $scoreEx) {
-                \Illuminate\Support\Facades\Log::warning("Score recalculation warning: " . $scoreEx->getMessage());
+                Log::warning('Score recalculation warning: '.$scoreEx->getMessage());
                 $newScore = $evalue->score_prosartisan;
             }
 
             return response()->json([
                 'success' => true,
                 'message' => 'Évaluation enregistrée avec succès.',
-                'data'    => [
-                    'id'               => $evaluation->id,
-                    'note'             => $evaluation->note,
+                'data' => [
+                    'id' => $evaluation->id,
+                    'note' => $evaluation->note,
                     'scoreProsArtisan' => $newScore ?? null,
                 ],
             ], 201);
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error("Erreur lors de l'enregistrement de l'évaluation: " . $e->getMessage(), [
+            Log::error("Erreur lors de l'enregistrement de l'évaluation: ".$e->getMessage(), [
                 'user_id' => $user->id,
                 'evalue_id' => $evalue->id,
                 'exception' => $e,
@@ -174,7 +183,7 @@ class EvaluationController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur lors de l\'enregistrement de votre évaluation : ' . $e->getMessage(),
+                'message' => 'Erreur lors de l\'enregistrement de votre évaluation : '.$e->getMessage(),
             ], 500);
         }
     }
@@ -206,21 +215,21 @@ class EvaluationController extends Controller
                     ->first();
 
                 $actors[] = [
-                    'id'          => $artisan->id,
-                    'name'        => $artisan->name,
-                    'role'        => 'artisan',
-                    'role_label'  => 'Artisan',
-                    'subtitle'    => $artisan->artisanProfile?->trade?->name ?? 'Artisan qualifié',
-                    'avatar_url'  => $artisan->avatar_url ?? null,
-                    'is_evaluated'=> $eval !== null,
-                    'evaluation'  => $eval ? [
-                        'note'        => $eval->note,
+                    'id' => $artisan->id,
+                    'name' => $artisan->name,
+                    'role' => 'artisan',
+                    'role_label' => 'Artisan',
+                    'subtitle' => $artisan->artisanProfile?->trade?->name ?? 'Artisan qualifié',
+                    'avatar_url' => $artisan->avatar_url ?? null,
+                    'is_evaluated' => $eval !== null,
+                    'evaluation' => $eval ? [
+                        'note' => $eval->note,
                         'commentaire' => $eval->commentaire,
-                        'fiabilite'   => $eval->fiabilite,
-                        'integrite'   => $eval->integrite,
-                        'qualite'     => $eval->qualite,
-                        'reactivite'  => $eval->reactivite,
-                        'created_at'  => $eval->created_at?->toIso8601String(),
+                        'fiabilite' => $eval->fiabilite,
+                        'integrite' => $eval->integrite,
+                        'qualite' => $eval->qualite,
+                        'reactivite' => $eval->reactivite,
+                        'created_at' => $eval->created_at?->toIso8601String(),
                     ] : null,
                 ];
             }
@@ -228,7 +237,7 @@ class EvaluationController extends Controller
 
         // 2. Fournisseurs associés aux J-Codes ou items
         $jcodeSupplierIds = $mission->jcodes()->whereNotNull('fournisseur_id')->pluck('fournisseur_id')->unique();
-        $itemSupplierIds = \App\Models\JCodeItem::whereIn('jcode_id', $mission->jcodes()->pluck('id'))
+        $itemSupplierIds = JCodeItem::whereIn('jcode_id', $mission->jcodes()->pluck('id'))
             ->whereNotNull('served_by_supplier_id')
             ->pluck('served_by_supplier_id')
             ->unique();
@@ -243,21 +252,21 @@ class EvaluationController extends Controller
                     ->first();
 
                 $actors[] = [
-                    'id'          => $supplier->id,
-                    'name'        => $supplier->fournisseurAgree?->nom_boutique ?? $supplier->name,
-                    'role'        => 'fournisseur',
-                    'role_label'  => 'Quincaillerie & Fournisseur',
-                    'subtitle'    => 'Fournisseur agréé de matériaux',
-                    'avatar_url'  => $supplier->avatar_url ?? null,
-                    'is_evaluated'=> $eval !== null,
-                    'evaluation'  => $eval ? [
-                        'note'        => $eval->note,
+                    'id' => $supplier->id,
+                    'name' => $supplier->fournisseurAgree?->nom_boutique ?? $supplier->name,
+                    'role' => 'fournisseur',
+                    'role_label' => 'Quincaillerie & Fournisseur',
+                    'subtitle' => 'Fournisseur agréé de matériaux',
+                    'avatar_url' => $supplier->avatar_url ?? null,
+                    'is_evaluated' => $eval !== null,
+                    'evaluation' => $eval ? [
+                        'note' => $eval->note,
                         'commentaire' => $eval->commentaire,
-                        'fiabilite'   => $eval->fiabilite,
-                        'integrite'   => $eval->integrite,
-                        'qualite'     => $eval->qualite,
-                        'reactivite'  => $eval->reactivite,
-                        'created_at'  => $eval->created_at?->toIso8601String(),
+                        'fiabilite' => $eval->fiabilite,
+                        'integrite' => $eval->integrite,
+                        'qualite' => $eval->qualite,
+                        'reactivite' => $eval->reactivite,
+                        'created_at' => $eval->created_at?->toIso8601String(),
                     ] : null,
                 ];
             }
@@ -275,11 +284,11 @@ class EvaluationController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => [
+            'data' => [
                 'mission_id' => $mission->id,
-                'status'     => (string) $mission->status,
-                'is_completed'=> in_array((string) $mission->status, ['completed', 'terminee'], true),
-                'actors'     => $actors,
+                'status' => (string) $mission->status,
+                'is_completed' => in_array((string) $mission->status, ['completed', 'terminee'], true),
+                'actors' => $actors,
             ],
         ]);
     }
@@ -311,17 +320,17 @@ class EvaluationController extends Controller
                     ->first();
 
                 $actors[] = [
-                    'id'          => $supplier->id,
-                    'name'        => $supplier->fournisseurAgree?->nom_boutique ?? $supplier->name,
-                    'role'        => 'fournisseur',
-                    'role_label'  => 'Fournisseur / Boutique',
-                    'subtitle'    => 'Quincaillerie agréée',
-                    'avatar_url'  => $supplier->avatar_url ?? null,
-                    'is_evaluated'=> $eval !== null,
-                    'evaluation'  => $eval ? [
-                        'note'        => $eval->note,
+                    'id' => $supplier->id,
+                    'name' => $supplier->fournisseurAgree?->nom_boutique ?? $supplier->name,
+                    'role' => 'fournisseur',
+                    'role_label' => 'Fournisseur / Boutique',
+                    'subtitle' => 'Quincaillerie agréée',
+                    'avatar_url' => $supplier->avatar_url ?? null,
+                    'is_evaluated' => $eval !== null,
+                    'evaluation' => $eval ? [
+                        'note' => $eval->note,
                         'commentaire' => $eval->commentaire,
-                        'created_at'  => $eval->created_at?->toIso8601String(),
+                        'created_at' => $eval->created_at?->toIso8601String(),
                     ] : null,
                 ];
             }
@@ -337,17 +346,17 @@ class EvaluationController extends Controller
                     ->first();
 
                 $actors[] = [
-                    'id'          => $driver->id,
-                    'name'        => $driver->name,
-                    'role'        => 'livreur',
-                    'role_label'  => 'Livreur Express',
-                    'subtitle'    => 'Transport & logistique',
-                    'avatar_url'  => $driver->avatar_url ?? null,
-                    'is_evaluated'=> $eval !== null,
-                    'evaluation'  => $eval ? [
-                        'note'        => $eval->note,
+                    'id' => $driver->id,
+                    'name' => $driver->name,
+                    'role' => 'livreur',
+                    'role_label' => 'Livreur Express',
+                    'subtitle' => 'Transport & logistique',
+                    'avatar_url' => $driver->avatar_url ?? null,
+                    'is_evaluated' => $eval !== null,
+                    'evaluation' => $eval ? [
+                        'note' => $eval->note,
                         'commentaire' => $eval->commentaire,
-                        'created_at'  => $eval->created_at?->toIso8601String(),
+                        'created_at' => $eval->created_at?->toIso8601String(),
                     ] : null,
                 ];
             }
@@ -355,11 +364,11 @@ class EvaluationController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => [
-                'order_id'    => $order->id,
-                'status'      => $order->status,
-                'is_delivered'=> $order->status === 'delivered',
-                'actors'      => $actors,
+            'data' => [
+                'order_id' => $order->id,
+                'status' => $order->status,
+                'is_delivered' => $order->status === 'delivered',
+                'actors' => $actors,
             ],
         ]);
     }
@@ -384,11 +393,10 @@ class EvaluationController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => [
-                'given'    => $given,
+            'data' => [
+                'given' => $given,
                 'received' => $received,
             ],
         ]);
     }
 }
-

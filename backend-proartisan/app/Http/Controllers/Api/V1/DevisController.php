@@ -8,21 +8,33 @@ use App\Http\Resources\DevisResource;
 use App\Models\Devis;
 use App\Models\Mission;
 use App\Models\Transaction;
+use App\Services\AiMonitoringService;
 use App\Services\DevisService;
+use App\Services\GeminiService;
+use App\Services\RealtimeEventService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class DevisController extends Controller
 {
     public function __construct(private DevisService $devisService) {}
 
-    public function index(Mission $mission): JsonResponse
+    public function index(Mission $mission, Request $request): JsonResponse
     {
+        $user = $request->user();
+        if ($mission->client_id !== $user->id && $mission->artisan_id !== $user->id && $user->role !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Non autorisé.',
+            ], 403);
+        }
+
         $devis = $mission->devis()->with(['artisan', 'mission'])->orderBy('created_at', 'desc')->get();
 
         return response()->json([
             'success' => true,
-            'data'    => DevisResource::collection($devis),
+            'data' => DevisResource::collection($devis),
         ]);
     }
 
@@ -46,7 +58,7 @@ class DevisController extends Controller
                     'preferred_payment_provider' => $request->input('preferred_payment_provider'),
                 ]);
             } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::warning('Impossible de synchroniser le téléphone de paiement (devis): ' . $e->getMessage());
+                Log::warning('Impossible de synchroniser le téléphone de paiement (devis): '.$e->getMessage());
             }
         }
 
@@ -61,20 +73,36 @@ class DevisController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => new DevisResource($devis->load(['artisan', 'mission'])),
+            'data' => new DevisResource($devis->load(['artisan', 'mission'])),
         ], 201);
     }
 
-    public function show(Devis $devis): JsonResponse
+    public function show(Devis $devis, Request $request): JsonResponse
     {
+        $user = $request->user();
+        $devis->loadMissing('mission');
+        if ($devis->artisan_id !== $user->id && $devis->mission->client_id !== $user->id && $user->role !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Non autorisé.',
+            ], 403);
+        }
+
         return response()->json([
             'success' => true,
-            'data'    => new DevisResource($devis->load(['artisan', 'mission'])),
+            'data' => new DevisResource($devis->load(['artisan', 'mission'])),
         ]);
     }
 
     public function update(CreateDevisRequest $request, Devis $devis): JsonResponse
     {
+        if ($devis->artisan_id !== $request->user()->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Seul l\'artisan auteur de ce devis peut le modifier.',
+            ], 403);
+        }
+
         if ($devis->statut !== 'brouillon') {
             return response()->json([
                 'success' => false,
@@ -96,7 +124,7 @@ class DevisController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => new DevisResource($devis->fresh()->load(['artisan', 'mission'])),
+            'data' => new DevisResource($devis->fresh()->load(['artisan', 'mission'])),
         ]);
     }
 
@@ -155,7 +183,7 @@ class DevisController extends Controller
                 'message' => $devis->is_avenant
                     ? 'Cet avenant est déjà accepté et financé.'
                     : 'Ce devis est déjà accepté et financé.',
-                'data'    => new DevisResource($devis->fresh()->load(['artisan', 'mission'])),
+                'data' => new DevisResource($devis->fresh()->load(['artisan', 'mission'])),
             ]);
         }
 
@@ -169,7 +197,7 @@ class DevisController extends Controller
         $this->devisService->accept($devis, $transaction);
 
         try {
-            app(\App\Services\RealtimeEventService::class)->broadcast(
+            app(RealtimeEventService::class)->broadcast(
                 $devis->mission_id,
                 'mission_status',
                 [
@@ -178,14 +206,15 @@ class DevisController extends Controller
                     'is_avenant' => (bool) $devis->is_avenant,
                 ]
             );
-        } catch (\Throwable $e) {}
+        } catch (\Throwable $e) {
+        }
 
         return response()->json([
             'success' => true,
             'message' => $devis->is_avenant
                 ? 'Avenant accepté et séquestre mis à jour.'
                 : 'Devis accepté. La mission est maintenant financée.',
-            'data'    => new DevisResource($devis->fresh()->load(['artisan', 'mission'])),
+            'data' => new DevisResource($devis->fresh()->load(['artisan', 'mission'])),
         ]);
     }
 
@@ -218,7 +247,7 @@ class DevisController extends Controller
     /**
      * Suggère des lignes et jalons de devis via Gemini pour aider l'artisan.
      */
-    public function suggest(Mission $mission, Request $request, \App\Services\GeminiService $geminiService): JsonResponse
+    public function suggest(Mission $mission, Request $request, GeminiService $geminiService): JsonResponse
     {
         $user = $request->user();
 
@@ -233,14 +262,14 @@ class DevisController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $suggestion,
+            'data' => $suggestion,
         ]);
     }
 
     /**
      * Analyse un enregistrement audio pour pré-remplir le devis (Voice-to-Quote).
      */
-    public function parseVoiceQuote(Mission $mission, Request $request, \App\Services\GeminiService $geminiService): JsonResponse
+    public function parseVoiceQuote(Mission $mission, Request $request, GeminiService $geminiService): JsonResponse
     {
         $user = $request->user();
 
@@ -252,7 +281,7 @@ class DevisController extends Controller
         }
 
         // Vérification des quotas IA
-        if (! \App\Services\AiMonitoringService::checkUserLimit($user->id)) {
+        if (! AiMonitoringService::checkUserLimit($user->id)) {
             return response()->json([
                 'success' => false,
                 'message' => "Quota d'assistance IA atteint pour aujourd'hui. Saisissez votre devis manuellement ou réessayez demain.",
@@ -282,7 +311,7 @@ class DevisController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $suggestion,
+            'data' => $suggestion,
         ]);
     }
 }

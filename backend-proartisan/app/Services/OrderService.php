@@ -2,21 +2,31 @@
 
 namespace App\Services;
 
-use App\Models\Order;
-use App\Models\OrderItem;
-use App\Models\SupplierProduct;
-use App\Models\User;
-use App\Models\Transaction;
-use App\Enums\WalletType;
 use App\Enums\PaymentProvider;
 use App\Enums\PaymentStatus;
+use App\Enums\WalletType;
+use App\Models\Address;
+use App\Models\DeliveryTracking;
+use App\Models\FournisseurAgree;
+use App\Models\Order;
+use App\Models\OrderItem;
+use App\Models\PromoCode;
+use App\Models\Setting;
+use App\Models\SupplierProduct;
+use App\Models\Transaction;
+use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class OrderService
 {
     private OsrmRoutingService $osrmService;
+
     private RealtimeEventService $realtimeEventService;
+
     private DeliveryPricingService $pricingService;
 
     public function __construct(
@@ -34,7 +44,7 @@ class OrderService
     /**
      * Crée une commande et calcule les coûts associés.
      */
-    public function createOrder(User $client, User $supplier, array $items, string $deliveryMode, string $vehicleClass = 'moto', float $surgeMultiplier = 1.0, ?string $promoCode = null, ?\App\Models\Address $address = null): Order
+    public function createOrder(User $client, User $supplier, array $items, string $deliveryMode, string $vehicleClass = 'moto', float $surgeMultiplier = 1.0, ?string $promoCode = null, ?Address $address = null): Order
     {
         return DB::transaction(function () use ($client, $supplier, $items, $deliveryMode, $vehicleClass, $surgeMultiplier, $promoCode, $address) {
             $subtotal = 0;
@@ -60,19 +70,19 @@ class OrderService
             }
 
             // 2. Calcul des frais de service plateforme (dynamique depuis settings, default 3%)
-            $platformFeeRatio = \App\Models\Setting::getValueByKey('platform_fee_ratio', 0.03);
+            $platformFeeRatio = Setting::getValueByKey('platform_fee_ratio', 0.03);
             $platformFee = (int) round($subtotal * $platformFeeRatio);
 
             // 3. Calcul dynamique de livraison différé (Distance x Temps)
             $deliveryCost = 0;
             if ($deliveryMode === 'delivery') {
                 $supplierProfile = $supplier->fournisseurAgree;
-                if (!$supplierProfile) {
-                    $supplierProfile = \App\Models\FournisseurAgree::firstOrCreate(
+                if (! $supplierProfile) {
+                    $supplierProfile = FournisseurAgree::firstOrCreate(
                         ['user_id' => $supplier->id],
                         [
                             'nom_boutique' => $supplier->name ?? 'Quincaillerie',
-                            'position' => DB::raw("ST_SRID(POINT(-4.0083, 5.3599), 4326)"),
+                            'position' => DB::raw('ST_SRID(POINT(-4.0083, 5.3599), 4326)'),
                             'statut' => 'agree',
                             'approuve_at' => now(),
                         ]
@@ -84,7 +94,7 @@ class OrderService
             $discountAmount = 0;
             if ($promoCode) {
                 $codeStr = strtoupper(trim($promoCode));
-                $appliedPromo = \App\Models\PromoCode::where('code', $codeStr)->first();
+                $appliedPromo = PromoCode::where('code', $codeStr)->first();
                 if ($appliedPromo) {
                     try {
                         $discountAmount = $appliedPromo->calculateDiscount($subtotal);
@@ -101,7 +111,7 @@ class OrderService
             $codeSuffix = str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);
             $pickupPrefix = $deliveryMode === 'delivery' ? 'LIVREUR' : 'RETRAIT';
             $pickupCode = "{$pickupPrefix}-{$codeSuffix}";
-            
+
             $receptionSuffix = str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);
             $receptionCode = "RECEPTION-{$receptionSuffix}";
 
@@ -144,8 +154,8 @@ class OrderService
                 'user_id' => $client->id,
                 'type' => 'acompte',
                 'montant' => $totalAmount,
-                'wallet_source' => 'client_mobile_money_' . $client->id,
-                'wallet_dest' => 'escrow_order_' . $order->id,
+                'wallet_source' => 'client_mobile_money_'.$client->id,
+                'wallet_dest' => 'escrow_order_'.$order->id,
                 'provider' => PaymentProvider::WAVE,
                 'statut' => PaymentStatus::CONFIRME,
                 'paid_at' => now(),
@@ -157,26 +167,26 @@ class OrderService
 
             // Notification Fournisseur
             try {
-                app(\App\Services\NotificationService::class)->send(
+                app(NotificationService::class)->send(
                     $supplier,
                     'payment',
                     'Nouvelle commande reçue',
-                    "La commande #{$order->id} d'un montant de " . number_format($order->subtotal, 0, ',', ' ') . " FCFA a été payée et est en attente de préparation."
+                    "La commande #{$order->id} d'un montant de ".number_format($order->subtotal, 0, ',', ' ').' FCFA a été payée et est en attente de préparation.'
                 );
             } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::warning("Notification fournisseur non bloquante : " . $e->getMessage());
+                Log::warning('Notification fournisseur non bloquante : '.$e->getMessage());
             }
 
             // Notification Client
             try {
-                app(\App\Services\NotificationService::class)->send(
+                app(NotificationService::class)->send(
                     $client,
                     'payment',
                     'Paiement commande confirmé',
-                    "Votre paiement de " . number_format($order->total_amount, 0, ',', ' ') . " FCFA pour la commande #{$order->id} est sécurisé en compte séquestre."
+                    'Votre paiement de '.number_format($order->total_amount, 0, ',', ' ')." FCFA pour la commande #{$order->id} est sécurisé en compte séquestre."
                 );
             } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::warning("Notification client non bloquante : " . $e->getMessage());
+                Log::warning('Notification client non bloquante : '.$e->getMessage());
             }
 
             return $order;
@@ -186,24 +196,21 @@ class OrderService
     /**
      * Crée un ensemble de sous-commandes pour un panier multi-fournisseurs avec paiement séquestre groupé.
      *
-     * @param User $client
-     * @param array $packages Liste des colis par fournisseur: [
-     *   [
-     *     'supplier_id' => int,
-     *     'delivery_mode' => 'delivery'|'pickup',
-     *     'vehicle_class' => 'moto'|'voiture'|'cargo',
-     *     'surge_multiplier' => float,
-     *     'items' => [ ['supplier_product_id' => int, 'quantity' => int], ... ]
-     *   ], ...
-     * ]
-     * @param string|null $promoCode
-     * @return array
+     * @param  array  $packages  Liste des colis par fournisseur: [
+     *                           [
+     *                           'supplier_id' => int,
+     *                           'delivery_mode' => 'delivery'|'pickup',
+     *                           'vehicle_class' => 'moto'|'voiture'|'cargo',
+     *                           'surge_multiplier' => float,
+     *                           'items' => [ ['supplier_product_id' => int, 'quantity' => int], ... ]
+     *                           ], ...
+     *                           ]
      */
-    public function createMultiSupplierOrders(User $client, array $packages, ?string $promoCode = null, ?\App\Models\Address $address = null): array
+    public function createMultiSupplierOrders(User $client, array $packages, ?string $promoCode = null, ?Address $address = null): array
     {
         return DB::transaction(function () use ($client, $packages, $promoCode, $address) {
-            $orderGroupId = 'GRP-' . strtoupper(Str::random(10));
-            $platformFeeRatio = \App\Models\Setting::getValueByKey('platform_fee_ratio', 0.03);
+            $orderGroupId = 'GRP-'.strtoupper(Str::random(10));
+            $platformFeeRatio = Setting::getValueByKey('platform_fee_ratio', 0.03);
 
             $createdOrders = [];
             $totalSubtotal = 0;
@@ -302,14 +309,14 @@ class OrderService
 
                 // Notification individuelle au fournisseur
                 try {
-                    app(\App\Services\NotificationService::class)->send(
+                    app(NotificationService::class)->send(
                         $supplier,
                         'payment',
                         'Nouvelle commande reçue (Panier multi-fournisseurs)',
-                        "La commande #{$order->id} (Groupe {$orderGroupId}) d'un montant de " . number_format($order->subtotal, 0, ',', ' ') . " FCFA a été payée et est en attente de préparation."
+                        "La commande #{$order->id} (Groupe {$orderGroupId}) d'un montant de ".number_format($order->subtotal, 0, ',', ' ').' FCFA a été payée et est en attente de préparation.'
                     );
                 } catch (\Throwable $e) {
-                    \Illuminate\Support\Facades\Log::warning("Notification fournisseur non bloquante : " . $e->getMessage());
+                    Log::warning('Notification fournisseur non bloquante : '.$e->getMessage());
                 }
             }
 
@@ -317,7 +324,7 @@ class OrderService
             $discountAmount = 0;
             if ($promoCode) {
                 $codeStr = strtoupper(trim($promoCode));
-                $appliedPromo = \App\Models\PromoCode::where('code', $codeStr)->first();
+                $appliedPromo = PromoCode::where('code', $codeStr)->first();
                 if ($appliedPromo) {
                     try {
                         $discountAmount = $appliedPromo->calculateDiscount($totalSubtotal);
@@ -334,8 +341,8 @@ class OrderService
                 'user_id' => $client->id,
                 'type' => 'acompte',
                 'montant' => $grandTotal,
-                'wallet_source' => 'client_mobile_money_' . $client->id,
-                'wallet_dest' => 'escrow_group_' . $orderGroupId,
+                'wallet_source' => 'client_mobile_money_'.$client->id,
+                'wallet_dest' => 'escrow_group_'.$orderGroupId,
                 'provider' => PaymentProvider::WAVE,
                 'statut' => PaymentStatus::CONFIRME,
                 'paid_at' => now(),
@@ -349,14 +356,14 @@ class OrderService
 
             // Notification Client
             try {
-                app(\App\Services\NotificationService::class)->send(
+                app(NotificationService::class)->send(
                     $client,
                     'payment',
                     'Paiement groupé confirmé',
-                    "Votre commande multi-fournisseurs ({$orderGroupId}) pour " . count($createdOrders) . " quincailleries d'un montant total de " . number_format($grandTotal, 0, ',', ' ') . " FCFA est sécurisée en compte séquestre."
+                    "Votre commande multi-fournisseurs ({$orderGroupId}) pour ".count($createdOrders)." quincailleries d'un montant total de ".number_format($grandTotal, 0, ',', ' ').' FCFA est sécurisée en compte séquestre.'
                 );
             } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::warning("Notification client non bloquante : " . $e->getMessage());
+                Log::warning('Notification client non bloquante : '.$e->getMessage());
             }
 
             return [
@@ -377,7 +384,7 @@ class OrderService
     public function markAsPrepared(Order $order): Order
     {
         if ($order->status !== 'paid') {
-            throw new \Exception("La commande ne peut pas être marquée comme préparée dans son état actuel.");
+            throw new \Exception('La commande ne peut pas être marquée comme préparée dans son état actuel.');
         }
 
         $nextStatus = $order->delivery_mode === 'delivery' ? 'searching_driver' : 'prepared';
@@ -386,14 +393,14 @@ class OrderService
         if ($nextStatus === 'prepared') {
             // Retrait direct : le client vient lui-même chercher sa commande.
             // Il reçoit le code, le fournisseur le contrôle au comptoir.
-            app(\App\Services\NotificationService::class)->send(
+            app(NotificationService::class)->send(
                 $order->client,
                 'payment',
                 'Commande prête pour retrait',
                 "Votre commande #{$order->id} est prête. Code de retrait à présenter au comptoir : {$order->pickup_code}."
             );
 
-            app(\App\Services\NotificationService::class)->send(
+            app(NotificationService::class)->send(
                 $order->supplier,
                 'payment',
                 'Commande à remettre au client',
@@ -416,14 +423,14 @@ class OrderService
             throw new \Exception("Cette course n'est plus disponible.");
         }
 
-        if (!in_array($driver->role, ['driver', 'livreur'])) {
-            throw new \Exception("Seul un livreur peut accepter cette course.");
+        if (! in_array($driver->role, ['driver', 'livreur'])) {
+            throw new \Exception('Seul un livreur peut accepter cette course.');
         }
 
         // Calcul dynamique des frais de livraison via DeliveryPricingService
         $supplierProfile = $order->supplier->fournisseurAgree;
-        if (!$supplierProfile) {
-            throw new \Exception("Profil fournisseur incomplet ou non agréé.");
+        if (! $supplierProfile) {
+            throw new \Exception('Profil fournisseur incomplet ou non agréé.');
         }
 
         // Peut réévaluer et relever order->vehicle_class si les articles sont
@@ -440,14 +447,14 @@ class OrderService
         ]);
 
         // Créer la transaction Mobile Money pour le montant de la course
-        \App\Models\Transaction::create([
+        Transaction::create([
             'user_id' => $order->client_id,
             'type' => 'acompte',
             'montant' => $deliveryCost,
-            'wallet_source' => 'client_mobile_money_' . $order->client_id,
-            'wallet_dest' => 'escrow_order_' . $order->id,
-            'provider' => \App\Enums\PaymentProvider::WAVE,
-            'statut' => \App\Enums\PaymentStatus::CONFIRME,
+            'wallet_source' => 'client_mobile_money_'.$order->client_id,
+            'wallet_dest' => 'escrow_order_'.$order->id,
+            'provider' => PaymentProvider::WAVE,
+            'statut' => PaymentStatus::CONFIRME,
             'paid_at' => now(),
             'metadata' => [
                 'order_id' => $order->id,
@@ -459,7 +466,7 @@ class OrderService
 
         // Notification Livreur : la localisation, mais pas le code. Le livreur
         // doit le demander au comptoir — c'est ce qui atteste sa présence.
-        app(\App\Services\NotificationService::class)->send(
+        app(NotificationService::class)->send(
             $driver,
             'payment',
             'Course acceptée',
@@ -468,7 +475,7 @@ class OrderService
 
         // Notification Fournisseur : il détient le code et contrôle qui se
         // présente. Sans cela, il n'avait aucun moyen de vérifier le livreur.
-        app(\App\Services\NotificationService::class)->send(
+        app(NotificationService::class)->send(
             $order->supplier,
             'payment',
             'Livreur en route',
@@ -476,7 +483,7 @@ class OrderService
         );
 
         // Notification Client
-        app(\App\Services\NotificationService::class)->send(
+        app(NotificationService::class)->send(
             $order->client,
             'payment',
             'Livreur en route',
@@ -499,17 +506,17 @@ class OrderService
 
             // 1. Détacher le livreur et remettre en recherche
             $order->update([
-                'driver_id'                 => null,
-                'status'                    => 'searching_driver',
-                'driver_assigned_at'        => null,
+                'driver_id' => null,
+                'status' => 'searching_driver',
+                'driver_assigned_at' => null,
                 'driver_reassignment_count' => $order->driver_reassignment_count + 1,
             ]);
 
-            \Illuminate\Support\Facades\Log::warning('[DriverWatchdog] Réaffectation automatique', [
-                'order_id'          => $order->id,
-                'previous_driver'   => $previousDriverId,
-                'reason'            => $reason,
-                'reassignment_count'=> $order->driver_reassignment_count,
+            Log::warning('[DriverWatchdog] Réaffectation automatique', [
+                'order_id' => $order->id,
+                'previous_driver' => $previousDriverId,
+                'reason' => $reason,
+                'reassignment_count' => $order->driver_reassignment_count,
             ]);
 
             // 2. Pénalité de score pour le livreur retiré
@@ -521,8 +528,8 @@ class OrderService
                         description: "Course #{$order->id} retirée automatiquement : {$reason}"
                     );
                 } catch (\Throwable $e) {
-                    \Illuminate\Support\Facades\Log::warning(
-                        "[DriverWatchdog] Pénalité score non appliquée pour user {$previousDriverId}: " . $e->getMessage()
+                    Log::warning(
+                        "[DriverWatchdog] Pénalité score non appliquée pour user {$previousDriverId}: ".$e->getMessage()
                     );
                 }
 
@@ -535,8 +542,8 @@ class OrderService
                         "Votre course #{$order->id} vous a été retirée pour {$reason}. Veuillez être plus réactif."
                     );
                 } catch (\Throwable $e) {
-                    \Illuminate\Support\Facades\Log::warning(
-                        "[DriverWatchdog] Notification livreur échouée: " . $e->getMessage()
+                    Log::warning(
+                        '[DriverWatchdog] Notification livreur échouée: '.$e->getMessage()
                     );
                 }
             }
@@ -550,8 +557,8 @@ class OrderService
                     "Un nouveau livreur est recherché pour votre commande #{$order->id}. Nous nous excusons pour le délai."
                 );
             } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::warning(
-                    "[DriverWatchdog] Notification client échouée: " . $e->getMessage()
+                Log::warning(
+                    '[DriverWatchdog] Notification client échouée: '.$e->getMessage()
                 );
             }
 
@@ -564,8 +571,8 @@ class OrderService
                     ['order_id' => $order->id, 'previous_driver_id' => $previousDriverId]
                 );
             } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::warning(
-                    "[DriverWatchdog] Notification admin échouée: " . $e->getMessage()
+                Log::warning(
+                    '[DriverWatchdog] Notification admin échouée: '.$e->getMessage()
                 );
             }
 
@@ -636,7 +643,7 @@ class OrderService
             // constante universelle (« RET-5561 »), valable pour n'importe
             // quelle commande, traînait également.
             if (! $this->codeMatches($inputCode, $expectedCode, ['RET', 'RETRAIT', 'LIVREUR'])) {
-                throw new \Exception("Le code de retrait ou de prise en charge est incorrect.");
+                throw new \Exception('Le code de retrait ou de prise en charge est incorrect.');
             }
 
             // Idempotence : la même validation peut arriver deux fois — le
@@ -670,7 +677,7 @@ class OrderService
                 $this->releaseSupplierFunds($order);
 
                 // Notification Client
-                app(\App\Services\NotificationService::class)->send(
+                app(NotificationService::class)->send(
                     $order->client,
                     'payment',
                     'Commande récupérée',
@@ -678,7 +685,7 @@ class OrderService
                 );
 
                 // Notification Fournisseur
-                app(\App\Services\NotificationService::class)->send(
+                app(NotificationService::class)->send(
                     $order->supplier,
                     'payment',
                     'Retrait validé',
@@ -697,7 +704,7 @@ class OrderService
 
                 // Notification Livreur (reçoit code de réception et localisation client)
                 $clientAddress = $order->client->commune ? $order->client->commune->name : 'adresse du client';
-                app(\App\Services\NotificationService::class)->send(
+                app(NotificationService::class)->send(
                     $order->driver,
                     'payment',
                     'Colis récupéré',
@@ -705,7 +712,7 @@ class OrderService
                 );
 
                 // Notification Client
-                app(\App\Services\NotificationService::class)->send(
+                app(NotificationService::class)->send(
                     $order->client,
                     'payment',
                     'Colis récupéré par le livreur',
@@ -736,7 +743,7 @@ class OrderService
             // de présence. « REC-42 », dérivable de l'identifiant de commande,
             // permettait au livreur de se payer sans avoir livré.
             if (! $this->codeMatches($inputCode, $expectedCode, ['REC', 'RECEPTION'])) {
-                throw new \Exception("Le code de réception de livraison est incorrect.");
+                throw new \Exception('Le code de réception de livraison est incorrect.');
             }
 
             // Idempotence : le client peut confirmer la réception depuis son
@@ -765,7 +772,7 @@ class OrderService
             $this->releaseDriverFunds($order);
 
             // Notification Client
-            app(\App\Services\NotificationService::class)->send(
+            app(NotificationService::class)->send(
                 $order->client,
                 'payment',
                 'Livraison effectuée',
@@ -773,7 +780,7 @@ class OrderService
             );
 
             // Notification Livreur
-            app(\App\Services\NotificationService::class)->send(
+            app(NotificationService::class)->send(
                 $order->driver,
                 'payment',
                 'Course terminée',
@@ -791,12 +798,12 @@ class OrderService
     {
         return DB::transaction(function () use ($order, $client, $reason) {
             if ($order->client_id !== $client->id) {
-                throw new \Exception("Seul le client ayant passé la commande peut ouvrir un litige.");
+                throw new \Exception('Seul le client ayant passé la commande peut ouvrir un litige.');
             }
 
-            $windowMinutes = (int) \App\Models\Setting::getValueByKey('order_dispute_window_minutes', 30);
+            $windowMinutes = (int) Setting::getValueByKey('order_dispute_window_minutes', 30);
 
-            if (!$order->canDeclareDispute()) {
+            if (! $order->canDeclareDispute()) {
                 throw new \Exception("Le délai d'ouverture de litige (limité à {$windowMinutes} minutes) est dépassé ou la commande n'est pas éligible.");
             }
 
@@ -807,7 +814,7 @@ class OrderService
             ]);
 
             // Notification Fournisseur
-            app(\App\Services\NotificationService::class)->send(
+            app(NotificationService::class)->send(
                 $order->supplier,
                 'payment',
                 'Litige ouvert sur la commande',
@@ -816,7 +823,7 @@ class OrderService
 
             if ($order->driver) {
                 // Notification Livreur
-                app(\App\Services\NotificationService::class)->send(
+                app(NotificationService::class)->send(
                     $order->driver,
                     'payment',
                     'Litige ouvert sur la livraison',
@@ -837,16 +844,47 @@ class OrderService
             return $order;
         }
 
+        // Plafond cumulé par commande (indépendant du plafond par appel déjà
+        // imposé par la validation de la requête) : sans lui, un livreur
+        // pouvait répéter l'appel autant de fois que voulu pour accumuler un
+        // surcoût sans limite, chaque appel restant sous le plafond unitaire.
+        $cumulativeCapMinutes = 180;
+        if ($order->waiting_time_minutes + $waitingMinutes > $cumulativeCapMinutes) {
+            throw new \Exception("Le temps d'attente cumulé déclaré pour cette commande dépasse le plafond autorisé ({$cumulativeCapMinutes} minutes).");
+        }
+
         $extraFee = (int) round(($waitingMinutes / 5) * 100); // 100 FCFA par tranche de 5 min d'attente
         $newDeliveryCost = $order->delivery_cost + $extraFee;
 
-        $order->update([
-            'waiting_time_minutes' => $order->waiting_time_minutes + $waitingMinutes,
-            'delivery_cost' => $newDeliveryCost,
-            'total_amount' => $order->subtotal + $order->platform_fee + $newDeliveryCost,
-        ]);
+        return DB::transaction(function () use ($order, $waitingMinutes, $extraFee, $newDeliveryCost) {
+            $order->update([
+                'waiting_time_minutes' => $order->waiting_time_minutes + $waitingMinutes,
+                'delivery_cost' => $newDeliveryCost,
+                'total_amount' => $order->subtotal + $order->platform_fee + $newDeliveryCost,
+            ]);
 
-        return $order;
+            // Trace le surcoût dans le séquestre de la commande : sans cette
+            // écriture, le montant reversé au livreur à la livraison
+            // (`releaseDriverFunds`, calculé sur `delivery_cost`) n'avait
+            // aucune contrepartie dans le ledger financier.
+            Transaction::create([
+                'user_id' => $order->client_id,
+                'type' => 'acompte',
+                'montant' => $extraFee,
+                'wallet_source' => 'client_mobile_money_'.$order->client_id,
+                'wallet_dest' => 'escrow_order_'.$order->id,
+                'provider' => PaymentProvider::WAVE,
+                'statut' => PaymentStatus::CONFIRME,
+                'paid_at' => now(),
+                'metadata' => [
+                    'order_id' => $order->id,
+                    'waiting_minutes' => $waitingMinutes,
+                    'description' => "Majoration frais d'attente livreur - commande #{$order->id}",
+                ],
+            ]);
+
+            return $order;
+        });
     }
 
     /**
@@ -857,7 +895,7 @@ class OrderService
         $supplier = $order->supplier;
 
         // Calcul de la commission fournisseur dynamique (depuis settings, default 5%)
-        $supplierCommissionRatio = \App\Models\Setting::getValueByKey('commission_fournisseur', 0.05);
+        $supplierCommissionRatio = Setting::getValueByKey('commission_fournisseur', 0.05);
         $supplierCommission = (int) round($order->subtotal * $supplierCommissionRatio);
         $gainNetSupplier = $order->subtotal - $supplierCommission;
 
@@ -866,8 +904,8 @@ class OrderService
             'user_id' => $supplier->id,
             'type' => 'paiement_fournisseur',
             'montant' => $gainNetSupplier,
-            'wallet_source' => 'escrow_order_' . $order->id,
-            'wallet_dest' => 'supplier_wallet_' . $supplier->id,
+            'wallet_source' => 'escrow_order_'.$order->id,
+            'wallet_dest' => 'supplier_wallet_'.$supplier->id,
             'provider' => PaymentProvider::WAVE,
             'statut' => PaymentStatus::CONFIRME,
             'paid_at' => now(),
@@ -909,10 +947,12 @@ class OrderService
     private function releaseDriverFunds(Order $order): void
     {
         $driver = $order->driver;
-        if (!$driver) return;
+        if (! $driver) {
+            return;
+        }
 
         // Calcul de la commission livreur dynamique (depuis settings, default 10%)
-        $driverCommissionRatio = \App\Models\Setting::getValueByKey('commission_livreur', 0.10);
+        $driverCommissionRatio = Setting::getValueByKey('commission_livreur', 0.10);
         $driverCommission = (int) round($order->delivery_cost * $driverCommissionRatio);
         $gainNetDriver = $order->delivery_cost - $driverCommission;
 
@@ -921,8 +961,8 @@ class OrderService
             'user_id' => $driver->id,
             'type' => 'liberation_jalon',
             'montant' => $gainNetDriver,
-            'wallet_source' => 'escrow_order_' . $order->id,
-            'wallet_dest' => 'driver_wallet_' . $driver->id,
+            'wallet_source' => 'escrow_order_'.$order->id,
+            'wallet_dest' => 'driver_wallet_'.$driver->id,
             'provider' => PaymentProvider::WAVE,
             'statut' => PaymentStatus::CONFIRME,
             'paid_at' => now(),
@@ -972,7 +1012,7 @@ class OrderService
 
         foreach ($drivers as $driver) {
             try {
-                app(\App\Services\NotificationService::class)->send(
+                app(NotificationService::class)->send(
                     $driver,
                     'payment',
                     'Course de livraison disponible',
@@ -980,7 +1020,7 @@ class OrderService
                     ['order_id' => $order->id, 'type' => 'delivery_request']
                 );
             } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::warning("Notification livreur échouée pour user {$driver->id}: " . $e->getMessage());
+                Log::warning("Notification livreur échouée pour user {$driver->id}: ".$e->getMessage());
             }
         }
     }
@@ -989,36 +1029,34 @@ class OrderService
      * Enregistre un lot de points GPS télémétriques (batching économie réseau/batterie)
      * et diffuse la dernière position connue.
      *
-     * @param Order $order
-     * @param User $driver
-     * @param array $points [ ['latitude' => ..., 'longitude' => ..., 'speed_kmh' => ..., 'heading' => ..., 'battery_level' => ..., 'recorded_at' => ...], ... ]
+     * @param  array  $points  [ ['latitude' => ..., 'longitude' => ..., 'speed_kmh' => ..., 'heading' => ..., 'battery_level' => ..., 'recorded_at' => ...], ... ]
      */
-    public function recordDriverBatchLocations(Order $order, User $driver, array $points): \App\Models\DeliveryTracking
+    public function recordDriverBatchLocations(Order $order, User $driver, array $points): DeliveryTracking
     {
         if ($order->driver_id !== $driver->id) {
             throw new \Exception("Ce livreur n'est pas assigné à cette commande.");
         }
 
         if (empty($points)) {
-            throw new \Exception("Aucun point de télémétrie fourni.");
+            throw new \Exception('Aucun point de télémétrie fourni.');
         }
 
         $records = [];
         $now = now();
         foreach ($points as $pt) {
             $records[] = [
-                'order_id'      => $order->id,
-                'driver_id'     => $driver->id,
-                'latitude'      => (float) $pt['latitude'],
-                'longitude'     => (float) $pt['longitude'],
-                'speed_kmh'     => isset($pt['speed_kmh']) ? (float) $pt['speed_kmh'] : null,
-                'heading'       => isset($pt['heading']) ? (float) $pt['heading'] : null,
+                'order_id' => $order->id,
+                'driver_id' => $driver->id,
+                'latitude' => (float) $pt['latitude'],
+                'longitude' => (float) $pt['longitude'],
+                'speed_kmh' => isset($pt['speed_kmh']) ? (float) $pt['speed_kmh'] : null,
+                'heading' => isset($pt['heading']) ? (float) $pt['heading'] : null,
                 'battery_level' => isset($pt['battery_level']) ? (int) $pt['battery_level'] : null,
-                'created_at'    => !empty($pt['recorded_at']) ? \Carbon\Carbon::parse($pt['recorded_at']) : $now,
+                'created_at' => ! empty($pt['recorded_at']) ? Carbon::parse($pt['recorded_at']) : $now,
             ];
         }
 
-        \App\Models\DeliveryTracking::insert($records);
+        DeliveryTracking::insert($records);
 
         $lastPoint = end($points);
         $lastLat = (float) $lastPoint['latitude'];
@@ -1029,25 +1067,26 @@ class OrderService
 
         try {
             $driver->setPosition($lastLat, $lastLng);
-        } catch (\Throwable $e) {}
+        } catch (\Throwable $e) {
+        }
 
-        $latestTracking = \App\Models\DeliveryTracking::where('order_id', $order->id)
+        $latestTracking = DeliveryTracking::where('order_id', $order->id)
             ->where('driver_id', $driver->id)
             ->latest('id')
             ->first();
 
         // Diffusion temps réel SSE
         $payload = [
-            'order_id'      => $order->id,
-            'driver_id'     => $driver->id,
-            'driver_name'   => $driver->name,
-            'latitude'      => $lastLat,
-            'longitude'     => $lastLng,
-            'speed_kmh'     => $lastSpeed,
-            'heading'       => $lastHeading,
+            'order_id' => $order->id,
+            'driver_id' => $driver->id,
+            'driver_name' => $driver->name,
+            'latitude' => $lastLat,
+            'longitude' => $lastLng,
+            'speed_kmh' => $lastSpeed,
+            'heading' => $lastHeading,
             'battery_level' => $lastBattery,
-            'recorded_at'   => $now->toIso8601String(),
-            'batch_size'    => count($points),
+            'recorded_at' => $now->toIso8601String(),
+            'batch_size' => count($points),
         ];
 
         $this->realtimeEventService->publish(
@@ -1058,7 +1097,7 @@ class OrderService
             'Livreur en mouvement (Batch)'
         );
 
-        return $latestTracking ?? new \App\Models\DeliveryTracking($records[0]);
+        return $latestTracking ?? new DeliveryTracking($records[0]);
     }
 
     /**
@@ -1072,20 +1111,20 @@ class OrderService
         ?float $speed = null,
         ?float $heading = null,
         ?int $battery = null,
-    ): \App\Models\DeliveryTracking {
+    ): DeliveryTracking {
         if ($order->driver_id !== $driver->id) {
             throw new \Exception("Ce livreur n'est pas assigné à cette commande.");
         }
 
-        $tracking = \App\Models\DeliveryTracking::create([
-            'order_id'      => $order->id,
-            'driver_id'     => $driver->id,
-            'latitude'      => $lat,
-            'longitude'     => $lng,
-            'speed_kmh'     => $speed,
-            'heading'       => $heading,
+        $tracking = DeliveryTracking::create([
+            'order_id' => $order->id,
+            'driver_id' => $driver->id,
+            'latitude' => $lat,
+            'longitude' => $lng,
+            'speed_kmh' => $speed,
+            'heading' => $heading,
             'battery_level' => $battery,
-            'created_at'    => now(),
+            'created_at' => now(),
         ]);
 
         // Mettre à jour la position courante du profil livreur.
@@ -1102,15 +1141,15 @@ class OrderService
 
         // Diffusion temps réel SSE via RealtimeEventService (Lot 2)
         $payload = [
-            'order_id'      => $order->id,
-            'driver_id'     => $driver->id,
-            'driver_name'   => $driver->name,
-            'latitude'      => $lat,
-            'longitude'     => $lng,
-            'speed_kmh'     => $speed,
-            'heading'       => $heading,
+            'order_id' => $order->id,
+            'driver_id' => $driver->id,
+            'driver_name' => $driver->name,
+            'latitude' => $lat,
+            'longitude' => $lng,
+            'speed_kmh' => $speed,
+            'heading' => $heading,
             'battery_level' => $battery,
-            'recorded_at'   => now()->toIso8601String(),
+            'recorded_at' => now()->toIso8601String(),
         ];
 
         // 1. Diffusion au canal de la commande
@@ -1165,68 +1204,69 @@ class OrderService
         }
 
         return [
-            'order_id'          => $order->id,
-            'status'            => $order->status,
-            'delivery_mode'     => $order->delivery_mode,
-            'supplier'          => [
-                'id'       => $order->supplier_id,
-                'name'     => $order->supplier?->fournisseurAgree?->nom_boutique ?? $order->supplier?->name,
-                'phone'    => $order->supplier?->phone,
+            'order_id' => $order->id,
+            'status' => $order->status,
+            'delivery_mode' => $order->delivery_mode,
+            'supplier' => [
+                'id' => $order->supplier_id,
+                'name' => $order->supplier?->fournisseurAgree?->nom_boutique ?? $order->supplier?->name,
+                'phone' => $order->supplier?->phone,
                 'position' => $supplierPos,
             ],
-            'client'            => [
-                'id'       => $order->client_id,
-                'name'     => $order->client?->name,
-                'phone'    => $order->client?->phone,
+            'client' => [
+                'id' => $order->client_id,
+                'name' => $order->client?->name,
+                'phone' => $order->client?->phone,
                 'position' => $clientPos,
             ],
-            'driver'            => $order->driver ? [
-                'id'       => $order->driver->id,
-                'name'     => $order->driver->name,
-                'phone'    => $order->driver->phone,
+            'driver' => $order->driver ? [
+                'id' => $order->driver->id,
+                'name' => $order->driver->name,
+                'phone' => $order->driver->phone,
                 'position' => $latest ? [
-                    'lat'   => $latest->latitude,
-                    'lng'   => $latest->longitude,
+                    'lat' => $latest->latitude,
+                    'lng' => $latest->longitude,
                     'speed' => $latest->speed_kmh,
                     'heading' => $latest->heading,
                     'updated_at' => $latest->created_at?->toIso8601String(),
                 ] : null,
             ] : null,
-            'route'             => $route,
-            'routing'           => $route,
+            'route' => $route,
+            'routing' => $route,
             'driver_latest_position' => $latest ? [
-                'latitude'      => $latest->latitude,
-                'longitude'     => $latest->longitude,
-                'speed_kmh'     => $latest->speed_kmh,
-                'heading'       => $latest->heading,
+                'latitude' => $latest->latitude,
+                'longitude' => $latest->longitude,
+                'speed_kmh' => $latest->speed_kmh,
+                'heading' => $latest->heading,
                 'battery_level' => $latest->battery_level,
-                'recorded_at'   => $latest->created_at?->toIso8601String(),
+                'recorded_at' => $latest->created_at?->toIso8601String(),
             ] : null,
             // Uniquement les codes que cet acteur doit connaître : le livreur
             // n'en reçoit aucun, il doit les demander au fournisseur puis au
             // client. Auparavant les deux étaient renvoyés à tout le monde.
-            'codes'             => $order->codesVisibleTo($viewer),
-            'pickup_photo_url'  => $order->pickup_photo_url,
-            'delivery_photo_url'=> $order->delivery_photo_url,
-            'delivery_cost'     => $order->delivery_cost,
+            'codes' => $order->codesVisibleTo($viewer),
+            'pickup_photo_url' => $order->pickup_photo_url,
+            'delivery_photo_url' => $order->delivery_photo_url,
+            'delivery_cost' => $order->delivery_cost,
         ];
     }
 
     /**
      * Recherche les livreurs vérifiés à proximité du point d'enlèvement (magasin).
      */
-    public function findNearbyDrivers(float $lat, float $lng, float $radiusKm = 10.0, ?string $vehicleClass = null): \Illuminate\Support\Collection
+    public function findNearbyDrivers(float $lat, float $lng, float $radiusKm = 10.0, ?string $vehicleClass = null): Collection
     {
         $query = User::whereIn('role', ['livreur', 'driver'])
             ->where('kyc_status', 'actif');
 
         return $query->get()->filter(function ($driver) use ($lat, $lng, $radiusKm) {
             $coords = $driver->getPositionCoords();
-            if (!$coords) {
+            if (! $coords) {
                 return false;
             }
 
             $dist = $this->osrmService->haversineDistanceKm($lat, $lng, (float) $coords['lat'], (float) $coords['lng']);
+
             return $dist <= $radiusKm;
         })->values();
     }
