@@ -124,6 +124,11 @@ export interface AdminOrder {
     total_amount: number;
     pickup_code: string;
     reception_code: string;
+    address_id?: number | null;
+    recipient_name?: string | null;
+    recipient_phone?: string | null;
+    delivery_address_line?: string | null;
+    delivery_city?: string | null;
     vehicle_class?: string | null;
     surge_multiplier?: number | null;
     delivered_at?: string | null;

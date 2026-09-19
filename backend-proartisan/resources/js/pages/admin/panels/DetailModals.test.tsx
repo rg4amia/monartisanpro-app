@@ -189,6 +189,56 @@ describe('OrderDetailModal', () => {
 
         expect(onClose).toHaveBeenCalledTimes(1);
     });
+
+    it("affiche l'adresse de livraison figée sur la commande plutôt que le profil du client", () => {
+        render(
+            <OrderDetailModal
+                order={makeOrder({
+                    delivery_mode: 'delivery',
+                    client: { id: 1, name: 'Awa Traoré', phone: '+2250700000001', role: 'client' },
+                    recipient_name: 'Bamba Inza',
+                    recipient_phone: '+2250707262811',
+                    delivery_address_line: 'Cocody Angré 8e Tranche',
+                    delivery_city: 'Abidjan',
+                })}
+                onClose={vi.fn()}
+            />,
+        );
+
+        // Le destinataire de la commande peut différer du titulaire du compte
+        // (cadeau, livraison pour un tiers) : c'est le snapshot figé sur la
+        // commande qui doit primer, jamais le profil du client connecté.
+        expect(screen.getByText('Bamba Inza')).toBeInTheDocument();
+        expect(screen.getByText(/Cocody Angré 8e Tranche, Abidjan/)).toBeInTheDocument();
+        expect(screen.queryByText('Awa Traoré')).not.toBeInTheDocument();
+    });
+
+    it('signale une adresse manquante sur une commande en livraison', () => {
+        render(
+            <OrderDetailModal
+                order={makeOrder({
+                    delivery_mode: 'delivery',
+                    recipient_name: undefined,
+                    recipient_phone: undefined,
+                    delivery_address_line: undefined,
+                    delivery_city: undefined,
+                })}
+                onClose={vi.fn()}
+            />,
+        );
+
+        expect(
+            screen.getByText(/Adresse de livraison non renseignée sur cette commande/),
+        ).toBeInTheDocument();
+    });
+
+    it("n'affiche pas de ligne d'adresse pour un retrait en magasin", () => {
+        render(<OrderDetailModal order={makeOrder({ delivery_mode: 'pickup' })} onClose={vi.fn()} />);
+
+        expect(
+            screen.queryByText(/Adresse de livraison non renseignée sur cette commande/),
+        ).not.toBeInTheDocument();
+    });
 });
 
 describe('TransactionDetailModal', () => {

@@ -505,7 +505,7 @@ export function OrderDetailModal({ order, onClose }: { order: AdminOrder; onClos
                             </p>
                             <div className="mt-2 space-y-1">
                                 <p className="text-sm font-bold text-[var(--admin-text)]">
-                                    {order.client?.name ?? 'Non renseigné'}
+                                    {order.recipient_name ?? order.client?.name ?? 'Non renseigné'}
                                     {order.client?.role && (
                                         <span className="ml-1.5 text-[10px] uppercase font-semibold text-[var(--admin-muted)]">
                                             ({order.client.role})
@@ -514,12 +514,20 @@ export function OrderDetailModal({ order, onClose }: { order: AdminOrder; onClos
                                 </p>
                                 <div className="pt-1.5">
                                     <a
-                                        href={`tel:${order.client?.phone}`}
+                                        href={`tel:${order.recipient_phone ?? order.client?.phone}`}
                                         className="inline-flex items-center gap-1.5 rounded-lg bg-slate-50 border border-slate-200 px-2.5 py-1 text-xs font-mono font-bold text-[var(--admin-text)] hover:bg-slate-100 transition"
                                     >
-                                        📞 {order.client?.phone ?? 'N/A'}
+                                        📞 {order.recipient_phone ?? order.client?.phone ?? 'N/A'}
                                     </a>
                                 </div>
+                                {order.delivery_mode === 'delivery' && (
+                                    <p className="pt-1 text-xs text-[var(--admin-muted)]">
+                                        📍{' '}
+                                        {order.delivery_address_line
+                                            ? `${order.delivery_address_line}, ${order.delivery_city ?? ''}`.trim()
+                                            : 'Adresse de livraison non renseignée sur cette commande'}
+                                    </p>
+                                )}
                             </div>
                         </div>
 
