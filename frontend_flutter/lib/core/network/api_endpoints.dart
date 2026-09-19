@@ -25,6 +25,11 @@ class ApiEndpoints {
   // Dashboard
   static const String dashboard = '/dashboard';
 
+  // Carnet d'adresses
+  static const String addresses = '/addresses';
+  static String address(int id) => '/addresses/$id';
+  static String addressSetDefault(int id) => '/addresses/$id/default';
+
   // Artisans
   static const String artisans = '/artisans';
   static String artisan(int id) => '/artisans/$id';

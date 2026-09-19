@@ -170,6 +170,7 @@ class OrderController extends GetxController {
   Future<bool> createMultiOrders({
     required List<Map<String, dynamic>> packages,
     String? promoCode,
+    int? addressId,
   }) async {
     if (isSubmitting.value) return false;
     isSubmitting.value = true;
@@ -179,6 +180,7 @@ class OrderController extends GetxController {
       await _repo.createMultiOrders(
         packages: packages,
         promoCode: promoCode,
+        addressId: addressId,
       );
       Get.snackbar(
         'Succès',
@@ -224,6 +226,7 @@ class OrderController extends GetxController {
     String? vehicleClass,
     double? surgeMultiplier,
     String? promoCode,
+    int? addressId,
   }) async {
     if (isSubmitting.value) return false;
     isSubmitting.value = true;
@@ -237,6 +240,7 @@ class OrderController extends GetxController {
         vehicleClass: vehicleClass,
         surgeMultiplier: surgeMultiplier,
         promoCode: promoCode,
+        addressId: addressId,
       );
       Get.snackbar(
         'Succès',

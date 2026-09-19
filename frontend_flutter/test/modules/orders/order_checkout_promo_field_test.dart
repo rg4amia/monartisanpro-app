@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:frontend_flutter/modules/addresses/controllers/address_controller.dart';
 import 'package:frontend_flutter/modules/orders/controllers/order_controller.dart';
 import 'package:frontend_flutter/modules/orders/views/order_checkout_screen.dart';
 import 'package:get/get.dart';
@@ -10,12 +11,20 @@ class _TestOrderController extends OrderController {
   Future<void> loadApprovedSuppliers({String? search}) async {}
 }
 
+/// Le carnet d'adresses est chargé au montage de l'écran de checkout : on
+/// neutralise l'appel réseau réel, comme pour `_TestOrderController`.
+class _TestAddressController extends AddressController {
+  @override
+  Future<void> loadAddresses() async {}
+}
+
 void main() {
   testWidgets(
     'le champ code promo et le bouton APPLIQUER sont bien présents',
     (tester) async {
       Get.testMode = true;
       Get.put<OrderController>(_TestOrderController());
+      Get.put<AddressController>(_TestAddressController());
 
       // `initState` déclenche un vrai appel Dio (_fetchDeliveryEstimate) :
       // on le laisse tourner sur la vraie boucle d'événements (voir Règle

@@ -1,5 +1,8 @@
 import 'package:get/get.dart';
 
+import '../../modules/addresses/bindings/address_binding.dart';
+import '../../modules/addresses/views/address_form_screen.dart';
+import '../../modules/addresses/views/address_list_screen.dart';
 import '../../modules/artisans/bindings/artisans_binding.dart';
 import '../../modules/artisans/views/artisan_profile_screen.dart';
 import '../../modules/artisans/views/parrainage_screen.dart';
@@ -309,6 +312,17 @@ class AppPages {
     GetPage(
       name: Routes.orderCheckout,
       page: () => const OrderCheckoutScreen(),
+      binding: AddressBinding(),
+    ),
+    GetPage(
+      name: Routes.addressList,
+      page: () => const AddressListScreen(),
+      binding: AddressBinding(),
+    ),
+    GetPage(
+      name: Routes.addressForm,
+      page: () => const AddressFormScreen(),
+      binding: AddressBinding(),
     ),
     GetPage(
       name: Routes.clientSuppliers,

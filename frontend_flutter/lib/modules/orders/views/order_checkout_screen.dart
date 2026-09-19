@@ -2,9 +2,12 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../app/routes/app_routes.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_endpoints.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../data/models/address_model.dart';
+import '../../addresses/controllers/address_controller.dart';
 import '../controllers/order_controller.dart';
 
 class OrderCheckoutScreen extends StatefulWidget {
@@ -16,6 +19,7 @@ class OrderCheckoutScreen extends StatefulWidget {
 
 class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
   final OrderController controller = Get.find<OrderController>();
+  final AddressController addressController = Get.find<AddressController>();
   final TextEditingController _promoController = TextEditingController();
 
   late int supplierId;
@@ -68,6 +72,8 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
           'vehicle_class': vehicleClass,
           'surge_multiplier': surgeMultiplier,
           'items': items,
+          if (addressController.selectedAddressId.value != null)
+            'address_id': addressController.selectedAddressId.value,
         },
       );
 
@@ -246,7 +252,23 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
   void _submit() async {
     // Protection anti double-submit : flag local + contrôle du controller
     if (_orderSubmitted.value || controller.isSubmitting.value) return;
+
+    if (deliveryMode == 'delivery' &&
+        addressController.selectedAddressId.value == null) {
+      Get.snackbar(
+        'Adresse requise',
+        'Veuillez ajouter une adresse de livraison avant de continuer.',
+        backgroundColor: const Color(0xFFC55E50),
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+      );
+      return;
+    }
+
     _orderSubmitted.value = true;
+
+    final addressId =
+        deliveryMode == 'delivery' ? addressController.selectedAddressId.value : null;
 
     final multiPackages = controller.getMultiCartPackagesPayload(
       defaultDeliveryMode: deliveryMode,
@@ -259,6 +281,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
         ? await controller.createMultiOrders(
             packages: multiPackages,
             promoCode: _appliedPromoCode,
+            addressId: addressId,
           )
         : await controller.createOrder(
             supplierId: effectiveSupplierId,
@@ -268,6 +291,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
             surgeMultiplier:
                 deliveryMode == 'delivery' ? surgeMultiplier : null,
             promoCode: _appliedPromoCode,
+            addressId: addressId,
           );
 
     if (success) {
@@ -372,6 +396,87 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
     );
   }
 
+  Future<void> _openAddressPicker() async {
+    final result = await Get.toNamed(Routes.addressList);
+    if (result is AddressModel) {
+      // Le coût de livraison dépend de la destination : on aligne la
+      // sélection sur l'adresse choisie puis on rafraîchit l'estimation.
+      addressController.selectAddress(result.id);
+      if (mounted && deliveryMode == 'delivery') {
+        await _fetchDeliveryEstimate();
+      }
+    }
+  }
+
+  Widget _buildRecipientInfo() {
+    return Obx(() {
+      if (addressController.isLoading.value &&
+          addressController.addresses.isEmpty) {
+        return const SizedBox(
+          height: 20,
+          width: 20,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        );
+      }
+
+      final address = addressController.selectedAddress;
+      if (address == null) {
+        return Row(
+          children: [
+            Expanded(
+              child: const Text(
+                'Aucune adresse enregistrée. Ajoutez une adresse pour recevoir votre livraison.',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: AppColors.textSecondary,
+                  height: 1.4,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: _openAddressPicker,
+              child: const Text('Ajouter'),
+            ),
+          ],
+        );
+      }
+
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  address.recipientName,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  '${address.addressLine}\n${address.city}${address.region != null ? ' • ${address.region}' : ''}\nTél: ${address.recipientPhone}',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: _openAddressPicker,
+            child: const Text('Changer'),
+          ),
+        ],
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final shopName =
@@ -407,28 +512,11 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
                 children: [
                   _buildStepHeader('1', 'ADRESSE DU DESTINATAIRE'),
                   const Divider(height: 24, color: Color(0xFFEDF2F7)),
-                  const Text(
-                    'Inza Bamba',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  const Text(
-                    '28 BP 124 ABIDJAN 28, Cocody Mermoz\nAbidjan-Lagunes • Côte d\'Ivoire\nTél: +225 0141498208',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textSecondary,
-                      height: 1.4,
-                    ),
-                  ),
+                  _buildRecipientInfo(),
                 ],
               ),
             ),
             const SizedBox(height: 16),
-
             // ÉTAPE 2 : DÉTAILS DE LIVRAISON
             Container(
               padding: const EdgeInsets.all(16),

@@ -63,6 +63,8 @@ abstract class Routes {
   static const referentValidation = '/referent-validation';
   static const parrainage = '/parrainage';
   static const orderCheckout = '/order-checkout';
+  static const addressList = '/address-list';
+  static const addressForm = '/address-form';
   static const clientSuppliers = '/client-suppliers';
   static const clientCatalog = '/client-catalog';
   static const clientOrders = '/client-orders';

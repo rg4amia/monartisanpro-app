@@ -29,6 +29,7 @@ class OrderRepository {
     String? vehicleClass,
     double? surgeMultiplier,
     String? promoCode,
+    int? addressId,
   }) async {
     final res = await _client.post(
       ApiEndpoints.orders,
@@ -39,6 +40,7 @@ class OrderRepository {
         if (vehicleClass != null) 'vehicle_class': vehicleClass,
         if (surgeMultiplier != null) 'surge_multiplier': surgeMultiplier,
         if (promoCode != null && promoCode.isNotEmpty) 'promo_code': promoCode,
+        if (addressId != null) 'address_id': addressId,
       },
     );
     await _invalidateMyOrders();
@@ -48,12 +50,14 @@ class OrderRepository {
   Future<Map<String, dynamic>> createMultiOrders({
     required List<Map<String, dynamic>> packages,
     String? promoCode,
+    int? addressId,
   }) async {
     final res = await _client.post(
       ApiEndpoints.ordersMultiStore,
       data: {
         'packages': packages,
         if (promoCode != null && promoCode.isNotEmpty) 'promo_code': promoCode,
+        if (addressId != null) 'address_id': addressId,
       },
     );
     await _invalidateMyOrders();

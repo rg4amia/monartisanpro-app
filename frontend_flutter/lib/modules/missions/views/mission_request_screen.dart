@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -31,15 +32,22 @@ class MissionRequestScreen extends StatefulWidget {
 }
 
 class _MissionRequestScreenState extends State<MissionRequestScreen> {
+  // Repli si le GPS est inaccessible (refusé, coupé, ou délai dépassé) —
+  // jamais (0.0, 0.0), qui pointe au large du golfe de Guinée et serait
+  // envoyé au backend comme si c'était une position réelle (Règle d'or 26/29).
+  static const double _kAbidjanFallbackLat = 5.3543;
+  static const double _kAbidjanFallbackLng = -4.0083;
+
   final MissionsController _missionsController = Get.find<MissionsController>();
   final _descCtrl = TextEditingController();
   final _selectedCategory = ''.obs;
   final _selectedCategoryId = 0.obs;
   final _selectedTradeId = 0.obs;
-  final _location = 'Abidjan, Côte d\'Ivoire'.obs;
-  final _locationDetail = 'Cocody, Riviera 3'.obs;
+  final _location = 'Localisation en cours...'.obs;
+  final _locationDetail = ''.obs;
   final _latitude = 0.0.obs;
   final _longitude = 0.0.obs;
+  final _isLocating = true.obs;
   final _nightIntervention = false.obs;
   final _photos = <XFile>[].obs;
   final _video = Rx<XFile?>(null);
@@ -53,6 +61,7 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
   void initState() {
     super.initState();
     _loadInterventionTypes();
+    _autoDetectLocation();
 
     // RÈGLE CRITIQUE : Vérifier KYC avant création mission
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -82,6 +91,47 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
   void dispose() {
     _descCtrl.dispose();
     super.dispose();
+  }
+
+  /// Récupère la position GPS réelle du client dès l'ouverture de l'écran,
+  /// pour que la mission soit géolocalisée même si le client ne touche
+  /// jamais « Changer ». L'appel est borné (Règle d'or 26) : sans `timeLimit`,
+  /// un terminal qui ne fixe aucun point en haute précision laisserait
+  /// l'écran indéfiniment sur « Localisation en cours... ».
+  Future<void> _autoDetectLocation() async {
+    try {
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        throw Exception('Permission de localisation refusée');
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 5),
+        ),
+      );
+
+      if (!mounted) return;
+      _latitude.value = position.latitude;
+      _longitude.value = position.longitude;
+      _location.value = 'Position actuelle détectée';
+      _locationDetail.value =
+          'Lat: ${position.latitude.toStringAsFixed(4)}, Lng: ${position.longitude.toStringAsFixed(4)}';
+    } catch (_) {
+      if (!mounted) return;
+      _latitude.value = _kAbidjanFallbackLat;
+      _longitude.value = _kAbidjanFallbackLng;
+      _location.value = 'Abidjan, Côte d\'Ivoire';
+      _locationDetail.value =
+          'Position par défaut — précisez via « Changer »';
+    } finally {
+      if (mounted) _isLocating.value = false;
+    }
   }
 
   Future<void> _loadInterventionTypes() async {
