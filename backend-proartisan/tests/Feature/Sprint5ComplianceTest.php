@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Address;
 use App\Models\Order;
 use App\Models\SupplierProduct;
 use App\Models\User;
@@ -17,6 +18,15 @@ class Sprint5ComplianceTest extends TestCase
     {
         $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
         $client->setPosition(5.3484, -4.0305); // Abidjan Cocody
+
+        $address = Address::create([
+            'user_id' => $client->id,
+            'recipient_name' => $client->name,
+            'recipient_phone' => $client->phone,
+            'address_line' => 'Cocody Angré 8e Tranche',
+            'city' => 'Abidjan',
+            'is_default' => true,
+        ]);
 
         $supplier = User::factory()->create(['role' => 'fournisseur', 'kyc_status' => 'actif']);
         $supplier->setPosition(5.3598, -4.0083); // Abidjan Bingerville
@@ -67,6 +77,7 @@ class Sprint5ComplianceTest extends TestCase
             ->postJson('/api/v1/orders', [
                 'supplier_id' => $supplier->id,
                 'delivery_mode' => 'delivery',
+                'address_id' => $address->id,
                 'items' => [
                     [
                         'supplier_product_id' => $lightProduct->id,
@@ -91,6 +102,7 @@ class Sprint5ComplianceTest extends TestCase
             ->postJson('/api/v1/orders', [
                 'supplier_id' => $supplier->id,
                 'delivery_mode' => 'delivery',
+                'address_id' => $address->id,
                 'items' => [
                     [
                         'supplier_product_id' => $lightProduct->id,
@@ -114,6 +126,7 @@ class Sprint5ComplianceTest extends TestCase
             ->postJson('/api/v1/orders', [
                 'supplier_id' => $supplier->id,
                 'delivery_mode' => 'delivery',
+                'address_id' => $address->id,
                 'items' => [
                     [
                         'supplier_product_id' => $product->id,

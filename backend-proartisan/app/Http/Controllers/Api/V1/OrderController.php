@@ -30,6 +30,7 @@ class OrderController extends Controller
         $validator = Validator::make($request->all(), [
             'supplier_id' => 'required|exists:users,id',
             'delivery_mode' => 'required|in:pickup,delivery',
+            'address_id' => 'required_if:delivery_mode,delivery|nullable|exists:addresses,id',
             'items' => 'required|array|min:1',
             'items.*.supplier_product_id' => 'required|exists:supplier_products,id',
             'items.*.quantity' => 'required|integer|min:1',
@@ -48,6 +49,17 @@ class OrderController extends Controller
 
         $client = $request->user();
         $lock = null;
+
+        $address = null;
+        if ($request->filled('address_id')) {
+            $address = \App\Models\Address::find($request->address_id);
+            if (! $address || $address->user_id !== $client->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Adresse de livraison invalide.',
+                ], 422);
+            }
+        }
 
         try {
             if (! app()->environment('testing')) {
@@ -78,7 +90,8 @@ class OrderController extends Controller
                 $request->delivery_mode,
                 $request->input('vehicle_class', 'moto'),
                 (float) $request->input('surge_multiplier', 1.0),
-                $request->input('promo_code')
+                $request->input('promo_code'),
+                $address
             );
 
             return response()->json([
@@ -387,6 +400,7 @@ class OrderController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'supplier_id' => 'nullable|exists:users,id',
+            'address_id' => 'nullable|exists:addresses,id',
             'client_latitude' => 'nullable|numeric|between:-90,90',
             'client_longitude' => 'nullable|numeric|between:-180,180',
             'from_latitude' => 'nullable|numeric|between:-90,90',
@@ -433,6 +447,11 @@ class OrderController extends Controller
                 'lat' => (float) $request->client_latitude,
                 'lng' => (float) $request->client_longitude,
             ];
+        } elseif ($request->filled('address_id')) {
+            $address = \App\Models\Address::find($request->address_id);
+            $to = ($address && $address->user_id === $request->user()->id)
+                ? ($address->getPositionCoords() ?? $request->user()?->getPositionCoords())
+                : $request->user()?->getPositionCoords();
         } else {
             $client = $request->user();
             $to = $client?->getPositionCoords();
@@ -558,6 +577,7 @@ class OrderController extends Controller
     public function multiStore(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
+            'address_id' => 'nullable|exists:addresses,id',
             'packages' => 'required|array|min:1',
             'packages.*.supplier_id' => 'required|exists:users,id',
             'packages.*.delivery_mode' => 'required|in:delivery,pickup',
@@ -580,6 +600,22 @@ class OrderController extends Controller
         $client = $request->user();
         $lock = null;
 
+        $address = null;
+        if ($request->filled('address_id')) {
+            $address = \App\Models\Address::find($request->address_id);
+            if (! $address || $address->user_id !== $client->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Adresse de livraison invalide.',
+                ], 422);
+            }
+        } elseif (collect($request->packages)->contains(fn ($pkg) => ($pkg['delivery_mode'] ?? 'delivery') === 'delivery')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Une adresse de livraison est requise.',
+            ], 422);
+        }
+
         try {
             if (! app()->environment('testing')) {
                 $lockKey = 'create_order_lock_' . $client->id;
@@ -596,7 +632,8 @@ class OrderController extends Controller
             $result = $this->orderService->createMultiSupplierOrders(
                 $client,
                 $request->packages,
-                $request->input('promo_code')
+                $request->input('promo_code'),
+                $address
             );
 
             return response()->json([

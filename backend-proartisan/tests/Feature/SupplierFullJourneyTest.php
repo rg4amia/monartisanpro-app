@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Address;
 use App\Models\Order;
 use App\Models\SupplierProduct;
 use App\Models\Transaction;
@@ -27,12 +28,22 @@ class SupplierFullJourneyTest extends TestCase
 
     private User $supplier;
 
+    private Address $clientAddress;
+
     protected function setUp(): void
     {
         parent::setUp();
 
         $this->client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
         $this->client->setPosition(5.3599, -4.0083);
+        $this->clientAddress = Address::create([
+            'user_id' => $this->client->id,
+            'recipient_name' => $this->client->name,
+            'recipient_phone' => $this->client->phone,
+            'address_line' => 'Cocody Angré 8e Tranche',
+            'city' => 'Abidjan',
+            'is_default' => true,
+        ]);
 
         $this->supplier = User::factory()->create(['role' => 'fournisseur', 'kyc_status' => 'actif']);
         $this->supplier->setPosition(5.3400, -3.9800);
@@ -64,6 +75,7 @@ class SupplierFullJourneyTest extends TestCase
         $response = $this->actingAs($this->client)->postJson('/api/v1/orders', [
             'supplier_id' => $this->supplier->id,
             'delivery_mode' => $mode,
+            'address_id' => $mode === 'delivery' ? $this->clientAddress->id : null,
             'items' => [
                 ['supplier_product_id' => $product->id, 'quantity' => $quantity],
             ],

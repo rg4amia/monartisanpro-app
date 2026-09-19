@@ -167,6 +167,11 @@ class User extends Authenticatable
         return $this->hasOne(FournisseurAgree::class);
     }
 
+    public function addresses()
+    {
+        return $this->hasMany(Address::class);
+    }
+
     public function supplierProducts()
     {
         return $this->hasMany(SupplierProduct::class, 'supplier_id');

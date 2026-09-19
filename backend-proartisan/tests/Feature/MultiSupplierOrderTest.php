@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Address;
 use App\Models\User;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -70,6 +71,14 @@ test('client can estimate multi-supplier delivery', function () {
 
 test('client can checkout split-cart with multiple suppliers in single transaction', function () {
     $client = User::factory()->create(['role' => 'client', 'phone' => '+2250101010101', 'kyc_status' => 'actif']);
+    $address = Address::create([
+        'user_id' => $client->id,
+        'recipient_name' => $client->name,
+        'recipient_phone' => '+2250101010101',
+        'address_line' => 'Cocody Angré 8e Tranche',
+        'city' => 'Abidjan',
+        'is_default' => true,
+    ]);
     $supplier1 = User::factory()->create(['role' => 'fournisseur', 'phone' => '+2250202020202']);
     $supplier2 = User::factory()->create(['role' => 'fournisseur', 'phone' => '+2250303030303']);
 
@@ -101,6 +110,7 @@ test('client can checkout split-cart with multiple suppliers in single transacti
     ]);
 
     $response = $this->actingAs($client)->postJson('/api/v1/orders/multi-store', [
+        'address_id' => $address->id,
         'packages' => [
             [
                 'supplier_id' => $supplier1->id,

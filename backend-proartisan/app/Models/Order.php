@@ -13,6 +13,11 @@ class Order extends Model
         'client_id',
         'supplier_id',
         'driver_id',
+        'address_id',
+        'recipient_name',
+        'recipient_phone',
+        'delivery_address_line',
+        'delivery_city',
         'driver_assigned_at',
         'driver_reassignment_count',
         'delivery_mode',
@@ -168,6 +173,11 @@ class Order extends Model
     public function driver()
     {
         return $this->belongsTo(User::class, 'driver_id');
+    }
+
+    public function address()
+    {
+        return $this->belongsTo(Address::class);
     }
 
     public function items()

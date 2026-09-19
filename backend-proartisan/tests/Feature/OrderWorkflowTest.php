@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Address;
 use App\Models\User;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -83,6 +84,15 @@ test('client can create order in delivery mode with dynamic maps calculation', f
     $client = User::factory()->create(['role' => 'client', 'phone' => '+2250101010101', 'kyc_status' => 'actif']);
     $client->setPosition(5.35, -4.02);
 
+    $address = Address::create([
+        'user_id' => $client->id,
+        'recipient_name' => $client->name,
+        'recipient_phone' => '+2250101010101',
+        'address_line' => 'Cocody Angré 8e Tranche',
+        'city' => 'Abidjan',
+        'is_default' => true,
+    ]);
+
     $supplier = User::factory()->create(['role' => 'fournisseur', 'phone' => '+2250202020202']);
     $agree = FournisseurAgree::create([
         'user_id' => $supplier->id,
@@ -103,6 +113,7 @@ test('client can create order in delivery mode with dynamic maps calculation', f
         ->postJson('/api/v1/orders', [
             'supplier_id' => $supplier->id,
             'delivery_mode' => 'delivery',
+            'address_id' => $address->id,
             'items' => [
                 [
                     'supplier_product_id' => $product->id,

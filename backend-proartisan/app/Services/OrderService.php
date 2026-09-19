@@ -34,9 +34,9 @@ class OrderService
     /**
      * Crée une commande et calcule les coûts associés.
      */
-    public function createOrder(User $client, User $supplier, array $items, string $deliveryMode, string $vehicleClass = 'moto', float $surgeMultiplier = 1.0, ?string $promoCode = null): Order
+    public function createOrder(User $client, User $supplier, array $items, string $deliveryMode, string $vehicleClass = 'moto', float $surgeMultiplier = 1.0, ?string $promoCode = null, ?\App\Models\Address $address = null): Order
     {
-        return DB::transaction(function () use ($client, $supplier, $items, $deliveryMode, $vehicleClass, $surgeMultiplier, $promoCode) {
+        return DB::transaction(function () use ($client, $supplier, $items, $deliveryMode, $vehicleClass, $surgeMultiplier, $promoCode, $address) {
             $subtotal = 0;
             $itemsData = [];
 
@@ -119,6 +119,11 @@ class OrderService
                 'reception_code' => $receptionCode,
                 'vehicle_class' => $vehicleClass,
                 'surge_multiplier' => $surgeMultiplier,
+                'address_id' => $address?->id,
+                'recipient_name' => $address?->recipient_name,
+                'recipient_phone' => $address?->recipient_phone,
+                'delivery_address_line' => $address?->address_line,
+                'delivery_city' => $address?->city,
             ]);
 
             // 6. Création des items de commande et décrémentation des stocks
@@ -194,9 +199,9 @@ class OrderService
      * @param string|null $promoCode
      * @return array
      */
-    public function createMultiSupplierOrders(User $client, array $packages, ?string $promoCode = null): array
+    public function createMultiSupplierOrders(User $client, array $packages, ?string $promoCode = null, ?\App\Models\Address $address = null): array
     {
-        return DB::transaction(function () use ($client, $packages, $promoCode) {
+        return DB::transaction(function () use ($client, $packages, $promoCode, $address) {
             $orderGroupId = 'GRP-' . strtoupper(Str::random(10));
             $platformFeeRatio = \App\Models\Setting::getValueByKey('platform_fee_ratio', 0.03);
 
@@ -237,7 +242,7 @@ class OrderService
                 $pkgDeliveryCost = 0;
                 if ($deliveryMode === 'delivery') {
                     $from = $supplier->fournisseurAgree?->getPositionCoords() ?? $supplier->getPositionCoords();
-                    $to = $client->getPositionCoords();
+                    $to = $address?->getPositionCoords() ?? $client->getPositionCoords();
                     $fare = $this->pricingService->estimateFare([
                         'from' => $from,
                         'to' => $to,
@@ -271,6 +276,11 @@ class OrderService
                     'surge_multiplier' => $surgeMultiplier,
                     'order_group_id' => $orderGroupId,
                     'is_parent_group' => false,
+                    'address_id' => $address?->id,
+                    'recipient_name' => $address?->recipient_name,
+                    'recipient_phone' => $address?->recipient_phone,
+                    'delivery_address_line' => $address?->address_line,
+                    'delivery_city' => $address?->city,
                 ]);
 
                 foreach ($itemsData as $data) {

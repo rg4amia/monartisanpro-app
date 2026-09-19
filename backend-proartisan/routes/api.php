@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\LlmAdminController;
 use App\Http\Controllers\Api\V1\AdminController;
 use App\Http\Controllers\Api\V1\AdminRolePermissionController;
+use App\Http\Controllers\Api\V1\AddressController;
 use App\Http\Controllers\Api\V1\ArtisanController;
 use App\Http\Controllers\Api\V1\ArtisanStockController;
 use App\Http\Controllers\Api\V1\AuthController;
@@ -147,6 +148,13 @@ Route::prefix('v1')->group(function () {
             Route::post('/upload-selfie', [KycController::class, 'uploadSelfie']);
             Route::get('/status', [KycController::class, 'status']);
         });
+
+        // ── Carnet d'adresses de livraison ───────────────────────────────────
+        Route::get('/addresses', [AddressController::class, 'index']);
+        Route::post('/addresses', [AddressController::class, 'store']);
+        Route::put('/addresses/{address}', [AddressController::class, 'update']);
+        Route::delete('/addresses/{address}', [AddressController::class, 'destroy']);
+        Route::post('/addresses/{address}/default', [AddressController::class, 'setDefault']);
 
         // ── Commandes Catalogue E-Commerce ───────────────────────────────────
         Route::apiResource('orders', OrderController::class)->only(['index', 'store', 'show']);
