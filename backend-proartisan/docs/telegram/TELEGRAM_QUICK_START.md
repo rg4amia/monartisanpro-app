@@ -25,7 +25,7 @@ Ou recherchez `@ProsArtisanBot` dans Telegram.
 
 ```bash
 cd backend-proartisan
-php get_chat_id.php
+php scripts/telegram/get_chat_id.php
 ```
 
 Le script vous donnera une ligne comme :
@@ -55,7 +55,7 @@ TELEGRAM_CHAT_ID=987654321  ← NOUVEAU (votre vrai Chat ID)
 ## Étape 5 : Testez
 
 ```bash
-php test_telegram.php
+php scripts/telegram/test_telegram.php
 ```
 
 Vous devriez recevoir 3 messages de test sur Telegram ! ✅
@@ -84,7 +84,7 @@ php artisan tinker --execute="Log::channel('telegram_bot')->error('✅ ProsArtis
 Exécutez le diagnostic :
 
 ```bash
-php get_chat_id.php
+php scripts/telegram/get_chat_id.php
 ```
 
 Le script vous guidera automatiquement.

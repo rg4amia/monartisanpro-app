@@ -4,6 +4,14 @@
 release_apks/
 **/android/build/
 
+# ── Dépendances (défense en profondeur si install lancé à la racine) ─
+node_modules/
+vendor/
+build/
+.dart_tool/
+.next/
+.env
+
 # ── OS ──────────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db

@@ -33,7 +33,7 @@ Dans votre terminal, exécutez :
 
 ```bash
 cd backend-proartisan
-php get_chat_id.php
+php scripts/telegram/get_chat_id.php
 ```
 
 Le script va :
@@ -55,7 +55,7 @@ TELEGRAM_CHAT_ID=987654321  # Votre vrai Chat ID
 
 ```bash
 # Test complet
-php test_telegram.php
+php scripts/telegram/test_telegram.php
 
 # Ou test rapide via Tinker
 php artisan tinker --execute="Log::channel('telegram_bot')->error('✅ Test ProsArtisan');"
@@ -82,13 +82,13 @@ Vous devriez recevoir un message sur Telegram ! 🎉
 ### Test 1 : Script automatique (recommandé)
 
 ```bash
-php get_chat_id.php
+php scripts/telegram/get_chat_id.php
 ```
 
 ### Test 2 : Script de test complet
 
 ```bash
-php test_telegram.php
+php scripts/telegram/test_telegram.php
 ```
 
 ### Test 3 : Via Tinker
@@ -254,9 +254,9 @@ echo "Body: " . $response->body() . "\n";
 - [ ] J'ai trouvé @ProsArtisanBot
 - [ ] J'ai cliqué sur "Start"
 - [ ] J'ai envoyé un message
-- [ ] J'ai exécuté `php get_chat_id.php`
+- [ ] J'ai exécuté `php scripts/telegram/get_chat_id.php`
 - [ ] J'ai copié le Chat ID dans `.env`
-- [ ] J'ai testé avec `php test_telegram.php`
+- [ ] J'ai testé avec `php scripts/telegram/test_telegram.php`
 - [ ] Je reçois bien les messages sur Telegram
 
 ---
@@ -265,7 +265,7 @@ echo "Body: " . $response->body() . "\n";
 
 Une fois la configuration terminée :
 
-1. **Testez les alertes** : `php test_telegram.php`
+1. **Testez les alertes** : `php scripts/telegram/test_telegram.php`
 2. **Intégrez dans votre code** : Utilisez `Log::channel('telegram_bot')->error(...)` pour les alertes importantes
 3. **Configurez les niveaux** : Modifiez `config/logging.php` pour ajuster les niveaux de log
 4. **Ajoutez des alertes métier** : Fraudes GPS, litiges, paiements importants, etc.
@@ -279,7 +279,7 @@ Si vous travaillez en équipe, créez un groupe Telegram :
 1. Créez un groupe dans Telegram
 2. Ajoutez @ProsArtisanBot au groupe
 3. Envoyez un message dans le groupe
-4. Exécutez `php get_chat_id.php`
+4. Exécutez `php scripts/telegram/get_chat_id.php`
 5. Le Chat ID du groupe commencera par `-` (ex: `-1001234567890`)
 6. Mettez à jour `.env` avec ce Chat ID
 
@@ -287,4 +287,4 @@ Toute l'équipe recevra les alertes ! 👥
 
 ---
 
-**Besoin d'aide ?** Consultez les fichiers de documentation ou exécutez `php get_chat_id.php` pour un diagnostic automatique.
+**Besoin d'aide ?** Consultez les fichiers de documentation ou exécutez `php scripts/telegram/get_chat_id.php` pour un diagnostic automatique.

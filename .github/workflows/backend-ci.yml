@@ -2,13 +2,13 @@ name: Deploy to Production (Hostinger Optimized)
 
 on:
   push:
-    branches: [master, develop, new-dev-inz]
+    branches: [new-develop, new-dev-inz]
     paths:
       - "backend-proartisan/**"
       - "vitrine-nextjs/**"
       - ".github/workflows/backend-ci.yml"
   pull_request:
-    branches: [master, develop, new-dev-inz]
+    branches: [new-develop, new-dev-inz]
     paths:
       - "backend-proartisan/**"
       - "vitrine-nextjs/**"

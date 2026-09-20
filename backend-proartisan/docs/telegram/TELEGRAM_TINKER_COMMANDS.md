@@ -54,13 +54,13 @@ Log::channel('telegram_bot')->error('Exception de test', [
 ```bash
 # Option 1: Via Tinker
 php artisan tinker
-require 'test_telegram.php';
+require 'scripts/telegram/test_telegram.php';
 testTelegramDirect();
 testTelegramLogger();
 testTelegramWithException();
 
 # Option 2: Directement
-php test_telegram.php
+php scripts/telegram/test_telegram.php
 ```
 
 ## Méthode 4 : Test rapide one-liner

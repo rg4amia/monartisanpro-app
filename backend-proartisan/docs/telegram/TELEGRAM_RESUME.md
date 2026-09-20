@@ -79,7 +79,7 @@ Ou recherchez `@ProsArtisanBot` dans Telegram.
 
 ```bash
 cd backend-proartisan
-php get_chat_id.php
+php scripts/telegram/get_chat_id.php
 ```
 
 Le script affichera quelque chose comme :
@@ -111,7 +111,7 @@ TELEGRAM_CHAT_ID=987654321
 #### 5. Tester
 
 ```bash
-php test_telegram.php
+php scripts/telegram/test_telegram.php
 ```
 
 Vous devriez recevoir 3 messages de test sur Telegram :
@@ -127,7 +127,7 @@ Vous devriez recevoir 3 messages de test sur Telegram :
 ### Test automatique complet
 
 ```bash
-php test_telegram.php
+php scripts/telegram/test_telegram.php
 ```
 
 ### Test rapide via Tinker
@@ -164,7 +164,7 @@ Log::channel('telegram_bot')->error('Exception de test', [
 ### Diagnostic complet
 
 ```bash
-php get_chat_id.php
+php scripts/telegram/get_chat_id.php
 ```
 
 ---
@@ -268,7 +268,7 @@ Si vous travaillez en équipe :
 1. Créez un groupe dans Telegram
 2. Ajoutez @ProsArtisanBot au groupe
 3. Envoyez un message dans le groupe
-4. Exécutez `php get_chat_id.php`
+4. Exécutez `php scripts/telegram/get_chat_id.php`
 5. Le Chat ID du groupe commencera par `-` (ex: `-1001234567890`)
 6. Mettez à jour `.env` avec ce Chat ID
 
@@ -314,7 +314,7 @@ Ou dans `config/logging.php`, commentez le channel `telegram_bot` dans le stack.
 
 ### Erreur : "Bad Request: chat not found"
 
-➡️ Le Chat ID est incorrect. Vérifiez avec `php get_chat_id.php`.
+➡️ Le Chat ID est incorrect. Vérifiez avec `php scripts/telegram/get_chat_id.php`.
 
 ### Erreur : "Unauthorized"
 
@@ -331,7 +331,7 @@ Ou dans `config/logging.php`, commentez le channel `telegram_bot` dans le stack.
 ### Diagnostic automatique
 
 ```bash
-php get_chat_id.php
+php scripts/telegram/get_chat_id.php
 ```
 
 Le script vous guidera automatiquement.
@@ -357,9 +357,9 @@ Le script vous guidera automatiquement.
 - [ ] J'ai trouvé @ProsArtisanBot
 - [ ] J'ai cliqué sur "Start"
 - [ ] J'ai envoyé un message
-- [ ] J'ai exécuté `php get_chat_id.php`
+- [ ] J'ai exécuté `php scripts/telegram/get_chat_id.php`
 - [ ] J'ai copié le Chat ID dans `.env`
-- [ ] J'ai testé avec `php test_telegram.php`
+- [ ] J'ai testé avec `php scripts/telegram/test_telegram.php`
 - [ ] Je reçois bien les messages sur Telegram
 
 ---
@@ -367,7 +367,7 @@ Le script vous guidera automatiquement.
 ## 🎯 Prochaines étapes
 
 1. **Configurez le Chat ID** en suivant les étapes ci-dessus
-2. **Testez** avec `php test_telegram.php`
+2. **Testez** avec `php scripts/telegram/test_telegram.php`
 3. **Intégrez** dans votre code avec `Log::channel('telegram_bot')->error(...)`
 4. **Personnalisez** les alertes selon vos besoins métier
 

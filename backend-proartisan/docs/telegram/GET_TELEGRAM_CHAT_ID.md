@@ -124,7 +124,7 @@ php artisan tinker --execute="Http::asForm()->post('https://api.telegram.org/bot
 php artisan tinker --execute="Log::channel('telegram_bot')->error('✅ Test logger ProsArtisan');"
 
 # Test 3 : Script complet
-php test_telegram.php
+php scripts/telegram/test_telegram.php
 ```
 
 ---

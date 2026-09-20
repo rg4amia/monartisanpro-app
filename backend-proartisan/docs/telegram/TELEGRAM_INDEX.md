@@ -24,8 +24,8 @@
 
 | Script | Description | Usage |
 |--------|-------------|-------|
-| **[get_chat_id.php](get_chat_id.php)** | Récupère automatiquement votre Chat ID | `php get_chat_id.php` |
-| **[test_telegram.php](test_telegram.php)** | Tests complets d'envoi de messages | `php test_telegram.php` |
+| **[get_chat_id.php](../../scripts/telegram/get_chat_id.php)** | Récupère automatiquement votre Chat ID | `php scripts/telegram/get_chat_id.php` |
+| **[test_telegram.php](../../scripts/telegram/test_telegram.php)** | Tests complets d'envoi de messages | `php scripts/telegram/test_telegram.php` |
 
 ---
 
@@ -38,26 +38,26 @@
 # 2. Cliquez sur "Start" et envoyez un message
 
 # 3. Récupérez votre Chat ID
-php get_chat_id.php
+php scripts/telegram/get_chat_id.php
 
 # 4. Copiez le Chat ID dans .env
 # TELEGRAM_CHAT_ID=987654321
 
 # 5. Testez
-php test_telegram.php
+php scripts/telegram/test_telegram.php
 ```
 
 ### 2️⃣ Tests et débogage
 
 ```bash
 # Test complet
-php test_telegram.php
+php scripts/telegram/test_telegram.php
 
 # Test rapide via Tinker
 php artisan tinker --execute="Log::channel('telegram_bot')->error('Test');"
 
 # Diagnostic
-php get_chat_id.php
+php scripts/telegram/get_chat_id.php
 ```
 
 ### 3️⃣ Utilisation dans le code
@@ -91,8 +91,8 @@ Log::channel('telegram_bot')->error('Exception capturée', [
 | Résoudre un problème | [TELEGRAM_SETUP_INSTRUCTIONS.md](TELEGRAM_SETUP_INSTRUCTIONS.md) |
 | Obtenir le Chat ID manuellement | [GET_TELEGRAM_CHAT_ID.md](GET_TELEGRAM_CHAT_ID.md) |
 | Tester dans Tinker | [TELEGRAM_TINKER_COMMANDS.md](TELEGRAM_TINKER_COMMANDS.md) |
-| Récupérer le Chat ID automatiquement | Exécutez `php get_chat_id.php` |
-| Tester l'envoi de messages | Exécutez `php test_telegram.php` |
+| Récupérer le Chat ID automatiquement | Exécutez `php scripts/telegram/get_chat_id.php` |
+| Tester l'envoi de messages | Exécutez `php scripts/telegram/test_telegram.php` |
 
 ---
 
@@ -117,7 +117,7 @@ TELEGRAM_CHAT_ID='<ID_DU_BOT>' ❌ INCORRECT
 
 ```bash
 # Solution :
-php get_chat_id.php
+php scripts/telegram/get_chat_id.php
 # Suivez les instructions pour obtenir votre vrai Chat ID
 ```
 
@@ -126,17 +126,17 @@ php get_chat_id.php
 ```bash
 # Vérifiez que vous avez envoyé un message au bot
 # Puis relancez :
-php get_chat_id.php
+php scripts/telegram/get_chat_id.php
 ```
 
 ### Aucun message reçu
 
 ```bash
 # Diagnostic complet :
-php get_chat_id.php
+php scripts/telegram/get_chat_id.php
 
 # Test manuel :
-php test_telegram.php
+php scripts/telegram/test_telegram.php
 ```
 
 ---
@@ -145,8 +145,8 @@ php test_telegram.php
 
 ```
 backend-proartisan/
-├── get_chat_id.php                    # Script pour récupérer le Chat ID
-├── test_telegram.php                  # Script de test complet
+├── scripts/telegram/get_chat_id.php                    # Script pour récupérer le Chat ID
+├── scripts/telegram/test_telegram.php                  # Script de test complet
 ├── TELEGRAM_INDEX.md                  # Ce fichier (index)
 ├── TELEGRAM_QUICK_START.md            # Guide rapide (2 min)
 ├── README_TELEGRAM.md                 # Documentation complète
@@ -162,9 +162,9 @@ backend-proartisan/
 - [ ] J'ai lu [TELEGRAM_QUICK_START.md](TELEGRAM_QUICK_START.md)
 - [ ] J'ai ouvert Telegram et trouvé @ProsArtisanBot
 - [ ] J'ai cliqué sur "Start" et envoyé un message
-- [ ] J'ai exécuté `php get_chat_id.php`
+- [ ] J'ai exécuté `php scripts/telegram/get_chat_id.php`
 - [ ] J'ai copié le Chat ID dans `.env`
-- [ ] J'ai testé avec `php test_telegram.php`
+- [ ] J'ai testé avec `php scripts/telegram/test_telegram.php`
 - [ ] Je reçois bien les messages sur Telegram
 
 ---

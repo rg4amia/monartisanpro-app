@@ -85,7 +85,7 @@ cd backend-proartisan
 php artisan tinker --execute="Http::asForm()->post('https://api.telegram.org/bot' . env('TELEGRAM_BOT_TOKEN') . '/sendMessage', ['chat_id' => env('TELEGRAM_CHAT_ID'), 'text' => '✅ ProsArtisan configuré avec succès !'])->body()"
 
 # Ou utilisez le script de test
-php test_telegram.php
+php scripts/telegram/test_telegram.php
 ```
 
 Si tout fonctionne, vous recevrez un message sur Telegram ! 🎉
