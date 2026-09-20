@@ -10,13 +10,14 @@ import { useServerTable } from './hooks/useServerTable';
 import LlmAdminPanel from './llm-admin-panel';
 import { AiQuotasPanel } from './panels/AiQuotasPanel';
 import { AuditLogsPanel } from './panels/AuditLogsPanel';
+import { CampagnesParrainagePanel } from './panels/CampagnesParrainagePanel';
 import { CartographyPanel } from './panels/CartographyPanel';
 import { CommunicationsPanel } from './panels/CommunicationsPanel';
 import { DashboardPanel } from './panels/DashboardPanel';
 import { ArtisanLedgerModal, MissionDetailModal, OrderDetailModal, TransactionDetailModal } from './panels/DetailModals';
 import { EvaluationsPanel } from './panels/EvaluationsPanel';
 import { FaqPanel } from './panels/FaqPanel';
-import { AiQuotaFormModal, CommunicationFormModal, PromoCodeFormModal, StatusFormModal, UserFormModal } from './panels/FormModals';
+import { AiQuotaFormModal, CampagneParrainageFormModal, CommunicationFormModal, PromoCodeFormModal, StatusFormModal, UserFormModal } from './panels/FormModals';
 import { KycPanel } from './panels/KycPanel';
 import { LitigesPanel } from './panels/LitigesPanel';
 import { MissionsPanel } from './panels/MissionsPanel';
@@ -41,6 +42,7 @@ import type {
     AiUserQuotaRow,
     ArtisanScoreItem,
     AuditAdminOption,
+    CampagneParrainageItem,
     CommuneHeatmapItem,
     CommuneListItem,
     DashboardData,
@@ -131,10 +133,12 @@ interface AdminPageProps {
         transactions_en_attente?: number;
         communications_publiees?: number;
         promo_codes_actifs?: number;
+        campagnes_parrainage_actives?: number;
         contact_messages_nouveaux?: number;
     };
     financialKpis?: any;
     promoCodes?: PromoCodeItem[];
+    campagnesParrainage?: CampagneParrainageItem[];
     settingsList?: SettingItem[];
     sectors?: SectorItem[];
     rolesPermissions?: Record<string, string[]>;
@@ -278,6 +282,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         navBadges = {} as NonNullable<AdminPageProps['navBadges']>,
         financialKpis = {} as any,
         promoCodes = [] as PromoCodeItem[],
+        campagnesParrainage = [] as CampagneParrainageItem[],
         communications = [],
         audioUploadLimit,
         adminNotifications = [] as AdminNotificationItem[],
@@ -1115,6 +1120,104 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         });
     };
 
+    const [campagneModalOpen, setCampagneModalOpen] = useState<boolean>(false);
+    const [editingCampagne, setEditingCampagne] = useState<CampagneParrainageItem | null>(null);
+
+    const campagneForm = useForm({
+        libelle: '',
+        discount_type: 'percent' as 'percent' | 'fixed',
+        discount_value: 10,
+        max_discount_amount: 0,
+        min_montant: 0,
+        starts_at: '',
+        expires_at: '',
+        is_active: true,
+    });
+
+    const openCreateCampagneModal = (): void => {
+        setEditingCampagne(null);
+        campagneForm.reset();
+        campagneForm.clearErrors();
+        campagneForm.setData({
+            libelle: '',
+            discount_type: 'percent',
+            discount_value: 10,
+            max_discount_amount: 0,
+            min_montant: 0,
+            starts_at: '',
+            expires_at: '',
+            is_active: true,
+        });
+        setCampagneModalOpen(true);
+    };
+
+    const openEditCampagneModal = (campagne: CampagneParrainageItem): void => {
+        setEditingCampagne(campagne);
+        campagneForm.clearErrors();
+        campagneForm.setData({
+            libelle: campagne.libelle,
+            discount_type: campagne.discount_type,
+            discount_value: campagne.discount_value,
+            max_discount_amount: campagne.max_discount_amount || 0,
+            min_montant: campagne.min_montant || 0,
+            starts_at: campagne.starts_at ? campagne.starts_at.slice(0, 10) : '',
+            expires_at: campagne.expires_at ? campagne.expires_at.slice(0, 10) : '',
+            is_active: campagne.is_active,
+        });
+        setCampagneModalOpen(true);
+    };
+
+    const handleCampagneSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
+        event.preventDefault();
+        if (campagneForm.processing) return;
+
+        campagneForm.transform(() => ({
+            ...campagneForm.data,
+            libelle: campagneForm.data.libelle.trim(),
+            max_discount_amount: Number(campagneForm.data.max_discount_amount) || null,
+            min_montant: Number(campagneForm.data.min_montant) || 0,
+            starts_at: campagneForm.data.starts_at || null,
+            expires_at: campagneForm.data.expires_at || null,
+        }));
+
+        if (editingCampagne) {
+            campagneForm.put(`/admin/campagnes-parrainage/${editingCampagne.id}`, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setCampagneModalOpen(false);
+                    campagneForm.reset();
+                },
+            });
+        } else {
+            campagneForm.post('/admin/campagnes-parrainage', {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setCampagneModalOpen(false);
+                    campagneForm.reset();
+                },
+            });
+        }
+    };
+
+    const handleDeleteCampagne = async (campagne: CampagneParrainageItem): Promise<void> => {
+        const ok = await askConfirm({
+            title: 'Supprimer la campagne de parrainage',
+            message: `Supprimer définitivement la campagne "${campagne.libelle}" ?`,
+            tone: 'danger',
+            confirmLabel: 'Supprimer',
+        });
+        if (!ok) return;
+        router.delete(`/admin/campagnes-parrainage/${campagne.id}`, {
+            preserveScroll: true,
+        });
+    };
+
+    const handleToggleCampagne = (campagne: CampagneParrainageItem): void => {
+        router.post(`/admin/campagnes-parrainage/${campagne.id}/toggle`, {}, {
+            preserveScroll: true,
+        });
+    };
+
     // ── Quota IA par utilisateur ──────────────────────────────────────────────
     const [aiQuotaModalOpen, setAiQuotaModalOpen] = useState<boolean>(false);
     const [aiQuotaTarget, setAiQuotaTarget] = useState<AiUserQuotaRow | null>(null);
@@ -1182,6 +1285,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         evaluationsList,
         artisansScores,
         promoCodes,
+        campagnesParrainage,
         now,
     });
 
@@ -1231,6 +1335,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                 { id: 'observability', label: tabMeta.observability.label },
                 { count: navBadges.communications_publiees ?? (communications ?? []).filter(c => c.statut === 'publie').length, id: 'communications', label: tabMeta.communications.label },
                 { count: navBadges.promo_codes_actifs ?? (promoCodes ?? []).filter(p => p.is_active).length, id: 'promo_codes', label: 'Codes Promo' },
+                { count: navBadges.campagnes_parrainage_actives ?? (campagnesParrainage ?? []).filter(c => c.is_active).length, id: 'campagnes_parrainage', label: 'Parrainage Clients' },
                 { count: navBadges.contact_messages_nouveaux ?? (contactMessages ?? []).filter(c => c.statut === 'nouveau').length, id: 'vitrine', label: tabMeta.vitrine.label },
                 { count: whatsappClickStats.today, id: 'whatsapp', label: tabMeta.whatsapp.label },
                 { count: faqs.length, id: 'faq', label: tabMeta.faq.label },
@@ -1248,6 +1353,12 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                     { label: 'Codes Actifs', tone: 'green' as const, value: `${(promoCodes ?? []).filter(p => p.is_active).length}` },
                     { label: 'Utilisations Totales', tone: 'blue' as const, value: `${(promoCodes ?? []).reduce((sum, p) => sum + (p.used_count || 0), 0)}` },
                     { label: 'Campagnes Fixes & %', tone: 'slate' as const, value: `${(promoCodes ?? []).filter(p => p.discount_type === 'percent').length} % / ${(promoCodes ?? []).filter(p => p.discount_type === 'fixed').length} Fixe` },
+                ];
+            case 'campagnes_parrainage':
+                return [
+                    { label: 'Campagnes Total', tone: 'amber' as const, value: `${(campagnesParrainage ?? []).length}` },
+                    { label: 'Campagnes Actives', tone: 'green' as const, value: `${(campagnesParrainage ?? []).filter(c => c.is_active).length}` },
+                    { label: 'Campagnes Fixes & %', tone: 'slate' as const, value: `${(campagnesParrainage ?? []).filter(c => c.discount_type === 'percent').length} % / ${(campagnesParrainage ?? []).filter(c => c.discount_type === 'fixed').length} Fixe` },
                 ];
             case 'notifications':
                 return [
@@ -1910,6 +2021,16 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                 />
                             ) : null}
 
+                            {activeTab === 'campagnes_parrainage' ? (
+                                <CampagnesParrainagePanel
+                                    filteredCampagnes={analytics.filteredCampagnes}
+                                    onCreate={openCreateCampagneModal}
+                                    onEdit={openEditCampagneModal}
+                                    onToggle={handleToggleCampagne}
+                                    onDelete={handleDeleteCampagne}
+                                />
+                            ) : null}
+
                             {activeTab === 'vitrine' ? (
                                 <section className="mt-5">
                                     <VitrinePanel
@@ -1975,6 +2096,15 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                         editing={editingPromo}
                         onSubmit={handlePromoSubmit}
                         onClose={() => setPromoModalOpen(false)}
+                    />
+                )}
+
+                {campagneModalOpen && (
+                    <CampagneParrainageFormModal
+                        form={campagneForm}
+                        editing={editingCampagne}
+                        onSubmit={handleCampagneSubmit}
+                        onClose={() => setCampagneModalOpen(false)}
                     />
                 )}
 

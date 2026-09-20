@@ -3,11 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PromoCode extends Model
 {
     protected $fillable = [
         'code',
+        'owner_user_id',
         'description',
         'discount_type',
         'discount_value',
@@ -35,12 +37,21 @@ class PromoCode extends Model
     }
 
     /**
+     * Utilisateur auquel ce code promo est réservé (ex : récompense de
+     * parrainage client). `null` = code promo générique, utilisable par tous.
+     */
+    public function owner(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'owner_user_id');
+    }
+
+    /**
      * Valide et calcule la remise pour un montant donné en FCFA.
      */
     public function calculateDiscount(int $orderAmount): int
     {
-        if (!$this->is_active) {
-            throw new \Exception("Ce code promo est inactif.");
+        if (! $this->is_active) {
+            throw new \Exception('Ce code promo est inactif.');
         }
 
         if ($this->starts_at && now()->lt($this->starts_at)) {
@@ -48,7 +59,7 @@ class PromoCode extends Model
         }
 
         if ($this->expires_at && now()->gt($this->expires_at)) {
-            throw new \Exception("Ce code promo a expiré.");
+            throw new \Exception('Ce code promo a expiré.');
         }
 
         if ($this->usage_limit && $this->used_count >= $this->usage_limit) {

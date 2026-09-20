@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Empêche le resource shrinker (isShrinkResources = true en release) de supprimer
+  notif_artisan.wav : ce fichier n'est référencé que par son nom dans le payload
+  OneSignal envoyé par le backend (android_sound), jamais statiquement dans le
+  code Kotlin/Dart, donc invisible à l'analyse statique du shrinker.
+-->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@raw/notif_artisan" />

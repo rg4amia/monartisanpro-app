@@ -28,6 +28,7 @@ export const tabCapability: Record<AdminTab, string | null> = {
     observability: 'admin.observability.view',
     communications: 'admin.communications.manage',
     promo_codes: 'admin.promo.manage',
+    campagnes_parrainage: 'admin.parrainage.manage',
     vitrine: 'admin.vitrine.manage',
     whatsapp: 'admin.whatsapp.manage',
     faq: 'admin.faq.manage',

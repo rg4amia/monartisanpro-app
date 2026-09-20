@@ -8,6 +8,7 @@ use App\Http\Requests\Admin\BulkUserStatusRequest;
 use App\Http\Requests\Admin\ReviewCnmciRequest;
 use App\Http\Requests\Admin\ReviewFournisseurRequest;
 use App\Http\Requests\Admin\ReviewKycRequest;
+use App\Http\Requests\Admin\StoreCampagneParrainageRequest;
 use App\Http\Requests\Admin\StoreCommunicationRequest;
 use App\Http\Requests\Admin\StorePromoCodeRequest;
 use App\Http\Requests\Admin\StoreSectorRequest;
@@ -21,6 +22,7 @@ use App\Http\Requests\Admin\UpdateSettingRequest;
 use App\Http\Requests\Admin\UpdateTradeRequest;
 use App\Http\Requests\Admin\UpdateUserRequest;
 use App\Http\Requests\Litige\ArbitrateLitigeRequest;
+use App\Models\CampagneParrainage;
 use App\Models\Communication;
 use App\Models\FournisseurAgree;
 use App\Models\Litige;
@@ -31,6 +33,7 @@ use App\Models\Setting;
 use App\Models\Trade;
 use App\Models\User;
 use App\Services\Admin\AdminActivityLogger;
+use App\Services\Admin\AdminCampagneParrainageService;
 use App\Services\Admin\AdminExportService;
 use App\Services\Admin\AdminGdprService;
 use App\Services\Admin\AdminPanelData;
@@ -454,6 +457,40 @@ class BackofficeController extends Controller
         $status = $active ? 'activé' : 'désactivé';
 
         return back()->with('success', "Code promo {$promoCode->code} {$status}.");
+    }
+
+    public function campagnesParrainage(): Response
+    {
+        return $this->page('admin/campagnes-parrainage', $this->panelData->campagnesParrainage());
+    }
+
+    public function storeCampagneParrainage(StoreCampagneParrainageRequest $request, AdminCampagneParrainageService $campagnes): RedirectResponse
+    {
+        $campagne = $campagnes->create($request->validated());
+
+        return back()->with('success', "Campagne de parrainage « {$campagne->libelle} » créée avec succès.");
+    }
+
+    public function updateCampagneParrainage(StoreCampagneParrainageRequest $request, CampagneParrainage $campagne, AdminCampagneParrainageService $campagnes): RedirectResponse
+    {
+        $campagnes->update($campagne, $request->validated());
+
+        return back()->with('success', "Campagne de parrainage « {$campagne->libelle} » mise à jour.");
+    }
+
+    public function destroyCampagneParrainage(CampagneParrainage $campagne): RedirectResponse
+    {
+        $campagne->delete();
+
+        return back()->with('success', 'Campagne de parrainage supprimée.');
+    }
+
+    public function toggleCampagneParrainage(CampagneParrainage $campagne, AdminCampagneParrainageService $campagnes): RedirectResponse
+    {
+        $active = $campagnes->toggle($campagne);
+        $status = $active ? 'activée' : 'désactivée';
+
+        return back()->with('success', "Campagne de parrainage {$status}.");
     }
 
     public function vitrine(): Response

@@ -16,6 +16,19 @@ export interface PromoCodeItem {
     created_at: string;
 }
 
+export interface CampagneParrainageItem {
+    id: number;
+    libelle: string;
+    discount_type: 'percent' | 'fixed';
+    discount_value: number;
+    max_discount_amount?: number | null;
+    min_montant: number;
+    starts_at?: string | null;
+    expires_at?: string | null;
+    is_active: boolean;
+    created_at: string;
+}
+
 export interface DashboardData {
     users_total: number;
     artisans_actifs: number;

@@ -85,9 +85,10 @@ class AdminPermissionService
             ],
             'marketing' => [
                 'admin.promo.manage' => 'Gérer les codes promotionnels',
+                'admin.parrainage.manage' => 'Gérer les campagnes de parrainage client',
             ],
             'recrutement' => [
-                'admin.recruitment.manage' => "Modérer les offres de recrutement et piloter la publication client/fournisseur",
+                'admin.recruitment.manage' => 'Modérer les offres de recrutement et piloter la publication client/fournisseur',
             ],
             'intelligence' => [
                 'admin.ai.manage' => 'Piloter les paramètres et coûts IA',

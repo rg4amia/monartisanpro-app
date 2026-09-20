@@ -26,6 +26,7 @@ use App\Http\Controllers\Api\V1\MissionController;
 use App\Http\Controllers\Api\V1\MissionStreamController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\OrderController;
+use App\Http\Controllers\Api\V1\ParrainageClientController;
 use App\Http\Controllers\Api\V1\ParrainageController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\PromoCodeController;
@@ -337,6 +338,10 @@ Route::prefix('v1')->group(function () {
         // ── Parrainages ────────────────────────────────────────────────────────
         Route::post('/parrainages', [ParrainageController::class, 'store']);
         Route::get('/parrainages', [ParrainageController::class, 'index']);
+
+        // ── Parrainages clients (distinct du parrainage artisan ci-dessus) ──────
+        Route::post('/parrainages-clients', [ParrainageClientController::class, 'store']);
+        Route::get('/parrainages-clients', [ParrainageClientController::class, 'index']);
 
         // ── Notifications ─────────────────────────────────────────────────────
         Route::get('/notifications', [NotificationController::class, 'index']);

@@ -12,6 +12,7 @@ import '../../modules/auth/views/kyc_selfie_liveness_screen.dart';
 import '../../modules/auth/views/login_screen.dart';
 import '../../modules/auth/views/otp_verification_screen.dart';
 import '../../modules/auth/views/register_screen.dart';
+import '../../modules/clients/parrainage/views/parrainage_client_screen.dart';
 import '../../modules/devis/bindings/devis_binding.dart';
 import '../../modules/devis/views/quote_builder_screen.dart';
 import '../../modules/devis/views/quote_screen.dart';
@@ -308,6 +309,10 @@ class AppPages {
     GetPage(
       name: Routes.parrainage,
       page: () => ParrainageScreen(),
+    ),
+    GetPage(
+      name: Routes.parrainageClient,
+      page: () => ParrainageClientScreen(),
     ),
     GetPage(
       name: Routes.orderCheckout,

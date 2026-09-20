@@ -10,6 +10,18 @@ use Illuminate\Support\Facades\Http;
 class NotificationService
 {
     /**
+     * Nom (sans extension) de la sonnerie distincte, dans
+     * frontend_flutter/android/app/src/main/res/raw/notif_artisan.wav.
+     */
+    private const DISTINCT_SOUND = 'notif_artisan';
+
+    /**
+     * Rôles bénéficiant de la sonnerie distincte (métiers de terrain : artisan
+     * intervenant sur chantier, livreur en tournée).
+     */
+    private const ROLES_WITH_DISTINCT_SOUND = ['artisan', 'livreur'];
+
+    /**
      * Envoie une notification via plusieurs canaux (Base, Push, SMS).
      */
     public function send(User $user, string $type, string $title, string $body, array $data = []): void
@@ -26,7 +38,8 @@ class NotificationService
         // 2. Push Notification via OneSignal (basé sur l'ID utilisateur)
         try {
             $oneSignal = app(\App\Services\OneSignalService::class);
-            $oneSignal->sendToUser((string) $user->id, $title, $body, $data);
+            $androidSound = in_array($user->role, self::ROLES_WITH_DISTINCT_SOUND, true) ? self::DISTINCT_SOUND : null;
+            $oneSignal->sendToUser((string) $user->id, $title, $body, $data, $androidSound);
         } catch (\Exception $e) {
             Log::error("Erreur lors de l'appel OneSignal dans NotificationService : " . $e->getMessage());
         }

@@ -4,7 +4,7 @@
 import type { FormEvent } from 'react';
 
 import { CloseIcon, KycStatusBadge } from '../shared';
-import type { AdminUser, PromoCodeItem, SectorItem } from '../shared';
+import type { AdminUser, CampagneParrainageItem, PromoCodeItem, SectorItem } from '../shared';
 
 const documentLabels: Record<'cni' | 'selfie', string> = {
     cni: 'Carte Nationale d’Identité (CNI)',
@@ -372,6 +372,155 @@ export function PromoCodeFormModal({
                             className="rounded-full bg-[#ebb95e] text-[#241b16] px-6 py-2.5 text-sm font-semibold hover:opacity-90 transition disabled:opacity-50"
                         >
                             {editing ? 'Mettre à jour' : 'Créer le Code Promo'}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}
+
+export function CampagneParrainageFormModal({
+    form,
+    editing,
+    onSubmit,
+    onClose,
+}: {
+    form: InertiaForm;
+    editing: CampagneParrainageItem | null;
+    onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+    onClose: () => void;
+}) {
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className="admin-panel admin-surface w-full max-w-[550px] rounded-[32px] border p-6 lg:p-8 shadow-2xl relative">
+                <div className="flex items-center justify-between border-b border-[var(--admin-border)] pb-4">
+                    <h2 className="text-xl font-bold text-[var(--admin-text)]">
+                        {editing ? `Modifier la campagne ${editing.libelle}` : 'Créer une nouvelle campagne de parrainage'}
+                    </h2>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="rounded-full p-2 text-[var(--admin-muted)] hover:bg-white/10 hover:text-[var(--admin-text)] transition"
+                        title="Fermer"
+                    >
+                        <CloseIcon className="h-5 w-5" />
+                    </button>
+                </div>
+
+                <form onSubmit={onSubmit} className="mt-6 space-y-4">
+                    <label className="block space-y-1">
+                        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Libellé *</span>
+                        <input
+                            type="text"
+                            value={form.data.libelle}
+                            onChange={(e) => form.setData('libelle', e.target.value)}
+                            placeholder="ex: Parrainage Septembre 2026"
+                            className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none"
+                            required
+                        />
+                    </label>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <label className="block space-y-1">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Type de réduction *</span>
+                            <select
+                                value={form.data.discount_type}
+                                onChange={(e) => form.setData('discount_type', e.target.value as 'percent' | 'fixed')}
+                                className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none"
+                            >
+                                <option value="percent">Pourcentage (%)</option>
+                                <option value="fixed">Montant fixe (FCFA)</option>
+                            </select>
+                        </label>
+
+                        <label className="block space-y-1">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">
+                                Valeur de la réduction ({form.data.discount_type === 'percent' ? '%' : 'FCFA'}) *
+                            </span>
+                            <input
+                                type="number"
+                                min="1"
+                                value={form.data.discount_value}
+                                onChange={(e) => form.setData('discount_value', Number(e.target.value))}
+                                className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none"
+                                required
+                            />
+                        </label>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <label className="block space-y-1">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Montant min commande/mission (FCFA)</span>
+                            <input
+                                type="number"
+                                min="0"
+                                value={form.data.min_montant}
+                                onChange={(e) => form.setData('min_montant', Number(e.target.value))}
+                                placeholder="0"
+                                className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none"
+                            />
+                        </label>
+
+                        <label className="block space-y-1">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Plafond réduction (FCFA)</span>
+                            <input
+                                type="number"
+                                min="0"
+                                value={form.data.max_discount_amount}
+                                onChange={(e) => form.setData('max_discount_amount', Number(e.target.value))}
+                                placeholder="Optionnel"
+                                className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none"
+                            />
+                        </label>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <label className="block space-y-1">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Date de début</span>
+                            <input
+                                type="date"
+                                value={form.data.starts_at}
+                                onChange={(e) => form.setData('starts_at', e.target.value)}
+                                className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none"
+                            />
+                        </label>
+
+                        <label className="block space-y-1">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Date d'expiration</span>
+                            <input
+                                type="date"
+                                value={form.data.expires_at}
+                                onChange={(e) => form.setData('expires_at', e.target.value)}
+                                className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none"
+                            />
+                        </label>
+                    </div>
+
+                    <label className="flex items-center gap-3 cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={form.data.is_active}
+                            onChange={(e) => form.setData('is_active', e.target.checked)}
+                            className="rounded border-[var(--admin-border)] h-5 w-5"
+                        />
+                        <span className="text-sm font-semibold text-[var(--admin-text)]">Campagne Active</span>
+                    </label>
+
+                    <div className="pt-4 flex justify-end gap-3 border-t border-[var(--admin-border)]">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="rounded-full border border-[var(--admin-border)] px-5 py-2.5 text-sm font-semibold hover:bg-white/10 transition"
+                        >
+                            Annuler
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={form.processing}
+                            className="rounded-full bg-[#ebb95e] text-[#241b16] px-6 py-2.5 text-sm font-semibold hover:opacity-90 transition disabled:opacity-50"
+                        >
+                            {editing ? 'Mettre à jour' : 'Créer la Campagne'}
                         </button>
                     </div>
                 </form>

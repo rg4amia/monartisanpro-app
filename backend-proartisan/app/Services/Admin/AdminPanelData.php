@@ -4,6 +4,7 @@ namespace App\Services\Admin;
 
 use App\Http\Requests\Admin\StoreCommunicationRequest;
 use App\Models\AdminActivityLog;
+use App\Models\CampagneParrainage;
 use App\Models\Communication;
 use App\Models\ContactMessage;
 use App\Models\Faq;
@@ -328,6 +329,17 @@ class AdminPanelData
     {
         return [
             'promoCodes' => $this->promoCodesList(),
+        ];
+    }
+
+    /**
+     * Onglet « Campagnes de parrainage » — parrainage client → client
+     * (distinct du parrainage artisan, hors backoffice).
+     */
+    public function campagnesParrainage(): array
+    {
+        return [
+            'campagnesParrainage' => $this->campagnesParrainageList(),
         ];
     }
 
@@ -733,6 +745,8 @@ class AdminPanelData
                 ? Communication::where('statut', 'publie')->count() : 0,
             'promo_codes_actifs' => Schema::hasTable('promo_codes')
                 ? PromoCode::where('is_active', true)->count() : 0,
+            'campagnes_parrainage_actives' => Schema::hasTable('campagnes_parrainage')
+                ? CampagneParrainage::where('is_active', true)->count() : 0,
             'contact_messages_nouveaux' => Schema::hasTable('contact_messages')
                 ? ContactMessage::where('statut', 'nouveau')->count() : 0,
         ];
@@ -775,6 +789,17 @@ class AdminPanelData
         try {
             return Schema::hasTable('promo_codes')
                 ? PromoCode::orderByDesc('created_at')->get()
+                : [];
+        } catch (\Throwable $e) {
+            return [];
+        }
+    }
+
+    private function campagnesParrainageList()
+    {
+        try {
+            return Schema::hasTable('campagnes_parrainage')
+                ? CampagneParrainage::orderByDesc('created_at')->get()
                 : [];
         } catch (\Throwable $e) {
             return [];

@@ -7,6 +7,7 @@ use App\Models\Devis;
 use App\Models\InterventionType;
 use App\Models\Jalon;
 use App\Models\Mission;
+use App\Models\PromoCode;
 use App\Models\Setting;
 use App\Models\Transaction;
 use App\Models\User;
@@ -277,16 +278,29 @@ class DevisService
                 throw new \InvalidArgumentException('Ce devis ne peut plus être accepté.');
             }
 
-            // 1. Calcul du ratio matériaux (TTC)
-            $montantTotal = $devis->montant_total;
+            // 1. Calcul du ratio matériaux (TTC) — sur les montants BRUTS du devis
+            // (les accesseurs montant_total/montant_materiaux ne connaissent pas
+            // une éventuelle réduction de code promo appliquée au paiement) ;
+            // le ratio reste donc immuable et indépendant du montant réellement payé.
             $montantMat = $devis->montant_materiaux;
-            $ratioMat = $montantTotal > 0 ? round($montantMat / $montantTotal, 4) : 0.6500;
+            $ratioMat = $devis->montant_total > 0 ? round($montantMat / $devis->montant_total, 4) : 0.6500;
+
+            // Le montant effectivement séquestré est celui réellement payé
+            // (montant du devis, éventuellement réduit par un code promo).
+            $montantTotal = $paymentTransaction->montant;
 
             // 2. Mise à jour du devis
             $devis->update([
                 'statut' => 'accepte',
                 'ratio_materiaux' => $ratioMat,
             ]);
+
+            // Consommation définitive du code promo éventuellement appliqué à
+            // l'acompte (le paiement est désormais confirmé et le devis accepté).
+            $metadata = $paymentTransaction->metadata ?? [];
+            if (! empty($metadata['promo_code'])) {
+                PromoCode::where('code', $metadata['promo_code'])->increment('used_count');
+            }
 
             // 3. Association artisan ↔ mission (seulement pour devis initial)
             if (! $devis->is_avenant) {

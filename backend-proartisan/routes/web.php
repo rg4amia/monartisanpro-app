@@ -174,6 +174,13 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::delete('/promo-codes/{promoCode}', [BackofficeController::class, 'destroyPromoCode'])->middleware('can:admin.promo.manage')->name('promo-codes.destroy');
         Route::post('/promo-codes/{promoCode}/toggle', [BackofficeController::class, 'togglePromoCode'])->middleware('can:admin.promo.manage')->name('promo-codes.toggle');
 
+        // Marketing — Campagnes de parrainage client (distinct du parrainage artisan)
+        Route::get('/campagnes-parrainage', [BackofficeController::class, 'campagnesParrainage'])->middleware('can:admin.parrainage.manage')->name('campagnes-parrainage');
+        Route::post('/campagnes-parrainage', [BackofficeController::class, 'storeCampagneParrainage'])->middleware('can:admin.parrainage.manage')->name('campagnes-parrainage.store');
+        Route::put('/campagnes-parrainage/{campagne}', [BackofficeController::class, 'updateCampagneParrainage'])->middleware('can:admin.parrainage.manage')->name('campagnes-parrainage.update');
+        Route::delete('/campagnes-parrainage/{campagne}', [BackofficeController::class, 'destroyCampagneParrainage'])->middleware('can:admin.parrainage.manage')->name('campagnes-parrainage.destroy');
+        Route::post('/campagnes-parrainage/{campagne}/toggle', [BackofficeController::class, 'toggleCampagneParrainage'])->middleware('can:admin.parrainage.manage')->name('campagnes-parrainage.toggle');
+
         // Communication
         Route::middleware('can:admin.communications.manage')->group(function () {
             Route::get('/communications', [BackofficeController::class, 'communications'])->name('communications');

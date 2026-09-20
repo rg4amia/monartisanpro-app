@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Devis;
 use App\Models\Jalon;
 use App\Models\Mission;
+use App\Models\PromoCode;
 use App\Models\Transaction;
 use App\Services\DevisService;
 use App\Services\OrangeMoneyService;
@@ -40,6 +41,7 @@ class PaymentController extends Controller
             'provider' => 'required|in:wave,orange_money,virement_bancaire',
             'phone' => 'required_if:provider,wave,orange_money|nullable|string|max:20',
             'payment_type' => 'nullable|string|in:total,hybrid',
+            'promo_code' => 'nullable|string|max:50',
         ]);
 
         if ($validator->fails()) {
@@ -95,6 +97,33 @@ class PaymentController extends Controller
                 Log::warning("Paiement initié: ajustement automatique du montant client ($montant FCFA) au montant officiel devis ($montantAttendu FCFA).");
                 $montant = $montantAttendu;
             }
+
+            // Application d'un code promo (parrainage client ou autre) : un code
+            // à propriétaire (`owner_user_id`) ne peut être appliqué que par ce
+            // propriétaire — jamais par un autre utilisateur du bon rôle
+            // (Règle d'or 36 : propriété de la ressource, pas seulement le rôle).
+            $discountAmount = 0;
+            $appliedPromoCode = null;
+            if (! empty($request->promo_code)) {
+                $codeStr = strtoupper(trim($request->promo_code));
+                $promo = PromoCode::where('code', $codeStr)->first();
+                if ($promo && (! $promo->owner_user_id || $promo->owner_user_id === $request->user()->id)) {
+                    try {
+                        $discountAmount = $promo->calculateDiscount($montantAttendu);
+                        $appliedPromoCode = $promo;
+                    } catch (\Exception $e) {
+                        Log::info('Code promo non appliqué à l\'acompte devis: '.$e->getMessage());
+                    }
+                } elseif ($promo) {
+                    Log::warning("Tentative d'utilisation d'un code promo appartenant à un autre utilisateur", [
+                        'promo_code' => $codeStr,
+                        'user_id' => $request->user()->id,
+                        'owner_user_id' => $promo->owner_user_id,
+                    ]);
+                }
+            }
+            $montantAttendu -= $discountAmount;
+            $montant = $montantAttendu;
 
             $provider = PaymentProvider::from($request->provider);
             $phone = (string) ($request->phone ?? $client->phone ?? '');
@@ -181,6 +210,8 @@ class PaymentController extends Controller
                     'devis_id' => $devis->id,
                     'payment_type' => $paymentType,
                     'description' => $paymentType === 'hybrid' ? "Acompte matériaux mission #{$mission->id}" : "Acompte intégral mission #{$mission->id}",
+                    'promo_code' => $appliedPromoCode?->code,
+                    'discount_amount' => $discountAmount,
                 ],
             ]);
 

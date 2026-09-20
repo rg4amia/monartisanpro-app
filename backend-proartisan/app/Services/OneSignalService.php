@@ -24,9 +24,12 @@ class OneSignalService
      * @param string $heading Titre de la notification
      * @param string $content Contenu de la notification
      * @param array $data Données additionnelles invisibles
+     * @param string|null $androidSound Nom (sans extension) d'un fichier son dans android/app/src/main/res/raw,
+     *   pour une sonnerie de notification distincte. Passer 'null' (chaîne littérale, convention OneSignal)
+     *   pour couper le son. Omis = son système par défaut.
      * @return bool
      */
-    public function sendToUser(string $userId, string $heading, string $content, array $data = []): bool
+    public function sendToUser(string $userId, string $heading, string $content, array $data = [], ?string $androidSound = null): bool
     {
         if (empty($this->appId) || empty($this->restApiKey)) {
             Log::warning('OneSignal non configuré. Notification ignorée.', ['user_id' => $userId]);
@@ -46,6 +49,10 @@ class OneSignalService
                 'contents' => ['en' => $content, 'fr' => $content],
                 'data' => $data,
             ];
+
+            if ($androidSound !== null) {
+                $payload['android_sound'] = $androidSound;
+            }
 
             $response = Http::timeout(3)
                 ->connectTimeout(2)

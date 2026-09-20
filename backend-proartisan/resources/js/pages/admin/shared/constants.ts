@@ -17,6 +17,7 @@ export const tabRoutes: Record<AdminTab, string> = {
     communications: '/admin/communications',
     notifications: '/admin/notifications',
     promo_codes: '/admin/promo-codes',
+    campagnes_parrainage: '/admin/campagnes-parrainage',
     audit_logs: '/admin/audit-logs',
     observability: '/admin/observability',
     vitrine: '/admin/vitrine',
@@ -41,6 +42,11 @@ export const tabMeta: Record<AdminTab, { description: string; label: string; sec
         label: 'Codes Promo',
         section: 'MARKETING',
         description: 'Gestion des campagnes promotionnelles, remises en pourcentage ou en montant fixe et plafonds.',
+    },
+    campagnes_parrainage: {
+        label: 'Parrainage Clients',
+        section: 'MARKETING',
+        description: 'Gestion des campagnes de réduction de parrainage client → client : activation, période et plafonds.',
     },
     kyc: {
         label: 'KYC & Vérifications',
@@ -149,6 +155,7 @@ export const searchPlaceholders: Record<AdminTab, string> = {
     communications: 'Rechercher une communication, un titre ou une cible...',
     notifications: 'Rechercher une notification ou alerte...',
     promo_codes: 'Rechercher un code promo, une description ou un type...',
+    campagnes_parrainage: 'Rechercher une campagne de parrainage...',
     audit_logs: 'Rechercher une action, un admin, une entité ou une IP...',
     observability: 'Filtrer les signaux de santé...',
     vitrine: 'Rechercher un slide, article, vidéo ou formation...',

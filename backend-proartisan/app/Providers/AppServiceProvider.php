@@ -10,6 +10,7 @@ use App\Models\SupplierCashout;
 use App\Models\Transaction;
 use App\Models\WalletTransaction;
 use App\Observers\AdminDashboardCacheObserver;
+use App\Observers\MissionFundedObserver;
 use App\Services\Admin\AdminPermissionService;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -41,6 +42,10 @@ class AppServiceProvider extends ServiceProvider
         $this->configureRateLimiting();
         $this->configureAdminDashboardCache();
         $this->configureAdminGates();
+
+        // Récompense de parrainage client dès qu'une mission passe à
+        // `funded_locked` (premier financement du filleul parrainé).
+        Mission::observe(new MissionFundedObserver);
 
         // Enregistrement des rôles et permissions
         Gate::before(function ($user, $ability) {

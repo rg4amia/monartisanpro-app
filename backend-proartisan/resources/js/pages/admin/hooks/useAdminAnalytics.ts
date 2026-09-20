@@ -17,6 +17,7 @@ import type {
     AdminTransaction,
     AdminUser,
     ArtisanScoreItem,
+    CampagneParrainageItem,
     DashboardData,
     FournisseurItem,
     KycUser,
@@ -43,6 +44,7 @@ interface AdminAnalyticsInput {
     evaluationsList: AdminEvaluation[];
     artisansScores: ArtisanScoreItem[];
     promoCodes: PromoCodeItem[];
+    campagnesParrainage: CampagneParrainageItem[];
     now: number;
 }
 
@@ -60,6 +62,7 @@ export function useAdminAnalytics({
     evaluationsList,
     artisansScores,
     promoCodes,
+    campagnesParrainage,
     now,
 }: AdminAnalyticsInput) {
     return useMemo(() => {
@@ -280,6 +283,17 @@ export function useAdminAnalytics({
                 ]).includes(deferredSearch),
         );
 
+        const filteredCampagnes = (campagnesParrainage || []).filter((campagne) =>
+            deferredSearch === ''
+                ? true
+                : normalizeSearch([
+                    campagne.id,
+                    campagne.libelle,
+                    campagne.discount_type,
+                    campagne.discount_value,
+                ]).includes(deferredSearch),
+        );
+
         const filteredOrders = (orders || []).filter((order) => {
             const matchesStatus = deliveryStatusFilter === 'all' || order.status === deliveryStatusFilter;
             const matchesSearch = deferredSearch === '' || normalizeSearch([
@@ -345,6 +359,7 @@ export function useAdminAnalytics({
             filteredEvaluations,
             filteredArtisansScores,
             filteredPromoCodes,
+            filteredCampagnes,
             highRiskDisputes,
             missionStatusMetrics,
             monthlyUserCount,
@@ -357,5 +372,5 @@ export function useAdminAnalytics({
             urgentKyc,
             weeklyUserCount,
         };
-    }, [dashboard, deferredSearch, fournisseurs, kycUsers, litiges, missions, orders, deliveryStatusFilter, transactions, users, evaluationsList, artisansScores, promoCodes, now]);
+    }, [dashboard, deferredSearch, fournisseurs, kycUsers, litiges, missions, orders, deliveryStatusFilter, transactions, users, evaluationsList, artisansScores, promoCodes, campagnesParrainage, now]);
 }

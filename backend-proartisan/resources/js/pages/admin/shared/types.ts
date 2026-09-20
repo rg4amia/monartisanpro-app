@@ -15,6 +15,7 @@ export type AdminTab =
     | 'ai_dashboard'
     | 'communications'
     | 'promo_codes'
+    | 'campagnes_parrainage'
     | 'audit_logs'
     | 'observability'
     | 'cartography'
