@@ -31,11 +31,11 @@ class ParrainageController extends GetxController {
     }
   }
 
-  Future<bool> addFilleul(String phone) async {
+  Future<bool> addFilleul(String phone, String nom) async {
     isSubmitting.value = true;
     errorMsg.value = null;
     try {
-      await _repo.addFilleul(phone);
+      await _repo.addFilleul(phone, nom);
       Get.snackbar('Succès', 'Filleul ajouté avec succès !');
       await loadFilleuls();
       return true;

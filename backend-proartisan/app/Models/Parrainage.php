@@ -10,6 +10,9 @@ class Parrainage extends Model
     protected $fillable = [
         'parrain_id',
         'filleul_id',
+        'filleul_phone',
+        'filleul_nom',
+        'statut',
         'score_caution',
     ];
 

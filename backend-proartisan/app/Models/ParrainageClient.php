@@ -12,6 +12,8 @@ class ParrainageClient extends Model
     protected $fillable = [
         'parrain_id',
         'filleul_id',
+        'filleul_phone',
+        'filleul_nom',
         'campagne_id',
         'promo_code_id',
         'statut',

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Exceptions\ParrainageClientException;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreParrainageClientRequest;
 use App\Models\ParrainageClient;
 use App\Services\ParrainageClientService;
 use Illuminate\Http\JsonResponse;
@@ -13,15 +14,17 @@ class ParrainageClientController extends Controller
 {
     /**
      * Enregistre un parrainage d'un client (filleul) par un autre client (parrain).
+     * Si le filleul n'a pas encore de compte, crée une invitation en attente
+     * et lui envoie un SMS (voir ParrainageClientService::parrainer()).
      */
-    public function store(Request $request, ParrainageClientService $service): JsonResponse
+    public function store(StoreParrainageClientRequest $request, ParrainageClientService $service): JsonResponse
     {
-        $request->validate([
-            'filleul_phone' => ['required', 'string', 'regex:/^\+225[0-9]{10}$/'],
-        ]);
-
         try {
-            $parrainage = $service->parrainer($request->user(), $request->input('filleul_phone'));
+            $parrainage = $service->parrainer(
+                $request->user(),
+                $request->input('filleul_phone'),
+                $request->input('filleul_nom')
+            );
         } catch (ParrainageClientException $e) {
             return response()->json([
                 'success' => false,

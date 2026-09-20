@@ -38,11 +38,12 @@ class ParrainageClientRepository {
     );
   }
 
-  Future<Map<String, dynamic>> addFilleul(String phone) async {
+  Future<Map<String, dynamic>> addFilleul(String phone, String nom) async {
     final res = await _client.post(
       '/parrainages-clients',
       data: {
         'filleul_phone': phone,
+        'filleul_nom': nom,
       },
     );
     await _store.invalidate(_key);

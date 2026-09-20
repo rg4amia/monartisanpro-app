@@ -50,14 +50,17 @@ class ParrainageClientScreen extends StatelessWidget {
 
   final ParrainageClientController controller =
       Get.put(ParrainageClientController());
+  final TextEditingController _nomController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
 
   void _submit() async {
+    final nom = _nomController.text.trim();
     final phone = _phoneController.text.trim();
-    if (phone.isEmpty) return;
+    if (nom.isEmpty || phone.isEmpty) return;
 
-    final success = await controller.addFilleul(phone);
+    final success = await controller.addFilleul(phone, nom);
     if (success) {
+      _nomController.clear();
       _phoneController.clear();
     }
   }
@@ -126,6 +129,25 @@ class ParrainageClientScreen extends StatelessWidget {
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _nomController,
+                      keyboardType: TextInputType.name,
+                      textCapitalization: TextCapitalization.words,
+                      decoration: InputDecoration(
+                        hintText: 'Nom du filleul',
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: AppColors.border),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: AppColors.border),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -208,17 +230,36 @@ class ParrainageClientScreen extends StatelessWidget {
                           final f = controller.filleuls[index];
                           final filleul = _readMap(f, 'filleul');
                           final promoCode = _readMap(f, 'promo_code');
+                          final isInscrit = filleul != null;
 
-                          final name = _readString(filleul, 'name', 'Inconnu');
-                          final phone = _readString(filleul, 'phone');
+                          // Trois états distincts : pas encore de compte,
+                          // inscrit mais 1ère mission pas encore financée,
+                          // ou récompense (code promo) obtenue.
                           final statut = _readString(f, 'statut', 'en_attente');
+                          final isEnAttenteInscription =
+                              statut == 'en_attente_inscription';
+                          final isRecompense = statut == 'recompense';
+
+                          final name = isInscrit
+                              ? _readString(filleul, 'name', 'Inconnu')
+                              : _readString(f, 'filleul_nom', 'Filleul invité');
+                          final phone = isInscrit
+                              ? _readString(filleul, 'phone')
+                              : _readString(f, 'filleul_phone');
                           final createdAt = _readString(f, 'created_at');
 
-                          final isRecompense = statut == 'recompense';
-                          final statutLabel =
-                              isRecompense ? 'Récompensé' : 'En attente';
-                          final statutColor =
-                              isRecompense ? AppColors.success : AppColors.warning;
+                          final String statutLabel;
+                          final Color statutColor;
+                          if (isEnAttenteInscription) {
+                            statutLabel = 'En attente d\'inscription';
+                            statutColor = AppColors.warning;
+                          } else if (isRecompense) {
+                            statutLabel = 'Récompensé';
+                            statutColor = AppColors.success;
+                          } else {
+                            statutLabel = 'En attente (1ère mission)';
+                            statutColor = AppColors.warning;
+                          }
 
                           return Container(
                             margin: const EdgeInsets.only(bottom: 12),

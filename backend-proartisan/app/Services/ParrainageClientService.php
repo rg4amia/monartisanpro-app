@@ -22,11 +22,14 @@ class ParrainageClientService
     public function __construct(private NotificationService $notificationService) {}
 
     /**
-     * Enregistre un parrainage d'un client (filleul) par un autre client (parrain).
+     * Enregistre un parrainage d'un client (filleul) par un autre client
+     * (parrain), ou crée une invitation en attente si le filleul n'a pas
+     * encore de compte (Règle d'or 35 : SMS d'invitation, liaison
+     * automatique à l'inscription via `linkPending()`).
      *
      * @throws ParrainageClientException
      */
-    public function parrainer(User $parrain, string $filleulPhone): ParrainageClient
+    public function parrainer(User $parrain, string $filleulPhone, string $filleulNom): ParrainageClient
     {
         // RÈGLE : Seul un client peut être parrain
         if ($parrain->role !== 'client') {
@@ -36,13 +39,33 @@ class ParrainageClientService
             );
         }
 
+        // RÈGLE : Un numéro ne peut être parrainé/invité qu'une seule fois
+        // (couvre à la fois « déjà lié à un parrain » et « déjà invité en
+        // attente »). Vérifié avant la recherche du filleul pour éviter
+        // qu'un même numéro non inscrit reçoive deux invitations.
+        if (ParrainageClient::where('filleul_phone', $filleulPhone)->exists()) {
+            throw new ParrainageClientException(
+                'Ce client a déjà un parrain.',
+                422
+            );
+        }
+
         $filleul = User::where('phone', $filleulPhone)->first();
 
         if (! $filleul) {
-            throw new ParrainageClientException(
-                'Aucun client trouvé avec ce numéro de téléphone.',
-                404
+            $parrainage = ParrainageClient::create([
+                'parrain_id' => $parrain->id,
+                'filleul_phone' => $filleulPhone,
+                'filleul_nom' => $filleulNom,
+                'statut' => 'en_attente_inscription',
+            ]);
+
+            app(SmsService::class)->send(
+                $filleulPhone,
+                "{$parrain->name} vous invite à rejoindre ProsArtisan ! Inscrivez-vous avec ce numéro pour bénéficier d'une réduction sur votre première mission."
             );
+
+            return $parrainage;
         }
 
         // RÈGLE : Le filleul doit être un client
@@ -61,19 +84,28 @@ class ParrainageClientService
             );
         }
 
-        // RÈGLE : Le filleul ne doit pas déjà avoir un parrain
-        if (ParrainageClient::where('filleul_id', $filleul->id)->exists()) {
-            throw new ParrainageClientException(
-                'Ce client a déjà un parrain.',
-                422
-            );
-        }
-
         return ParrainageClient::create([
             'parrain_id' => $parrain->id,
             'filleul_id' => $filleul->id,
+            'filleul_phone' => $filleul->phone,
             'statut' => 'en_attente',
         ]);
+    }
+
+    /**
+     * Lie automatiquement les invitations en attente correspondant au
+     * téléphone de l'utilisateur qui vient de s'inscrire, si son rôle
+     * définitif est client. No-op silencieux sinon.
+     */
+    public function linkPending(User $user): void
+    {
+        if ($user->role !== 'client') {
+            return;
+        }
+
+        ParrainageClient::where('filleul_phone', $user->phone)
+            ->where('statut', 'en_attente_inscription')
+            ->update(['filleul_id' => $user->id, 'statut' => 'en_attente']);
     }
 
     /**

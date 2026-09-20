@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\ArtisanProfile;
+use App\Models\Notification;
 use App\Models\User;
 use Illuminate\Validation\ValidationException;
 
@@ -31,12 +33,20 @@ class AuthService
 
         if ($data['role'] === 'artisan') {
             $artisanData = [];
-            if (isset($data['sector_id'])) $artisanData['sector_id'] = $data['sector_id'];
-            if (isset($data['trade_id'])) $artisanData['trade_id'] = $data['trade_id'];
-            if (isset($data['bio'])) $artisanData['bio'] = $data['bio'];
-            if (isset($data['experience_years'])) $artisanData['experience_years'] = $data['experience_years'];
+            if (isset($data['sector_id'])) {
+                $artisanData['sector_id'] = $data['sector_id'];
+            }
+            if (isset($data['trade_id'])) {
+                $artisanData['trade_id'] = $data['trade_id'];
+            }
+            if (isset($data['bio'])) {
+                $artisanData['bio'] = $data['bio'];
+            }
+            if (isset($data['experience_years'])) {
+                $artisanData['experience_years'] = $data['experience_years'];
+            }
 
-            \App\Models\ArtisanProfile::updateOrCreate(
+            ArtisanProfile::updateOrCreate(
                 ['user_id' => $user->id],
                 $artisanData
             );
@@ -45,13 +55,13 @@ class AuthService
         $user = $user->fresh();
 
         if ($user->kyc_status === 'en_attente') {
-            $hasPendingNotif = \App\Models\Notification::where('user_id', $user->id)
+            $hasPendingNotif = Notification::where('user_id', $user->id)
                 ->where('type', 'kyc')
                 ->where('title', 'Compte en attente de validation')
                 ->exists();
 
-            if (!$hasPendingNotif) {
-                app(\App\Services\NotificationService::class)->send(
+            if (! $hasPendingNotif) {
+                app(NotificationService::class)->send(
                     $user,
                     'kyc',
                     'Compte en attente de validation',
@@ -59,9 +69,9 @@ class AuthService
                 );
 
                 // Notification pour les administrateurs
-                $admins = \App\Models\User::where('role', 'admin')->get();
+                $admins = User::where('role', 'admin')->get();
                 foreach ($admins as $admin) {
-                    app(\App\Services\NotificationService::class)->send(
+                    app(NotificationService::class)->send(
                         $admin,
                         'admin_alert',
                         'Nouveau profil en attente KYC',
@@ -70,6 +80,12 @@ class AuthService
                 }
             }
         }
+
+        // Lie automatiquement les invitations de parrainage en attente pour
+        // ce numéro de téléphone, maintenant que le rôle définitif est
+        // connu. No-op silencieux si aucune invitation ne correspond.
+        app(ParrainageService::class)->linkPending($user);
+        app(ParrainageClientService::class)->linkPending($user);
 
         return $user;
     }
@@ -103,7 +119,7 @@ class AuthService
                 try {
                     $admins = User::where('role', 'admin')->get();
                     foreach ($admins as $admin) {
-                        app(\App\Services\NotificationService::class)->send(
+                        app(NotificationService::class)->send(
                             $admin,
                             'fraud_alert',
                             'Tentative de contournement de bannissement détectée',
@@ -124,11 +140,11 @@ class AuthService
             if ($user->device_fingerprint === null) {
                 $user->update(['device_fingerprint' => $deviceFingerprint]);
             } elseif ($user->device_fingerprint !== $deviceFingerprint) {
-                \App\Models\Notification::create([
+                Notification::create([
                     'user_id' => $user->id,
-                    'title'   => 'Alerte sécurité : Changement d\'appareil suspect',
-                    'body'    => 'Un changement suspect d\'appareil (IMEI) a été détecté. Votre Score ProsArtisan est gelé par mesure de sécurité.',
-                    'type'    => 'security_alert',
+                    'title' => 'Alerte sécurité : Changement d\'appareil suspect',
+                    'body' => 'Un changement suspect d\'appareil (IMEI) a été détecté. Votre Score ProsArtisan est gelé par mesure de sécurité.',
+                    'type' => 'security_alert',
                 ]);
 
                 $user->update([

@@ -5,18 +5,52 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
 import '../controllers/parrainage_controller.dart';
 
+/// Lecture défensive d'une valeur textuelle dans une Map issue du JSON API.
+/// Ne jamais transtyper directement (`as String`) : une clé absente ou d'un
+/// type inattendu ne doit jamais faire échouer la lecture des autres champs
+/// (Règle d'or 28).
+String _readString(
+  Map<String, dynamic>? map,
+  String key, [
+  String fallback = '',
+]) {
+  if (map == null) return fallback;
+  final value = map[key];
+  if (value is String && value.isNotEmpty) return value;
+  return fallback;
+}
+
+Map<String, dynamic>? _readMap(Map<String, dynamic>? map, String key) {
+  if (map == null) return null;
+  final value = map[key];
+  if (value is Map) return value.cast<String, dynamic>();
+  return null;
+}
+
+String _formatDate(String isoDate) {
+  if (isoDate.isEmpty) return '';
+  try {
+    return DateFormat('dd/MM/yyyy').format(DateTime.parse(isoDate));
+  } catch (_) {
+    return '';
+  }
+}
+
 class ParrainageScreen extends StatelessWidget {
   ParrainageScreen({super.key});
 
   final ParrainageController controller = Get.put(ParrainageController());
+  final TextEditingController _nomController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
 
   void _submit() async {
+    final nom = _nomController.text.trim();
     final phone = _phoneController.text.trim();
-    if (phone.isEmpty) return;
+    if (nom.isEmpty || phone.isEmpty) return;
 
-    final success = await controller.addFilleul(phone);
+    final success = await controller.addFilleul(phone, nom);
     if (success) {
+      _nomController.clear();
       _phoneController.clear();
     }
   }
@@ -85,6 +119,25 @@ class ParrainageScreen extends StatelessWidget {
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _nomController,
+                      keyboardType: TextInputType.name,
+                      textCapitalization: TextCapitalization.words,
+                      decoration: InputDecoration(
+                        hintText: 'Nom du filleul',
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: AppColors.border),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: AppColors.border),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -165,9 +218,23 @@ class ParrainageScreen extends StatelessWidget {
                       delegate: SliverChildBuilderDelegate(
                         (context, index) {
                           final f = controller.filleuls[index];
-                          final filleul =
-                              (f['filleul'] as Map?)?.cast<String, dynamic>() ??
-                                  const <String, dynamic>{};
+                          final filleul = _readMap(f, 'filleul');
+                          final isInscrit = filleul != null;
+                          final statut = _readString(f, 'statut');
+                          final isEnAttenteInscription =
+                              statut == 'en_attente_inscription';
+
+                          final name = isInscrit
+                              ? _readString(filleul, 'name', 'Inconnu')
+                              : _readString(f, 'filleul_nom', 'Filleul invité');
+                          final phone = isInscrit
+                              ? _readString(filleul, 'phone')
+                              : _readString(f, 'filleul_phone');
+
+                          final showCaution =
+                              isInscrit || statut == 'actif';
+                          final createdAt = _readString(f, 'created_at');
+
                           return Container(
                             margin: const EdgeInsets.only(bottom: 12),
                             padding: const EdgeInsets.all(16),
@@ -192,40 +259,60 @@ class ParrainageScreen extends StatelessWidget {
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        filleul['name'] ?? 'Inconnu',
+                                        name,
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           color: AppColors.textPrimary,
                                         ),
                                       ),
                                       Text(
-                                        filleul['phone'] ?? '',
+                                        phone,
                                         style: TextStyle(
                                           color: AppColors.textSecondary,
                                           fontSize: 13,
                                         ),
                                       ),
+                                      if (isEnAttenteInscription) ...[
+                                        const SizedBox(height: 6),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.warning
+                                                .withValues(alpha: 0.15),
+                                            borderRadius:
+                                                BorderRadius.circular(20),
+                                          ),
+                                          child: Text(
+                                            'En attente d\'inscription',
+                                            style: TextStyle(
+                                              color: AppColors.warning,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 11,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ],
                                   ),
                                 ),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.end,
                                   children: [
-                                    Text(
-                                      'Caution: ${f['score_caution']} pts',
-                                      style: TextStyle(
-                                        color: AppColors.warning,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 12,
+                                    if (showCaution)
+                                      Text(
+                                        'Caution: ${f['score_caution']} pts',
+                                        style: TextStyle(
+                                          color: AppColors.warning,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12,
+                                        ),
                                       ),
-                                    ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      f['created_at'] != null
-                                          ? DateFormat('dd/MM/yyyy').format(
-                                              DateTime.parse(f['created_at']),
-                                            )
-                                          : '',
+                                      _formatDate(createdAt),
                                       style: TextStyle(
                                         color: AppColors.textSecondary,
                                         fontSize: 11,

@@ -7,6 +7,8 @@ use App\Models\ParrainageClient;
 use App\Models\PromoCode;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Services\AuthService;
+use App\Services\SmsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -17,6 +19,7 @@ test('un artisan ne peut pas parrainer un autre client', function () {
 
     $response = $this->actingAs($artisan)->postJson('/api/v1/parrainages-clients', [
         'filleul_phone' => $filleul->phone,
+        'filleul_nom' => 'Nom Ignoré',
     ]);
 
     $response->assertStatus(403);
@@ -32,6 +35,7 @@ test('un client ne peut pas parrainer un artisan', function () {
 
     $response = $this->actingAs($parrain)->postJson('/api/v1/parrainages-clients', [
         'filleul_phone' => $artisan->phone,
+        'filleul_nom' => 'Nom Ignoré',
     ]);
 
     $response->assertStatus(422);
@@ -44,6 +48,7 @@ test('un client ne peut pas se parrainer lui-meme', function () {
 
     $response = $this->actingAs($parrain)->postJson('/api/v1/parrainages-clients', [
         'filleul_phone' => $parrain->phone,
+        'filleul_nom' => 'Moi-même',
     ]);
 
     $response->assertStatus(422);
@@ -58,11 +63,13 @@ test('un client deja parraine ne peut pas etre parraine a nouveau', function () 
     ParrainageClient::create([
         'parrain_id' => $parrain1->id,
         'filleul_id' => $filleul->id,
+        'filleul_phone' => $filleul->phone,
         'statut' => 'en_attente',
     ]);
 
     $response = $this->actingAs($parrain2)->postJson('/api/v1/parrainages-clients', [
         'filleul_phone' => $filleul->phone,
+        'filleul_nom' => 'Nom Ignoré',
     ]);
 
     $response->assertStatus(422);
@@ -75,6 +82,7 @@ test('un client peut parrainer un autre client', function () {
 
     $response = $this->actingAs($parrain)->postJson('/api/v1/parrainages-clients', [
         'filleul_phone' => $filleul->phone,
+        'filleul_nom' => 'Nom Ignoré',
     ]);
 
     $response->assertCreated();
@@ -83,8 +91,96 @@ test('un client peut parrainer un autre client', function () {
     $this->assertDatabaseHas('parrainages_clients', [
         'parrain_id' => $parrain->id,
         'filleul_id' => $filleul->id,
+        'filleul_phone' => $filleul->phone,
         'statut' => 'en_attente',
     ]);
+});
+
+test('inviter un numero client non inscrit cree une ligne en attente et envoie un sms', function () {
+    $smsMock = $this->mock(SmsService::class);
+    $smsMock->shouldReceive('send')
+        ->once()
+        ->with('+2250700000030', Mockery::pattern('/vous invite à rejoindre ProsArtisan/'))
+        ->andReturn(['status' => 'success']);
+
+    $parrain = User::factory()->create(['role' => 'client', 'phone' => '+2250700000029']);
+
+    $response = $this->actingAs($parrain)->postJson('/api/v1/parrainages-clients', [
+        'filleul_phone' => '+2250700000030',
+        'filleul_nom' => 'Futur Client',
+    ]);
+
+    $response->assertCreated();
+    $response->assertJsonPath('success', true);
+
+    $this->assertDatabaseHas('parrainages_clients', [
+        'parrain_id' => $parrain->id,
+        'filleul_id' => null,
+        'filleul_phone' => '+2250700000030',
+        'filleul_nom' => 'Futur Client',
+        'statut' => 'en_attente_inscription',
+    ]);
+});
+
+test('inscription ulterieure avec role client lie automatiquement le parrainage client en attente', function () {
+    $this->mock(SmsService::class)->shouldReceive('send')->once()->andReturn(['status' => 'success']);
+
+    $parrain = User::factory()->create(['role' => 'client', 'phone' => '+2250700000031']);
+
+    $this->actingAs($parrain)->postJson('/api/v1/parrainages-clients', [
+        'filleul_phone' => '+2250700000032',
+        'filleul_nom' => 'Futur Client',
+    ])->assertCreated();
+
+    $filleul = User::factory()->create(['phone' => '+2250700000032', 'role' => null, 'kyc_status' => 'en_attente']);
+
+    app(AuthService::class)->register($filleul, ['name' => 'Nouveau Client', 'role' => 'client']);
+
+    $parrainage = ParrainageClient::where('filleul_phone', '+2250700000032')->first();
+
+    expect($parrainage->statut)->toBe('en_attente');
+    expect($parrainage->filleul_id)->toBe($filleul->id);
+});
+
+test('inscription avec un mauvais role ne lie pas le parrainage client en attente', function () {
+    $this->mock(SmsService::class)->shouldReceive('send')->once()->andReturn(['status' => 'success']);
+
+    $parrain = User::factory()->create(['role' => 'client', 'phone' => '+2250700000033']);
+
+    $this->actingAs($parrain)->postJson('/api/v1/parrainages-clients', [
+        'filleul_phone' => '+2250700000034',
+        'filleul_nom' => 'Futur Client',
+    ])->assertCreated();
+
+    $filleul = User::factory()->create(['phone' => '+2250700000034', 'role' => null, 'kyc_status' => 'en_attente']);
+
+    app(AuthService::class)->register($filleul, ['name' => 'Un Artisan', 'role' => 'artisan']);
+
+    $parrainage = ParrainageClient::where('filleul_phone', '+2250700000034')->first();
+
+    expect($parrainage->statut)->toBe('en_attente_inscription');
+    expect($parrainage->filleul_id)->toBeNull();
+});
+
+test('double invitation client du meme numero renvoie une erreur claire sans exception sql', function () {
+    $this->mock(SmsService::class)->shouldReceive('send')->once()->andReturn(['status' => 'success']);
+
+    $parrain1 = User::factory()->create(['role' => 'client', 'phone' => '+2250700000035']);
+    $parrain2 = User::factory()->create(['role' => 'client', 'phone' => '+2250700000036']);
+
+    $this->actingAs($parrain1)->postJson('/api/v1/parrainages-clients', [
+        'filleul_phone' => '+2250700000037',
+        'filleul_nom' => 'Futur Client',
+    ])->assertCreated();
+
+    $response = $this->actingAs($parrain2)->postJson('/api/v1/parrainages-clients', [
+        'filleul_phone' => '+2250700000037',
+        'filleul_nom' => 'Futur Client Bis',
+    ]);
+
+    $response->assertStatus(422);
+    $response->assertJsonPath('success', false);
+    $response->assertJsonPath('message', 'Ce client a déjà un parrain.');
 });
 
 test('aucune recompense sans campagne active quand la mission du filleul est financee', function () {

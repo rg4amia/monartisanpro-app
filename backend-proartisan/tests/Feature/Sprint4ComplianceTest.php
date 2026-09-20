@@ -5,9 +5,12 @@ namespace Tests\Feature;
 use App\Models\Jalon;
 use App\Models\Litige;
 use App\Models\Mission;
-use App\Models\Parrainage;
+use App\Models\ScoreLedgerEntry;
 use App\Models\User;
+use App\Services\ScoreService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class Sprint4ComplianceTest extends TestCase
@@ -48,8 +51,8 @@ class Sprint4ComplianceTest extends TestCase
                         'url' => 'http://example.com/photo.jpg',
                         'lat' => 5.3,
                         'lng' => -4.0,
-                    ]
-                ]
+                    ],
+                ],
             ]);
 
         $response->assertOk();
@@ -70,8 +73,8 @@ class Sprint4ComplianceTest extends TestCase
                         'url' => 'http://example.com/fraud.jpg',
                         'lat' => 5.3,
                         'lng' => -4.0,
-                    ]
-                ]
+                    ],
+                ],
             ]);
 
         $response2->assertStatus(422)
@@ -87,14 +90,14 @@ class Sprint4ComplianceTest extends TestCase
             'score_prosartisan' => 300,
         ]);
 
-        \App\Models\ScoreLedgerEntry::create([
+        ScoreLedgerEntry::create([
             'user_id' => $parrain->id,
             'event_type' => 'success_mission',
             'points' => 890,
             'credibility_factor' => 1.00,
             'description' => 'Initial high score',
         ]);
-        app(\App\Services\ScoreService::class)->recalculateFromLedger($parrain);
+        app(ScoreService::class)->recalculateFromLedger($parrain);
 
         $filleul = User::factory()->create([
             'role' => 'artisan',
@@ -107,6 +110,7 @@ class Sprint4ComplianceTest extends TestCase
         $response = $this->actingAs($parrain)
             ->postJson('/api/v1/parrainages', [
                 'filleul_phone' => $filleul->phone,
+                'filleul_nom' => $filleul->name,
             ]);
 
         $response->assertCreated();
@@ -199,16 +203,16 @@ class Sprint4ComplianceTest extends TestCase
                         'url' => 'http://example.com/photo1.jpg',
                         'lat' => 5.3,
                         'lng' => -4.0,
-                    ]
-                ]
+                    ],
+                ],
             ])
             ->assertOk();
 
         $this->assertEquals('soumis', $jalon->fresh()->statut);
 
         // 2. Upload additional proof (mock file upload)
-        \Illuminate\Support\Facades\Storage::fake('public');
-        $file = \Illuminate\Http\UploadedFile::fake()->image('photo2.jpg');
+        Storage::fake('public');
+        $file = UploadedFile::fake()->image('photo2.jpg');
 
         $responseUpload = $this->actingAs($artisan)
             ->postJson("/api/v1/jalons/{$jalon->id}/photos", [
@@ -218,8 +222,8 @@ class Sprint4ComplianceTest extends TestCase
                         'latitude' => 5.301,
                         'longitude' => -4.001,
                         'description' => 'Vue de face',
-                    ]
-                ]
+                    ],
+                ],
             ]);
 
         $responseUpload->assertOk();
@@ -230,12 +234,12 @@ class Sprint4ComplianceTest extends TestCase
             ->postJson("/api/v1/jalons/{$jalon->id}/accept-proofs");
 
         $responseAccept->assertOk();
-        
+
         // Jalon status should now be validated ('paye' or 'valide' depending on execution flow)
         $this->assertTrue(in_array($jalon->fresh()->statut, ['valide', 'paye']));
 
         // 4. Try uploading photos again -> should be blocked because status is no longer en_attente or soumis
-        $file3 = \Illuminate\Http\UploadedFile::fake()->image('photo3.jpg');
+        $file3 = UploadedFile::fake()->image('photo3.jpg');
         $this->actingAs($artisan)
             ->postJson("/api/v1/jalons/{$jalon->id}/photos", [
                 'photos' => [
@@ -243,8 +247,8 @@ class Sprint4ComplianceTest extends TestCase
                         'photo' => $file3,
                         'latitude' => 5.3,
                         'longitude' => -4.0,
-                    ]
-                ]
+                    ],
+                ],
             ])
             ->assertStatus(400);
     }
