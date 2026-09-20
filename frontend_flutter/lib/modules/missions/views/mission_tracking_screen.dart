@@ -153,7 +153,7 @@ class _MissionTrackingScreenState extends State<MissionTrackingScreen> {
                       controller.hasReferentPendingValidation,
                 ),
                 if (isArtisan &&
-                    mission.status == 'pending_artisan_acceptance') ...[
+                    mission.rawStatus == 'pending_artisan_acceptance') ...[
                   const SizedBox(height: 16),
                   PendingAcceptanceCard(
                     mission: mission,

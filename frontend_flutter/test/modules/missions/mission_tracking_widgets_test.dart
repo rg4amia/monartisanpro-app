@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:frontend_flutter/data/models/mission_model.dart';
 import 'package:frontend_flutter/modules/missions/widgets/tracking/budget_bar.dart';
 import 'package:frontend_flutter/modules/missions/widgets/tracking/status_pill.dart';
 import 'package:frontend_flutter/modules/missions/widgets/tracking/tracking_info_row.dart';
 import 'package:frontend_flutter/modules/missions/widgets/tracking/tracking_media_viewer.dart';
+import 'package:frontend_flutter/modules/missions/widgets/tracking/workflow_card.dart';
 
 Future<void> _pump(WidgetTester tester, Widget child) {
   return tester.pumpWidget(
@@ -50,6 +52,42 @@ void main() {
       );
       expect(find.text('Wallet materiaux'), findsOneWidget);
       expect(find.byType(LinearProgressIndicator), findsOneWidget);
+    });
+
+    testWidgets(
+        'WorkflowCard invite l\'artisan a accepter/refuser une demande en '
+        'pending_artisan_acceptance (non-regression du statut normalise)',
+        (tester) async {
+      // json['status'] brut FSM : MissionModel.status le normalise en
+      // 'en_attente', mais rawStatus (statusGemini) doit rester
+      // 'pending_artisan_acceptance' pour piloter cet affichage.
+      final mission = MissionModel.fromJson({
+        'id': 1,
+        'client_id': 10,
+        'artisan_id': 20,
+        'status': 'pending_artisan_acceptance',
+        'montant_total': 0,
+        'montant_materiaux': 0,
+        'montant_mo': 0,
+        'created_at': DateTime.now().toIso8601String(),
+      });
+
+      expect(mission.status, 'en_attente');
+      expect(mission.rawStatus, 'pending_artisan_acceptance');
+
+      await _pump(
+        tester,
+        WorkflowCard(
+          mission: mission,
+          devis: null,
+          role: 'artisan',
+          hasReferentPendingValidation: false,
+        ),
+      );
+
+      expect(find.text('Nouvelle demande de devis reçue'), findsOneWidget);
+      expect(find.textContaining('accepter ou refuser'), findsOneWidget);
+      expect(find.text('Devis a preparer'), findsNothing);
     });
   });
 }

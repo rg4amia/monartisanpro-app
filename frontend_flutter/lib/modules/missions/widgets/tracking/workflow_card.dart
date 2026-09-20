@@ -108,7 +108,7 @@ class WorkflowCard extends StatelessWidget {
       );
     }
 
-    if (mission.status == 'pending_artisan_acceptance') {
+    if (mission.rawStatus == 'pending_artisan_acceptance') {
       return _PhaseDescription(
         title: isArtisan
             ? 'Nouvelle demande de devis reçue'
