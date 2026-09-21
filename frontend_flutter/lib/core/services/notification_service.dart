@@ -71,12 +71,12 @@ class NotificationService extends GetxService {
       }
       // 1. Redirection pour les devis/propositions
       else if (type.contains('devis') || type.contains('quote')) {
-        if (devisId != null) {
-          if (role == 'client') {
-            Get.toNamed(Routes.devisReview, arguments: devisId);
-          } else {
-            Get.toNamed(Routes.quote, arguments: devisId);
-          }
+        // Seul le client peut consulter/valider un devis sur DevisReviewScreen
+        // (Règle d'or 37 : exclusivité client). Un artisan notifié (ex : son
+        // devis a été refusé) est renvoyé vers le suivi de sa mission, où
+        // DevisSection lui montre l'état du devis sans action qui échouerait.
+        if (role == 'client' && devisId != null) {
+          Get.toNamed(Routes.devisReview, arguments: devisId);
         } else if (missionId != null) {
           Get.toNamed(Routes.missionTracking, arguments: missionId);
         }

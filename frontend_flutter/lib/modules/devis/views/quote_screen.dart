@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../core/storage/storage_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../data/models/devis_model.dart';
@@ -74,7 +75,13 @@ class QuoteScreen extends GetView<DevisController> {
               ),
             ),
             const SizedBox(height: 24),
-            if (devis.statut == 'soumis') ...[
+            // Seul le client peut accepter/refuser un devis (exclusivité
+            // client posée par PRD.md, Règle d'or 37) : le backend refuse
+            // déjà l'artisan (403 silencieux côté paiement), mais un artisan
+            // amené ici par erreur (notification mal routée) ne doit même
+            // pas voir des boutons qui ne peuvent que lui échouer.
+            if (devis.statut == 'soumis' &&
+                StorageService.getRole() == 'client') ...[
               ElevatedButton(
                 onPressed: () => controller.acceptDevis(devis.id),
                 style: ElevatedButton.styleFrom(
