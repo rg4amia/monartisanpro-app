@@ -44,10 +44,18 @@ class WhatsAppService
         }
 
         try {
-            $response = Http::withHeaders([
+            $client = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $this->apiToken,
                 'Accept' => 'application/json',
-            ])->post($this->baseUrl . '/whatsapp/send', [
+            ]);
+
+            // Bypass SSL verification in local/testing (Windows WAMP cURL error 60) —
+            // même contournement que SmsService::httpClient(), jamais porté ici.
+            if (app()->environment('local', 'testing')) {
+                $client = $client->withoutVerifying();
+            }
+
+            $response = $client->post($this->baseUrl . '/whatsapp/send', [
                 'recipient' => $recipient,
                 'message' => $message,
             ]);
