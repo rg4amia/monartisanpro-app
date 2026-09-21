@@ -54,43 +54,64 @@ class _SupplierDashboardScreenState extends State<SupplierDashboardScreen> {
                 _ErrorBanner(message: controller.errorMsg.value!),
                 const SizedBox(height: 16),
               ],
-              GridView.count(
-                crossAxisCount: 2,
-                physics: const NeverScrollableScrollPhysics(),
-                shrinkWrap: true,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                childAspectRatio: 1.45,
-                children: [
-                  StatCard(
-                    label: 'Commandes',
-                    value: '${controller.totalOrders.value}',
-                    subtitle: 'Total reçues',
-                    color: AppColors.primary,
-                    icon: Icons.receipt_long_outlined,
-                  ),
-                  StatCard(
-                    label: 'En attente',
-                    value: '${controller.pendingOrders.value}',
-                    subtitle: 'À préparer',
-                    color: AppColors.accent,
-                    icon: Icons.pending_actions_outlined,
-                  ),
-                  StatCard(
-                    label: 'Chiffre d\'affaires',
-                    value: Formatters.fcfaShort(controller.totalRevenue.value),
-                    subtitle: 'Livré (FCFA)',
-                    color: AppColors.success,
-                    icon: Icons.payments_outlined,
-                  ),
-                  StatCard(
-                    label: 'Catalogue',
-                    value: '${controller.catalogCount.value}',
-                    subtitle: 'Articles actifs',
-                    color: AppColors.info,
-                    icon: Icons.inventory_2_outlined,
-                  ),
-                ],
+              // Rangées de hauteur intrinsèque plutôt qu'un GridView.count à
+              // ratio fixe : sur police système agrandie ou écran étroit, le
+              // texte dépassait le ratio calculé et provoquait un "BOTTOM
+              // OVERFLOWED" sur les 4 cartes (même StatCard que le pipeline
+              // artisan — voir stat_grid.dart).
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      child: StatCard(
+                        label: 'Commandes',
+                        value: '${controller.totalOrders.value}',
+                        subtitle: 'Total reçues',
+                        color: AppColors.primary,
+                        icon: Icons.receipt_long_outlined,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: StatCard(
+                        label: 'En attente',
+                        value: '${controller.pendingOrders.value}',
+                        subtitle: 'À préparer',
+                        color: AppColors.accent,
+                        icon: Icons.pending_actions_outlined,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      child: StatCard(
+                        label: 'Chiffre d\'affaires',
+                        value:
+                            Formatters.fcfaShort(controller.totalRevenue.value),
+                        subtitle: 'Livré (FCFA)',
+                        color: AppColors.success,
+                        icon: Icons.payments_outlined,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: StatCard(
+                        label: 'Catalogue',
+                        value: '${controller.catalogCount.value}',
+                        subtitle: 'Articles actifs',
+                        color: AppColors.info,
+                        icon: Icons.inventory_2_outlined,
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 24),
               const Text(

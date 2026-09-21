@@ -36,6 +36,7 @@ class StatCard extends StatelessWidget {
         ],
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -60,7 +61,7 @@ class StatCard extends StatelessWidget {
               ),
             ],
           ),
-          const Spacer(),
+          const SizedBox(height: 12),
           Text(
             label,
             style: const TextStyle(

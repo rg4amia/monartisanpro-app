@@ -25,43 +25,62 @@ class StatGrid extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        GridView.count(
-          crossAxisCount: 2,
-          physics: const NeverScrollableScrollPhysics(),
-          shrinkWrap: true,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: 1.45,
-          children: [
-            StatCard(
-              label: 'A deviser',
-              value: '${controller.pendingMissionCount}',
-              subtitle: 'Demandes en attente',
-              color: AppColors.accent,
-              icon: Icons.receipt_long_outlined,
-            ),
-            StatCard(
-              label: 'Financees',
-              value: '${controller.fundedMissionCount}',
-              subtitle: 'Pretes pour J-Code',
-              color: AppColors.primary,
-              icon: Icons.account_balance_wallet_outlined,
-            ),
-            StatCard(
-              label: 'Travaux',
-              value: '${controller.ongoingMissionCount}',
-              subtitle: 'Chantiers actifs',
-              color: AppColors.success,
-              icon: Icons.construction_outlined,
-            ),
-            StatCard(
-              label: 'Litiges',
-              value: '${controller.disputedMissionCount}',
-              subtitle: 'A suivre',
-              color: AppColors.danger,
-              icon: Icons.gpp_bad_outlined,
-            ),
-          ],
+        // Chaque rangée est haute de son contenu (IntrinsicHeight) plutôt que
+        // forcée par un ratio fixe (GridView.count) : sur police système
+        // agrandie ou écran étroit, un texte plus haut que le ratio calculé
+        // provoquait un "BOTTOM OVERFLOWED" sur les 4 cartes du pipeline.
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: StatCard(
+                  label: 'A deviser',
+                  value: '${controller.pendingMissionCount}',
+                  subtitle: 'Demandes en attente',
+                  color: AppColors.accent,
+                  icon: Icons.receipt_long_outlined,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: StatCard(
+                  label: 'Financees',
+                  value: '${controller.fundedMissionCount}',
+                  subtitle: 'Pretes pour J-Code',
+                  color: AppColors.primary,
+                  icon: Icons.account_balance_wallet_outlined,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: StatCard(
+                  label: 'Travaux',
+                  value: '${controller.ongoingMissionCount}',
+                  subtitle: 'Chantiers actifs',
+                  color: AppColors.success,
+                  icon: Icons.construction_outlined,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: StatCard(
+                  label: 'Litiges',
+                  value: '${controller.disputedMissionCount}',
+                  subtitle: 'A suivre',
+                  color: AppColors.danger,
+                  icon: Icons.gpp_bad_outlined,
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );
