@@ -1,9 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../controllers/parrainage_controller.dart';
+
+/// Ne garde que les chiffres (et un éventuel `+` initial) d'un numéro issu
+/// du répertoire téléphonique : les contacts stockent souvent des espaces,
+/// tirets ou parenthèses que le backend ne sait normaliser qu'après ce
+/// nettoyage (`NormalizesIvorianPhone` ne retire que les espaces).
+String _sanitizePhone(String raw) {
+  final trimmed = raw.trim();
+  final digits = trimmed.replaceAll(RegExp(r'[^0-9]'), '');
+  return trimmed.startsWith('+') ? '+$digits' : digits;
+}
 
 /// Lecture défensive d'une valeur textuelle dans une Map issue du JSON API.
 /// Ne jamais transtyper directement (`as String`) : une clé absente ou d'un
@@ -40,18 +52,51 @@ class ParrainageScreen extends StatelessWidget {
   ParrainageScreen({super.key});
 
   final ParrainageController controller = Get.put(ParrainageController());
-  final TextEditingController _nomController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController();
+  final ValueNotifier<Contact?> _selectedContact = ValueNotifier<Contact?>(
+    null,
+  );
 
-  void _submit() async {
-    final nom = _nomController.text.trim();
-    final phone = _phoneController.text.trim();
+  Future<void> _pickContact() async {
+    // `openExternalPick` délègue l'affichage au sélecteur système, mais
+    // relit ensuite les numéros du contact choisi via le fournisseur de
+    // contacts : sans cette permission, cette relecture lève une
+    // `SecurityException` côté natif Android qui n'est pas récupérable
+    // depuis Dart (crash de l'application, pas d'exception catchable ici).
+    final status = await Permission.contacts.request();
+    if (!status.isGranted) {
+      Get.snackbar(
+        'Permission requise',
+        'L\'accès aux contacts est nécessaire pour choisir un filleul dans votre répertoire.',
+      );
+      return;
+    }
+
+    try {
+      final contact = await FlutterContacts.openExternalPick();
+      if (contact == null) return;
+      if (contact.phones.isEmpty) {
+        Get.snackbar(
+          'Contact invalide',
+          'Ce contact ne possède aucun numéro de téléphone.',
+        );
+        return;
+      }
+      _selectedContact.value = contact;
+    } catch (_) {
+      Get.snackbar('Erreur', 'Impossible d\'accéder au répertoire de contacts.');
+    }
+  }
+
+  Future<void> _submit() async {
+    final contact = _selectedContact.value;
+    if (contact == null || contact.phones.isEmpty) return;
+    final nom = contact.displayName.trim();
+    final phone = _sanitizePhone(contact.phones.first.number);
     if (nom.isEmpty || phone.isEmpty) return;
 
     final success = await controller.addFilleul(phone, nom);
     if (success) {
-      _nomController.clear();
-      _phoneController.clear();
+      _selectedContact.value = null;
     }
   }
 
@@ -122,72 +167,111 @@ class ParrainageScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    TextField(
-                      controller: _nomController,
-                      keyboardType: TextInputType.name,
-                      textCapitalization: TextCapitalization.words,
-                      decoration: InputDecoration(
-                        hintText: 'Nom du filleul',
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: AppColors.border),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: AppColors.border),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _phoneController,
-                            keyboardType: TextInputType.phone,
-                            decoration: InputDecoration(
-                              hintText: 'Numéro de téléphone (ex: 0700000000)',
-                              filled: true,
-                              fillColor: Colors.white,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: AppColors.border),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: AppColors.border),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        SizedBox(
-                          height: 56,
-                          child: ElevatedButton(
-                            onPressed:
-                                controller.isSubmitting.value ? null : _submit,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: controller.isSubmitting.value
-                                ? const SizedBox(
-                                    width: 24,
-                                    height: 24,
-                                    child: CircularProgressIndicator(
-                                      color: Colors.white,
-                                      strokeWidth: 2,
+                    ValueListenableBuilder<Contact?>(
+                      valueListenable: _selectedContact,
+                      builder: (context, contact, _) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            if (contact == null)
+                              OutlinedButton.icon(
+                                onPressed: _pickContact,
+                                icon: const Icon(Icons.contacts),
+                                label: const Text(
+                                  'Choisir un contact à parrainer',
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  minimumSize: const Size.fromHeight(56),
+                                  foregroundColor: AppColors.primary,
+                                  side: BorderSide(color: AppColors.primary),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              )
+                            else
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: AppColors.border),
+                                ),
+                                child: Row(
+                                  children: [
+                                    CircleAvatar(
+                                      backgroundColor: AppColors.background,
+                                      child: Icon(
+                                        Icons.person,
+                                        color: AppColors.primary,
+                                      ),
                                     ),
-                                  )
-                                : const Icon(Icons.add),
-                          ),
-                        ),
-                      ],
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            contact.displayName,
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              color: AppColors.textPrimary,
+                                            ),
+                                          ),
+                                          Text(
+                                            contact.phones.first.number,
+                                            style: TextStyle(
+                                              color: AppColors.textSecondary,
+                                              fontSize: 13,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.close),
+                                      tooltip: 'Changer de contact',
+                                      onPressed: () =>
+                                          _selectedContact.value = null,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            const SizedBox(height: 12),
+                            Obx(
+                              () => SizedBox(
+                                height: 48,
+                                child: ElevatedButton.icon(
+                                  onPressed:
+                                      (contact == null ||
+                                          controller.isSubmitting.value)
+                                      ? null
+                                      : _submit,
+                                  icon: controller.isSubmitting.value
+                                      ? const SizedBox(
+                                          width: 18,
+                                          height: 18,
+                                          child: CircularProgressIndicator(
+                                            color: Colors.white,
+                                            strokeWidth: 2,
+                                          ),
+                                        )
+                                      : const Icon(Icons.send),
+                                  label: const Text('Inviter ce contact'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.primary,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                     const SizedBox(height: 32),
                     Text(

@@ -8,6 +8,7 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+    <uses-permission android:name="android.permission.READ_CONTACTS"/>
 
     <!-- Le trafic en clair est interdit par défaut : en release, l'application
          ne parle qu'à https://<API_HOST> (NetworkDiscoveryService force la

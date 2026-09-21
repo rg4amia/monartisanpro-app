@@ -55,5 +55,7 @@
         <string>Nous avons besoin de votre position pour afficher les adresses et trouver les artisans proches</string>
         <key>NSPhotoLibraryUsageDescription</key>
         <string>We need access to your photo library to select profile photos</string>
+        <key>NSContactsUsageDescription</key>
+        <string>Nous avons besoin d'accéder à vos contacts pour vous permettre de sélectionner la personne à parrainer</string>
     </dict>
 </plist>
