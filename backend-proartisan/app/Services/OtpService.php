@@ -70,6 +70,17 @@ class OtpService
                     'phone' => $phone,
                     'error' => $result['message'] ?? 'Unknown error',
                 ]);
+
+                // Repli SMS : un canal WhatsApp mal configuré (token absent,
+                // endpoint invalide...) ne doit jamais bloquer totalement la
+                // livraison de l'OTP, qui est le mécanisme de connexion.
+                $fallbackResult = $this->smsService->sendOtp($phone, $otp);
+                if ($fallbackResult['status'] !== 'success') {
+                    Log::error('[OTP] Failed to send SMS (repli WhatsApp)', [
+                        'phone' => $phone,
+                        'error' => $fallbackResult['message'] ?? 'Unknown error',
+                    ]);
+                }
             }
         } else {
             // Send via SMS

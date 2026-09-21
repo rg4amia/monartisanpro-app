@@ -3,7 +3,10 @@
 use App\Models\Otp;
 use App\Models\User;
 use App\Services\OtpService;
+use App\Services\WhatsAppService;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 beforeEach(function () {
     $this->otpService = app(OtpService::class);
@@ -18,10 +21,10 @@ test('it can generate and save otp in database without existing user', function 
     expect(strlen($code))->toBe(4);
 
     $this->assertDatabaseHas('otps', [
-        'phone'      => $phone,
-        'user_id'    => null,
-        'code'       => $code,
-        'used_at'    => null,
+        'phone' => $phone,
+        'user_id' => null,
+        'code' => $code,
+        'used_at' => null,
     ]);
 
     $otp = Otp::latest()->first();
@@ -30,21 +33,21 @@ test('it can generate and save otp in database without existing user', function 
 
 test('it links otp to user if user exists', function () {
     $phone = '2250707123456';
-    $user  = User::factory()->create(['phone' => $phone]);
+    $user = User::factory()->create(['phone' => $phone]);
 
     $code = $this->otpService->sendOtp($phone);
 
     $this->assertDatabaseHas('otps', [
-        'phone'      => $phone,
-        'user_id'    => $user->id,
-        'code'       => $code,
-        'used_at'    => null,
+        'phone' => $phone,
+        'user_id' => $user->id,
+        'code' => $code,
+        'used_at' => null,
     ]);
 });
 
 test('it can verify a valid otp and mark it as used', function () {
     $phone = '2250707123456';
-    $code  = $this->otpService->sendOtp($phone);
+    $code = $this->otpService->sendOtp($phone);
 
     $result = $this->otpService->verifyOtp($phone, $code);
 
@@ -69,7 +72,7 @@ test('it rejects verification with wrong code', function () {
 
 test('it rejects expired otp', function () {
     $phone = '2250707123456';
-    $code  = $this->otpService->sendOtp($phone);
+    $code = $this->otpService->sendOtp($phone);
 
     // Voyage dans le temps de 6 minutes (TTL est de 5 minutes)
     Carbon::setTestNow(now()->addMinutes(6));
@@ -86,7 +89,7 @@ test('it rejects expired otp', function () {
 
 test('it cannot reuse a verified/used otp', function () {
     $phone = '2250707123456';
-    $code  = $this->otpService->sendOtp($phone);
+    $code = $this->otpService->sendOtp($phone);
 
     // Première validation : OK
     $firstResult = $this->otpService->verifyOtp($phone, $code);
@@ -99,7 +102,7 @@ test('it cannot reuse a verified/used otp', function () {
 
 test('it respects action parameter if provided', function () {
     $phone = '2250707123456';
-    $code  = $this->otpService->sendOtp($phone, 'login');
+    $code = $this->otpService->sendOtp($phone, 'login');
 
     // Vérification avec action différente : Ko
     expect($this->otpService->verifyOtp($phone, $code, 'register'))->toBeFalse();
@@ -124,7 +127,7 @@ test('un code errone consomme une tentative', function () {
 
 test('le code est brule apres cinq tentatives erronees', function () {
     $phone = '2250707123456';
-    $code  = $this->otpService->sendOtp($phone);
+    $code = $this->otpService->sendOtp($phone);
 
     // 5 essais infructueux — on évite volontairement le bon code.
     $wrong = $code === '0000' ? '1111' : '0000';
@@ -143,7 +146,7 @@ test('le code est brule apres cinq tentatives erronees', function () {
 
 test('le bon code reste accepte tant que le plafond n est pas atteint', function () {
     $phone = '2250707123456';
-    $code  = $this->otpService->sendOtp($phone);
+    $code = $this->otpService->sendOtp($phone);
 
     $wrong = $code === '0000' ? '1111' : '0000';
     for ($i = 0; $i < 4; $i++) {
@@ -171,7 +174,7 @@ test('un nouvel envoi repart avec un compteur neuf', function () {
 test('it can send OTP via WhatsApp channel', function () {
     $phone = '2250707123456';
 
-    \Illuminate\Support\Facades\Log::shouldReceive('info')
+    Log::shouldReceive('info')
         ->once()
         ->with('WhatsApp OTP (log mode)', Mockery::on(function ($data) use ($phone) {
             return $data['recipient'] === $phone && str_contains($data['message'], 'code de vérification');
@@ -182,38 +185,65 @@ test('it can send OTP via WhatsApp channel', function () {
     expect($code)->not->toBeNull();
 
     $this->assertDatabaseHas('otps', [
-        'phone'   => $phone,
-        'code'    => $code,
+        'phone' => $phone,
+        'code' => $code,
         'used_at' => null,
     ]);
+});
+
+test('un echec WhatsApp bascule automatiquement sur SMS', function () {
+    $phone = '2250707123456';
+
+    $this->app->bind(WhatsAppService::class, function () {
+        $fake = Mockery::mock(WhatsAppService::class);
+        $fake->shouldReceive('sendOtp')
+            ->once()
+            ->andReturn(['status' => 'error', 'message' => 'token manquant']);
+
+        return $fake;
+    });
+
+    $otpService = app(OtpService::class);
+
+    Log::shouldReceive('error')
+        ->once()
+        ->with('[OTP] Failed to send WhatsApp', Mockery::any());
+
+    Log::shouldReceive('info')
+        ->once()
+        ->with('SMS (log mode)', Mockery::on(fn ($data) => $data['recipient'] === $phone));
+
+    $code = $otpService->sendOtp($phone, null, 'whatsapp');
+
+    expect($code)->not->toBeNull();
 });
 
 test('it respects global otp_delivery_channel setting', function () {
     $phone = '2250707123456';
 
     // 1. WhatsApp only setting
-    \Illuminate\Support\Facades\DB::table('settings')->updateOrInsert(
+    DB::table('settings')->updateOrInsert(
         ['key' => 'otp_delivery_channel'],
         ['value' => 'whatsapp', 'type' => 'string']
     );
 
-    \Illuminate\Support\Facades\Log::shouldReceive('info')
+    Log::shouldReceive('info')
         ->once()
         ->with('WhatsApp OTP (log mode)', Mockery::any());
 
     $this->otpService->sendOtp($phone);
 
     // 2. Both setting
-    \Illuminate\Support\Facades\DB::table('settings')->updateOrInsert(
+    DB::table('settings')->updateOrInsert(
         ['key' => 'otp_delivery_channel'],
         ['value' => 'both', 'type' => 'string']
     );
 
-    \Illuminate\Support\Facades\Log::shouldReceive('info')
+    Log::shouldReceive('info')
         ->once()
         ->with('SMS (log mode)', Mockery::any());
 
-    \Illuminate\Support\Facades\Log::shouldReceive('info')
+    Log::shouldReceive('info')
         ->once()
         ->with('WhatsApp OTP (log mode)', Mockery::any());
 
