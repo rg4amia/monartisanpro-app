@@ -231,8 +231,13 @@ jobs:
             php artisan key:generate --force 2>/dev/null || echo "⚠️ Key already exists"
             php artisan storage:link --force 2>/dev/null || echo "⚠️ Storage link exists"
 
-            # Run migrations
-            php artisan migrate --force || echo "⚠️ Migration issues - check manually"
+            # Run migrations — un échec ici ne doit JAMAIS être avalé : un
+            # `|| echo` a permis à une migration cassée (20/09, commit
+            # 6abb0f87) de bloquer silencieusement toute la suite du lot
+            # (les migrations suivantes ne tournent pas) pendant que le
+            # déploiement était marqué "succès", jusqu'à ce que l'app en
+            # production plante en silence sur les colonnes manquantes.
+            php artisan migrate --force
 
             # Cache optimization
             php artisan config:clear

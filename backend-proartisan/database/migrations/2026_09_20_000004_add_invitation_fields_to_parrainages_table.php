@@ -20,11 +20,24 @@ use Illuminate\Support\Facades\Schema;
  * changement nativement via Schema::change() (pas de doctrine/dbal requis
  * depuis Laravel 11), suivant le précédent déjà posé par la migration
  * 2026_09_16_000003_convert_transactions_type_to_varchar.
+ *
+ * `filleul_id` porte une contrainte de clé étrangère vers `users` : MySQL
+ * réutilise l'index unique existant pour la satisfaire plutôt que d'en
+ * créer un dédié. Supprimer cet index sans lever d'abord la contrainte
+ * échoue donc avec l'erreur 1553 ("needed in a foreign key constraint") —
+ * repéré en production le 20/09 (déploiement du commit 6abb0f87), la
+ * migration suivante (parrainages_clients) n'ayant de fait jamais tourné.
  */
 return new class extends Migration
 {
     public function up(): void
     {
+        if (DB::getDriverName() !== 'sqlite') {
+            Schema::table('parrainages', function (Blueprint $table) {
+                $table->dropForeign(['filleul_id']);
+            });
+        }
+
         Schema::table('parrainages', function (Blueprint $table) {
             $table->dropUnique(['filleul_id']);
         });
@@ -35,6 +48,9 @@ return new class extends Migration
             });
         } else {
             DB::statement('ALTER TABLE parrainages MODIFY filleul_id BIGINT UNSIGNED NULL');
+            Schema::table('parrainages', function (Blueprint $table) {
+                $table->foreign('filleul_id')->references('id')->on('users')->onDelete('cascade');
+            });
         }
 
         Schema::table('parrainages', function (Blueprint $table) {
@@ -61,6 +77,12 @@ return new class extends Migration
             $table->dropColumn(['filleul_phone', 'filleul_nom', 'statut']);
         });
 
+        if (DB::getDriverName() !== 'sqlite') {
+            Schema::table('parrainages', function (Blueprint $table) {
+                $table->dropForeign(['filleul_id']);
+            });
+        }
+
         if (DB::getDriverName() === 'sqlite') {
             Schema::table('parrainages', function (Blueprint $table) {
                 $table->unsignedBigInteger('filleul_id')->nullable(false)->change();
@@ -72,5 +94,11 @@ return new class extends Migration
         Schema::table('parrainages', function (Blueprint $table) {
             $table->unique('filleul_id');
         });
+
+        if (DB::getDriverName() !== 'sqlite') {
+            Schema::table('parrainages', function (Blueprint $table) {
+                $table->foreign('filleul_id')->references('id')->on('users')->onDelete('cascade');
+            });
+        }
     }
 };

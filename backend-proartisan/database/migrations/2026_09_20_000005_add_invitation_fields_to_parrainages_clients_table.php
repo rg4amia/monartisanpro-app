@@ -15,11 +15,25 @@ use Illuminate\Support\Facades\Schema;
  * (qui signifie « en attente de récompense / 1ère mission financée », pas
  * « en attente d'inscription ») : l'enum est élargi, sans toucher les
  * lignes déjà en `en_attente`/`recompense`.
+ *
+ * `filleul_id` porte une contrainte de clé étrangère vers `users` : MySQL
+ * réutilise l'index unique existant pour la satisfaire plutôt que d'en
+ * créer un dédié. Supprimer cet index sans lever d'abord la contrainte
+ * échoue avec l'erreur 1553 ("needed in a foreign key constraint") — même
+ * défaut que sur `parrainages` (migration 2026_09_20_000004), repéré en
+ * production le 20/09 : cette migration-ci n'a d'ailleurs jamais tourné,
+ * le lot s'étant arrêté sur l'échec de la précédente.
  */
 return new class extends Migration
 {
     public function up(): void
     {
+        if (DB::getDriverName() !== 'sqlite') {
+            Schema::table('parrainages_clients', function (Blueprint $table) {
+                $table->dropForeign(['filleul_id']);
+            });
+        }
+
         Schema::table('parrainages_clients', function (Blueprint $table) {
             $table->dropUnique(['filleul_id']);
         });
@@ -31,6 +45,9 @@ return new class extends Migration
         } else {
             // MySQL 5.7 : ->change() nécessite doctrine/dbal, non installé.
             DB::statement('ALTER TABLE parrainages_clients MODIFY filleul_id BIGINT UNSIGNED NULL');
+            Schema::table('parrainages_clients', function (Blueprint $table) {
+                $table->foreign('filleul_id')->references('id')->on('users')->onDelete('cascade');
+            });
         }
 
         Schema::table('parrainages_clients', function (Blueprint $table) {
@@ -79,6 +96,12 @@ return new class extends Migration
             $table->dropColumn(['filleul_phone', 'filleul_nom']);
         });
 
+        if (DB::getDriverName() !== 'sqlite') {
+            Schema::table('parrainages_clients', function (Blueprint $table) {
+                $table->dropForeign(['filleul_id']);
+            });
+        }
+
         if (DB::getDriverName() === 'sqlite') {
             Schema::table('parrainages_clients', function (Blueprint $table) {
                 $table->unsignedBigInteger('filleul_id')->nullable(false)->change();
@@ -90,5 +113,11 @@ return new class extends Migration
         Schema::table('parrainages_clients', function (Blueprint $table) {
             $table->unique('filleul_id');
         });
+
+        if (DB::getDriverName() !== 'sqlite') {
+            Schema::table('parrainages_clients', function (Blueprint $table) {
+                $table->foreign('filleul_id')->references('id')->on('users')->onDelete('cascade');
+            });
+        }
     }
 };
