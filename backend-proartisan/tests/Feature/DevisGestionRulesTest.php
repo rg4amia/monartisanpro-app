@@ -133,6 +133,59 @@ class DevisGestionRulesTest extends TestCase
         $response->assertCreated();
     }
 
+    public function test_deplacement_diagnostic_mission_allows_a_same_day_jalon_date(): void
+    {
+        $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
+        $artisan = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif']);
+
+        $diagnosticType = \App\Models\InterventionType::firstOrCreate(
+            ['name' => 'Déplacement / Diagnostic'],
+            ['requires_labor' => true]
+        );
+
+        $mission = Mission::create([
+            'client_id' => $client->id,
+            'description' => 'Besoin de diagnostic sur place',
+            'status' => 'draft',
+            'intervention_type_id' => $diagnosticType->id,
+        ]);
+
+        // 1. Mission rattachée au type Déplacement / Diagnostic
+        $response1 = $this->actingAs($artisan)
+            ->postJson("/api/v1/missions/{$mission->id}/devis", [
+                'materials_required' => false,
+                'lignes' => [
+                    ['type' => 'mo', 'description' => 'Frais de déplacement et diagnostic', 'montant' => 10000],
+                ],
+                'jalons' => [
+                    ['ordre' => 1, 'description' => 'Réception du devis et diagnostic immédiat', 'montant' => 10000, 'date_cible' => now()->toDateString()],
+                ],
+            ]);
+
+        $response1->assertCreated();
+
+        // 2. Mission standard mais devis spécifiant intervention_type_id de Déplacement / Diagnostic
+        $standardMission = Mission::create([
+            'client_id' => $client->id,
+            'description' => 'Mission avec demande de diagnostic initial',
+            'status' => 'draft',
+        ]);
+
+        $response2 = $this->actingAs($artisan)
+            ->postJson("/api/v1/missions/{$standardMission->id}/devis", [
+                'materials_required' => false,
+                'intervention_type_id' => $diagnosticType->id,
+                'lignes' => [
+                    ['type' => 'mo', 'description' => 'Diagnostic', 'montant' => 5000],
+                ],
+                'jalons' => [
+                    ['ordre' => 1, 'description' => 'Date réception devis', 'montant' => 5000, 'date_cible' => now()->toDateString()],
+                ],
+            ]);
+
+        $response2->assertCreated();
+    }
+
     public function test_mission_cannot_be_processed_when_devis_is_pending(): void
     {
         $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);

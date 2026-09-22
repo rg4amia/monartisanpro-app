@@ -74,9 +74,9 @@ class CreateDevisRequest extends FormRequest
     }
 
     /**
-     * Vrai lorsque la mission rattachée est marquée « urgent » : le devis
-     * (déplacement/diagnostic ou sinistre) peut alors porter un jalon daté
-     * du jour même.
+     * Vrai lorsque la mission rattachée est marquée « urgent » ou porte sur un
+     * déplacement / diagnostic : le devis peut alors porter un jalon daté
+     * du jour même (date de réception / émission du devis).
      */
     protected function allowsSameDayMilestone(): bool
     {
@@ -87,8 +87,43 @@ class CreateDevisRequest extends FormRequest
             $mission = $devis instanceof \App\Models\Devis ? $devis->mission : null;
         }
 
-        return $mission instanceof \App\Models\Mission
-            && $mission->gemini_urgency === 'urgent';
+        if (! $mission instanceof \App\Models\Mission) {
+            return false;
+        }
+
+        if ($mission->gemini_urgency === 'urgent') {
+            return true;
+        }
+
+        $interventionTypeId = $this->input('intervention_type_id');
+        if ($interventionTypeId) {
+            $type = \App\Models\InterventionType::find($interventionTypeId);
+            if ($type && $this->isDiagnosticOrUrgentType($type->name)) {
+                return true;
+            }
+        }
+
+        if ($mission->intervention_type_id) {
+            $missionType = $mission->interventionType ?: \App\Models\InterventionType::find($mission->intervention_type_id);
+            if ($missionType && $this->isDiagnosticOrUrgentType($missionType->name)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function isDiagnosticOrUrgentType(?string $name): bool
+    {
+        if (empty($name)) {
+            return false;
+        }
+
+        $normalized = mb_strtolower($name, 'UTF-8');
+        return str_contains($normalized, 'déplacement')
+            || str_contains($normalized, 'deplacement')
+            || str_contains($normalized, 'diagnostic')
+            || str_contains($normalized, 'urgence');
     }
 
     public function messages(): array
@@ -102,6 +137,7 @@ class CreateDevisRequest extends FormRequest
             'jalons.min'                   => 'Le devis doit comporter au moins un jalon.',
             'jalons.*.montant.min'         => 'Le montant d\'un jalon doit être d\'au moins 1 000 FCFA.',
             'jalons.*.date_cible.after'    => 'La date cible doit être dans le futur.',
+            'jalons.*.date_cible.after_or_equal' => 'La date cible ne peut pas être dans le passé.',
 
             // Variantes `*_json` : clés réellement envoyées par l'app mobile.
             'lignes_json.min'                    => 'Le devis doit comporter au moins une ligne.',

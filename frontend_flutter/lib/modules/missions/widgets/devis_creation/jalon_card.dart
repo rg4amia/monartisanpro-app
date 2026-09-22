@@ -100,6 +100,10 @@ class JalonCard extends StatelessWidget {
   String _formatDate(String date) {
     try {
       final dt = DateTime.parse(date);
+      final now = DateTime.now();
+      if (dt.year == now.year && dt.month == now.month && dt.day == now.day) {
+        return "Aujourd'hui (${DateFormat('dd/MM/yyyy').format(dt)})";
+      }
       return DateFormat('dd/MM/yyyy').format(dt);
     } catch (_) {
       return date;

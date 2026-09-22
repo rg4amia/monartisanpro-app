@@ -75,6 +75,13 @@ class JalonsSection extends StatelessWidget {
     final dateController = TextEditingController();
     DateTime? selectedDate;
 
+    // Pour les missions d'urgence (ou de déplacement / diagnostic), autoriser
+    // et proposer par défaut la date de réception / émission du devis (aujourd'hui).
+    if (controller.allowSameDayMilestone) {
+      selectedDate = DateTime.now();
+      dateController.text = DateFormat('dd/MM/yyyy').format(selectedDate);
+    }
+
     Get.dialog(
       Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -113,33 +120,86 @@ class JalonsSection extends StatelessWidget {
               const _FieldLabel('Date cible'),
               const SizedBox(height: 8),
               StatefulBuilder(
-                builder: (context, setState) => TextField(
-                  controller: dateController,
-                  readOnly: true,
-                  onTap: () async {
-                    // La date cible d'un jalon doit être dans le futur (backend
-                    // `after:today`), sauf mission urgente où le jour même est
-                    // autorisé (`after_or_equal:today`).
-                    final firstDate = controller.allowSameDayMilestone
-                        ? DateTime.now()
-                        : DateTime.now().add(const Duration(days: 1));
-                    final date = await showDatePicker(
-                      context: context,
-                      initialDate: DateTime.now().add(const Duration(days: 7)),
-                      firstDate: firstDate,
-                      lastDate: DateTime.now().add(const Duration(days: 365)),
-                    );
-                    if (date != null) {
-                      selectedDate = date;
-                      dateController.text =
-                          DateFormat('dd/MM/yyyy').format(date);
-                      setState(() {});
-                    }
-                  },
-                  decoration:
-                      _fieldDecoration('Sélectionner une date').copyWith(
-                    suffixIcon: const Icon(Icons.calendar_today, size: 20),
-                  ),
+                builder: (context, setState) => Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextField(
+                      controller: dateController,
+                      readOnly: true,
+                      onTap: () async {
+                        // La date cible d'un jalon doit être dans le futur (backend
+                        // `after:today`), sauf mission urgente ou déplacement / diagnostic
+                        // où le jour même est autorisé (`after_or_equal:today`).
+                        final firstDate = controller.allowSameDayMilestone
+                            ? DateTime.now()
+                            : DateTime.now().add(const Duration(days: 1));
+                        final initialDate = selectedDate ??
+                            (controller.allowSameDayMilestone
+                                ? DateTime.now()
+                                : DateTime.now().add(const Duration(days: 7)));
+                        final date = await showDatePicker(
+                          context: context,
+                          initialDate: initialDate.isBefore(firstDate)
+                              ? firstDate
+                              : initialDate,
+                          firstDate: firstDate,
+                          lastDate:
+                              DateTime.now().add(const Duration(days: 365)),
+                        );
+                        if (date != null) {
+                          selectedDate = date;
+                          dateController.text =
+                              DateFormat('dd/MM/yyyy').format(date);
+                          setState(() {});
+                        }
+                      },
+                      decoration:
+                          _fieldDecoration('Sélectionner une date').copyWith(
+                        suffixIcon: const Icon(Icons.calendar_today, size: 20),
+                      ),
+                    ),
+                    if (controller.allowSameDayMilestone) ...[
+                      const SizedBox(height: 8),
+                      InkWell(
+                        onTap: () {
+                          selectedDate = DateTime.now();
+                          dateController.text =
+                              DateFormat('dd/MM/yyyy').format(selectedDate!);
+                          setState(() {});
+                        },
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: AppColors.primary.withOpacity(0.25),
+                            ),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.bolt,
+                                  size: 16, color: AppColors.primary),
+                              SizedBox(width: 6),
+                              Text(
+                                "Date de réception du devis (Aujourd'hui)",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
               const SizedBox(height: 24),

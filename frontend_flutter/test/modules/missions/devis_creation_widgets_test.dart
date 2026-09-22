@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:frontend_flutter/data/models/devis_model.dart';
 import 'package:frontend_flutter/modules/missions/widgets/devis_creation/creation_app_bar.dart';
 import 'package:frontend_flutter/modules/missions/widgets/devis_creation/creation_empty_state.dart';
 import 'package:frontend_flutter/modules/missions/widgets/devis_creation/creation_money_format.dart';
+import 'package:frontend_flutter/modules/missions/widgets/devis_creation/jalon_card.dart';
 import 'package:frontend_flutter/modules/missions/widgets/devis_creation/workflow_card.dart';
 
 Future<void> _pump(WidgetTester tester, Widget child) {
@@ -44,6 +46,26 @@ void main() {
       await _pump(tester, const WorkflowCard());
       expect(
           find.textContaining('total des jalons doit égaler'), findsOneWidget,);
+    });
+
+    testWidgets('JalonCard affiche Aujourd\'hui si la date cible est le jour même', (tester) async {
+      final now = DateTime.now();
+      final jalon = DevisJalon(
+        ordre: 1,
+        description: 'Diagnostic sur place',
+        montant: 5000,
+        dateCible: now.toIso8601String(),
+      );
+
+      await _pump(
+        tester,
+        JalonCard(
+          jalon: jalon,
+          onDelete: () {},
+        ),
+      );
+
+      expect(find.textContaining("Aujourd'hui"), findsOneWidget);
     });
   });
 }
