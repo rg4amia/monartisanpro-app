@@ -47,13 +47,14 @@
 
 ### 💵 Phase 2 : Devis & Séquestre (Escrow)
 #### Workflow — Phase 2
-1. L'artisan formule une proposition de devis (lignes matériaux, lignes MO, jalons), héritant par défaut du type d'intervention choisi par le client à l'étape précédente.
-2. **Devis en deux temps (optionnel)** : si le besoin réel ne peut être évalué qu'en présentiel, l'artisan soumet d'abord un devis de simple déplacement/diagnostic (sans ligne matériaux). Une fois ce devis accepté et financé, il soumet — une fois le chantier examiné — un second devis intégrant les matériaux sous forme d'**avenant**, qui complète le séquestre déjà constitué sans repartir de zéro.
-3. Le client accepte le devis et paie l'acompte total via Wave ou Orange Money.
-4. Les fonds sont fragmentés et bloqués :
+1. L'artisan formule une proposition de devis (lignes matériaux, lignes MO, jalons), héritant par défaut du type d'intervention choisi par le client à l'étape précédente. L'accès à la création du devis requiert obligatoirement l'acceptation préalable de la demande de mission par l'artisan (le bouton « Créer le devis » reste masqué tant que la mission est au statut `pending_artisan_acceptance`).
+2. **Jalons à date de réception pour urgences & déplacement/diagnostic** : pour les missions qualifiées d'urgence (Gemini `gemini_urgency = 'urgent'`) ou les types d'intervention Déplacement / Diagnostic (`intervention_types`), l'artisan est autorisé à indiquer la date de réception du devis (aujourd'hui) comme date cible de jalon (`after_or_equal:today`). Pour les missions standard, la date cible doit impérativement rester dans le futur (`after:today`).
+3. **Devis en deux temps (optionnel)** : si le besoin réel ne peut être évalué qu'en présentiel, l'artisan soumet d'abord un devis de simple déplacement/diagnostic (sans ligne matériaux). Une fois ce devis accepté et financé, il soumet — une fois le chantier examiné — un second devis intégrant les matériaux sous forme d'**avenant**, qui complète le séquestre déjà constitué sans repartir de zéro.
+4. Le client accepte le devis et paie l'acompte total via Wave ou Orange Money.
+5. Les fonds sont fragmentés et bloqués :
    * `wallet_materiaux` : Réservé exclusivement à la quincaillerie fournisseur.
    * `wallet_mo` : Débloqué jalon par jalon pour l'artisan.
-5. Le ratio matériaux/MO est figé à l'acceptation et devient **strictement immuable**.
+6. Le ratio matériaux/MO est figé à l'acceptation et devient **strictement immuable**.
 
 ---
 
@@ -297,6 +298,10 @@ Le backoffice (Laravel 12 + Inertia 2 + React 19 + TypeScript) a fait l'objet d'
 
 64. **Langue Française Obligatoire — Communication Utilisateur & Documentation Produit :** Toute communication adressée à un utilisateur — messages d'erreur et de validation (API comme mobile), notifications, SMS/OTP, libellés d'interface (mobile, backoffice, vitrine web) — est rédigée en français, sans exception. La documentation produit du projet (ce PRD, `CLAUDE.md`, et tout « point d'attention » qui y est consigné — Retours Observés, Règles d'Or, backlog) est elle aussi rédigée intégralement en français : toute règle ou observation nouvellement ajoutée doit suivre cette convention, y compris lorsqu'elle documente un composant ou une variable nommés en anglais dans le code.
 
+65. **Jalons à Date du Jour pour Missions d'Urgence & Déplacement / Diagnostic :** Pour les missions d'urgence (`gemini_urgency = 'urgent'`) ou les interventions de type Déplacement / Diagnostic (`intervention_type_id` ciblant un type de déplacement ou diagnostic), l'artisan peut choisir la date de réception du devis (date du jour même) comme date cible de jalon de paiement. Côté backend, `CreateDevisRequest` applique la validation `after_or_equal:today` au lieu de la règle stricte `after:today`. Côté application mobile (`DevisCreationScreen`, `JalonsSection`), l'interface pré-remplit la date du jour par défaut, propose un raccourci One-Tap « Date de réception du devis (Aujourd'hui) » et affiche `Aujourd'hui (dd/MM/yyyy)` sur la carte de jalon (`JalonCard`). Pour les missions standard, la règle `after:today` stricte demeure obligatoire.
+
+66. **Gating d'Accès à l'Élaboration du Devis & Masquage Pré-Acceptation :** Le bouton « Créer le devis » / « Faire devis » est obligatoirement masqué dans l'espace artisan tant que celui-ci n'a pas formellement accepté la demande de devis transmise par le client (statut de mission `pending_artisan_acceptance`). Ce n'est qu'après l'acceptation explicite via `POST /missions/{mission}/accept-request` que l'accès au formulaire de devis est débloqué.
+
 ---
 
 ## 5. Liste des Besoins Produits Prioritaires (Backlog)
@@ -324,6 +329,8 @@ Le backoffice (Laravel 12 + Inertia 2 + React 19 + TypeScript) a fait l'objet d'
 ### 🏗️ Gestion de Chantier & Jalons
 1. **Bypass de Sécurité / Auto-Release 72h :** Si un jalon soumis reste sans réponse pendant 72h, il est validé automatiquement par le système, libérant ainsi les fonds de main-d'œuvre pour protéger la trésorerie de l'artisan.
 2. **Ajustements de Devis en cours de Mission (Avenants) :** [COMPLÉTÉ] Permettre la création d'avenants au devis initial (matériel/main d'œuvre supplémentaire imprévu) validés par le client, réajustant le séquestre de façon incrémentale et insérant les jalons sans perturber le cycle de vie de la mission.
+3. **Jalons à Date de Réception pour Urgences & Déplacement/Diagnostic :** [COMPLÉTÉ] Assouplissement de la contrainte de date cible de jalon pour les missions urgentes ou de déplacement/diagnostic, permettant à l'artisan de fixer le jalon au jour même (`after_or_equal:today`), avec pré-remplissage et action rapide dans l'application mobile Flutter.
+4. **Gating de l'Élaboration du Devis :** [COMPLÉTÉ] Masquage complet du bouton « Créer le devis » / « Faire devis » tant que la demande de mission n'a pas été acceptée par l'artisan (`pending_artisan_acceptance`).
 
 ### ⭐️ Système de Réputation (Score ProsArtisan)
 1. **Indice de Crédibilité de l'Évaluateur ($C_k$) :** [COMPLÉTÉ] Pondérer la note laissée à l'artisan selon le profil du client (0.1 pour un nouveau client, 1.0 pour un client vérifié récurrent, 1.5 pour un client B2B) afin d'éviter le dénigrement ou les faux avis.
