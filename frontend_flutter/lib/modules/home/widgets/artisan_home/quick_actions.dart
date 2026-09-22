@@ -24,7 +24,17 @@ class QuickActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pendingMission = _findFirst(missions, 'en_attente');
+    // Mission en attente de réponse (demande de devis non encore acceptée)
+    final requestMission = missions.firstWhereOrNull(
+      (m) => m.rawStatus == 'pending_artisan_acceptance',
+    );
+    // Mission acceptée, en attente de chiffrage (devis à créer)
+    final readyToQuoteMission = missions.firstWhereOrNull(
+      (m) =>
+          m.status == 'en_attente' &&
+          m.rawStatus != 'pending_artisan_acceptance' &&
+          !m.hasDevis,
+    );
     final fundedMission = _findFirst(missions, 'financee');
     final ongoingMission = _findFirst(missions, 'en_cours');
 
@@ -61,24 +71,36 @@ class QuickActions extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 14),
-        ActionTile(
-          icon: Icons.receipt_long_rounded,
-          gradient: AppColors.gradientElectricity,
-          badge: pendingMission != null ? 'À Chiffrer' : null,
-          title: pendingMission == null
-              ? 'Consulter les demandes'
-              : 'Créer le devis de la mission #${pendingMission.id}',
-          subtitle: pendingMission == null
-              ? 'Ouvrir vos missions en attente de chiffrage'
-              : pendingMission.description ?? 'Nouvelle demande client',
-          onTap: () {
-            if (pendingMission != null) {
-              Get.toNamed(Routes.devisCreation, arguments: pendingMission);
-            } else {
-              _openArtisanTab(1);
-            }
-          },
-        ),
+        if (requestMission != null)
+          ActionTile(
+            icon: Icons.pending_actions_rounded,
+            gradient: AppColors.gradientElectricity,
+            badge: 'À Accepter',
+            title: 'Répondre à la demande #${requestMission.id}',
+            subtitle: requestMission.description ?? 'Nouvelle demande client reçue',
+            onTap: () {
+              Get.toNamed(Routes.missionTracking, arguments: requestMission);
+            },
+          )
+        else
+          ActionTile(
+            icon: Icons.receipt_long_rounded,
+            gradient: AppColors.gradientElectricity,
+            badge: readyToQuoteMission != null ? 'À Chiffrer' : null,
+            title: readyToQuoteMission == null
+                ? 'Consulter les demandes'
+                : 'Créer le devis de la mission #${readyToQuoteMission.id}',
+            subtitle: readyToQuoteMission == null
+                ? 'Ouvrir vos missions en attente de chiffrage'
+                : readyToQuoteMission.description ?? 'Nouvelle demande client',
+            onTap: () {
+              if (readyToQuoteMission != null) {
+                Get.toNamed(Routes.devisCreation, arguments: readyToQuoteMission);
+              } else {
+                _openArtisanTab(1);
+              }
+            },
+          ),
         const SizedBox(height: 12),
         ActionTile(
           icon: Icons.qr_code_2_rounded,

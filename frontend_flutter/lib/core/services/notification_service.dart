@@ -30,6 +30,15 @@ class NotificationService extends GetxService {
       // Demander la permission de recevoir des notifications
       OneSignal.Notifications.requestPermission(true);
 
+      // Gestion des notifications reçues lorsque l'application est au premier plan
+      OneSignal.Notifications.addForegroundWillDisplayListener((event) {
+        if (StorageService.areNotificationsEnabled()) {
+          event.notification.display();
+        } else {
+          event.preventDefault();
+        }
+      });
+
       // Écouter les clics sur les notifications push reçues
       OneSignal.Notifications.addClickListener((event) {
         final data = event.notification.additionalData;

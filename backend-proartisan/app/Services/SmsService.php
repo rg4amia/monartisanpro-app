@@ -324,17 +324,27 @@ class SmsService
         $message = "Votre code de vérification ProsArtisan est: {$code}. "
             ."Valide {$ttl} minutes. Ne le communiquez jamais : ProsArtisan ne vous le demandera pas.";
 
-        // `type: otp` — route transactionnelle dédiée de SMSpro. Les codes de
-        // vérification partaient jusqu'ici en `plain`, c'est-à-dire par la même
-        // voie que les campagnes marketing, plus filtrée et moins prioritaire.
-        // La fiabilité de livraison de l'OTP fait partie de la sécurité : c'est
-        // le mécanisme de connexion.
-        return $this->send(
+        // `type: otp` — route transactionnelle dédiée de SMSpro. Si le forfait de l'opérateur
+        // ne dispose pas de serveur OTP dédié (HTTP 403), on replie automatiquement sur 'plain'.
+        $result = $this->send(
             $phone,
             $message,
             config('services.sms.sender_id', 'ProsArtisan'),
             null,
             'otp'
         );
+
+        if (($result['status'] ?? null) === 'error' && ($result['http_status'] ?? 0) === 403) {
+            Log::info("Route SMS 'otp' non incluse dans le forfait SMSpro. Repli automatique sur la route standard 'plain'.");
+            return $this->send(
+                $phone,
+                $message,
+                config('services.sms.sender_id', 'ProsArtisan'),
+                null,
+                'plain'
+            );
+        }
+
+        return $result;
     }
 }

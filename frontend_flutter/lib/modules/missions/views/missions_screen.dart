@@ -451,6 +451,17 @@ class _MissionCard extends StatelessWidget {
     if (role == 'artisan') {
       switch (mission.status) {
         case 'en_attente':
+          if (mission.rawStatus == 'pending_artisan_acceptance') {
+            return _MissionAction(
+              label: 'Voir la demande',
+              subtitle:
+                  'Demande de devis reçue. Acceptez-la pour débloquer le devis.',
+              color: _Palette.warning,
+              icon: Icons.pending_actions_outlined,
+              onTap: () =>
+                  Get.toNamed(Routes.missionTracking, arguments: mission),
+            );
+          }
           if (mission.hasDevis) {
             return _MissionAction(
               label: 'Devis envoyé',

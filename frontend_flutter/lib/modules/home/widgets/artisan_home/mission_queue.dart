@@ -217,6 +217,16 @@ class _MissionQueueCard extends StatelessWidget {
   MissionAction _resolveAction(MissionModel mission) {
     switch (mission.status) {
       case 'en_attente':
+        if (mission.rawStatus == 'pending_artisan_acceptance') {
+          return MissionAction(
+            label: 'Répondre',
+            subtitle:
+                'Demande de devis reçue. Acceptez-la pour préparer le chiffrage.',
+            color: AppColors.warning,
+            onTap: () =>
+                Get.toNamed(Routes.missionTracking, arguments: mission),
+          );
+        }
         if (mission.hasDevis) {
           return const MissionAction(
             label: 'Devis envoyé',

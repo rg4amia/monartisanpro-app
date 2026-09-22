@@ -14,6 +14,15 @@ Future<void> openDevisCreation(
   MissionModel mission, {
   bool isAvenant = false,
 }) async {
+  if (mission.rawStatus == 'pending_artisan_acceptance') {
+    Get.snackbar(
+      'Demande non acceptée',
+      'Vous devez d\'abord accepter la demande de devis avant de pouvoir créer un devis.',
+      snackPosition: SnackPosition.TOP,
+    );
+    return;
+  }
+
   final result = await Get.toNamed(
     Routes.devisCreation,
     arguments: {'mission': mission, 'isAvenant': isAvenant},

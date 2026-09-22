@@ -64,12 +64,17 @@ class _EmptyDevis extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isPendingAcceptance =
+        mission.rawStatus == 'pending_artisan_acceptance';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           isArtisan
-              ? 'Aucun devis n\'a encore ete envoye pour cette mission.'
+              ? (isPendingAcceptance
+                  ? 'En attente de votre acceptation de la demande pour pouvoir créer un devis.'
+                  : 'Aucun devis n\'a encore ete envoye pour cette mission.')
               : 'L\'artisan n\'a pas encore soumis de devis.',
           style: const TextStyle(
             fontSize: 13,
@@ -77,7 +82,7 @@ class _EmptyDevis extends StatelessWidget {
             height: 1.4,
           ),
         ),
-        if (isArtisan) ...[
+        if (isArtisan && !isPendingAcceptance) ...[
           const SizedBox(height: 14),
           ElevatedButton.icon(
             onPressed: () => openDevisCreation(mission),

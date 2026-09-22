@@ -59,6 +59,11 @@ class BottomActions extends StatelessWidget {
 
   Widget _artisanActions() {
     if (mission.status == 'en_attente' && devis == null && !mission.hasDevis) {
+      // Tant que l'artisan n'a pas accepté la demande, le bouton "Créer le devis" est masqué.
+      // L'action requise (Accepter / Refuser) est affichée dans PendingAcceptanceCard.
+      if (mission.rawStatus == 'pending_artisan_acceptance') {
+        return const SizedBox.shrink();
+      }
       return _ActionRow(
         primary: _ActionButtonConfig(
           label: 'Creer le devis',

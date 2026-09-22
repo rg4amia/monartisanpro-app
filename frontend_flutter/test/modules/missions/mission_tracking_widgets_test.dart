@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend_flutter/data/models/mission_model.dart';
+import 'package:frontend_flutter/modules/missions/widgets/tracking/bottom_actions.dart';
 import 'package:frontend_flutter/modules/missions/widgets/tracking/budget_bar.dart';
+import 'package:frontend_flutter/modules/missions/widgets/tracking/devis_section.dart';
 import 'package:frontend_flutter/modules/missions/widgets/tracking/status_pill.dart';
 import 'package:frontend_flutter/modules/missions/widgets/tracking/tracking_info_row.dart';
 import 'package:frontend_flutter/modules/missions/widgets/tracking/tracking_media_viewer.dart';
@@ -88,6 +90,82 @@ void main() {
       expect(find.text('Nouvelle demande de devis reçue'), findsOneWidget);
       expect(find.textContaining('accepter ou refuser'), findsOneWidget);
       expect(find.text('Devis a preparer'), findsNothing);
+    });
+
+    testWidgets(
+        'DevisSection et BottomActions masquent "Creer le devis" tant que l\'artisan n\'a pas accepté la demande',
+        (tester) async {
+      final unacceptedMission = MissionModel.fromJson({
+        'id': 1,
+        'client_id': 10,
+        'artisan_id': 20,
+        'status': 'pending_artisan_acceptance',
+        'montant_total': 0,
+        'montant_materiaux': 0,
+        'montant_mo': 0,
+        'created_at': DateTime.now().toIso8601String(),
+      });
+
+      // 1. DevisSection quand non accepté
+      await _pump(
+        tester,
+        DevisSection(
+          role: 'artisan',
+          mission: unacceptedMission,
+          devis: null,
+        ),
+      );
+      expect(find.text('Creer le devis'), findsNothing);
+      expect(find.textContaining('En attente de votre acceptation'), findsOneWidget);
+
+      // 2. BottomActions quand non accepté
+      await _pump(
+        tester,
+        BottomActions(
+          role: 'artisan',
+          mission: unacceptedMission,
+          devis: null,
+          nextPendingJalon: null,
+          nextSubmittedJalon: null,
+          onStartMission: () async => true,
+        ),
+      );
+      expect(find.text('Creer le devis'), findsNothing);
+
+      // 3. Après acceptation (statut draft / en_attente normalisé) : "Creer le devis" devient visible
+      final acceptedMission = MissionModel.fromJson({
+        'id': 1,
+        'client_id': 10,
+        'artisan_id': 20,
+        'status': 'draft',
+        'montant_total': 0,
+        'montant_materiaux': 0,
+        'montant_mo': 0,
+        'created_at': DateTime.now().toIso8601String(),
+      });
+
+      await _pump(
+        tester,
+        DevisSection(
+          role: 'artisan',
+          mission: acceptedMission,
+          devis: null,
+        ),
+      );
+      expect(find.text('Creer le devis'), findsOneWidget);
+
+      await _pump(
+        tester,
+        BottomActions(
+          role: 'artisan',
+          mission: acceptedMission,
+          devis: null,
+          nextPendingJalon: null,
+          nextSubmittedJalon: null,
+          onStartMission: () async => true,
+        ),
+      );
+      expect(find.text('Creer le devis'), findsOneWidget);
     });
   });
 }

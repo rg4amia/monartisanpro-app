@@ -59,6 +59,20 @@ class _DevisCreationScreenState extends State<DevisCreationScreen> {
       isAvenant = args['isAvenant'] == true;
     }
 
+    if (mission?.rawStatus == 'pending_artisan_acceptance') {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          Get.back();
+          Get.snackbar(
+            'Action requise',
+            'Vous devez d\'abord accepter la demande de devis avant de pouvoir créer un devis.',
+            snackPosition: SnackPosition.TOP,
+          );
+        }
+      });
+      return;
+    }
+
     if (missionId != null) {
       controller.prepareDraftForMission(missionId!, isAvenant: isAvenant);
     }
