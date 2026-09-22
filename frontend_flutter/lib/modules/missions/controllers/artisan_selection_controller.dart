@@ -117,10 +117,12 @@ class ArtisanSelectionController extends GetxController {
           artisan.id,
         );
         if (success) {
-          unawaited(Get.offNamed(
-            Routes.missionTracking,
-            arguments: missionsController.currentMission.value,
-          ));
+          unawaited(
+            Get.offNamed(
+              Routes.missionTracking,
+              arguments: missionsController.currentMission.value,
+            ),
+          );
         }
         return;
       }
