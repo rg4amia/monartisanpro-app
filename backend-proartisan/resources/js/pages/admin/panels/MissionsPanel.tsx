@@ -86,9 +86,9 @@ export function MissionsPanel({
     const missionFilters = [
         { id: 'all', label: 'Toutes les missions', count: missionStats.total ?? missionsPage?.total ?? 0 },
         { id: 'en_cours', label: 'Financées & En cours', count: missionStats.en_cours },
-        { id: 'en_attente', label: 'En attente devis / artisan', count: missionStats.en_attente },
+        { id: 'en_attente', label: 'En attente devis / artisan', count: missionStats.en_attente ?? 0 },
         { id: 'refusee', label: 'Demandes refusées', count: missionStats.refusees ?? 0 },
-        { id: 'terminee', label: 'Terminées', count: missionStats.terminees },
+        { id: 'terminee', label: 'Terminées', count: missionStats.terminees ?? 0 },
         { id: 'litige', label: 'En litige', count: missionStats.en_litige },
     ];
 

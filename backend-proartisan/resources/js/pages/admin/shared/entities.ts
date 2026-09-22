@@ -579,7 +579,11 @@ export interface EvaluationStats {
 }
 
 export interface MissionStats {
+    total?: number;
     en_cours: number;
+    en_attente?: number;
+    refusees?: number;
+    terminees?: number;
     en_litige: number;
     referent_required: number;
     enrichies: number;

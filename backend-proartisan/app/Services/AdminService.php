@@ -275,14 +275,16 @@ class AdminService
     /**
      * Agrégats de l'onglet « Missions » (Chantier C4 / P1-6), indépendants de la page.
      *
-     * @return array{en_cours: int, en_attente: int, refusees: int, referent_required: int, en_litige: int, enrichies: int}
+     * @return array{total: int, en_cours: int, en_attente: int, refusees: int, terminees: int, referent_required: int, en_litige: int, enrichies: int}
      */
     public function missionStats(): array
     {
         return [
+            'total' => (int) Mission::count(),
             'en_cours' => (int) Mission::whereIn('status', ['funded_locked', 'in_progress', 'pending_approval'])->count(),
             'en_attente' => (int) Mission::whereNull('artisan_rejected_at')->whereIn('status', ['draft', 'pending_artisan_acceptance', 'pending_funding'])->count(),
             'refusees' => (int) Mission::whereNotNull('artisan_rejected_at')->count(),
+            'terminees' => (int) Mission::where('status', 'completed')->count(),
             'en_litige' => (int) Mission::where('status', 'disputed')->count(),
             'referent_required' => (int) Mission::where('referent_required', true)
                 ->whereIn('status', ['funded_locked', 'in_progress', 'disputed'])
