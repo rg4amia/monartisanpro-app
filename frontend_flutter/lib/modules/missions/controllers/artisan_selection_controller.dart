@@ -28,6 +28,7 @@ class ArtisanSelectionController extends GetxController {
   final searchDistant = false.obs;
   final photos = <XFile>[].obs;
   final video = Rx<XFile?>(null);
+  final existingMissionId = 0.obs;
 
   void toggleSearchDistant() {
     searchDistant.value = !searchDistant.value;
@@ -39,7 +40,9 @@ class ArtisanSelectionController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    if (Get.arguments == null) {
+    if (Get.arguments is Map<String, dynamic>) {
+      initializeWithMissionData(Get.arguments as Map<String, dynamic>);
+    } else if (Get.arguments == null) {
       _loadNearbyArtisans();
     }
   }
@@ -75,6 +78,7 @@ class ArtisanSelectionController extends GetxController {
     }
 
     _initializedFromArgs = true;
+    existingMissionId.value = _parseInt(data['missionId'] ?? data['id']);
     selectedCategory.value = nextCategory;
     selectedCategoryId.value = nextCategoryId;
     selectedTradeId.value = nextTradeId;
@@ -106,6 +110,21 @@ class ArtisanSelectionController extends GetxController {
 
     isLoading.value = true;
     try {
+      // 0. Si c'est une réassignation d'une mission existante
+      if (existingMissionId.value > 0) {
+        final success = await missionsController.assignArtisan(
+          existingMissionId.value,
+          artisan.id,
+        );
+        if (success) {
+          unawaited(Get.offNamed(
+            Routes.missionTracking,
+            arguments: missionsController.currentMission.value,
+          ));
+        }
+        return;
+      }
+
       // 1. Upload files first (if any)
       final List<String> uploadedUrls = [];
       for (final photo in photos) {

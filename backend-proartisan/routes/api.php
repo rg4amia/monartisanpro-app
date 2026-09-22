@@ -210,6 +210,7 @@ Route::prefix('v1')->group(function () {
         Route::put('/missions/{mission}/status', [MissionController::class, 'updateStatus']);
         Route::post('/missions/{mission}/accept-request', [MissionController::class, 'acceptRequest']);
         Route::post('/missions/{mission}/reject-request', [MissionController::class, 'rejectRequest']);
+        Route::post('/missions/{mission}/assign-artisan', [MissionController::class, 'assignArtisan'])->middleware('kyc.verified');
         Route::get('/referent/missions', [ReferentController::class, 'index'])->middleware('kyc.verified');
         Route::post('/missions/{mission}/referent-validate', [ReferentController::class, 'validateMission'])->middleware(['can:mission.referent-validate', 'kyc.verified']);
 

@@ -160,6 +160,43 @@ class _MissionTrackingScreenState extends State<MissionTrackingScreen> {
                     controller: controller,
                   ),
                 ],
+                if (!isArtisan &&
+                    (mission.artisanRejected ||
+                        (!mission.hasArtisan &&
+                            mission.status == 'en_attente'))) ...[
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    onPressed: () => Get.toNamed(
+                      Routes.artisanSelection,
+                      arguments: <String, dynamic>{
+                        'mission': mission,
+                        'missionId': mission.id,
+                        'category': mission.category,
+                        'latitude': mission.clientLatitude,
+                        'longitude': mission.clientLongitude,
+                        'description': mission.description,
+                        'locationAddress': mission.location,
+                      },
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFF59E0B),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      elevation: 0,
+                    ),
+                    icon: const Icon(Icons.person_search_rounded, size: 20),
+                    label: const Text(
+                      'CHOISIR UN NOUVEL ARTISAN',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 16),
                 if (!isArtisan &&
                     (mission.status == 'financee' ||

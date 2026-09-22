@@ -17,7 +17,7 @@ import '../../../data/repositories/mission_repository.dart';
 const Map<String, List<String>> _statusTabsByRole = {
   'artisan': ['en_attente', 'financee', 'en_cours', 'terminee', 'litige'],
   'fournisseur': ['validee', 'en_attente', 'payee'],
-  'client': ['en_cours', 'terminee', 'litige'],
+  'client': ['en_cours', 'refusee', 'terminee', 'litige'],
 };
 
 class MissionsController extends GetxController {
@@ -369,10 +369,52 @@ class MissionsController extends GetxController {
     try {
       final updated = await _repo.rejectRequest(missionId);
       currentMission.value = updated;
-      await loadMission(missionId, forceRefresh: true);
+
+      // Retirer immédiatement la mission de la liste locale de l'artisan
+      missions.removeWhere((m) => m.id == missionId);
+
+      // Rechargement en arrière-plan sans réinterroger la mission unitaire interdite (HTTP 403)
+      unawaited(loadMissions(isRefresh: true));
+
       Get.snackbar(
         'Demande refusée',
-        'La demande de devis a été refusée.',
+        'La demande de devis a été refusée et retirée de vos chantiers.',
+        snackPosition: SnackPosition.TOP,
+      );
+
+      // Si l'écran de tracking est ouvert, fermer la vue pour revenir à la liste
+      if (Get.currentRoute.contains('mission-tracking') ||
+          (Get.context != null && Navigator.canPop(Get.context!))) {
+        Get.back();
+      }
+
+      return true;
+    } on DioException catch (e) {
+      final msg = _handleDioError(e);
+      _showErrorSnackbar(msg);
+      return false;
+    } catch (e) {
+      _showErrorSnackbar('Erreur lors du refus');
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Client assigne ou réassigne un artisan pour une demande de devis
+  Future<bool> assignArtisan(int missionId, int artisanId) async {
+    isLoading.value = true;
+    try {
+      final updated = await _repo.assignArtisan(missionId, artisanId);
+      currentMission.value = updated;
+      final idx = missions.indexWhere((m) => m.id == missionId);
+      if (idx != -1) {
+        missions[idx] = updated;
+      }
+      unawaited(loadMissions(isRefresh: true));
+      Get.snackbar(
+        'Demande transmise',
+        'Votre demande de devis a été transmise à l\'artisan.',
         snackPosition: SnackPosition.TOP,
       );
       return true;
@@ -381,7 +423,7 @@ class MissionsController extends GetxController {
       _showErrorSnackbar(msg);
       return false;
     } catch (e) {
-      _showErrorSnackbar('Erreur lors du refus');
+      _showErrorSnackbar('Erreur lors de l\'assignation');
       return false;
     } finally {
       isLoading.value = false;

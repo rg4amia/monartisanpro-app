@@ -20,7 +20,7 @@ class Mission extends Model
     use HasFactory, HasStates;
 
     protected $fillable = [
-        'client_id', 'artisan_id', 'description', 'photos_json',
+        'client_id', 'artisan_id', 'artisan_rejected_at', 'description', 'photos_json',
         'requested_sector_id', 'requested_trade_id', 'intervention_type_id',
         'gemini_category', 'gemini_urgency', 'gemini_estimation_min', 'gemini_estimation_max',
         'status', 'montant_total', 'montant_materiaux', 'montant_mo',
@@ -44,6 +44,7 @@ class Mission extends Model
             'gemini_estimation_min' => 'integer',
             'gemini_estimation_max' => 'integer',
             'referent_validated_at' => 'datetime',
+            'artisan_rejected_at'   => 'datetime',
             'client_latitude'       => 'float',
             'client_longitude'      => 'float',
         ];
@@ -52,6 +53,11 @@ class Mission extends Model
     // ──────────────────────────────────────────────
     // Guards métier (utilisés par les services)
     // ──────────────────────────────────────────────
+
+    public function isArtisanRejected(): bool
+    {
+        return $this->artisan_rejected_at !== null && $this->artisan_id === null;
+    }
 
     public function isFundsFrozen(): bool
     {

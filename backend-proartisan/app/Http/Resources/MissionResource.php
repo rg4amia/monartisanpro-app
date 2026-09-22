@@ -102,6 +102,9 @@ class MissionResource extends JsonResource
                 'active_devis_count',
                 fn () => $this->devis()->where('statut', '!=', 'refuse')->exists()
             ),
+            'artisanRejected' => $this->artisan_rejected_at !== null && $this->artisan_id === null,
+            'artisanRejectedAt' => $this->artisan_rejected_at?->toIso8601String(),
+            'hasArtisan' => $this->artisan_id !== null,
             'createdAt' => $this->created_at?->toIso8601String(),
             'updatedAt' => $this->updated_at?->toIso8601String(),
         ];

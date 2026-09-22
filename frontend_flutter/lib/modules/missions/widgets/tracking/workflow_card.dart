@@ -108,6 +108,16 @@ class WorkflowCard extends StatelessWidget {
       );
     }
 
+    if (mission.artisanRejected ||
+        (!isArtisan && !mission.hasArtisan && mission.status == 'en_attente')) {
+      return const _PhaseDescription(
+        title: 'Demande déclinée par l\'artisan',
+        body:
+            'L\'artisan sollicité a décliné la demande de devis. Veuillez sélectionner un nouvel artisan pour démarrer votre projet.',
+        color: AppColors.danger,
+      );
+    }
+
     if (mission.rawStatus == 'pending_artisan_acceptance') {
       return _PhaseDescription(
         title: isArtisan

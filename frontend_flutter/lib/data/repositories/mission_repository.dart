@@ -317,6 +317,22 @@ class MissionRepository {
     return MissionModel.fromJson(missionData);
   }
 
+  /// Client assigne ou réassigne un artisan pour une demande de devis
+  Future<MissionModel> assignArtisan(int missionId, int artisanId) async {
+    final res = await _client.post(
+      '/missions/$missionId/assign-artisan',
+      data: {'artisan_id': artisanId},
+    );
+    final data = res.data;
+    final Map<String, dynamic> missionData;
+    if (data is Map && data.containsKey('data')) {
+      missionData = data['data'] as Map<String, dynamic>;
+    } else {
+      missionData = data as Map<String, dynamic>;
+    }
+    return MissionModel.fromJson(missionData);
+  }
+
   Future<Map<String, dynamic>> validateReferentMission({
     required int missionId,
     required double latitude,

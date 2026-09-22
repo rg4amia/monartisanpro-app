@@ -43,6 +43,8 @@ class Formatters {
       'searching_driver': 'Recherche livreur',
       'prepared': 'Prête pour livraison',
       'driver_picked_up': 'En cours',
+      'refusee': 'Demande refusée',
+      'artisan_rejected': 'Demande refusée',
     };
     return labels[status] ?? status;
   }

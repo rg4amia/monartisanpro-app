@@ -242,7 +242,8 @@ class _FilterTabs extends StatelessWidget {
     return const [
       ('all', 'Tout'),
       ('en_cours', 'En cours'),
-      ('terminee', 'Terminees'),
+      ('refusee', 'Refusées'),
+      ('terminee', 'Terminées'),
       ('litige', 'Litiges'),
     ];
   }
@@ -259,12 +260,17 @@ class _MissionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final action = _resolveAction();
+    final isRefused = role == 'client' &&
+        (mission.artisanRejected ||
+            (!mission.hasArtisan && mission.status == 'en_attente'));
+    final action = _resolveAction(isRefused: isRefused);
     final counterpartName = role == 'artisan'
         ? (mission.clientName ?? 'Client')
-        : (mission.artisanName ?? 'Artisan');
+        : (isRefused
+            ? 'Aucun artisan (Demande refusée)'
+            : (mission.artisanName ?? 'Artisan'));
     final counterpartLabel = role == 'artisan' ? 'Client' : 'Artisan';
-    final accent = _statusColor(mission.status);
+    final accent = _statusColor(mission.status, isRefused: isRefused);
 
     return GestureDetector(
       onTap: () => Get.toNamed(Routes.missionTracking, arguments: mission),
@@ -272,7 +278,9 @@ class _MissionCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: _Palette.surface,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: _Palette.subtle),
+          border: Border.all(
+            color: isRefused ? accent.withValues(alpha: 0.4) : _Palette.subtle,
+          ),
           boxShadow: [
             BoxShadow(
               color: _Palette.ink.withValues(alpha: 0.04),
@@ -294,7 +302,9 @@ class _MissionCard extends StatelessWidget {
                       runSpacing: 8,
                       children: [
                         _Pill(
-                          label: Formatters.missionStatus(mission.status),
+                          label: isRefused
+                              ? 'Demande refusée'
+                              : Formatters.missionStatus(mission.status),
                           color: accent,
                         ),
                         if (mission.needsReferent)
@@ -415,7 +425,29 @@ class _MissionCard extends StatelessWidget {
     );
   }
 
-  _MissionAction _resolveAction() {
+  _MissionAction _resolveAction({bool isRefused = false}) {
+    if (isRefused) {
+      return _MissionAction(
+        label: 'Choisir artisan',
+        subtitle:
+            'L\'artisan a décliné la demande. Choisissez un nouvel artisan.',
+        color: _Palette.warning,
+        icon: Icons.person_search_outlined,
+        onTap: () => Get.toNamed(
+          Routes.artisanSelection,
+          arguments: <String, dynamic>{
+            'mission': mission,
+            'missionId': mission.id,
+            'category': mission.category,
+            'latitude': mission.clientLatitude,
+            'longitude': mission.clientLongitude,
+            'description': mission.description,
+            'locationAddress': mission.location,
+          },
+        ),
+      );
+    }
+
     if (role == 'artisan') {
       switch (mission.status) {
         case 'en_attente':
@@ -505,7 +537,10 @@ class _MissionCard extends StatelessWidget {
     );
   }
 
-  Color _statusColor(String status) {
+  Color _statusColor(String status, {bool isRefused = false}) {
+    if (isRefused) {
+      return const Color(0xFFEF4444);
+    }
     switch (status) {
       case 'en_attente':
         return _Palette.warning;

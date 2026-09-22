@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Mission\CreateMissionRequest;
 use App\Http\Resources\MissionResource;
 use App\Models\Mission;
+use App\Models\User;
 use App\Services\MissionService;
 use App\Services\NotificationService;
 use App\States\Mission\CancelledState;
@@ -43,26 +44,30 @@ class MissionController extends Controller
         };
 
         if ($status) {
-            if ($user->role === 'artisan') {
-                $mappedStatuses = match ($status) {
-                    'en_attente' => ['draft', 'pending_funding', 'pending_artisan_acceptance'],
-                    'financee' => ['funded_locked'],
-                    'en_cours' => ['in_progress', 'pending_approval'],
-                    'terminee' => ['completed'],
-                    'litige' => ['disputed'],
-                    'annulee' => ['cancelled'],
-                    default => [$status],
-                };
+            if ($status === 'refusee') {
+                $query->whereNotNull('artisan_rejected_at')->whereNull('artisan_id');
             } else {
-                $mappedStatuses = match ($status) {
-                    'en_cours' => ['draft', 'pending_artisan_acceptance', 'pending_funding', 'funded_locked', 'in_progress', 'pending_approval'],
-                    'terminee' => ['completed'],
-                    'litige' => ['disputed'],
-                    'annulee' => ['cancelled'],
-                    default => [$status],
-                };
+                if ($user->role === 'artisan') {
+                    $mappedStatuses = match ($status) {
+                        'en_attente' => ['draft', 'pending_funding', 'pending_artisan_acceptance'],
+                        'financee' => ['funded_locked'],
+                        'en_cours' => ['in_progress', 'pending_approval'],
+                        'terminee' => ['completed'],
+                        'litige' => ['disputed'],
+                        'annulee' => ['cancelled'],
+                        default => [$status],
+                    };
+                } else {
+                    $mappedStatuses = match ($status) {
+                        'en_cours' => ['draft', 'pending_artisan_acceptance', 'pending_funding', 'funded_locked', 'in_progress', 'pending_approval'],
+                        'terminee' => ['completed'],
+                        'litige' => ['disputed'],
+                        'annulee' => ['cancelled'],
+                        default => [$status],
+                    };
+                }
+                $query->whereIn('status', $mappedStatuses);
             }
-            $query->whereIn('status', $mappedStatuses);
         }
 
         $missions = $query->with(['client', 'artisan', 'jalons', 'requestedSector', 'requestedTrade', 'interventionType'])
@@ -353,6 +358,7 @@ class MissionController extends Controller
             return response()->json(['success' => false, 'message' => 'Statut invalide.'], 400);
         }
 
+        $mission->update(['artisan_rejected_at' => null]);
         $mission->status->transitionTo(DraftState::class);
 
         if ($mission->client) {
@@ -411,7 +417,10 @@ class MissionController extends Controller
 
         $client = $mission->client;
 
-        $mission->update(['artisan_id' => null]);
+        $mission->update([
+            'artisan_id' => null,
+            'artisan_rejected_at' => now(),
+        ]);
         $mission->status->transitionTo(DraftState::class);
 
         if ($client) {
@@ -430,6 +439,79 @@ class MissionController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Demande refusée, mission remise en recherche d\'artisan.',
+            'data' => new MissionResource($mission),
+        ]);
+    }
+
+    /**
+     * Client assigne ou réassigne un artisan pour une demande de devis.
+     */
+    public function assignArtisan(Request $request, Mission $mission): JsonResponse
+    {
+        $user = $request->user();
+
+        if ((int) $mission->client_id !== (int) $user->id) {
+            return response()->json(['success' => false, 'message' => 'Accès refusé.'], 403);
+        }
+
+        if (! ($mission->status instanceof DraftState || $mission->status instanceof PendingArtisanAcceptanceState)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Impossible de modifier l\'artisan pour une mission déjà financée ou en cours.',
+            ], 400);
+        }
+
+        if ($mission->hasPendingDevis()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cette mission a un devis en cours d\'examen et ne peut pas être réassignée.',
+            ], 422);
+        }
+
+        $validated = $request->validate([
+            'artisan_id' => ['required', 'integer', 'exists:users,id'],
+        ]);
+
+        $artisan = User::findOrFail($validated['artisan_id']);
+
+        if ($artisan->role !== 'artisan') {
+            return response()->json([
+                'success' => false,
+                'message' => 'L\'utilisateur sélectionné n\'est pas un artisan.',
+            ], 422);
+        }
+
+        if (! $artisan->isKycActif()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Le profil de cet artisan n\'est pas encore validé.',
+            ], 422);
+        }
+
+        $mission->update([
+            'artisan_id' => $artisan->id,
+            'artisan_rejected_at' => null,
+        ]);
+
+        if ($mission->status instanceof DraftState) {
+            $mission->status->transitionTo(PendingArtisanAcceptanceState::class);
+        }
+
+        $clientName = $user->name ?? 'Client';
+        $this->notificationService->send(
+            $artisan,
+            'mission',
+            'Nouvelle demande de devis',
+            "Le client {$clientName} vous a envoyé une demande de devis.",
+            ['mission_id' => $mission->id]
+        );
+
+        $mission->refresh();
+        $mission->load(['client', 'artisan', 'jalons', 'requestedSector', 'requestedTrade', 'interventionType']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Demande de devis transmise au nouvel artisan.',
             'data' => new MissionResource($mission),
         ]);
     }

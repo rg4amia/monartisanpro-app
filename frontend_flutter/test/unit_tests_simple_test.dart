@@ -589,6 +589,8 @@ void main() {
         'driver_picked_up',
         'disputed',
         'completed',
+        'refusee',
+        'artisan_rejected',
       ];
 
       for (final statut in statutsTechniquesConnus) {
@@ -599,6 +601,46 @@ void main() {
           reason: 'Le statut "$statut" est affiché sans traduction française.',
         );
       }
+      expect(Formatters.missionStatus('refusee'), 'Demande refusée');
+    });
+
+    test('MissionModel.fromJson parse correctement artisanRejected et hasArtisan', () {
+      final jsonRefused = {
+        'id': 42,
+        'client_id': 1,
+        'artisan_id': null,
+        'status': 'draft',
+        'artisanRejected': true,
+        'hasArtisan': false,
+        'montant_total': 50000,
+        'montant_materiaux': 30000,
+        'montant_mo': 20000,
+      };
+
+      final mission = MissionModel.fromJson(jsonRefused);
+      expect(mission.id, 42);
+      expect(mission.artisanRejected, isTrue);
+      expect(mission.hasArtisan, isFalse);
+      expect(mission.artisanId, 0);
+
+      final jsonAssigned = {
+        'id': 43,
+        'client_id': 1,
+        'artisan_id': 5,
+        'status': 'pending_artisan_acceptance',
+        'artisanRejected': false,
+        'hasArtisan': true,
+        'montant_total': 50000,
+        'montant_materiaux': 30000,
+        'montant_mo': 20000,
+      };
+
+      final missionAssigned = MissionModel.fromJson(jsonAssigned);
+      expect(missionAssigned.id, 43);
+      expect(missionAssigned.artisanRejected, isFalse);
+      expect(missionAssigned.hasArtisan, isTrue);
+      expect(missionAssigned.artisanId, 5);
     });
   });
 }
+

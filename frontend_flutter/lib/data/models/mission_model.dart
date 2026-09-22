@@ -27,6 +27,8 @@ class MissionModel {
   final double? supplierLongitude;
   final int? interventionTypeId;
   final String? interventionTypeName;
+  final bool artisanRejected;
+  final bool hasArtisan;
 
   /// Messages de la discussion de chantier reçus et non encore lus par
   /// l'utilisateur courant (agrégé côté API, jamais recalculé localement).
@@ -61,6 +63,8 @@ class MissionModel {
     this.supplierLongitude,
     this.interventionTypeId,
     this.interventionTypeName,
+    this.artisanRejected = false,
+    this.hasArtisan = true,
     this.unreadMessagesCount = 0,
   });
 
@@ -198,6 +202,14 @@ class MissionModel {
           : null,
       interventionTypeName: (json['interventionTypeName'] ??
           json['intervention_type_name']) as String?,
+      artisanRejected: json['artisanRejected'] == true ||
+          json['artisan_rejected'] == true ||
+          (json['artisanRejectedAt'] != null &&
+              (json['artisanId'] == null ||
+                  _parseInt(json['artisanId'] ?? json['artisan_id']) == 0)),
+      hasArtisan: json['hasArtisan'] == true ||
+          (json['artisanId'] != null &&
+              _parseInt(json['artisanId'] ?? json['artisan_id']) != 0),
       unreadMessagesCount: _parseInt(
         json['unreadMessagesCount'] ?? json['unread_messages_count'],
       ),
