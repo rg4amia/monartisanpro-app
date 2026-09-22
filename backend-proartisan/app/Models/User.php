@@ -51,6 +51,10 @@ class User extends Authenticatable
         'anonymized_by',
     ];
 
+    protected $attributes = [
+        'score_prosartisan' => 0,
+    ];
+
     protected $hidden = ['password', 'remember_token', 'position', 'google_2fa_secret', 'photo_path'];
 
     protected function casts(): array

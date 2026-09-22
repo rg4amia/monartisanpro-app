@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
 class ScoreService
 {
     /**
-     * Poids des événements du Score ProsArtisan (échelle 0–1000, base 300).
+     * Poids des événements du Score ProsArtisan (échelle 0–1000, base 0).
      */
     private const EVENT_POINTS = [
         'success_mission' => 5,
@@ -370,7 +370,11 @@ class ScoreService
         $ledgerEntries = ScoreLedgerEntry::where('user_id', $artisan->id)->get();
 
         if ($totalEvals === 0 && $ledgerEntries->isEmpty()) {
-            return (int) $artisan->score_prosartisan;
+            if ($artisan->score_prosartisan !== 0) {
+                $artisan->update(['score_prosartisan' => 0]);
+            }
+
+            return 0;
         }
 
         $ledgerSum = (int) $ledgerEntries->sum(function ($entry) {
