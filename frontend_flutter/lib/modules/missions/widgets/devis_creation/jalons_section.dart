@@ -174,17 +174,20 @@ class JalonsSection extends StatelessWidget {
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.08),
+                            color: AppColors.primary.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: AppColors.primary.withOpacity(0.25),
+                              color: AppColors.primary.withValues(alpha: 0.25),
                             ),
                           ),
                           child: const Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.bolt,
-                                  size: 16, color: AppColors.primary),
+                              Icon(
+                                Icons.bolt,
+                                size: 16,
+                                color: AppColors.primary,
+                              ),
                               SizedBox(width: 6),
                               Text(
                                 "Date de réception du devis (Aujourd'hui)",
