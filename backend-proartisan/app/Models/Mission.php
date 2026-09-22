@@ -30,6 +30,11 @@ class Mission extends Model
         'payment_type',
     ];
 
+    protected $appends = [
+        'is_artisan_rejected',
+        'has_artisan',
+    ];
+
     protected function casts(): array
     {
         return [
@@ -57,6 +62,21 @@ class Mission extends Model
     public function isArtisanRejected(): bool
     {
         return $this->artisan_rejected_at !== null && $this->artisan_id === null;
+    }
+
+    public function getIsArtisanRejectedAttribute(): bool
+    {
+        return $this->isArtisanRejected();
+    }
+
+    public function getHasArtisanAttribute(): bool
+    {
+        return $this->artisan_id !== null;
+    }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
     }
 
     public function isFundsFrozen(): bool

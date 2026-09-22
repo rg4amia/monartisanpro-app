@@ -10,6 +10,7 @@ class Order extends Model
     use HasFactory;
 
     protected $fillable = [
+        'mission_id',
         'client_id',
         'supplier_id',
         'driver_id',
@@ -160,6 +161,11 @@ class Order extends Model
     }
 
     // Relations
+    public function mission()
+    {
+        return $this->belongsTo(Mission::class);
+    }
+
     public function client()
     {
         return $this->belongsTo(User::class, 'client_id');

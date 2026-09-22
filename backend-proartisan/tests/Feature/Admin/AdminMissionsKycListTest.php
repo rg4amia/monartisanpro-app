@@ -67,6 +67,78 @@ class AdminMissionsKycListTest extends TestCase
             ->assertInertia(fn (AssertableInertia $page) => $page->has('missionsPage.data', 1));
     }
 
+    public function test_mission_status_filter_and_refusal_stats(): void
+    {
+        $admin = $this->admin();
+        // 1 mission active
+        $this->mission(['status' => 'in_progress']);
+        // 1 mission avec refus de l'artisan
+        $this->mission([
+            'status' => 'draft',
+            'artisan_rejected_at' => now(),
+        ]);
+        // 1 mission en attente classique (sans refus)
+        $this->mission([
+            'status' => 'draft',
+            'artisan_rejected_at' => null,
+        ]);
+
+        // Filtrer uniquement les missions refusées
+        $this->actingAs($admin)->get('/admin/missions?status_mission=refusee')
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->has('missionsPage.data', 1)
+                ->where('missionStats.refusees', 1)
+                ->where('missionStats.en_cours', 1)
+                ->where('missionStats.en_attente', 1));
+
+        // Filtrer les missions en attente classique (exclut les refusées)
+        $this->actingAs($admin)->get('/admin/missions?status_mission=en_attente')
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->has('missionsPage.data', 1));
+    }
+
+    public function test_orders_are_associated_with_mission_via_foreign_key(): void
+    {
+        $admin = $this->admin();
+        $client = User::factory()->create(['role' => 'client']);
+        $supplier = User::factory()->create(['role' => 'fournisseur']);
+        $mission = $this->mission(['client_id' => $client->id]);
+
+        $linkedOrder = \App\Models\Order::create([
+            'client_id' => $client->id,
+            'supplier_id' => $supplier->id,
+            'mission_id' => $mission->id,
+            'status' => 'paid',
+            'delivery_mode' => 'delivery',
+            'subtotal' => 40000,
+            'delivery_cost' => 5000,
+            'platform_fee' => 1000,
+            'total_amount' => 46000,
+            'pickup_code' => 'LIVREUR-4821',
+            'reception_code' => 'RECEPTION-7390',
+            'vehicle_class' => 'moto',
+        ]);
+        $unrelatedOrder = \App\Models\Order::create([
+            'client_id' => $client->id,
+            'supplier_id' => $supplier->id,
+            'mission_id' => null,
+            'status' => 'paid',
+            'delivery_mode' => 'delivery',
+            'subtotal' => 40000,
+            'delivery_cost' => 5000,
+            'platform_fee' => 1000,
+            'total_amount' => 46000,
+            'pickup_code' => 'LIVREUR-4822',
+            'reception_code' => 'RECEPTION-7391',
+            'vehicle_class' => 'moto',
+        ]);
+
+        $this->actingAs($admin)->get('/admin/missions')
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->has('missionsPage.data.0.orders', 1)
+                ->where('missionsPage.data.0.orders.0.id', $linkedOrder->id));
+    }
+
     public function test_kyc_queue_is_paginated_and_searchable(): void
     {
         $admin = $this->admin();

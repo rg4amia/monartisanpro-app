@@ -108,6 +108,18 @@ export interface AdminMission {
     transactions?: any[];
     litiges?: any[];
     evaluations?: any[];
+    artisan_rejected_at?: string | null;
+    is_artisan_rejected?: boolean;
+    has_artisan?: boolean;
+    devis?: Array<{
+        id: number;
+        mission_id: number;
+        artisan_id: number;
+        statut: string;
+        is_avenant?: boolean;
+        montant_total?: number;
+    }>;
+    orders?: AdminOrder[];
 }
 
 export interface AdminOrderItem {
@@ -126,6 +138,8 @@ export interface AdminOrderItem {
 
 export interface AdminOrder {
     id: number;
+    mission_id?: number | null;
+    mission?: { id: number; description: string } | null;
     client_id: number;
     supplier_id: number;
     driver_id?: number | null;

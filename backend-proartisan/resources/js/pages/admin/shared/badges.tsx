@@ -3,6 +3,7 @@
 import { cn } from '@/lib/utils';
 
 import { kycStatusLabels, litigeDecisionLabels, missionStatusLabels, providerLabels, roleLabels } from './constants';
+import type { AdminMission } from './entities';
 import { toneBadgeClasses } from './format';
 import type { Tone } from './types';
 
@@ -38,9 +39,29 @@ export function AccountStatusBadge({ status }: { status?: string | null }) {
     );
 }
 
-export function MissionStatusBadge({ status }: { status: string }) {
+export function getMissionStatusInfo(status: string, mission?: AdminMission): { label: string; tone: Tone } {
+    // 1. Refus de la demande par l'artisan (prioritaire)
+    if (mission?.artisan_rejected_at || mission?.is_artisan_rejected) {
+        return { label: 'Demande refusée', tone: 'rose' };
+    }
+
+    // 2. Gestion fine de l'état "draft"
+    if (status === 'draft') {
+        if (!mission) {
+            return { label: missionStatusLabels.draft ?? 'Brouillon', tone: 'slate' };
+        }
+        const hasSubmittedDevis = mission?.devis?.some((d) => d.statut === 'soumis');
+        if (hasSubmittedDevis) {
+            return { label: 'Devis soumis (En attente client)', tone: 'amber' };
+        }
+        if (mission?.artisan_id || mission?.artisan) {
+            return { label: 'En attente de devis', tone: 'amber' };
+        }
+        return { label: "En attente d'artisan", tone: 'slate' };
+    }
+
+    // 3. Mapping des autres états du FSM
     const toneMap: Record<string, Tone> = {
-        // États techniques du FSM (valeurs réellement stockées en base)
         draft: 'slate',
         pending_artisan_acceptance: 'amber',
         pending_funding: 'amber',
@@ -60,9 +81,18 @@ export function MissionStatusBadge({ status }: { status: string }) {
         terminee: 'slate',
     };
 
+    return {
+        label: missionStatusLabels[status] ?? status,
+        tone: toneMap[status] ?? 'slate',
+    };
+}
+
+export function MissionStatusBadge({ status, mission }: { status: string; mission?: AdminMission }) {
+    const { label, tone } = getMissionStatusInfo(status, mission);
+
     return (
-        <span className={cn('rounded-full border px-3 py-1 text-xs font-semibold', toneBadgeClasses(toneMap[status] ?? 'slate'))}>
-            {missionStatusLabels[status] ?? status}
+        <span className={cn('rounded-full border px-3 py-1 text-xs font-semibold', toneBadgeClasses(tone))}>
+            {label}
         </span>
     );
 }

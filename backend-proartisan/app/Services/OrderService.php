@@ -44,9 +44,9 @@ class OrderService
     /**
      * Crée une commande et calcule les coûts associés.
      */
-    public function createOrder(User $client, User $supplier, array $items, string $deliveryMode, string $vehicleClass = 'moto', float $surgeMultiplier = 1.0, ?string $promoCode = null, ?Address $address = null): Order
+    public function createOrder(User $client, User $supplier, array $items, string $deliveryMode, string $vehicleClass = 'moto', float $surgeMultiplier = 1.0, ?string $promoCode = null, ?Address $address = null, ?int $missionId = null): Order
     {
-        return DB::transaction(function () use ($client, $supplier, $items, $deliveryMode, $vehicleClass, $surgeMultiplier, $promoCode, $address) {
+        return DB::transaction(function () use ($client, $supplier, $items, $deliveryMode, $vehicleClass, $surgeMultiplier, $promoCode, $address, $missionId) {
             $subtotal = 0;
             $itemsData = [];
 
@@ -117,6 +117,7 @@ class OrderService
 
             // 5. Création de la commande
             $order = Order::create([
+                'mission_id' => $missionId,
                 'client_id' => $client->id,
                 'supplier_id' => $supplier->id,
                 'delivery_mode' => $deliveryMode,

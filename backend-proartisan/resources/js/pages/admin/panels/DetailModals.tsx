@@ -108,9 +108,9 @@ export function MissionDetailModal({
     onClose: () => void;
     onSelectOrder: (order: AdminOrder) => void;
 }) {
-    const clientId = (mission.client as any)?.id;
-    const artisanId = (mission.artisan as any)?.id;
-    const relatedOrders = (orders ?? []).filter((o) => o.client_id === clientId || o.client_id === artisanId);
+    const relatedOrders = (orders ?? []).filter(
+        (o) => o.mission_id === mission.id || (mission.orders && mission.orders.some((mo: any) => mo.id === o.id)),
+    );
 
     return (
         <div role="dialog" aria-modal="true" aria-label="Fenêtre de détail" className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
@@ -119,7 +119,7 @@ export function MissionDetailModal({
                     <div className="space-y-1">
                         <h2 className="text-xl font-bold text-[var(--admin-text)] flex items-center gap-3">
                             <span>Détails de la mission #{mission.id}</span>
-                            <MissionStatusBadge status={mission.status} />
+                            <MissionStatusBadge status={mission.status} mission={mission} />
                         </h2>
                         <p className="text-xs text-[var(--admin-muted)]">Créée le {shortDate(mission.created_at)}</p>
                     </div>
@@ -127,6 +127,18 @@ export function MissionDetailModal({
                 </div>
 
                 <div className="mt-6 space-y-6">
+                    {mission.artisan_rejected_at && (
+                        <div className="rounded-2xl border border-rose-300 bg-rose-50 p-4 text-xs text-rose-900 flex items-start gap-3">
+                            <span className="text-lg">🚨</span>
+                            <div>
+                                <p className="font-bold text-sm text-rose-950">Demande d'intervention refusée par l'artisan</p>
+                                <p className="mt-0.5 text-rose-800">
+                                    L'artisan sollicité a décliné cette mission le {shortDate(mission.artisan_rejected_at)}. La mission est en attente d'un nouvel artisan sélectionné par le client.
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
                         <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)]">
                             <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Description</p>
@@ -139,8 +151,17 @@ export function MissionDetailModal({
                         </div>
                         <div className="p-4 rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)]">
                             <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Artisan</p>
-                            <p className="mt-1 text-sm text-[var(--admin-text)] font-bold">{mission.artisan?.name ?? 'Non affecté'}</p>
-                            <p className="text-xs text-[var(--admin-muted)]">{mission.artisan?.phone}</p>
+                            {mission.artisan_rejected_at || (mission as any).is_artisan_rejected ? (
+                                <>
+                                    <p className="mt-1 text-sm text-rose-600 font-bold">Non affecté (Demande refusée)</p>
+                                    <p className="text-xs text-rose-500">Refusée le {shortDate(mission.artisan_rejected_at)}</p>
+                                </>
+                            ) : (
+                                <>
+                                    <p className="mt-1 text-sm text-[var(--admin-text)] font-bold">{mission.artisan?.name ?? 'Non affecté'}</p>
+                                    <p className="text-xs text-[var(--admin-muted)]">{mission.artisan?.phone}</p>
+                                </>
+                            )}
                         </div>
                     </div>
 

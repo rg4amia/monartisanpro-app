@@ -43,6 +43,7 @@ class OrderController extends Controller
             'vehicle_class' => 'nullable|string|in:moto,voiture,cargo',
             'surge_multiplier' => 'nullable|numeric|min:1.0|max:3.0',
             'promo_code' => 'nullable|string|max:50',
+            'mission_id' => 'nullable|exists:missions,id',
         ]);
 
         if ($validator->fails()) {
@@ -97,7 +98,8 @@ class OrderController extends Controller
                 $request->input('vehicle_class', 'moto'),
                 (float) $request->input('surge_multiplier', 1.0),
                 $request->input('promo_code'),
-                $address
+                $address,
+                $request->filled('mission_id') ? (int) $request->input('mission_id') : null
             );
 
             return response()->json([

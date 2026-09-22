@@ -542,7 +542,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
     const missionsTable = useServerTable({
         path: '/admin/missions',
         only: ['missionsPage', 'ordersPage', 'missionStats', 'deliveryStats'],
-        initial: { search_mission: '', search_order: '', status_order: '' },
+        initial: { search_mission: '', search_order: '', status_order: '', status_mission: '' },
         storageKey: 'missions',
     });
 
@@ -1760,6 +1760,8 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                 <MissionsPanel
                                     missionSubTab={missionSubTab}
                                     onMissionSubTabChange={setMissionSubTab}
+                                    missionStatusFilter={missionsTable.filters.status_mission || 'all'}
+                                    onMissionStatusFilterChange={(id) => missionsTable.applyWith('status_mission', id === 'all' ? '' : id)}
                                     deliveryStatusFilter={missionsTable.filters.status_order || 'all'}
                                     onDeliveryStatusFilterChange={(id) => missionsTable.applyWith('status_order', id === 'all' ? '' : id)}
                                     missionsPage={missionsPage}

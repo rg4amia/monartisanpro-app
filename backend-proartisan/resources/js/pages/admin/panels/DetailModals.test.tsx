@@ -137,21 +137,42 @@ describe('MissionDetailModal', () => {
         expect(screen.getByText('Aucune transaction enregistrée.')).toBeInTheDocument();
     });
 
-    it('affiche les courses liées au client ou à l\'artisan et déclenche onSelectOrder', () => {
-        const order = makeOrder({ client_id: 1 });
+    it('affiche uniquement les courses liées à la mission et déclenche onSelectOrder', () => {
+        const order = makeOrder({ client_id: 1, mission_id: 12 });
+        const unrelatedOrder = makeOrder({ id: 101, client_id: 1, mission_id: 99 });
         const onSelectOrder = vi.fn();
         render(
             <MissionDetailModal
-                mission={makeMission()}
-                orders={[order]}
+                mission={makeMission({ id: 12 })}
+                orders={[order, unrelatedOrder]}
                 onClose={vi.fn()}
                 onSelectOrder={onSelectOrder}
             />,
         );
 
+        expect(screen.getByText('Course #100')).toBeInTheDocument();
+        expect(screen.queryByText('Course #101')).not.toBeInTheDocument();
+
         fireEvent.click(screen.getByText('Course #100'));
 
         expect(onSelectOrder).toHaveBeenCalledWith(order);
+    });
+
+    it('affiche un avertissement explicite si l artisan a refuse la demande', () => {
+        render(
+            <MissionDetailModal
+                mission={makeMission({
+                    id: 13,
+                    artisan_rejected_at: '2026-09-22T08:00:00Z',
+                })}
+                orders={[]}
+                onClose={vi.fn()}
+                onSelectOrder={vi.fn()}
+            />,
+        );
+
+        expect(screen.getByText("Demande d'intervention refusée par l'artisan")).toBeInTheDocument();
+        expect(screen.getByText('Non affecté (Demande refusée)')).toBeInTheDocument();
     });
 });
 

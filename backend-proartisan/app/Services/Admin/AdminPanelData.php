@@ -120,7 +120,7 @@ class AdminPanelData
     {
         return [
             'missionsPage' => $this->adminService->listMissions(
-                null,
+                $request->query('status_mission') && $request->query('status_mission') !== 'all' ? $request->query('status_mission') : null,
                 $request->query('search_mission') ?: null,
                 25,
                 'mission_page',

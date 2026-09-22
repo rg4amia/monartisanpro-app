@@ -236,14 +236,26 @@ class AdminService
             ->with([
                 'client:id,name,phone',
                 'artisan:id,name,phone',
+                'devis:id,mission_id,artisan_id,statut,is_avenant,created_at',
                 'jalons',
                 'jcodes.fournisseur:id,name,phone',
                 'transactions',
                 'litiges',
                 'evaluations',
+                'orders:id,mission_id,client_id,supplier_id,driver_id,status,total_amount,subtotal,created_at',
             ])
-            ->when($status, fn ($q) => $q->where('status', $status))
-            ->when($query, function ($q) use ($query) {
+            ->when($status, function ($q) use ($status): void {
+                match ($status) {
+                    'refusee' => $q->whereNotNull('artisan_rejected_at'),
+                    'en_attente' => $q->whereNull('artisan_rejected_at')->whereIn('status', ['draft', 'pending_artisan_acceptance', 'pending_funding']),
+                    'en_cours' => $q->whereIn('status', ['funded_locked', 'in_progress', 'pending_approval']),
+                    'terminee' => $q->where('status', 'completed'),
+                    'litige' => $q->where('status', 'disputed'),
+                    'annulee' => $q->where('status', 'cancelled'),
+                    default => $q->where('status', $status),
+                };
+            })
+            ->when($query, function ($q) use ($query): void {
                 $q->where(function ($sub) use ($query): void {
                     $sub->where('id', $query)
                         ->orWhere('description', 'like', "%{$query}%")
@@ -263,12 +275,14 @@ class AdminService
     /**
      * Agrégats de l'onglet « Missions » (Chantier C4 / P1-6), indépendants de la page.
      *
-     * @return array{en_cours: int, referent_required: int, en_litige: int, enrichies: int}
+     * @return array{en_cours: int, en_attente: int, refusees: int, referent_required: int, en_litige: int, enrichies: int}
      */
     public function missionStats(): array
     {
         return [
-            'en_cours' => (int) Mission::where('status', 'in_progress')->count(),
+            'en_cours' => (int) Mission::whereIn('status', ['funded_locked', 'in_progress', 'pending_approval'])->count(),
+            'en_attente' => (int) Mission::whereNull('artisan_rejected_at')->whereIn('status', ['draft', 'pending_artisan_acceptance', 'pending_funding'])->count(),
+            'refusees' => (int) Mission::whereNotNull('artisan_rejected_at')->count(),
             'en_litige' => (int) Mission::where('status', 'disputed')->count(),
             'referent_required' => (int) Mission::where('referent_required', true)
                 ->whereIn('status', ['funded_locked', 'in_progress', 'disputed'])
@@ -312,6 +326,7 @@ class AdminService
 
         return Order::query()
             ->with([
+                'mission:id,description',
                 'client:id,name,phone,role',
                 'supplier:id,name,phone,role',
                 'supplier.fournisseurAgree:id,user_id,nom_boutique,statut',

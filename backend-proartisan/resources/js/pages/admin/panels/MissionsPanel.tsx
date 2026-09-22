@@ -27,6 +27,8 @@ type MissionSubTab = 'chantiers' | 'livraisons';
 interface MissionsPanelProps {
     missionSubTab: MissionSubTab;
     onMissionSubTabChange: (tab: MissionSubTab) => void;
+    missionStatusFilter?: string;
+    onMissionStatusFilterChange?: (filter: string) => void;
     deliveryStatusFilter: string;
     onDeliveryStatusFilterChange: (filter: string) => void;
     missionsPage: Paginated<AdminMission> | undefined;
@@ -50,6 +52,8 @@ interface MissionsPanelProps {
 export function MissionsPanel({
     missionSubTab,
     onMissionSubTabChange,
+    missionStatusFilter = 'all',
+    onMissionStatusFilterChange,
     deliveryStatusFilter,
     onDeliveryStatusFilterChange,
     missionsPage,
@@ -77,6 +81,15 @@ export function MissionsPanel({
         { title: 'Seuil > 2M FCFA', description: 'Escalade Référent nécessaire', tone: 'amber', value: numberFormat.format(missionStats.referent_required) },
         { title: 'Missions en litige', description: 'Missions avec arbitrage', tone: 'rose', value: numberFormat.format(missionStats.en_litige) },
         { title: 'Missions enrichies', description: 'Analyses Gemini disponibles', tone: 'blue', value: numberFormat.format(missionStats.enrichies) },
+    ];
+
+    const missionFilters = [
+        { id: 'all', label: 'Toutes les missions', count: missionStats.total ?? missionsPage?.total ?? 0 },
+        { id: 'en_cours', label: 'Financées & En cours', count: missionStats.en_cours },
+        { id: 'en_attente', label: 'En attente devis / artisan', count: missionStats.en_attente },
+        { id: 'refusee', label: 'Demandes refusées', count: missionStats.refusees ?? 0 },
+        { id: 'terminee', label: 'Terminées', count: missionStats.terminees },
+        { id: 'litige', label: 'En litige', count: missionStats.en_litige },
     ];
 
     const deliveryMetrics: MetricItem[] = [
@@ -160,6 +173,27 @@ export function MissionsPanel({
                         ))}
                     </div>
 
+                    {/* Filtres d'état des missions */}
+                    {onMissionStatusFilterChange && (
+                        <div className="flex flex-wrap items-center gap-2 pt-1">
+                            {missionFilters.map((filterItem) => (
+                                <button
+                                    key={filterItem.id}
+                                    type="button"
+                                    onClick={() => onMissionStatusFilterChange(filterItem.id)}
+                                    className={cn(
+                                        'rounded-full px-4 py-1.5 text-xs font-semibold transition border',
+                                        missionStatusFilter === filterItem.id
+                                            ? 'bg-[#1e293b] text-white border-[#1e293b] shadow-sm'
+                                            : 'bg-[var(--admin-panel-strong)] text-[var(--admin-text-soft)] border-[var(--admin-border)] hover:bg-black/5',
+                                    )}
+                                >
+                                    {filterItem.label} ({filterItem.count})
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
                     <Surface className="rounded-[32px] p-5 lg:p-6">
                         <SectionTitle
                             description="Vision claire des missions, enrichissement Gemini et montant piloté."
@@ -213,7 +247,7 @@ export function MissionsPanel({
                                                 <div className="space-y-2">
                                                     <div className="flex items-center gap-2 flex-wrap">
                                                         <span className="text-sm font-semibold text-[var(--admin-text)]">#{mission.id}</span>
-                                                        <MissionStatusBadge status={mission.status} />
+                                                        <MissionStatusBadge status={mission.status} mission={mission} />
                                                         {(Number(mission.montant_total) >= 2000000 || (mission as any).referent_required) && (
                                                             <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-800 border border-amber-300 shadow-sm" title="Mission supérieure à 2M FCFA nécessitant validation physique par le Référent de zone">
                                                                 🛡️ Référent Requis
@@ -229,7 +263,12 @@ export function MissionsPanel({
                                                         <span className="font-medium text-[var(--admin-text)]">Client:</span> {mission.client?.name ?? 'Non renseigné'}
                                                     </p>
                                                     <p>
-                                                        <span className="font-medium text-[var(--admin-text)]">Artisan:</span> {mission.artisan?.name ?? 'Non affecté'}
+                                                        <span className="font-medium text-[var(--admin-text)]">Artisan:</span>{' '}
+                                                        {mission.artisan_rejected_at || (mission as any).is_artisan_rejected ? (
+                                                            <span className="text-rose-600 font-semibold">Non affecté (Demande refusée)</span>
+                                                        ) : (
+                                                            mission.artisan?.name ?? 'Non affecté'
+                                                        )}
                                                     </p>
                                                 </div>
                                             </td>
