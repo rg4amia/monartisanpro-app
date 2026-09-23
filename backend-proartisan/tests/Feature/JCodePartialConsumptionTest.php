@@ -1,25 +1,26 @@
 <?php
 
+use App\Jobs\PaySupplierJob;
 use App\Models\FournisseurAgree;
 use App\Models\JCode;
 use App\Models\JCodeItem;
 use App\Models\Mission;
-use App\Models\Setting;
-use App\Models\SupplierProduct;
 use App\Models\User;
 use App\Services\GeoService;
 use App\Services\GoogleMapsService;
 use App\Services\JCodeService;
 use App\Services\SupplierCatalogService;
-use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Queue;
+use Illuminate\Validation\ValidationException;
+use Tests\Support\Geo;
 
 beforeEach(function () {
     // Mock le GPS pour valider automatiquement (< 100m)
     $this->mock(GeoService::class, function ($mock) {
         $mock->shouldReceive('validateJCodeGps')->andReturn([
-            'valid'    => true,
+            'valid' => true,
             'distance' => 15,
-            'max'      => 100,
+            'max' => 100,
         ]);
     });
 
@@ -33,7 +34,7 @@ beforeEach(function () {
         $mock->shouldReceive('getDirections')->andReturn([
             'distance' => 5000,
             'duration' => 600,
-            'source'   => 'mocked',
+            'source' => 'mocked',
         ]);
     });
 });
@@ -47,40 +48,42 @@ function createJCodeWithItems(int $itemCount = 4, int $unitPrice = 5000): array
         'role' => 'artisan',
         'kyc_status' => 'actif',
         'wallet_materiaux' => 1000000,
-        'phone' => '+225040' . rand(1000000, 9999999)
+        'phone' => '+225040'.rand(1000000, 9999999),
     ]);
     $fournisseur1 = User::factory()->create([
         'role' => 'fournisseur',
         'kyc_status' => 'actif',
-        'phone' => '+225050' . rand(1000000, 9999999)
+        'phone' => '+225050'.rand(1000000, 9999999),
     ]);
     $fournisseur2 = User::factory()->create([
         'role' => 'fournisseur',
         'kyc_status' => 'actif',
-        'phone' => '+225060' . rand(1000000, 9999999)
+        'phone' => '+225060'.rand(1000000, 9999999),
     ]);
     $client = User::factory()->create([
         'role' => 'client',
         'kyc_status' => 'actif',
-        'phone' => '+225070' . rand(1000000, 9999999)
+        'phone' => '+225070'.rand(1000000, 9999999),
     ]);
 
     FournisseurAgree::create([
-        'user_id'      => $fournisseur1->id,
+        'position' => Geo::point(),
+        'user_id' => $fournisseur1->id,
         'nom_boutique' => 'Quincaillerie A',
-        'statut'       => 'agree',
+        'statut' => 'agree',
     ]);
     FournisseurAgree::create([
-        'user_id'      => $fournisseur2->id,
+        'position' => Geo::point(),
+        'user_id' => $fournisseur2->id,
         'nom_boutique' => 'Quincaillerie B',
-        'statut'       => 'agree',
+        'statut' => 'agree',
     ]);
 
     $mission = Mission::create([
         'artisan_id' => $artisan->id,
-        'client_id'  => $client->id,
+        'client_id' => $client->id,
         'description' => 'Test Mission',
-        'status'     => 'funded_locked',
+        'status' => 'funded_locked',
         'montant_total' => $unitPrice * $itemCount,
         'montant_materiaux' => $unitPrice * $itemCount,
         'montant_mo' => 0,
@@ -90,28 +93,28 @@ function createJCodeWithItems(int $itemCount = 4, int $unitPrice = 5000): array
     $montantTotal = $unitPrice * $itemCount;
 
     $jcode = JCode::create([
-        'mission_id'      => $mission->id,
-        'artisan_id'      => $artisan->id,
-        'fournisseur_id'  => $fournisseur1->id,
-        'code'            => 'PA-' . strtoupper(substr(md5(rand()), 0, 4)),
-        'ussd_code'       => '*555*TEST#',
-        'montant'         => $montantTotal,
-        'montant_consomme'=> 0,
-        'statut'          => 'actif',
-        'expires_at'      => now()->addHours(48),
+        'mission_id' => $mission->id,
+        'artisan_id' => $artisan->id,
+        'fournisseur_id' => $fournisseur1->id,
+        'code' => 'PA-'.strtoupper(substr(md5(rand()), 0, 4)),
+        'ussd_code' => '*555*TEST#',
+        'montant' => $montantTotal,
+        'montant_consomme' => 0,
+        'statut' => 'actif',
+        'expires_at' => now()->addHours(48),
     ]);
 
     $items = [];
     for ($i = 0; $i < $itemCount; $i++) {
         $items[] = JCodeItem::create([
-            'jcode_id'    => $jcode->id,
-            'source'      => 'custom',
-            'item_name'   => "Ciment sac " . ($i + 1),
-            'quantity'    => 1,
+            'jcode_id' => $jcode->id,
+            'source' => 'custom',
+            'item_name' => 'Ciment sac '.($i + 1),
+            'quantity' => 1,
             'quantity_served' => 0,
-            'unit_price'  => $unitPrice,
-            'subtotal'    => $unitPrice,
-            'status'      => 'requested',
+            'unit_price' => $unitPrice,
+            'subtotal' => $unitPrice,
+            'status' => 'requested',
         ]);
     }
 
@@ -216,7 +219,7 @@ test('isActif returns true for partiellement_utilise jcode', function () {
     $data = createJCodeWithItems(4, 5000);
 
     $data['jcode']->update([
-        'statut'           => 'partiellement_utilise',
+        'statut' => 'partiellement_utilise',
         'montant_consomme' => 10000,
     ]);
 
@@ -230,7 +233,7 @@ test('isActif returns true for partiellement_utilise jcode', function () {
 // ─── Test 5 : PaySupplierJob dispatché avec le bon montant partiel ───────────
 
 test('pay supplier job is dispatched with partial amount', function () {
-    \Illuminate\Support\Facades\Queue::fake();
+    Queue::fake();
 
     $data = createJCodeWithItems(4, 5000);
 
@@ -245,7 +248,7 @@ test('pay supplier job is dispatched with partial amount', function () {
         ]
     );
 
-    \Illuminate\Support\Facades\Queue::assertPushed(\App\Jobs\PaySupplierJob::class, function ($job) use ($data) {
+    Queue::assertPushed(PaySupplierJob::class, function ($job) use ($data) {
         return $job->jcodeId === $data['jcode']->id
             && $job->fournisseurId === $data['fournisseur1']->id
             && $job->montantServi === 5000;
@@ -258,9 +261,9 @@ test('gps verification is required on every scan including second supplier', fun
     // Overrider le mock GPS pour rejeter
     $this->mock(GeoService::class, function ($mock) {
         $mock->shouldReceive('validateJCodeGps')->andReturn([
-            'valid'    => false,
+            'valid' => false,
             'distance' => 250,
-            'max'      => 100,
+            'max' => 100,
         ]);
     });
 
@@ -268,7 +271,7 @@ test('gps verification is required on every scan including second supplier', fun
 
     // Forcer le statut partiellement_utilise
     $data['jcode']->update([
-        'statut'           => 'partiellement_utilise',
+        'statut' => 'partiellement_utilise',
         'montant_consomme' => 5000,
     ]);
 
@@ -281,7 +284,7 @@ test('gps verification is required on every scan including second supplier', fun
         [
             ['jcode_item_id' => $data['items'][1]->id, 'quantity_served' => 1],
         ]
-    ))->toThrow(\Illuminate\Validation\ValidationException::class);
+    ))->toThrow(ValidationException::class);
 });
 
 // ─── Test 7 : Quantité servie > quantité demandée → rejet ───────────────────
@@ -298,7 +301,7 @@ test('serving more than requested quantity is rejected', function () {
         [
             ['jcode_item_id' => $data['items'][0]->id, 'quantity_served' => 99],
         ]
-    ))->toThrow(\Illuminate\Validation\ValidationException::class);
+    ))->toThrow(ValidationException::class);
 });
 
 // ─── Test 8 : J-Code expiré partiellement consommé ne peut plus être scanné ──
@@ -307,9 +310,9 @@ test('expired partially consumed jcode cannot be scanned', function () {
     $data = createJCodeWithItems(4, 5000);
 
     $data['jcode']->update([
-        'statut'           => 'partiellement_utilise',
+        'statut' => 'partiellement_utilise',
         'montant_consomme' => 10000,
-        'expires_at'       => now()->subHour(), // Expiré
+        'expires_at' => now()->subHour(), // Expiré
     ]);
 
     $data['jcode']->refresh();
@@ -325,7 +328,7 @@ test('expired partially consumed jcode cannot be scanned', function () {
         [
             ['jcode_item_id' => $data['items'][2]->id, 'quantity_served' => 1],
         ]
-    ))->toThrow(\Illuminate\Validation\ValidationException::class);
+    ))->toThrow(ValidationException::class);
 });
 
 // ─── Test 9 : Items individuels traçés par fournisseur ───────────────────────

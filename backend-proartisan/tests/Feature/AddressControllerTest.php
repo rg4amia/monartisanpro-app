@@ -1,8 +1,12 @@
 <?php
 
 use App\Models\Address;
+use App\Models\FournisseurAgree;
+use App\Models\SupplierProduct;
 use App\Models\User;
+use App\Services\OrderService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Support\Geo;
 
 uses(RefreshDatabase::class);
 
@@ -102,12 +106,13 @@ test('a client cannot see, edit, delete or default another clients address', fun
 test('deleting an address does not corrupt the frozen snapshot on a past order', function () {
     $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
     $supplier = User::factory()->create(['role' => 'fournisseur']);
-    \App\Models\FournisseurAgree::create([
+    FournisseurAgree::create([
+        'position' => Geo::point(),
         'user_id' => $supplier->id,
         'nom_boutique' => 'Quincaillerie Test',
         'statut' => 'agree',
     ]);
-    $product = \App\Models\SupplierProduct::create([
+    $product = SupplierProduct::create([
         'supplier_id' => $supplier->id,
         'sku' => 'ADDR-TEST',
         'name' => 'Ciment',
@@ -123,7 +128,7 @@ test('deleting an address does not corrupt the frozen snapshot on a past order',
         'city' => 'Abidjan',
     ]);
 
-    $order = app(\App\Services\OrderService::class)->createOrder(
+    $order = app(OrderService::class)->createOrder(
         client: $client,
         supplier: $supplier,
         items: [['supplier_product_id' => $product->id, 'quantity' => 1]],

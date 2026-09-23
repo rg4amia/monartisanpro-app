@@ -7,7 +7,6 @@ use App\Models\FournisseurAgree;
 use App\Models\JCode;
 use App\Models\Mission;
 use App\Models\SupplierProduct;
-use App\Models\Transaction;
 use App\Models\User;
 use App\Services\JCodeService;
 use App\Services\NotificationService;
@@ -17,6 +16,7 @@ use App\Services\WaveService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Tests\Support\Geo;
 use Tests\TestCase;
 
 class FullMissionWorkflowTest extends TestCase
@@ -44,6 +44,7 @@ class FullMissionWorkflowTest extends TestCase
         ]);
 
         $agreement = FournisseurAgree::create([
+            'position' => Geo::point(),
             'user_id' => $fournisseur->id,
             'nom_boutique' => 'Quincaillerie Plateau',
             'statut' => 'agree',

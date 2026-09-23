@@ -1,9 +1,11 @@
 <?php
 
-use App\Models\User;
+use App\Models\FournisseurAgree;
 use App\Models\Order;
-use App\Services\SmsService;
+use App\Models\User;
 use App\Services\GoogleMapsService;
+use App\Services\SmsService;
+use Tests\Support\Geo;
 
 beforeEach(function () {
     // La passerelle USSD/SMS doit s'authentifier : on configure un secret de
@@ -16,7 +18,7 @@ beforeEach(function () {
         $mock->shouldReceive('getDirections')->andReturn([
             'distance' => 5000,
             'duration' => 600,
-            'source'   => 'mocked',
+            'source' => 'mocked',
         ]);
     });
 
@@ -34,24 +36,25 @@ function createTestOrder(User $driver, string $status = 'driver_assigned'): Orde
     $client = User::factory()->create(['role' => 'client', 'phone' => '+2250101010101']);
     $supplier = User::factory()->create(['role' => 'fournisseur', 'phone' => '+2250202020202']);
 
-    \App\Models\FournisseurAgree::create([
-        'user_id'      => $supplier->id,
+    FournisseurAgree::create([
+        'position' => Geo::point(),
+        'user_id' => $supplier->id,
         'nom_boutique' => 'Quincaillerie USSD',
-        'statut'       => 'agree',
+        'statut' => 'agree',
     ]);
 
     return Order::create([
-        'client_id'                 => $client->id,
-        'supplier_id'               => $supplier->id,
-        'driver_id'                 => $driver->id,
-        'delivery_mode'             => 'delivery',
-        'status'                    => $status,
-        'subtotal'                  => 15000,
-        'delivery_cost'             => 2500,
-        'platform_fee'              => 450,
-        'total_amount'              => 17950,
-        'pickup_code'               => 'LIVREUR-1234',
-        'reception_code'            => 'RECEPTION-5678',
+        'client_id' => $client->id,
+        'supplier_id' => $supplier->id,
+        'driver_id' => $driver->id,
+        'delivery_mode' => 'delivery',
+        'status' => $status,
+        'subtotal' => 15000,
+        'delivery_cost' => 2500,
+        'platform_fee' => 450,
+        'total_amount' => 17950,
+        'pickup_code' => 'LIVREUR-1234',
+        'reception_code' => 'RECEPTION-5678',
     ]);
 }
 
@@ -61,7 +64,7 @@ test('ussd handle returns main menu for driver on empty text', function () {
     $response = $this->postJson('/api/v1/ussd', [
         'phoneNumber' => '+2250303030303',
         'text' => '',
-        'sessionId' => 'session_123'
+        'sessionId' => 'session_123',
     ]);
 
     $response->assertStatus(200);
@@ -106,7 +109,7 @@ test('ussd interactive menu validates order pickup', function () {
     // Second choice: 1*order_id
     $response2 = $this->postJson('/api/v1/ussd', [
         'phoneNumber' => '+2250303030303',
-        'text' => '1*' . $order->id,
+        'text' => '1*'.$order->id,
     ]);
     $response2->assertSee('CON Saisir le code de retrait');
 

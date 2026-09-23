@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use App\Services\AuthService;
 use Illuminate\Database\QueryException;
 
 // ── Unicité du numéro de téléphone à l'inscription ───────────────────────────
@@ -35,9 +36,10 @@ test('il rejette l’inscription si le numéro appartient déjà à un compte co
 
 test('il autorise la complétion d’un compte stub créé par verify-otp sur le même numéro', function () {
     $phone = '+2250700000002';
-    // Stub tel que créé par AuthService::findOrCreateByPhone lors de verify-otp :
-    // seul le téléphone est renseigné, name et role restent null.
-    $stub = User::factory()->create(['phone' => $phone, 'name' => null, 'role' => null]);
+    // Stub créé par le vrai chemin de verify-otp : seul le téléphone est renseigné,
+    // name reste null ; role vaut null sous SQLite mais 'client' sous MariaDB
+    // (ENUM NOT NULL sans défaut → premier élément), comme en production.
+    $stub = app(AuthService::class)->findOrCreateByPhone($phone);
 
     $response = $this->postJson('/api/v1/auth/register', registerPayload($phone));
 

@@ -8,6 +8,7 @@ use App\Models\SupplierProduct;
 use App\Models\User;
 use App\Services\AdminService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Support\Geo;
 use Tests\TestCase;
 
 /**
@@ -40,7 +41,7 @@ class OrderCodeVisibilityTest extends TestCase
         $this->supplier->setPosition(5.3400, -3.9800);
         $this->supplier->fournisseurAgree()->create([
             'nom_boutique' => 'Quincaillerie Centrale',
-            'position' => $this->supplier->position,
+            'position' => Geo::point(),
             'statut' => 'agree',
             'approuve_at' => now(),
         ]);

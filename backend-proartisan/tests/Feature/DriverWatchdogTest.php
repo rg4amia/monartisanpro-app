@@ -1,18 +1,20 @@
 <?php
 
-use App\Models\User;
+use App\Models\FournisseurAgree;
 use App\Models\Order;
 use App\Models\Setting;
+use App\Models\User;
 use App\Services\GoogleMapsService;
 use App\Services\OrderService;
 use Illuminate\Support\Carbon;
+use Tests\Support\Geo;
 
 beforeEach(function () {
     $this->mock(GoogleMapsService::class, function ($mock) {
         $mock->shouldReceive('getDirections')->andReturn([
             'distance' => 5000,
             'duration' => 600,
-            'source'   => 'mocked',
+            'source' => 'mocked',
         ]);
     });
 });
@@ -22,29 +24,30 @@ beforeEach(function () {
  */
 function createAssignedOrder(int $minutesAgo, int $reassignmentCount = 0): Order
 {
-    $client = User::factory()->create(['role' => 'client', 'phone' => '+225010' . rand(1000000, 9999999)]);
-    $supplier = User::factory()->create(['role' => 'fournisseur', 'phone' => '+225020' . rand(1000000, 9999999)]);
-    $driver = User::factory()->create(['role' => 'livreur', 'phone' => '+225030' . rand(1000000, 9999999)]);
+    $client = User::factory()->create(['role' => 'client', 'phone' => '+225010'.rand(1000000, 9999999)]);
+    $supplier = User::factory()->create(['role' => 'fournisseur', 'phone' => '+225020'.rand(1000000, 9999999)]);
+    $driver = User::factory()->create(['role' => 'livreur', 'phone' => '+225030'.rand(1000000, 9999999)]);
 
-    \App\Models\FournisseurAgree::create([
-        'user_id'      => $supplier->id,
+    FournisseurAgree::create([
+        'position' => Geo::point(),
+        'user_id' => $supplier->id,
         'nom_boutique' => 'Quincaillerie Test',
-        'statut'       => 'agree',
+        'statut' => 'agree',
     ]);
 
     return Order::create([
-        'client_id'                 => $client->id,
-        'supplier_id'               => $supplier->id,
-        'driver_id'                 => $driver->id,
-        'delivery_mode'             => 'delivery',
-        'status'                    => 'driver_assigned',
-        'subtotal'                  => 15000,
-        'delivery_cost'             => 2500,
-        'platform_fee'              => 450,
-        'total_amount'              => 17950,
-        'pickup_code'               => 'LIVREUR-1234',
-        'reception_code'            => 'RECEPTION-5678',
-        'driver_assigned_at'        => Carbon::now()->subMinutes($minutesAgo),
+        'client_id' => $client->id,
+        'supplier_id' => $supplier->id,
+        'driver_id' => $driver->id,
+        'delivery_mode' => 'delivery',
+        'status' => 'driver_assigned',
+        'subtotal' => 15000,
+        'delivery_cost' => 2500,
+        'platform_fee' => 450,
+        'total_amount' => 17950,
+        'pickup_code' => 'LIVREUR-1234',
+        'reception_code' => 'RECEPTION-5678',
+        'driver_assigned_at' => Carbon::now()->subMinutes($minutesAgo),
         'driver_reassignment_count' => $reassignmentCount,
     ]);
 }
@@ -68,7 +71,7 @@ test('watchdog reassigns order when driver is stale for more than 15 minutes', f
     // Le livreur retiré doit avoir reçu une notification
     $this->assertDatabaseHas('notifications', [
         'user_id' => $originalDriverId,
-        'title'   => 'Course retirée',
+        'title' => 'Course retirée',
     ]);
 });
 
@@ -118,7 +121,7 @@ test('reassignment counter increments on each watchdog cycle', function () {
 
 test('watchdog escalates to admin when max reassignments reached', function () {
     $order = createAssignedOrder(minutesAgo: 20, reassignmentCount: 3);
-    $admin = User::factory()->create(['role' => 'admin', 'phone' => '+225099' . rand(1000000, 9999999)]);
+    $admin = User::factory()->create(['role' => 'admin', 'phone' => '+225099'.rand(1000000, 9999999)]);
 
     $this->artisan('prosartisan:driver-watchdog')
         ->assertExitCode(0);
@@ -132,7 +135,7 @@ test('watchdog escalates to admin when max reassignments reached', function () {
     // L'admin reçoit une alerte d'escalade
     $this->assertDatabaseHas('notifications', [
         'user_id' => $admin->id,
-        'title'   => 'Commande sans livreur — escalade requise',
+        'title' => 'Commande sans livreur — escalade requise',
     ]);
 });
 
@@ -147,7 +150,7 @@ test('client receives notification when driver is reassigned', function () {
 
     $this->assertDatabaseHas('notifications', [
         'user_id' => $clientId,
-        'title'   => 'Changement de livreur',
+        'title' => 'Changement de livreur',
     ]);
 });
 
@@ -193,22 +196,23 @@ test('assignDriver sets driver_assigned_at timestamp', function () {
     $supplier = User::factory()->create(['role' => 'fournisseur', 'phone' => '+2250702000002']);
     $driver = User::factory()->create(['role' => 'livreur', 'phone' => '+2250703000003']);
 
-    \App\Models\FournisseurAgree::create([
-        'user_id'      => $supplier->id,
+    FournisseurAgree::create([
+        'position' => Geo::point(),
+        'user_id' => $supplier->id,
         'nom_boutique' => 'Quincaillerie Assignation',
-        'statut'       => 'agree',
+        'statut' => 'agree',
     ]);
 
     $order = Order::create([
-        'client_id'      => $client->id,
-        'supplier_id'    => $supplier->id,
-        'delivery_mode'  => 'delivery',
-        'status'         => 'searching_driver',
-        'subtotal'       => 10000,
-        'delivery_cost'  => 0,
-        'platform_fee'   => 300,
-        'total_amount'   => 10300,
-        'pickup_code'    => 'LIVREUR-9999',
+        'client_id' => $client->id,
+        'supplier_id' => $supplier->id,
+        'delivery_mode' => 'delivery',
+        'status' => 'searching_driver',
+        'subtotal' => 10000,
+        'delivery_cost' => 0,
+        'platform_fee' => 300,
+        'total_amount' => 10300,
+        'pickup_code' => 'LIVREUR-9999',
         'reception_code' => 'RECEPTION-9999',
     ]);
 

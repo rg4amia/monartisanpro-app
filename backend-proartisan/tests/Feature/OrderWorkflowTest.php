@@ -1,15 +1,16 @@
 <?php
 
-use App\Models\Address;
-use App\Models\User;
-use App\Models\Order;
-use App\Models\OrderItem;
-use App\Models\SupplierProduct;
-use App\Models\FournisseurAgree;
-use App\Models\Transaction;
 use App\Enums\WalletType;
+use App\Models\Address;
+use App\Models\FournisseurAgree;
+use App\Models\SupplierProduct;
+use App\Models\Transaction;
+use App\Models\User;
 use App\Services\GoogleMapsService;
+use App\Services\OrderService;
+use App\Services\WalletService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Support\Geo;
 
 uses(RefreshDatabase::class);
 
@@ -29,6 +30,7 @@ test('client can create order in pickup mode and pay it', function () {
     $supplier = User::factory()->create(['role' => 'fournisseur', 'phone' => '+2250202020202']);
 
     FournisseurAgree::create([
+        'position' => Geo::point(),
         'user_id' => $supplier->id,
         'nom_boutique' => 'Boutique Test',
         'statut' => 'agree',
@@ -50,7 +52,7 @@ test('client can create order in pickup mode and pay it', function () {
                 [
                     'supplier_product_id' => $product->id,
                     'quantity' => 2,
-                ]
+                ],
             ],
         ]);
 
@@ -95,6 +97,7 @@ test('client can create order in delivery mode with dynamic maps calculation', f
 
     $supplier = User::factory()->create(['role' => 'fournisseur', 'phone' => '+2250202020202']);
     $agree = FournisseurAgree::create([
+        'position' => Geo::point(),
         'user_id' => $supplier->id,
         'nom_boutique' => 'Boutique Test',
         'statut' => 'agree',
@@ -118,7 +121,7 @@ test('client can create order in delivery mode with dynamic maps calculation', f
                 [
                     'supplier_product_id' => $product->id,
                     'quantity' => 2,
-                ]
+                ],
             ],
         ]);
 
@@ -141,11 +144,11 @@ test('full pickup order validation workflow', function () {
     $admin = User::factory()->create(['role' => 'admin', 'phone' => '+2250000000000']);
     $client = User::factory()->create(['role' => 'client']);
     $supplier = User::factory()->create(['role' => 'fournisseur']);
-    FournisseurAgree::create(['user_id' => $supplier->id, 'nom_boutique' => 'Boutique Test', 'statut' => 'agree']);
+    FournisseurAgree::create(['position' => Geo::point(), 'user_id' => $supplier->id, 'nom_boutique' => 'Boutique Test', 'statut' => 'agree']);
     $product = SupplierProduct::create(['supplier_id' => $supplier->id, 'sku' => 'P1', 'name' => 'P', 'unit_price' => 1000, 'stock_quantity' => 5]);
 
     // 1. Passer commande
-    $order = app(\App\Services\OrderService::class)->createOrder($client, $supplier, [['supplier_product_id' => $product->id, 'quantity' => 1]], 'pickup');
+    $order = app(OrderService::class)->createOrder($client, $supplier, [['supplier_product_id' => $product->id, 'quantity' => 1]], 'pickup');
 
     // 2. Le fournisseur prépare la commande
     $this->actingAs($supplier)
@@ -168,12 +171,12 @@ test('full pickup order validation workflow', function () {
 
     // 4. Vérifier la libération de la part matériel au fournisseur (1000 - 5% com = 950 FCFA)
     $supplier->refresh();
-    $balance = app(\App\Services\WalletService::class)->getBalance($supplier, WalletType::WALLET_MATERIAUX);
+    $balance = app(WalletService::class)->getBalance($supplier, WalletType::WALLET_MATERIAUX);
     expect($balance)->toBe(950);
 
     // Vérifier que la commission plateforme a été créditée sur le compte admin (3% client + 5% fournisseur = 30 + 50 = 80 FCFA)
     $admin->refresh();
-    $adminBalance = app(\App\Services\WalletService::class)->getBalance($admin, WalletType::WALLET_MO);
+    $adminBalance = app(WalletService::class)->getBalance($admin, WalletType::WALLET_MO);
     expect($adminBalance)->toBe(80);
 });
 
@@ -183,15 +186,15 @@ test('full delivery order validation workflow', function () {
     $client->setPosition(5.35, -4.02);
 
     $supplier = User::factory()->create(['role' => 'fournisseur']);
-    $agree = FournisseurAgree::create(['user_id' => $supplier->id, 'nom_boutique' => 'Boutique Test', 'statut' => 'agree']);
+    $agree = FournisseurAgree::create(['position' => Geo::point(), 'user_id' => $supplier->id, 'nom_boutique' => 'Boutique Test', 'statut' => 'agree']);
     $agree->setPosition(5.36, -4.01);
 
-    $driver = User::factory()->create(['role' => 'driver', 'kyc_status' => 'actif']);
+    $driver = User::factory()->create(['role' => 'livreur', 'kyc_status' => 'actif']);
 
     $product = SupplierProduct::create(['supplier_id' => $supplier->id, 'sku' => 'P1', 'name' => 'P', 'unit_price' => 1000, 'stock_quantity' => 5]);
 
     // 1. Passer commande
-    $order = app(\App\Services\OrderService::class)->createOrder($client, $supplier, [['supplier_product_id' => $product->id, 'quantity' => 1]], 'delivery');
+    $order = app(OrderService::class)->createOrder($client, $supplier, [['supplier_product_id' => $product->id, 'quantity' => 1]], 'delivery');
 
     // 2. Le fournisseur prépare la commande -> Passe à searching_driver
     $this->actingAs($supplier)
@@ -226,12 +229,12 @@ test('full delivery order validation workflow', function () {
     expect($order->status)->toBe('driver_picked_up');
 
     $supplier->refresh();
-    $supplierBalance = app(\App\Services\WalletService::class)->getBalance($supplier, WalletType::WALLET_MATERIAUX);
+    $supplierBalance = app(WalletService::class)->getBalance($supplier, WalletType::WALLET_MATERIAUX);
     expect($supplierBalance)->toBe(950); // 1000 - 5% com = 950 FCFA
 
     // Le livreur n'est pas encore payé
     $driver->refresh();
-    $driverBalance = app(\App\Services\WalletService::class)->getBalance($driver, WalletType::WALLET_MO);
+    $driverBalance = app(WalletService::class)->getBalance($driver, WalletType::WALLET_MO);
     expect($driverBalance)->toBe(0);
 
     // 6. Livraison chez le client -> Libère la part livraison au livreur
@@ -246,11 +249,11 @@ test('full delivery order validation workflow', function () {
 
     // Le livreur reçoit son gain de livraison (1250 FCFA - 10% com = 1125 FCFA)
     $driver->refresh();
-    $driverBalance = app(\App\Services\WalletService::class)->getBalance($driver, WalletType::WALLET_MO);
+    $driverBalance = app(WalletService::class)->getBalance($driver, WalletType::WALLET_MO);
     expect($driverBalance)->toBe(1125);
 
     // Vérifier que la commission plateforme totale a été créditée sur le compte admin (80 FCFA part matériaux + 125 FCFA part livraison = 205 FCFA)
     $admin->refresh();
-    $adminBalance = app(\App\Services\WalletService::class)->getBalance($admin, WalletType::WALLET_MO);
+    $adminBalance = app(WalletService::class)->getBalance($admin, WalletType::WALLET_MO);
     expect($adminBalance)->toBe(205);
 });

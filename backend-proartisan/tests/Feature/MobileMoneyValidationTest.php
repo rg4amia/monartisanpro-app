@@ -3,13 +3,15 @@
 namespace Tests\Feature;
 
 use App\Models\Devis;
-use App\Models\JCode;
+use App\Models\FournisseurAgree;
 use App\Models\Mission;
 use App\Models\Order;
+use App\Models\SupplierProduct;
 use App\Models\User;
-use App\Models\FournisseurAgree;
+use App\Services\JCodeService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
+use Tests\Support\Geo;
 use Tests\TestCase;
 
 class MobileMoneyValidationTest extends TestCase
@@ -150,7 +152,7 @@ class MobileMoneyValidationTest extends TestCase
             'ratio_materiaux' => 0.50,
         ]);
 
-        $product = \App\Models\SupplierProduct::create([
+        $product = SupplierProduct::create([
             'supplier_id' => $supplier->id,
             'name' => 'Ciment',
             'sku' => 'CIM-001',
@@ -160,13 +162,14 @@ class MobileMoneyValidationTest extends TestCase
         ]);
 
         FournisseurAgree::create([
+            'position' => Geo::point(),
             'user_id' => $supplier->id,
             'nom_boutique' => 'Ma Boutique',
             'statut' => 'agree',
             'approuve_at' => now(),
         ])->setPosition(5.33, -4.06);
 
-        $jcode = app(\App\Services\JCodeService::class)->generate($mission, $artisan, $supplier, [
+        $jcode = app(JCodeService::class)->generate($mission, $artisan, $supplier, [
             [
                 'supplier_product_id' => $product->id,
                 'quantity' => 2,
@@ -206,13 +209,14 @@ class MobileMoneyValidationTest extends TestCase
         /** @var User $driver */
         $driver = User::factory()->create([
             'name' => 'Driver Test',
-            'role' => 'driver',
+            'role' => 'livreur',
             'kyc_status' => 'actif',
             'payment_phone' => null,
             'preferred_payment_provider' => null,
         ]);
 
         FournisseurAgree::create([
+            'position' => Geo::point(),
             'user_id' => $supplier->id,
             'nom_boutique' => 'Boutique Test',
             'statut' => 'agree',

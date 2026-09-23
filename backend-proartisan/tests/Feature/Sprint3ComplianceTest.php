@@ -2,13 +2,22 @@
 
 namespace Tests\Feature;
 
+use App\Models\Devis;
+use App\Models\FournisseurAgree;
+use App\Models\JuryReview;
 use App\Models\Litige;
 use App\Models\Mission;
+use App\Models\Notification;
+use App\Models\SupplierProduct;
 use App\Models\User;
-use App\Models\JuryReview;
+use App\Services\OrderService;
 use App\Services\OtpService;
 use App\Services\ScoreService;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
+use Tests\Support\Geo;
 use Tests\TestCase;
 
 class Sprint3ComplianceTest extends TestCase
@@ -28,7 +37,7 @@ class Sprint3ComplianceTest extends TestCase
 
         $otpService = app(OtpService::class);
         $otpService->sendOtp($artisan->phone);
-        $otp = \Illuminate\Support\Facades\DB::table('otps')->where('phone', $artisan->phone)->value('code');
+        $otp = DB::table('otps')->where('phone', $artisan->phone)->value('code');
 
         // First login binds the fingerprint
         $response = $this->postJson('/api/v1/auth/verify-otp', [
@@ -43,7 +52,7 @@ class Sprint3ComplianceTest extends TestCase
 
         // Second login with different fingerprint alerts and freezes the score
         $otpService->sendOtp($artisan->phone);
-        $otp2 = \Illuminate\Support\Facades\DB::table('otps')->where('phone', $artisan->phone)->orderByDesc('id')->value('code');
+        $otp2 = DB::table('otps')->where('phone', $artisan->phone)->orderByDesc('id')->value('code');
 
         $response2 = $this->postJson('/api/v1/auth/verify-otp', [
             'phone' => $artisan->phone,
@@ -90,7 +99,7 @@ class Sprint3ComplianceTest extends TestCase
 
         $otpService = app(OtpService::class);
         $otpService->sendOtp($newArtisan->phone);
-        $otp = \Illuminate\Support\Facades\DB::table('otps')->where('phone', $newArtisan->phone)->value('code');
+        $otp = DB::table('otps')->where('phone', $newArtisan->phone)->value('code');
 
         $response = $this->postJson('/api/v1/auth/verify-otp', [
             'phone' => $newArtisan->phone,
@@ -226,12 +235,12 @@ class Sprint3ComplianceTest extends TestCase
         $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'en_attente']);
         $artisan = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'en_attente']);
         $supplier = User::factory()->create(['role' => 'fournisseur', 'kyc_status' => 'en_attente']);
-        $driver = User::factory()->create(['role' => 'driver', 'kyc_status' => 'en_attente']);
+        $driver = User::factory()->create(['role' => 'livreur', 'kyc_status' => 'en_attente']);
 
-        assert($client instanceof \Illuminate\Contracts\Auth\Authenticatable);
-        assert($artisan instanceof \Illuminate\Contracts\Auth\Authenticatable);
-        assert($supplier instanceof \Illuminate\Contracts\Auth\Authenticatable);
-        assert($driver instanceof \Illuminate\Contracts\Auth\Authenticatable);
+        assert($client instanceof Authenticatable);
+        assert($artisan instanceof Authenticatable);
+        assert($supplier instanceof Authenticatable);
+        assert($driver instanceof Authenticatable);
 
         $mission = Mission::create([
             'client_id' => $client->id,
@@ -244,14 +253,15 @@ class Sprint3ComplianceTest extends TestCase
             'ratio_materiaux' => 0.60,
         ]);
 
-        $agree = \App\Models\FournisseurAgree::create([
+        $agree = FournisseurAgree::create([
+            'position' => Geo::point(),
             'user_id' => $supplier->id,
             'nom_boutique' => 'Test Boutique',
             'statut' => 'agree',
         ]);
         $agree->setPosition(5.36, -4.01);
 
-        $product = \App\Models\SupplierProduct::create([
+        $product = SupplierProduct::create([
             'supplier_id' => $supplier->id,
             'sku' => 'TESTPRODUCT',
             'name' => 'Test Product',
@@ -259,7 +269,7 @@ class Sprint3ComplianceTest extends TestCase
             'stock_quantity' => 10,
         ]);
 
-        $order = app(\App\Services\OrderService::class)->createOrder(
+        $order = app(OrderService::class)->createOrder(
             $client,
             $supplier,
             [['supplier_product_id' => $product->id, 'quantity' => 1]],
@@ -314,7 +324,7 @@ class Sprint3ComplianceTest extends TestCase
             'amount' => 50000,
         ])->assertStatus(403);
 
-        $devis = \App\Models\Devis::create([
+        $devis = Devis::create([
             'mission_id' => $mission->id,
             'artisan_id' => $artisan->id,
             'lignes_json' => [],
@@ -329,13 +339,13 @@ class Sprint3ComplianceTest extends TestCase
         ])->assertStatus(403);
 
         // 8. Test that notifications are created when document uploaded
-        $file = \Illuminate\Http\UploadedFile::fake()->create('cni.jpg', 500);
+        $file = UploadedFile::fake()->create('cni.jpg', 500);
         $this->actingAs($client)->postJson('/api/v1/kyc/upload-cni', [
             'file' => $file,
         ])->assertOk();
 
         $this->assertTrue(
-            \App\Models\Notification::where('user_id', $client->id)
+            Notification::where('user_id', $client->id)
                 ->where('type', 'kyc')
                 ->where('title', 'Compte en attente de validation')
                 ->exists()

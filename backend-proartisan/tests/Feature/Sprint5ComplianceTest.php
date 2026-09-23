@@ -8,6 +8,7 @@ use App\Models\SupplierProduct;
 use App\Models\User;
 use App\Services\GoogleMapsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Support\Geo;
 use Tests\TestCase;
 
 class Sprint5ComplianceTest extends TestCase
@@ -32,7 +33,7 @@ class Sprint5ComplianceTest extends TestCase
         $supplier->setPosition(5.3598, -4.0083); // Abidjan Bingerville
         $supplier->fournisseurAgree()->create([
             'nom_boutique' => 'Bingerville Quincaillerie',
-            'position' => $supplier->position,
+            'position' => Geo::point(),
             'statut' => 'agree',
         ]);
 
@@ -71,7 +72,7 @@ class Sprint5ComplianceTest extends TestCase
 
         // 1. Order with Moto and Surge = 1.0 (default)
         // Base cost: (10 km * 150) + (15 mins * 50) = 1500 + 750 = 2250 FCFA
-        $driver = User::factory()->create(['role' => 'driver', 'kyc_status' => 'actif']);
+        $driver = User::factory()->create(['role' => 'livreur', 'kyc_status' => 'actif']);
 
         $response1 = $this->actingAs($client)
             ->postJson('/api/v1/orders', [
@@ -82,7 +83,7 @@ class Sprint5ComplianceTest extends TestCase
                     [
                         'supplier_product_id' => $lightProduct->id,
                         'quantity' => 1,
-                    ]
+                    ],
                 ],
                 'vehicle_class' => 'moto',
                 'surge_multiplier' => 1.0,
@@ -90,7 +91,7 @@ class Sprint5ComplianceTest extends TestCase
 
         $response1->assertCreated();
         $order1 = Order::findOrFail($response1->json('data.id'));
-        
+
         // Préparer et accepter la commande pour déclencher le calcul de livraison
         $this->actingAs($supplier)->postJson("/api/v1/orders/{$order1->id}/prepared")->assertOk();
         $this->actingAs($driver)->postJson("/api/v1/deliveries/{$order1->id}/accept")->assertOk();
@@ -107,7 +108,7 @@ class Sprint5ComplianceTest extends TestCase
                     [
                         'supplier_product_id' => $lightProduct->id,
                         'quantity' => 1,
-                    ]
+                    ],
                 ],
                 'vehicle_class' => 'voiture',
                 'surge_multiplier' => 1.0,
@@ -115,7 +116,7 @@ class Sprint5ComplianceTest extends TestCase
 
         $response2->assertCreated();
         $order2 = Order::findOrFail($response2->json('data.id'));
-        
+
         $this->actingAs($supplier)->postJson("/api/v1/orders/{$order2->id}/prepared")->assertOk();
         $this->actingAs($driver)->postJson("/api/v1/deliveries/{$order2->id}/accept")->assertOk();
         $this->assertSame(3375, $order2->fresh()->delivery_cost);
@@ -131,7 +132,7 @@ class Sprint5ComplianceTest extends TestCase
                     [
                         'supplier_product_id' => $product->id,
                         'quantity' => 1,
-                    ]
+                    ],
                 ],
                 'vehicle_class' => 'cargo',
                 'surge_multiplier' => 2.0,
@@ -139,11 +140,11 @@ class Sprint5ComplianceTest extends TestCase
 
         $response3->assertCreated();
         $order3 = Order::findOrFail($response3->json('data.id'));
-        
+
         $this->actingAs($supplier)->postJson("/api/v1/orders/{$order3->id}/prepared")->assertOk();
         $this->actingAs($driver)->postJson("/api/v1/deliveries/{$order3->id}/accept")->assertOk();
         $this->assertSame(11250, $order3->fresh()->delivery_cost);
         $this->assertSame('cargo', $order3->fresh()->vehicle_class);
-        $this->assertSame(2.0, (float)$order3->fresh()->surge_multiplier);
+        $this->assertSame(2.0, (float) $order3->fresh()->surge_multiplier);
     }
 }

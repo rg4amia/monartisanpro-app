@@ -1,14 +1,7 @@
 <?php
 
-use App\Models\User;
 use App\Models\Otp;
-use Illuminate\Support\Facades\Event;
-
-beforeEach(function () {
-    // Nettoyer les utilisateurs avant chaque test
-    User::truncate();
-    Otp::truncate();
-});
+use App\Models\User;
 
 test('request reset phone lost fails with invalid credentials', function () {
     $user = User::factory()->create([
@@ -74,7 +67,7 @@ test('confirm reset phone lost updates phone number and logs in', function () {
 
     $response->assertStatus(200);
     $response->assertJsonStructure(['success', 'token', 'user']);
-    
+
     // Vérifier en base
     $user->refresh();
     expect($user->phone)->toBe('+2250707262812');
@@ -110,7 +103,7 @@ test('logged in user can change phone number via OTP confirmation', function () 
         ]);
 
     $confirmResponse->assertStatus(200);
-    
+
     $user->refresh();
     expect($user->phone)->toBe('+2250707262813');
 });

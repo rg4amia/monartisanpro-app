@@ -3,10 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\FournisseurAgree;
-use App\Models\Order;
 use App\Models\SupplierProduct;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Support\Geo;
 use Tests\TestCase;
 
 class SupplierBackofficeTest extends TestCase
@@ -51,6 +51,7 @@ class SupplierBackofficeTest extends TestCase
         ]);
 
         FournisseurAgree::create([
+            'position' => Geo::point(),
             'user_id' => $supplier->id,
             'nom_boutique' => 'Quincaillerie Centrale',
             'statut' => 'agree',
@@ -95,6 +96,7 @@ class SupplierBackofficeTest extends TestCase
         ]);
 
         FournisseurAgree::create([
+            'position' => Geo::point(),
             'user_id' => $supplier->id,
             'nom_boutique' => 'Quincaillerie Centrale',
             'statut' => 'agree',

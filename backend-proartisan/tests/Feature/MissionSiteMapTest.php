@@ -13,6 +13,7 @@ use App\Models\FournisseurAgree;
 use App\Models\JCode;
 use App\Models\Mission;
 use App\Models\User;
+use Tests\Support\Geo;
 
 function makeFundedMissionWithClientPosition(): array
 {
@@ -52,6 +53,7 @@ it('liste les fournisseurs des J-Codes de la mission', function () {
 
     $fournisseur = User::factory()->create(['role' => 'fournisseur', 'kyc_status' => 'actif', 'name' => 'Quincaillerie Nord']);
     $agree = FournisseurAgree::create([
+        'position' => Geo::point(),
         'user_id' => $fournisseur->id,
         'nom_boutique' => 'Quincaillerie Nord',
         'statut' => 'agree',

@@ -8,16 +8,18 @@
  * arguments `ST_SRID(POINT(...), 4326)`. Les tests tournent sur SQLite, qui
  * n'exécute aucune fonction spatiale : une telle requête passe la suite et le
  * poste local (MySQL 8.4) puis casse uniquement en production. Ce test relit
- * donc les sources au lieu d'exécuter les requêtes.
+ * donc les sources (code applicatif ET tests, qui tournent aussi sur MariaDB en CI)
+ * au lieu d'exécuter les requêtes.
  */
 function spatialSourceFiles(): array
 {
     $files = [];
 
-    foreach (['app', 'database/migrations', 'routes'] as $dir) {
+    foreach (['app', 'database/migrations', 'routes', 'tests'] as $dir) {
         $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator(dirname(__DIR__, 2).DIRECTORY_SEPARATOR.$dir));
         foreach ($iterator as $file) {
-            if ($file->isFile() && $file->getExtension() === 'php') {
+            // Le garde lui-même cite les syntaxes interdites dans sa documentation.
+            if ($file->isFile() && $file->getExtension() === 'php' && $file->getFilename() !== basename(__FILE__)) {
                 $files[] = $file->getPathname();
             }
         }

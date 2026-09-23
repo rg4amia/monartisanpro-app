@@ -11,6 +11,7 @@ use App\Services\Admin\AdminUserService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Tests\Support\Geo;
 use Tests\TestCase;
 
 /**
@@ -121,7 +122,7 @@ class AdminUserServiceTest extends TestCase
     {
         $sector = Sector::create(['name' => 'Électricité']);
         $fournisseur = User::factory()->create(['role' => 'fournisseur']);
-        FournisseurAgree::create(['user_id' => $fournisseur->id, 'nom_boutique' => 'Quincaillerie Test', 'statut' => 'agree']);
+        FournisseurAgree::create(['position' => Geo::point(), 'user_id' => $fournisseur->id, 'nom_boutique' => 'Quincaillerie Test', 'statut' => 'agree']);
 
         $this->service->update($fournisseur, $this->baseUpdateData($fournisseur, [
             'fournisseur_sector_id' => $sector->id,
@@ -135,7 +136,7 @@ class AdminUserServiceTest extends TestCase
         $sector = Sector::create(['name' => 'Électricité']);
         $trade = Trade::create(['sector_id' => $sector->id, 'name' => 'Électricien bâtiment']);
         $fournisseur = User::factory()->create(['role' => 'fournisseur']);
-        FournisseurAgree::create(['user_id' => $fournisseur->id, 'nom_boutique' => 'Quincaillerie Test', 'statut' => 'agree']);
+        FournisseurAgree::create(['position' => Geo::point(), 'user_id' => $fournisseur->id, 'nom_boutique' => 'Quincaillerie Test', 'statut' => 'agree']);
 
         $this->service->update($fournisseur, $this->baseUpdateData($fournisseur, [
             'fournisseur_sector_id' => $sector->id,
@@ -151,7 +152,7 @@ class AdminUserServiceTest extends TestCase
         $sectorB = Sector::create(['name' => 'Plomberie']);
         $tradeFromSectorB = Trade::create(['sector_id' => $sectorB->id, 'name' => 'Plombier sanitaire']);
         $fournisseur = User::factory()->create(['role' => 'fournisseur']);
-        FournisseurAgree::create(['user_id' => $fournisseur->id, 'nom_boutique' => 'Quincaillerie Test', 'statut' => 'agree']);
+        FournisseurAgree::create(['position' => Geo::point(), 'user_id' => $fournisseur->id, 'nom_boutique' => 'Quincaillerie Test', 'statut' => 'agree']);
 
         $this->service->update($fournisseur, $this->baseUpdateData($fournisseur, [
             'fournisseur_sector_id' => $sectorA->id,

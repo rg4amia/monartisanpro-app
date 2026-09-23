@@ -15,6 +15,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use Tests\Support\Geo;
 use Tests\TestCase;
 
 class DeliveryTrackingServiceTest extends TestCase
@@ -22,62 +23,64 @@ class DeliveryTrackingServiceTest extends TestCase
     use RefreshDatabase;
 
     private OsrmRoutingService $osrmService;
+
     private OrderService $orderService;
+
     private RealtimeEventService $realtimeEventService;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->osrmService = new OsrmRoutingService();
-        $this->realtimeEventService = new RealtimeEventService();
+        $this->osrmService = new OsrmRoutingService;
+        $this->realtimeEventService = new RealtimeEventService;
         $this->orderService = app(OrderService::class);
     }
 
     private function createTestOrder(array $attributes = []): Order
     {
         $client = User::factory()->create([
-            'role'     => 'client',
-            'phone'    => '+225070' . rand(1000000, 9999999),
-            'position' => '5.3599,-4.0083',
+            'role' => 'client',
+            'phone' => '+225070'.rand(1000000, 9999999),
+            'position' => Geo::point(5.3599, -4.0083),
         ]);
 
         $supplier = User::factory()->create([
-            'role'     => 'fournisseur',
-            'phone'    => '+225050' . rand(1000000, 9999999),
-            'position' => '5.3484,-4.0267',
+            'role' => 'fournisseur',
+            'phone' => '+225050'.rand(1000000, 9999999),
+            'position' => Geo::point(5.3484, -4.0267),
         ]);
 
         $driver = User::factory()->create([
-            'role'     => 'livreur',
-            'phone'    => '+225010' . rand(1000000, 9999999),
-            'position' => '5.3480,-4.0250',
+            'role' => 'livreur',
+            'phone' => '+225010'.rand(1000000, 9999999),
+            'position' => Geo::point(5.3480, -4.0250),
         ]);
 
         FournisseurAgree::updateOrCreate(
             ['user_id' => $supplier->id],
             [
                 'nom_boutique' => 'Quincaillerie Centrale Abidjan',
-                'statut'       => 'agree',
-                'position'     => '5.3484,-4.0267',
+                'statut' => 'agree',
+                'position' => Geo::point(5.3484, -4.0267),
             ]
         );
 
         return Order::create(array_merge([
-            'client_id'                 => $client->id,
-            'supplier_id'               => $supplier->id,
-            'driver_id'                 => $driver->id,
-            'delivery_mode'             => 'delivery',
-            'status'                    => 'driver_assigned',
-            'subtotal'                  => 25000,
-            'delivery_cost'             => 3500,
-            'platform_fee'              => 500,
-            'total_amount'              => 29000,
-            'pickup_code'               => 'LIV-PICK-1234',
-            'reception_code'            => 'LIV-RECP-5678',
-            'delivery_latitude'         => 5.3599,
-            'delivery_longitude'        => -4.0083,
-            'driver_assigned_at'        => Carbon::now(),
+            'client_id' => $client->id,
+            'supplier_id' => $supplier->id,
+            'driver_id' => $driver->id,
+            'delivery_mode' => 'delivery',
+            'status' => 'driver_assigned',
+            'subtotal' => 25000,
+            'delivery_cost' => 3500,
+            'platform_fee' => 500,
+            'total_amount' => 29000,
+            'pickup_code' => 'LIV-PICK-1234',
+            'reception_code' => 'LIV-RECP-5678',
+            'delivery_latitude' => 5.3599,
+            'delivery_longitude' => -4.0083,
+            'driver_assigned_at' => Carbon::now(),
             'driver_reassignment_count' => 0,
         ], $attributes));
     }
@@ -219,10 +222,10 @@ class DeliveryTrackingServiceTest extends TestCase
 
         $response = $this->actingAs($driver, 'sanctum')
             ->postJson("/api/v1/orders/{$order->id}/location", [
-                'latitude'      => 5.3490,
-                'longitude'     => -4.0210,
-                'speed_kmh'     => 38.0,
-                'heading'       => 120.5,
+                'latitude' => 5.3490,
+                'longitude' => -4.0210,
+                'speed_kmh' => 38.0,
+                'heading' => 120.5,
                 'battery_level' => 78,
             ]);
 
@@ -233,8 +236,8 @@ class DeliveryTrackingServiceTest extends TestCase
             ]);
 
         $this->assertDatabaseHas('delivery_trackings', [
-            'order_id'      => $order->id,
-            'driver_id'     => $driver->id,
+            'order_id' => $order->id,
+            'driver_id' => $driver->id,
             'battery_level' => 78,
         ]);
     }
@@ -266,13 +269,13 @@ class DeliveryTrackingServiceTest extends TestCase
         $responsePickup = $this->actingAs($driver, 'sanctum')
             ->postJson("/api/v1/orders/{$order->id}/pickup", [
                 'pickup_code' => 'LIV-PICK-1234',
-                'photo'       => $photoPickup,
+                'photo' => $photoPickup,
             ]);
 
         $responsePickup->assertStatus(200)
             ->assertJson([
                 'success' => true,
-                'status'  => 'driver_picked_up',
+                'status' => 'driver_picked_up',
             ]);
 
         $order->refresh();
@@ -285,13 +288,13 @@ class DeliveryTrackingServiceTest extends TestCase
         $responseDelivery = $this->actingAs($driver, 'sanctum')
             ->postJson("/api/v1/orders/{$order->id}/deliver", [
                 'reception_code' => 'LIV-RECP-5678',
-                'photo'          => $photoDelivery,
+                'photo' => $photoDelivery,
             ]);
 
         $responseDelivery->assertStatus(200)
             ->assertJson([
                 'success' => true,
-                'status'  => 'delivered',
+                'status' => 'delivered',
             ]);
 
         $order->refresh();
@@ -317,7 +320,7 @@ class DeliveryTrackingServiceTest extends TestCase
         $response->assertStatus(200)
             ->assertJson([
                 'success' => true,
-                'status'  => 'searching_driver',
+                'status' => 'searching_driver',
             ]);
 
         $order->refresh();

@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Services\Admin\AdminTerritoryService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Tests\Support\Geo;
 use Tests\TestCase;
 
 class AdminTerritoryControllerTest extends TestCase
@@ -112,11 +113,11 @@ class AdminTerritoryControllerTest extends TestCase
         // Le hook d'auto-création de fournisseurs_agrees est désactivé pendant
         // les tests (User::booted()) : on crée le profil explicitement ici.
         $fournisseur = User::factory()->create(['role' => 'fournisseur', 'commune_id' => $cocody->id]);
-        FournisseurAgree::create(['user_id' => $fournisseur->id, 'nom_boutique' => 'Quincaillerie Plomberie', 'sector_id' => $plomberie->id, 'statut' => 'agree']);
+        FournisseurAgree::create(['position' => Geo::point(), 'user_id' => $fournisseur->id, 'nom_boutique' => 'Quincaillerie Plomberie', 'sector_id' => $plomberie->id, 'statut' => 'agree']);
 
         // Fournisseur sans secteur assigné : doit être compté dans « Non renseigné ».
         $fournisseurSansSecteur = User::factory()->create(['role' => 'fournisseur', 'commune_id' => $cocody->id]);
-        FournisseurAgree::create(['user_id' => $fournisseurSansSecteur->id, 'nom_boutique' => 'Quincaillerie Générale', 'statut' => 'agree']);
+        FournisseurAgree::create(['position' => Geo::point(), 'user_id' => $fournisseurSansSecteur->id, 'nom_boutique' => 'Quincaillerie Générale', 'statut' => 'agree']);
 
         $response = $this->actingAs($admin)
             ->getJson('/admin/cartographie/stats?commune=cocody');

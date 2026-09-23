@@ -7,7 +7,7 @@ use App\Models\Sector;
 use App\Models\Trade;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
+use Tests\Support\Geo;
 use Tests\TestCase;
 
 class ArtisanNightModeFeatureTest extends TestCase
@@ -83,6 +83,9 @@ class ArtisanNightModeFeatureTest extends TestCase
             'role' => 'artisan',
             'kyc_status' => 'actif',
             'name' => 'Artisan Nuit',
+            // À ~100 m du point de recherche : sous MariaDB, ST_Distance_Sphere
+            // écarte à raison un artisan sans position (SQLite l'ignorait).
+            'position' => Geo::point(5.3490, -4.0170),
         ]);
 
         ArtisanProfile::create([
@@ -94,6 +97,9 @@ class ArtisanNightModeFeatureTest extends TestCase
             'role' => 'artisan',
             'kyc_status' => 'actif',
             'name' => 'Artisan Jour',
+            // À ~100 m du point de recherche : sous MariaDB, ST_Distance_Sphere
+            // écarte à raison un artisan sans position (SQLite l'ignorait).
+            'position' => Geo::point(5.3480, -4.0160),
         ]);
 
         ArtisanProfile::create([
@@ -126,7 +132,7 @@ class ArtisanNightModeFeatureTest extends TestCase
             'kyc_status' => 'actif',
             'name' => 'Artisan Distant',
             // Position éloignée de Abidjan Cocody (~12 km)
-            'position' => DB::raw('ST_SRID(POINT(-4.0200, 5.4500), 4326)'),
+            'position' => Geo::point(5.4500, -4.0200),
         ]);
 
         ArtisanProfile::create([

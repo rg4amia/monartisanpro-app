@@ -88,9 +88,9 @@ test('inscription ulterieure avec le meme numero et le role artisan lie automati
         'filleul_nom' => 'Futur Apprenti',
     ])->assertCreated();
 
-    // Simule findOrCreateByPhone() : un compte coquille est créé par téléphone
+    // findOrCreateByPhone() : un compte coquille est créé par téléphone
     // avant que le rôle ne soit connu (flux OTP normal).
-    $filleul = User::factory()->create(['phone' => '+2250700010010', 'role' => null, 'kyc_status' => 'en_attente']);
+    $filleul = app(AuthService::class)->findOrCreateByPhone('+2250700010010');
 
     app(AuthService::class)->register($filleul, ['name' => 'Nouvel Artisan', 'role' => 'artisan']);
 
@@ -110,7 +110,7 @@ test('inscription avec un mauvais role ne lie pas le parrainage en attente', fun
         'filleul_nom' => 'Futur Apprenti',
     ])->assertCreated();
 
-    $filleul = User::factory()->create(['phone' => '+2250700010012', 'role' => null, 'kyc_status' => 'en_attente']);
+    $filleul = app(AuthService::class)->findOrCreateByPhone('+2250700010012');
 
     app(AuthService::class)->register($filleul, ['name' => 'Un Client', 'role' => 'client']);
 

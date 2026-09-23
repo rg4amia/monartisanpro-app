@@ -13,6 +13,7 @@ use App\Services\OsrmRoutingService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
+use Tests\Support\Geo;
 use Tests\TestCase;
 
 class DeliveryPricingEngineTest extends TestCase
@@ -175,7 +176,7 @@ class DeliveryPricingEngineTest extends TestCase
 
         $supplier->fournisseurAgree()->create([
             'nom_boutique' => 'Quincaillerie Centrale',
-            'position' => $supplier->position,
+            'position' => Geo::point(),
             'statut' => 'agree',
             'approuve_at' => now(),
         ]);
@@ -253,7 +254,7 @@ class DeliveryPricingEngineTest extends TestCase
         $supplier->setPosition(5.3400, -3.9800);
         $supplier->fournisseurAgree()->create([
             'nom_boutique' => 'Quincaillerie Centrale',
-            'position' => $supplier->position,
+            'position' => Geo::point(),
             'statut' => 'agree',
             'approuve_at' => now(),
         ]);

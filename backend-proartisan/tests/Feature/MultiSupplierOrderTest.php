@@ -1,15 +1,15 @@
 <?php
 
 use App\Models\Address;
-use App\Models\User;
-use App\Models\Order;
-use App\Models\OrderItem;
-use App\Models\SupplierProduct;
 use App\Models\FournisseurAgree;
+use App\Models\Order;
+use App\Models\SupplierProduct;
 use App\Models\Transaction;
+use App\Models\User;
 use App\Services\GoogleMapsService;
 use App\Services\OsrmRoutingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Support\Geo;
 
 uses(RefreshDatabase::class);
 
@@ -38,11 +38,13 @@ test('client can estimate multi-supplier delivery', function () {
     $supplier2 = User::factory()->create(['role' => 'fournisseur', 'phone' => '+2250303030303']);
 
     FournisseurAgree::create([
+        'position' => Geo::point(),
         'user_id' => $supplier1->id,
         'nom_boutique' => 'Quincaillerie Nord',
         'statut' => 'agree',
     ]);
     FournisseurAgree::create([
+        'position' => Geo::point(),
         'user_id' => $supplier2->id,
         'nom_boutique' => 'Quincaillerie Sud',
         'statut' => 'agree',
@@ -60,8 +62,8 @@ test('client can estimate multi-supplier delivery', function () {
             [
                 'supplier_id' => $supplier2->id,
                 'delivery_mode' => 'pickup',
-            ]
-        ]
+            ],
+        ],
     ]);
 
     $response->assertStatus(200);
@@ -83,11 +85,13 @@ test('client can checkout split-cart with multiple suppliers in single transacti
     $supplier2 = User::factory()->create(['role' => 'fournisseur', 'phone' => '+2250303030303']);
 
     FournisseurAgree::create([
+        'position' => Geo::point(),
         'user_id' => $supplier1->id,
         'nom_boutique' => 'Quincaillerie Nord',
         'statut' => 'agree',
     ]);
     FournisseurAgree::create([
+        'position' => Geo::point(),
         'user_id' => $supplier2->id,
         'nom_boutique' => 'Quincaillerie Sud',
         'statut' => 'agree',
@@ -120,8 +124,8 @@ test('client can checkout split-cart with multiple suppliers in single transacti
                     [
                         'supplier_product_id' => $prod1->id,
                         'quantity' => 2,
-                    ]
-                ]
+                    ],
+                ],
             ],
             [
                 'supplier_id' => $supplier2->id,
@@ -130,10 +134,10 @@ test('client can checkout split-cart with multiple suppliers in single transacti
                     [
                         'supplier_product_id' => $prod2->id,
                         'quantity' => 1,
-                    ]
-                ]
-            ]
-        ]
+                    ],
+                ],
+            ],
+        ],
     ]);
 
     $response->assertStatus(201);
@@ -151,7 +155,7 @@ test('client can checkout split-cart with multiple suppliers in single transacti
     $this->assertDatabaseHas('transactions', [
         'user_id' => $client->id,
         'type' => 'acompte',
-        'wallet_dest' => 'escrow_group_' . $orderGroupId,
+        'wallet_dest' => 'escrow_group_'.$orderGroupId,
         'statut' => 'confirme',
     ]);
 

@@ -3,11 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\DeliveryTracking;
-use App\Models\FournisseurAgree;
 use App\Models\Order;
-use App\Models\SupplierProduct;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Support\Geo;
 use Tests\TestCase;
 
 class DeliveryTelemetryEndpointTest extends TestCase
@@ -23,7 +22,7 @@ class DeliveryTelemetryEndpointTest extends TestCase
         $supplier->setPosition(5.3400, -3.9800);
         $supplier->fournisseurAgree()->create([
             'nom_boutique' => 'Quincaillerie Centrale',
-            'position' => $supplier->position,
+            'position' => Geo::point(),
             'statut' => 'agree',
             'approuve_at' => now(),
         ]);
@@ -136,7 +135,7 @@ class DeliveryTelemetryEndpointTest extends TestCase
         $supplier->setPosition(5.3400, -3.9800);
         $supplier->fournisseurAgree()->create([
             'nom_boutique' => 'Quincaillerie Centrale',
-            'position' => $supplier->position,
+            'position' => Geo::point(),
             'statut' => 'agree',
             'approuve_at' => now(),
         ]);
@@ -229,7 +228,7 @@ class DeliveryTelemetryEndpointTest extends TestCase
                     'heading' => 55.0,
                     'battery_level' => 86,
                 ],
-            ]
+            ],
         ]);
 
         $response->assertOk();

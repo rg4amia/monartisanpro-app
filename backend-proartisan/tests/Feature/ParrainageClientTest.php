@@ -132,7 +132,7 @@ test('inscription ulterieure avec role client lie automatiquement le parrainage 
         'filleul_nom' => 'Futur Client',
     ])->assertCreated();
 
-    $filleul = User::factory()->create(['phone' => '+2250700000032', 'role' => null, 'kyc_status' => 'en_attente']);
+    $filleul = app(AuthService::class)->findOrCreateByPhone('+2250700000032');
 
     app(AuthService::class)->register($filleul, ['name' => 'Nouveau Client', 'role' => 'client']);
 
@@ -152,7 +152,7 @@ test('inscription avec un mauvais role ne lie pas le parrainage client en attent
         'filleul_nom' => 'Futur Client',
     ])->assertCreated();
 
-    $filleul = User::factory()->create(['phone' => '+2250700000034', 'role' => null, 'kyc_status' => 'en_attente']);
+    $filleul = app(AuthService::class)->findOrCreateByPhone('+2250700000034');
 
     app(AuthService::class)->register($filleul, ['name' => 'Un Artisan', 'role' => 'artisan']);
 

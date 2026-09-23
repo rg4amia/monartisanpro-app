@@ -2,16 +2,16 @@
 
 namespace Tests\Feature;
 
-use App\Models\JCode;
-use App\Models\Mission;
-use App\Models\User;
+use App\Jobs\PaySupplierJob;
 use App\Models\FournisseurAgree;
+use App\Models\Mission;
 use App\Models\SupplierProduct;
+use App\Models\User;
 use App\Services\JCodeService;
-use App\Services\NotificationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
-use App\Jobs\PaySupplierJob;
+use Illuminate\Validation\ValidationException;
+use Tests\Support\Geo;
 use Tests\TestCase;
 
 class JCodeComplianceTest extends TestCase
@@ -25,12 +25,13 @@ class JCodeComplianceTest extends TestCase
         $artisan = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif', 'wallet_materiaux' => 100000]);
         $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
         $fournisseur = User::factory()->create(['role' => 'fournisseur', 'kyc_status' => 'actif']);
-        
+
         // Setup fournisseur agree
         $agreement = FournisseurAgree::create([
+            'position' => Geo::point(),
             'user_id' => $fournisseur->id,
             'nom_boutique' => 'Test Shop',
-            'statut' => 'agree'
+            'statut' => 'agree',
         ]);
         $agreement->setPosition(5.3, -4.0);
 
@@ -51,7 +52,7 @@ class JCodeComplianceTest extends TestCase
             'montant_total' => 100000,
             'montant_materiaux' => 65000,
             'montant_mo' => 35000,
-            'ratio_materiaux' => 0.65
+            'ratio_materiaux' => 0.65,
         ]);
 
         $jCodeService = app(JCodeService::class);
@@ -68,7 +69,7 @@ class JCodeComplianceTest extends TestCase
         // Assert
         $this->assertEquals('utilise', $jcode->fresh()->statut);
         $this->assertEquals('programme', $jcode->fresh()->paiement_status);
-        
+
         Queue::assertPushed(PaySupplierJob::class);
     }
 
@@ -77,11 +78,12 @@ class JCodeComplianceTest extends TestCase
         $artisan = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif', 'wallet_materiaux' => 100000]);
         $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
         $fournisseur = User::factory()->create(['role' => 'fournisseur', 'kyc_status' => 'actif']);
-        
+
         $agreement = FournisseurAgree::create([
+            'position' => Geo::point(),
             'user_id' => $fournisseur->id,
             'nom_boutique' => 'Test Shop',
-            'statut' => 'agree'
+            'statut' => 'agree',
         ]);
         $agreement->setPosition(5.3, -4.0);
 
@@ -102,7 +104,7 @@ class JCodeComplianceTest extends TestCase
             'montant_total' => 100000,
             'montant_materiaux' => 65000,
             'montant_mo' => 35000,
-            'ratio_materiaux' => 0.65
+            'ratio_materiaux' => 0.65,
         ]);
 
         $jCodeService = app(JCodeService::class);
@@ -117,7 +119,7 @@ class JCodeComplianceTest extends TestCase
         try {
             $jCodeService->scan($jcode, $fournisseur, 6.3, -4.0);
             $this->fail('ValidationException was expected but not thrown.');
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             $this->assertArrayHasKey('gps', $e->errors());
         }
     }
@@ -134,9 +136,10 @@ class JCodeComplianceTest extends TestCase
         $fournisseur = User::factory()->create(['role' => 'fournisseur', 'kyc_status' => 'actif']);
 
         $agreement = FournisseurAgree::create([
+            'position' => Geo::point(),
             'user_id' => $fournisseur->id,
             'nom_boutique' => 'Test Shop',
-            'statut' => 'agree'
+            'statut' => 'agree',
         ]);
         $agreement->setPosition(5.3, -4.0);
 
@@ -157,7 +160,7 @@ class JCodeComplianceTest extends TestCase
             'montant_total' => 100000,
             'montant_materiaux' => 65000,
             'montant_mo' => 35000,
-            'ratio_materiaux' => 0.65
+            'ratio_materiaux' => 0.65,
         ]);
 
         $jCodeService = app(JCodeService::class);

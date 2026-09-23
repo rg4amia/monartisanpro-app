@@ -6,6 +6,7 @@ use App\Models\FournisseurAgree;
 use App\Models\SupplierProduct;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Support\Geo;
 use Tests\TestCase;
 
 class SupplierCatalogFeatureTest extends TestCase
@@ -161,7 +162,7 @@ class SupplierCatalogFeatureTest extends TestCase
                 'stock_quantity' => 12,
             ])
             ->assertStatus(422)
-            ->assertJsonPath('errors.supplier.0', "Le fournisseur doit être agréé avant de gérer un catalogue.");
+            ->assertJsonPath('errors.supplier.0', 'Le fournisseur doit être agréé avant de gérer un catalogue.');
     }
 
     public function test_supplier_cannot_modify_another_supplier_product_and_cannot_duplicate_own_sku(): void
@@ -270,6 +271,7 @@ class SupplierCatalogFeatureTest extends TestCase
         ]);
 
         $agreement = FournisseurAgree::create([
+            'position' => Geo::point(),
             'user_id' => $supplier->id,
             'nom_boutique' => $shopName,
             'statut' => $status,
