@@ -82,7 +82,7 @@ class OrderService
                         ['user_id' => $supplier->id],
                         [
                             'nom_boutique' => $supplier->name ?? 'Quincaillerie',
-                            'position' => DB::raw('ST_SRID(POINT(-4.0083, 5.3599), 4326)'),
+                            'position' => DB::raw('POINT(-4.0083, 5.3599)'),
                             'statut' => 'agree',
                             'approuve_at' => now(),
                         ]
