@@ -357,14 +357,21 @@ class WalletService
      * par l'app peuvent tous confirmer le même paiement — un seul crédit en
      * résulte (verrou sur le jalon puis vérification dans le ledger).
      *
+     * `$regularisation` (commande prosartisan:reconcile-hybrid-jalons) accepte
+     * aussi un jalon déjà validé ou libéré : son paiement a bien été encaissé
+     * mais jamais consigné, et sa libération a puisé dans le séquestre d'autres
+     * missions — le financement a posteriori reconstitue ce séquestre.
+     *
      * @return bool vrai si ce paiement vient de financer le jalon
      */
-    public function fundHybridJalon(Jalon $jalon, Transaction $payment): bool
+    public function fundHybridJalon(Jalon $jalon, Transaction $payment, bool $regularisation = false): bool
     {
-        return DB::transaction(function () use ($jalon, $payment) {
+        return DB::transaction(function () use ($jalon, $payment, $regularisation) {
             $jalon = Jalon::lockForUpdate()->find($jalon->id);
 
-            if (! $jalon || ! in_array($jalon->statut, ['en_attente', 'soumis'], true) || $this->isJalonFunded($jalon)) {
+            $fundableStatus = $regularisation || in_array($jalon?->statut, ['en_attente', 'soumis'], true);
+
+            if (! $jalon || ! $fundableStatus || $this->isJalonFunded($jalon)) {
                 return false;
             }
 
@@ -372,13 +379,14 @@ class WalletService
                 $jalon->mission->artisan,
                 WalletType::WALLET_MO,
                 $jalon->montant,
-                "Financement jalon #{$jalon->ordre} - Mission #{$jalon->mission_id}",
-                [
+                ($regularisation ? 'Régularisation — ' : '')."Financement jalon #{$jalon->ordre} - Mission #{$jalon->mission_id}",
+                array_filter([
                     'mission_id' => $jalon->mission_id,
                     'jalon_id' => $jalon->id,
                     'transaction_id' => $payment->id,
                     'type' => 'escrow_mo_jalon',
-                ]
+                    'regularisation' => $regularisation ?: null,
+                ], fn ($value) => $value !== null)
             );
 
             Log::info("[Jalon financé] Jalon #{$jalon->id} financé pour la mission #{$jalon->mission_id}");
