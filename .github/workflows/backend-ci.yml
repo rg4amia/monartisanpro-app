@@ -72,12 +72,12 @@ jobs:
         run: php vendor/bin/pest --parallel
 
   # ── Même suite face au moteur de production (MariaDB 11.8, pilote `mysql`
-  #    comme sur Hostinger). Informatif : ne bloque pas le déploiement tant
-  #    que les écarts SQLite ↔ MariaDB de la suite ne sont pas résorbés.
+  #    comme sur Hostinger). Bloquant : SQLite masque des défauts réels
+  #    (tailles de colonnes, ENUM NOT NULL, identifiants inconnus lus comme
+  #    chaînes, fonctions spatiales) qui ne cassent qu'en production.
   tests-mariadb:
-    name: Tests Pest (MariaDB 11.8, informatif)
+    name: Tests Pest (MariaDB 11.8, bloquant)
     runs-on: ubuntu-latest
-    continue-on-error: true
     defaults:
       run:
         working-directory: ./backend-proartisan
@@ -154,7 +154,10 @@ jobs:
         run: php vendor/bin/pest --parallel
 
   deploy:
-    needs: tests
+    needs: [tests, tests-mariadb]
+    # Une pull request ne fait qu'exécuter les tests : jamais de mise en
+    # production depuis la référence d'une PR (refs/pull/N/merge).
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
 
     steps:

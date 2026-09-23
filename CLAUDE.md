@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `frontend_flutter/` — Flutter 3.x mobile app (Android-first)
 - `vitrine-nextjs/` — site vitrine public (Next.js 16, React 19, export statique)
 
-Déploiement production : Hostinger shared hosting via GitHub Actions (`.github/workflows/backend-ci.yml`). Le job `tests` (suite Pest sur SQLite) **conditionne le déploiement** : aucun push ne part en production si un test échoue. Le job `tests-mariadb` rejoue la suite face à MariaDB 11.8 (moteur de production) à titre informatif, sans bloquer, tant que les écarts SQLite ↔ MariaDB de la suite (données de test incomplètes sur les colonnes `POINT NOT NULL`, tests sans isolation de base) ne sont pas résorbés.
+Déploiement production : Hostinger shared hosting via GitHub Actions (`.github/workflows/backend-ci.yml`). Le job `tests` (suite Pest sur SQLite) **conditionne le déploiement** : aucun push ne part en production si un test échoue. Le job `tests-mariadb` rejoue la même suite face à MariaDB 11.8 (moteur de production) et **bloque aussi le déploiement** : SQLite masque des défauts qui ne cassent qu'en production (tailles de colonnes ignorées, ENUM `NOT NULL` rempli implicitement, identifiant de colonne inconnu lu comme chaîne littérale, fonctions spatiales absentes). Dans les tests, toute colonne `position` s'écrit via `Tests\Support\Geo::point()`.
 
 ---
 
@@ -31,6 +31,7 @@ php artisan migrate:fresh --seed
 ./vendor/bin/pest                       # tous les tests
 ./vendor/bin/pest tests/Feature/FullMissionWorkflowTest.php  # un fichier
 ./vendor/bin/pest --filter="nom du test"  # filtre par nom
+DB_CONNECTION=mysql DB_HOST=127.0.0.1 DB_PORT=<port> DB_DATABASE=prosartisan_test DB_USERNAME=root DB_PASSWORD=<mdp> ./vendor/bin/pest --parallel  # même suite sur MariaDB (comme le job CI tests-mariadb)
 
 # Tests de composants front du backoffice (Vitest + Testing Library)
 npm test                                # resources/js/**/*.test.tsx
