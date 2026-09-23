@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `frontend_flutter/` — Flutter 3.x mobile app (Android-first)
 - `vitrine-nextjs/` — site vitrine public (Next.js 16, React 19, export statique)
 
-Déploiement production : Hostinger shared hosting via GitHub Actions (`.github/workflows/backend-ci.yml`).
+Déploiement production : Hostinger shared hosting via GitHub Actions (`.github/workflows/backend-ci.yml`). Le job `tests` (suite Pest sur SQLite) **conditionne le déploiement** : aucun push ne part en production si un test échoue. Le job `tests-mariadb` rejoue la suite face à MariaDB 11.8 (moteur de production) à titre informatif, sans bloquer, tant que les écarts SQLite ↔ MariaDB de la suite (données de test incomplètes sur les colonnes `POINT NOT NULL`, tests sans isolation de base) ne sont pas résorbés.
 
 ---
 

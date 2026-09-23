@@ -16,7 +16,145 @@ on:
   workflow_dispatch:
 
 jobs:
+  # ── Garde de déploiement : la suite Pest doit passer avant toute mise en production.
+  tests:
+    name: Tests Pest (SQLite, bloquant)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend-proartisan
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: "backend-proartisan/package-lock.json"
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: mbstring, xml, ctype, iconv, intl, pdo_mysql, pdo_sqlite, sqlite3, dom, filter, gd, json, pdo, bcmath, zip
+          tools: composer:v2
+          coverage: none
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-dev-${{ hashFiles('backend-proartisan/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-dev-
+
+      - name: Install PHP dependencies (avec dev)
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate --force
+
+      # Les pages Inertia du backoffice exigent le manifeste Vite.
+      - name: Build assets
+        run: |
+          npm ci
+          npm run build
+
+      - name: Run Pest
+        run: php vendor/bin/pest --parallel
+
+  # ── Même suite face au moteur de production (MariaDB 11.8, pilote `mysql`
+  #    comme sur Hostinger). Informatif : ne bloque pas le déploiement tant
+  #    que les écarts SQLite ↔ MariaDB de la suite ne sont pas résorbés.
+  tests-mariadb:
+    name: Tests Pest (MariaDB 11.8, informatif)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    defaults:
+      run:
+        working-directory: ./backend-proartisan
+
+    services:
+      mariadb:
+        image: mariadb:11.8
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: prosartisan_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      DB_CONNECTION: mysql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_DATABASE: prosartisan_test
+      DB_USERNAME: root
+      DB_PASSWORD: root
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: "backend-proartisan/package-lock.json"
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: mbstring, xml, ctype, iconv, intl, pdo_mysql, dom, filter, gd, json, pdo, bcmath, zip
+          tools: composer:v2
+          coverage: none
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-dev-${{ hashFiles('backend-proartisan/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-dev-
+
+      - name: Install PHP dependencies (avec dev)
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate --force
+
+      - name: Build assets
+        run: |
+          npm ci
+          npm run build
+
+      - name: MariaDB version
+        run: php -r '$p = new PDO("mysql:host=127.0.0.1;port=3306", "root", "root"); echo $p->query("select version()")->fetchColumn(), PHP_EOL;'
+
+      - name: Run Pest (MariaDB)
+        run: php vendor/bin/pest --parallel
+
   deploy:
+    needs: tests
     runs-on: ubuntu-latest
 
     steps:
