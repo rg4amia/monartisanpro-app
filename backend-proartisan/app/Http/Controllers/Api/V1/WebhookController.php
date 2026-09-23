@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Services\OrangeMoneyService;
+use App\Services\PaymentService;
 use App\Services\WaveService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,7 +14,8 @@ class WebhookController extends Controller
 {
     public function __construct(
         protected WaveService $waveService,
-        protected OrangeMoneyService $orangeMoneyService
+        protected OrangeMoneyService $orangeMoneyService,
+        protected PaymentService $paymentService
     ) {}
 
     /**
@@ -34,12 +36,12 @@ class WebhookController extends Controller
             ]);
 
             // Valider la signature du webhook
-            if (!$this->waveService->validateWebhookSignature($payload, $signature)) {
+            if (! $this->waveService->validateWebhookSignature($payload, $signature)) {
                 Log::warning('Wave: Signature webhook invalide');
 
                 return response()->json([
                     'success' => false,
-                    'message' => 'Signature invalide'
+                    'message' => 'Signature invalide',
                 ], 401);
             }
 
@@ -48,16 +50,20 @@ class WebhookController extends Controller
             // Traiter le webhook
             $transaction = $this->waveService->processWebhook($data);
 
-            if (!$transaction) {
+            if (! $transaction) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Transaction non trouvée'
+                    'message' => 'Transaction non trouvée',
                 ], 404);
             }
 
+            // Un paiement de jalon confirmé doit financer le séquestre ici même :
+            // l'app peut ne jamais revenir interroger le statut.
+            $this->paymentService->applyConfirmedPayment($transaction);
+
             return response()->json([
                 'success' => true,
-                'message' => 'Webhook traité avec succès'
+                'message' => 'Webhook traité avec succès',
             ]);
 
         } catch (\Exception $e) {
@@ -68,7 +74,7 @@ class WebhookController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur interne'
+                'message' => 'Erreur interne',
             ], 500);
         }
     }
@@ -87,16 +93,18 @@ class WebhookController extends Controller
             // Traiter la notification
             $transaction = $this->orangeMoneyService->processNotification($data);
 
-            if (!$transaction) {
+            if (! $transaction) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Transaction non trouvée'
+                    'message' => 'Transaction non trouvée',
                 ], 404);
             }
 
+            $this->paymentService->applyConfirmedPayment($transaction);
+
             return response()->json([
                 'success' => true,
-                'message' => 'Notification traitée avec succès'
+                'message' => 'Notification traitée avec succès',
             ]);
 
         } catch (\Exception $e) {
@@ -107,9 +115,8 @@ class WebhookController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur interne'
+                'message' => 'Erreur interne',
             ], 500);
         }
     }
-
 }

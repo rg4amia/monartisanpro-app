@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Enums\PaymentProvider;
 use App\Enums\PaymentStatus;
-use App\Enums\WalletType;
 use App\Exceptions\PaymentException;
 use App\Models\Devis;
 use App\Models\Jalon;
@@ -124,6 +123,10 @@ class PaymentService
             throw new PaymentException('Ce jalon n\'est pas en attente de paiement.', 422);
         }
 
+        if ($this->walletService->isJalonFunded($jalon)) {
+            throw new PaymentException('Ce jalon a déjà été payé et financé.', 422);
+        }
+
         $montant = $jalon->montant;
         $this->assertMobileMoneyLimit($montant, $provider);
 
@@ -164,6 +167,9 @@ class PaymentService
     public function refreshStatus(Transaction $transaction): Transaction
     {
         if ($transaction->statut->isFinalized()) {
+            // Déjà confirmée par le webhook : s'assurer que le séquestre a suivi.
+            $this->applyConfirmedPayment($transaction);
+
             return $transaction;
         }
 
@@ -176,7 +182,7 @@ class PaymentService
                     'wave_payment_id' => $result['payment_id'],
                     'paid_at' => now(),
                 ]);
-                $this->confirmJalonFunding($transaction);
+                $this->applyConfirmedPayment($transaction);
             } elseif (in_array($result['status'], ['failed', 'cancelled'], true)) {
                 $transaction->update([
                     'statut' => PaymentStatus::ECHOUE,
@@ -196,7 +202,7 @@ class PaymentService
                     'orange_tx_reference' => $result['tx_reference'],
                     'paid_at' => now(),
                 ]);
-                $this->confirmJalonFunding($transaction);
+                $this->applyConfirmedPayment($transaction);
             } elseif (in_array($result['status'], ['FAILED', 'CANCELLED'], true)) {
                 $transaction->update([
                     'statut' => PaymentStatus::ECHOUE,
@@ -234,7 +240,7 @@ class PaymentService
             'paid_at' => now(),
         ]);
 
-        $this->confirmJalonFunding($transaction);
+        $this->applyConfirmedPayment($transaction);
 
         $devisId = $transaction->metadata['devis_id'] ?? null;
         if ($devisId) {
@@ -259,33 +265,24 @@ class PaymentService
         Log::info("Paiement simulé échoué pour la transaction #{$transaction->id}");
     }
 
-    private function confirmJalonFunding(Transaction $transaction): void
+    /**
+     * Répercute un paiement confirmé sur le séquestre. Point d'entrée commun
+     * aux trois voies de confirmation — webhook opérateur, interrogation de
+     * statut par l'app, simulateur local — et idempotent : un webhook arrivé
+     * avant l'interrogation laissait sinon le jalon payé mais jamais financé.
+     */
+    public function applyConfirmedPayment(Transaction $transaction): void
     {
-        if (($transaction->metadata['payment_type'] ?? '') !== 'jalon') {
+        if (! $transaction->statut->isSuccessful() || ($transaction->metadata['payment_type'] ?? '') !== 'jalon') {
             return;
         }
 
         $jalonId = $transaction->metadata['jalon_id'] ?? null;
         $jalon = $jalonId ? Jalon::find($jalonId) : null;
 
-        if (! $jalon || ($jalon->statut !== 'en_attente' && $jalon->statut !== 'soumis')) {
-            return;
+        if ($jalon) {
+            $this->walletService->fundHybridJalon($jalon, $transaction);
         }
-
-        $this->walletService->credit(
-            $jalon->mission->artisan,
-            WalletType::WALLET_MO,
-            $jalon->montant,
-            "Financement jalon #{$jalon->ordre} - Mission #{$jalon->mission_id}",
-            [
-                'mission_id' => $jalon->mission_id,
-                'jalon_id' => $jalon->id,
-                'transaction_id' => $transaction->id,
-                'type' => 'escrow_mo_jalon',
-            ]
-        );
-
-        Log::info("[Jalon financé] Jalon #{$jalon->id} financé pour la mission #{$jalon->mission_id}");
     }
 
     /**

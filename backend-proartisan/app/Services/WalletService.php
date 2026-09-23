@@ -4,13 +4,18 @@ namespace App\Services;
 
 use App\Enums\WalletOperation;
 use App\Enums\WalletType;
+use App\Models\Devis;
 use App\Models\Jalon;
 use App\Models\Litige;
 use App\Models\Mission;
+use App\Models\Setting;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\WalletTransaction;
-use App\Models\Devis;
+use App\States\Mission\CompletedState;
+use App\States\Mission\FundedLockedState;
+use App\States\Mission\InProgressState;
+use App\States\Mission\PendingApprovalState;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -56,8 +61,8 @@ class WalletService
                 'mission_id' => $metadata['mission_id'] ?? null,
                 'jalon_id' => $metadata['jalon_id'] ?? null,
                 'transaction_id' => $metadata['transaction_id'] ?? null,
-                'reference' => 'WTX-' . strtoupper(Str::random(12)),
-                'cle_idempotence'  => $metadata['idempotency_key'] ?? (string) Str::uuid(),
+                'reference' => 'WTX-'.strtoupper(Str::random(12)),
+                'cle_idempotence' => $metadata['idempotency_key'] ?? (string) Str::uuid(),
                 'solde_avant' => $soldeAvant,
                 'solde_apres' => $soldeApres,
                 'description' => $description ?? "Crédit wallet {$walletType->label()}",
@@ -106,19 +111,19 @@ class WalletService
             $user->update([$columnName => $soldeApres]);
             // Création de la transaction de wallet avec clé d'idempotence
             $walletTransaction = WalletTransaction::create([
-                'user_id'          => $user->id,
-                'wallet_type'      => $walletType->value,
-                'operation'        => WalletOperation::DEBIT,
-                'montant'          => $montant,
-                'mission_id'       => $metadata['mission_id'] ?? null,
-                'jalon_id'         => $metadata['jalon_id'] ?? null,
-                'transaction_id'   => $metadata['transaction_id'] ?? null,
-                'reference'        => 'WTX-' . strtoupper(Str::random(12)),
-                'cle_idempotence'  => $metadata['idempotency_key'] ?? (string) Str::uuid(),
-                'solde_avant'      => $soldeAvant,
-                'solde_apres'      => $soldeApres,
-                'description'      => $description ?? "Débit wallet {$walletType->label()}",
-                'metadata'         => $metadata,
+                'user_id' => $user->id,
+                'wallet_type' => $walletType->value,
+                'operation' => WalletOperation::DEBIT,
+                'montant' => $montant,
+                'mission_id' => $metadata['mission_id'] ?? null,
+                'jalon_id' => $metadata['jalon_id'] ?? null,
+                'transaction_id' => $metadata['transaction_id'] ?? null,
+                'reference' => 'WTX-'.strtoupper(Str::random(12)),
+                'cle_idempotence' => $metadata['idempotency_key'] ?? (string) Str::uuid(),
+                'solde_avant' => $soldeAvant,
+                'solde_apres' => $soldeApres,
+                'description' => $description ?? "Débit wallet {$walletType->label()}",
+                'metadata' => $metadata,
             ]);
             Log::info('Wallet débité', [
                 'user_id' => $user->id,
@@ -191,13 +196,13 @@ class WalletService
         $devis = $mission->devis()->where('statut', 'accepte')->first();
         if ($devis) {
             $montantMat = $devis->montant_materiaux;
-            $montantMo  = $devis->montant_mo;
+            $montantMo = $devis->montant_mo;
             if ($montantMat + $montantMo !== $montantTotal) {
                 $montantMo = $montantTotal - $montantMat;
             }
         } else {
             $montantMat = (int) round($montantTotal * $ratioMat);
-            $montantMo  = $montantTotal - $montantMat;
+            $montantMo = $montantTotal - $montantMat;
         }
 
         DB::transaction(function () use (
@@ -213,12 +218,12 @@ class WalletService
 
             // Mise à jour mission
             $mission->update([
-                'montant_total'     => $montantTotal,
+                'montant_total' => $montantTotal,
                 'montant_materiaux' => $montantMat,
-                'montant_mo'        => $montantMo,
-                'ratio_materiaux'   => $ratioMat,
-                'status'            => 'funded_locked',
-                'payment_type'      => $isHybrid ? 'hybrid' : 'total',
+                'montant_mo' => $montantMo,
+                'ratio_materiaux' => $ratioMat,
+                'status' => 'funded_locked',
+                'payment_type' => $isHybrid ? 'hybrid' : 'total',
             ]);
 
             // Crédit du wallet_materiaux de l'artisan
@@ -231,12 +236,12 @@ class WalletService
                     [
                         'mission_id' => $mission->id,
                         'transaction_id' => $paiementTransaction->id,
-                        'type' => 'escrow_materiaux'
+                        'type' => 'escrow_materiaux',
                     ]
                 );
             }
 
-            if (!$isHybrid && $montantMo > 0) {
+            if (! $isHybrid && $montantMo > 0) {
                 // Crédit du wallet_mo de l'artisan
                 $this->credit(
                     $artisan,
@@ -246,7 +251,7 @@ class WalletService
                     [
                         'mission_id' => $mission->id,
                         'transaction_id' => $paiementTransaction->id,
-                        'type' => 'escrow_mo'
+                        'type' => 'escrow_mo',
                     ]
                 );
             }
@@ -270,8 +275,8 @@ class WalletService
         Transaction $paiementTransaction
     ): void {
         $montantTotal = $avenant->montant_total;
-        $montantMat   = $avenant->montant_materiaux;
-        $montantMo    = $avenant->montant_mo;
+        $montantMat = $avenant->montant_materiaux;
+        $montantMo = $avenant->montant_mo;
 
         DB::transaction(function () use (
             $mission,
@@ -283,9 +288,9 @@ class WalletService
         ) {
             // Incrémentation des montants de la mission
             $mission->update([
-                'montant_total'     => $mission->montant_total + $montantTotal,
+                'montant_total' => $mission->montant_total + $montantTotal,
                 'montant_materiaux' => $mission->montant_materiaux + $montantMat,
-                'montant_mo'        => $mission->montant_mo + $montantMo,
+                'montant_mo' => $mission->montant_mo + $montantMo,
             ]);
 
             $artisan = $mission->artisan;
@@ -301,7 +306,7 @@ class WalletService
                         'mission_id' => $mission->id,
                         'transaction_id' => $paiementTransaction->id,
                         'devis_id' => $avenant->id,
-                        'type' => 'escrow_materiaux_avenant'
+                        'type' => 'escrow_materiaux_avenant',
                     ]
                 );
             }
@@ -317,7 +322,7 @@ class WalletService
                         'mission_id' => $mission->id,
                         'transaction_id' => $paiementTransaction->id,
                         'devis_id' => $avenant->id,
-                        'type' => 'escrow_mo_avenant'
+                        'type' => 'escrow_mo_avenant',
                     ]
                 );
             }
@@ -333,6 +338,87 @@ class WalletService
     }
 
     /**
+     * Vrai si le jalon a été financé par son propre paiement (mode hybride).
+     * Le ledger fait foi : un crédit `escrow_mo_jalon` rattaché au jalon.
+     */
+    public function isJalonFunded(Jalon $jalon): bool
+    {
+        return WalletTransaction::query()
+            ->where('jalon_id', $jalon->id)
+            ->where('wallet_type', WalletType::WALLET_MO->value)
+            ->where('operation', WalletOperation::CREDIT->value)
+            ->where('metadata->type', 'escrow_mo_jalon')
+            ->exists();
+    }
+
+    /**
+     * Consigne au séquestre MO le paiement confirmé d'un jalon hybride.
+     * Idempotent : le webhook opérateur, son rejeu et l'interrogation de statut
+     * par l'app peuvent tous confirmer le même paiement — un seul crédit en
+     * résulte (verrou sur le jalon puis vérification dans le ledger).
+     *
+     * @return bool vrai si ce paiement vient de financer le jalon
+     */
+    public function fundHybridJalon(Jalon $jalon, Transaction $payment): bool
+    {
+        return DB::transaction(function () use ($jalon, $payment) {
+            $jalon = Jalon::lockForUpdate()->find($jalon->id);
+
+            if (! $jalon || ! in_array($jalon->statut, ['en_attente', 'soumis'], true) || $this->isJalonFunded($jalon)) {
+                return false;
+            }
+
+            $this->credit(
+                $jalon->mission->artisan,
+                WalletType::WALLET_MO,
+                $jalon->montant,
+                "Financement jalon #{$jalon->ordre} - Mission #{$jalon->mission_id}",
+                [
+                    'mission_id' => $jalon->mission_id,
+                    'jalon_id' => $jalon->id,
+                    'transaction_id' => $payment->id,
+                    'type' => 'escrow_mo_jalon',
+                ]
+            );
+
+            Log::info("[Jalon financé] Jalon #{$jalon->id} financé pour la mission #{$jalon->mission_id}");
+
+            return true;
+        });
+    }
+
+    /**
+     * Mode hybride : la main d'œuvre est consignée jalon par jalon dans le
+     * `wallet_mo` de l'artisan, commun à toutes ses missions. Libérer un jalon
+     * non couvert débiterait donc le séquestre d'une AUTRE mission. Le jalon
+     * n'est libérable que si le séquestre MO de SA mission le couvre, une fois
+     * réservé l'argent des autres jalons payés individuellement et non libérés
+     * (les jalons d'avenant, financés globalement par applyAvenantEscrow,
+     * restent libérables sur ce même principe).
+     */
+    private function assertHybridJalonCovered(Jalon $jalon, Mission $mission): void
+    {
+        if ($mission->payment_type !== 'hybrid') {
+            return;
+        }
+
+        $reservedForOtherJalons = $mission->jalons()
+            ->whereKeyNot($jalon->id)
+            ->whereIn('statut', ['en_attente', 'soumis', 'valide'])
+            ->get()
+            ->filter(fn (Jalon $other) => $this->isJalonFunded($other))
+            ->sum('montant');
+
+        $available = $this->getMissionEscrowBalance($mission, WalletType::WALLET_MO) - $reservedForOtherJalons;
+
+        if ($available < $jalon->montant) {
+            throw new \InvalidArgumentException(
+                "Ce jalon n'a pas encore été financé par le client : libération impossible."
+            );
+        }
+    }
+
+    /**
      * Libère le montant d'un jalon vers l'artisan.
      */
     public function releaseJalon(Jalon $jalon): void
@@ -343,6 +429,8 @@ class WalletService
         if ($mission->isFundsFrozen()) {
             throw new \InvalidArgumentException('Les fonds de cette mission sont gelés suite à un litige.');
         }
+
+        $this->assertHybridJalonCovered($jalon, $mission);
 
         // Garde-fou anti-contournement (Règle d'or 5) : au-delà du seuil, aucun
         // chemin de libération — y compris le Force-Pass 72h — ne doit pouvoir
@@ -361,15 +449,15 @@ class WalletService
             $provider = $this->resolveMissionProvider($mission, $artisan);
 
             $jalon->update([
-                'statut'  => 'paye',
+                'statut' => 'paye',
                 'paye_at' => now(),
             ]);
 
             // Calcul de la commission MO (TTC -> HT)
-            $devis = \App\Models\Devis::where('mission_id', $mission->id)->where('statut', 'accepte')->first();
-            $commissionService = $devis && $devis->commission_service_ratio !== null 
-                ? (float) $devis->commission_service_ratio 
-                : \App\Models\Setting::getValueByKey('commission_service', 0.10);
+            $devis = Devis::where('mission_id', $mission->id)->where('statut', 'accepte')->first();
+            $commissionService = $devis && $devis->commission_service_ratio !== null
+                ? (float) $devis->commission_service_ratio
+                : Setting::getValueByKey('commission_service', 0.10);
             $commission = (int) round($jalon->montant * ($commissionService / (1 + $commissionService)));
             $gainNetArtisan = $jalon->montant - $commission;
 
@@ -382,7 +470,7 @@ class WalletService
                 [
                     'mission_id' => $mission->id,
                     'jalon_id' => $jalon->id,
-                    'type' => 'liberation_jalon'
+                    'type' => 'liberation_jalon',
                 ]
             );
 
@@ -398,14 +486,14 @@ class WalletService
 
             // Transaction externe vers Mobile Money de l'artisan (montant net HT)
             $transaction = Transaction::create([
-                'mission_id'    => $mission->id,
-                'user_id'       => $mission->artisan_id,
-                'type'          => 'liberation_jalon',
-                'montant'       => $gainNetArtisan,
-                'wallet_source' => 'escrow_mission_' . $mission->id,
-                'wallet_dest'   => 'artisan_mobile_money_' . $mission->artisan_id,
-                'provider'      => $provider,
-                'statut'        => 'en_attente',
+                'mission_id' => $mission->id,
+                'user_id' => $mission->artisan_id,
+                'type' => 'liberation_jalon',
+                'montant' => $gainNetArtisan,
+                'wallet_source' => 'escrow_mission_'.$mission->id,
+                'wallet_dest' => 'artisan_mobile_money_'.$mission->artisan_id,
+                'provider' => $provider,
+                'statut' => 'en_attente',
             ]);
 
             // Virement réel du montant net HT vers Mobile Money
@@ -435,13 +523,13 @@ class WalletService
                 ->whereIn('statut', ['en_attente', 'soumis', 'valide'])
                 ->count();
             if ($remainingJalons === 0) {
-                if ($mission->status instanceof \App\States\Mission\PendingApprovalState) {
-                    $mission->status->transitionTo(\App\States\Mission\CompletedState::class);
+                if ($mission->status instanceof PendingApprovalState) {
+                    $mission->status->transitionTo(CompletedState::class);
                 } else {
-                    $mission->update(['status' => \App\States\Mission\CompletedState::class]);
+                    $mission->update(['status' => CompletedState::class]);
                 }
-            } elseif ($mission->status instanceof \App\States\Mission\FundedLockedState) {
-                $mission->status->transitionTo(\App\States\Mission\InProgressState::class);
+            } elseif ($mission->status instanceof FundedLockedState) {
+                $mission->status->transitionTo(InProgressState::class);
             }
         });
     }
@@ -493,7 +581,13 @@ class WalletService
             ->where('wallet_type', $walletType->value)
             ->exists();
 
-        if (! $hasMissionTransactions) {
+        // Repli historique (missions financées avant le ledger par mission) :
+        // exclu pour la main d'œuvre d'une mission hybride, jamais consignée
+        // sans écriture de ledger — il renverrait sinon le solde global de
+        // l'artisan, c'est-à-dire le séquestre de ses AUTRES missions.
+        $isHybridLabor = $walletType === WalletType::WALLET_MO && $mission->payment_type === 'hybrid';
+
+        if (! $hasMissionTransactions && ! $isHybridLabor) {
             $userBalance = $mission->artisan?->{$walletType->columnName()} ?? 0;
             $missionAmount = $walletType === WalletType::WALLET_MATERIAUX
                 ? (int) $mission->montant_materiaux
@@ -568,8 +662,8 @@ class WalletService
                 'user_id' => $client->id,
                 'type' => 'remboursement',
                 'montant' => $total,
-                'wallet_source' => 'escrow_mission_' . $mission->id,
-                'wallet_dest' => 'client_mobile_money_' . $client->id,
+                'wallet_source' => 'escrow_mission_'.$mission->id,
+                'wallet_dest' => 'client_mobile_money_'.$client->id,
                 'provider' => $provider,
                 'statut' => 'en_attente',
                 'metadata' => [
@@ -632,8 +726,8 @@ class WalletService
                 'user_id' => $artisan->id,
                 'type' => 'liberation_jalon',
                 'montant' => $amount,
-                'wallet_source' => 'escrow_mission_' . $mission->id,
-                'wallet_dest' => 'artisan_mobile_money_' . $artisan->id,
+                'wallet_source' => 'escrow_mission_'.$mission->id,
+                'wallet_dest' => 'artisan_mobile_money_'.$artisan->id,
                 'provider' => $provider,
                 'statut' => 'en_attente',
                 'metadata' => [
@@ -697,8 +791,8 @@ class WalletService
                 'user_id' => $artisan->id,
                 'type' => 'credit',
                 'montant' => $amount,
-                'wallet_source' => 'escrow_mission_' . $mission->id,
-                'wallet_dest' => 'artisan_mobile_money_' . $artisan->id,
+                'wallet_source' => 'escrow_mission_'.$mission->id,
+                'wallet_dest' => 'artisan_mobile_money_'.$artisan->id,
                 'provider' => $provider,
                 'statut' => 'en_attente',
                 'metadata' => [
@@ -731,6 +825,7 @@ class WalletService
     public function getBalance(User $user, WalletType $walletType): int
     {
         $columnName = $walletType->columnName();
+
         return $user->{$columnName} ?? 0;
     }
 
@@ -778,8 +873,9 @@ class WalletService
         }
 
         $admin = User::where('role', 'admin')->first();
-        if (!$admin) {
-            Log::warning("Impossible de créditer le compte financier ProsArtisan: aucun administrateur trouvé.");
+        if (! $admin) {
+            Log::warning('Impossible de créditer le compte financier ProsArtisan: aucun administrateur trouvé.');
+
             return;
         }
 
