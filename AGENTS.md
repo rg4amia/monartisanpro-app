@@ -1,4 +1,4 @@
-# ProsArtisan — Prompt Contexte pour Codex (Version MySQL)
+# ProsArtisan — Prompt Contexte pour Codex (Version MariaDB / MySQL)
 
 ## 🧾 À coller au début de chaque conversation Codex (ou en System Prompt via API)
 
@@ -25,7 +25,7 @@ Tu m'assistes sur le développement de **ProsArtisan**, une plateforme marketpla
 | Couche | Technologie |
 | --- | --- |
 | Backend API | Laravel 11 (PHP 8.3) |
-| Base de données | **MySQL 8.0+ avec extension spatiale (InnoDB + SRID 4326)** |
+| Base de données | **MariaDB 11.8 en production** (Hostinger) · MySQL 8.4 en local · SQLite pour les tests — spatial : `POINT` **sans SRID** + `ST_Distance_Sphere` |
 | App mobile | prosartisan-marketplace (Android prioritaire : `arm64-v8a` 64-bit standard, APK Universel multi-architectures) |
 | IA | Google Gemini API (`gemini-3.6-flash` avec support Cloudflare AI Gateway & fallback résilient) |
 | SMS / OTP | Infobip ou Twilio |
@@ -62,7 +62,7 @@ Tu m'assistes sur le développement de **ProsArtisan**, une plateforme marketpla
 
 - Client décrit son besoin (texte + photos) et sélectionne un **type d'intervention** (`intervention_type_id`, référentiel `intervention_types` : Maintenance, Assistance, Dépannage, Déplacement / Diagnostic)
 - **Gemini API** retourne : catégorie, urgence, estimation FCFA
-- Recherche artisans dans rayon ≤ 2 km via **ST_Distance_Sphere** (MySQL)
+- Recherche artisans dans rayon ≤ 2 km via **ST_Distance_Sphere** (MariaDB / MySQL)
 - Position artisan floutée à 50 m via calcul d'offset aléatoire en PHP avant envoi au client
 - Tri par Score ProsArtisan (`score_prosartisan`, 0–1000) + badge "marqueur doré" pour artisans prioritaires (score ≥ 700)
 
@@ -122,9 +122,9 @@ Tu m'assistes sur le développement de **ProsArtisan**, une plateforme marketpla
 
 ---
 
-## 🗄️ Schéma de base de données MySQL 8.0+
+## 🗄️ Schéma de base de données (MariaDB 11.8 en production, compatible MySQL)
 
-> **Important** : MySQL ne supporte pas `JSONB` ni `GEOGRAPHY`. On utilise `JSON`, `POINT` avec `SRID 4326`, et `ST_Distance_Sphere()` pour les calculs de distance. Les ENUMs sont natifs MySQL.
+> **Important** : ni MariaDB ni MySQL ne supportent `JSONB` ou `GEOGRAPHY`. On utilise `JSON`, `POINT` **sans SRID** (colonne ajoutée par `DB::statement`) et `ST_Distance_Sphere()` pour les calculs de distance. Les ENUMs sont natifs. **Jamais** `POINT SRID 4326` ni `ST_SRID(POINT(...), 4326)` : syntaxes MySQL 8 refusées par MariaDB, le moteur de production.
 
 ```sql
 -- Utilisateurs
@@ -136,7 +136,7 @@ CREATE TABLE users (
   score_prosartisan INT UNSIGNED NOT NULL DEFAULT 0,  -- Score 0 à 1000 (0 par défaut)
   wallet_materiaux BIGINT NOT NULL DEFAULT 0,          -- FCFA, entiers
   wallet_mo        BIGINT NOT NULL DEFAULT 0,          -- FCFA, entiers
-  position      POINT SRID 4326 NULL,                  -- coordonnées GPS (lat/lng)
+  position      POINT NULL,                  -- coordonnées GPS (lat/lng)
   created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   SPATIAL INDEX idx_position (position)
@@ -215,7 +215,7 @@ CREATE TABLE jcodes (
   ussd_code      VARCHAR(20) NULL,
   montant        BIGINT NOT NULL,             -- FCFA
   statut         ENUM('actif','utilise','expire') NOT NULL DEFAULT 'actif',
-  position_scan  POINT SRID 4326 NULL,        -- position GPS au moment du scan fournisseur
+  position_scan  POINT NULL,        -- position GPS au moment du scan fournisseur
   scanned_at     TIMESTAMP NULL,
   expires_at     TIMESTAMP NOT NULL,
   FOREIGN KEY (mission_id)     REFERENCES missions(id),
@@ -269,7 +269,7 @@ CREATE TABLE fournisseurs_agrees (
   id           BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id      BIGINT UNSIGNED NOT NULL UNIQUE,
   nom_boutique VARCHAR(150) NOT NULL,
-  position     POINT SRID 4326 NOT NULL,   -- adresse GPS de la boutique
+  position     POINT NOT NULL,   -- adresse GPS de la boutique
   statut       ENUM('en_attente','agree','suspendu') NOT NULL DEFAULT 'en_attente',
   approuve_at  TIMESTAMP NULL,
   FOREIGN KEY (user_id) REFERENCES users(id),
@@ -279,21 +279,21 @@ CREATE TABLE fournisseurs_agrees (
 
 ---
 
-## 📐 Requêtes géospatiales MySQL à utiliser
+## 📐 Requêtes géospatiales à utiliser (MariaDB / MySQL — `lng` en premier dans `POINT`)
 
 ```sql
 -- Recherche artisans dans un rayon de 2 km autour d'un point (lat, lng)
 SELECT id, phone, score_prosartisan,
-       ST_Distance_Sphere(position, ST_SRID(POINT(:lng, :lat), 4326)) AS distance_metres
+       ST_Distance_Sphere(position, POINT(:lng, :lat)) AS distance_metres
 FROM users
 WHERE role = 'artisan'
   AND kyc_status = 'actif'
-  AND ST_Distance_Sphere(position, ST_SRID(POINT(:lng, :lat), 4326)) <= 2000
+  AND ST_Distance_Sphere(position, POINT(:lng, :lat)) <= 2000
 ORDER BY score_prosartisan DESC, distance_metres ASC;
 
 -- Vérification GPS J-Code (fournisseur doit être à < 100 m de sa boutique)
 SELECT ST_Distance_Sphere(
-  ST_SRID(POINT(:lng_scan, :lat_scan), 4326),
+  POINT(:lng_scan, :lat_scan),
   fa.position
 ) AS distance_metres
 FROM fournisseurs_agrees fa
@@ -301,7 +301,7 @@ WHERE fa.user_id = :fournisseur_id;
 
 -- Insertion d'un point GPS
 INSERT INTO users (phone, role, position)
-VALUES ('0700000001', 'artisan', ST_SRID(POINT(lng, lat), 4326));
+VALUES ('0700000001', 'artisan', POINT(lng, lat));
 
 -- Lecture d'un point GPS (extraire lat/lng)
 SELECT ST_X(position) AS lng, ST_Y(position) AS lat FROM users WHERE id = :id;
@@ -318,7 +318,7 @@ SELECT ST_X(position) AS lng, ST_Y(position) AS lat FROM users WHERE id = :id;
 5. **Seuil Référent** : missions > 2 000 000 FCFA → validation physique obligatoire
 6. **Floutage GPS artisan** : ne jamais retourner la position exacte au client — appliquer un offset aléatoire de ~50 m en PHP avant de sérialiser la réponse
 7. **Montants FCFA** : toujours `BIGINT`, jamais de `FLOAT` ou `DOUBLE` pour les montants financiers
-8. **Colonnes JSON** : utiliser `JSON` MySQL (pas de texte brut), toujours valider le schéma en PHP avant insertion
+8. **Colonnes JSON** : utiliser `JSON` (MariaDB / MySQL, pas de texte brut), toujours valider le schéma en PHP avant insertion
 9. **Score & Notation par défaut (Zéro Initial Absolu)** : L'inscription d'un utilisateur ne donne droit à aucun point. Tout nouvel utilisateur/artisan démarre avec un score initial strict de 0 sur 1000 et des sous-critères (Fiabilité, Intégrité, Qualité, Réactivité) à 0%. Ce zéro par défaut est verrouillé au niveau modèle (`User::$attributes['score_prosartisan'] = 0`), DDL de base de données (`DEFAULT 0`), et réévaluation (`ScoreService::recalculateFromLedger` réinitialise à 0 si aucune évaluation ni entrée ledger n'existe). Aucun point n'est jamais crédité sans évaluation ou notation d'activité réelle.
 10. **Alignement du montant de paiement** : Le montant du devis calculé par le serveur (`$devis->montant_total`) fait autorité. En cas de léger décalage d'arrondi ou de commission côté client lors de l'initiation de paiement, le backend ajuste automatiquement la transaction au montant exact du devis sans bloquer l'utilisateur.
 11. **Protocoles de retour Deep Link (`intent://` / `prosartisan://`)** : La confirmation de paiement sur le web / simulateur doit exécuter le séquestre et déclencher une redirection vers l'Intent Android `intent://payment-result?transaction_id=...#Intent;scheme=prosartisan;package=com.prosartisan.app;end` pour rouvrir immédiatement l'application mobile.
@@ -405,9 +405,9 @@ SELECT ST_X(position) AS lng, ST_Y(position) AS lat FROM users WHERE id = :id;
 ## 🧠 Comment m'aider efficacement
 
 - Génère du code **Laravel 11** complet : migrations, models (avec casts appropriés), controllers, services, form requests, routes
-- Pour les colonnes `POINT` MySQL, utilise `DB::raw("ST_SRID(POINT(?, ?), 4326)")` dans les migrations et les requêtes Eloquent
+- Pour les colonnes `POINT`, ajoute la colonne par `DB::statement('ALTER TABLE t ADD COLUMN position POINT NULL')` et écris les points avec `POINT(?, ?)` (lng, lat) **sans SRID** — jamais `ST_SRID(..., 4326)`, absent de MariaDB (production)
 - Pour les colonnes `JSON`, utilise le cast `$casts = ['lignes_json' => 'array']` dans les models Eloquent
-- **Jamais de PostGIS** — on est sur MySQL, utilise `ST_Distance_Sphere`, `ST_SRID`, `ST_X`, `ST_Y`
+- **Jamais de PostGIS** — on est sur MariaDB (production) / MySQL (local), utilise `ST_Distance_Sphere`, `ST_X`, `ST_Y`
 - Respecte l'architecture **Service Layer** : logique métier dans `app/Services/`, pas dans les controllers
 - Pour les jobs asynchrones (SMS, virements) : utilise les **Laravel Queues**
 - Les messages d'erreur et de validation sont toujours en **français**

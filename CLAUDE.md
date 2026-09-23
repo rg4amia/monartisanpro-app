@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **ProsArtisan** — marketplace artisanal pour la Côte d'Ivoire. Trois sous-projets :
 
-- `backend-proartisan/` — Laravel 12 API + backoffice Inertia (PHP 8.2+, MySQL 5.7.39)
+- `backend-proartisan/` — Laravel 12 API + backoffice Inertia (PHP 8.2+, MariaDB 11.8 en production)
 - `frontend_flutter/` — Flutter 3.x mobile app (Android-first)
 - `vitrine-nextjs/` — site vitrine public (Next.js 16, React 19, export statique)
 
@@ -95,9 +95,17 @@ routes/api.php
 
 **Auth** : Sanctum Bearer tokens (API). Middleware `account.active` vérifie `kyc_status = 'actif'`. Routes publiques : `send-otp`, `verify-otp`, `register`, webhooks. Le **backoffice** (`/admin/*`, Inertia + session web) est gardé par `admin.only` (`role='admin'`) puis, route par route, par le middleware `can:admin.<capacité>` adossé aux Gates d'`AdminPermissionService`.
 
-### MySQL 5.7 — Contraintes critiques
+### Base de données — MariaDB en production : contraintes critiques
 
-La base tourne sur MySQL **5.7.39** (MAMP port 8889), pas 8.0+.
+Trois moteurs coexistent, et le code doit rester portable entre eux :
+
+| Environnement | Moteur | Source |
+|---|---|---|
+| **Production** (Hostinger) | **MariaDB 11.8.9** | `select version()` sur le serveur (vérifié le 23/09/2026) |
+| Local (WAMP) | MySQL 8.4 | `select version()` en local |
+| Tests Pest | SQLite en mémoire | `phpunit.xml` |
+
+N'utiliser que le sous-ensemble SQL commun. SQLite n'exécute pas les fonctions spatiales : une syntaxe spatiale ou JSON propre à MySQL 8 passe les tests et le local, puis casse **uniquement en production**. Toute requête de ce type se vérifie contre MariaDB. La mention historique « MySQL 5.7.39 (MAMP) » de ce fichier était erronée pour la production.
 
 ```php
 // Colonnes POINT — ne PAS utiliser le builder Eloquent
@@ -117,8 +125,9 @@ $table->dateTime('expires_at');  // ✅ pas timestamp()
 
 **Jamais** :
 
-- `POINT SRID 4326` dans les migrations (MySQL 8.0+ seulement)
-- `DB::raw("ST_SRID(...)")` (inutile en 5.7)
+- `POINT SRID 4326` dans les migrations (syntaxe MySQL 8 : MariaDB la refuse, elle utilise `REF_SYSTEM_ID`)
+- `ST_SRID(POINT(...), 4326)` à deux arguments (mutateur MySQL 8, absent de MariaDB où `ST_SRID(g)` ne fait que lire) : toujours `POINT(lng, lat)` nu
+- Garde de non-régression pour ces deux syntaxes : `tests/Unit/MariaDbSpatialSyntaxGuardTest.php` (relit les sources, SQLite n'exécutant pas les fonctions spatiales)
 - `FLOAT`/`DOUBLE` pour les montants (toujours `BIGINT`)
 
 **Format téléphone** : `+225` + 10 chiffres (regex `^\+225[0-9]{10}$`).

@@ -33,7 +33,7 @@
 ### 🔍 Phase 1 : Diagnostic & Matching Géospatial
 #### Workflow — Phase 1
 1. Le client décrit son problème et sélectionne le **type d'intervention** souhaité dans une liste (`GET /intervention-types` : Maintenance, Assistance, Dépannage, ou simple Déplacement / Diagnostic). L'API **Gemini** analyse la demande, classe la catégorie, évalue l'urgence, et propose une estimation de prix.
-2. Le système recherche les artisans actifs dans un rayon $\le$ 2 km à l'aide de requêtes spatiales MySQL (`ST_Distance_Sphere`).
+2. Le système recherche les artisans actifs dans un rayon $\le$ 2 km à l'aide de requêtes spatiales MariaDB / MySQL (`ST_Distance_Sphere`).
 3. La position GPS exacte de l'artisan est floutée d'environ 50 mètres pour préserver sa vie privée.
 4. Tri par **Score de Réputation ProsArtisan** (enregistré sous la colonne `score_prosartisan` en BDD).
 
