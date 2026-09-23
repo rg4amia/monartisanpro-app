@@ -3,13 +3,16 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
-use App\Models\Mission;
 use App\Models\Devis;
+use App\Models\FournisseurAgree;
 use App\Models\Litige;
+use App\Models\Mission;
 use App\Models\Order;
 use App\Models\SupplierProduct;
+use App\Models\User;
+use App\Services\ScoreService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
@@ -100,15 +103,15 @@ class DashboardController extends Controller
     private function getClientStats($user): array
     {
         $acceptedDevisCount = Devis::where('statut', 'accepte')
-            ->whereHas('mission', fn($q) => $q->where('client_id', $user->id))
+            ->whereHas('mission', fn ($q) => $q->where('client_id', $user->id))
             ->count();
-            
+
         $refusedDevisCount = Devis::where('statut', 'refuse')
-            ->whereHas('mission', fn($q) => $q->where('client_id', $user->id))
+            ->whereHas('mission', fn ($q) => $q->where('client_id', $user->id))
             ->count();
 
         $disputesCount = Litige::where('declencheur_id', $user->id)
-            ->orWhereHas('mission', fn($q) => $q->where('client_id', $user->id))
+            ->orWhereHas('mission', fn ($q) => $q->where('client_id', $user->id))
             ->count();
 
         // Total spent (missions completed or funded)
@@ -126,10 +129,13 @@ class DashboardController extends Controller
             ->selectRaw('COALESCE(gemini_category, "Travaux généraux") as category, SUM(montant_total) as total')
             ->groupBy('category')
             ->pluck('total', 'category')
+            // SUM() renvoie un DECIMAL, transmis en chaîne par PDO sous MariaDB
+            // (production) : sans ce cast, l'app recevait "150000" au lieu de 150000.
+            ->map(fn ($total) => (int) $total)
             ->toArray();
 
         // Top 3 suppliers based on ratings & completed deliveries count
-        $topSuppliers = \App\Models\FournisseurAgree::join('users', 'fournisseurs_agrees.user_id', '=', 'users.id')
+        $topSuppliers = FournisseurAgree::join('users', 'fournisseurs_agrees.user_id', '=', 'users.id')
             ->leftJoin('evaluations', 'evaluations.evalue_id', '=', 'users.id')
             ->select('fournisseurs_agrees.nom_boutique as name')
             ->selectRaw('AVG(evaluations.note) as rating')
@@ -142,7 +148,7 @@ class DashboardController extends Controller
             ->orderByDesc('rating')
             ->take(3)
             ->get()
-            ->map(fn($item) => [
+            ->map(fn ($item) => [
                 'name' => $item->name,
                 'rating' => $this->averageRating($item),
                 'ratings_count' => (int) $item->ratings_count,
@@ -151,7 +157,7 @@ class DashboardController extends Controller
             ->toArray();
 
         // Top 3 delivery drivers based on ratings & completed delivery trips count
-        $topDrivers = \App\Models\User::where('role', 'livreur')
+        $topDrivers = User::where('role', 'livreur')
             ->leftJoin('evaluations', 'evaluations.evalue_id', '=', 'users.id')
             ->select('users.name', 'users.id')
             ->selectRaw('AVG(evaluations.note) as rating')
@@ -165,8 +171,8 @@ class DashboardController extends Controller
             ->orderByDesc('rating')
             ->take(3)
             ->get()
-            ->map(fn($item) => [
-                'name' => $item->name ?? 'Livreur #' . $item->id,
+            ->map(fn ($item) => [
+                'name' => $item->name ?? 'Livreur #'.$item->id,
                 'rating' => $this->averageRating($item),
                 'ratings_count' => (int) $item->ratings_count,
                 'trips' => (int) $item->trips,
@@ -200,7 +206,7 @@ class DashboardController extends Controller
             ->count();
 
         $disputesCount = Litige::where('declencheur_id', $user->id)
-            ->orWhereHas('mission', fn($q) => $q->where('artisan_id', $user->id))
+            ->orWhereHas('mission', fn ($q) => $q->where('artisan_id', $user->id))
             ->count();
 
         $totalEarnings = Mission::where('artisan_id', $user->id)
@@ -211,7 +217,7 @@ class DashboardController extends Controller
             ->whereIn('status', self::ACTIVE_MISSION_STATES)
             ->count();
 
-        $calculatedScore = app(\App\Services\ScoreService::class)->recalculateFromLedger($user);
+        $calculatedScore = app(ScoreService::class)->recalculateFromLedger($user);
 
         return [
             'accepted_devis_count' => $acceptedDevisCount,
@@ -249,7 +255,7 @@ class DashboardController extends Controller
     {
         $totalOrders = Order::where('supplier_id', $user->id)->count();
         $pendingOrders = Order::where('supplier_id', $user->id)->where('status', 'paid')->count();
-        
+
         $totalRevenue = Order::where('supplier_id', $user->id)
             ->where('status', 'delivered')
             ->sum('subtotal');

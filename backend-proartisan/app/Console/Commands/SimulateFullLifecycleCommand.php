@@ -14,8 +14,8 @@ use App\Models\User;
 use App\Services\DevisService;
 use App\Services\GeminiService;
 use App\Services\GeneratedDocumentService;
-use App\Services\JCodeService;
 use App\Services\JalonService;
+use App\Services\JCodeService;
 use App\Services\MissionService;
 use App\Services\ScoreService;
 use App\Services\WalletService;
@@ -52,37 +52,37 @@ class SimulateFullLifecycleCommand extends Command
             // -------------------------------------------------------------
             $this->comment("\n[ÉTAPE 0] Initialisation des acteurs du marché ivoirien...");
 
-            $uniquePhone = '07' . rand(10000000, 99999999);
+            $uniquePhone = '07'.rand(10000000, 99999999);
             $client = User::create([
                 'name' => 'Kouamé Kouassi (Client)',
-                'phone' => '+225' . $uniquePhone,
+                'phone' => '+225'.$uniquePhone,
                 'role' => 'client',
                 'kyc_status' => 'actif',
                 'password' => Hash::make('secret123'),
-                'payment_phone' => '+225' . $uniquePhone,
+                'payment_phone' => '+225'.$uniquePhone,
                 'preferred_payment_provider' => 'wave',
             ]);
             $client->setPosition(5.3364, -4.0267); // Abidjan Plateau
             $client->save();
 
-            $artisanPhone = '05' . rand(10000000, 99999999);
+            $artisanPhone = '05'.rand(10000000, 99999999);
             $artisan = User::create([
                 'name' => 'Bakary Traoré (Maçon Certifié)',
-                'phone' => '+225' . $artisanPhone,
+                'phone' => '+225'.$artisanPhone,
                 'role' => 'artisan',
                 'kyc_status' => 'actif',
                 'password' => Hash::make('secret123'),
-                'payment_phone' => '+225' . $artisanPhone,
+                'payment_phone' => '+225'.$artisanPhone,
                 'preferred_payment_provider' => 'orange_money',
                 'score_prosartisan' => 0,
             ]);
             $artisan->setPosition(5.3400, -4.0250); // Proche du client (< 1 km)
             $artisan->save();
 
-            $fournisseurPhone = '01' . rand(10000000, 99999999);
+            $fournisseurPhone = '01'.rand(10000000, 99999999);
             $fournisseur = User::create([
                 'name' => 'Quincaillerie Centrale du Plateau',
-                'phone' => '+225' . $fournisseurPhone,
+                'phone' => '+225'.$fournisseurPhone,
                 'role' => 'fournisseur',
                 'kyc_status' => 'actif',
                 'password' => Hash::make('secret123'),
@@ -90,14 +90,17 @@ class SimulateFullLifecycleCommand extends Command
             $fournisseur->setPosition(5.3380, -4.0260);
             $fournisseur->save();
 
+            // `position` est un POINT NOT NULL sous MariaDB (production) : il doit
+            // être fourni dès l'insertion, pas fixé après coup par setPosition().
             $fournisseurAgree = FournisseurAgree::create([
                 'user_id' => $fournisseur->id,
                 'nom_boutique' => 'Quincaillerie Centrale du Plateau SARL',
                 'statut' => 'agree',
                 'approuve_at' => now(),
+                'position' => config('database.default') === 'sqlite'
+                    ? '5.3380,-4.0260'
+                    : DB::raw('POINT(-4.0260, 5.3380)'),
             ]);
-            $fournisseurAgree->setPosition(5.3380, -4.0260);
-            $fournisseurAgree->save();
 
             $ciment = SupplierProduct::create([
                 'supplier_id' => $fournisseur->id,
@@ -116,8 +119,8 @@ class SimulateFullLifecycleCommand extends Command
             // ÉTAPE 1 : DIAGNOSTIC IA & MATCHING GÉOSPATIAL
             // -------------------------------------------------------------
             $this->comment("\n[ÉTAPE 1] Diagnostic IA Gemini & Matching Géospatial...");
-            $descriptionBesoin = "Je dois refaire la chape et le carrelage de ma terrasse extérieure fissurée (environ 25m2) suite aux fortes pluies.";
-            
+            $descriptionBesoin = 'Je dois refaire la chape et le carrelage de ma terrasse extérieure fissurée (environ 25m2) suite aux fortes pluies.';
+
             $iaDiagnostic = [
                 'category' => 'Maçonnerie',
                 'urgence' => 'normale',
@@ -175,13 +178,13 @@ class SimulateFullLifecycleCommand extends Command
             ]);
 
             $this->line("  ✓ Devis #{$devis->id} créé : Total {$totalDevis} FCFA (Matériaux: {$montantMateriaux} FCFA, MO: {$montantMO} FCFA)");
-            $this->line("  ✓ 2 Jalons définis : 50 000 FCFA chacun");
+            $this->line('  ✓ 2 Jalons définis : 50 000 FCFA chacun');
 
             // -------------------------------------------------------------
             // ÉTAPE 3 : FINANCEMENT DU SÉQUESTRE (ESCROW) PAR LE CLIENT
             // -------------------------------------------------------------
             $this->comment("\n[ÉTAPE 3] Acceptation du Devis & Financement Séquestre (Wave CI)...");
-            
+
             // Transaction acompte
             $transaction = Transaction::create([
                 'user_id' => $client->id,
@@ -192,7 +195,7 @@ class SimulateFullLifecycleCommand extends Command
                 'wallet_dest' => 'escrow_prosartisan',
                 'provider' => 'wave',
                 'statut' => 'confirme',
-                'reference_externe' => 'WAVE-TX-' . strtoupper(Str::random(10)),
+                'reference_externe' => 'WAVE-TX-'.strtoupper(Str::random(10)),
             ]);
 
             // Fragmentation automatique immuable du séquestre via WalletService (Règles 2 & 23)
@@ -247,7 +250,7 @@ class SimulateFullLifecycleCommand extends Command
             // ÉTAPE 4 : J-CODE MATÉRIAUX & ANTI-FRAUDE GPS QUINCAILLERIE
             // -------------------------------------------------------------
             $this->comment("\n[ÉTAPE 4] Génération du J-Code Matériaux & Scan Quincaillerie...");
-            $jcodeCode = 'PA-' . rand(1000, 9999);
+            $jcodeCode = 'PA-'.rand(1000, 9999);
             $jcode = JCode::create([
                 'mission_id' => $mission->id,
                 'artisan_id' => $artisan->id,
@@ -281,7 +284,7 @@ class SimulateFullLifecycleCommand extends Command
             );
             $artisan->refresh();
 
-            $this->line("  🛡️ Vérification Anti-Fraude GPS : Distance scan boutique = 0 m (< 100 m) -> VALIDÉ");
+            $this->line('  🛡️ Vérification Anti-Fraude GPS : Distance scan boutique = 0 m (< 100 m) -> VALIDÉ');
             $this->line("  📦 Déstockage Quincaillerie : 10 sacs décomptés (Nouveau stock: {$ciment->stock_quantity} sacs)");
             $this->line("  💰 Solde Wallet Matériaux Artisan après achat : {$artisan->wallet_materiaux} FCFA");
 
@@ -291,7 +294,7 @@ class SimulateFullLifecycleCommand extends Command
             $this->comment("\n[ÉTAPE 5] Soumission du Jalon 1 par l'Artisan & Analyse Vision IA...");
             $jalon1->statut = 'soumis';
             $jalon1->photos_json = [
-                ['url' => 'https://prosartisan.ci/storage/proofs/chape_coulee.jpg', 'lat' => 5.3364, 'lng' => -4.0267, 'taken_at' => now()->toIso8601String()]
+                ['url' => 'https://prosartisan.ci/storage/proofs/chape_coulee.jpg', 'lat' => 5.3364, 'lng' => -4.0267, 'taken_at' => now()->toIso8601String()],
             ];
             $jalon1->conformity_score = 94;
             $jalon1->vision_analysis_json = [
@@ -305,7 +308,7 @@ class SimulateFullLifecycleCommand extends Command
             ];
             $jalon1->save();
 
-            $this->line("  📸 Photos géolocalisées uploadées sur le chantier du Plateau");
+            $this->line('  📸 Photos géolocalisées uploadées sur le chantier du Plateau');
             $this->line("  🤖 Analyse Vision Gemini : Taux de confiance {$jalon1->conformity_score}% | Travail conforme");
 
             // Demande d'OTP par SMS (Règles 4 & 22)
@@ -393,21 +396,22 @@ class SimulateFullLifecycleCommand extends Command
                 'description' => 'Évaluation 5 étoiles reçue du client Kouamé Kouassi',
             ]);
 
-            $this->line("  ⭐ Évaluation Client enregistrée : 5/5 étoiles sur les 4 sous-critères");
+            $this->line('  ⭐ Évaluation Client enregistrée : 5/5 étoiles sur les 4 sous-critères');
             $this->line("  📈 Score ProsArtisan de Bakary Traoré : Évolué de 0 à {$artisan->score_prosartisan}/1000 points");
-            $this->line("  📒 Inscription certifiée au registre comptable `score_ledger_entries`");
+            $this->line('  📒 Inscription certifiée au registre comptable `score_ledger_entries`');
 
             DB::commit();
 
             $this->info("\n======================================================================");
-            $this->info("   🎉 CYCLE DE VIE COMPLET RÉUSSI DE BOUT EN BOUT SANS ERREUR !      ");
+            $this->info('   🎉 CYCLE DE VIE COMPLET RÉUSSI DE BOUT EN BOUT SANS ERREUR !      ');
             $this->info("======================================================================\n");
 
             return Command::SUCCESS;
         } catch (\Throwable $e) {
             DB::rollBack();
-            $this->error("\n❌ ERREUR LORS DE LA SIMULATION : " . $e->getMessage());
-            $this->error("Ligne: " . $e->getFile() . ':' . $e->getLine());
+            $this->error("\n❌ ERREUR LORS DE LA SIMULATION : ".$e->getMessage());
+            $this->error('Ligne: '.$e->getFile().':'.$e->getLine());
+
             return Command::FAILURE;
         }
     }

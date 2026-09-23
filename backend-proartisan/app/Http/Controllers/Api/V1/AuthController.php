@@ -7,6 +7,8 @@ use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Requests\Auth\SendOtpRequest;
 use App\Http\Requests\Auth\VerifyOtpRequest;
 use App\Http\Resources\UserResource;
+use App\Models\Setting;
+use App\Models\User;
 use App\Services\AuthService;
 use App\Services\OtpService;
 use Illuminate\Http\JsonResponse;
@@ -31,24 +33,29 @@ class AuthController extends Controller
                 $role = 'livreur';
             }
 
-            $blockStatus = \App\Models\Setting::getValueByKey('block_' . $role, 'none');
+            $blockStatus = Setting::getValueByKey('block_'.$role, 'none');
 
             if ($blockStatus !== 'none') {
-                $user = \App\Models\User::where('phone', $request->phone)->first();
-                $isNewUser = !$user || ($user->name === null && $user->role === null);
-                
+                $user = User::where('phone', $request->phone)->first();
+                // Un compte « coquille » (créé par verify-otp, inscription non
+                // terminée) se reconnaît à son nom vide. Son rôle n'est PAS nul
+                // en production : `users.role` est un ENUM NOT NULL sans défaut,
+                // que MariaDB remplit implicitement avec 'client'.
+                $isNewUser = ! $user || $user->name === null;
+
                 $shouldBlock = false;
                 if ($blockStatus === 'all') {
                     $shouldBlock = true;
                 } elseif ($blockStatus === 'new' && $isNewUser) {
                     $shouldBlock = true;
-                } elseif ($blockStatus === 'old' && !$isNewUser) {
+                } elseif ($blockStatus === 'old' && ! $isNewUser) {
                     $shouldBlock = true;
                 }
 
                 if ($shouldBlock) {
-                    $msg = \App\Models\Setting::getValueByKey('app_access_disabled_message_' . $role)
-                        ?: \App\Models\Setting::getValueByKey('app_access_disabled_message', 'L\'accès à cet espace est temporairement restreint suite à une opération de maintenance de nos services. Nous vous prions de nous excuser pour la gêne occasionnée et vous remercions de votre patience.');
+                    $msg = Setting::getValueByKey('app_access_disabled_message_'.$role)
+                        ?: Setting::getValueByKey('app_access_disabled_message', 'L\'accès à cet espace est temporairement restreint suite à une opération de maintenance de nos services. Nous vous prions de nous excuser pour la gêne occasionnée et vous remercions de votre patience.');
+
                     return response()->json([
                         'success' => false,
                         'message' => $msg,
@@ -60,7 +67,7 @@ class AuthController extends Controller
         $channel = $request->input('channel');
         $this->otpService->sendOtp($request->phone, null, $channel);
 
-        $globalChannel = \App\Models\Setting::getValueByKey('otp_delivery_channel', 'sms');
+        $globalChannel = Setting::getValueByKey('otp_delivery_channel', 'sms');
         $effectiveChannel = $channel ?: $globalChannel;
 
         $msg = 'Code OTP envoyé.';
@@ -73,8 +80,8 @@ class AuthController extends Controller
         }
 
         return response()->json([
-            'success'    => true,
-            'message'    => $msg,
+            'success' => true,
+            'message' => $msg,
             'expires_in' => $this->otpService->ttlSeconds(),
         ]);
     }
@@ -105,16 +112,17 @@ class AuthController extends Controller
                 $role = 'livreur';
             }
 
-            $blockStatus = \App\Models\Setting::getValueByKey('block_' . $role, 'none');
+            $blockStatus = Setting::getValueByKey('block_'.$role, 'none');
             $shouldBlock = false;
-            
+
             if ($blockStatus === 'all' || $blockStatus === 'old') {
                 $shouldBlock = true;
             }
 
             if ($shouldBlock) {
-                $msg = \App\Models\Setting::getValueByKey('app_access_disabled_message_' . $role)
-                    ?: \App\Models\Setting::getValueByKey('app_access_disabled_message', 'L\'accès à cet espace est temporairement restreint suite à une opération de maintenance de nos services. Nous vous prions de nous excuser pour la gêne occasionnée et vous remercions de votre patience.');
+                $msg = Setting::getValueByKey('app_access_disabled_message_'.$role)
+                    ?: Setting::getValueByKey('app_access_disabled_message', 'L\'accès à cet espace est temporairement restreint suite à une opération de maintenance de nos services. Nous vous prions de nous excuser pour la gêne occasionnée et vous remercions de votre patience.');
+
                 return response()->json([
                     'success' => false,
                     'message' => $msg,
@@ -124,20 +132,20 @@ class AuthController extends Controller
             $token = $this->authService->createToken($user, $request->input('device_fingerprint'));
 
             return response()->json([
-                'success'               => true,
-                'message'               => 'Connexion réussie.',
-                'token'                 => $token,
-                'user'                  => new UserResource($user->load('artisanProfile.sector', 'artisanProfile.trade')),
+                'success' => true,
+                'message' => 'Connexion réussie.',
+                'token' => $token,
+                'user' => new UserResource($user->load('artisanProfile.sector', 'artisanProfile.trade')),
                 'has_completed_profile' => true,
             ]);
         }
 
         // Sinon, on demande à l'utilisateur de compléter son profil
         return response()->json([
-            'success'               => true,
-            'message'               => 'OTP vérifié. Veuillez compléter votre profil.',
-            'user_id'               => $user->id,
-            'phone'                 => $user->phone,
+            'success' => true,
+            'message' => 'OTP vérifié. Veuillez compléter votre profil.',
+            'user_id' => $user->id,
+            'phone' => $user->phone,
             'has_completed_profile' => false,
         ]);
     }
@@ -154,16 +162,17 @@ class AuthController extends Controller
         }
         $role = $data['role'];
 
-        $blockStatus = \App\Models\Setting::getValueByKey('block_' . $role, 'none');
+        $blockStatus = Setting::getValueByKey('block_'.$role, 'none');
         $shouldBlock = false;
-        
+
         if ($blockStatus === 'all' || $blockStatus === 'new') {
             $shouldBlock = true;
         }
 
         if ($shouldBlock) {
-            $msg = \App\Models\Setting::getValueByKey('app_access_disabled_message_' . $role)
-                ?: \App\Models\Setting::getValueByKey('app_access_disabled_message', 'L\'accès à cet espace est temporairement restreint suite à une opération de maintenance de nos services. Nous vous prions de nous excuser pour la gêne occasionnée et vous remercions de votre patience.');
+            $msg = Setting::getValueByKey('app_access_disabled_message_'.$role)
+                ?: Setting::getValueByKey('app_access_disabled_message', 'L\'accès à cet espace est temporairement restreint suite à une opération de maintenance de nos services. Nous vous prions de nous excuser pour la gêne occasionnée et vous remercions de votre patience.');
+
             return response()->json([
                 'success' => false,
                 'message' => $msg,
@@ -181,8 +190,8 @@ class AuthController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Inscription complétée avec succès.',
-            'token'   => $token,
-            'user'    => new UserResource($user->load('artisanProfile.sector', 'artisanProfile.trade')),
+            'token' => $token,
+            'user' => new UserResource($user->load('artisanProfile.sector', 'artisanProfile.trade')),
         ]);
     }
 
@@ -195,7 +204,7 @@ class AuthController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => new UserResource($user),
+            'data' => new UserResource($user),
         ]);
     }
 
@@ -220,12 +229,12 @@ class AuthController extends Controller
         $request->validate([
             'old_phone' => ['required', 'string', 'regex:/^\+225[0-9]{10}$/'],
             'new_phone' => ['required', 'string', 'regex:/^\+225[0-9]{10}$/'],
-            'name'      => ['required', 'string', 'max:255'],
-            'role'      => ['required', 'string', 'in:client,artisan,fournisseur,driver'],
+            'name' => ['required', 'string', 'max:255'],
+            'role' => ['required', 'string', 'in:client,artisan,fournisseur,driver'],
         ]);
 
         // Vérifie si un autre utilisateur utilise déjà le nouveau numéro
-        $alreadyUsed = \App\Models\User::where('phone', $request->new_phone)->exists();
+        $alreadyUsed = User::where('phone', $request->new_phone)->exists();
         if ($alreadyUsed) {
             return response()->json([
                 'success' => false,
@@ -234,12 +243,12 @@ class AuthController extends Controller
         }
 
         // Trouve l'utilisateur par l'ancien numéro, le rôle et le nom complet exact
-        $user = \App\Models\User::where('phone', $request->old_phone)
+        $user = User::where('phone', $request->old_phone)
             ->where('role', $request->role)
             ->where('name', trim($request->name))
             ->first();
 
-        if (!$user) {
+        if (! $user) {
             return response()->json([
                 'success' => false,
                 'message' => 'Les informations fournies (ancien numéro, nom complet ou rôle) ne correspondent à aucun compte.',
@@ -264,13 +273,13 @@ class AuthController extends Controller
         $request->validate([
             'old_phone' => ['required', 'string', 'regex:/^\+225[0-9]{10}$/'],
             'new_phone' => ['required', 'string', 'regex:/^\+225[0-9]{10}$/'],
-            'name'      => ['required', 'string', 'max:255'],
-            'role'      => ['required', 'string', 'in:client,artisan,fournisseur,driver'],
-            'otp'       => ['required', 'string', 'size:4'],
+            'name' => ['required', 'string', 'max:255'],
+            'role' => ['required', 'string', 'in:client,artisan,fournisseur,driver'],
+            'otp' => ['required', 'string', 'size:4'],
         ]);
 
         // Vérifie l'OTP sur le nouveau numéro
-        if (!$this->otpService->verifyOtp($request->new_phone, $request->otp)) {
+        if (! $this->otpService->verifyOtp($request->new_phone, $request->otp)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Code OTP de validation invalide ou expiré.',
@@ -278,12 +287,12 @@ class AuthController extends Controller
         }
 
         // Trouve à nouveau l'utilisateur pour modification
-        $user = \App\Models\User::where('phone', $request->old_phone)
+        $user = User::where('phone', $request->old_phone)
             ->where('role', $request->role)
             ->where('name', trim($request->name))
             ->first();
 
-        if (!$user) {
+        if (! $user) {
             return response()->json([
                 'success' => false,
                 'message' => 'Le compte à réinitialiser est introuvable.',
@@ -299,8 +308,8 @@ class AuthController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Votre compte a été récupéré avec succès. Votre numéro a été mis à jour.',
-            'token'   => $token,
-            'user'    => new UserResource($user->load('artisanProfile.sector', 'artisanProfile.trade')),
+            'token' => $token,
+            'user' => new UserResource($user->load('artisanProfile.sector', 'artisanProfile.trade')),
         ]);
     }
 
@@ -311,12 +320,12 @@ class AuthController extends Controller
     {
         $request->validate([
             'new_phone' => ['required', 'string', 'regex:/^\+225[0-9]{10}$/'],
-            'otp'       => ['nullable', 'string', 'size:4'],
+            'otp' => ['nullable', 'string', 'size:4'],
         ]);
 
         $user = $request->user();
 
-        if (!$request->has('otp')) {
+        if (! $request->has('otp')) {
             // Envoyer OTP pour validation du nouveau numéro
             $this->otpService->sendOtp($request->new_phone);
 
@@ -328,7 +337,7 @@ class AuthController extends Controller
         }
 
         // Valider l'OTP
-        if (!$this->otpService->verifyOtp($request->new_phone, $request->otp)) {
+        if (! $this->otpService->verifyOtp($request->new_phone, $request->otp)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Code OTP invalide ou expiré.',
@@ -336,7 +345,7 @@ class AuthController extends Controller
         }
 
         // Vérifie si le numéro est déjà pris
-        if (\App\Models\User::where('phone', $request->new_phone)->where('id', '!=', $user->id)->exists()) {
+        if (User::where('phone', $request->new_phone)->where('id', '!=', $user->id)->exists()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Ce numéro de téléphone est déjà associé à un autre compte.',
@@ -349,7 +358,7 @@ class AuthController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Votre numéro de téléphone a été modifié avec succès.',
-            'user'    => new UserResource($user),
+            'user' => new UserResource($user),
         ]);
     }
 
@@ -372,7 +381,7 @@ class AuthController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Conditions Générales d\'Utilisation acceptées avec succès.',
-            'user'    => new UserResource($user->fresh(['artisanProfile.sector', 'artisanProfile.trade', 'fournisseurAgree'])),
+            'user' => new UserResource($user->fresh(['artisanProfile.sector', 'artisanProfile.trade', 'fournisseurAgree'])),
         ]);
     }
 }

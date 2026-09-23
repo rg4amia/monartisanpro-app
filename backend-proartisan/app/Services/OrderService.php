@@ -1163,7 +1163,11 @@ class OrderService
         );
 
         // 2. Si rattaché à une mission chantier, diffusion au canal de la mission
-        $missionId = $order->items()->whereNotNull('mission_id')->value('mission_id');
+        // Le lien mission est porté par la commande (`orders.mission_id`) ;
+        // `order_items` n'a pas de colonne mission_id. SQLite tolérait la
+        // requête (identifiant inconnu lu comme chaîne littérale), MariaDB la
+        // rejette : toute télémétrie livreur échouait en production.
+        $missionId = $order->mission_id;
         if ($missionId) {
             $this->realtimeEventService->publish(
                 'mission',
