@@ -8,6 +8,8 @@ PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 FLUTTER_DIR = os.path.join(PROJECT_ROOT, "frontend_flutter")
 ANDROID_DIR = os.path.join(FLUTTER_DIR, "android")
 BUILD_DIR = os.path.join(FLUTTER_DIR, "build")
+# Emplacement de référence des APK livrables (sortie standard de Flutter, ignorée par git).
+APK_OUTPUT_DIR = os.path.join(BUILD_DIR, "app", "outputs", "flutter-apk")
 
 print("=== MonArtisanPro - Clean Reliable Flutter Build ===")
 
@@ -19,8 +21,8 @@ os.system("taskkill /f /im adb.exe 2>nul")
 os.system("taskkill /f /im dart.exe 2>nul")
 time.sleep(1)
 
-# Clean up existing APK files at the root of the project and build_pa to avoid stale files
-print("Nettoyage des APKs existants a la racine du projet...")
+# Supprime les APK hérités de l'ancien emplacement (racine du projet) et de build_pa
+print("Nettoyage des APKs residuels a la racine du projet...")
 for f in os.listdir(PROJECT_ROOT):
     if f.endswith(".apk"):
         try:
@@ -74,10 +76,11 @@ print("\n[3/5] Compilation Flutter APK Release (Split-per-ABI + Universal)...")
 flutter_build_cmd = "flutter build apk --release --split-per-abi --no-tree-shake-icons --dart-define-from-file=env.json"
 result = subprocess.run(flutter_build_cmd, shell=True)
 
-# 4. Copie des APKs générés vers la racine du projet
+# 4. Copie des APKs renommés (prosartisan-*.apk) dans le dossier de sortie Flutter
 print("\n[4/5] Copie des APKs generes...")
+os.makedirs(APK_OUTPUT_DIR, exist_ok=True)
 build_out_dirs = [
-    os.path.join(FLUTTER_DIR, "build", "app", "outputs", "flutter-apk"),
+    APK_OUTPUT_DIR,
     os.path.join(FLUTTER_DIR, "android", "app", "build", "outputs", "flutter-apk"),
     r"C:\Users\Utilisateur\build_pa\app\outputs\flutter-apk"
 ]
@@ -99,7 +102,9 @@ for build_out_dir in build_out_dirs:
                 elif filename == "app-x86_64-release.apk":
                     dest_name = "prosartisan-x86_64.apk"
                 
-                target_path = os.path.join(PROJECT_ROOT, dest_name)
+                target_path = os.path.join(APK_OUTPUT_DIR, dest_name)
+                if os.path.abspath(source_path) == os.path.abspath(target_path):
+                    continue
                 try:
                     shutil.copy2(source_path, target_path)
                     size_mb = os.path.getsize(target_path) / (1024 * 1024)
@@ -113,11 +118,11 @@ if not copied_any:
     sys.exit(1)
 else:
     # Delete app-release.apk if it exists to avoid user downloading cached version
-    for p in [os.path.join(PROJECT_ROOT, "app-release.apk"), os.path.join(r"C:\Users\Utilisateur\build_pa\app\outputs\flutter-apk", "app-release.apk")]:
+    for p in [os.path.join(APK_OUTPUT_DIR, "app-release.apk"), os.path.join(r"C:\Users\Utilisateur\build_pa\app\outputs\flutter-apk", "app-release.apk")]:
         if os.path.exists(p):
             try:
                 os.remove(p)
                 print(f" -> Supprime (nettoyage cache) : {p}")
             except Exception as e:
                 print(f" [!] Impossible de supprimer {p} : {e}")
-    print("\n[+] Build et copie terminés avec succès !")
+    print(f"\n[+] Build et copie terminés avec succès ! APK disponibles dans : {APK_OUTPUT_DIR}")
