@@ -9,6 +9,25 @@ class Order extends Model
 {
     use HasFactory;
 
+    /** Libellés français des statuts de commande : la base stocke la clé technique, l'affichage ce libellé. */
+    public const STATUS_LABELS = [
+        'pending' => 'En attente de paiement',
+        'paid' => 'Payée',
+        'prepared' => 'Préparée',
+        'searching_driver' => 'Recherche de livreur',
+        'driver_assigned' => 'Livreur assigné',
+        'driver_picked_up' => 'Récupérée par le livreur',
+        'shipping' => 'En cours de livraison',
+        'delivered' => 'Livrée',
+        'disputed' => 'En litige',
+        'cancelled' => 'Annulée',
+    ];
+
+    public static function statusLabel(string $status): string
+    {
+        return self::STATUS_LABELS[$status] ?? $status;
+    }
+
     protected $fillable = [
         'mission_id',
         'client_id',
@@ -63,17 +82,17 @@ class Order extends Model
     protected function casts(): array
     {
         return [
-            'subtotal'                  => 'integer',
-            'delivery_cost'             => 'integer',
-            'platform_fee'              => 'integer',
-            'total_amount'              => 'integer',
-            'surge_multiplier'          => 'float',
-            'waiting_time_minutes'      => 'integer',
+            'subtotal' => 'integer',
+            'delivery_cost' => 'integer',
+            'platform_fee' => 'integer',
+            'total_amount' => 'integer',
+            'surge_multiplier' => 'float',
+            'waiting_time_minutes' => 'integer',
             'driver_reassignment_count' => 'integer',
-            'delivered_at'              => 'datetime',
-            'driver_assigned_at'        => 'datetime',
-            'dispute_opened_at'         => 'datetime',
-            'is_parent_group'           => 'boolean',
+            'delivered_at' => 'datetime',
+            'driver_assigned_at' => 'datetime',
+            'dispute_opened_at' => 'datetime',
+            'is_parent_group' => 'boolean',
         ];
     }
 
@@ -242,7 +261,7 @@ class Order extends Model
      */
     public function isDriverStale(int $timeoutMinutes = 15): bool
     {
-        if ($this->status !== 'driver_assigned' || !$this->driver_assigned_at) {
+        if ($this->status !== 'driver_assigned' || ! $this->driver_assigned_at) {
             return false;
         }
 
@@ -256,7 +275,7 @@ class Order extends Model
 
     public function canDeclareDispute(): bool
     {
-        if ($this->status !== 'delivered' || !$this->delivered_at) {
+        if ($this->status !== 'delivered' || ! $this->delivered_at) {
             return false;
         }
 
@@ -265,6 +284,7 @@ class Order extends Model
         }
 
         $windowMinutes = (int) Setting::getValueByKey('order_dispute_window_minutes', 30);
+
         return now()->diffInMinutes($this->delivered_at) <= $windowMinutes;
     }
 }
