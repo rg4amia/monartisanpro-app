@@ -1,6 +1,9 @@
 <?php
 
 return [
+    // Domaine du site vitrine : la racine du backend y redirige (routes/web.php).
+    'front_url' => env('FRONT_URL', 'https://www.prosartisan.net'),
+
     'gps' => [
         'jcode_max_distance' => env('GPS_JCODE_MAX_DISTANCE', 100),   // mètres
         'artisan_blur_radius' => env('GPS_ARTISAN_BLUR', 50),          // mètres

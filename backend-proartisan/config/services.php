@@ -163,7 +163,7 @@ return [
     | OSRM — routage réel (tracé, distance, ETA) pour le suivi livreur
     |--------------------------------------------------------------------------
     | Dernier repli de OsrmRoutingService/DeliveryPricingService quand Yandex
-    | Distance Matrix et Google Directions sont indisponibles ou non configurés.
+    | Distance Matrix est indisponible ou non configuré.
     | La valeur par défaut est le serveur de démonstration public d'OSRM :
     | rate-limité, sans SLA, non destiné à la production. Pointer vers une
     | instance dédiée via OSRM_BASE_URL une fois disponible.

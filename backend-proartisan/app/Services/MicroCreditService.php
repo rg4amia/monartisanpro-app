@@ -21,23 +21,26 @@ class MicroCreditService
     {
         $threshold = (int) config('prosartisan.score_prosartisan.credit_threshold', 700);
 
-        if (! $this->scoreService->isEligibleCredit($artisan)) {
+        // Le score est recalculé depuis le ledger AVANT toute décision : éligibilité
+        // et plafond reposent sur la même valeur. Juger l'éligibilité sur la colonne
+        // stockée (potentiellement obsolète) puis plafonner sur le score recalculé
+        // accordait un crédit à un artisan dont le score réel est sous le seuil.
+        $scoreDetail = $this->scoreService->getScoreDetail($artisan);
+        $score = (int) $scoreDetail['score_prosartisan'];
+
+        if ($score < $threshold) {
             return [
                 'eligible' => false,
                 'reason' => "Score ProsArtisan < {$threshold}. Améliorez votre score en complétant des missions.",
-                'current_score' => $artisan->score_prosartisan,
+                'current_score' => $score,
                 'required_score' => $threshold,
             ];
         }
 
-        // Calcul montant max basé sur score et historique
-        $scoreDetail = $this->scoreService->getScoreDetail($artisan);
-        $maxAmount = $this->calculateMaxCredit($artisan, $scoreDetail);
-
         return [
             'eligible' => true,
-            'max_amount' => $maxAmount,
-            'score_prosartisan' => $artisan->score_prosartisan,
+            'max_amount' => $this->calculateMaxCredit($score, $threshold),
+            'score_prosartisan' => $score,
             'total_evaluations' => $scoreDetail['total_evaluations'],
         ];
     }
@@ -61,7 +64,7 @@ class MicroCreditService
         $application = CreditApplication::create([
             'user_id' => $artisan->id,
             'amount' => $amount,
-            'score_prosartisan_at_application' => $artisan->score_prosartisan,
+            'score_prosartisan_at_application' => $eligibility['score_prosartisan'],
             'status' => 'en_attente',
         ]);
 
@@ -123,15 +126,13 @@ class MicroCreditService
         return $application;
     }
 
-    private function calculateMaxCredit(User $artisan, array $scoreDetail): int
+    private function calculateMaxCredit(int $score, int $threshold): int
     {
         // Formule : Base 50 000 FCFA + (score - seuil) * 1 500 FCFA par point au-dessus du seuil.
         // Sur l'échelle 0–1000 : seuil 700 → score 1000 plafonne le crédit à 50 000 + 300 × 1 500 = 500 000 FCFA.
-        $threshold = (int) config('prosartisan.score_prosartisan.credit_threshold', 700);
         $base = 50000;
         $perPoint = 1500;
-        $scoreAboveThreshold = max(0, $artisan->score_prosartisan - $threshold);
 
-        return $base + ($scoreAboveThreshold * $perPoint);
+        return $base + (max(0, $score - $threshold) * $perPoint);
     }
 }

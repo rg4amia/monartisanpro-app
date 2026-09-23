@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', function () {
-    $frontUrl = env('FRONT_URL', 'https://www.prosartisan.net');
+    $frontUrl = config('prosartisan.front_url');
 
     $frontHost = parse_url($frontUrl, PHP_URL_HOST);
     $currentHost = request()->getHost();

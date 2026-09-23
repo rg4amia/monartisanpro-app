@@ -15,13 +15,13 @@ class DevisPaymentFlowTest extends TestCase
 
     public function test_client_must_confirm_payment_before_financing_a_devis(): void
     {
-        /** @var \App\Models\User $client */
+        /** @var User $client */
         $client = User::factory()->create([
             'role' => 'client',
             'kyc_status' => 'actif',
         ]);
 
-        /** @var \App\Models\User $artisan */
+        /** @var User $artisan */
         $artisan = User::factory()->create([
             'role' => 'artisan',
             'kyc_status' => 'actif',
@@ -99,13 +99,13 @@ class DevisPaymentFlowTest extends TestCase
 
     public function test_payment_above_limit_blocks_mobile_money(): void
     {
-        /** @var \App\Models\User $client */
+        /** @var User $client */
         $client = User::factory()->create([
             'role' => 'client',
             'kyc_status' => 'actif',
         ]);
 
-        /** @var \App\Models\User $artisan */
+        /** @var User $artisan */
         $artisan = User::factory()->create([
             'role' => 'artisan',
             'kyc_status' => 'actif',
@@ -171,15 +171,60 @@ class DevisPaymentFlowTest extends TestCase
             ]);
     }
 
+    public function test_understated_amount_cannot_bypass_mobile_money_limit(): void
+    {
+        // Le montant posté est ignoré au profit du montant officiel du devis :
+        // le plafond Mobile Money doit donc être jugé sur ce dernier, sans quoi
+        // un client déclarant `montant: 100` paierait 2,5 M FCFA en Wave.
+        /** @var User $client */
+        $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
+        /** @var User $artisan */
+        $artisan = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif']);
+
+        $mission = Mission::create([
+            'client_id' => $client->id,
+            'artisan_id' => null,
+            'description' => 'Gros Oeuvre Villa',
+            'status' => 'draft',
+        ]);
+
+        $devis = Devis::create([
+            'mission_id' => $mission->id,
+            'artisan_id' => $artisan->id,
+            'statut' => 'soumis',
+            'commission_service_ratio' => 0.00,
+            'lignes_json' => [
+                ['type' => 'mat', 'description' => 'Béton', 'montant' => 1500000],
+                ['type' => 'mo', 'description' => 'Main d\'oeuvre', 'montant' => 1000000],
+            ],
+            'jalons_json' => [
+                ['ordre' => 1, 'description' => 'Total', 'montant' => 2500000, 'date_cible' => '2026-03-25'],
+            ],
+        ]);
+
+        $this->actingAs($client)
+            ->postJson('/api/v1/payments/initiate', [
+                'mission_id' => $mission->id,
+                'devis_id' => $devis->id,
+                'montant' => 100,
+                'provider' => 'wave',
+                'phone' => $client->phone,
+            ])
+            ->assertStatus(422)
+            ->assertJsonPath('success', false);
+
+        $this->assertDatabaseMissing('transactions', ['mission_id' => $mission->id]);
+    }
+
     public function test_devis_refusal_notifies_artisan(): void
     {
-        /** @var \App\Models\User $client */
+        /** @var User $client */
         $client = User::factory()->create([
             'role' => 'client',
             'kyc_status' => 'actif',
         ]);
 
-        /** @var \App\Models\User $artisan */
+        /** @var User $artisan */
         $artisan = User::factory()->create([
             'role' => 'artisan',
             'kyc_status' => 'actif',
@@ -221,13 +266,13 @@ class DevisPaymentFlowTest extends TestCase
 
     public function test_duplicate_payment_initiation_reuses_existing_transaction(): void
     {
-        /** @var \App\Models\User $client */
+        /** @var User $client */
         $client = User::factory()->create([
             'role' => 'client',
             'kyc_status' => 'actif',
         ]);
 
-        /** @var \App\Models\User $artisan */
+        /** @var User $artisan */
         $artisan = User::factory()->create([
             'role' => 'artisan',
             'kyc_status' => 'actif',

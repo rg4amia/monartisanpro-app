@@ -9,11 +9,12 @@ use Illuminate\Support\Facades\Log;
  * Service de calcul d'itinéraire (distance + durée réelles).
  *
  * Fournisseurs, dans l'ordre de préférence :
- *   1. Yandex Distance Matrix API  (services.yandex.distance_matrix_key)
- *   2. Google Directions API       (services.google.maps_api_key / GOOGLE_MAPS_API_KEY)
- *   3. Repli géodésique Haversine  (toujours disponible, aucune clé)
+ *   1. Yandex Distance Matrix API  (services.yandex.distance_matrix_key) — Yandex
+ *      est le fournisseur cartographique officiel de la plateforme.
+ *   2. Repli géodésique Haversine  (toujours disponible, aucune clé)
  *
- * Le nom de classe est conservé pour compatibilité (mocké dans plusieurs tests).
+ * Le nom de classe est historique et conservé pour compatibilité (mocké dans
+ * plusieurs tests) : aucun appel Google n'est effectué.
  * Le contrat public reste `getDirections(array $from, array $to): array` avec
  * `['distance' => mètres, 'duration' => secondes, 'source' => string]`.
  */
@@ -23,8 +24,6 @@ class GoogleMapsService
 
     private string $yandexUrl;
 
-    private ?string $googleKey;
-
     public function __construct()
     {
         $this->yandexKey = config('services.yandex.distance_matrix_key');
@@ -32,7 +31,6 @@ class GoogleMapsService
             'services.yandex.distance_matrix_url',
             'https://api.routing.yandex.net/v2/distancematrix'
         );
-        $this->googleKey = config('services.google.maps_api_key') ?? env('GOOGLE_MAPS_API_KEY');
     }
 
     /**
@@ -48,15 +46,8 @@ class GoogleMapsService
             }
         }
 
-        if ($this->googleKey) {
-            $result = $this->tryGoogle($from, $to);
-            if ($result !== null) {
-                return $result;
-            }
-        }
-
-        if (! $this->yandexKey && ! $this->googleKey) {
-            Log::warning('Aucune clé Maps (Yandex/Google) configurée. Fallback Haversine.');
+        if (! $this->yandexKey) {
+            Log::warning('Aucune clé Yandex Distance Matrix configurée. Fallback Haversine.');
         }
 
         return $this->fallbackHaversine($from, $to);
@@ -87,36 +78,6 @@ class GoogleMapsService
             }
         } catch (\Throwable $e) {
             Log::error('Exception Yandex Distance Matrix : '.$e->getMessage());
-        }
-
-        return null;
-    }
-
-    private function tryGoogle(array $from, array $to): ?array
-    {
-        try {
-            $response = Http::timeout(5)->get('https://maps.googleapis.com/maps/api/directions/json', [
-                'origin' => "{$from['lat']},{$from['lng']}",
-                'destination' => "{$to['lat']},{$to['lng']}",
-                'key' => $this->googleKey,
-                'mode' => 'driving',
-            ]);
-
-            if ($response->successful()) {
-                $leg = $response->json('routes.0.legs.0');
-                if (is_array($leg) && isset($leg['distance']['value'], $leg['duration']['value'])) {
-                    return [
-                        'distance' => (int) $leg['distance']['value'],
-                        'duration' => (int) $leg['duration']['value'],
-                        'source' => 'google_maps',
-                    ];
-                }
-                Log::warning('Google Maps : aucune route.', ['data' => $response->json()]);
-            } else {
-                Log::error('Erreur API Google Maps Directions : '.$response->body());
-            }
-        } catch (\Throwable $e) {
-            Log::error('Exception Google Maps Directions : '.$e->getMessage());
         }
 
         return null;

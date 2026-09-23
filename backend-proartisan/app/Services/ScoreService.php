@@ -461,9 +461,4 @@ class ScoreService
             'average_rating' => round((float) ($row?->avg_note ?? 0), 1),
         ];
     }
-
-    public function isEligibleCredit(User $artisan): bool
-    {
-        return $artisan->score_prosartisan >= config('prosartisan.score_prosartisan.credit_threshold', 700);
-    }
 }
