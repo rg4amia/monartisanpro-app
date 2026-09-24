@@ -3,6 +3,7 @@
 use App\Enums\WalletType;
 use App\Models\Address;
 use App\Models\FournisseurAgree;
+use App\Models\Order;
 use App\Models\SupplierProduct;
 use App\Models\Transaction;
 use App\Models\User;
@@ -75,10 +76,12 @@ test('client can create order in pickup mode and pay it', function () {
     expect($product->stock_quantity)->toBe(8);
 
     // Vérifier que la transaction séquestre a été créée
+    // (id réel de la commande : MariaDB ne réinitialise pas l'AUTO_INCREMENT au rollback)
+    $orderId = Order::where('client_id', $client->id)->value('id');
     $this->assertDatabaseHas('transactions', [
         'user_id' => $client->id,
         'montant' => 10300,
-        'wallet_dest' => 'escrow_order_1',
+        'wallet_dest' => "escrow_order_{$orderId}",
     ]);
 });
 
