@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Play, Search, Video as VideoIcon, ArrowLeft, GraduationCap, Lightbulb, MessageSquareQuote, Mic2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api, Video } from '@/lib/api';
+import Image from 'next/image';
 
 const categories = [
   { id: 'all', label: 'Toutes les vidéos', icon: VideoIcon },
@@ -196,12 +197,14 @@ export default function VideosPage() {
                       onClick={() => setActiveVideo(video)}
                       className="relative aspect-video bg-zinc-950 overflow-hidden cursor-pointer"
                     >
-                      <img
+                      <Image
                         src={
                           video.thumbnail_url ||
                           'https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?auto=format&fit=crop&w=600&q=80'
                         }
                         alt={video.titre}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 33vw"
                         className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                       />
                       <div className="absolute inset-0 bg-black/35 group-hover:bg-black/20 flex items-center justify-center transition">

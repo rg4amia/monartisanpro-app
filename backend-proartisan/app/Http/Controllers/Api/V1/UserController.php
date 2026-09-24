@@ -7,12 +7,21 @@ use App\Http\Resources\UserResource;
 use App\Models\ArtisanProfile;
 use App\Models\Trade;
 use App\Models\User;
+use App\Services\Admin\AdminActivityLogger;
+use App\Services\Admin\AdminGdprService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 
 class UserController extends Controller
 {
+    public function __construct(
+        private AdminGdprService $gdpr,
+        private AdminActivityLogger $audit,
+    ) {}
+
     public function update(Request $request, User $user): JsonResponse
     {
         if ($request->user()->id !== $user->id && $request->user()->role !== 'admin') {
@@ -132,8 +141,18 @@ class UserController extends Controller
 
     public function setRole(Request $request, User $user): JsonResponse
     {
-        if ($request->user()->id !== $user->id && $request->user()->role !== 'admin') {
+        $actor = $request->user();
+
+        // Un changement de rôle modifie le périmètre KYC et les capacités du
+        // compte. Il ne peut donc jamais être effectué en libre-service.
+        if ($actor->role !== 'admin' || Gate::forUser($actor)->denies('admin.users.manage')) {
             abort(403, 'Accès refusé.');
+        }
+
+        // Les comptes administrateurs et l'acteur lui-même sont gérés par le
+        // workflow backoffice protégé afin d'éviter toute auto-rétrogradation.
+        if ($user->role === 'admin' || $actor->is($user)) {
+            abort(403, 'Le rôle de ce compte ne peut pas être modifié par cette route.');
         }
 
         $data = $request->validate([
@@ -143,14 +162,36 @@ class UserController extends Controller
             'role.in' => 'Rôle invalide.',
         ]);
 
-        $user->update(['role' => $data['role']]);
+        $previousRole = $user->role;
+        DB::transaction(function () use ($user, $data): void {
+            // Un dossier KYC validé pour un rôle ne vaut pas agrément pour un
+            // autre rôle. Le nouveau périmètre doit être revu avant transaction.
+            $user->update([
+                'role' => $data['role'],
+                'kyc_status' => 'en_attente',
+            ]);
 
-        if ($data['role'] === 'artisan') {
-            ArtisanProfile::query()->firstOrCreate(
-                ['user_id' => $user->id],
-                ['intervient_la_nuit' => false]
-            );
-        }
+            if ($data['role'] === 'artisan') {
+                ArtisanProfile::query()->firstOrCreate(
+                    ['user_id' => $user->id],
+                    ['intervient_la_nuit' => false]
+                );
+            }
+
+            $user->tokens()->delete();
+        });
+
+        $this->audit->log(
+            'user.role.updated',
+            $user,
+            [
+                'before' => $previousRole,
+                'after' => $data['role'],
+                'kyc_reset' => true,
+                'tokens_revoked' => true,
+            ],
+            actor: $actor,
+        );
 
         return response()->json([
             'success' => true,
@@ -210,16 +251,24 @@ class UserController extends Controller
 
     public function destroy(Request $request, User $user): JsonResponse
     {
-        if ($request->user()->id !== $user->id && $request->user()->role !== 'admin') {
+        if ($request->user()->id !== $user->id) {
             abort(403, 'Accès refusé.');
         }
 
-        $user->tokens()->delete();
-        $user->delete();
+        try {
+            // Le droit à l'effacement conserve la ligne utilisateur afin de ne
+            // pas rompre les ledgers financiers et les pistes d'audit.
+            $this->gdpr->anonymize($user, $request->user(), allowSelf: true);
+        } catch (\LogicException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
 
         return response()->json([
             'success' => true,
-            'message' => 'Votre compte a été supprimé avec succès.',
+            'message' => 'Votre compte a été anonymisé avec succès.',
         ]);
     }
 }

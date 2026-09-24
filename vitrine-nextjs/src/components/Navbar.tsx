@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { Menu, X, ArrowRight, ShieldCheck, HeartHandshake, Store } from 'lucide-react';
+import { Menu, X, ArrowRight, Store } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Navbar() {
@@ -52,9 +53,11 @@ export default function Navbar() {
                 <div className="flex items-center justify-between">
                     {/* Logo */}
                     <Link href="/" className="flex items-center group py-1">
-                        <img
+                        <Image
                             src="/img/prosartisan-logo.png"
                             alt="ProsArtisan — Professionnel de l'Artisanat"
+                            width={240}
+                            height={96}
                             className="h-10 sm:h-12 w-auto object-contain group-hover:scale-105 transition transform drop-shadow-sm"
                         />
                     </Link>

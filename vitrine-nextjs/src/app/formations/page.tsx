@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { api, Formation } from '@/lib/api';
 import { Calendar, MapPin, ChevronRight } from 'lucide-react';
+import Image from 'next/image';
 
 export default function FormationsPage() {
     const [formations, setFormations] = useState<Formation[]>([]);
@@ -61,10 +62,12 @@ export default function FormationsPage() {
                             >
                                 <div className="space-y-6">
                                     {/* Cover image */}
-                                    <div className="aspect-[2/1] rounded-2xl overflow-hidden bg-zinc-200">
-                                        <img
+                                    <div className="aspect-[2/1] rounded-2xl overflow-hidden bg-zinc-200 relative">
+                                        <Image
                                             src={formation.image_url || 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=800&q=80'}
                                             alt={formation.titre}
+                                            fill
+                                            sizes="(max-width: 768px) 100vw, 50vw"
                                             className="w-full h-full object-cover"
                                         />
                                     </div>

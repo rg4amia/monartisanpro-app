@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ShieldCheck, Lock, FileText, Scale, CheckCircle2, ChevronRight, AlertTriangle } from 'lucide-react';
+import { ShieldCheck, Lock, Scale, ChevronRight, AlertTriangle } from 'lucide-react';
 
 export default function CguPage() {
     return (

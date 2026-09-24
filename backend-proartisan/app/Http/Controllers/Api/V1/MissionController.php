@@ -7,6 +7,7 @@ use App\Http\Requests\Mission\CreateMissionRequest;
 use App\Http\Resources\MissionResource;
 use App\Models\Mission;
 use App\Models\User;
+use App\Services\Admin\AdminActivityLogger;
 use App\Services\MissionService;
 use App\Services\NotificationService;
 use App\States\Mission\CancelledState;
@@ -20,13 +21,15 @@ use App\States\Mission\PendingArtisanAcceptanceState;
 use App\States\Mission\PendingFundingState;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 
 class MissionController extends Controller
 {
     public function __construct(
         private MissionService $missionService,
-        private NotificationService $notificationService
+        private NotificationService $notificationService,
+        private AdminActivityLogger $audit,
     ) {}
 
     /**
@@ -287,7 +290,11 @@ class MissionController extends Controller
     public function updateStatus(Request $request, Mission $mission): JsonResponse
     {
         $user = $request->user();
-        if ($mission->client_id !== $user->id && $mission->artisan_id !== $user->id && $user->role !== 'admin') {
+
+        // Les transitions utilisateur passent exclusivement par les actions
+        // métier dédiées (paiement, OTP, litige, etc.). Autoriser ici un client
+        // ou un artisan permettrait notamment de simuler un financement.
+        if ($user->role !== 'admin' || Gate::forUser($user)->denies('admin.missions.manage')) {
             return response()->json([
                 'success' => false,
                 'message' => 'Non autorisé.',
@@ -306,8 +313,10 @@ class MissionController extends Controller
                 'required',
                 'in:en_attente,financee,en_cours,terminee,litige,annulee,draft,pending_funding,funded_locked,in_progress,pending_approval,completed,disputed,cancelled',
             ],
+            'reason' => ['required', 'string', 'min:10', 'max:500'],
         ]);
 
+        $previousStatus = (string) $mission->status;
         $status = $data['status'];
         $stateClass = match ($status) {
             'draft', 'en_attente' => DraftState::class,
@@ -322,6 +331,17 @@ class MissionController extends Controller
         };
 
         $mission->status->transitionTo($stateClass);
+
+        $this->audit->log(
+            'mission.status.forced',
+            $mission,
+            [
+                'before' => $previousStatus,
+                'after' => (string) $mission->fresh()->status,
+                'reason' => $data['reason'],
+            ],
+            actor: $user,
+        );
 
         return response()->json([
             'success' => true,

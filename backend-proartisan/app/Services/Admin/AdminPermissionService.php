@@ -39,6 +39,7 @@ class AdminPermissionService
             ],
             'missions' => [
                 'admin.missions.view' => 'Consulter les missions et livraisons',
+                'admin.missions.manage' => 'Forcer une transition administrative de mission',
                 'admin.territory.view' => 'Consulter la cartographie interactive et les statistiques territoriales',
             ],
             'litiges' => [

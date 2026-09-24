@@ -248,12 +248,13 @@ class DevisGestionRulesTest extends TestCase
             'message' => "Cette mission a déjà un devis en cours d'examen par le client.",
         ]);
 
-        // 2. Try to update status of the mission - should fail (422)
+        // 2. Les transitions génériques sont réservées à l'administration :
+        // le client doit passer par les actions métier dédiées.
         $response3 = $this->actingAs($client)
             ->putJson("/api/v1/missions/{$mission->id}/status", [
                 'status' => 'in_progress',
             ]);
-        $response3->assertStatus(422);
+        $response3->assertForbidden();
 
         // 3. Verify mention exists in resource representation
         $responseShow = $this->actingAs($client)

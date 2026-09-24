@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function SupplierLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter();
@@ -71,9 +72,11 @@ export default function SupplierLayout({ children }: { children: React.ReactNode
             <header className="bg-slate-900 border-b border-slate-800 px-6 py-3.5 flex items-center justify-between sticky top-0 z-30">
                 <div className="flex items-center gap-3">
                     <div className="bg-white/95 px-2.5 py-1 rounded-lg flex items-center shadow-sm">
-                        <img
+                        <Image
                             src="/img/prosartisan-logo.png"
                             alt="ProsArtisan — Professionnel de l'Artisanat"
+                            width={180}
+                            height={56}
                             className="h-7 w-auto object-contain"
                         />
                     </div>

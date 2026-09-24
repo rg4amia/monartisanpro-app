@@ -93,9 +93,9 @@ class AdminGdprService
     /**
      * Anonymise définitivement un compte. Irréversible.
      */
-    public function anonymize(User $user, User $actor): void
+    public function anonymize(User $user, User $actor, bool $allowSelf = false): void
     {
-        if ($user->id === $actor->id) {
+        if ($user->id === $actor->id && ! $allowSelf) {
             throw new \LogicException('Vous ne pouvez pas anonymiser votre propre compte.');
         }
 
@@ -149,7 +149,10 @@ class AdminGdprService
         $this->audit->log(
             'user.anonymized',
             $user,
-            ['reason' => 'RGPD — droit à l\'effacement'],
+            [
+                'reason' => 'RGPD — droit à l\'effacement',
+                'self_service' => $user->id === $actor->id,
+            ],
             subjectLabel: 'Compte #'.$user->id,
             actor: $actor,
         );

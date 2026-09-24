@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { api, Article } from '@/lib/api';
 import { Calendar, ChevronLeft, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function ArticleDetailClient() {
     const params = useParams();
@@ -97,10 +98,12 @@ export default function ArticleDetailClient() {
 
                 {/* Featured image */}
                 {article.image_url && (
-                    <div className="rounded-[36px] overflow-hidden border border-[#e6d3b2]/40 shadow-sm aspect-video mb-12">
-                        <img
+                    <div className="rounded-[36px] overflow-hidden border border-[#e6d3b2]/40 shadow-sm aspect-video mb-12 relative">
+                        <Image
                             src={article.image_url}
                             alt={article.titre}
+                            fill
+                            sizes="(max-width: 1024px) 100vw, 1024px"
                             className="w-full h-full object-cover"
                         />
                     </div>

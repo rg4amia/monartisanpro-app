@@ -88,7 +88,11 @@ class WebhookController extends Controller
         try {
             $data = $request->all();
 
-            Log::info('Orange Money: Webhook reçu', ['data' => $data]);
+            Log::info('Orange Money: Webhook reçu', [
+                'order_id' => $data['order_id'] ?? null,
+                'status' => $data['status'] ?? null,
+                'keys' => array_keys($data),
+            ]);
 
             // Traiter la notification
             $transaction = $this->orangeMoneyService->processNotification($data);

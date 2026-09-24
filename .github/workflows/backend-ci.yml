@@ -7,17 +7,45 @@ on:
     branches: [new-dev-inz]
     paths:
       - "backend-proartisan/**"
+      - "frontend_flutter/**"
       - "vitrine-nextjs/**"
       - ".github/workflows/backend-ci.yml"
   pull_request:
     branches: [new-dev-inz]
     paths:
       - "backend-proartisan/**"
+      - "frontend_flutter/**"
       - "vitrine-nextjs/**"
       - ".github/workflows/backend-ci.yml"
   workflow_dispatch:
 
 jobs:
+  flutter-tests:
+    name: Flutter analyze & tests
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: ./frontend_flutter
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install Flutter dependencies
+        run: flutter pub get
+
+      - name: Analyze Flutter
+        run: flutter analyze
+
+      - name: Run Flutter tests
+        run: flutter test
+
   # ── Garde de déploiement : la suite Pest doit passer avant toute mise en production.
   tests:
     name: Tests Pest (SQLite, bloquant)
@@ -156,7 +184,7 @@ jobs:
         run: php vendor/bin/pest --parallel
 
   deploy:
-    needs: [tests, tests-mariadb]
+    needs: [tests, tests-mariadb, flutter-tests]
     # Une pull request ne fait qu'exécuter les tests : jamais de mise en
     # production depuis la référence d'une PR (refs/pull/N/merge).
     # Seule new-dev-inz déploie, y compris via workflow_dispatch : le serveur
@@ -374,7 +402,15 @@ jobs:
             find storage -type f -exec chmod 664 {} \; 2>/dev/null || true
 
             # Laravel artisan commands
-            php artisan key:generate --force 2>/dev/null || echo "⚠️ Key already exists"
+            # APP_KEY est un secret persistant. Elle est créée lors de la toute
+            # première installation uniquement et ne doit jamais tourner à
+            # chaque déploiement (les valeurs chiffrées deviendraient illisibles).
+            if ! grep -Eq '^APP_KEY=base64:.+' "$BACKEND_PATH/.env"; then
+              php artisan key:generate --force
+              echo "✅ APP_KEY initialisée"
+            else
+              echo "✅ APP_KEY existante conservée"
+            fi
             php artisan storage:link --force 2>/dev/null || echo "⚠️ Storage link exists"
 
             # Run migrations — un échec ici ne doit JAMAIS être avalé : un

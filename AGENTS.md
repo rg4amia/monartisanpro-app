@@ -24,7 +24,7 @@ Tu m'assistes sur le développement de **ProsArtisan**, une plateforme marketpla
 
 | Couche | Technologie |
 | --- | --- |
-| Backend API | Laravel 11 (PHP 8.3) |
+| Backend API | **Laravel 12** (PHP 8.3) |
 | Base de données | **MariaDB 11.8 en production** (Hostinger) · MySQL 8.4 en local · SQLite pour les tests — spatial : `POINT` **sans SRID** + `ST_Distance_Sphere` |
 | App mobile | prosartisan-marketplace (Android prioritaire : `arm64-v8a` 64-bit standard, APK Universel multi-architectures) |
 | IA | Google Gemini API (`gemini-3.6-flash` avec support Cloudflare AI Gateway & fallback résilient) |
@@ -410,7 +410,7 @@ SELECT ST_X(position) AS lng, ST_Y(position) AS lat FROM users WHERE id = :id;
 
 ## 🧠 Comment m'aider efficacement
 
-- Génère du code **Laravel 11** complet : migrations, models (avec casts appropriés), controllers, services, form requests, routes
+- Génère du code **Laravel 12** complet : migrations, models (avec casts appropriés), controllers, services, form requests, routes
 - Pour les colonnes `POINT`, ajoute la colonne par `DB::statement('ALTER TABLE t ADD COLUMN position POINT NULL')` et écris les points avec `POINT(?, ?)` (lng, lat) **sans SRID** — jamais `ST_SRID(..., 4326)`, absent de MariaDB (production)
 - Pour les colonnes `JSON`, utilise le cast `$casts = ['lignes_json' => 'array']` dans les models Eloquent
 - **Jamais de PostGIS** — on est sur MariaDB (production) / MySQL (local), utilise `ST_Distance_Sphere`, `ST_X`, `ST_Y`

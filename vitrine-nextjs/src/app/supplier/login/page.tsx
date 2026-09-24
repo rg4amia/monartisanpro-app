@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { api } from '@/lib/api';
+import Image from 'next/image';
 
 export default function SupplierLogin() {
     const router = useRouter();
@@ -114,9 +115,11 @@ export default function SupplierLogin() {
             <div className="w-full max-w-md bg-slate-900/60 backdrop-blur-xl border border-slate-800 p-8 rounded-2xl shadow-2xl relative z-10">
                 <div className="flex flex-col items-center mb-8">
                     <div className="bg-white/95 px-4 py-2 rounded-2xl mb-4 shadow-lg">
-                        <img
+                        <Image
                             src="/img/prosartisan-logo.png"
                             alt="ProsArtisan — Professionnel de l'Artisanat"
+                            width={240}
+                            height={96}
                             className="h-12 w-auto object-contain"
                         />
                     </div>

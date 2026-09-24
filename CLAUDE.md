@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **ProsArtisan** — marketplace artisanal pour la Côte d'Ivoire. Trois sous-projets :
 
-- `backend-proartisan/` — Laravel 12 API + backoffice Inertia (PHP 8.2+, MariaDB 11.8 en production)
+- `backend-proartisan/` — Laravel 12 API + backoffice Inertia (PHP 8.3, MariaDB 11.8 en production)
 - `frontend_flutter/` — Flutter 3.x mobile app (Android-first)
 - `vitrine-nextjs/` — site vitrine public (Next.js 16, React 19, export statique)
 

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, ArrowRight } from 'lucide-react';
 import { api, Popup } from '@/lib/api';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function PopupModal() {
     const [popup, setPopup] = useState<Popup | null>(null);
@@ -78,10 +79,12 @@ export default function PopupModal() {
                             </h3>
 
                             {popup.image_url && (
-                                <div className="rounded-2xl overflow-hidden border border-[#e6d3b2]/30 max-h-48">
-                                    <img
+                                <div className="rounded-2xl overflow-hidden border border-[#e6d3b2]/30 max-h-48 relative aspect-video">
+                                    <Image
                                         src={popup.image_url}
                                         alt={popup.titre}
+                                        fill
+                                        sizes="(max-width: 768px) 100vw, 640px"
                                         className="w-full object-cover"
                                     />
                                 </div>

@@ -8,6 +8,17 @@
 * Des **Livreurs (Drivers)** pour le transport de marchandises et matériaux.
 * Des **Référents de zone** pour l'arbitrage et le contrôle des chantiers d'envergure.
 
+### Socle technique de référence
+
+| Couche | Version validée |
+| --- | --- |
+| Backend API et backoffice | **Laravel 12**, PHP 8.3, Inertia 2, React 19 |
+| Base de données | MariaDB 11.8 en production, MySQL 8.4 en local, SQLite pour les tests |
+| Application mobile | Flutter 3.x, Android prioritaire |
+| Site vitrine | Next.js 16, React 19, export statique |
+
+**Décision d'architecture :** Laravel 12 est la version officielle et supportée du backend ProsArtisan. Le fichier `backend-proartisan/composer.json` (`laravel/framework: ^12.0`) constitue la source de vérité technique. Toute nouvelle fonctionnalité, migration, commande Artisan, règle de validation ou intégration Inertia doit cibler Laravel 12. Une rétrogradation vers Laravel 11 n'est pas supportée.
+
 ---
 
 ## 2. Parcours Utilisateur de A à Z : Analyse & Retours d'Expérience

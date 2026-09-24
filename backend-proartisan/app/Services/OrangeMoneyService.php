@@ -134,7 +134,11 @@ class OrangeMoneyService
                 'reference' => $description,
             ];
 
-            Log::info('Orange Money: Création paiement', ['payload' => $payload]);
+            Log::info('Orange Money: Création paiement', [
+                'order_id' => $orderId,
+                'amount' => $montant,
+                'currency' => $this->currency,
+            ]);
 
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer '.$token,
@@ -212,7 +216,7 @@ class OrangeMoneyService
 
             Log::info('Orange Money: Vérification statut paiement', [
                 'order_id' => $orderId,
-                'payment_token' => $paymentToken,
+                'has_payment_token' => $paymentToken !== '',
             ]);
 
             $response = Http::withHeaders([
@@ -261,7 +265,11 @@ class OrangeMoneyService
     public function processNotification(array $notificationData): ?Transaction
     {
         try {
-            Log::info('Orange Money: Traitement notification', ['data' => $notificationData]);
+            Log::info('Orange Money: Traitement notification', [
+                'order_id' => $notificationData['order_id'] ?? null,
+                'status' => $notificationData['status'] ?? null,
+                'keys' => array_keys($notificationData),
+            ]);
 
             $orderId = $notificationData['order_id'] ?? null;
 

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { api, Article } from '@/lib/api';
 import { Calendar, ArrowRight, BookOpen } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function ActualitesPage() {
     const [articles, setArticles] = useState<Article[]>([]);
@@ -88,9 +89,11 @@ export default function ActualitesPage() {
                             >
                                 {/* Cover image */}
                                 <div className="aspect-video bg-zinc-100 overflow-hidden relative">
-                                    <img
+                                    <Image
                                         src={article.image_url || 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=500&q=80'}
                                         alt={article.titre}
+                                        fill
+                                        sizes="(max-width: 768px) 100vw, 33vw"
                                         className="w-full h-full object-cover group-hover:scale-102 transition duration-300"
                                     />
                                     <span className="absolute bottom-4 left-4 px-2.5 py-0.5 bg-white/95 backdrop-blur-md rounded-md text-[9px] font-bold uppercase tracking-wider text-[#8a5d16] border border-[#e6d3b2]/30">

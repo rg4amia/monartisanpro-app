@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { api, Artisan } from '@/lib/api';
 import { MapPin, Star, ShieldAlert } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function ArtisansDirectoryPage() {
     const [artisans, setArtisans] = useState<Artisan[]>([]);
@@ -173,9 +174,11 @@ export default function ArtisansDirectoryPage() {
                                 <div>
                                     {/* Image / Header */}
                                     <div className="aspect-square bg-zinc-950 overflow-hidden relative">
-                                        <img
+                                        <Image
                                             src={artisan.kyc_selfie_path || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80'}
                                             alt={artisan.name}
+                                            fill
+                                            sizes="(max-width: 768px) 100vw, 33vw"
                                             className="w-full h-full object-cover"
                                         />
                                         <div className="absolute top-4 left-4 right-4 flex justify-between items-center">

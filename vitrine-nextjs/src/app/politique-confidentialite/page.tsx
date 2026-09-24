@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Shield, Lock, EyeOff, Server, Clock, Mail, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { Shield, EyeOff, Server, Clock, Mail, ChevronRight } from 'lucide-react';
 
 export default function PolitiqueConfidentialitePage() {
     return (
