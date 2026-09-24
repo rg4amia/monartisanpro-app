@@ -12,9 +12,7 @@ use Illuminate\Http\Request;
 
 class AdminCashoutController extends Controller
 {
-    public function __construct(
-        private ?AdminActivityLogger $audit = null
-    ) {}
+    public function __construct(private AdminActivityLogger $audit) {}
 
     /**
      * Enregistre une opération de cash-out pour une quincaillerie.
@@ -60,14 +58,10 @@ class AdminCashoutController extends Controller
             'processed_by' => $request->user()?->id,
         ]);
 
-        if ($this->audit && $request->user()) {
-            $this->audit->log($request->user(), 'cashout.created', [
-                'cashout_id' => $cashout->id,
-                'reference' => $cashout->reference,
-                'supplier_id' => $supplier->id,
-                'montant_brut' => $montantBrut,
-            ]);
-        }
+        $this->audit->log('cashout.created', $cashout, [
+            'supplier_id' => $supplier->id,
+            'montant_brut' => $montantBrut,
+        ], $cashout->reference, $request->user());
 
         return back()->with('success', "Opération de retrait {$cashout->reference} enregistrée.");
     }
@@ -87,12 +81,7 @@ class AdminCashoutController extends Controller
             'processed_at' => now(),
         ]);
 
-        if ($this->audit && $request->user()) {
-            $this->audit->log($request->user(), 'cashout.approved', [
-                'cashout_id' => $cashout->id,
-                'reference' => $cashout->reference,
-            ]);
-        }
+        $this->audit->log('cashout.approved', $cashout, [], $cashout->reference, $request->user());
 
         return back()->with('success', "Demande de retrait {$cashout->reference} approuvée.");
     }
@@ -102,7 +91,7 @@ class AdminCashoutController extends Controller
      */
     public function complete(Request $request, SupplierCashout $cashout): RedirectResponse
     {
-        if (!in_array($cashout->statut, ['en_attente', 'approuve'])) {
+        if (! in_array($cashout->statut, ['en_attente', 'approuve'])) {
             return back()->with('error', 'Cette demande ne peut pas être complétée.');
         }
 
@@ -112,13 +101,9 @@ class AdminCashoutController extends Controller
             'processed_at' => now(),
         ]);
 
-        if ($this->audit && $request->user()) {
-            $this->audit->log($request->user(), 'cashout.completed', [
-                'cashout_id' => $cashout->id,
-                'reference' => $cashout->reference,
-                'montant_net' => $cashout->montant_net,
-            ]);
-        }
+        $this->audit->log('cashout.completed', $cashout, [
+            'montant_net' => $cashout->montant_net,
+        ], $cashout->reference, $request->user());
 
         return back()->with('success', "Retrait {$cashout->reference} complété. Montant net décaissé.");
     }
@@ -142,13 +127,9 @@ class AdminCashoutController extends Controller
             'processed_at' => now(),
         ]);
 
-        if ($this->audit && $request->user()) {
-            $this->audit->log($request->user(), 'cashout.rejected', [
-                'cashout_id' => $cashout->id,
-                'reference' => $cashout->reference,
-                'reason' => $reason,
-            ]);
-        }
+        $this->audit->log('cashout.rejected', $cashout, [
+            'reason' => $reason,
+        ], $cashout->reference, $request->user());
 
         return back()->with('success', "Demande de retrait {$cashout->reference} rejetée.");
     }
