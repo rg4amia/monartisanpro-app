@@ -139,14 +139,48 @@ class GeoService
         $initialRadius = (int) config('prosartisan.gps.nearby_artisan_radius', 2000);
 
         if ($customRadius !== null) {
-            $artisans = $this->nearbyArtisans($lat, $lng, $customRadius, $sectorFilter, $tradeFilter, $nightOnly);
+            $matchedArtisans = $this->nearbyArtisans($lat, $lng, $customRadius, $sectorFilter, $tradeFilter, $nightOnly);
+
+            if ($matchedArtisans->isNotEmpty()) {
+                return [
+                    'artisans' => $matchedArtisans,
+                    'tier_id' => 'custom',
+                    'tier_label' => "Rayon personnalisé ({$customRadius} m)",
+                    'radius_meters' => $customRadius,
+                    'is_fallback' => $customRadius > $initialRadius,
+                ];
+            }
+
+            // Si aucun artisan n'est trouvé dans le rayon demandé, on élargit
+            // aux paliers concentriques dont le rayon est supérieur au rayon personnalisé
+            $fallbackTiers = array_filter($tiers, fn ($t) => (int) $t['radius'] > $customRadius);
+            foreach ($fallbackTiers as $tier) {
+                $matchedArtisans = $this->nearbyArtisans(
+                    $lat,
+                    $lng,
+                    (int) $tier['radius'],
+                    $sectorFilter,
+                    $tradeFilter,
+                    $nightOnly
+                );
+
+                if ($matchedArtisans->isNotEmpty()) {
+                    return [
+                        'artisans' => $matchedArtisans,
+                        'tier_id' => (string) $tier['id'],
+                        'tier_label' => (string) $tier['label'],
+                        'radius_meters' => (int) $tier['radius'],
+                        'is_fallback' => true,
+                    ];
+                }
+            }
 
             return [
-                'artisans' => $artisans,
+                'artisans' => collect(),
                 'tier_id' => 'custom',
                 'tier_label' => "Rayon personnalisé ({$customRadius} m)",
                 'radius_meters' => $customRadius,
-                'is_fallback' => $customRadius > $initialRadius,
+                'is_fallback' => false,
             ];
         }
 
@@ -213,14 +247,31 @@ class GeoService
         if ($seed !== null) {
             $hash = hash_hmac('sha256', $seed, (string) config('app.key'));
             $angle = hexdec(substr($hash, 0, 8)) % 360;
-            $r = $delta * sqrt((hexdec(substr($hash, 8, 8)) % 1000) / 1000);
+            // Plancher à 20% pour garantir un déplacement effectif minimal (Règle d'or 6)
+            $factor = 0.20 + 0.80 * ((hexdec(substr($hash, 8, 8)) % 1000) / 1000);
+            $r = $delta * sqrt($factor);
         } else {
             $angle = mt_rand(0, 359);
-            $r = $delta * sqrt(mt_rand(0, 100) / 100);
+            $factor = 0.20 + 0.80 * (mt_rand(0, 100) / 100);
+            $r = $delta * sqrt($factor);
+        }
+
+        // Éviter l'alignement strict sur un axe cardinal (0, 90, 180, 270)
+        // qui annulerait le décalage sur l'un des deux axes (lat ou lng).
+        if ($angle % 90 === 0) {
+            $angle += 25;
         }
 
         $blurredLat = $lat + $r * cos(deg2rad($angle));
         $blurredLng = $lng + $r * sin(deg2rad($angle));
+
+        // Garantie absolue que les deux coordonnées diffèrent de la position réelle
+        if (round($blurredLat, 6) === round($lat, 6)) {
+            $blurredLat += ($r > 0 ? $r : $delta) * 0.5;
+        }
+        if (round($blurredLng, 6) === round($lng, 6)) {
+            $blurredLng += ($r > 0 ? $r : $delta) * 0.5;
+        }
 
         return ['lat' => round($blurredLat, 6), 'lng' => round($blurredLng, 6)];
     }
