@@ -7,7 +7,7 @@ use App\Models\FournisseurAgree;
 use App\Models\Order;
 use App\Models\RealtimeEvent;
 use App\Models\User;
-use App\Services\OrderService;
+use App\Services\DeliveryTrackingService;
 use App\Services\OsrmRoutingService;
 use App\Services\RealtimeEventService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -24,7 +24,7 @@ class DeliveryTrackingServiceTest extends TestCase
 
     private OsrmRoutingService $osrmService;
 
-    private OrderService $orderService;
+    private DeliveryTrackingService $trackingService;
 
     private RealtimeEventService $realtimeEventService;
 
@@ -34,7 +34,7 @@ class DeliveryTrackingServiceTest extends TestCase
 
         $this->osrmService = new OsrmRoutingService;
         $this->realtimeEventService = new RealtimeEventService;
-        $this->orderService = app(OrderService::class);
+        $this->trackingService = app(DeliveryTrackingService::class);
     }
 
     private function createTestOrder(array $attributes = []): Order
@@ -135,7 +135,7 @@ class DeliveryTrackingServiceTest extends TestCase
         $order = $this->createTestOrder();
         $driver = $order->driver;
 
-        $tracking = $this->orderService->recordDriverLocation(
+        $tracking = $this->trackingService->recordDriverLocation(
             $order,
             $driver,
             5.3480,
@@ -186,9 +186,9 @@ class DeliveryTrackingServiceTest extends TestCase
         $order = $this->createTestOrder();
         $driver = $order->driver;
 
-        $this->orderService->recordDriverLocation($order, $driver, 5.3480, -4.0250, 30.0, 90.0, 80);
+        $this->trackingService->recordDriverLocation($order, $driver, 5.3480, -4.0250, 30.0, 90.0, 80);
 
-        $payload = $this->orderService->getDeliveryTrackingData($order);
+        $payload = $this->trackingService->getDeliveryTrackingData($order);
 
         $this->assertIsArray($payload);
         $this->assertEquals($order->id, $payload['order_id']);
@@ -206,12 +206,12 @@ class DeliveryTrackingServiceTest extends TestCase
 
         // Le fournisseur, lui, doit voir le code de retrait pour contrôler le
         // livreur qui se présente.
-        $supplierPayload = $this->orderService->getDeliveryTrackingData($order, $order->supplier);
+        $supplierPayload = $this->trackingService->getDeliveryTrackingData($order, $order->supplier);
         $this->assertSame('LIV-PICK-1234', $supplierPayload['codes']['pickup_code']);
         $this->assertArrayNotHasKey('reception_code', $supplierPayload['codes']);
 
         // Le livreur n'en obtient aucun, même en étant assigné à la course.
-        $driverPayload = $this->orderService->getDeliveryTrackingData($order, $driver);
+        $driverPayload = $this->trackingService->getDeliveryTrackingData($order, $driver);
         $this->assertSame([], $driverPayload['codes']);
     }
 

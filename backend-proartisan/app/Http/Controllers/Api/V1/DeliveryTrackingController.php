@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Services\DeliveryTrackingService;
 use App\Services\OrderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -12,7 +13,8 @@ use Illuminate\Support\Facades\Storage;
 class DeliveryTrackingController extends Controller
 {
     public function __construct(
-        private OrderService $orderService
+        private OrderService $orderService,
+        private DeliveryTrackingService $tracking,
     ) {}
 
     /**
@@ -47,13 +49,13 @@ class DeliveryTrackingController extends Controller
 
         try {
             if (! empty($validated['points'])) {
-                $tracking = $this->orderService->recordDriverBatchLocations(
+                $tracking = $this->tracking->recordDriverBatchLocations(
                     $order,
                     $user,
                     $validated['points']
                 );
             } else {
-                $tracking = $this->orderService->recordDriverLocation(
+                $tracking = $this->tracking->recordDriverLocation(
                     $order,
                     $user,
                     (float) $validated['latitude'],
@@ -95,7 +97,7 @@ class DeliveryTrackingController extends Controller
             return response()->json(['error' => 'Non autorisé à consulter ce suivi.'], 403);
         }
 
-        $trackingData = $this->orderService->getDeliveryTrackingData($order, $user);
+        $trackingData = $this->tracking->getDeliveryTrackingData($order, $user);
 
         return response()->json([
             'success' => true,
