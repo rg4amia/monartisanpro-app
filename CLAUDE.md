@@ -104,7 +104,7 @@ routes/api.php
 Trois moteurs coexistent, et le code doit rester portable entre eux :
 
 | Environnement | Moteur | Source |
-|---|---|---|
+| --- | --- | --- |
 | **Production** (Hostinger) | **MariaDB 11.8.9** | `select version()` sur le serveur (vérifié le 23/09/2026) |
 | Local (WAMP) | MySQL 8.4 | `select version()` en local |
 | Tests Pest | SQLite en mémoire | `phpunit.xml` |
@@ -282,4 +282,3 @@ App Router (`src/app/`), composants partagés dans `src/components/`, accès API
 53. **Watchdog Livreur Étendu en Transit & Préservation du Séquestre Matériaux (`driver_picked_up`)** : supervision distincte des courses en transit (`driver_picked_up`) par `prosartisan:driver-watchdog`. Contrairement au statut `driver_assigned` (> 15 min réaffecté automatiquement), une course où les matériaux ont été retirés en quincaillerie ne peut jamais être annulée ni réaffectée automatiquement sans confirmation physique (séquestre matériaux déjà engagé). Si le livreur n'émet plus de signal GPS depuis > 25 min, le système déclenche une relance SMS/Push et une alerte admin haute priorité `delivery_in_transit_unresponsive`.
 54. **Mise à Jour Obligatoire du PRD et des Fichiers de Règles Avant Chaque Commit et Push (Règle de Gouvernance)** : [OBLIGATOIRE] Avant **chaque commit et push**, le Product Requirement Document (`PRD.md`) ainsi que l'ensemble des fichiers de gestion des règles (`AGENTS.md` et `CLAUDE.md`) doivent être **obligatoirement et systématiquement mis à jour** pour refléter l'état exact des modifications, des nouvelles fonctionnalités, des correctifs ou des règles architecturales introduites. Aucun commit (`git commit`) ni aucun push (`git push`) ne peut être effectué sans inclure au préalable la mise à jour correspondante de ces fichiers de référence.
 55. **Résilience et Idempotence Stricte des Migrations de Production** : Toute migration ajoutant, modifiant ou supprimant des colonnes, index ou clés étrangères doit impérativement être défensive et idempotente via `Schema::hasColumn(...)`, `Schema::hasTable(...)` ou `hasIndex(...)`. En particulier, les clauses `->after('colonne_existante')` ne doivent JAMAIS présumer de la présence inconditionnelle de la colonne cible en base de production : chaque ajout de colonne dépendante doit vérifier l'existence de la colonne parente ou fractionner ses instructions `Schema::table` en blocs séquentiels distincts (afin que chaque instruction `ALTER TABLE` soit exécutée avant la vérification suivante). Si une colonne parente est absente, la migration doit la créer défensivement ou se rabattre sur une colonne antérieure existante garantie.
-
