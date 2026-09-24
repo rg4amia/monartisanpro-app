@@ -13,10 +13,19 @@ class DevisGestionRulesTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * @param array<string, mixed> $attributes
+     */
+    private function user(array $attributes = []): User
+    {
+        /** @var User */
+        return User::factory()->create($attributes);
+    }
+
     public function test_artisan_cannot_submit_multiple_devis_until_previous_is_refused(): void
     {
-        $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
-        $artisan = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif']);
+        $client = $this->user(['role' => 'client', 'kyc_status' => 'actif']);
+        $artisan = $this->user(['role' => 'artisan', 'kyc_status' => 'actif']);
 
         $mission = Mission::create([
             'client_id' => $client->id,
@@ -78,8 +87,8 @@ class DevisGestionRulesTest extends TestCase
 
     public function test_jalon_date_cible_must_be_in_the_future_for_a_standard_mission(): void
     {
-        $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
-        $artisan = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif']);
+        $client = $this->user(['role' => 'client', 'kyc_status' => 'actif']);
+        $artisan = $this->user(['role' => 'artisan', 'kyc_status' => 'actif']);
 
         $mission = Mission::create([
             'client_id' => $client->id,
@@ -108,8 +117,8 @@ class DevisGestionRulesTest extends TestCase
 
     public function test_urgent_mission_allows_a_same_day_jalon_date(): void
     {
-        $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
-        $artisan = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif']);
+        $client = $this->user(['role' => 'client', 'kyc_status' => 'actif']);
+        $artisan = $this->user(['role' => 'artisan', 'kyc_status' => 'actif']);
 
         $mission = Mission::create([
             'client_id' => $client->id,
@@ -135,8 +144,8 @@ class DevisGestionRulesTest extends TestCase
 
     public function test_deplacement_diagnostic_mission_allows_a_same_day_jalon_date(): void
     {
-        $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
-        $artisan = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif']);
+        $client = $this->user(['role' => 'client', 'kyc_status' => 'actif']);
+        $artisan = $this->user(['role' => 'artisan', 'kyc_status' => 'actif']);
 
         $diagnosticType = \App\Models\InterventionType::firstOrCreate(
             ['name' => 'Déplacement / Diagnostic'],
@@ -188,9 +197,9 @@ class DevisGestionRulesTest extends TestCase
 
     public function test_mission_cannot_be_processed_when_devis_is_pending(): void
     {
-        $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
-        $artisan = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif']);
-        $artisan2 = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif']);
+        $client = $this->user(['role' => 'client', 'kyc_status' => 'actif']);
+        $artisan = $this->user(['role' => 'artisan', 'kyc_status' => 'actif']);
+        $artisan2 = $this->user(['role' => 'artisan', 'kyc_status' => 'actif']);
 
         $mission = Mission::create([
             'client_id' => $client->id,
@@ -248,8 +257,8 @@ class DevisGestionRulesTest extends TestCase
     {
         config(['app.env' => 'local']);
 
-        $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
-        $artisan = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif']);
+        $client = $this->user(['role' => 'client', 'kyc_status' => 'actif']);
+        $artisan = $this->user(['role' => 'artisan', 'kyc_status' => 'actif']);
 
         $mission = Mission::create([
             'client_id' => $client->id,
@@ -310,8 +319,8 @@ class DevisGestionRulesTest extends TestCase
 
     public function test_materials_required_forces_supplier_product(): void
     {
-        $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
-        $artisan = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif']);
+        $client = $this->user(['role' => 'client', 'kyc_status' => 'actif']);
+        $artisan = $this->user(['role' => 'artisan', 'kyc_status' => 'actif']);
 
         $mission = Mission::create([
             'client_id' => $client->id,
@@ -336,7 +345,7 @@ class DevisGestionRulesTest extends TestCase
         ]);
 
         // Create supplier and product
-        $supplier = User::factory()->create(['role' => 'fournisseur', 'kyc_status' => 'actif']);
+        $supplier = $this->user(['role' => 'fournisseur', 'kyc_status' => 'actif']);
         $product = \App\Models\SupplierProduct::create([
             'supplier_id' => $supplier->id,
             'sku' => 'PROD-XYZ',
@@ -362,8 +371,8 @@ class DevisGestionRulesTest extends TestCase
 
     public function test_materials_not_required_requires_intervention_type_and_conditional_labor(): void
     {
-        $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
-        $artisan = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif']);
+        $client = $this->user(['role' => 'client', 'kyc_status' => 'actif']);
+        $artisan = $this->user(['role' => 'artisan', 'kyc_status' => 'actif']);
 
         $mission = Mission::create([
             'client_id' => $client->id,
@@ -407,8 +416,8 @@ class DevisGestionRulesTest extends TestCase
 
     public function test_artisan_stock_usage_restricted_to_night_mode(): void
     {
-        $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
-        $artisan = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif']);
+        $client = $this->user(['role' => 'client', 'kyc_status' => 'actif']);
+        $artisan = $this->user(['role' => 'artisan', 'kyc_status' => 'actif']);
 
         $mission = Mission::create([
             'client_id' => $client->id,
@@ -475,8 +484,8 @@ class DevisGestionRulesTest extends TestCase
     public function test_dynamic_labor_commission_based_on_artisan_trade(): void
     {
         // 1. Create client and artisan
-        $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
-        $artisan = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif']);
+        $client = $this->user(['role' => 'client', 'kyc_status' => 'actif']);
+        $artisan = $this->user(['role' => 'artisan', 'kyc_status' => 'actif']);
 
         // 2. Set up Sector and Trade (e.g. Maçon)
         $sector = \App\Models\Sector::create(['name' => 'Maçonnerie']);

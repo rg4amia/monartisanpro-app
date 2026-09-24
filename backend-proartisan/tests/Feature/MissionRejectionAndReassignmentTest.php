@@ -11,11 +11,20 @@ class MissionRejectionAndReassignmentTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * @param array<string, mixed> $attributes
+     */
+    private function user(array $attributes = []): User
+    {
+        /** @var User */
+        return User::factory()->create($attributes);
+    }
+
     public function test_artisan_rejection_removes_mission_from_artisan_and_flags_it_for_client(): void
     {
-        $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
-        $artisan = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif']);
-        $newArtisan = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif']);
+        $client = $this->user(['role' => 'client', 'kyc_status' => 'actif']);
+        $artisan = $this->user(['role' => 'artisan', 'kyc_status' => 'actif']);
+        $newArtisan = $this->user(['role' => 'artisan', 'kyc_status' => 'actif']);
 
         $mission = Mission::create([
             'client_id' => $client->id,
@@ -109,9 +118,9 @@ class MissionRejectionAndReassignmentTest extends TestCase
 
     public function test_cannot_reassign_artisan_if_not_mission_owner(): void
     {
-        $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
-        $otherClient = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
-        $artisan = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif']);
+        $client = $this->user(['role' => 'client', 'kyc_status' => 'actif']);
+        $otherClient = $this->user(['role' => 'client', 'kyc_status' => 'actif']);
+        $artisan = $this->user(['role' => 'artisan', 'kyc_status' => 'actif']);
 
         $mission = Mission::create([
             'client_id' => $client->id,

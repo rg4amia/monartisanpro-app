@@ -28,7 +28,7 @@ use App\Models\WhatsappClickLog;
 use App\Services\AdminService;
 use App\Services\GeneratedDocumentService;
 use App\Services\UploadLimitService;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -209,6 +209,7 @@ class AdminPanelData
     {
         $stats = $this->adminService->dashboard();
 
+        /** @var LengthAwarePaginator $usersPage */
         $usersPage = $this->adminService->listUsers(
             $request->query('search_users') ?: null,
             $request->query('role_users') ?: null,

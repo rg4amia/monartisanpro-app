@@ -14,7 +14,7 @@ use App\Models\ScoreLedgerEntry;
 use App\Models\Order;
 use App\Models\Jalon;
 use App\Models\SupplierCashout;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\DB;
 
