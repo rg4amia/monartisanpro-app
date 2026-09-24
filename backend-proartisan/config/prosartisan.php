@@ -8,6 +8,28 @@ return [
         'jcode_max_distance' => env('GPS_JCODE_MAX_DISTANCE', 100),   // mètres
         'artisan_blur_radius' => env('GPS_ARTISAN_BLUR', 50),          // mètres
         'nearby_artisan_radius' => env('ARTISAN_NEARBY_RADIUS', 2000),   // mètres
+        'matching_tiers' => [
+            [
+                'id' => 'immediate',
+                'radius' => (int) env('ARTISAN_TIER_IMMEDIATE', 2000),
+                'label' => 'Proximité immédiate (2 km)',
+            ],
+            [
+                'id' => 'local',
+                'radius' => (int) env('ARTISAN_TIER_LOCAL', 5000),
+                'label' => 'Zone locale (5 km)',
+            ],
+            [
+                'id' => 'city',
+                'radius' => (int) env('ARTISAN_TIER_CITY', 15000),
+                'label' => 'Grand Abidjan (15 km)',
+            ],
+            [
+                'id' => 'extended',
+                'radius' => (int) env('ARTISAN_TIER_EXTENDED', 50000),
+                'label' => 'Zone élargie (50 km)',
+            ],
+        ],
     ],
 
     'mission' => [
@@ -57,6 +79,11 @@ return [
         'trim',
         explode(',', (string) env('SUPER_ADMIN_EMAILS', 'admin@prosartisan.ci')),
     ))),
+
+    'delivery' => [
+        'in_transit_timeout_minutes' => (int) env('DRIVER_IN_TRANSIT_TIMEOUT_MINUTES', 25),
+        'in_transit_alert_cooldown_minutes' => (int) env('DRIVER_IN_TRANSIT_ALERT_COOLDOWN_MINUTES', 30),
+    ],
 
     'jalon' => [
         // Délai (en heures) avant libération automatique si le client ne valide pas

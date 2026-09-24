@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Address;
 use App\Models\InterventionType;
 use App\Models\Mission;
 use App\Models\User;
@@ -38,6 +39,30 @@ class MissionService
             : DraftState::class;
 
         $locationAddress = $data['location_address'] ?? $data['location'] ?? null;
+        $clientLat = $data['lat'] ?? null;
+        $clientLng = $data['lng'] ?? null;
+        $addressId = null;
+
+        if (! empty($data['address_id'])) {
+            $address = Address::find($data['address_id']);
+            if (! $address || $address->user_id !== $client->id) {
+                abort(403, 'Cette adresse ne vous appartient pas.');
+            }
+
+            $addressId = $address->id;
+            if (empty($locationAddress)) {
+                $parts = array_filter([$address->address_line, $address->city, $address->region]);
+                $locationAddress = ! empty($parts) ? implode(', ', $parts) : ($address->label ?? 'Adresse enregistrée');
+            }
+
+            if ($clientLat === null && $clientLng === null) {
+                $coords = $address->getPositionCoords();
+                if ($coords) {
+                    $clientLat = $coords['lat'];
+                    $clientLng = $coords['lng'];
+                }
+            }
+        }
 
         // RÈGLE : le client sélectionne le type d'intervention souhaité à la
         // demande de devis. Les anciennes versions mobiles ne l'envoient pas
@@ -47,6 +72,7 @@ class MissionService
 
         $mission = Mission::create([
             'client_id' => $client->id,
+            'address_id' => $addressId,
             'artisan_id' => $data['artisan_id'] ?? null,
             'requested_sector_id' => $data['sector_id'] ?? null,
             'requested_trade_id' => $data['trade_id'] ?? null,
@@ -54,8 +80,8 @@ class MissionService
             'description' => $data['description'],
             'photos_json' => $data['photos'] ?? null,
             'status' => $initialState,
-            'client_latitude' => $data['lat'] ?? null,
-            'client_longitude' => $data['lng'] ?? null,
+            'client_latitude' => $clientLat,
+            'client_longitude' => $clientLng,
             'client_address' => $locationAddress,
             'montant_total' => 0,
             'montant_materiaux' => 0,

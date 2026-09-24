@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../core/storage/storage_service.dart';
 import '../../../core/utils/bypass_validator.dart';
+import '../../../data/models/address_model.dart';
 import '../../../data/repositories/mission_repository.dart';
 import '../../services/models/intervention_type_model.dart';
 import '../../services/models/sector_model.dart';
@@ -41,6 +42,8 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
   final _locationDetail = ''.obs;
   final _latitude = 0.0.obs;
   final _longitude = 0.0.obs;
+  final _selectedAddressId = Rxn<int>();
+  final _selectedAddressLabel = Rxn<String>();
   final _isLocating = true.obs;
   final _nightIntervention = false.obs;
   final _photos = <XFile>[].obs;
@@ -111,6 +114,8 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
       );
 
       if (!mounted) return;
+      _selectedAddressId.value = null;
+      _selectedAddressLabel.value = null;
       _latitude.value = position.latitude;
       _longitude.value = position.longitude;
       _location.value = 'Position actuelle détectée';
@@ -118,6 +123,8 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
           'Lat: ${position.latitude.toStringAsFixed(4)}, Lng: ${position.longitude.toStringAsFixed(4)}';
     } catch (_) {
       if (!mounted) return;
+      _selectedAddressId.value = null;
+      _selectedAddressLabel.value = null;
       _latitude.value = _kAbidjanFallbackLat;
       _longitude.value = _kAbidjanFallbackLng;
       _location.value = 'Abidjan, Côte d\'Ivoire';
@@ -125,6 +132,145 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
     } finally {
       if (mounted) _isLocating.value = false;
     }
+  }
+
+  Future<void> _showLocationOptionsSheet() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      backgroundColor: Colors.white,
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Choisir l\'emplacement du chantier',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: MissionRequestColors.ink,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: MissionRequestColors.primaryLight,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.my_location,
+                      color: MissionRequestColors.primary,
+                    ),
+                  ),
+                  title: const Text(
+                    'Ma position GPS actuelle',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: const Text(
+                    'Détecter automatiquement via le capteur GPS',
+                  ),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _autoDetectLocation();
+                  },
+                ),
+                const Divider(),
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF24734F).withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.bookmark_border_rounded,
+                      color: Color(0xFF24734F),
+                    ),
+                  ),
+                  title: const Text(
+                    'Mon carnet d\'adresses',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: const Text(
+                    'Sélectionner une adresse enregistrée (maison, bureau, etc.)',
+                  ),
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    final result = await Get.toNamed(Routes.addressList);
+                    if (result is AddressModel) {
+                      _selectedAddressId.value = result.id;
+                      _selectedAddressLabel.value = result.shortLabel;
+                      _location.value = result.addressLine;
+                      final cityPart =
+                          result.city.isNotEmpty ? '${result.city} • ' : '';
+                      final latPart = result.lat != null && result.lat != 0.0
+                          ? 'Lat: ${result.lat!.toStringAsFixed(4)}, Lng: ${result.lng?.toStringAsFixed(4)}'
+                          : 'Adresse enregistrée';
+                      _locationDetail.value = '$cityPart$latPart';
+                      if (result.lat != null && result.lat != 0.0) {
+                        _latitude.value = result.lat!;
+                        _longitude.value = result.lng ?? _kAbidjanFallbackLng;
+                      }
+                    }
+                  },
+                ),
+                const Divider(),
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(Icons.map_outlined, color: Colors.blue.shade700),
+                  ),
+                  title: const Text(
+                    'Sélectionner sur la carte',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: const Text(
+                    'Pointer manuellement l\'emplacement précis',
+                  ),
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    final result = await Get.toNamed(Routes.locationPicker);
+                    if (result != null && result is Map) {
+                      _selectedAddressId.value = null;
+                      _selectedAddressLabel.value = null;
+                      _latitude.value = result['latitude'] ?? 0.0;
+                      _longitude.value = result['longitude'] ?? 0.0;
+                      _location.value =
+                          result['address'] ?? 'Emplacement sélectionné';
+                      _locationDetail.value =
+                          'Lat: ${_latitude.value.toStringAsFixed(4)}, Lng: ${_longitude.value.toStringAsFixed(4)}';
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _loadInterventionTypes() async {
@@ -326,19 +472,8 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
                       () => MissionLocationCard(
                         location: _location.value,
                         detail: _locationDetail.value,
-                        onChangeTap: () async {
-                          final result = await Get.toNamed(
-                            Routes.locationPicker,
-                          );
-                          if (result != null && result is Map) {
-                            _latitude.value = result['latitude'] ?? 0.0;
-                            _longitude.value = result['longitude'] ?? 0.0;
-                            _location.value =
-                                result['address'] ?? 'Location selected';
-                            _locationDetail.value =
-                                'Lat: ${_latitude.value.toStringAsFixed(4)}, Lng: ${_longitude.value.toStringAsFixed(4)}';
-                          }
-                        },
+                        addressLabel: _selectedAddressLabel.value,
+                        onChangeTap: _showLocationOptionsSheet,
                       ),
                     ),
                     const SizedBox(height: 32),
@@ -391,6 +526,7 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
                             'locationDetail': _locationDetail.value,
                             'latitude': _latitude.value,
                             'longitude': _longitude.value,
+                            'addressId': _selectedAddressId.value,
                             'nightIntervention': _nightIntervention.value,
                             'photos': _photos.toList(),
                             'video': _video.value,

@@ -688,6 +688,7 @@ class OrderService
                 }
 
                 $updateData['status'] = 'driver_picked_up';
+                $updateData['driver_picked_up_at'] = now();
                 $order->update($updateData);
 
                 $this->releaseSupplierFunds($order);

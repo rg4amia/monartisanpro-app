@@ -31,6 +31,7 @@ class GeoService
                     u.phone,
                     u.name,
                     u.score_prosartisan,
+                    u.position,
                     0.0 AS lng,
                     0.0 AS lat,
                     0 AS distance_metres,
@@ -50,7 +51,27 @@ class GeoService
             $bindings = [];
             [$sql, $bindings] = $this->appendFilters($sql, $bindings, $sectorFilter, $tradeFilter, $nightOnly);
 
-            return collect(DB::select($sql, $bindings));
+            $rows = collect(DB::select($sql, $bindings));
+
+            return $rows->map(function ($row) use ($lat, $lng) {
+                if (! empty($row->position) && str_contains((string) $row->position, ',')) {
+                    $parts = explode(',', (string) $row->position, 2);
+                    $row->lat = (float) trim($parts[0]);
+                    $row->lng = (float) trim($parts[1]);
+                    $row->distance_metres = (int) round($this->haversineDistanceMeters($lat, $lng, $row->lat, $row->lng));
+                }
+
+                return $row;
+            })->filter(function ($row) use ($radiusMeters) {
+                if (! empty($row->position) && str_contains((string) $row->position, ',')) {
+                    return $row->distance_metres <= $radiusMeters;
+                }
+
+                return true;
+            })->sortBy([
+                ['score_prosartisan', 'desc'],
+                ['distance_metres', 'asc'],
+            ])->values();
         }
 
         $sql = "
@@ -82,6 +103,97 @@ class GeoService
         $sql .= ' ORDER BY u.score_prosartisan DESC, distance_metres ASC';
 
         return collect(DB::select($sql, $bindings));
+    }
+
+    /**
+     * Recherche adaptative d'artisans par paliers concentriques :
+     * P1 (2 km) -> P2 (5 km) -> P3 (15 km) -> P4 (50 km).
+     *
+     * Si un rayon explicite est fourni par le client, on effectue la recherche
+     * sur ce rayon uniquement. Sinon, on itère sur les paliers configurés
+     * jusqu'à trouver au moins un artisan actif.
+     *
+     * @return array{
+     *     artisans: Collection,
+     *     tier_id: string,
+     *     tier_label: string,
+     *     radius_meters: int,
+     *     is_fallback: bool
+     * }
+     */
+    public function adaptiveNearbyArtisans(
+        float $lat,
+        float $lng,
+        ?int $customRadius = null,
+        ?string $sectorFilter = null,
+        ?string $tradeFilter = null,
+        bool $nightOnly = false
+    ): array {
+        $tiers = config('prosartisan.gps.matching_tiers', [
+            ['id' => 'immediate', 'radius' => 2000, 'label' => 'Proximité immédiate (2 km)'],
+            ['id' => 'local', 'radius' => 5000, 'label' => 'Zone locale (5 km)'],
+            ['id' => 'city', 'radius' => 15000, 'label' => 'Grand Abidjan (15 km)'],
+            ['id' => 'extended', 'radius' => 50000, 'label' => 'Zone élargie (50 km)'],
+        ]);
+
+        $initialRadius = (int) config('prosartisan.gps.nearby_artisan_radius', 2000);
+
+        if ($customRadius !== null) {
+            $artisans = $this->nearbyArtisans($lat, $lng, $customRadius, $sectorFilter, $tradeFilter, $nightOnly);
+
+            return [
+                'artisans' => $artisans,
+                'tier_id' => 'custom',
+                'tier_label' => "Rayon personnalisé ({$customRadius} m)",
+                'radius_meters' => $customRadius,
+                'is_fallback' => $customRadius > $initialRadius,
+            ];
+        }
+
+        $activeTier = $tiers[0] ?? ['id' => 'immediate', 'radius' => 2000, 'label' => 'Proximité immédiate (2 km)'];
+        $matchedArtisans = collect();
+
+        foreach ($tiers as $tier) {
+            $activeTier = $tier;
+            $matchedArtisans = $this->nearbyArtisans(
+                $lat,
+                $lng,
+                (int) $tier['radius'],
+                $sectorFilter,
+                $tradeFilter,
+                $nightOnly
+            );
+
+            if ($matchedArtisans->isNotEmpty()) {
+                break;
+            }
+        }
+
+        $radiusUsed = (int) $activeTier['radius'];
+
+        return [
+            'artisans' => $matchedArtisans,
+            'tier_id' => (string) $activeTier['id'],
+            'tier_label' => (string) $activeTier['label'],
+            'radius_meters' => $radiusUsed,
+            'is_fallback' => $radiusUsed > $initialRadius,
+        ];
+    }
+
+    /**
+     * Distance orthodromique en mètres (formule de Haversine).
+     */
+    public function haversineDistanceMeters(float $lat1, float $lon1, float $lat2, float $lon2): float
+    {
+        $earthRadius = 6371000; // mètres
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLon = deg2rad($lon2 - $lon1);
+        $a = sin($dLat / 2) * sin($dLat / 2) +
+             cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+             sin($dLon / 2) * sin($dLon / 2);
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+
+        return $earthRadius * $c;
     }
 
     /**

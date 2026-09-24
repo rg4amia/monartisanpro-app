@@ -37,32 +37,22 @@ class ArtisanController extends Controller
             'lng.required' => 'La longitude est obligatoire.',
         ]);
 
-        $radius = $data['radius'] ?? config('prosartisan.gps.nearby_artisan_radius', 2000);
-        $isFallback = false;
+        $customRadius = isset($data['radius']) ? (int) $data['radius'] : null;
 
-        $artisans = $this->geoService->nearbyArtisans(
+        $adaptiveResult = $this->geoService->adaptiveNearbyArtisans(
             (float) $data['lat'],
             (float) $data['lng'],
-            (int) $radius,
+            $customRadius,
             isset($data['sector']) ? (string) $data['sector'] : null,
             isset($data['trade']) ? (string) $data['trade'] : null,
             (bool) ($data['intervention_nuit'] ?? false),
         );
 
-        if ($artisans->isEmpty()) {
-            // Aucun artisan trouvé dans le rayon initial (ex: 2km).
-            // Élargissement de la recherche à 150 km pour proposer des artisans d'autres zones/communes (ex: plombier distant).
-            $isFallback = true;
-            $radius = 150000;
-            $artisans = $this->geoService->nearbyArtisans(
-                (float) $data['lat'],
-                (float) $data['lng'],
-                (int) $radius,
-                isset($data['sector']) ? (string) $data['sector'] : null,
-                isset($data['trade']) ? (string) $data['trade'] : null,
-                (bool) ($data['intervention_nuit'] ?? false),
-            );
-        }
+        $artisans = $adaptiveResult['artisans'];
+        $radius = $adaptiveResult['radius_meters'];
+        $isFallback = $adaptiveResult['is_fallback'];
+        $tierId = $adaptiveResult['tier_id'];
+        $tierLabel = $adaptiveResult['tier_label'];
 
         $blurRadius = config('prosartisan.gps.artisan_blur_radius', 50);
 
@@ -92,6 +82,9 @@ class ArtisanController extends Controller
                 'total' => $result->count(),
                 'radius' => $radius,
                 'is_fallback' => $isFallback,
+                'tier_id' => $tierId,
+                'tier_label' => $tierLabel,
+                'is_extended_search' => $isFallback,
                 'intervention_nuit' => (bool) ($data['intervention_nuit'] ?? false),
                 'center' => ['lat' => (float) $data['lat'], 'lng' => (float) $data['lng']],
             ],

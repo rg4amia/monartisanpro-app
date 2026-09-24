@@ -23,6 +23,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 class MissionController extends Controller
 {
@@ -134,6 +135,8 @@ class MissionController extends Controller
                 'success' => true,
                 'data' => new MissionResource($mission->load('client', 'jalons', 'requestedSector', 'requestedTrade')),
             ], 201);
+        } catch (HttpExceptionInterface $e) {
+            throw $e;
         } catch (\Throwable $e) {
             Log::error('Erreur lors de la création de la mission: '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),

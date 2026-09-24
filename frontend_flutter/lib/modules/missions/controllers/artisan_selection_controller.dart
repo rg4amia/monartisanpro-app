@@ -29,6 +29,7 @@ class ArtisanSelectionController extends GetxController {
   final photos = <XFile>[].obs;
   final video = Rx<XFile?>(null);
   final existingMissionId = 0.obs;
+  final selectedAddressId = Rxn<int>();
 
   void toggleSearchDistant() {
     searchDistant.value = !searchDistant.value;
@@ -61,6 +62,11 @@ class ArtisanSelectionController extends GetxController {
     final nextPhotos = data['photos'] as List<XFile>? ?? [];
     final nextVideo = data['video'] as XFile?;
 
+    final nextAddressId =
+        data['addressId'] != null ? _parseInt(data['addressId']) : null;
+    final normalizedAddressId =
+        nextAddressId != null && nextAddressId > 0 ? nextAddressId : null;
+
     final hasSamePayload = _initializedFromArgs &&
         selectedCategory.value == nextCategory &&
         selectedCategoryId.value == nextCategoryId &&
@@ -68,6 +74,7 @@ class ArtisanSelectionController extends GetxController {
         selectedInterventionTypeId.value == nextInterventionTypeId &&
         clientLatitude.value == nextLatitude &&
         clientLongitude.value == nextLongitude &&
+        selectedAddressId.value == normalizedAddressId &&
         missionDescription.value == nextDescription &&
         locationAddress.value == nextLocationAddress &&
         locationDetail.value == nextLocationDetail &&
@@ -85,6 +92,7 @@ class ArtisanSelectionController extends GetxController {
     selectedInterventionTypeId.value = nextInterventionTypeId;
     clientLatitude.value = nextLatitude;
     clientLongitude.value = nextLongitude;
+    selectedAddressId.value = normalizedAddressId;
     missionDescription.value = nextDescription;
     locationAddress.value = nextLocationAddress;
     locationDetail.value = nextLocationDetail;
@@ -146,6 +154,7 @@ class ArtisanSelectionController extends GetxController {
             ? selectedCategory.value
             : (artisan.trade ?? 'Travaux generaux'),
         urgency: 'moyen',
+        addressId: selectedAddressId.value,
         sectorId:
             selectedCategoryId.value > 0 ? selectedCategoryId.value : null,
         tradeId: selectedTradeId.value > 0 ? selectedTradeId.value : null,
@@ -188,7 +197,7 @@ class ArtisanSelectionController extends GetxController {
       final results = await _artisanRepository.getNearby(
         lat: clientLatitude.value,
         lng: clientLongitude.value,
-        radiusMeters: searchDistant.value ? 150000 : 5000,
+        radiusMeters: searchDistant.value ? 50000 : null,
         sectorId: selectedCategoryId.value > 0
             ? selectedCategoryId.value.toString()
             : null,

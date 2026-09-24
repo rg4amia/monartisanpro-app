@@ -43,7 +43,7 @@ class Address extends Model
     public function setPosition(float $lat, float $lng): void
     {
         if (config('database.default') === 'sqlite') {
-            $this->update(['position' => "$lat,$lng"]);
+            $this->forceFill(['position' => "$lat,$lng"])->save();
 
             return;
         }

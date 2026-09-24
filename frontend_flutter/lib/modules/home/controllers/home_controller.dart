@@ -281,7 +281,7 @@ class HomeController extends GetxController {
       artisans.value = await _artisanRepo.getNearby(
         lat: _lat!,
         lng: _lng!,
-        radiusMeters: searchDistant.value ? 150000 : 5000,
+        radiusMeters: searchDistant.value ? 50000 : null,
       );
       nearbyArtisansCount.value = artisans.length;
     }
@@ -373,7 +373,7 @@ class HomeController extends GetxController {
         lat: _lat!,
         lng: _lng!,
         sectorId: category,
-        radiusMeters: searchDistant.value ? 150000 : 5000,
+        radiusMeters: searchDistant.value ? 50000 : null,
       );
       nearbyArtisansCount.value = artisans.length;
     } catch (_) {
@@ -403,7 +403,7 @@ class HomeController extends GetxController {
         lat: _lat!,
         lng: _lng!,
         sectorId: selectedCategory.value,
-        radiusMeters: searchDistant.value ? 150000 : 5000,
+        radiusMeters: searchDistant.value ? 50000 : null,
       );
 
       // Filtrer localement par nom ou métier

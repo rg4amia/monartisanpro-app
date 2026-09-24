@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\DeliveryTracking;
 use App\Models\FournisseurAgree;
 use App\Models\Order;
 use App\Models\Setting;
@@ -235,4 +236,117 @@ test('Order::isDriverStale returns correct values', function () {
     // Un order qui n'est pas driver_assigned ne peut pas être stale
     $order->update(['status' => 'driver_picked_up']);
     expect($order->isDriverStale(15))->toBeFalse();
+});
+
+// ─── Test 11 : Livreur immobile en transit (> 25 min) déclenche relance et alerte admin ─
+
+test('watchdog alerts driver and admin when order is in transit without movement for more than 25 minutes', function () {
+    $order = createAssignedOrder(minutesAgo: 45);
+    $driverId = $order->driver_id;
+    $admin = User::factory()->create(['role' => 'admin', 'phone' => '+225099'.rand(1000000, 9999999)]);
+
+    $order->update([
+        'status' => 'driver_picked_up',
+        'driver_picked_up_at' => Carbon::now()->subMinutes(30),
+        'updated_at' => Carbon::now()->subMinutes(30),
+    ]);
+
+    $this->artisan('prosartisan:driver-watchdog')
+        ->assertExitCode(0);
+
+    $order->refresh();
+
+    // Le statut et le livreur ne doivent STRICTEMENT PAS changer (matériaux déjà récupérés)
+    expect($order->status)->toBe('driver_picked_up');
+    expect($order->driver_id)->toBe($driverId);
+    expect($order->driver_stalled_alert_at)->not->toBeNull();
+
+    // Relance envoyée au livreur
+    $this->assertDatabaseHas('notifications', [
+        'user_id' => $driverId,
+        'title' => 'Confirmation de livraison requise',
+    ]);
+
+    // Alerte émise pour l'administrateur
+    $this->assertDatabaseHas('notifications', [
+        'user_id' => $admin->id,
+        'title' => 'Livreur immobile en cours de livraison',
+    ]);
+});
+
+// ─── Test 12 : Livreur en transit avec point GPS récent (< 25 min) n'est pas alerté ─────
+
+test('watchdog does not alert when driver in transit has recent GPS tracking point', function () {
+    $order = createAssignedOrder(minutesAgo: 45);
+    $driverId = $order->driver_id;
+
+    $order->update([
+        'status' => 'driver_picked_up',
+        'driver_picked_up_at' => Carbon::now()->subMinutes(35),
+    ]);
+
+    // Simuler un point GPS récent (il y a 5 min)
+    DeliveryTracking::create([
+        'order_id' => $order->id,
+        'driver_id' => $driverId,
+        'latitude' => 5.3400,
+        'longitude' => -4.0100,
+        'speed_kmh' => 25.0,
+        'created_at' => Carbon::now()->subMinutes(5),
+    ]);
+
+    $this->artisan('prosartisan:driver-watchdog')
+        ->assertExitCode(0);
+
+    $order->refresh();
+
+    expect($order->status)->toBe('driver_picked_up');
+    expect($order->driver_stalled_alert_at)->toBeNull();
+});
+
+// ─── Test 13 : Cooldown anti-spam évite de renvoyer l'alerte trop rapidement ─────────────
+
+test('watchdog respects alert cooldown for in-transit orders', function () {
+    $order = createAssignedOrder(minutesAgo: 45);
+    $driverId = $order->driver_id;
+
+    $order->update([
+        'status' => 'driver_picked_up',
+        'driver_picked_up_at' => Carbon::now()->subMinutes(40),
+        'driver_stalled_alert_at' => Carbon::now()->subMinutes(10), // Déjà alerté il y a 10 min (< 30 min cooldown)
+    ]);
+
+    $initialNotificationCount = DB::table('notifications')->where('user_id', $driverId)->count();
+
+    $this->artisan('prosartisan:driver-watchdog')
+        ->assertExitCode(0);
+
+    $order->refresh();
+
+    // Aucune nouvelle notification générée
+    $newNotificationCount = DB::table('notifications')->where('user_id', $driverId)->count();
+    expect($newNotificationCount)->toBe($initialNotificationCount);
+});
+
+// ─── Test 14 : Mode dry-run n'émet pas d'alerte en transit ───────────────────────────────
+
+test('dry-run mode does not alert or update stalled timestamp in transit', function () {
+    $order = createAssignedOrder(minutesAgo: 45);
+    $driverId = $order->driver_id;
+
+    $order->update([
+        'status' => 'driver_picked_up',
+        'driver_picked_up_at' => Carbon::now()->subMinutes(35),
+    ]);
+
+    $this->artisan('prosartisan:driver-watchdog', ['--dry-run' => true])
+        ->assertExitCode(0);
+
+    $order->refresh();
+
+    expect($order->driver_stalled_alert_at)->toBeNull();
+    $this->assertDatabaseMissing('notifications', [
+        'user_id' => $driverId,
+        'title' => 'Confirmation de livraison requise',
+    ]);
 });

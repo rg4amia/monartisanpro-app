@@ -31,6 +31,7 @@ class CreateMissionRequest extends FormRequest
             'location_address' => ['nullable', 'string', 'max:255', new NoContactInformation],
             'photos' => ['nullable', 'array', 'max:5'],
             'photos.*' => ['string'],
+            'address_id' => ['nullable', 'integer', 'exists:addresses,id'],
         ];
 
         // Les coordonnées de paiement Mobile Money sont facultatives lors de la demande de devis
@@ -53,6 +54,7 @@ class CreateMissionRequest extends FormRequest
             'lat.numeric' => 'La latitude doit être un nombre.',
             'lng.numeric' => 'La longitude doit être un nombre.',
             'location_address.max' => 'L\'adresse est trop longue.',
+            'address_id.exists' => 'L\'adresse sélectionnée est introuvable.',
         ];
     }
 }

@@ -39,6 +39,8 @@ class Order extends Model
         'delivery_address_line',
         'delivery_city',
         'driver_assigned_at',
+        'driver_picked_up_at',
+        'driver_stalled_alert_at',
         'driver_reassignment_count',
         'delivery_mode',
         'status',
@@ -91,6 +93,8 @@ class Order extends Model
             'driver_reassignment_count' => 'integer',
             'delivered_at' => 'datetime',
             'driver_assigned_at' => 'datetime',
+            'driver_picked_up_at' => 'datetime',
+            'driver_stalled_alert_at' => 'datetime',
             'dispute_opened_at' => 'datetime',
             'is_parent_group' => 'boolean',
         ];

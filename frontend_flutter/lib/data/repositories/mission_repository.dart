@@ -146,6 +146,7 @@ class MissionRepository {
     required String description,
     required String category,
     required String urgency,
+    int? addressId,
     int? sectorId,
     int? tradeId,
     int? interventionTypeId,
@@ -160,6 +161,7 @@ class MissionRepository {
       'description': description,
       'category': category,
       'urgency': urgency,
+      if (addressId != null) 'address_id': addressId,
       if (sectorId != null) 'sector_id': sectorId,
       if (tradeId != null) 'trade_id': tradeId,
       if (interventionTypeId != null)

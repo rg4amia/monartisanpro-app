@@ -29,6 +29,7 @@ class MissionModel {
   final double? supplierLongitude;
   final int? interventionTypeId;
   final String? interventionTypeName;
+  final int? addressId;
   final bool artisanRejected;
   final bool hasArtisan;
 
@@ -65,6 +66,7 @@ class MissionModel {
     this.supplierLongitude,
     this.interventionTypeId,
     this.interventionTypeName,
+    this.addressId,
     this.artisanRejected = false,
     this.hasArtisan = true,
     this.unreadMessagesCount = 0,
@@ -203,6 +205,7 @@ class MissionModel {
       unreadMessagesCount: _parseInt(
         json['unreadMessagesCount'] ?? json['unread_messages_count'],
       ),
+      addressId: readInt(json['address_id'] ?? json['addressId']),
     );
   }
 
@@ -249,6 +252,7 @@ class MissionModel {
         'category': category,
         'urgency': urgency,
         'location': location,
+        if (addressId != null) 'address_id': addressId,
         'paymentStatus': paymentStatus,
         'payment_type': paymentType,
         'statusGemini': statusGemini,

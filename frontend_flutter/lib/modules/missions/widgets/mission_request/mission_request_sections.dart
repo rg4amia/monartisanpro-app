@@ -223,12 +223,14 @@ class MissionDescriptionField extends StatelessWidget {
 class MissionLocationCard extends StatelessWidget {
   final String location;
   final String detail;
+  final String? addressLabel;
   final VoidCallback onChangeTap;
 
   const MissionLocationCard({
     super.key,
     required this.location,
     required this.detail,
+    this.addressLabel,
     required this.onChangeTap,
   });
 
@@ -247,12 +249,16 @@ class MissionLocationCard extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: MissionRequestColors.primaryLight,
+              color: addressLabel != null
+                  ? const Color(0xFF24734F).withValues(alpha: 0.12)
+                  : MissionRequestColors.primaryLight,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(
-              Icons.location_on,
-              color: MissionRequestColors.primary,
+            child: Icon(
+              addressLabel != null ? Icons.bookmark_rounded : Icons.location_on,
+              color: addressLabel != null
+                  ? const Color(0xFF24734F)
+                  : MissionRequestColors.primary,
               size: 20,
             ),
           ),
@@ -261,6 +267,41 @@ class MissionLocationCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (addressLabel != null && addressLabel!.isNotEmpty) ...[
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF24734F).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.bookmark_outline,
+                          size: 11,
+                          color: Color(0xFF24734F),
+                        ),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            addressLabel!,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF24734F),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 Text(
                   location,
                   style: const TextStyle(

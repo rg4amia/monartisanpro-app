@@ -45,6 +45,8 @@ class MissionResource extends JsonResource
             'referentRequired' => $this->referent_required,
             'paymentStatus' => $this->mapPaymentStatus(),
             'location' => $this->shouldRevealClientDetails($request) ? $this->client_address : null,
+            'address_id' => $this->shouldRevealClientDetails($request) ? $this->address_id : null,
+            'addressId' => $this->shouldRevealClientDetails($request) ? $this->address_id : null,
             'clientAddress' => $this->shouldRevealClientDetails($request) ? $this->client_address : null,
             'clientCoordinates' => $this->shouldRevealClientDetails($request) && $this->client_latitude !== null && $this->client_longitude !== null ? [
                 'lat' => $this->client_latitude,

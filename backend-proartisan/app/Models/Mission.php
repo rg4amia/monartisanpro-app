@@ -17,7 +17,7 @@ class Mission extends Model
     use HasFactory, HasStates;
 
     protected $fillable = [
-        'client_id', 'artisan_id', 'artisan_rejected_at', 'description', 'photos_json',
+        'client_id', 'address_id', 'artisan_id', 'artisan_rejected_at', 'description', 'photos_json',
         'requested_sector_id', 'requested_trade_id', 'intervention_type_id',
         'gemini_category', 'gemini_urgency', 'gemini_estimation_min', 'gemini_estimation_max',
         'status', 'montant_total', 'montant_materiaux', 'montant_mo',
@@ -36,6 +36,7 @@ class Mission extends Model
     {
         return [
             'status' => MissionState::class,
+            'address_id' => 'integer',
             'photos_json' => 'array',
             'montant_total' => 'integer',
             'montant_materiaux' => 'integer',
@@ -125,6 +126,11 @@ class Mission extends Model
     public function requestedTrade()
     {
         return $this->belongsTo(Trade::class, 'requested_trade_id');
+    }
+
+    public function address()
+    {
+        return $this->belongsTo(Address::class);
     }
 
     public function interventionType()
