@@ -22,6 +22,9 @@ Thumbs.db
 # ── Environnements Python locaux ────────────────────────────────────
 .venv/
 
+# ── Brouillons locaux (scripts jetables, jamais versionnés) ────────
+scratch/
+
 # ── Logs & captures de debug ───────────────────────────────────────
 *.log
 emulator_*.log

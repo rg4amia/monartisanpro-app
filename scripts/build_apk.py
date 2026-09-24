@@ -4,7 +4,7 @@ import time
 import shutil
 import subprocess
 
-PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FLUTTER_DIR = os.path.join(PROJECT_ROOT, "frontend_flutter")
 ANDROID_DIR = os.path.join(FLUTTER_DIR, "android")
 BUILD_DIR = os.path.join(FLUTTER_DIR, "build")

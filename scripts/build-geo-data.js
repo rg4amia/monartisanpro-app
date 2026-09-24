@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const districtsData = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../extracted-districts.json'), 'utf8'));
+const districtsData = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'data/extracted-districts.json'), 'utf8'));
 
 // 22 Pôles urbains et villes stratégiques de Côte d'Ivoire
 // Coordonnées calibrées sur la grille vectorielle 1000x1000
