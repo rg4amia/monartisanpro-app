@@ -1,3 +1,5 @@
+import 'package:frontend_flutter/core/utils/json_readers.dart';
+
 class UserModel {
   final int id;
   final String phone;
@@ -52,30 +54,24 @@ class UserModel {
   bool get isCnmciVerified => cnmciStatus == 'valide';
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
-    final artisanProfile = json['artisanProfile'] as Map<String, dynamic>?;
+    final artisanProfile = readMap(json['artisanProfile']);
     return UserModel(
-      id: json['id'] as int,
-      phone: json['phone'] as String,
-      role: json['role'] as String,
+      id: readInt(json['id']) ?? 0,
+      phone: readString(json['phone']) ?? '',
+      role: readString(json['role']) ?? '',
       kycStatus:
-          (json['kycStatus'] ?? json['kyc_status']) as String? ?? 'en_attente',
+          readString(json['kycStatus'] ?? json['kyc_status']) ?? 'en_attente',
       scoreProsArtisan:
-          (json['scoreProsArtisan'] ?? json['score_prosartisan']) as int? ?? 0,
+          readInt(json['scoreProsArtisan'] ?? json['score_prosartisan']) ?? 0,
       walletMateriaux:
-          (json['walletMateriaux'] ?? json['wallet_materiaux']) as int? ?? 0,
-      walletMo: (json['walletMo'] ?? json['wallet_mo']) as int? ?? 0,
-      name: json['name'] as String?,
-      photoUrl: (json['photoUrl'] ?? json['photo_url']) as String?,
-      lat: (json['lat'] as num?)?.toDouble() ??
-          (json['position'] is Map<String, dynamic>
-                  ? (json['position'] as Map<String, dynamic>)['lat'] as num?
-                  : null)
-              ?.toDouble(),
-      lng: (json['lng'] as num?)?.toDouble() ??
-          (json['position'] is Map<String, dynamic>
-                  ? (json['position'] as Map<String, dynamic>)['lng'] as num?
-                  : null)
-              ?.toDouble(),
+          readInt(json['walletMateriaux'] ?? json['wallet_materiaux']) ?? 0,
+      walletMo: readInt(json['walletMo'] ?? json['wallet_mo']) ?? 0,
+      name: readString(json['name']),
+      photoUrl: readString(json['photoUrl'] ?? json['photo_url']),
+      lat: readDouble(json['lat']) ??
+          readDouble(readMap(json['position'])?['lat']),
+      lng: readDouble(json['lng']) ??
+          readDouble(readMap(json['position'])?['lng']),
       nightInterventionAvailable: _parseBool(
         json['nightInterventionAvailable'] ??
             json['night_intervention_available'] ??
@@ -84,21 +80,21 @@ class UserModel {
                 : null),
       ),
       sectorId:
-          artisanProfile != null ? artisanProfile['sectorId'] as int? : null,
+          artisanProfile != null ? readInt(artisanProfile['sectorId']) : null,
       tradeId:
-          artisanProfile != null ? artisanProfile['tradeId'] as int? : null,
+          artisanProfile != null ? readInt(artisanProfile['tradeId']) : null,
       sectorName:
-          artisanProfile != null ? artisanProfile['sector'] as String? : null,
+          artisanProfile != null ? readString(artisanProfile['sector']) : null,
       tradeName:
-          artisanProfile != null ? artisanProfile['trade'] as String? : null,
-      cguAcceptedAt: json['cguAcceptedAt'] as String?,
-      cnmciNumber: json['cnmciNumber'] as String?,
-      cnmciCardUrl: json['cnmciCardUrl'] as String?,
-      cnmciStatus: json['cnmciStatus'] as String? ?? 'non_renseigne',
+          artisanProfile != null ? readString(artisanProfile['trade']) : null,
+      cguAcceptedAt: readString(json['cguAcceptedAt']),
+      cnmciNumber: readString(json['cnmciNumber']),
+      cnmciCardUrl: readString(json['cnmciCardUrl']),
+      cnmciStatus: readString(json['cnmciStatus']) ?? 'non_renseigne',
       paymentPhone:
-          json['paymentPhone'] as String? ?? json['payment_phone'] as String?,
-      preferredPaymentProvider: json['preferredPaymentProvider'] as String? ??
-          json['preferred_payment_provider'] as String?,
+          readString(json['paymentPhone']) ?? readString(json['payment_phone']),
+      preferredPaymentProvider: readString(json['preferredPaymentProvider']) ??
+          readString(json['preferred_payment_provider']),
     );
   }
 

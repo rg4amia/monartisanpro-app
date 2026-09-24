@@ -1,3 +1,5 @@
+import 'package:frontend_flutter/core/utils/json_readers.dart';
+
 class NotificationModel {
   final int id;
   final String type; // payment | validation | alert | litige
@@ -19,15 +21,15 @@ class NotificationModel {
 
   factory NotificationModel.fromJson(Map<String, dynamic> json) =>
       NotificationModel(
-        id: json['id'] as int? ?? 0,
-        type: json['type'] as String? ?? 'alert',
-        title: json['title'] as String? ?? '',
-        message: json['message'] as String? ?? '',
-        isRead: json['isRead'] as bool? ?? json['read'] as bool? ?? false,
-        createdAt: json['createdAt'] as String? ??
-            json['created_at'] as String? ??
+        id: readInt(json['id']) ?? 0,
+        type: readString(json['type']) ?? 'alert',
+        title: readString(json['title']) ?? '',
+        message: readString(json['message']) ?? '',
+        isRead: readBool(json['isRead']) ?? readBool(json['read']) ?? false,
+        createdAt: readString(json['createdAt']) ??
+            readString(json['created_at']) ??
             DateTime.now().toIso8601String(),
-        data: json['data'] is Map ? json['data'] as Map<String, dynamic> : null,
+        data: readMap(json['data']),
       );
 
   Map<String, dynamic> toJson() => {

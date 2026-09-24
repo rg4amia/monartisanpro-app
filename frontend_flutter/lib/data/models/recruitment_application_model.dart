@@ -1,3 +1,5 @@
+import 'package:frontend_flutter/core/utils/json_readers.dart';
+
 import 'recruitment_offer_model.dart';
 
 class RecruitmentApplicantModel {
@@ -15,14 +17,10 @@ class RecruitmentApplicantModel {
 
   factory RecruitmentApplicantModel.fromJson(Map<String, dynamic> json) {
     return RecruitmentApplicantModel(
-      id: json['id'] is int
-          ? json['id'] as int
-          : int.tryParse('${json['id']}') ?? 0,
-      name: json['name'] as String? ?? '',
-      phone: json['phone'] as String? ?? '',
-      scoreProsartisan: json['score_prosartisan'] is int
-          ? json['score_prosartisan'] as int
-          : int.tryParse('${json['score_prosartisan']}') ?? 0,
+      id: readInt(json['id']) ?? 0,
+      name: readString(json['name']) ?? '',
+      phone: readString(json['phone']) ?? '',
+      scoreProsartisan: readInt(json['score_prosartisan']) ?? 0,
     );
   }
 }
@@ -69,9 +67,9 @@ class RecruitmentApplicationModel {
     return RecruitmentApplicationModel(
       id: _asInt(json['id']),
       offerId: _asInt(json['offer_id']),
-      status: json['status'] as String? ?? 'submitted',
+      status: readString(json['status']) ?? 'submitted',
       matchingScore: _asDouble(json['matching_score']),
-      appliedAt: json['applied_at'] as String?,
+      appliedAt: readString(json['applied_at']),
       offer: offerJson is Map<String, dynamic>
           ? RecruitmentOfferModel.fromJson(offerJson)
           : null,

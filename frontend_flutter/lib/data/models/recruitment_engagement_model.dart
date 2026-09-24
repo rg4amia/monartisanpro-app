@@ -1,3 +1,5 @@
+import 'package:frontend_flutter/core/utils/json_readers.dart';
+
 class RecruitmentWorkdayModel {
   final int id;
   final int dayNumber;
@@ -24,8 +26,8 @@ class RecruitmentWorkdayModel {
       id: _asInt(json['id']),
       dayNumber: _asInt(json['day_number']),
       montant: _asInt(json['montant']),
-      status: json['status'] as String? ?? 'awaiting_payment',
-      validatedAt: json['validated_at'] as String?,
+      status: readString(json['status']) ?? 'awaiting_payment',
+      validatedAt: readString(json['validated_at']),
     );
   }
 }
@@ -95,8 +97,8 @@ class RecruitmentEngagementModel {
       dailyRate: _asInt(json['daily_rate']),
       totalDays: _asInt(json['total_days']),
       montantTotal: _asInt(json['montant_total']),
-      status: json['status'] as String? ?? 'pending_artisan_acceptance',
-      acceptedAt: json['accepted_at'] as String?,
+      status: readString(json['status']) ?? 'pending_artisan_acceptance',
+      acceptedAt: readString(json['accepted_at']),
       offerTitle:
           offer is Map<String, dynamic> ? offer['title'] as String? : null,
       artisanName:
@@ -104,10 +106,10 @@ class RecruitmentEngagementModel {
       artisanPhone:
           artisan is Map<String, dynamic> ? artisan['phone'] as String? : null,
       recruiterName: recruiter is Map<String, dynamic>
-          ? recruiter['name'] as String?
+          ? readString(recruiter['name'])
           : null,
       recruiterPhone: recruiter is Map<String, dynamic>
-          ? recruiter['phone'] as String?
+          ? readString(recruiter['phone'])
           : null,
       workdays: workdaysJson is List
           ? workdaysJson

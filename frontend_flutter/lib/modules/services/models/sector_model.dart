@@ -1,3 +1,5 @@
+import 'package:frontend_flutter/core/utils/json_readers.dart';
+
 class SectorModel {
   final int id;
   final String name;
@@ -13,10 +15,10 @@ class SectorModel {
 
   factory SectorModel.fromJson(Map<String, dynamic> json) {
     return SectorModel(
-      id: json['id'] as int,
-      name: json['name'] as String,
-      icon: json['icon'] as String?,
-      color: json['color'] as String?,
+      id: readInt(json['id']) ?? 0,
+      name: readString(json['name']) ?? '',
+      icon: readString(json['icon']),
+      color: readString(json['color']),
     );
   }
 

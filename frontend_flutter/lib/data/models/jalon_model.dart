@@ -1,3 +1,5 @@
+import 'package:frontend_flutter/core/utils/json_readers.dart';
+
 class JalonModel {
   final int id;
   final int missionId;
@@ -61,17 +63,17 @@ class JalonModel {
   factory JalonModel.fromJson(Map<String, dynamic> json) {
     // Support pour snake_case (Laravel) et camelCase (frontend)
     return JalonModel(
-      id: json['id'] as int,
-      missionId: (json['mission_id'] ?? json['missionId']) as int,
-      ordre: json['ordre'] as int,
-      description: json['description'] as String,
+      id: readInt(json['id']) ?? 0,
+      missionId: readInt(json['mission_id'] ?? json['missionId']) ?? 0,
+      ordre: readInt(json['ordre']) ?? 0,
+      description: readString(json['description']) ?? '',
       montant: _parseAmount(json['montant']),
-      statut: json['statut'] as String,
-      otpCode: (json['otp_code'] ?? json['otpCode']) as String?,
-      otpExpiresAt: (json['otp_expires_at'] ?? json['otpExpiresAt']) as String?,
+      statut: readString(json['statut']) ?? '',
+      otpCode: readString(json['otp_code'] ?? json['otpCode']),
+      otpExpiresAt: readString(json['otp_expires_at'] ?? json['otpExpiresAt']),
       photosJson: _parsePhotos(json['photos_json'] ?? json['photosJson']),
-      valideAt: (json['valide_at'] ?? json['valideAt']) as String?,
-      payeAt: (json['paye_at'] ?? json['payeAt']) as String?,
+      valideAt: readString(json['valide_at'] ?? json['valideAt']),
+      payeAt: readString(json['paye_at'] ?? json['payeAt']),
     );
   }
 

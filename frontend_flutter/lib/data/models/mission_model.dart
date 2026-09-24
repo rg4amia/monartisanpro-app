@@ -1,3 +1,5 @@
+import 'package:frontend_flutter/core/utils/json_readers.dart';
+
 class MissionModel {
   final int id;
   final int clientId;
@@ -94,13 +96,9 @@ class MissionModel {
   }
 
   factory MissionModel.fromJson(Map<String, dynamic> json) {
-    final client = json['client'] is Map<String, dynamic>
-        ? json['client'] as Map<String, dynamic>
-        : null;
-    final artisan = json['artisan'] is Map<String, dynamic>
-        ? json['artisan'] as Map<String, dynamic>
-        : null;
-    final financials = json['financials'] as Map<String, dynamic>?;
+    final client = readMap(json['client']);
+    final artisan = readMap(json['artisan']);
+    final financials = readMap(json['financials']);
     final montantMateriaux = _parseAmount(
       json['montant_materiaux'] ??
           json['montantMateriaux'] ??
@@ -167,22 +165,12 @@ class MissionModel {
               : null) ??
           [],
       clientPhone: _asString(client?['phone'] ?? json['clientPhone']),
-      clientLatitude: json['clientCoordinates'] is Map<String, dynamic>
-          ? double.tryParse(
-              (json['clientCoordinates'] as Map<String, dynamic>)['lat']
-                  .toString(),
-            )
-          : (json['clientLatitude'] != null
-              ? double.tryParse(json['clientLatitude'].toString())
-              : null),
-      clientLongitude: json['clientCoordinates'] is Map<String, dynamic>
-          ? double.tryParse(
-              (json['clientCoordinates'] as Map<String, dynamic>)['lng']
-                  .toString(),
-            )
-          : (json['clientLongitude'] != null
-              ? double.tryParse(json['clientLongitude'].toString())
-              : null),
+      clientLatitude: readDouble(
+        readMap(json['clientCoordinates'])?['lat'] ?? json['clientLatitude'],
+      ),
+      clientLongitude: readDouble(
+        readMap(json['clientCoordinates'])?['lng'] ?? json['clientLongitude'],
+      ),
       supplierLatitude: _parseCoord(
         json,
         mapKeys: const ['supplierCoordinates', 'fournisseurCoordinates'],
@@ -198,10 +186,12 @@ class MissionModel {
       interventionTypeId: json['interventionTypeId'] != null ||
               json['intervention_type_id'] != null
           ? _parseInt(
-              json['interventionTypeId'] ?? json['intervention_type_id'],)
+              json['interventionTypeId'] ?? json['intervention_type_id'],
+            )
           : null,
-      interventionTypeName: (json['interventionTypeName'] ??
-          json['intervention_type_name']) as String?,
+      interventionTypeName: readString(
+        json['interventionTypeName'] ?? json['intervention_type_name'],
+      ),
       artisanRejected: json['artisanRejected'] == true ||
           json['artisan_rejected'] == true ||
           (json['artisanRejectedAt'] != null &&
@@ -338,9 +328,9 @@ class MissionModel {
       return location;
     }
 
-    return (json['clientAddress'] ??
-        json['location_address'] ??
-        json['adresse']) as String?;
+    return readString(
+      json['clientAddress'] ?? json['location_address'] ?? json['adresse'],
+    );
   }
 
   static int _parseInt(dynamic value) {

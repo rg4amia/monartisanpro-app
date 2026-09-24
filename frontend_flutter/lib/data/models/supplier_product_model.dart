@@ -1,3 +1,5 @@
+import 'package:frontend_flutter/core/utils/json_readers.dart';
+
 class SupplierProductModel {
   final int id;
   final int supplierId;
@@ -37,7 +39,7 @@ class SupplierProductModel {
         json['stockQuantity'] ?? json['stock_quantity'],
       ),
       imageUrl: _parseImageUrl(json['imageUrl'] ?? json['image_url']),
-      isActive: (json['isActive'] ?? json['is_active']) as bool? ?? true,
+      isActive: readBool(json['isActive'] ?? json['is_active']) ?? true,
       createdAt: json['createdAt']?.toString(),
       updatedAt: json['updatedAt']?.toString(),
     );

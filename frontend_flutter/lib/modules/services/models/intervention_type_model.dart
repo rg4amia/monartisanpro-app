@@ -1,3 +1,5 @@
+import 'package:frontend_flutter/core/utils/json_readers.dart';
+
 class InterventionTypeModel {
   final int id;
   final String name;
@@ -11,8 +13,8 @@ class InterventionTypeModel {
 
   factory InterventionTypeModel.fromJson(Map<String, dynamic> json) {
     return InterventionTypeModel(
-      id: json['id'] as int,
-      name: json['name'] as String,
+      id: readInt(json['id']) ?? 0,
+      name: readString(json['name']) ?? '',
       requiresLabor:
           (json['requiresLabor'] ?? json['requires_labor'] ?? true) == true,
     );

@@ -1,3 +1,4 @@
+import '../../core/utils/json_readers.dart';
 import 'jcode_item_model.dart';
 import 'supplier_model.dart';
 
@@ -47,12 +48,8 @@ class JcodeModel {
   int get montantRestant => montant - montantConsomme;
 
   factory JcodeModel.fromJson(Map<String, dynamic> json) {
-    final artisan = json['artisan'] is Map<String, dynamic>
-        ? json['artisan'] as Map<String, dynamic>
-        : null;
-    final fournisseur = json['fournisseur'] is Map<String, dynamic>
-        ? json['fournisseur'] as Map<String, dynamic>
-        : null;
+    final artisan = readMap(json['artisan']);
+    final fournisseur = readMap(json['fournisseur']);
     final itemsRaw = json['items'];
 
     return JcodeModel(
@@ -78,7 +75,8 @@ class JcodeModel {
               json['expires_at'] ??
               DateTime.now().toIso8601String())
           .toString(),
-      paymentStatus: _asString(json['paymentStatus'] ?? json['paiement_status']),
+      paymentStatus:
+          _asString(json['paymentStatus'] ?? json['paiement_status']),
       supplier:
           fournisseur == null ? null : SupplierModel.fromJson(fournisseur),
       items: itemsRaw is List

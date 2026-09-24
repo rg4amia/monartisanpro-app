@@ -1,3 +1,5 @@
+import '../../core/utils/json_readers.dart';
+
 class ChatMessageModel {
   final int id;
   final int missionId;
@@ -35,8 +37,7 @@ class ChatMessageModel {
   bool get isRead => readAt != null;
 
   factory ChatMessageModel.fromJson(Map<String, dynamic> json) {
-    final sender =
-        json['sender'] is Map<String, dynamic> ? json['sender'] as Map<String, dynamic> : null;
+    final sender = readMap(json['sender']);
 
     return ChatMessageModel(
       id: _asInt(json['id']) ?? 0,
@@ -47,8 +48,7 @@ class ChatMessageModel {
       type: _asString(json['type']) ?? 'text',
       content: _asString(json['content']),
       mediaUrl: _asString(json['media_url']),
-      mediaMetadata:
-          json['media_metadata'] is Map<String, dynamic> ? json['media_metadata'] as Map<String, dynamic> : null,
+      mediaMetadata: readMap(json['media_metadata']),
       isRedacted: json['is_redacted'] == true,
       flaggedForReview: json['flagged_for_review'] == true,
       readAt: _asDateTime(json['read_at']),

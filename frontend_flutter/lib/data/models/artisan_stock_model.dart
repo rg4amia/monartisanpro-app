@@ -29,8 +29,10 @@ class ArtisanStockModel {
       quantity: _parseInt(json['quantity']),
       unitCost: _parseInt(json['unit_cost'] ?? json['unitCost']),
       condition: (json['condition'] ?? 'neuf').toString(),
-      createdAt: json['created_at']?.toString() ?? json['createdAt']?.toString(),
-      updatedAt: json['updated_at']?.toString() ?? json['updatedAt']?.toString(),
+      createdAt:
+          json['created_at']?.toString() ?? json['createdAt']?.toString(),
+      updatedAt:
+          json['updated_at']?.toString() ?? json['updatedAt']?.toString(),
     );
   }
 

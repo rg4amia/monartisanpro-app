@@ -130,5 +130,27 @@ void main() {
 
       expect(user.isGoldenMarker, false);
     });
+
+    // Règle d'or 28 : une charge utile incomplète ou mal typée ne doit
+    // jamais faire échouer la lecture du profil (chargé à chaque session).
+    test('tolère une charge utile incomplète et des types inattendus', () {
+      final user = UserModel.fromJson({
+        'id': '42',
+        'walletMo': 15000.0,
+        'walletMateriaux': '8000',
+        'scoreProsArtisan': 712.0,
+        'position': {'lat': 5, 'lng': '-4.01'},
+        'artisanProfile': <dynamic>[],
+      });
+
+      expect(user.id, 42);
+      expect(user.phone, '');
+      expect(user.role, '');
+      expect(user.walletMo, 15000);
+      expect(user.walletMateriaux, 8000);
+      expect(user.scoreProsArtisan, 712);
+      expect(user.lat, 5.0);
+      expect(user.sectorId, isNull);
+    });
   });
 }

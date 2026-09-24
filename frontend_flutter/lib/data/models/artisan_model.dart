@@ -1,3 +1,5 @@
+import 'package:frontend_flutter/core/utils/json_readers.dart';
+
 class ArtisanModel {
   final int id;
   final String phone;
@@ -69,11 +71,12 @@ class ArtisanModel {
       phone: (json['phone'] ?? json['telephone'] ?? json['contactMobile'] ?? '')
           .toString(),
       name: _parseName(json),
-      photo: (json['photo'] ?? json['image']) as String?,
-      bio: json['bio'] as String?,
-      trade: (json['trade'] ?? json['category'] ?? json['artisanCategory'])
-          as String?,
-      sector: (json['sector'] ?? json['secteur']) as String?,
+      photo: readString(json['photo'] ?? json['image']),
+      bio: readString(json['bio']),
+      trade: readString(
+        json['trade'] ?? json['category'] ?? json['artisanCategory'],
+      ),
+      sector: readString(json['sector'] ?? json['secteur']),
       experienceYears: _parseInt(
         json['experienceYears'] ?? json['experience_years'],
       ),
@@ -82,28 +85,28 @@ class ArtisanModel {
       completedMissions: _parseInt(
         json['completedMissions'] ?? json['completed_missions'],
       ),
-      distance: (json['distance'] as String?) ??
+      distance: readString(json['distance']) ??
           (distanceMetres != null ? _formatDistance(distanceMetres) : null),
       distanceMetres: distanceMetres,
       isGoldenMarker:
-          (json['isGoldenMarker'] as bool?) ?? scoreProsArtisan >= 700,
+          readBool(json['isGoldenMarker']) ?? scoreProsArtisan >= 700,
       nightInterventionAvailable: _parseBool(
         json['nightInterventionAvailable'] ??
             json['intervention_nuit'] ??
             json['intervientLaNuit'],
       ),
-      kycStatus: (json['kycStatus'] ?? json['kyc_status']) as String?,
+      kycStatus: readString(json['kycStatus'] ?? json['kyc_status']),
       location: parsedLocation,
       locationLabel: _parseLocationLabel(json),
-      commune: (json['commune'] ?? _parseLocationLabel(json)) as String?,
-      isAvailable: (json['isAvailable'] ?? json['active']) as bool? ?? true,
+      commune: readString(json['commune'] ?? _parseLocationLabel(json)),
+      isAvailable: readBool(json['isAvailable'] ?? json['active']) ?? true,
       joinedDate: _parseDate(
         json['joinedDate'] ?? json['createdAt'] ?? json['created_at'],
       ),
-      role: json['role'] as String?,
-      price: json['price'] as String?,
-      cnmciNumber: json['cnmciNumber'] as String?,
-      cnmciStatus: (json['cnmciStatus'] ?? json['cnmci_status']) as String? ??
+      role: readString(json['role']),
+      price: readString(json['price']),
+      cnmciNumber: readString(json['cnmciNumber']),
+      cnmciStatus: readString(json['cnmciStatus'] ?? json['cnmci_status']) ??
           'non_renseigne',
     );
   }
@@ -163,12 +166,13 @@ class ArtisanModel {
       return location;
     }
 
-    return (json['locationLabel'] ?? json['commune'] ?? json['adresse'])
-        as String?;
+    return readString(
+      json['locationLabel'] ?? json['commune'] ?? json['adresse'],
+    );
   }
 
   static String? _parseName(Map<String, dynamic> json) {
-    final name = json['name'] as String?;
+    final name = readString(json['name']);
     if (name != null && name.trim().isNotEmpty) {
       return name;
     }

@@ -1,3 +1,5 @@
+import 'package:frontend_flutter/core/utils/json_readers.dart';
+
 class TransactionModel {
   final int id;
   final String type;
@@ -43,15 +45,16 @@ class TransactionModel {
                 DateTime.now().toIso8601String())
             .toString(),
         referenceExterne:
-            (json['referenceExterne'] ?? json['reference_externe']) as String?,
+            readString(json['referenceExterne'] ?? json['reference_externe']),
         missionId: json['missionId'] != null
             ? _parseInt(json['missionId'])
             : (json['mission_id'] != null
                 ? _parseInt(json['mission_id'])
                 : null),
-        missionDescription: (json['missionDescription'] ??
-            json['mission_description']) as String?,
-        clientName: (json['clientName'] ?? json['client_name']) as String?,
+        missionDescription: readString(
+          json['missionDescription'] ?? json['mission_description'],
+        ),
+        clientName: readString(json['clientName'] ?? json['client_name']),
       );
 
   Map<String, dynamic> toJson() => {

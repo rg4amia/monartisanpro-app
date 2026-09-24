@@ -1,3 +1,5 @@
+import 'package:frontend_flutter/core/utils/json_readers.dart';
+
 import 'jcode_item_model.dart';
 import 'mission_model.dart';
 
@@ -102,8 +104,8 @@ class DevisJalon {
         ordre: _parseInt(json['ordre']),
         description: (json['description'] ?? '').toString(),
         montant: _parseInt(json['montant']),
-        dateCible: (json['date_cible'] as String? ??
-            json['dateCible'] as String? ??
+        dateCible: (readString(json['date_cible']) ??
+            readString(json['dateCible']) ??
             ''),
       );
 
@@ -188,21 +190,21 @@ class DevisModel {
         id: _parseInt(json['id']),
         missionId: _parseInt(json['missionId'] ?? json['mission_id']),
         artisanId: _parseInt(json['artisanId'] ?? json['artisan_id']),
-        lignes: (json['lignesJson'] as List<dynamic>? ??
-                json['lignes_json'] as List<dynamic>? ??
+        lignes: (readList(json['lignesJson']) ??
+                readList(json['lignes_json']) ??
                 const [])
             .whereType<Map<String, dynamic>>()
             .map(DevisLigne.fromJson)
             .toList(),
-        jalons: (json['jalonsJson'] as List<dynamic>? ??
-                json['jalons_json'] as List<dynamic>? ??
+        jalons: (readList(json['jalonsJson']) ??
+                readList(json['jalons_json']) ??
                 const [])
             .whereType<Map<String, dynamic>>()
             .map(DevisJalon.fromJson)
             .toList(),
         statut: (json['statut'] ?? '').toString(),
         createdAt: (json['createdAt'] ?? json['created_at'] ?? '').toString(),
-        artisanName: (json['artisanName'] ?? json['artisan_name']) as String?,
+        artisanName: readString(json['artisanName'] ?? json['artisan_name']),
         missionStatus: MissionModel.normalizeStatus(
           (json['missionStatus'] ?? json['mission_status'] ?? '').toString(),
         ),

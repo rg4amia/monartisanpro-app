@@ -1,3 +1,5 @@
+import 'package:frontend_flutter/core/utils/json_readers.dart';
+
 class FaqModel {
   final int id;
   final String question;
@@ -14,15 +16,11 @@ class FaqModel {
   });
 
   factory FaqModel.fromJson(Map<String, dynamic> json) => FaqModel(
-        id: json['id'] is int
-            ? json['id'] as int
-            : int.tryParse('${json['id']}') ?? 0,
-        question: json['question'] as String? ?? '',
-        reponse: json['reponse'] as String? ?? '',
-        categorie: json['categorie'] as String?,
-        ordre: json['ordre'] is int
-            ? json['ordre'] as int
-            : int.tryParse('${json['ordre']}') ?? 0,
+        id: readInt(json['id']) ?? 0,
+        question: readString(json['question']) ?? '',
+        reponse: readString(json['reponse']) ?? '',
+        categorie: readString(json['categorie']),
+        ordre: readInt(json['ordre']) ?? 0,
       );
 
   Map<String, dynamic> toJson() => {

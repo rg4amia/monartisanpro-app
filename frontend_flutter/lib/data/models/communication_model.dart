@@ -1,3 +1,5 @@
+import 'package:frontend_flutter/core/utils/json_readers.dart';
+
 class CommunicationModel {
   final int id;
   final String type; // annonce | le_saviez_vous | audio | video
@@ -78,20 +80,21 @@ class CommunicationModel {
     }
 
     return CommunicationModel(
-      id: json['id'] as int? ?? 0,
-      type: json['type'] as String? ?? 'annonce',
-      titre: json['titre'] as String? ?? json['title'] as String? ?? '',
-      contenu: json['contenu'] as String? ??
-          json['content'] as String? ??
-          json['message'] as String? ??
+      id: readInt(json['id']) ?? 0,
+      type: readString(json['type']) ?? 'annonce',
+      titre: readString(json['titre']) ?? readString(json['title']) ?? '',
+      contenu: readString(json['contenu']) ??
+          readString(json['content']) ??
+          readString(json['message']) ??
           '',
       cibles: ciblesList,
-      statut:
-          json['statut'] as String? ?? json['status'] as String? ?? 'brouillon',
-      publieAt: json['publie_at'] as String?,
-      clotureAt: json['cloture_at'] as String?,
+      statut: readString(json['statut']) ??
+          readString(json['status']) ??
+          'brouillon',
+      publieAt: readString(json['publie_at']),
+      clotureAt: readString(json['cloture_at']),
       createdAt:
-          json['created_at'] as String? ?? DateTime.now().toIso8601String(),
+          readString(json['created_at']) ?? DateTime.now().toIso8601String(),
       // Lecture tolérante : ces clés sont absentes des réponses d'un backend
       // antérieur, et d'un cache Hive écrit avant la mise à jour.
       mediaUrl: json['media_url']?.toString(),

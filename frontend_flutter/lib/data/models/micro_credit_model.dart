@@ -1,3 +1,5 @@
+import 'package:frontend_flutter/core/utils/json_readers.dart';
+
 class MicroCreditEligibilityModel {
   final bool eligible;
   final int currentScore;
@@ -17,7 +19,7 @@ class MicroCreditEligibilityModel {
 
   factory MicroCreditEligibilityModel.fromJson(Map<String, dynamic> json) {
     return MicroCreditEligibilityModel(
-      eligible: json['eligible'] as bool? ?? false,
+      eligible: readBool(json['eligible']) ?? false,
       currentScore: _parseInt(
         json['score_prosartisan'] ??
             json['scoreProsArtisan'] ??

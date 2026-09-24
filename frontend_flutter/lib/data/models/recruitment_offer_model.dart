@@ -1,3 +1,5 @@
+import 'package:frontend_flutter/core/utils/json_readers.dart';
+
 class RecruitmentOfferModel {
   final int id;
   final String title;
@@ -48,22 +50,22 @@ class RecruitmentOfferModel {
 
     return RecruitmentOfferModel(
       id: _asInt(json['id']) ?? 0,
-      title: json['title'] as String? ?? '',
-      description: json['description'] as String? ?? '',
-      missionType: json['mission_type'] as String? ?? 'journalier',
-      commune: json['commune'] as String? ?? '',
-      sousQuartier: json['sous_quartier'] as String?,
-      dateDebut: json['date_debut'] as String?,
+      title: readString(json['title']) ?? '',
+      description: readString(json['description']) ?? '',
+      missionType: readString(json['mission_type']) ?? 'journalier',
+      commune: readString(json['commune']) ?? '',
+      sousQuartier: readString(json['sous_quartier']),
+      dateDebut: readString(json['date_debut']),
       dailyRateMin: _asInt(json['daily_rate_min']),
       dailyRateMax: _asInt(json['daily_rate_max']),
       openingsCount: _asInt(json['openings_count']) ?? 1,
-      deadlineAt: json['deadline_at'] as String?,
-      status: json['status'] as String? ?? 'pending_review',
+      deadlineAt: readString(json['deadline_at']),
+      status: readString(json['status']) ?? 'pending_review',
       tradeName:
           trade is Map<String, dynamic> ? trade['name'] as String? : null,
       creatorName:
           creator is Map<String, dynamic> ? creator['name'] as String? : null,
-      creatorType: json['creator_type'] as String? ?? 'admin',
+      creatorType: readString(json['creator_type']) ?? 'admin',
       applicationsCount: _asInt(json['applications_count']) ?? 0,
     );
   }
