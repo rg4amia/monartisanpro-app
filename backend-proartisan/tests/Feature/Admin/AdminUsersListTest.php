@@ -44,9 +44,22 @@ class AdminUsersListTest extends TestCase
 
     public function test_search_matches_name_phone_and_email(): void
     {
-        $admin = $this->admin();
+        // Noms et e-mails figés : un nom Faker contenant « awa » (Hawaii,
+        // Awad…) faisait remonter un second résultat de façon aléatoire.
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'kyc_status' => 'actif',
+            'name' => 'Admin Test',
+            'email' => 'admin-test@example.test',
+        ]);
         User::factory()->create(['name' => 'Awa Koné', 'role' => 'client']);
-        User::factory()->count(4)->create(['role' => 'client']);
+        foreach (range(1, 4) as $i) {
+            User::factory()->create([
+                'name' => "Client Témoin {$i}",
+                'email' => "temoin{$i}@example.test",
+                'role' => 'client',
+            ]);
+        }
 
         $this->actingAs($admin)->get('/admin/users?search_users=Awa')
             ->assertInertia(fn (AssertableInertia $page) => $page
