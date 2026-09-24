@@ -364,7 +364,7 @@ Le backoffice (Laravel 12 + Inertia 2 + React 19 + TypeScript) a fait l'objet d'
 4. **Exports CSV & Actions Groupées :** [COMPLÉTÉ] Exports tracés (Règle d'Or 28) et revue KYC / statut de compte en lot (Règle d'Or 29).
 5. **Permissions Fines & Super Admin Protégé :** [COMPLÉTÉ] Capacités `admin.*`, table pivot, Gates, super admins inconditionnels (Règle d'Or 24).
 6. **Panneau de Santé & Alerte Telegram :** [COMPLÉTÉ] Jobs KO, webhooks paiement, fraude GPS, seuil Référent + tâche `admin:health-check` (Règle d'Or 31).
-7. **Usurpation de Session :** [COMPLÉTÉ] « Se connecter en tant que » un utilisateur non-admin avec bandeau de retour et audit (Règle d'Or 32). *À étendre :* variante « jeton Sanctum temporaire » pour le support de l'application mobile.
+7. **Usurpation de Session :** [COMPLÉTÉ] « Se connecter en tant que » un utilisateur non-admin avec bandeau de retour et audit (Règle d'Or 32). Limitée au backoffice web : la variante mobile (jeton Sanctum temporaire) a été écartée.
 
 ### 💬 Support Client & Communication
 1. **Bouton WhatsApp « Click-to-Chat » & Suivi des Clics (Front Office + Backoffice) :** [COMPLÉTÉ] Bouton flottant sur le site vitrine ouvrant une conversation WhatsApp pré-remplie vers un numéro et un message paramétrables depuis le backoffice, avec journal des clics (aucune donnée personnelle) consultable et paginé dans un onglet dédié (`admin.whatsapp.manage`, Règle d'Or 54).
