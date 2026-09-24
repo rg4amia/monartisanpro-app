@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:frontend_flutter/core/utils/json_readers.dart';
 
 import '../../core/cache/cache_store.dart';
 import '../../core/network/api_client.dart';
@@ -121,7 +122,11 @@ class SupplierCatalogRepository {
       'file': await MultipartFile.fromFile(filePath, filename: 'product.jpg'),
     });
     final res = await _client.postMultipart('/upload', formData);
-    return (res.data as Map<String, dynamic>)['url'] as String;
+    final url = readString(readMap(res.data)?['url']);
+    if (url == null) {
+      throw const FormatException('Adresse du fichier téléversé absente.');
+    }
+    return url;
   }
 
   /// Après une mutation de fiche produit : seul le catalogue « mes produits »
@@ -135,7 +140,6 @@ class SupplierCatalogRepository {
   /// Extrait la liste `data` de la réponse et normalise chaque élément en
   /// `Map<String, dynamic>` (tolère la relecture Hive `Map<dynamic, dynamic>`).
   static List<Map<String, dynamic>> _rawList(Object? data) {
-    final list = (data as Map<String, dynamic>)['data'] as List<dynamic>;
-    return list.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+    return readDataList(data);
   }
 }

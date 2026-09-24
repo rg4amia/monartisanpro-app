@@ -1,6 +1,8 @@
 import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/widgets.dart';
+import 'package:frontend_flutter/core/utils/json_readers.dart';
 import 'package:get/get.dart';
 
 import '../../../app/routes/app_routes.dart';
@@ -696,11 +698,7 @@ class MissionsController extends GetxController {
           return 'Session expirée. Veuillez vous reconnecter.';
         case 403:
           // Extraire le message backend (ex: KYC non validé)
-          final data403 = e.response!.data;
-          if (data403 is Map && data403.containsKey('message')) {
-            return data403['message'] as String;
-          }
-          return 'Accès refusé';
+          return readApiMessage(e.response!.data) ?? 'Accès refusé';
         case 404:
           return 'Ressource introuvable';
         case 422:
@@ -716,9 +714,8 @@ class MissionsController extends GetxController {
                 }
               }
             }
-            if (data.containsKey('message')) {
-              return data['message'] as String;
-            }
+            final message = readApiMessage(data);
+            if (message != null) return message;
           }
           return 'Données invalides';
         case 500:

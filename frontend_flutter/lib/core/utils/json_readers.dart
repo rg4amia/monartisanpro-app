@@ -63,3 +63,31 @@ Map<String, dynamic>? readMap(dynamic value) {
 
 /// Liste JSON, ou `null` si la valeur n'en est pas une.
 List<dynamic>? readList(dynamic value) => value is List ? value : null;
+
+/// Liste d'objets JSON : les éléments qui ne sont pas des objets sont
+/// ignorés, et une `Map<dynamic, dynamic>` (relecture Hive) est normalisée.
+List<Map<String, dynamic>> readMapList(dynamic value) =>
+    (readList(value) ?? const [])
+        .map(readMap)
+        .whereType<Map<String, dynamic>>()
+        .toList();
+
+/// Liste `data` d'une réponse d'API, sous l'enveloppe `{data: [...]}` ou en
+/// tableau nu.
+///
+/// Une réponse qui n'a aucune de ces deux formes lève une
+/// [FormatException] plutôt que de renvoyer une liste vide : un écran vide
+/// masquerait la panne de chargement (Règle d'or 29).
+List<Map<String, dynamic>> readDataList(dynamic body) {
+  final list = body is List ? body : readList(readMap(body)?['data']);
+  if (list == null) {
+    throw const FormatException('Réponse inattendue du serveur.');
+  }
+  return readMapList(list);
+}
+
+/// Message lisible d'un corps d'erreur d'API (`{message: ...}`), ou `null`.
+String? readApiMessage(dynamic body) {
+  final message = readString(readMap(body)?['message'])?.trim();
+  return (message == null || message.isEmpty) ? null : message;
+}

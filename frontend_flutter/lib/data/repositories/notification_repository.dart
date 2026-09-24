@@ -1,3 +1,4 @@
+import 'package:frontend_flutter/core/utils/json_readers.dart';
 import '../../core/cache/cache_store.dart';
 import '../../core/network/api_client.dart';
 import '../../core/network/api_endpoints.dart';
@@ -31,11 +32,7 @@ class NotificationRepository {
         final res = await NetworkExecutor.run(
           () => _client.get(ApiEndpoints.notifications),
         );
-        final list =
-            (res.data as Map<String, dynamic>)['data'] as List<dynamic>;
-        return list
-            .map((e) => NotificationModel.fromJson(e as Map<String, dynamic>))
-            .toList();
+        return readDataList(res.data).map(NotificationModel.fromJson).toList();
       },
     );
   }

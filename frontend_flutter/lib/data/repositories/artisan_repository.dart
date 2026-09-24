@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:frontend_flutter/core/utils/json_readers.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../../core/cache/cache_store.dart';
@@ -58,11 +59,7 @@ class ArtisanRepository {
             },
           ),
         );
-        final list =
-            (res.data as Map<String, dynamic>)['data'] as List<dynamic>;
-        return list
-            .map((e) => ArtisanModel.fromJson(e as Map<String, dynamic>))
-            .toList();
+        return readDataList(res.data).map(ArtisanModel.fromJson).toList();
       },
     );
   }

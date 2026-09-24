@@ -1,5 +1,7 @@
 import 'package:dio/dio.dart';
+import 'package:frontend_flutter/core/utils/json_readers.dart';
 import 'package:get/get.dart';
+
 import '../../../data/repositories/parrainage_repository.dart';
 
 class ParrainageController extends GetxController {
@@ -69,9 +71,8 @@ class ParrainageController extends GetxController {
             }
           }
         }
-        if (data.containsKey('message')) {
-          return data['message'] as String;
-        }
+        final message = readApiMessage(data);
+        if (message != null) return message;
       }
       return 'Erreur ${e.response?.statusCode}';
     }

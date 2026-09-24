@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:frontend_flutter/core/utils/json_readers.dart';
 import 'package:get/get.dart' hide Response, MultipartFile, FormData;
 import 'package:image_picker/image_picker.dart';
 
@@ -53,20 +54,8 @@ class MissionRepository {
       );
 
       // Support pour différents formats de réponse backend
-      final data = res.data;
-      final List<dynamic> list;
-
-      if (data is Map && data.containsKey('data')) {
-        list = data['data'] as List<dynamic>;
-      } else if (data is List) {
-        list = data;
-      } else {
-        throw Exception('Format de réponse inattendu pour getMissions');
-      }
-
-      final missions = list
-          .map((e) => MissionModel.fromJson(e as Map<String, dynamic>))
-          .toList();
+      final missions =
+          readDataList(res.data).map(MissionModel.fromJson).toList();
 
       // 3. Mettre à jour le cache
       await _cache.cacheMissions(missions, filter: status);
@@ -204,13 +193,7 @@ class MissionRepository {
     final res = await NetworkExecutor.run(
       () => _client.get(ApiEndpoints.interventionTypes),
     );
-    final data = res.data;
-    final List<dynamic> list = data is Map && data.containsKey('data')
-        ? data['data'] as List<dynamic>
-        : (data as List<dynamic>);
-    return list
-        .map((e) => InterventionTypeModel.fromJson(e as Map<String, dynamic>))
-        .toList();
+    return readDataList(res.data).map(InterventionTypeModel.fromJson).toList();
   }
 
   /// Upload un fichier (image/vidéo) et retourne son URL publique
@@ -222,7 +205,11 @@ class MissionRepository {
       ),
     });
     final res = await _client.postMultipart('/upload', formData);
-    return (res.data as Map<String, dynamic>)['url'] as String;
+    final url = readString(readMap(res.data)?['url']);
+    if (url == null) {
+      throw const FormatException('Adresse du fichier téléversé absente.');
+    }
+    return url;
   }
 
   /// Demande une estimation IA Gemini pour une mission
@@ -408,20 +395,7 @@ class MissionRepository {
         () => _client.get(ApiEndpoints.missionJalons(missionId)),
       );
 
-      final data = res.data;
-      final List<dynamic> list;
-
-      if (data is Map && data.containsKey('data')) {
-        list = data['data'] as List<dynamic>;
-      } else if (data is List) {
-        list = data;
-      } else {
-        throw Exception('Format de réponse inattendu pour getJalons');
-      }
-
-      final jalons = list
-          .map((e) => JalonModel.fromJson(e as Map<String, dynamic>))
-          .toList();
+      final jalons = readDataList(res.data).map(JalonModel.fromJson).toList();
 
       // 3. Mettre à jour le cache
       await _cache.cacheJalons(missionId, jalons);

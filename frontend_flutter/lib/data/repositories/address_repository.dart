@@ -8,7 +8,8 @@ class AddressRepository {
   Future<List<AddressModel>> list() async {
     final response = await _client.get(ApiEndpoints.addresses);
     final data = response.data;
-    final rawList = data is Map && data['data'] is List ? data['data'] as List : [];
+    final rawList =
+        data is Map && data['data'] is List ? data['data'] as List : [];
     return rawList
         .whereType<Map>()
         .map((item) => AddressModel.fromJson(item.cast<String, dynamic>()))

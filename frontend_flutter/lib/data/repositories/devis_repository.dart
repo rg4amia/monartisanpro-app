@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:frontend_flutter/core/utils/json_readers.dart';
 
 import '../../core/cache/cache_store.dart';
 import '../../core/network/api_client.dart';
@@ -35,11 +36,7 @@ class DevisRepository {
         final res = await NetworkExecutor.run(
           () => _client.get(ApiEndpoints.missionDevis(missionId)),
         );
-        final list =
-            (res.data as Map<String, dynamic>)['data'] as List<dynamic>;
-        return list
-            .map((e) => DevisModel.fromJson(e as Map<String, dynamic>))
-            .toList();
+        return readDataList(res.data).map(DevisModel.fromJson).toList();
       },
     );
   }

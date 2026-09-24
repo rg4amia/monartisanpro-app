@@ -60,4 +60,55 @@ void main() {
       expect(readList(null), isNull);
     });
   });
+
+  group('readMapList / readDataList / readApiMessage', () {
+    test('readMapList ignore les éléments non objets et normalise les clés',
+        () {
+      expect(
+        readMapList([
+          {'id': 1},
+          'bruit',
+          <dynamic, dynamic>{'id': 2},
+          null,
+        ]),
+        [
+          {'id': 1},
+          {'id': 2},
+        ],
+      );
+      expect(readMapList(null), isEmpty);
+    });
+
+    test("readDataList lit l'enveloppe {data: [...]} comme le tableau nu", () {
+      expect(
+          readDataList({
+            'data': [
+              {'id': 1},
+            ],
+          }),
+          [
+            {'id': 1},
+          ]);
+      expect(
+          readDataList([
+            {'id': 2},
+          ]),
+          [
+            {'id': 2},
+          ]);
+    });
+
+    test('readDataList signale une réponse sans liste au lieu de la vider', () {
+      expect(() => readDataList({'data': null}), throwsFormatException);
+      expect(() => readDataList('<html>'), throwsFormatException);
+      expect(() => readDataList(null), throwsFormatException);
+    });
+
+    test("readApiMessage n'extrait qu'un message non vide", () {
+      expect(readApiMessage({'message': ' KYC non validé '}), 'KYC non validé');
+      expect(readApiMessage({'message': null}), isNull);
+      expect(readApiMessage({'message': ''}), isNull);
+      expect(readApiMessage('Erreur 500'), isNull);
+    });
+  });
 }

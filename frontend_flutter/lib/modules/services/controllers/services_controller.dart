@@ -1,3 +1,4 @@
+import 'package:frontend_flutter/core/utils/json_readers.dart';
 import 'package:get/get.dart';
 
 import '../../../core/network/api_client.dart';
@@ -25,9 +26,9 @@ class ServicesController extends GetxController {
       isLoading.value = true;
       final response = await _api.get(ApiEndpoints.sectors);
 
-      if ((response.data as Map<String, dynamic>)['success'] == true) {
-        final data = (response.data as Map<String, dynamic>)['data'] as List;
-        sectors.value = data.map((e) => SectorModel.fromJson(e)).toList();
+      if (readMap(response.data)?['success'] == true) {
+        sectors.value =
+            readDataList(response.data).map(SectorModel.fromJson).toList();
       }
     } catch (e) {
       Get.snackbar('Erreur', 'Échec du chargement des services : $e');
@@ -44,9 +45,9 @@ class ServicesController extends GetxController {
 
       final response = await _api.get(ApiEndpoints.sectorTrades(sector.id));
 
-      if ((response.data as Map<String, dynamic>)['success'] == true) {
-        final data = (response.data as Map<String, dynamic>)['data'] as List;
-        trades.value = data.map((e) => TradeModel.fromJson(e)).toList();
+      if (readMap(response.data)?['success'] == true) {
+        trades.value =
+            readDataList(response.data).map(TradeModel.fromJson).toList();
       }
     } catch (e) {
       Get.snackbar('Erreur', 'Échec du chargement des métiers : $e');

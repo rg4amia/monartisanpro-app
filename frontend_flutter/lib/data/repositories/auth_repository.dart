@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:frontend_flutter/core/utils/json_readers.dart';
 
 import '../../core/cache/cache_store.dart';
 import '../../core/network/api_client.dart';
@@ -25,21 +26,21 @@ class AuthRepository {
       },
     );
 
+    final body = readMap(res.data) ?? const <String, dynamic>{};
     final hasCompletedProfile =
-        (res.data as Map<String, dynamic>)['has_completed_profile'] as bool? ??
-            false;
+        readBool(body['has_completed_profile']) ?? false;
+    final token = readString(body['token']);
 
     // Si le profil est complet, on sauvegarde le token
-    if (hasCompletedProfile) {
-      final token = (res.data as Map<String, dynamic>)['token'] as String?;
-      if (token != null) await StorageService.saveToken(token);
+    if (hasCompletedProfile && token != null) {
+      await StorageService.saveToken(token);
     }
 
     return {
       'has_completed_profile': hasCompletedProfile,
-      'token': (res.data as Map<String, dynamic>)['token'] as String?,
-      'user': (res.data as Map<String, dynamic>)['user'],
-      'phone': (res.data as Map<String, dynamic>)['phone'] as String?,
+      'token': token,
+      'user': body['user'],
+      'phone': readString(body['phone']),
     };
   }
 
@@ -99,7 +100,11 @@ class AuthRepository {
 
   Future<String> kycStatus() async {
     final res = await _client.get(ApiEndpoints.kycStatus);
-    return (res.data as Map<String, dynamic>)['kycStatus'] as String;
+    final status = readString(readMap(res.data)?['kycStatus']);
+    if (status == null) {
+      throw const FormatException('Statut KYC absent de la réponse.');
+    }
+    return status;
   }
 
   Future<void> uploadCni(String filePath) async {
