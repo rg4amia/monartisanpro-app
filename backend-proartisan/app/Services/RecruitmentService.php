@@ -248,6 +248,21 @@ class RecruitmentService
     }
 
     /**
+     * Active/désactive la publication d'offres par espace (client / fournisseur).
+     *
+     * @param  array<string, string|null>  $values  réglages déjà validés
+     */
+    public function updateSettings(array $values): void
+    {
+        foreach ($values as $key => $value) {
+            DB::table('recruitment_settings')->where('key', $key)->update([
+                'value' => $value,
+                'updated_at' => now(),
+            ]);
+        }
+    }
+
+    /**
      * Score de matching déterministe (0-100), simplifié pour la Phase 1 :
      * proximité spatiale (50%) et fiabilité via le Score ProsArtisan (50%).
      * La composante outillage/disponibilité de la spécification d'origine est

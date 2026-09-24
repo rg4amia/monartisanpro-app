@@ -9,7 +9,6 @@ use App\Services\RecruitmentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
@@ -76,12 +75,7 @@ class RecruitmentAdminController extends Controller
                 'fournisseur_posting_enabled' => 'nullable|in:0,1',
             ]);
 
-            foreach ($validated as $key => $value) {
-                DB::table('recruitment_settings')->where('key', $key)->update([
-                    'value' => $value,
-                    'updated_at' => now(),
-                ]);
-            }
+            $this->recruitment->updateSettings($validated);
 
             return back()->with('success', 'Réglages du module recrutement enregistrés.');
         } catch (\Throwable $e) {

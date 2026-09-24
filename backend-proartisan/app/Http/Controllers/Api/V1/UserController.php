@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
 use App\Models\ArtisanProfile;
+use App\Models\Trade;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -31,8 +32,8 @@ class UserController extends Controller
                 function ($attribute, $value, $fail) use ($request, $user) {
                     $sectorId = $request->input('sector_id') ?? ($user->artisanProfile?->sector_id);
                     if ($value && $sectorId) {
-                        $exists = \DB::table('trades')
-                            ->where('id', $value)
+                        $exists = Trade::query()
+                            ->whereKey($value)
                             ->where('sector_id', $sectorId)
                             ->exists();
                         if (!$exists) {

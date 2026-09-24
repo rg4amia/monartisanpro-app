@@ -153,6 +153,19 @@ class RecruitmentTest extends TestCase
             ->assertCreated();
     }
 
+    public function test_admin_toggles_posting_per_space_from_backoffice(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'kyc_status' => 'actif']);
+
+        $this->actingAs($admin)
+            ->post('/admin/recruitment/settings', ['client_posting_enabled' => '0', 'fournisseur_posting_enabled' => '1'])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect();
+
+        $this->assertSame('0', DB::table('recruitment_settings')->where('key', 'client_posting_enabled')->value('value'));
+        $this->assertSame('1', DB::table('recruitment_settings')->where('key', 'fournisseur_posting_enabled')->value('value'));
+    }
+
     public function test_public_index_only_lists_active_offers(): void
     {
         $trade = $this->trade();

@@ -1591,16 +1591,20 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         });
     };
 
-    const handleKycDecision = (user: KycUser, decision: 'approuve' | 'rejete'): void => {
+    const handleKycDecision = async (user: KycUser, decision: 'approuve' | 'rejete'): Promise<void> => {
         let rejectionReason = '';
 
         if (decision === 'rejete') {
-            rejectionReason = window.prompt('Motif de rejet KYC (minimum 10 caractères) :') ?? '';
-
-            if (rejectionReason.trim().length < 10) {
-                window.alert('Motif trop court.');
-                return;
-            }
+            const reason = await askConfirm({
+                title: 'Rejeter le dossier KYC',
+                message: `Le dossier de ${user.name} sera rejeté et l'utilisateur notifié.`,
+                confirmLabel: 'Rejeter',
+                tone: 'danger',
+                promptLabel: 'Motif de rejet (minimum 10 caractères)',
+                promptMinLength: 10,
+            });
+            if (typeof reason !== 'string') return;
+            rejectionReason = reason.trim();
         }
 
         submitAction(`/admin/kyc/${user.id}/review`, {
